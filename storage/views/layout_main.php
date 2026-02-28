@@ -102,6 +102,18 @@
   <script src="/assets/js/marked.min.js"></script>
   <script src="/assets/js/connection.js"></script>
   <script src="/assets/js/main.js"></script>
+  
+  <?php if (!empty($siteConfig['integrations']['google_analytics_id'] ?? '')): ?>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?= htmlspecialchars($siteConfig['integrations']['google_analytics_id']) ?>"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '<?= htmlspecialchars($siteConfig['integrations']['google_analytics_id']) ?>');
+    </script>
+  <?php endif; ?>
+
   <?php if (!empty($scripts)):
       foreach ($scripts as $script): ?>
     <script src="<?= $script ?>"></script>
