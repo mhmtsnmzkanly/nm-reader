@@ -204,6 +204,10 @@ final class Config
             $group->get('/genre/{slug}', [SeriesController::class, 'genre']);
             $group->get('/tag/{slug}', [SeriesController::class, 'tag']);
             $group->get('/latest-chapters', [SeriesController::class, 'latestChapters']);
+            
+            $group->get('/series_genres', [SeriesController::class, 'series_genres']);
+            $group->get('/series_tags', [SeriesController::class, 'series_tags']);
+
             $group->get('/content/{type:' . $typePattern . '}/chapters', [SeriesController::class, 'latestChaptersByType']);
             $group->get('/profile/{person:[A-Za-z0-9_]+}', [UserController::class, 'publicProfile']);
             $group->get('/blogs', [BlogController::class, 'list']);
@@ -293,9 +297,6 @@ final class Config
             $group->get('/metrics', [MetricsController::class, 'snapshot'])->add($perm(['admin.metrics.view']));
             $group->get('/dashboard', [MetricsController::class, 'snapshot'])->add($perm(['admin.metrics.view']));
             $group->get('/metrics/insights', [MetricsController::class, 'insights'])->add($perm(['admin.metrics.view']));
-
-            $group->get('/series_genres', [SeriesController::class, 'series_genres'])->add($perm(['admin.panel.access']));
-            $group->get('/series_tags', [SeriesController::class, 'series_tags'])->add($perm(['admin.panel.access']));
 
             $group->post('/content', [AdminController::class, 'createContent'])->add($perm(['admin.content.create']));
             $group->put('/content/{id}', [AdminController::class, 'updateContent'])->add($perm(['admin.content.update']));
