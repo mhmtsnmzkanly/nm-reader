@@ -94,6 +94,15 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Route Restoration & Turnstile JS Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: 
+  - Several user routes (`/user/profile`, `/user/history`, etc.) were accidentally removed during the previous logout fix.
+  - Turnstile token was not being correctly extracted from the login/register forms.
+- **Fix**:
+  - Restored all missing routes in `app/Config.php`.
+  - Updated `main.js` to use a more reliable selector `[name="cf-turnstile-response"]` for extracting the Turnstile token.
+
 ### Turnstile Verification Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Turnstile verification was failing in some environments due to `file_get_contents` SSL restrictions.

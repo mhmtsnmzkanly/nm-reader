@@ -253,13 +253,14 @@ $(function () {
     // Event Delegation: Auth Forms
     $('body').on('submit', '#loginForm', async function (e) {
       e.preventDefault();
-      const fd = new FormData(this);
+      const turnstileToken = $(this).find('[name="cf-turnstile-response"]').val();
+      
       try {
         await Connection.login(
           $(this).find('input[type="email"]').val(), 
           $(this).find('input[type="password"]').val(),
           $('#loginRemember').is(':checked'),
-          fd.get('cf-turnstile-response')
+          turnstileToken
         );
         showPopup(NMR.__t('msg_login_success'), 'success');
         setTimeout(() => location.reload(), 1000);
@@ -271,13 +272,14 @@ $(function () {
 
     $('body').on('submit', '#registerForm', async function (e) {
       e.preventDefault();
-      const fd = new FormData(this);
+      const turnstileToken = $(this).find('[name="cf-turnstile-response"]').val();
+
       try {
         await Connection.register(
           $(this).find('input[type="text"]').val(), 
           $(this).find('input[type="email"]').val(), 
           $(this).find('input[type="password"]').val(),
-          fd.get('cf-turnstile-response')
+          turnstileToken
         );
         showPopup(NMR.__t('msg_register_success'), 'success');
         openModal('loginModal');
