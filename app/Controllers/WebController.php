@@ -700,6 +700,7 @@ final class WebController
             "Disallow: /login\n" .
             "Disallow: /logout\n" .
             "Disallow: /chat\n" .
+            "Disallow: /uploads/\n" .
             "Sitemap: {$base}/sitemap.xml\n";
 
         $response->getBody()->write($payload);
