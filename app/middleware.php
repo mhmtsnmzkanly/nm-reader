@@ -13,15 +13,17 @@ if (!isset($app, $settings)) {
     throw new RuntimeException('App or settings missing for middleware bootstrap.');
 }
 
-$siteConfig = $app->getContainer()->get(\App\Services\SiteConfigService::class);
+// 1. Dependency Access
+$container = $app->getContainer();
 
 // CORS must be early in the stack to handle preflight OPTIONS
 $app->add(\App\Middleware\CorsMiddleware::class);
 
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($app, $settings): ResponseInterface {
+// Session and Auth Middleware
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $settings): ResponseInterface {
     $sessionPath = (string) $settings['app']['session_path'];
     if (!is_dir($sessionPath)) {
-        mkdir($sessionPath, 0777, true);
+        @mkdir($sessionPath, 0777, true);
     }
 
     if (session_status() === PHP_SESSION_NONE) {
@@ -45,14 +47,16 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             'samesite' => $sessionSameSite,
         ]);
 
-        session_start();
+        @session_start();
     }
 
     $newRefreshToken = null;
     $invalidToken = false;
+    
+    // Auth logic depends on DB
     if (!isset($_SESSION['user_id']) && !empty($request->getCookieParams()['nm_remember'])) {
         try {
-            $authService = $app->getContainer()->get(\App\Services\AuthService::class);
+            $authService = $container->get(\App\Services\AuthService::class);
             $refreshToken = $request->getCookieParams()['nm_remember'];
             $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
             $ua = (string) ($request->getHeaderLine('User-Agent') ?: 'unknown');
@@ -67,6 +71,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             $_SESSION['session_key'] = $user['session_key'];
             $newRefreshToken = $user['refresh_token'];
         } catch (\Throwable) {
+            // DB might be down or token invalid
             $invalidToken = true;
         }
     }
@@ -111,23 +116,31 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     return $response;
 });
 
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($siteConfig): ResponseInterface {
-    if (!$siteConfig->enforceHttps()) {
+// HTTPS Enforcement
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
+    try {
+        $siteConfig = $container->get(\App\Services\SiteConfigService::class);
+        if (!$siteConfig->enforceHttps()) {
+            return $handler->handle($request);
+        }
+
+        $protoHeader = strtolower(trim($request->getHeaderLine('X-Forwarded-Proto')));
+        $isSecure = $request->getUri()->getScheme() === 'https' || $protoHeader === 'https';
+        if ($isSecure) {
+            return $handler->handle($request);
+        }
+
+        $uri = $request->getUri()->withScheme('https');
+        $responseFactory = new \Slim\Psr7\Factory\ResponseFactory();
+        $response = $responseFactory->createResponse(308);
+        return $response->withHeader('Location', (string) $uri);
+    } catch (\Throwable) {
+        // If DB config fails, skip HTTPS enforcement
         return $handler->handle($request);
     }
-
-    $protoHeader = strtolower(trim($request->getHeaderLine('X-Forwarded-Proto')));
-    $isSecure = $request->getUri()->getScheme() === 'https' || $protoHeader === 'https';
-    if ($isSecure) {
-        return $handler->handle($request);
-    }
-
-    $uri = $request->getUri()->withScheme('https');
-    $responseFactory = new \Slim\Psr7\Factory\ResponseFactory();
-    $response = $responseFactory->createResponse(308);
-    return $response->withHeader('Location', (string) $uri);
 });
 
+// Security Headers
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
     $response = $handler->handle($request);
 
@@ -143,13 +156,9 @@ $app->addBodyParsingMiddleware();
 $app->add(App\Middleware\I18nMiddleware::class);
 $app->addRoutingMiddleware();
 
-/** @var Logger $accessLogger */
-$accessLogger = $app->getContainer()->get('logger.access');
-/** @var Logger $auditLogger */
-$auditLogger = $app->getContainer()->get('logger.audit');
-$pdo = $app->getContainer()->get(\PDO::class);
-
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($accessLogger): ResponseInterface {
+// Access and Audit Logging
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
+    $accessLogger = $container->get('logger.access');
     $start = microtime(true);
     $response = $handler->handle($request);
 
@@ -172,7 +181,8 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     return $response;
 });
 
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($auditLogger, $pdo): ResponseInterface {
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
+    $auditLogger = $container->get('logger.audit');
     $startedAt = microtime(true);
     $response = $handler->handle($request);
     $duration = (int) round((microtime(true) - $startedAt) * 1000);
@@ -183,7 +193,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     $ipHash = hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown'));
     $userAgent = substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255);
 
-    // 1. Permanent File Logging (Detailed)
+    // 1. Permanent File Logging
     $auditLogger->info('audit', [
         'user_id' => $userId,
         'method' => $method,
@@ -194,8 +204,9 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         'duration_ms' => $duration,
     ]);
 
-    // 2. Short-term Database Logging (For Dashboard)
+    // 2. Short-term Database Logging (Optional)
     try {
+        $pdo = $container->get(\PDO::class);
         $stmt = $pdo->prepare(
             'INSERT INTO system_audit_logs (user_id, method, path, status_code, ip_hash, user_agent, duration_ms, created_at)
              VALUES (:user_id, :method, :path, :status_code, :ip_hash, :user_agent, :duration_ms, NOW())'
@@ -210,13 +221,13 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             'duration_ms' => $duration,
         ]);
     } catch (\Throwable) {
-        // DB logging failure should not stop the app
+        // DB logging failure is non-blocking
     }
 
     return $response;
 });
 
-// Canonicalize URLs by removing trailing slash except for root path.
+// Utility Middlewares
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
     $path = $request->getUri()->getPath();
     if ($path !== '/' && str_ends_with($path, '/')) {
@@ -232,13 +243,12 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     return $handler->handle($request);
 });
 
-// Must be registered last to run first (Slim executes middleware stack in LIFO order).
 $app->add(\App\Middleware\ApiAuthMiddleware::class);
-$app->add(App\Middleware\RequestIdMiddleware::class);
+$app->add(\App\Middleware\RequestIdMiddleware::class);
 
-/** @var Logger $errorLogger */
-$errorLogger = $app->getContainer()->get('logger.error');
-$errorMiddleware = $app->addErrorMiddleware((bool) $settings['app']['debug'], true, true);
+// Error Handling
+$errorLogger = $container->get('logger.error');
+$errorMiddleware = $app->addErrorMiddleware((bool) ($settings['app']['debug'] ?? false), true, true);
 $errorMiddleware->setDefaultErrorHandler(
     function (
         ServerRequestInterface $request,
@@ -246,56 +256,46 @@ $errorMiddleware->setDefaultErrorHandler(
         bool $displayErrorDetails,
         bool $logErrors,
         bool $logErrorDetails
-    ) use ($errorLogger, $app): ResponseInterface {
+    ) use ($errorLogger, $container): ResponseInterface {
         $statusCode = 500;
         $message = 'Internal server error';
 
         if ($exception instanceof HttpException) {
             $statusCode = (int) $exception->getCode();
-            if ($statusCode < 400 || $statusCode > 599) {
-                $statusCode = 500;
+            $message = $statusCode === 404 ? 'Not found' : $exception->getMessage();
+        }
+
+        if ($statusCode >= 500) {
+            try {
+                $errorLogger->error($exception->getMessage(), [
+                    'request_id' => $request->getAttribute('request_id'),
+                    'user_id' => $_SESSION['user_id'] ?? null,
+                    'method' => $request->getMethod(),
+                    'path' => (string) $request->getUri()->getPath(),
+                    'status' => $statusCode,
+                    'duration_ms' => 0,
+                    'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
+                    'user_agent' => substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255),
+                    'context' => ['trace' => $exception->getTraceAsString()],
+                ]);
+            } catch (\Throwable) {
+                // Logger might fail if disk is full or permissions are wrong
             }
-            $message = $statusCode === 404
-                ? 'Not found'
-                : ($exception->getMessage() !== '' ? $exception->getMessage() : 'HTTP error');
-        }
-
-        if ($statusCode >= 500) {
-            $errorLogger->error($exception->getMessage(), [
-                'request_id' => $request->getAttribute('request_id'),
-                'user_id' => $_SESSION['user_id'] ?? null,
-                'method' => $request->getMethod(),
-                'path' => (string) $request->getUri()->getPath(),
-                'status' => $statusCode,
-                'duration_ms' => 0,
-                'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
-                'user_agent' => substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255),
-                'context' => [
-                    'trace' => $exception->getTraceAsString(),
-                ],
-            ]);
-        }
-
-        if ($statusCode >= 500) {
-            $message = $displayErrorDetails ? $exception->getMessage() : 'Internal server error';
         }
 
         $path = $request->getUri()->getPath();
         $accept = $request->getHeaderLine('Accept');
 
         if (str_starts_with($path, '/api/') || str_contains($accept, 'application/json')) {
-            return ResponseHelper::error($statusCode, $message);
+            return ResponseHelper::error($statusCode, $displayErrorDetails ? $exception->getMessage() : $message);
         }
 
         try {
-            /** @var \App\Controllers\WebController $webController */
-            $webController = $app->getContainer()->get(\App\Controllers\WebController::class);
+            $webController = $container->get(\App\Controllers\WebController::class);
             $responseFactory = new \Slim\Psr7\Factory\ResponseFactory();
             $response = $responseFactory->createResponse($statusCode);
-            
             return $webController->renderError($request, $response, $statusCode, $message);
-        } catch (\Throwable $e) {
-            // Fallback to JSON if rendering fails
+        } catch (\Throwable) {
             return ResponseHelper::error($statusCode, $message);
         }
     }

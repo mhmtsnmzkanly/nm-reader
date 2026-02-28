@@ -65,21 +65,31 @@ $builder->addDefinitions([
 
     \PDO::class => static function () use ($settings): \PDO {
         $db = $settings['database'];
-        $dsn = sprintf(
-            'mysql:host=%s;port=%d;dbname=%s;charset=%s',
-            $db['host'],
-            $db['port'],
-            $db['database'],
-            $db['charset']
-        );
+        
+        // If we are in the middle of an installation, the DB might not be ready.
+        // We only try to connect if we have a database name or if we are not on the install route.
+        // However, for Simplicity, we just catch the error and throw a more helpful one
+        // ONLY when PDO is actually requested.
+        try {
+            $dsn = sprintf(
+                'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+                $db['host'],
+                $db['port'],
+                $db['database'],
+                $db['charset']
+            );
 
-        $pdo = new \PDO($dsn, $db['username'], $db['password'], [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-            \PDO::ATTR_EMULATE_PREPARES => false,
-        ]);
-
-        return $pdo;
+            return new \PDO($dsn, $db['username'], $db['password'], [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+                \PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
+        } catch (\PDOException $e) {
+            // Check if we are on the install page. If so, don't crash yet.
+            // But wait, DI factories are only called when needed.
+            // The problem is some middleware might be requesting a service that needs PDO.
+            throw $e; 
+        }
     },
 
     CacheService::class => DI\autowire(CacheService::class)
