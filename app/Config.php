@@ -52,6 +52,8 @@ final class Config
 
     public static function getSettings(): array
     {
+        // If cached but APP_NAME is still default, it might have been cached too early.
+        // Or if we just want to be sure, we check if Dotenv has done its job.
         if (self::$cachedSettings !== null) return self::$cachedSettings;
         $basePath = dirname(__DIR__);
         self::$cachedSettings = [
