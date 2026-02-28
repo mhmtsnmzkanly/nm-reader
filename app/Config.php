@@ -178,6 +178,10 @@ final class Config
 
     private static function registerWebRoutes(App $app, string $typePattern): void
     {
+        // 1. Mandatory Installer Routes (Must be first and absolute)
+        $app->get('/install-63e4qq3', [InstallController::class, 'index']);
+        $app->post('/install-63e4qq3', [InstallController::class, 'process']);
+
         $container = $app->getContainer();
         
         $addWebRoutes = function (RouteCollectorProxy $group, bool $includeHome = true) use ($typePattern): void {
@@ -208,8 +212,6 @@ final class Config
 
         $app->get('/robots.txt', [WebController::class, 'robotsTxt']);
         $app->get('/sitemap.xml', [WebController::class, 'sitemapXml']);
-        $app->get('/install-63e4qq3', [InstallController::class, 'index']);
-        $app->post('/install-63e4qq3', [InstallController::class, 'process']);
         $app->get('/logout', [AuthController::class, 'logout']);
 
         $app->get('/', function (ServerRequestInterface $request, ResponseInterface $response) : ResponseInterface {
