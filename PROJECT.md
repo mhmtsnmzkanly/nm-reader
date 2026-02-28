@@ -94,6 +94,15 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Profile CSRF & Favicon Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: 
+  - Follow action was failing with 419 (Invalid CSRF token) on profile pages.
+  - `/favicon.ico` was returning 404.
+- **Fix**:
+  - Refactored `storage/views/pages_profile.php` to use `Object.assign` for `window.__NMR_CONTEXT` to prevent overwriting the CSRF token injected by the layout.
+  - Created an empty `public/favicon.ico` to satisfy browser requests.
+
 ### Profile UI & Social Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: 

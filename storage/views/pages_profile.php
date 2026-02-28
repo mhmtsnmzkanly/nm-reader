@@ -146,10 +146,11 @@ $defaultCover = "//placehold.co/1200x400?text=Profile\nCover";
 </div>
 
 <script>
-    window.__NMR_CONTEXT = window.__NMR_CONTEXT || {};
-    window.__NMR_CONTEXT.person = <?= json_encode($person ?? "") ?>;
-    window.__NMR_CONTEXT.user = <?= json_encode($user) ?>;
-    window.__NMR_CONTEXT.preferences = <?= json_encode($preferences) ?>;
+    window.__NMR_CONTEXT = Object.assign(window.__NMR_CONTEXT || {}, {
+        person: <?= json_encode($person ?? "") ?>,
+        user: <?= json_encode($user) ?>,
+        preferences: <?= json_encode($preferences) ?>
+    });
 </script>
 
 <?php /* Styles moved to site.css */ ?>
