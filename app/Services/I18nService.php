@@ -25,10 +25,11 @@ final class I18nService
 
     public function resolveLocale(ServerRequestInterface $request, ?string $userId = null): string
     {
-        // 1. URL path (Slim argument)
-        $routeContext = \Slim\Routing\RouteContext::fromRequest($request);
-        $route = $routeContext->getRoute();
-        $urlLang = $route ? $route->getArgument('lang') : null;
+        // 1. URL path (Direct URI parsing to avoid RouteContext dependency)
+        $path = ltrim($request->getUri()->getPath(), '/');
+        $segments = explode('/', $path);
+        $urlLang = $segments[0] ?? null;
+        
         if ($urlLang && in_array($urlLang, $this->supportedLangs, true)) {
             return $urlLang;
         }
