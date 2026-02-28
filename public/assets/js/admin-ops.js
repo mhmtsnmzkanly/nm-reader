@@ -41,27 +41,20 @@
     loadQueue();
   };
 
-  const runLegacyJobs = async () => {
-    const limit = Math.max(1, Math.min(100, parseInt($('#jobs-limit')?.value || '5', 10)));
-    try { await api('/admin/jobs/run-once', { method: 'POST', body: JSON.stringify({ limit }) }); alert('Legacy jobs executed'); } catch (e) { alert(e.message); }
-  };
-
   const runCleanup = async () => {
-    await api('/admin/retention/cleanup', { method: 'POST', body: '{}' });
-    alert('Cleanup done');
-  };
-
-  const runLegacyCleanup = async () => {
-    await api('/admin/maintenance/cleanup', { method: 'POST', body: '{}' });
-    alert('Legacy cleanup triggered');
+    const days = $('#cleanup-days')?.value || 30;
+    try {
+      await api('/admin/retention/cleanup', { method: 'POST', body: JSON.stringify({ days }) });
+      alert('Cleanup done');
+    } catch (e) {
+      alert('Cleanup failed: ' + e.message);
+    }
   };
 
   const init = () => {
     loadQueue();
     $('#btn-run-jobs')?.addEventListener('click', runQueueOnce);
-    $('#btn-run-jobs-legacy')?.addEventListener('click', runLegacyJobs);
     $('#btn-run-cleanup')?.addEventListener('click', runCleanup);
-    $('#btn-run-cleanup-legacy')?.addEventListener('click', runLegacyCleanup);
 
     const handleMaintenance = async (btnId, path, successMsg) => {
       const btn = $(`#${btnId}`);
