@@ -11,20 +11,26 @@ declare(strict_types=1);
 require __DIR__ . '/../../vendor/autoload.php';
 
 use App\Config;
-use PDO;
+use Dotenv\Dotenv;
+
+// 1. Load .env manually if it exists to override defaults
+$basePath = dirname(__DIR__, 2);
+if (file_exists($basePath . '/.env')) {
+    $dotenv = Dotenv::createImmutable($basePath);
+    $dotenv->load();
+}
 
 $settings = Config::getSettings();
 $db = $settings['database'];
 
 try {
     $dsn = "mysql:host={$db['host']};port={$db['port']};dbname={$db['database']};charset={$db['charset']}";
-    $pdo = new PDO($dsn, $db['username'], $db['password'], [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    $pdo = new \PDO($dsn, $db['username'], $db['password'], [
+        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
     ]);
 
-    echo "🌱 Seeding default Taxonomy data...
-";
+    echo "🌱 Seeding default Taxonomy data...\n";
 
     // 1. Genres
     $genres = [
@@ -49,8 +55,7 @@ try {
     foreach ($genres as $g) {
         $stmtGenre->execute($g);
     }
-    echo "✅ " . count($genres) . " Genres seeded.
-";
+    echo "✅ " . count($genres) . " Genres seeded.\n";
 
     // 2. Tags
     $tags = [
@@ -65,15 +70,11 @@ try {
     foreach ($tags as $t) {
         $stmtTag->execute($t);
     }
-    echo "✅ " . count($tags) . " Tags seeded.
-";
+    echo "✅ " . count($tags) . " Tags seeded.\n";
 
-    echo "
-🎉 Database seeding completed successfully!
-";
+    echo "\n🎉 Database seeding completed successfully!\n";
 
-} catch (Throwable $e) {
-    echo "❌ Seeding failed: " . $e->getMessage() . "
-";
+} catch (\Throwable $e) {
+    echo "❌ Seeding failed: " . $e->getMessage() . "\n";
     exit(1);
 }
