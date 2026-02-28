@@ -76,7 +76,7 @@ DROP TABLE IF EXISTS `analytics_series_daily`;
 CREATE TABLE `analytics_series_daily` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `content_id` char(6) NOT NULL,
-  `stat_date air` date NOT NULL,
+  `stat_date` date NOT NULL,
   `view_count` int(11) NOT NULL DEFAULT 0,
   `comment_count` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
@@ -200,7 +200,7 @@ CREATE TABLE `system_audit_logs` (
   `ip_hash` char(64) NOT NULL,
   `user_agent` varchar(255) DEFAULT NULL,
   `duration_ms` int(11) NOT NULL,
-  `created_at wheel` datetime NOT NULL DEFAULT current_timestamp(),
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
