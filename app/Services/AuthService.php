@@ -191,12 +191,18 @@ final class AuthService
         // Explicitly write and close to ensure reload sees the data
         session_write_close();
 
+        $token = bin2hex(random_bytes(32));
+        $tokenExpiry = date('Y-m-d H:i:s', time() + (365 * 24 * 60 * 60)); // 1 year for mobile
+        $stmt = $this->pdo->prepare('UPDATE users SET api_token = :token, api_token_expires_at = :expires WHERE id = :id');
+        $stmt->execute(['token' => $token, 'expires' => $tokenExpiry, 'id' => $user['id']]);
+
         return [
             'id' => (string) $user['id'],
             'username' => (string) $user['username'],
             'email' => (string) $user['email'],
             'csrf_token' => (string) $_SESSION['csrf_token'],
             'refresh_token' => $refreshToken,
+            'api_token' => $token,
             'roles' => $roles,
             'permissions' => $permissions,
         ];

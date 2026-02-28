@@ -15,6 +15,9 @@ if (!isset($app, $settings)) {
 
 $siteConfig = $app->getContainer()->get(\App\Services\SiteConfigService::class);
 
+// CORS must be early in the stack to handle preflight OPTIONS
+$app->add(\App\Middleware\CorsMiddleware::class);
+
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($app, $settings): ResponseInterface {
     $sessionPath = (string) $settings['app']['session_path'];
     if (!is_dir($sessionPath)) {
@@ -230,6 +233,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 });
 
 // Must be registered last to run first (Slim executes middleware stack in LIFO order).
+$app->add(\App\Middleware\ApiAuthMiddleware::class);
 $app->add(App\Middleware\RequestIdMiddleware::class);
 
 /** @var Logger $errorLogger */

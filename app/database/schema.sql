@@ -1656,6 +1656,8 @@ CREATE TABLE `users` (
   `cover_image` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `roles` varchar(255) DEFAULT NULL,
+  `api_token` varchar(64) DEFAULT NULL,
+  `api_token_expires_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),

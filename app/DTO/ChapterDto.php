@@ -56,7 +56,7 @@ final class ChapterDto
     /**
      * Converts the DTO properties back to a primitive associative array.
      */
-    public function toArray(): array
+    public function toArray(?string $baseUrl = null): array
     {
         return [
             'id' => $this->id,

@@ -83,8 +83,13 @@ final class ContentDto
     /**
      * Converts properties back to an associative array for JSON/view consumption.
      */
-    public function toArray(): array
+    public function toArray(?string $baseUrl = null): array
     {
+        $cover = $this->coverImage;
+        if ($baseUrl && $cover && !str_starts_with($cover, 'http')) {
+            $cover = rtrim($baseUrl, '/') . '/' . ltrim($cover, '/');
+        }
+
         return [
             'id' => $this->id,
             'title' => $this->title,
@@ -95,7 +100,7 @@ final class ContentDto
             'rating_count' => $this->ratingCount,
             'chapter_count' => $this->chapterCount,
             'comment_count' => $this->commentCount,
-            'cover_image' => $this->coverImage,
+            'cover_image' => $cover,
             'is_followed' => $this->isFollowed,
             'author' => $this->author,
             'artist' => $this->artist,

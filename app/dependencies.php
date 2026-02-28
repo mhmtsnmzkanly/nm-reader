@@ -126,6 +126,7 @@ $builder->addDefinitions([
         ->constructorParameter('logPath', $settings['app']['base_path'] . '/storage/logs'),
 
     RequestIdMiddleware::class => DI\autowire(RequestIdMiddleware::class),
+    \App\Middleware\ApiAuthMiddleware::class => DI\autowire(\App\Middleware\ApiAuthMiddleware::class),
     I18nMiddleware::class => DI\autowire(I18nMiddleware::class),
 
     UserRepository::class => DI\autowire(UserRepository::class),
