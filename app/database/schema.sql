@@ -248,7 +248,7 @@ CREATE TABLE `system_audit_logs` (
   `status_code` int(11) NOT NULL,
   `ip_hash` char(64) NOT NULL,
   `user_agent` varchar(255) DEFAULT NULL,
-  `duration_ms" int(11) NOT NULL,
+  `duration_ms` int(11) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -86,8 +86,15 @@ final class InstallController
 
             // 4. Generate .env file
             $envContent = $this->generateEnv($db, $userId);
-            if (file_put_contents($this->basePath . '/.env', $envContent) === false) {
-                throw new \Exception('Failed to write .env file. Please check directory permissions.');
+            $envPath = $this->basePath . '/.env';
+            
+            // Check if root directory is writable
+            if (!is_writable($this->basePath)) {
+                throw new \Exception("The root directory ({$this->basePath}) is not writable. Please run 'chmod 777 .' temporarily on the server.");
+            }
+
+            if (file_put_contents($envPath, $envContent) === false) {
+                throw new \Exception('Failed to write .env file to disk.');
             }
 
             return ResponseHelper::success(['message' => 'Installation successful! Please refresh the page.']);
