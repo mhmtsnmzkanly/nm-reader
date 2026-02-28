@@ -44,6 +44,9 @@ const Connection = (function () {
    * @returns {Promise<Object>} Standardized JSON response.
    */
   const request = async (path, options = {}) => {
+    // Always check for a fresh token from the context first, fallback to current or session
+    csrfToken = getContextToken() || csrfToken || sessionStorage.getItem('csrf_token') || null;
+
     const cacheKey = `${options.method || 'GET'}:${path}`;
     if (inFlight.has(cacheKey)) return inFlight.get(cacheKey);
 
@@ -60,6 +63,12 @@ const Connection = (function () {
           ...options,
           headers
         });
+
+        // Always try to sync CSRF token from response headers if available
+        const respCsrf = response.headers.get('X-CSRF-Token');
+        if (respCsrf) {
+          setCsrfToken(respCsrf);
+        }
 
         let payload;
         const contentType = response.headers.get('content-type');

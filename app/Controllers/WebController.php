@@ -1077,13 +1077,28 @@ final class WebController
         $footerGenres = $this->seriesService->series_genres(1, 20);
         $footerTags = $this->seriesService->series_tags(1, 20);
 
+        $contextJson = (string) json_encode(
+            [
+                "auth" => $authContext,
+                "lang_code" => $langCode,
+                "site_config" => $this->siteConfig->all(),
+            ],
+            JSON_HEX_TAG |
+                JSON_HEX_AMP |
+                JSON_HEX_APOS |
+                JSON_HEX_QUOT |
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES,
+        );
+
         $fullContext = array_merge($context, [
             "auth" => $authContext, 
             "lang" => $lang, 
             "langCode" => $langCode,
             "url" => $url,
             "footerGenres" => $footerGenres,
-            "footerTags" => $footerTags
+            "footerTags" => $footerTags,
+            "contextJson" => $contextJson
         ]);
 
         $seoDefaults = [

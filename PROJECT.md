@@ -94,6 +94,14 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### CSRF Sync & Late-Binding Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: 419 Invalid CSRF token persistent on POST requests.
+- **Fix**:
+  - Updated `public/assets/js/connection.js` to late-bind CSRF token from `window.__NMR_CONTEXT` just-in-time for each request.
+  - Added automatic synchronization of CSRF token from `X-CSRF-Token` response headers to ensure client-side state is always fresh.
+  - Ensured `$contextJson` is correctly passed to the layout in `WebController::render`.
+
 ### Profile CSRF & Favicon Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: 
