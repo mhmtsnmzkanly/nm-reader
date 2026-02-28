@@ -15,7 +15,8 @@ final class AdminConsoleService
 
     public function __construct(
         private readonly AdminConsoleRepository $repo,
-        private readonly CacheService $cache
+        private readonly CacheService $cache,
+        private readonly RetentionService $retention
     ) {
     }
 
@@ -249,6 +250,11 @@ final class AdminConsoleService
     public function revokeUserSession(string $userId, string $sessionKey, string $moderatorId): void
     {
         $this->repo->revokeUserSession($userId, $sessionKey, $moderatorId);
+    }
+
+    public function cleanupRetention(int $days): array
+    {
+        return $this->retention->cleanup($days);
     }
 
     public function triggerBackup(?string $moderatorId = null): array
