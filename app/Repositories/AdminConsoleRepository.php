@@ -384,9 +384,6 @@ final class AdminConsoleRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $total = $this->count('SELECT COUNT(*) FROM social_comments');
-        $blogJoin = $this->commentsHasBlogId()
-            ? 'LEFT JOIN blogs b ON b.id = c.blog_id'
-            : 'LEFT JOIN blogs b ON b.id = CAST(c.content_id AS UNSIGNED)';
 
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -397,14 +394,14 @@ final class AdminConsoleRepository
                 c.created_at,
                 c.upvote_count,
                 c.downvote_count,
-                co.title AS content_title,
+                s.title AS content_title,
                 b.title AS blog_title,
                 ch.chapter_number
              FROM social_comments c
              INNER JOIN users u ON u.id = c.user_id
-             LEFT JOIN series co ON co.id = c.content_id
-             ' . $blogJoin . '
              LEFT JOIN chapters ch ON ch.id = c.chapter_id
+             LEFT JOIN series s ON s.id = ch.content_id
+             LEFT JOIN blogs b ON b.id = c.blog_id
             ORDER BY c.created_at DESC
              LIMIT :limit OFFSET :offset'
         );
