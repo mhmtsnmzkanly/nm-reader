@@ -1282,6 +1282,13 @@ final class WebController
                 $this->siteConfig->defaultContentCoverImage(),
             );
         }
+        
+        // Handle protocol-relative URLs (//example.com)
+        if (str_starts_with($url, "//")) {
+            $scheme = $request->getUri()->getScheme() ?: "http";
+            return $scheme . ":" . $url;
+        }
+
         if (
             str_starts_with($url, "http://") ||
             str_starts_with($url, "https://")
@@ -1295,6 +1302,12 @@ final class WebController
         ServerRequestInterface $request,
         string $path,
     ): string {
+        // Handle protocol-relative input path
+        if (str_starts_with($path, "//")) {
+            $scheme = $request->getUri()->getScheme() ?: "http";
+            return $scheme . ":" . $path;
+        }
+
         $uri = $request->getUri();
         $scheme = $uri->getScheme() ?: "http";
         $host = $uri->getHost();
@@ -1303,6 +1316,12 @@ final class WebController
         if ($host === "") {
             $settings = \App\Config::getInstance();
             $configuredUrl = rtrim((string) ($settings['app']['url'] ?? 'http://localhost:8080'), '/');
+            
+            // If configured URL is protocol-relative, prepend current scheme
+            if (str_starts_with($configuredUrl, "//")) {
+                $configuredUrl = $scheme . ":" . $configuredUrl;
+            }
+
             if ($path === "") {
                 return $configuredUrl;
             }
