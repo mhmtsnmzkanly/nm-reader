@@ -159,10 +159,12 @@ final class AuthController
      */
     public function logout(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $this->authService->logout(isset($_SESSION['session_key']) ? (string) $_SESSION['session_key'] : null);
+        $sessionKey = isset($_SESSION['session_key']) ? (string) $_SESSION['session_key'] : null;
+        $this->authService->logout($sessionKey);
         
         // Thoroughly clear session data
         $_SESSION = [];
+        
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000,
@@ -170,14 +172,17 @@ final class AuthController
                 $params["secure"], $params["httponly"]
             );
         }
+
         if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
             session_destroy();
         }
 
         $res = ResponseHelper::success(['logged_out' => true]);
         
-        // Expire remember-me cookie
-        $res = $res->withHeader('Set-Cookie', 'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax');
+        // Expire remember-me cookie and session cookie again just in case
+        $res = $res->withAddedHeader('Set-Cookie', 'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax')
+                   ->withAddedHeader('Set-Cookie', session_name() . '=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax');
 
         if ($request->getMethod() === 'GET') {
             return $res->withStatus(302)->withHeader('Location', '/');

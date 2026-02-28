@@ -295,9 +295,13 @@ $(function () {
       } catch (err) {
         console.error('Logout API failed, forcing client-side cleanup', err);
       } finally {
-        sessionStorage.removeItem('csrf_token');
-        // Force a hard redirect to the home page to clear any remaining in-memory state
-        location.href = '/' + window.NMR.getLangPrefix() + '/';
+        sessionStorage.clear();
+        // Manually expire known cookies just in case
+        document.cookie = 'nm_remember=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        document.cookie = 'nm_reader_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        
+        // Hard redirect to home
+        window.location.href = '/' + window.NMR.getLangPrefix() + '/';
       }
     });
 

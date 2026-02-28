@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Aggressive Logout Reliability (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Logout button was still failing for some users.
+- **Fix**:
+  - Enhanced `AuthController::logout` with `session_regenerate_id(true)` and double `Set-Cookie` headers for session and remember-me cookies.
+  - Refactored `main.js` to clear all `sessionStorage`, manually expire cookies on the client side, and use `window.location.href` for a hard reset.
+
 ### Logout Fix & Robustness (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Logout button was not reliably logging users out.
