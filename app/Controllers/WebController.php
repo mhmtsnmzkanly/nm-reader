@@ -633,6 +633,23 @@ final class WebController
         );
     }
 
+    public function adminConfig(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+    ): ResponseInterface {
+        if (!$this->canAccessAdminPanel()) {
+            return $response->withHeader("Location", "/")->withStatus(302);
+        }
+
+        return $this->renderAdmin(
+            $request,
+            $response,
+            "admin_config.php",
+            ["/assets/js/admin-config.js"],
+            "System Config - Admin",
+        );
+    }
+
     public function adminLogs(
         ServerRequestInterface $request,
         ResponseInterface $response,

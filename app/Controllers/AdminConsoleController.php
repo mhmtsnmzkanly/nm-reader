@@ -470,6 +470,34 @@ final class AdminConsoleController
     }
 
     /**
+     * Reads the .env file content (ROOT_USER only).
+     */
+    public function getEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $moderatorId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->readEnv($moderatorId));
+        } catch (\Throwable $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
+    }
+
+    /**
+     * Updates the .env file content (ROOT_USER only).
+     */
+    public function saveEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $moderatorId = (string) $request->getAttribute('user_id');
+            $this->console->updateEnv($payload, $moderatorId);
+            return ResponseHelper::success(['updated' => true]);
+        } catch (\Throwable $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
+    }
+
+    /**
      * Helper to extract pagination metadata from query string.
      */
     private function pagination(ServerRequestInterface $request): array

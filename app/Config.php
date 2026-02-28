@@ -215,6 +215,7 @@ final class Config
             $group->get('/admin/comments', [WebController::class, 'adminComments']);
             $group->get('/admin/users', [WebController::class, 'adminUsers']);
             $group->get('/admin/ops', [WebController::class, 'adminOps']);
+            $group->get('/admin/config', [WebController::class, 'adminConfig']);
             $group->get('/admin/logs', [WebController::class, 'adminLogs']);
             $group->get('/admin/tutorial', [WebController::class, 'adminTutorial']);
         };
@@ -343,6 +344,8 @@ final class Config
             $group->post('/maintenance/sitemap', [AdminConsoleController::class, 'triggerSitemap'])->add($perm(['admin.jobs.run']));
             $group->post('/maintenance/warmup', [AdminConsoleController::class, 'triggerCacheWarmup'])->add($perm(['admin.jobs.run']));
             $group->post('/maintenance/analytics', [AdminConsoleController::class, 'triggerAnalytics'])->add($perm(['admin.jobs.run']));
+            $group->get('/maintenance/env', [AdminConsoleController::class, 'getEnvConfig'])->add($perm(['admin.panel.access']));
+            $group->post('/maintenance/env', [AdminConsoleController::class, 'saveEnvConfig'])->add($perm(['admin.panel.access']));
             
             $group->get('/audit-logs', [AdminConsoleController::class, 'auditLogs'])->add($perm(['admin.logs.view']));
             $group->get('/login-events', [AdminConsoleController::class, 'loginEvents'])->add($perm(['admin.logs.view']));

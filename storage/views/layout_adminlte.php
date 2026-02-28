@@ -104,6 +104,9 @@
           <?php if ($canAny(['admin.jobs.run', 'admin.settings.modify'])): ?>
             <li class="nav-item"><a href="<?= $url('/admin/ops') ?>" class="nav-link"><i class="nav-icon bi bi-gear"></i><p>System Ops</p></a></li>
           <?php endif; ?>
+          <?php if (($_SESSION['user_id'] ?? null) === ($_ENV['ROOT_USER'] ?? getenv('ROOT_USER'))): ?>
+            <li class="nav-item"><a href="<?= $url('/admin/config') ?>" class="nav-link"><i class="nav-icon bi bi-terminal-fill"></i><p>System Config</p></a></li>
+          <?php endif; ?>
           <?php if ($canAny(['admin.logs.view', 'admin.metrics.view'])): ?>
             <li class="nav-item"><a href="<?= $url('/admin/logs') ?>" class="nav-link"><i class="nav-icon bi bi-shield-lock"></i><p>Logs & Security</p></a></li>
           <?php endif; ?>

@@ -323,6 +323,74 @@ final class AdminConsoleService
         return $this->retention->cleanup($days);
     }
 
+    public function readEnv(string $moderatorId): array
+    {
+        $this->ensureRootUser($moderatorId);
+        $path = dirname(__DIR__, 2) . '/.env';
+        if (!file_exists($path)) return [];
+
+        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $data = [];
+        foreach ($lines as $line) {
+            if (str_starts_with(trim($line), '#')) continue;
+            $parts = explode('=', $line, 2);
+            if (count($parts) === 2) {
+                $key = trim($parts[0]);
+                $val = trim($parts[1], " \"'");
+                $data[$key] = $val;
+            }
+        }
+        return $data;
+    }
+
+    public function updateEnv(array $payload, string $moderatorId): void
+    {
+        $this->ensureRootUser($moderatorId);
+        $path = dirname(__DIR__, 2) . '/.env';
+        $backupPath = $path . '.bak';
+
+        if (!file_exists($path)) {
+            throw new \RuntimeException('.env file not found');
+        }
+
+        // Fetch current for diff logging
+        $current = $this->readEnv($moderatorId);
+        $diff = [];
+        foreach ($payload as $k => $v) {
+            $old = $current[$k] ?? '';
+            if ($old !== (string)$v) {
+                $diff[$k] = ['before' => $old, 'after' => $v];
+            }
+        }
+
+        if (empty($diff)) return;
+
+        // Atomic write strategy
+        copy($path, $backupPath);
+        try {
+            $content = "# Updated via Admin Console at " . date('Y-m-d H:i:s') . "\n";
+            foreach ($payload as $key => $value) {
+                $key = strtoupper(trim((string)$key));
+                if ($key === '') continue;
+                // Quote values with spaces or special chars
+                if (preg_match('/\s|[#$!]/', (string)$value)) {
+                    $value = '"' . str_replace('"', '\"', (string)$value) . '"';
+                }
+                $content .= "{$key}={$value}\n";
+            }
+
+            if (file_put_contents($path, $content, LOCK_EX) === false) {
+                throw new \RuntimeException('Failed to write .env file');
+            }
+            
+            $this->repo->createModerationAction($moderatorId, 'system', 'config', 'env_update', json_encode(['diff' => $diff]));
+            @unlink($backupPath);
+        } catch (\Throwable $e) {
+            copy($backupPath, $path);
+            throw $e;
+        }
+    }
+
     public function triggerBackup(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
