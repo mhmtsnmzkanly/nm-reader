@@ -239,6 +239,8 @@
         </div>
       </div>
     </footer>
+
+    <?php require __DIR__ . '/partials_modals.php'; ?>
   </app>
 
   <div id="mainPopup" class="popup hidden">
