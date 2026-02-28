@@ -153,7 +153,7 @@ final class AdminConsoleService
     /**
      * Lists social comments for moderation.
      */
-    public function listSocialComments(int $page, int $perPage): array
+    public function listComments(int $page, int $perPage): array
     {
         $result = $this->repo->listComments($page, $perPage);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['body', 'username', 'content_title', 'blog_title']);
