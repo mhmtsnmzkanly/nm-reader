@@ -1341,7 +1341,8 @@ CREATE TABLE `user_activity` (
   `user_agent` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_user_tab` (`user_id`,`tab_id`),
-  KEY `idx_user_last_seen` (`user_id`,`last_seen_at`)
+  KEY `idx_user_last_seen` (`user_id`,`last_seen_at`),
+  CONSTRAINT `fk_user_activity_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1477,7 +1478,11 @@ CREATE TABLE `user_notifications` (
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
   `read_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `fk_notifications_user` (`user_id`),
+  KEY `fk_notifications_actor` (`actor_user_id`),
+  CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_notifications_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
