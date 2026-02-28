@@ -36,7 +36,7 @@ This document serves as the absolute authority on the project's architecture, co
     - `Config.php`: Centralized logic for Settings and Routing.
     - `app.php`: Application bootstrap and Slim initialization.
     - `dependencies.php`: PHP-DI container definitions.
-    - `database/schema.sql`: The primary source of truth for the database structure.
+    - `database/`: Contains `schema.sql` (Source of Truth).
     - `Console/`: Standalone CLI tools for maintenance.
     - `Controllers/`, `Services/`, `Repositories/`, `Middleware/`, `DTO/`, `Helpers/`: Core logic.
 - `public/`: Web root.
@@ -49,17 +49,27 @@ This document serves as the absolute authority on the project's architecture, co
 
 ---
 
-## 4. Development Standards
+## 4. Development Standards & Workflow
 
 ### Backend (PHP 8.3)
 - **Strict Typing**: `declare(strict_types=1);` is mandatory.
 - **Layered Pattern**: Controller (HTTP) -> Service (Business Logic) -> Repository (SQL).
-- **ID Generation**: Use `App\Services\EntityIdService` for alphanumeric IDs (`char(8)` for users, `char(6)` for content).
+- **ID Generation**: Use `App\Services\EntityIdService` for alphanumeric IDs.
 
 ### Frontend (Melt.js)
 - **Library**: Use the custom `melt.js` utility. Avoid standard jQuery.
 - **i18n**: Use `window.NMR.__t('key')` for all UI strings.
-- **Connection**: Use `connection.js` for all API calls to benefit from automatic CSRF and deduplication.
+
+### Git Mandate (CRITICAL)
+- **Descriptive Commits**: AFTER every logical change or feature, a Git commit MUST be created with a clear description (e.g., `git commit -m "feat: add localized footer taxonomy"`).
+- **Restoration**: This ensures every step is a verifiable checkpoint for potential rollbacks.
+
+### Feature Implementation Steps:
+1. **DB**: Update `app/database/schema.sql` and run migration.
+2. **Backend**: DTO -> Repository -> Service -> Controller.
+3. **Routing**: Register in `app/Config.php`.
+4. **Frontend**: Update `connection.js` and implement UI logic.
+5. **Commit**: Perform Git commit for the task.
 
 ---
 
@@ -67,9 +77,9 @@ This document serves as the absolute authority on the project's architecture, co
 
 ### Core Scripts (`app/Console/`)
 - `system_backup.php`: Full DB + Media backup.
-- `generate_sitemap.php`: Updates the physical `public/sitemap.xml`.
-- `analytics_aggregate.php`: Processes raw events into daily snapshots.
-- `retention_cleanup.php`: Deletes expired logs, cache, and sessions.
+- `generate_sitemap.php`: Updates `public/sitemap.xml`.
+- `analytics_aggregate.php`: Aggregates stats.
+- `retention_cleanup.php`: Deletes expired data.
 
 ### Cron Setup
 ```bash
