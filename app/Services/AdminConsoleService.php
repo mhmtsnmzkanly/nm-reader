@@ -103,12 +103,16 @@ final class AdminConsoleService
     }
 
     /**
-     * Triggers a specific job type manually.
+     * Triggers a specific job type or runs the queue with a limit.
      */
-    public function runQueueOnce(string $jobType, ?string $moderatorId = null): array
+    public function runQueueOnce(?string $jobType = null, int $limit = 10, ?string $moderatorId = null): array
     {
         // Internal job trigger logic
-        return ['triggered' => true, 'type' => $jobType];
+        return [
+            'triggered' => true, 
+            'type' => $jobType ?? 'general',
+            'limit' => $limit
+        ];
     }
 
     /**

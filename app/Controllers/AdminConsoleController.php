@@ -148,9 +148,11 @@ final class AdminConsoleController
     public function runQueueOnce(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $payload = (array) $request->getParsedBody();
+        $jobType = isset($payload['type']) ? (string)$payload['type'] : null;
         $limit = (int) ($payload['limit'] ?? 10);
+        $moderatorId = (string) $request->getAttribute('user_id');
 
-        $results = $this->console->runQueueOnce($limit);
+        $results = $this->console->runQueueOnce($jobType, $limit, $moderatorId);
         
         // After running queue, also update stats snapshots
         try {
