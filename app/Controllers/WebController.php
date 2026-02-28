@@ -1100,13 +1100,13 @@ final class WebController
 
         $seoTitle = (string) $seo["title"];
         $seoDescription = $this->truncateDescription(
-            (string) $seo["description"],
+            (string) ($seo["description"] ?: $this->siteConfig->siteDescription())
         );
         $seoKeywords = (string) $seo["keywords"];
         $seoRobots = (string) $seo["robots"];
         $seoType = (string) $seo["type"];
         $seoCanonical = (string) $seo["canonical"];
-        $seoImage = $this->toAbsoluteAssetUrl((string) $seo["image"], $request);
+        $seoImage = $this->toAbsoluteAssetUrl((string) ($seo["image"] ?: $this->siteConfig->defaultContentCoverImage()), $request);
         $seoSiteName = $this->siteConfig->siteName();
         $seoLocale = $langCode === "tr" ? "tr_TR" : "en_US";
 
