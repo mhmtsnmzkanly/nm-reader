@@ -94,6 +94,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### CSP Update for Cloudflare Insights (2026-02-28)
+- **Status**: Completed.
+- **Problem**: `static.cloudflareinsights.com/beacon.min.js` was blocked by the CSP.
+- **Fix**: Updated `app/middleware.php` to allow `https://static.cloudflareinsights.com` in `script-src` and `https://cloudflareinsights.com` in `connect-src`.
+
 ### Cloudflare Turnstile Integration (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Need bot protection for Login and Register forms.
