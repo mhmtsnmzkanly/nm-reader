@@ -135,7 +135,8 @@ final class AdminController
     public function deleteChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {
-            $this->adminService->deleteChapter((string) $args['id']);
+            $moderatorId = (string) $request->getAttribute('user_id');
+            $this->adminService->deleteChapter((string) $args['id'], $moderatorId);
             return ResponseHelper::success(['deleted' => true]);
         } catch (\DomainException $e) {
             return ResponseHelper::error(404, $e->getMessage());

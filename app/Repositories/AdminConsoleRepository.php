@@ -707,6 +707,27 @@ final class AdminConsoleRepository
         return $stmt->fetchColumn() !== false;
     }
 
+    public function hideBlog(string $id, string $moderatorId): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE blogs SET approved = 0 WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+
+        $this->createModerationAction($moderatorId, 'blog', $id, 'hide', 'Blog hidden by moderator');
+    }
+
+    public function deleteBlog(string $id, string $moderatorId): void
+    {
+        // Check if soft delete column exists
+        if ($this->blogsHasDeletedAt()) {
+            $stmt = $this->pdo->prepare('UPDATE blogs SET deleted_at = NOW(), approved = 0 WHERE id = :id');
+        } else {
+            $stmt = $this->pdo->prepare('DELETE FROM blogs WHERE id = :id');
+        }
+        $stmt->execute(['id' => $id]);
+
+        $this->createModerationAction($moderatorId, 'blog', $id, 'delete', 'Blog permanently deleted or soft-deleted by moderator');
+    }
+
     /**
      * Fetches top-performing content, chapters, series_genres, and series_tags from pre-aggregated snapshots.
      *

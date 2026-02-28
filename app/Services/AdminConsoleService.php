@@ -252,6 +252,72 @@ final class AdminConsoleService
         $this->repo->revokeUserSession($userId, $sessionKey, $moderatorId);
     }
 
+    public function hideBlog(string $id, string $moderatorId): void
+    {
+        $this->repo->hideBlog($id, $moderatorId);
+    }
+
+    public function deleteBlog(string $id, string $moderatorId): void
+    {
+        $this->repo->deleteBlog($id, $moderatorId);
+    }
+
+    public function assignPermissionToRole(array $payload, string $moderatorId): bool
+    {
+        $role = (string)($payload['role'] ?? '');
+        $perm = (string)($payload['permission'] ?? '');
+        if ($role === '' || $perm === '') throw new \InvalidArgumentException('role and permission are required');
+        
+        $this->repo->assignPermissionToRole($role, $perm, $moderatorId);
+        return true;
+    }
+
+    public function revokePermissionFromRole(array $payload, string $moderatorId): bool
+    {
+        $role = (string)($payload['role'] ?? '');
+        $perm = (string)($payload['permission'] ?? '');
+        if ($role === '' || $perm === '') throw new \InvalidArgumentException('role and permission are required');
+
+        return $this->repo->revokePermissionFromRole($role, $perm, $moderatorId);
+    }
+
+    public function assignRoleToUser(array $payload): bool
+    {
+        $userId = (string)($payload['user_id'] ?? '');
+        $role = (string)($payload['role'] ?? '');
+        if ($userId === '' || $role === '') throw new \InvalidArgumentException('user_id and role are required');
+
+        return $this->repo->assignRoleToUser($userId, $role);
+    }
+
+    public function createGenre(string $name, string $moderatorId): array
+    {
+        $name = trim($name);
+        if ($name === '') throw new \InvalidArgumentException('Name is required');
+        
+        $genre = $this->repo->createGenre($name);
+        $this->repo->createModerationAction($moderatorId, 'system', (string)$genre['id'], 'create_genre', "New genre created: $name");
+        
+        return $genre;
+    }
+
+    public function createTag(string $name, string $moderatorId): array
+    {
+        $name = trim($name);
+        if ($name === '') throw new \InvalidArgumentException('Name is required');
+
+        $tag = $this->repo->createTag($name);
+        $this->repo->createModerationAction($moderatorId, 'system', (string)$tag['id'], 'create_tag', "New tag created: $name");
+
+        return $tag;
+    }
+
+    public function updateContentTaxonomy(string $contentId, array $genreIds, array $tagIds, string $moderatorId): void
+    {
+        $this->repo->updateContentTaxonomy($contentId, $genreIds, $tagIds);
+        $this->repo->createModerationAction($moderatorId, 'series', $contentId, 'update_taxonomy', 'Genre/Tag assignments updated');
+    }
+
     public function cleanupRetention(int $days): array
     {
         return $this->retention->cleanup($days);

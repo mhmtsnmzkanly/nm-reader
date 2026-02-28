@@ -24,7 +24,8 @@ final class BlogService
         private readonly BlogVoteRepository $blogVotes,
         private readonly SlugService $slugService,
         private readonly CacheService $cache,
-        private readonly EntityIdService $entityIds
+        private readonly EntityIdService $entityIds,
+        private readonly \App\Repositories\AdminConsoleRepository $adminConsole
     ) {
     }
 
@@ -217,6 +218,9 @@ final class BlogService
         }
 
         $this->blogs->approve($blogId, $approverUserId);
+        
+        $this->adminConsole->createModerationAction($approverUserId, 'blog', $blogId, 'approve', "Blog post approved: " . ($blog['title'] ?? $blogId));
+
         $this->cache->delete(sprintf('blog_%s', (string) $blog['slug']));
         $this->cache->delete('home_popular_blogs_3');
         $this->cache->delete('home_latest_blogs_3');
@@ -241,6 +245,11 @@ final class BlogService
         }
 
         $this->blogs->hideById($blogId, $moderatorId);
+
+        if ($moderatorId !== null) {
+            $this->adminConsole->createModerationAction($moderatorId, 'blog', $blogId, 'hide', "Blog post hidden: " . ($blog['title'] ?? $blogId));
+        }
+
         $this->invalidateCachesBySlug((string) ($blog['slug'] ?? ''));
     }
 
@@ -262,6 +271,11 @@ final class BlogService
         }
 
         $this->blogs->softDeleteById($blogId, $moderatorId);
+
+        if ($moderatorId !== null) {
+            $this->adminConsole->createModerationAction($moderatorId, 'blog', $blogId, 'delete', "Blog post soft-deleted: " . ($blog['title'] ?? $blogId));
+        }
+
         $this->invalidateCachesBySlug((string) ($blog['slug'] ?? ''));
     }
 

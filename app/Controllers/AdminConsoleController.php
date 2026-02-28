@@ -403,7 +403,8 @@ final class AdminConsoleController
     public function createGenre(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $payload = (array) $request->getParsedBody();
-        return ResponseHelper::created($this->console->createGenre((string)($payload['name'] ?? '')));
+        $moderatorId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::created($this->console->createGenre((string)($payload['name'] ?? ''), $moderatorId));
     }
 
     /**
@@ -412,7 +413,8 @@ final class AdminConsoleController
     public function createTag(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $payload = (array) $request->getParsedBody();
-        return ResponseHelper::created($this->console->createTag((string)($payload['name'] ?? '')));
+        $moderatorId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::created($this->console->createTag((string)($payload['name'] ?? ''), $moderatorId));
     }
 
     /**
@@ -421,10 +423,12 @@ final class AdminConsoleController
     public function updateTaxonomy(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $payload = (array) $request->getParsedBody();
+        $moderatorId = (string) $request->getAttribute('user_id');
         $this->console->updateContentTaxonomy(
             (string)$args['id'],
             (array)($payload['series_genres'] ?? []),
-            (array)($payload['series_tags'] ?? [])
+            (array)($payload['series_tags'] ?? []),
+            $moderatorId
         );
         return ResponseHelper::success();
     }

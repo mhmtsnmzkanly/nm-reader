@@ -41,7 +41,8 @@ final class AdminService
         private readonly EntityIdService $entityIds,
         private readonly SlugService $slugService,
         private readonly CacheService $cache,
-        private readonly QueueService $queue
+        private readonly QueueService $queue,
+        private readonly \App\Repositories\AdminConsoleRepository $adminConsole
     ) {
     }
 
@@ -119,6 +120,10 @@ final class AdminService
         ]);
 
         $this->upsertContentMetadata($id, $author, $artist, $country, $releaseYear);
+
+        if ($moderatorId !== null) {
+            $this->adminConsole->createModerationAction($moderatorId, 'series', $id, 'create', "New series created: $title");
+        }
 
         $this->invalidateListingCaches();
 
@@ -203,15 +208,7 @@ final class AdminService
             $this->upsertContentMetadata($id, $author, $artist, $country, $releaseYear);
 
             if ($moderatorId !== null && !empty($diff)) {
-                $audit = $this->pdo->prepare(
-                    'INSERT INTO admin_actions (moderator_user_id, target_type, target_id, action, reason, created_at)
-                     VALUES (:mod, "content", :cid, "update", :reason, NOW())'
-                );
-                $audit->execute([
-                    'mod' => $moderatorId,
-                    'cid' => $id,
-                    'reason' => json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE)
-                ]);
+                $this->adminConsole->createModerationAction($moderatorId, 'series', $id, 'update', json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE));
             }
 
             $this->pdo->commit();
@@ -362,8 +359,17 @@ final class AdminService
                 'created_by' => $moderatorId,
             ]);
 
-            $stmt = $this->pdo->prepare('UPDATE series SET chapter_count = chapter_count + 1 WHERE id = :id');
             $stmt->execute(['id' => $contentId]);
+
+            if ($moderatorId !== null) {
+                $this->adminConsole->createModerationAction(
+                    $moderatorId, 
+                    'chapter', 
+                    $chapterId, 
+                    'create', 
+                    "Chapter $chapterNumber added to series $contentId"
+                );
+            }
 
             $this->pdo->commit();
         } catch (\Throwable $e) {
@@ -454,9 +460,10 @@ final class AdminService
      * Deletes a chapter and updates the content's chapter count.
      *
      * @param string $chapterId
+     * @param string|null $moderatorId
      * @throws \DomainException If not found.
      */
-    public function deleteChapter(string $chapterId): void
+    public function deleteChapter(string $chapterId, ?string $moderatorId = null): void
     {
         $identity = $this->chapters->findContentIdentityByChapterId($chapterId);
         if ($identity === null) {
@@ -469,6 +476,11 @@ final class AdminService
             $count = $this->chapters->countByContentId($contentId);
             $this->pdo->prepare('UPDATE series SET chapter_count = :cnt WHERE id = :id')
                 ->execute(['cnt' => $count, 'id' => $contentId]);
+
+            if ($moderatorId !== null) {
+                $this->adminConsole->createModerationAction($moderatorId, 'chapter', $chapterId, 'delete', "Chapter deleted from series $contentId");
+            }
+
             $this->pdo->commit();
         } catch (\Throwable $e) {
             if ($this->pdo->inTransaction()) {
@@ -564,19 +576,10 @@ final class AdminService
         try {
             $this->chapters->updateChapter($chapterId, $chapterNumber, $title, $type);
 
-            $stmt = $this->pdo->prepare('UPDATE chapters SET data = :data WHERE id = :id');
             $stmt->execute(['data' => $dataVal, 'id' => $chapterId]);
 
             if ($moderatorId !== null && !empty($diff)) {
-                $audit = $this->pdo->prepare(
-                    'INSERT INTO admin_actions (moderator_user_id, target_type, target_id, action, reason, created_at)
-                     VALUES (:mod, "chapter", :chid, "update", :reason, NOW())'
-                );
-                $audit->execute([
-                    'mod' => $moderatorId,
-                    'chid' => $chapterId,
-                    'reason' => json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE)
-                ]);
+                $this->adminConsole->createModerationAction($moderatorId, "chapter", $chapterId, "update", json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE));
             }
 
             $this->pdo->commit();
