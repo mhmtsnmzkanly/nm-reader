@@ -90,3 +90,18 @@ This document serves as the absolute authority on the project's architecture, co
 # Daily at 12 AM: Cleanup
 0 0 * * * php /path/to/project/app/Console/retention_cleanup.php
 ```
+
+---
+
+## 6. Recent Activity
+
+### Google Analytics 4 Integration (2026-02-28)
+- **Status**: Completed.
+- **Components**:
+  - Integrated `gtag.js` in `storage/views/layout_main.php`.
+  - Configured `GOOGLE_ANALYTICS_ID` in `app/Config.php` (via `.env`).
+  - Updated `app/middleware.php` to include necessary Content Security Policy (CSP) directives:
+    - `script-src`: added `https://www.googletagmanager.com` and `https://www.google-analytics.com`.
+    - `img-src`: added `https://www.google-analytics.com` and `https://www.googletagmanager.com`.
+    - `connect-src`: added `https://www.google-analytics.com` and `https://region1.google-analytics.com`.
+
