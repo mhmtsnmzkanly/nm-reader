@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars(
-      $seoTitle ?? ($title ?? "NovelMangaReader"),
+      $seoTitle ?? ($title ?? ($siteConfig['site_name'] ?? "NovelMangaReader")),
       ENT_QUOTES,
       "UTF-8",
   ) ?></title>
   <meta name="description" content="<?= htmlspecialchars(
-      $seoDescription ?? "NovelMangaReader",
+      $seoDescription ?? ($siteConfig['site_description'] ?? "NovelMangaReader"),
       ENT_QUOTES,
       "UTF-8",
   ) ?>">
@@ -30,7 +30,7 @@
   ) ?>">
 
   <meta property="og:site_name" content="<?= htmlspecialchars(
-      $seoSiteName ?? "NovelMangaReader",
+      $seoSiteName ?? ($siteConfig['site_name'] ?? "NovelMangaReader"),
       ENT_QUOTES,
       "UTF-8",
   ) ?>">
@@ -45,12 +45,12 @@
       "UTF-8",
   ) ?>">
   <meta property="og:title" content="<?= htmlspecialchars(
-      $seoTitle ?? ($title ?? "NovelMangaReader"),
+      $seoTitle ?? ($title ?? ($siteConfig['site_name'] ?? "NovelMangaReader")),
       ENT_QUOTES,
       "UTF-8",
   ) ?>">
   <meta property="og:description" content="<?= htmlspecialchars(
-      $seoDescription ?? "NovelMangaReader",
+      $seoDescription ?? ($siteConfig['site_description'] ?? "NovelMangaReader"),
       ENT_QUOTES,
       "UTF-8",
   ) ?>">
@@ -67,12 +67,12 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="<?= htmlspecialchars(
-      $seoTitle ?? ($title ?? "NovelMangaReader"),
+      $seoTitle ?? ($title ?? ($siteConfig['site_name'] ?? "NovelMangaReader")),
       ENT_QUOTES,
       "UTF-8",
   ) ?>">
   <meta name="twitter:description" content="<?= htmlspecialchars(
-      $seoDescription ?? "NovelMangaReader",
+      $seoDescription ?? ($siteConfig['site_description'] ?? "NovelMangaReader"),
       ENT_QUOTES,
       "UTF-8",
   ) ?>">

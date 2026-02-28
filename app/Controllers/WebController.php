@@ -67,17 +67,18 @@ final class WebController
         ServerRequestInterface $request,
         ResponseInterface $response,
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
         return $this->render(
             $request,
             $response,
             "home.php",
             [],
             ["/assets/js/home.js"],
-            "Home - NovelMangaReader",
+            "Home - " . $siteName,
             "container",
             [
                 "title" =>
-                    "NovelMangaReader - Manga, Manhwa, Webtoon ve Novel Oku",
+                    $siteName . " - Manga, Manhwa, Webtoon ve Novel Oku",
                 "description" =>
                     "Manga, manhwa, webtoon ve novel serilerini tek yerde kesfet. Hizli okuma deneyimi ve duzenli guncellemeler.",
                 "keywords" =>
@@ -87,7 +88,7 @@ final class WebController
                 "json_ld" => [
                     "@context" => "https://schema.org",
                     "@type" => "WebSite",
-                    "name" => "NovelMangaReader",
+                    "name" => $siteName,
                     "url" => $this->absoluteUrl($request, "/"),
                     "inLanguage" => "tr-TR",
                 ],
@@ -197,6 +198,7 @@ final class WebController
                 ? "{$chapter["series_title"]} - Chapter {$chapterNumber}"
                 : "Chapter {$chapterNumber}";
 
+        $siteName = $this->siteConfig->siteName();
         return $this->render(
             $request,
             $response,
@@ -211,7 +213,7 @@ final class WebController
             $title,
             "container-fluid",
             [
-                "title" => $title . " - NovelMangaReader",
+                "title" => $title . " - " . $siteName,
                 "description" =>
                     $chapter && isset($chapter["series_title"])
                         ? "Read {$chapter["series_title"]} chapter {$chapterNumber} online."
@@ -226,16 +228,17 @@ final class WebController
         ServerRequestInterface $request,
         ResponseInterface $response,
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
         return $this->render(
             $request,
             $response,
             "login.php",
             [],
             [],
-            "Login - NovelMangaReader",
+            "Login - " . $siteName,
             "container",
             [
-                "title" => "Giris Yap - NovelMangaReader",
+                "title" => "Giris Yap - " . $siteName,
                 "description" =>
                     "Hesabina giris yaparak takip, yorum ve okuma ayarlarina eris.",
                 "robots" => "noindex,nofollow",
@@ -298,6 +301,7 @@ final class WebController
 
         $username = (string) ($profile["user"]["username"] ?? "User");
         $bio = (string) ($profile["user"]["bio"] ?? "");
+        $siteName = $this->siteConfig->siteName();
 
         return $this->render(
             $request,
@@ -315,7 +319,7 @@ final class WebController
             "$username - Profile",
             "container",
             [
-                "title" => "$username - NovelMangaReader",
+                "title" => "$username - " . $siteName,
                 "description" => $this->truncateDescription($bio),
                 "robots" => "index,follow",
             ],
@@ -333,10 +337,11 @@ final class WebController
         array $args = [],
     ): ResponseInterface {
         $slug = (string) ($args["slug"] ?? "");
+        $siteName = $this->siteConfig->siteName();
         $seo = [
-            "title" => "Blog - NovelMangaReader",
+            "title" => "Blog - " . $siteName,
             "description" =>
-                "NovelMangaReader toplulugundan blog yazilari, rehberler ve analizler.",
+                $siteName . " toplulugundan blog yazilari, rehberler ve analizler.",
             "type" => "website",
             "robots" => "index,follow",
         ];
@@ -389,16 +394,17 @@ final class WebController
         ServerRequestInterface $request,
         ResponseInterface $response,
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
         return $this->render(
             $request,
             $response,
             "chat.php",
             [],
             ["/assets/js/chat.js"],
-            "Chat - NovelMangaReader",
+            "Chat - " . $siteName,
             "container",
             [
-                "title" => "Chat - NovelMangaReader",
+                "title" => "Chat - " . $siteName,
                 "description" => "Topluluk sohbet alani.",
                 "robots" => "noindex,nofollow",
             ],
@@ -412,11 +418,12 @@ final class WebController
         ServerRequestInterface $request,
         ResponseInterface $response,
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
         $query = trim((string) ($request->getQueryParams()["q"] ?? ""));
         $title =
             $query !== ""
-                ? sprintf("Arama: %s - NovelMangaReader", $query)
-                : "Arama - NovelMangaReader";
+                ? sprintf("Arama: %s - %s", $query, $siteName)
+                : "Arama - " . $siteName;
 
         return $this->render(
             $request,
@@ -424,7 +431,7 @@ final class WebController
             "search.php",
             ["q" => $query],
             ["/assets/js/search.js"],
-            "Search - NovelMangaReader",
+            "Search - " . $siteName,
             "container",
             [
                 "title" => $title,
@@ -445,6 +452,7 @@ final class WebController
         ResponseInterface $response,
         array $args = [],
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
         $type = (string) ($args["type"] ?? "");
         $display = ucwords(str_replace("-", " ", $type));
 
@@ -457,10 +465,10 @@ final class WebController
                 "value" => $type,
             ],
             ["/assets/js/series_list.js"],
-            "Browse - NovelMangaReader",
+            "Browse - " . $siteName,
             "container",
             [
-                "title" => sprintf("%s Serileri - NovelMangaReader", $display),
+                "title" => sprintf("%s Serileri - %s", $display, $siteName),
                 "description" => sprintf(
                     "%s turundeki serileri listele, incele ve okumaya basla.",
                     $display,
@@ -476,6 +484,7 @@ final class WebController
         ResponseInterface $response,
         array $args = [],
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
         $slug = (string) ($args["slug"] ?? "");
         $display = ucwords(str_replace("-", " ", $slug));
 
@@ -491,7 +500,7 @@ final class WebController
             "Genre: " . ucfirst($slug),
             "container",
             [
-                "title" => sprintf("Genre: %s - NovelMangaReader", $display),
+                "title" => sprintf("Genre: %s - %s", $display, $siteName),
                 "description" => sprintf(
                     "%s etiketine ait serileri kesfet.",
                     $display,
@@ -506,6 +515,7 @@ final class WebController
         ResponseInterface $response,
         array $args = [],
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
         $slug = (string) ($args["slug"] ?? "");
         $display = ucwords(str_replace("-", " ", $slug));
 
@@ -521,7 +531,7 @@ final class WebController
             "Tag: " . ucfirst($slug),
             "container",
             [
-                "title" => sprintf("Tag: %s - NovelMangaReader", $display),
+                "title" => sprintf("Tag: %s - %s", $display, $siteName),
                 "description" => sprintf(
                     "%s tagine ait icerikleri goruntule.",
                     $display,
@@ -544,7 +554,7 @@ final class WebController
             $response,
             "admin_dashboard.php",
             ["/assets/js/admin.js"],
-            "Admin Dashboard - NovelMangaReader",
+            "Admin Dashboard - " . $this->siteConfig->siteName(),
         );
     }
 
@@ -556,12 +566,13 @@ final class WebController
             return $response->withHeader("Location", "/")->withStatus(302);
         }
 
+        $siteName = $this->siteConfig->siteName();
         return $this->renderAdmin(
             $request,
             $response,
             "admin_content.php",
             ["/assets/js/admin-content.js", "/assets/js/admin-chapters.js"],
-            "Content Management - Admin",
+            "Content Management - " . $siteName,
         );
     }
 
@@ -946,6 +957,7 @@ final class WebController
         int $code,
         string $message,
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
         return $this->render(
             $request,
             $response,
@@ -955,10 +967,10 @@ final class WebController
                 "errorMessage" => $message,
             ],
             [],
-            "Error " . $code . " - NovelMangaReader",
+            "Error " . $code . " - " . $siteName,
             "container",
             [
-                "title" => "Error " . $code . " - NovelMangaReader",
+                "title" => "Error " . $code . " - " . $siteName,
                 "robots" => "noindex,nofollow",
             ],
         );
@@ -970,10 +982,12 @@ final class WebController
         string $template,
         array $context = [],
         array $scripts = [],
-        string $title = "NovelMangaReader",
+        ?string $title = null,
         string $containerClass = "container",
         array $seo = [],
     ): ResponseInterface {
+        $siteName = $this->siteConfig->siteName();
+        $title = $title ?? $siteName;
         $basePath = (string) $this->settings["app"]["base_path"];
         $templatePath = $basePath . "/storage/views/pages_" . $template;
         $layoutPath = $basePath . "/storage/views/layout_main.php";
