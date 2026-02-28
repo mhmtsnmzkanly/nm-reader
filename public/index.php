@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+if (PHP_SAPI === 'cli-server') {
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    if (is_string($path)) {
+        $file = __DIR__ . $path;
+        if (is_file($file)) {
+            return false;
+        }
+    }
+}
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$app = require __DIR__ . '/../app/app.php';
+
+$app->map(['GET'], '/health', fn ($request, $response) => $response->withStatus(204));
+
+$app->run();

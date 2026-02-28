@@ -1,0 +1,35 @@
+# Dependency Directories
+/vendor/
+
+# Configuration
+.env
+.env.local
+.env.*.local
+
+# Storage & Logs
+/storage/cache/*
+/storage/logs/*.log
+/storage/sessions/*
+/storage/backups/*
+/storage/views/*.php
+!/storage/views/layout_*.php
+!/storage/views/pages_*.php
+!/storage/views/emails/
+
+# Public Assets
+/public/uploads/*
+/public/sitemap.xml
+/public/assets/css/site.css.bak
+
+# PHP & System
+.phpunit.result.cache
+.php_cs.cache
+.DS_Store
+Thumbs.db
+
+# Keep directory structure but ignore contents
+!/storage/cache/.gitkeep
+!/storage/logs/.gitkeep
+!/storage/sessions/.gitkeep
+!/storage/backups/.gitkeep
+!/public/uploads/.gitkeep
