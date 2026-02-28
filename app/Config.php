@@ -254,8 +254,8 @@ final class Config
                 $secure->get('/user/notifications', [UserController::class, 'notifications']);
                 $secure->post('/user/notifications/read', [UserController::class, 'markNotificationsRead']);
                 $secure->get('/user/follows/users', [UserController::class, 'followedUsers']);
-                $secure->post('/user/follows/{person:[A-Za-z0-9_]+}', [UserController::class, 'followUser']);
-                $secure->delete('/user/follows/{person:[A-Za-z0-9_]+}', [UserController::class, 'unfollowUser']);
+                $secure->post('/user/follows/{person:[A-Za-z0-9_]+}', [UserController::class, 'follow']);
+                $secure->delete('/user/follows/{person:[A-Za-z0-9_]+}', [UserController::class, 'unfollow']);
             })->add(new CsrfMiddleware())->add(new AuthMiddleware($authorization));
         });
     }

@@ -94,6 +94,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Follow Action 500 Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Follow/Unfollow actions were returning 500.
+- **Root Cause**: Method name mismatch in `app/Config.php`. Routes were pointing to `followUser` and `unfollowUser` which did not exist on `UserController` (actual methods are `follow` and `unfollow`).
+- **Fix**: Updated `app/Config.php` to use the correct method names `follow` and `unfollow`.
+
 ### CSRF Sync & Late-Binding Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: 419 Invalid CSRF token persistent on POST requests.
