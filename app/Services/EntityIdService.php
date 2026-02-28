@@ -17,6 +17,21 @@ final class EntityIdService
     ) {
     }
 
+    /**
+     * Static helper to generate a random base36 ID.
+     * Useful for initial setup or where dependency injection is not available.
+     */
+    public static function generate(int $length = 8): string
+    {
+        $alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        $maxIndex = strlen($alphabet) - 1;
+        $id = '';
+        for ($i = 0; $i < $length; $i++) {
+            $id .= $alphabet[random_int(0, $maxIndex)];
+        }
+        return $id;
+    }
+
     public function generateContentId(): string
     {
         return $this->generateUniqueId(fn (string $id): bool => $this->series->existsContentId($id), 6);
