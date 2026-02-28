@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Final CSP Refinement for Cloudflare Turnstile (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Persistent browser warnings regarding implicit `script-src` and preload timing.
+- **Fix**: 
+  - Added `script-src-attr 'self' 'unsafe-inline'`.
+  - Added `https://challenges.cloudflare.com` to `img-src` and `font-src`.
+
 ### Refined CSP for Cloudflare Turnstile (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Browser warnings about implicit `script-src` and internal Turnstile logs.
