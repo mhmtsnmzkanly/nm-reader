@@ -293,6 +293,10 @@ final class Config
             $group->get('/metrics', [MetricsController::class, 'snapshot'])->add($perm(['admin.metrics.view']));
             $group->get('/dashboard', [MetricsController::class, 'snapshot'])->add($perm(['admin.metrics.view']));
             $group->get('/metrics/insights', [MetricsController::class, 'insights'])->add($perm(['admin.metrics.view']));
+
+            $group->get('/series_genres', [SeriesController::class, 'series_genres'])->add($perm(['admin.panel.access']));
+            $group->get('/series_tags', [SeriesController::class, 'series_tags'])->add($perm(['admin.panel.access']));
+
             $group->post('/content', [AdminController::class, 'createContent'])->add($perm(['admin.content.create']));
             $group->put('/content/{id}', [AdminController::class, 'updateContent'])->add($perm(['admin.content.update']));
             $group->post('/content/{type:' . $typePattern . '}/{slug}/chapters', [AdminController::class, 'createChapter'])->add($perm(['admin.chapter.create']));

@@ -153,7 +153,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         ->withHeader('X-Frame-Options', 'DENY')
         ->withHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
         ->withHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-        ->withHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
+        ->withHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
 });
 
 $app->addBodyParsingMiddleware();
