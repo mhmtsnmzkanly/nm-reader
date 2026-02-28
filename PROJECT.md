@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Auth Form Robustness Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Login/Register forms were occasionally failing with 400 Bad Request due to unreliable field extraction.
+- **Fix**:
+  - Added explicit `name` attributes to all authentication input fields in `storage/views/partials_modals.php`.
+  - Refactored `main.js` to use `FormData` and `Object.fromEntries` for clean, reliable data extraction (including Turnstile tokens).
+
 ### Route Restoration & Turnstile JS Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: 

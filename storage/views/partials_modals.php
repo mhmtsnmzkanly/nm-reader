@@ -3,10 +3,10 @@
     <div class="modal-header"><h3>🔐 <?= $__t('login') ?></h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
     <div class="modal-body">
       <form id="loginForm">
-        <div class="form-group"><label class="form-label"><?= $__t('email') ?></label><input type="email" class="form-item" required></div>
-        <div class="form-group"><label class="form-label"><?= $__t('password') ?></label><input type="password" class="form-item" required></div>
+        <div class="form-group"><label class="form-label"><?= $__t('email') ?></label><input type="email" name="email" class="form-item" required></div>
+        <div class="form-group"><label class="form-label"><?= $__t('password') ?></label><input type="password" name="password" class="form-item" required></div>
         <div class="form-group flex items-center gap-2 mb-2">
-          <input type="checkbox" id="loginRemember" style="width:auto;cursor:pointer">
+          <input type="checkbox" name="remember" id="loginRemember" style="width:auto;cursor:pointer">
           <label for="loginRemember" style="cursor:pointer;font-size:0.85rem;user-select:none"><?= $__t('remember_me') ?></label>
         </div>
         <?php if (!empty($siteConfig['integrations']['cloudflare_turnstile_site_key'] ?? '')): ?>
@@ -26,9 +26,9 @@
     <div class="modal-header"><h3>✨ <?= $__t('signup') ?></h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
     <div class="modal-body">
       <form id="registerForm">
-        <div class="form-group"><label class="form-label"><?= $__t('username') ?></label><input type="text" class="form-item" required></div>
-        <div class="form-group"><label class="form-label"><?= $__t('email') ?></label><input type="email" class="form-item" required></div>
-        <div class="form-group"><label class="form-label"><?= $__t('password') ?></label><input type="password" class="form-item" required></div>
+        <div class="form-group"><label class="form-label"><?= $__t('username') ?></label><input type="text" name="username" class="form-item" required></div>
+        <div class="form-group"><label class="form-label"><?= $__t('email') ?></label><input type="email" name="email" class="form-item" required></div>
+        <div class="form-group"><label class="form-label"><?= $__t('password') ?></label><input type="password" name="password" class="form-item" required></div>
         <?php if (!empty($siteConfig['integrations']['cloudflare_turnstile_site_key'] ?? '')): ?>
           <div class="cf-turnstile-wrapper mb-3">
             <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($siteConfig['integrations']['cloudflare_turnstile_site_key']) ?>" data-theme="dark"></div>
