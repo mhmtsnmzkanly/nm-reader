@@ -179,9 +179,23 @@ final class Config
     private static function registerWebRoutes(App $app, string $typePattern): void
     {
         $container = $app->getContainer();
-        $siteConfig = $container->get(SiteConfigService::class);
-        $i18n = $container->get(I18nService::class);
-        $defaultLang = $siteConfig->defaultLanguage();
+        
+        // Use a safe way to get default language without triggering PDO/DB during routing
+        $defaultLang = 'tr';
+        try {
+            if ($container->has(SiteConfigService::class)) {
+                $siteConfig = $container->get(SiteConfigService::class);
+                $defaultLang = $siteConfig->defaultLanguage();
+            }
+        } catch (\Throwable) {
+            // DB not ready or Config failed, stick with 'tr' default for routing
+        }
+
+        $i18n = null;
+        try {
+            $i18n = $container->get(I18nService::class);
+        } catch (\Throwable) {}
+
         $supportedLangs = ['tr', 'en'];
 
         $resolveLang = function (string $acceptHeader) use ($supportedLangs, $defaultLang): string {
@@ -233,7 +247,11 @@ final class Config
 
         $app->group('/{lang:tr|en}', function (RouteCollectorProxy $group) use ($addWebRoutes): void {
             $addWebRoutes($group, true);
-        })->add(new I18nMiddleware($i18n));
+        });
+
+        if ($i18n !== null) {
+            $app->add(new I18nMiddleware($i18n));
+        }
         
         $app->group('', function (RouteCollectorProxy $group) use ($addWebRoutes): void {
             $addWebRoutes($group, false);
