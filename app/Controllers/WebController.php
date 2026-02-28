@@ -129,6 +129,7 @@ final class WebController
 
         $author = (string) ($content["author"] ?? "");
         $releaseYear = (string) ($content["release_year"] ?? "");
+        $altTitles = (string) ($content["alternative_titles"] ?? "");
 
         $jsonLd = [
             "@context" => "https://schema.org",
@@ -144,6 +145,11 @@ final class WebController
                 (string) ($content["created_at"] ?? gmdate("Y-m-d H:i:s")),
         ];
 
+        if ($altTitles !== "") {
+            $titlesArray = array_map("trim", explode(",", $altTitles));
+            $jsonLd["alternateName"] = $titlesArray;
+        }
+
         if ($author !== "") {
             $jsonLd["author"] = [
                 "@type" => "Person",
@@ -155,6 +161,14 @@ final class WebController
             $jsonLd["copyrightYear"] = $releaseYear;
         }
 
+        $keywords = $title . ", " . ucfirst($type) . " oku";
+        if ($altTitles !== "") {
+            $keywords .= ", " . $altTitles;
+        }
+        if ($author !== "") {
+            $keywords .= ", " . $author;
+        }
+
         $seo = [
             "title" => sprintf("%s - %s Oku", $title, ucfirst($type)),
             "description" =>
@@ -163,6 +177,7 @@ final class WebController
                     : $title . " detaylari ve bolumleri",
             "type" => "book",
             "image" => $cover,
+            "keywords" => $keywords,
             "robots" => "index,follow",
             "json_ld" => $jsonLd,
         ];

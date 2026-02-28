@@ -28,6 +28,7 @@ final class ContentDto
      * @param bool $isFollowed Whether the current viewer follows this series.
      * @param string|null $author Primary creator name.
      * @param string|null $artist Primary illustrator name.
+     * @param string|null $alternativeTitles Alternative titles (comma separated).
      * @param string|null $country Origin country code or name.
      * @param string|null $releaseYear Publication year.
      * @param string|null $description Full series synopsis.
@@ -47,6 +48,7 @@ final class ContentDto
         public readonly bool $isFollowed = false,
         public readonly ?string $author = null,
         public readonly ?string $artist = null,
+        public readonly ?string $alternativeTitles = null,
         public readonly ?string $country = null,
         public readonly ?string $releaseYear = null,
         public readonly ?string $description = null,
@@ -73,6 +75,7 @@ final class ContentDto
             isFollowed: (bool) ($row['is_followed'] ?? false),
             author: $row['author'] ?? null,
             artist: $row['artist'] ?? null,
+            alternativeTitles: $row['alternative_titles'] ?? null,
             country: $row['country'] ?? null,
             releaseYear: (string) ($row['release_year'] ?? ''),
             description: $row['description'] ?? null,
@@ -104,6 +107,7 @@ final class ContentDto
             'is_followed' => $this->isFollowed,
             'author' => $this->author,
             'artist' => $this->artist,
+            'alternative_titles' => $this->alternativeTitles,
             'country' => $this->country,
             'release_year' => $this->releaseYear,
             'description' => $this->description,

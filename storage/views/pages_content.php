@@ -56,6 +56,12 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
                         <span class="meta-pill">⭐ <?= htmlspecialchars((string) ($content['rating_avg'] ?? '-')) ?></span>
                     </div>
                     <h1 class="hero-title"><?= htmlspecialchars((string) ($content['title'] ?? '')) ?></h1>
+                    <?php if (!empty($content['alternative_titles'])): ?>
+                        <div class="mb-3 opacity-70 text-sm">
+                            <i class="bi bi-translate me-1"></i>
+                            <?= htmlspecialchars((string) $content['alternative_titles']) ?>
+                        </div>
+                    <?php endif; ?>
                     
                     <div class="hero-meta-strip">
                         <div class="flex items-center gap-2">

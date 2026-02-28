@@ -56,6 +56,7 @@ CREATE TABLE `series_metadata` (
   `content_id` char(6) NOT NULL,
   `author` varchar(100) DEFAULT NULL,
   `artist` varchar(100) DEFAULT NULL,
+  `alternative_titles` varchar(255) DEFAULT NULL,
   `country` varchar(50) DEFAULT NULL,
   `release_year` varchar(4) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
