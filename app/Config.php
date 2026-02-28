@@ -328,6 +328,7 @@ final class Config
             $group->get('/contents', [AdminConsoleController::class, 'series'])->add($perm(['admin.panel.access']));
             $group->get('/users', [AdminConsoleController::class, 'users'])->add($perm(['admin.panel.access']));
             $group->get('/blogs', [AdminConsoleController::class, 'blogs'])->add($perm(['admin.panel.access']));
+            $group->get('/blogs/pending', [BlogController::class, 'pending'])->add($perm(['admin.panel.access']));
             $group->get('/comments', [AdminConsoleController::class, 'comments'])->add($perm(['admin.panel.access']));
             $group->delete('/comments/{id:[0-9]+}', [AdminConsoleController::class, 'deleteComment'])->add($perm(['admin.comment.delete']));
             $group->put('/users/{id}', [AdminConsoleController::class, 'updateUser'])->add($perm(['admin.users.manage']));
