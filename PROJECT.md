@@ -94,6 +94,14 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Dropdown UX & Mobile Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Dropdowns were relying on hover, which is unreliable on mobile, and didn't close when clicking outside.
+- **Fix**:
+  - Refactored dropdown visibility to use an `.active` class in `site.css`.
+  - Added `onclick` toggles to all dropdown buttons (Library, Language, User Menu).
+  - Implemented a global click-outside listener in `main.js` to automatically close open dropdowns.
+
 ### Failsafe Logout Implementation (2026-02-28)
 - **Status**: Completed.
 - **Problem**: AJAX-based logout was unreliable due to session/CSRF state conflicts.
