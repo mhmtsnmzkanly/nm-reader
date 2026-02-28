@@ -54,7 +54,7 @@ $(function () {
       return `
       <div class="card p-0 overflow-hidden hover-lift cursor-pointer content-card" onclick="location.href='/${lang}/${type}/${item.slug}'">
         <div class="position-relative">
-          <img src="${item.cover_image || "/assets/img/covers/one-piece.jpg"}" onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';" class="w-100" alt="${item.title}">
+          <img src="${item.cover_image || "/assets/img/covers/one-piece.jpg"}" onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';" class="w-100" alt="${item.title}" loading="lazy">
           <span class="badge position-absolute top-0 right-0 m-2 text-xs" style="background:${getTypeColor(item.type)}">${String(item.type || "").toUpperCase()}</span>
         </div>
         <div class="p-3">
@@ -82,7 +82,7 @@ $(function () {
       return `
       <div class="card p-0 overflow-hidden hover-lift cursor-pointer content-card chapter-card" onclick="location.href='${url}'">
         <div class="position-relative">
-          <img src="${ch.cover_image}" onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';" class="w-100" alt="${ch.series_title}">
+          <img src="${ch.cover_image}" onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';" class="w-100" alt="${ch.series_title}" loading="lazy">
           <span class="badge position-absolute top-0 right-0 m-2 text-sm badge-chapter" style="background:var(--primary); padding: 0.4rem 0.8rem;">BÖLÜM ${ch.chapter_number}</span>
         </div>
         <div class="p-3">

@@ -94,6 +94,16 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Performance & CLS Optimizations (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Poor performance metrics (FCP 3.0s, CLS 0.839).
+- **Fix**:
+  - Implemented **Skeleton Loading** for the homepage to prevent layout jumps.
+  - Added fixed **aspect-ratio (2/3)** to series cover containers in CSS.
+  - Applied `loading="lazy"` to all dynamically rendered images in `home.js`.
+  - Reserved minimum height for Cloudflare Turnstile widget to prevent modal reflow.
+  - Set `font-display: swap` for faster initial text rendering.
+
 ### Final CSP Refinement for Cloudflare Turnstile (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Persistent browser warnings regarding implicit `script-src` and preload timing.

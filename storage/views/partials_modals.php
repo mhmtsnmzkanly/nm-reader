@@ -10,7 +10,9 @@
           <label for="loginRemember" style="cursor:pointer;font-size:0.85rem;user-select:none"><?= $__t('remember_me') ?></label>
         </div>
         <?php if (!empty($siteConfig['integrations']['cloudflare_turnstile_site_key'] ?? '')): ?>
-          <div class="cf-turnstile mb-3" data-sitekey="<?= htmlspecialchars($siteConfig['integrations']['cloudflare_turnstile_site_key']) ?>" data-theme="dark"></div>
+          <div class="cf-turnstile-wrapper mb-3">
+            <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($siteConfig['integrations']['cloudflare_turnstile_site_key']) ?>" data-theme="dark"></div>
+          </div>
         <?php endif; ?>
         <button type="submit" class="btn btn-primary w-100 mt-2"><?= $__t('login') ?></button>
       </form>
@@ -28,7 +30,9 @@
         <div class="form-group"><label class="form-label"><?= $__t('email') ?></label><input type="email" class="form-item" required></div>
         <div class="form-group"><label class="form-label"><?= $__t('password') ?></label><input type="password" class="form-item" required></div>
         <?php if (!empty($siteConfig['integrations']['cloudflare_turnstile_site_key'] ?? '')): ?>
-          <div class="cf-turnstile mb-3" data-sitekey="<?= htmlspecialchars($siteConfig['integrations']['cloudflare_turnstile_site_key']) ?>" data-theme="dark"></div>
+          <div class="cf-turnstile-wrapper mb-3">
+            <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars($siteConfig['integrations']['cloudflare_turnstile_site_key']) ?>" data-theme="dark"></div>
+          </div>
         <?php endif; ?>
         <button type="submit" class="btn btn-primary w-100 mt-2"><?= $__t('signup') ?></button>
       </form>
