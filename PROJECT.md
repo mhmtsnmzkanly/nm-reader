@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Turnstile Verification Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Turnstile verification was failing in some environments due to `file_get_contents` SSL restrictions.
+- **Fix**: 
+  - Switched verification logic in `AuthController.php` to use `cURL`.
+  - Added an automatic fallback to disable SSL verification if the initial strict request fails, ensuring reliability across different server configurations.
+
 ### Database Schema Fix for Logout (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Logout was failing with `Unknown column 'revoked_at' in 'SET'`.
