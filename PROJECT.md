@@ -94,6 +94,42 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Database Schema Fix for Logout (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Logout was failing with `Unknown column 'revoked_at' in 'SET'`.
+- **Root Cause**: The `user_sessions` table was missing columns, and `user_refresh_tokens` and `user_login_logs` tables were completely missing from the schema.
+- **Fix**: 
+  - Updated `app/database/schema.sql` with full table definitions.
+  - Recommended SQL for existing installations:
+    ```sql
+    ALTER TABLE user_sessions ADD COLUMN last_seen_at datetime NOT NULL DEFAULT current_timestamp() AFTER expires_at;
+    ALTER TABLE user_sessions ADD COLUMN revoked_at datetime DEFAULT NULL AFTER last_seen_at;
+
+    CREATE TABLE `user_refresh_tokens` (
+      `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+      `session_key` char(32) NOT NULL,
+      `token_hash` char(64) NOT NULL,
+      `expires_at` datetime NOT NULL,
+      `revoked_at` datetime DEFAULT NULL,
+      `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `token_hash` (`token_hash`),
+      CONSTRAINT `fk_tokens_session` FOREIGN KEY (`session_key`) REFERENCES `user_sessions` (`session_key`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE TABLE `user_login_logs` (
+      `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+      `user_id` char(8) DEFAULT NULL,
+      `email` varchar(150) NOT NULL,
+      `ip_hash` char(64) NOT NULL,
+      `user_agent` varchar(255) DEFAULT NULL,
+      `success` tinyint(1) NOT NULL,
+      `failure_reason` varchar(50) DEFAULT NULL,
+      `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
+      PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ```
+
 ### Dropdown UX & Mobile Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Dropdowns were relying on hover, which is unreliable on mobile, and didn't close when clicking outside.

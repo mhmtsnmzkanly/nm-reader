@@ -267,9 +267,37 @@ CREATE TABLE `user_sessions` (
   `ip_hash` char(64) NOT NULL,
   `user_agent` varchar(255) DEFAULT NULL,
   `expires_at` datetime NOT NULL,
+  `last_seen_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `revoked_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`session_key`),
   CONSTRAINT `fk_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_refresh_tokens`;
+CREATE TABLE `user_refresh_tokens` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `session_key` char(32) NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `token_hash` (`token_hash`),
+  CONSTRAINT `fk_tokens_session` FOREIGN KEY (`session_key`) REFERENCES `user_sessions` (`session_key`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_login_logs`;
+CREATE TABLE `user_login_logs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) DEFAULT NULL,
+  `email` varchar(150) NOT NULL,
+  `ip_hash` char(64) NOT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `success` tinyint(1) NOT NULL,
+  `failure_reason` varchar(50) DEFAULT NULL,
+  `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_series_follows`;
