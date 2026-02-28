@@ -248,6 +248,8 @@ final class Config
 
         $app->group('/api/v1', function (RouteCollectorProxy $group) use ($cache, $users, $authorization, $typePattern): void {
             $group->get('/home', [SeriesController::class, 'home']);
+            $group->get('/genres', [SeriesController::class, 'series_genres']);
+            $group->get('/tags', [SeriesController::class, 'series_tags']);
             $group->get('/content/type/{type:' . $typePattern . '}', [SeriesController::class, 'byType']);
             $group->get('/content/{type:' . $typePattern . '}/{slug}', [SeriesController::class, 'contentByType']);
             $group->get('/content/{type:' . $typePattern . '}/{slug}/chapters', [SeriesController::class, 'chaptersByType']);
@@ -323,6 +325,7 @@ final class Config
         $app->group('/api/v1/admin', function (RouteCollectorProxy $group) use ($typePattern, $perm, $cache): void {
             $group->get('/overview', [AdminConsoleController::class, 'overview'])->add($perm(['admin.panel.access']));
             $group->get('/series', [AdminConsoleController::class, 'series'])->add($perm(['admin.panel.access']));
+            $group->get('/contents', [AdminConsoleController::class, 'series'])->add($perm(['admin.panel.access']));
             $group->get('/users', [AdminConsoleController::class, 'users'])->add($perm(['admin.panel.access']));
             $group->get('/blogs', [AdminConsoleController::class, 'blogs'])->add($perm(['admin.panel.access']));
             $group->get('/comments', [AdminConsoleController::class, 'comments'])->add($perm(['admin.panel.access']));
