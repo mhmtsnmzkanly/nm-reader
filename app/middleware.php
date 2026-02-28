@@ -16,11 +16,15 @@ if (!isset($app, $settings)) {
 // 1. Dependency Access
 $container = $app->getContainer();
 
+// 2. Identify Install Route to skip DB-dependent logic
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+$isInstallRoute = str_contains($requestUri, 'install-63e4qq3');
+
 // CORS must be early in the stack to handle preflight OPTIONS
 $app->add(\App\Middleware\CorsMiddleware::class);
 
 // Session and Auth Middleware
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $settings): ResponseInterface {
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $settings, $isInstallRoute): ResponseInterface {
     $sessionPath = (string) $settings['app']['session_path'];
     if (!is_dir($sessionPath)) {
         @mkdir($sessionPath, 0777, true);
@@ -53,8 +57,8 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     $newRefreshToken = null;
     $invalidToken = false;
     
-    // Auth logic depends on DB
-    if (!isset($_SESSION['user_id']) && !empty($request->getCookieParams()['nm_remember'])) {
+    // Auth logic depends on DB - SKIP if installing
+    if (!$isInstallRoute && !isset($_SESSION['user_id']) && !empty($request->getCookieParams()['nm_remember'])) {
         try {
             $authService = $container->get(\App\Services\AuthService::class);
             $refreshToken = $request->getCookieParams()['nm_remember'];
@@ -71,7 +75,6 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             $_SESSION['session_key'] = $user['session_key'];
             $newRefreshToken = $user['refresh_token'];
         } catch (\Throwable) {
-            // DB might be down or token invalid
             $invalidToken = true;
         }
     }
@@ -117,7 +120,9 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 });
 
 // HTTPS Enforcement
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute): ResponseInterface {
+    if ($isInstallRoute) return $handler->handle($request);
+    
     try {
         $siteConfig = $container->get(\App\Services\SiteConfigService::class);
         if (!$siteConfig->enforceHttps()) {
@@ -135,7 +140,6 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         $response = $responseFactory->createResponse(308);
         return $response->withHeader('Location', (string) $uri);
     } catch (\Throwable) {
-        // If DB config fails, skip HTTPS enforcement
         return $handler->handle($request);
     }
 });
@@ -153,76 +157,70 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 });
 
 $app->addBodyParsingMiddleware();
-$app->add(App\Middleware\I18nMiddleware::class);
+
+// I18n Middleware (Depends on DB) - SKIP if installing
+if (!$isInstallRoute) {
+    $app->add(App\Middleware\I18nMiddleware::class);
+}
+
 $app->addRoutingMiddleware();
 
-// Access and Audit Logging
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
-    $accessLogger = $container->get('logger.access');
+// Access and Audit Logging (Depends on DB for audit) - SKIP if installing
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute): ResponseInterface {
     $start = microtime(true);
     $response = $handler->handle($request);
 
-    $requestId = (string) ($request->getAttribute('request_id') ?? '');
-    $userAgent = substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255);
-    $accessLogger->info('request', [
-        'request_id' => $requestId !== '' ? $requestId : null,
-        'user_id' => $_SESSION['user_id'] ?? null,
-        'method' => $request->getMethod(),
-        'path' => (string) $request->getUri()->getPath(),
-        'status' => $response->getStatusCode(),
-        'duration_ms' => (int) round((microtime(true) - $start) * 1000),
-        'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
-        'user_agent' => $userAgent,
-        'context' => [
-            'query' => $request->getUri()->getQuery(),
-        ],
-    ]);
+    try {
+        $accessLogger = $container->get('logger.access');
+        $requestId = (string) ($request->getAttribute('request_id') ?? '');
+        $userAgent = substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255);
+        $accessLogger->info('request', [
+            'request_id' => $requestId !== '' ? $requestId : null,
+            'user_id' => $_SESSION['user_id'] ?? null,
+            'method' => $request->getMethod(),
+            'path' => (string) $request->getUri()->getPath(),
+            'status' => $response->getStatusCode(),
+            'duration_ms' => (int) round((microtime(true) - $start) * 1000),
+            'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
+            'user_agent' => $userAgent,
+            'context' => ['query' => $request->getUri()->getQuery()],
+        ]);
+    } catch (\Throwable) {}
 
     return $response;
 });
 
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
-    $auditLogger = $container->get('logger.audit');
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute): ResponseInterface {
     $startedAt = microtime(true);
     $response = $handler->handle($request);
-    $duration = (int) round((microtime(true) - $startedAt) * 1000);
-    $userId = isset($_SESSION['user_id']) ? (string) $_SESSION['user_id'] : null;
-    $method = $request->getMethod();
-    $path = (string) $request->getUri()->getPath();
-    $status = $response->getStatusCode();
-    $ipHash = hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown'));
-    $userAgent = substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255);
+    
+    if ($isInstallRoute) return $response;
 
-    // 1. Permanent File Logging
-    $auditLogger->info('audit', [
-        'user_id' => $userId,
-        'method' => $method,
-        'path' => $path,
-        'status_code' => $status,
-        'ip_hash' => $ipHash,
-        'user_agent' => $userAgent,
-        'duration_ms' => $duration,
-    ]);
-
-    // 2. Short-term Database Logging (Optional)
     try {
+        $auditLogger = $container->get('logger.audit');
         $pdo = $container->get(\PDO::class);
+        $duration = (int) round((microtime(true) - $startedAt) * 1000);
+        $userId = isset($_SESSION['user_id']) ? (string) $_SESSION['user_id'] : null;
+        $method = $request->getMethod();
+        $path = (string) $request->getUri()->getPath();
+        $status = $response->getStatusCode();
+        $ipHash = hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown'));
+        $userAgent = substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255);
+
+        $auditLogger->info('audit', [
+            'user_id' => $userId, 'method' => $method, 'path' => $path,
+            'status_code' => $status, 'ip_hash' => $ipHash, 'user_agent' => $userAgent, 'duration_ms' => $duration,
+        ]);
+
         $stmt = $pdo->prepare(
             'INSERT INTO system_audit_logs (user_id, method, path, status_code, ip_hash, user_agent, duration_ms, created_at)
              VALUES (:user_id, :method, :path, :status_code, :ip_hash, :user_agent, :duration_ms, NOW())'
         );
         $stmt->execute([
-            'user_id' => $userId,
-            'method' => $method,
-            'path' => $path,
-            'status_code' => $status,
-            'ip_hash' => $ipHash,
-            'user_agent' => $userAgent,
-            'duration_ms' => $duration,
+            'user_id' => $userId, 'method' => $method, 'path' => $path,
+            'status_code' => $status, 'ip_hash' => $ipHash, 'user_agent' => $userAgent, 'duration_ms' => $duration,
         ]);
-    } catch (\Throwable) {
-        // DB logging failure is non-blocking
-    }
+    } catch (\Throwable) {}
 
     return $response;
 });
@@ -243,20 +241,16 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     return $handler->handle($request);
 });
 
-$app->add(\App\Middleware\ApiAuthMiddleware::class);
+// Bearer Token & Request ID
+if (!$isInstallRoute) {
+    $app->add(\App\Middleware\ApiAuthMiddleware::class);
+}
 $app->add(\App\Middleware\RequestIdMiddleware::class);
 
 // Error Handling
-$errorLogger = $container->get('logger.error');
 $errorMiddleware = $app->addErrorMiddleware((bool) ($settings['app']['debug'] ?? false), true, true);
 $errorMiddleware->setDefaultErrorHandler(
-    function (
-        ServerRequestInterface $request,
-        Throwable $exception,
-        bool $displayErrorDetails,
-        bool $logErrors,
-        bool $logErrorDetails
-    ) use ($errorLogger, $container): ResponseInterface {
+    function (ServerRequestInterface $request, Throwable $exception, bool $displayErrorDetails) use ($container): ResponseInterface {
         $statusCode = 500;
         $message = 'Internal server error';
 
@@ -267,6 +261,7 @@ $errorMiddleware->setDefaultErrorHandler(
 
         if ($statusCode >= 500) {
             try {
+                $errorLogger = $container->get('logger.error');
                 $errorLogger->error($exception->getMessage(), [
                     'request_id' => $request->getAttribute('request_id'),
                     'user_id' => $_SESSION['user_id'] ?? null,
@@ -278,9 +273,7 @@ $errorMiddleware->setDefaultErrorHandler(
                     'user_agent' => substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255),
                     'context' => ['trace' => $exception->getTraceAsString()],
                 ]);
-            } catch (\Throwable) {
-                // Logger might fail if disk is full or permissions are wrong
-            }
+            } catch (\Throwable) {}
         }
 
         $path = $request->getUri()->getPath();
