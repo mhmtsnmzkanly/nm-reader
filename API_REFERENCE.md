@@ -1,113 +1,155 @@
-# NMR API Reference - Mobile & CSR Development Guide
+# NovelMangaReader API Specification
 
-This document defines the REST API contract for the NovelMangaReader platform. It is optimized for frontend developers and AI agents building mobile (Flutter/RN) or web (React/Vue) applications.
+This document provides a comprehensive technical reference for the NMR API (v1).
 
 ---
 
-## 1. General Standards
+## 1. Protocol & Conventions
 
 ### Base URL
 `http://localhost:8080/api/v1`
 
-### Authentication
-- **Method**: Bearer Token.
-- **Header**: `Authorization: Bearer <your_api_token>`
-- **Token Source**: Obtained via `/auth/login`.
-
-### Response Structure
-All API responses follow this standard JSON envelope:
+### Data Formats
+- **Request Body**: `application/json`
+- **Response Body**: `application/json`
+- **Standard Envelope**:
 ```json
 {
   "status": "success",
-  "data": { ... },
+  "data": {},
   "meta": {
+    "total": 0,
     "page": 1,
-    "per_page": 20,
-    "total": 100
+    "per_page": 20
   }
 }
 ```
 
+### Authentication
+Two methods are supported:
+1. **Cookie-based (Web)**: Uses standard PHP sessions.
+2. **Bearer Token (Mobile/CSR)**:
+   - Header: `Authorization: Bearer <api_token>`
+   - Token is obtained via `POST /auth/login`.
+
 ---
 
-## 2. Authentication Endpoints
+## 2. Public Endpoints (Unauthenticated)
 
-### Login
-- **Endpoint**: `POST /auth/login`
-- **Request**:
+### 2.1 Content Discovery
+
+#### **GET /home**
+Aggregated data for the landing page.
+- **Response**:
+  - `explore`: [ContentDto]
+  - `recent_chapters`: [ChapterDto]
+  - `recently_added`: [ContentDto]
+  - `popular_blogs`: [BlogDto]
+
+#### **GET /content/type/{type}**
+List series by type (manga, novel, etc.).
+- **Query Params**: `page` (int), `per_page` (int).
+- **Response**: `[ContentDto]`
+
+#### **GET /content/{type}/{slug}**
+Get full details of a series.
+- **Response**: `ContentDto` (includes metadata like author, description).
+
+#### **GET /content/{type}/{slug}/chapters**
+List all chapters for a series.
+- **Response**: `[ChapterDto]`
+
+#### **GET /chapter/{chapterNumber}**
+Get reading data for a chapter.
+- **Query Params**: `slug` (required), `type` (required).
+- **Response**:
+  - `type`: "text" (Markdown) | "image" (Pipe-separated URLs).
+  - `data`: string.
+
+#### **GET /search**
+Search series by title.
+- **Query Params**: `q` (string).
+- **Response**: `[ContentDto]`
+
+---
+
+## 3. Auth & Identity
+
+#### **POST /auth/register**
+- **Payload**:
   ```json
-  { "email": "user@example.com", "password": "password123" }
+  { "username": "...", "email": "...", "password": "..." }
   ```
-- **Key Response Fields**: `api_token`, `roles`, `permissions`.
 
-### Register
-- **Endpoint**: `POST /auth/register`
-- **Request**:
+#### **POST /auth/login**
+- **Payload**:
   ```json
-  { "username": "newuser", "email": "new@example.com", "password": "password123" }
+  { "email": "...", "password": "..." }
+  ```
+- **Response**:
+  ```json
+  {
+    "id": "char(8)",
+    "username": "string",
+    "api_token": "char(64)",
+    "roles": ["string"],
+    "permissions": ["string"]
+  }
   ```
 
 ---
 
-## 3. Content Discovery
+## 4. Protected Endpoints (Requires Auth)
 
-### Homepage Aggregation
-- **Endpoint**: `GET /home`
-- **Response Data**:
-  - `explore`: Popular series.
-  - `recent_chapters`: Latest chapter updates.
-  - `recently_added`: New series entries.
-  - `popular_blogs`: Top trending blog posts.
+#### **POST /content/{type}/{slug}/follow**
+Follow a series.
 
-### Series Details
-- **Endpoint**: `GET /content/{type}/{slug}`
-- **Parameters**: `type` (manga|novel|etc.), `slug` (unique-title).
-- **Output**: Full metadata (author, artist, rating, status).
+#### **POST /content/{type}/{slug}/rate**
+- **Payload**: `{ "rating": 5 }` (int 1-5).
 
-### Chapter Listing
-- **Endpoint**: `GET /content/{type}/{slug}/chapters`
-- **Output**: List of available chapters with IDs and numbers.
+#### **POST /chapter/{chapterId}/comment**
+- **Payload**: `{ "body": "..." }`
 
-### Chapter Reading
-- **Endpoint**: `GET /chapter/{chapterNumber}`
-- **Response Data**:
-  - `type`: "text" or "image".
-  - `data`: Markdown content (for text) or Pipe-separated (`|`) image URLs.
+#### **POST /user/activity**
+Pulsing for reading duration.
+- **Payload**: `{ "chapter_id": "...", "duration": 30 }`
 
 ---
 
-## 4. User & Interaction
+## 5. Admin Console API (Requires admin.panel.access)
 
-### Public Profile
-- **Endpoint**: `GET /profile/{username}`
-- **Output**: User bio, statistics (comments, follows), and recent activity.
+#### **GET /admin/overview**
+Dashboard KPIs and Health Funnel.
 
-### Follow/Unfollow
-- **Endpoint**: `POST /content/{type}/{slug}/follow` (To Follow)
-- **Endpoint**: `DELETE /content/{type}/{slug}/follow` (To Unfollow)
+#### **GET /admin/series**
+Full series list with administrative controls.
 
-### Activity Tracking (Pulsing)
-- **Endpoint**: `POST /user/activity`
-- **Purpose**: Tracks reading duration.
-- **Payload**: `{"chapter_id": "...", "duration": 30}` (seconds).
+#### **GET /admin/users**
+User list with role management.
+
+#### **PUT /admin/users/{id}**
+Update user role/ban status.
+- **Payload**: `{ "role": "slug", "is_banned": bool }`
+
+#### **POST /admin/maintenance/backup**
+Trigger full system backup (**ROOT_USER ONLY**).
 
 ---
 
-## 5. Error Codes
+## 6. Entity Data Transfer Objects (DTOs)
 
-| Code | Key | Description |
+### ContentDto
+| Field | Type | Description |
 | :--- | :--- | :--- |
-| 400 | `VALIDATION_FAILED` | Input fields are missing or invalid. |
-| 401 | `UNAUTHORIZED` | Bearer token is missing or expired. |
-| 403 | `FORBIDDEN` | User does not have required permissions. |
-| 404 | `NOT_FOUND` | The requested entity (Series/Chapter) does not exist. |
-| 429 | `RATE_LIMIT` | Too many requests from this IP/Account. |
-| 500 | `INTERNAL_ERROR` | Server-side crash or SQL failure. |
+| `id` | `char(6)` | Unique ID |
+| `title` | `string` | Full title |
+| `cover_image` | `string` | Full or relative URL |
+| `type` | `string` | manga, novel, etc. |
+| `status` | `string` | ongoing, completed |
 
----
-
-## 6. Development Tips for AI Agents
-- **Images**: If `cover_image` is relative, prefix it with the base domain.
-- **Caching**: The `/home` and `/content` endpoints are cached for 5 minutes.
-- **Markdown**: Blog bodies and Text chapters use GitHub-flavored Markdown.
-- **Types**: Always check the `type` field in content lists to route to `/manga/` or `/novel/` pages.
+### ChapterDto
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `char(6)` | Unique ID |
+| `chapter_number` | `string` | e.g. "1", "1.5" |
+| `title` | `string` | Chapter title |
