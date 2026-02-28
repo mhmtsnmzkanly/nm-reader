@@ -94,8 +94,20 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Database Schema Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: `profile/memo` (User: memo) was failing with `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'c.content_id' in 'SELECT'`.
+- **Root Cause**: The `social_comments` table was missing the `content_id` column which is used to link comments directly to a series.
+- **Fix**:
+  - Updated `app/database/schema.sql` to include `content_id` and `fk_comments_series` in `social_comments`.
+  - Recommended SQL for existing installations:
+    ```sql
+    ALTER TABLE social_comments ADD COLUMN content_id char(6) DEFAULT NULL AFTER user_id;
+    ALTER TABLE social_comments ADD CONSTRAINT fk_comments_series FOREIGN KEY (content_id) REFERENCES series(id) ON DELETE CASCADE;
+    ```
 
 ### Google Analytics 4 Integration (2026-02-28)
+...
 - **Status**: Completed.
 - **Components**:
   - Integrated `gtag.js` in `storage/views/layout_main.php`.

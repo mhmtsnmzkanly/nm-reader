@@ -209,6 +209,7 @@ DROP TABLE IF EXISTS `social_comments`;
 CREATE TABLE `social_comments` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` char(8) NOT NULL,
+  `content_id` char(6) DEFAULT NULL,
   `chapter_id` char(6) DEFAULT NULL,
   `blog_id` char(6) DEFAULT NULL,
   `parent_id` bigint(20) unsigned DEFAULT NULL,
@@ -218,7 +219,8 @@ CREATE TABLE `social_comments` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_comments_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_comments_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_comments_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
