@@ -40,7 +40,7 @@ final class Config
 
     private static function env(string $key, mixed $default = null): mixed
     {
-        $val = $_ENV[$key] ?? getenv($key);
+        $val = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
         if ($val === false || $val === null || $val === '') return $default;
         if (is_string($val)) {
             $lower = strtolower($val);

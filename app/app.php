@@ -10,7 +10,7 @@ $basePath = dirname(__DIR__);
 
 // Load environment variables
 if (file_exists($basePath . '/.env')) {
-    $dotenv = Dotenv::createImmutable($basePath);
+    $dotenv = Dotenv::createUnsafeImmutable($basePath);
     $dotenv->load();
 }
 
