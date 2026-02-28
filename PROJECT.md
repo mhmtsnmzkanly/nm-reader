@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Refined CSP for Cloudflare Turnstile (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Browser warnings about implicit `script-src` and internal Turnstile logs.
+- **Fix**: 
+  - Added `script-src-elem` explicitly.
+  - Added `worker-src` and `child-src` for `https://challenges.cloudflare.com`.
+
 ### CSP Update for Cloudflare Insights (2026-02-28)
 - **Status**: Completed.
 - **Problem**: `static.cloudflareinsights.com/beacon.min.js` was blocked by the CSP.
