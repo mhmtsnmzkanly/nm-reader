@@ -31,18 +31,21 @@ final class SeriesRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $sql = 'SELECT 
-                    id,
-                    title,
-                    slug,
-                    type,
-                    status,
-                    rating_avg,
-                    rating_count,
-                    chapter_count,
-                    comment_count,
-                    cover_image
-                FROM series
-                ORDER BY rating_count DESC, rating_avg DESC, chapter_count DESC
+                    c.id,
+                    c.title,
+                    c.slug,
+                    c.type,
+                    c.status,
+                    c.rating_avg,
+                    c.rating_count,
+                    c.chapter_count,
+                    c.comment_count,
+                    c.cover_image,
+                    cm.author,
+                    cm.artist
+                FROM series c
+                LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                ORDER BY c.rating_count DESC, c.rating_avg DESC, c.chapter_count DESC
                 LIMIT :limit OFFSET :offset';
 
         $stmt = $this->pdo->prepare($sql);
@@ -69,9 +72,12 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
+                    cm.author,
+                    cm.artist,
                     MAX(ch.created_at) as last_chapter_at
                 FROM series c
                 INNER JOIN chapters ch ON ch.content_id = c.id
+                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 GROUP BY c.id
                 ORDER BY last_chapter_at DESC
                 LIMIT :limit';
@@ -89,18 +95,21 @@ final class SeriesRepository
     public function getRecentlyAdded(int $limit): array
     {
         $sql = 'SELECT 
-                    id,
-                    title,
-                    slug,
-                    type,
-                    status,
-                    rating_avg,
-                    rating_count,
-                    chapter_count,
-                    comment_count,
-                    cover_image
-                FROM series
-                ORDER BY created_at DESC
+                    c.id,
+                    c.title,
+                    c.slug,
+                    c.type,
+                    c.status,
+                    c.rating_avg,
+                    c.rating_count,
+                    c.chapter_count,
+                    c.comment_count,
+                    c.cover_image,
+                    cm.author,
+                    cm.artist
+                FROM series c
+                LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                ORDER BY c.created_at DESC
                 LIMIT :limit';
 
         $stmt = $this->pdo->prepare($sql);
@@ -289,19 +298,22 @@ final class SeriesRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $sql = 'SELECT 
-                    id,
-                    title,
-                    slug,
-                    type,
-                    status,
-                    rating_avg,
-                    rating_count,
-                    chapter_count,
-                    comment_count,
-                    cover_image
-                FROM series
-                WHERE type = :type
-                ORDER BY rating_count DESC, created_at DESC
+                    c.id,
+                    c.title,
+                    c.slug,
+                    c.type,
+                    c.status,
+                    c.rating_avg,
+                    c.rating_count,
+                    c.chapter_count,
+                    c.comment_count,
+                    c.cover_image,
+                    cm.author,
+                    cm.artist
+                FROM series c
+                LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                WHERE c.type = :type
+                ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
         $stmt = $this->pdo->prepare($sql);
@@ -329,10 +341,13 @@ final class SeriesRepository
                     c.rating_count,
                     c.chapter_count,
                     c.comment_count,
-                    c.cover_image
+                    c.cover_image,
+                    cm.author,
+                    cm.artist
                 FROM series c
                 INNER JOIN series_genre_map cg ON cg.content_id = c.id
                 INNER JOIN series_genres g ON g.id = cg.genre_id
+                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE g.slug = :slug
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
@@ -362,10 +377,13 @@ final class SeriesRepository
                     c.rating_count,
                     c.chapter_count,
                     c.comment_count,
-                    c.cover_image
+                    c.cover_image,
+                    cm.author,
+                    cm.artist
                 FROM series c
                 INNER JOIN series_tag_map ct ON ct.content_id = c.id
                 INNER JOIN series_tags t ON t.id = ct.tag_id
+                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE t.slug = :slug
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
@@ -390,25 +408,32 @@ final class SeriesRepository
     public function search(string $query, int $page, int $perPage): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $searchParam = '%' . $query . '%';
+
         $ftsSql = 'SELECT
-                       id,
-                       title,
-                       slug,
-                       type,
-                       status,
-                       rating_avg,
-                       rating_count,
-                       chapter_count,
-                       comment_count,
-                       cover_image
-                   FROM series
-                   WHERE MATCH(title, slug, description) AGAINST(:q IN BOOLEAN MODE)
-                   ORDER BY rating_count DESC, created_at DESC
+                       c.id,
+                       c.title,
+                       c.slug,
+                       c.type,
+                       c.status,
+                       c.rating_avg,
+                       c.rating_count,
+                       c.chapter_count,
+                       c.comment_count,
+                       c.cover_image,
+                       cm.author,
+                       cm.artist
+                   FROM series c
+                   LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                   WHERE MATCH(c.title, c.slug, c.description) AGAINST(:q IN BOOLEAN MODE)
+                      OR cm.author LIKE :q_like OR cm.artist LIKE :q_like
+                   ORDER BY c.rating_count DESC, c.created_at DESC
                    LIMIT :limit OFFSET :offset';
 
         try {
             $stmt = $this->pdo->prepare($ftsSql);
             $stmt->bindValue(':q', $this->toBooleanSearchQuery($query), PDO::PARAM_STR);
+            $stmt->bindValue(':q_like', $searchParam, PDO::PARAM_STR);
             $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
@@ -421,26 +446,34 @@ final class SeriesRepository
         }
 
         $likeSql = 'SELECT
-                        id,
-                        title,
-                        slug,
-                        type,
-                        status,
-                        rating_avg,
-                        rating_count,
-                        chapter_count,
-                        comment_count,
-                        cover_image
-                    FROM series
-                    WHERE title LIKE :query1 OR slug LIKE :query2 OR description LIKE :query3
-                    ORDER BY rating_count DESC, created_at DESC
+                        c.id,
+                        c.title,
+                        c.slug,
+                        c.type,
+                        c.status,
+                        c.rating_avg,
+                        c.rating_count,
+                        c.chapter_count,
+                        c.comment_count,
+                        c.cover_image,
+                        cm.author,
+                        cm.artist
+                    FROM series c
+                    LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                    WHERE c.title LIKE :query1 
+                       OR c.slug LIKE :query2 
+                       OR c.description LIKE :query3
+                       OR cm.author LIKE :query4
+                       OR cm.artist LIKE :query5
+                    ORDER BY c.rating_count DESC, c.created_at DESC
                     LIMIT :limit OFFSET :offset';
 
         $stmt = $this->pdo->prepare($likeSql);
-        $searchParam = '%' . $query . '%';
         $stmt->bindValue(':query1', $searchParam);
         $stmt->bindValue(':query2', $searchParam);
         $stmt->bindValue(':query3', $searchParam);
+        $stmt->bindValue(':query4', $searchParam);
+        $stmt->bindValue(':query5', $searchParam);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -582,9 +615,12 @@ final class SeriesRepository
                     c.rating_count,
                     c.chapter_count,
                     c.comment_count,
-                    c.created_at
+                    c.created_at,
+                    cm.author,
+                    cm.artist
                 FROM user_series_follows ucf
                 INNER JOIN series c ON c.id = ucf.content_id
+                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE ucf.user_id = :user_id
                 ORDER BY c.created_at DESC
                 LIMIT :limit OFFSET :offset';

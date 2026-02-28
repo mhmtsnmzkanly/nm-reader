@@ -58,7 +58,10 @@ $(function () {
           <span class="badge position-absolute top-0 right-0 m-2 text-xs" style="background:${getTypeColor(item.type)}">${String(item.type || "").toUpperCase()}</span>
         </div>
         <div class="p-3">
-          <h4 class="mb-1" title="${item.title}">${item.title}</h4>
+          <h4 class="mb-1 truncate" title="${item.title}">${item.title}</h4>
+          <p class="text-xs text-muted mb-2 truncate author-text">
+            👤 ${item.author || window.NMR.__t('unknown')}
+          </p>
           <div class="flex justify-between items-center text-xs text-muted">
             <span>⭐ ${item.rating_avg ?? "-"}</span>
             <span>${item.chapter_count ?? 0} Chapters</span>

@@ -299,6 +299,14 @@ footer {
     white-space: nowrap;
 }
 
+.author-text {
+    opacity: 0.85;
+}
+
+.hover-primary:hover {
+    color: var(--primary) !important;
+}
+
 /* Profile Modern UI */
 .profile-header {
     height: 380px;

@@ -60,7 +60,13 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
                     <div class="hero-meta-strip">
                         <div class="flex items-center gap-2">
                             <span class="text-white-50 opacity-70"><?= $__t('author') ?>:</span>
-                            <span class="font-bold"><?= !empty($content['author']) ? htmlspecialchars((string)$content['author']) : $__t('unknown') ?></span>
+                            <?php if (!empty($content['author'])): ?>
+                                <a href="<?= $url('/search?q=' . urlencode((string)$content['author'])) ?>" class="font-bold text-white hover-primary transition-all">
+                                    <?= htmlspecialchars((string)$content['author']) ?>
+                                </a>
+                            <?php else: ?>
+                                <span class="font-bold"><?= $__t('unknown') ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-white-50 opacity-70"><?= $__t('status') ?>:</span>
@@ -136,15 +142,33 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">🎨 <?= $__t('artist') ?></span>
-                            <span class="stat-value"><?= !empty($content['artist']) ? htmlspecialchars((string)$content['artist']) : $__t('unknown') ?></span>
+                            <?php if (!empty($content['artist'])): ?>
+                                <a href="<?= $url('/search?q=' . urlencode((string)$content['artist'])) ?>" class="stat-value hover-primary transition-all">
+                                    <?= htmlspecialchars((string)$content['artist']) ?>
+                                </a>
+                            <?php else: ?>
+                                <span class="stat-value"><?= $__t('unknown') ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">🌍 <?= $__t('country') ?></span>
-                            <span class="stat-value"><?= !empty($content['country']) ? htmlspecialchars((string)$content['country']) : $__t('unknown') ?></span>
+                            <?php if (!empty($content['country'])): ?>
+                                <a href="<?= $url('/search?q=' . urlencode((string)$content['country'])) ?>" class="stat-value hover-primary transition-all">
+                                    <?= htmlspecialchars((string)$content['country']) ?>
+                                </a>
+                            <?php else: ?>
+                                <span class="stat-value"><?= $__t('unknown') ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">🚀 <?= $__t('release') ?></span>
-                            <span class="stat-value"><?= (!empty($content['release_year']) && $content['release_year'] !== '0') ? htmlspecialchars((string)$content['release_year']) : $__t('unknown') ?></span>
+                            <?php if (!empty($content['release_year']) && $content['release_year'] !== '0'): ?>
+                                <a href="<?= $url('/search?q=' . urlencode((string)$content['release_year'])) ?>" class="stat-value hover-primary transition-all">
+                                    <?= htmlspecialchars((string)$content['release_year']) ?>
+                                </a>
+                            <?php else: ?>
+                                <span class="stat-value"><?= $__t('unknown') ?></span>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

@@ -127,6 +127,34 @@ final class WebController
         );
         $cover = (string) ($content["cover_image"] ?? "");
 
+        $author = (string) ($content["author"] ?? "");
+        $releaseYear = (string) ($content["release_year"] ?? "");
+
+        $jsonLd = [
+            "@context" => "https://schema.org",
+            "@type" => "Book",
+            "name" => $title,
+            "url" => $this->absoluteUrl(
+                $request,
+                sprintf("/%s/%s", $type, $slug),
+            ),
+            "description" => $description,
+            "image" => $cover,
+            "datePublished" =>
+                (string) ($content["created_at"] ?? gmdate("Y-m-d H:i:s")),
+        ];
+
+        if ($author !== "") {
+            $jsonLd["author"] = [
+                "@type" => "Person",
+                "name" => $author
+            ];
+        }
+
+        if ($releaseYear !== "" && $releaseYear !== "0") {
+            $jsonLd["copyrightYear"] = $releaseYear;
+        }
+
         $seo = [
             "title" => sprintf("%s - %s Oku", $title, ucfirst($type)),
             "description" =>
@@ -136,19 +164,7 @@ final class WebController
             "type" => "book",
             "image" => $cover,
             "robots" => "index,follow",
-            "json_ld" => [
-                "@context" => "https://schema.org",
-                "@type" => "Book",
-                "name" => $title,
-                "url" => $this->absoluteUrl(
-                    $request,
-                    sprintf("/%s/%s", $type, $slug),
-                ),
-                "description" => $description,
-                "image" => $cover,
-                "datePublished" =>
-                    (string) ($content["created_at"] ?? gmdate("Y-m-d H:i:s")),
-            ],
+            "json_ld" => $jsonLd,
         ];
 
         return $this->render(
