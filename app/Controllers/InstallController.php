@@ -86,7 +86,9 @@ final class InstallController
 
             // 4. Generate .env file
             $envContent = $this->generateEnv($db, $userId);
-            file_put_contents($this->basePath . '/.env', $envContent);
+            if (file_put_contents($this->basePath . '/.env', $envContent) === false) {
+                throw new \Exception('Failed to write .env file. Please check directory permissions.');
+            }
 
             return ResponseHelper::success(['message' => 'Installation successful! Please refresh the page.']);
         } catch (\Throwable $e) {
@@ -103,6 +105,32 @@ APP_ENV=production
 APP_DEBUG=false
 APP_URL=http://localhost:8080
 APP_TIMEZONE=UTC
+
+# Site Identity
+SITE_NAME=NovelMangaReader
+SITE_ABBREVIATION=NMR
+SITE_DESCRIPTION="Read manga, manhwa, webtoon and novels for free on NovelMangaReader."
+SITE_LOGO=/assets/img/logo.svg
+SITE_ADDRESS=http://localhost:8080
+
+# Default User Experience
+DEFAULT_LANGUAGE=tr
+DEFAULT_THEME=dark
+DEFAULT_PROFILE_IMAGE=/assets/img/default-profile.png
+DEFAULT_CONTENT_COVER_IMAGE=/assets/img/covers/one-piece.jpg
+
+# Session & Tokens
+SESSION_LIFETIME=7200
+REFRESH_TOKEN_DAYS=30
+CACHE_TTL=300
+
+# Security
+ENFORCE_HTTPS=false
+
+# Integrations
+GOOGLE_ANALYTICS_ID=""
+GOOGLE_RECAPTCHA_SITE_KEY=""
+GOOGLE_RECAPTCHA_SECRET_KEY=""
 
 # Database Settings
 DB_HOST={$db['host']}
