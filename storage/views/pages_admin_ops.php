@@ -25,7 +25,6 @@
               <input type="number" id="jobs-limit" class="form-control" value="5">
               <button class="btn btn-primary" id="btn-run-jobs">Execute Jobs</button>
             </div>
-            <button class="btn btn-outline-secondary btn-sm mt-2 w-100" id="btn-run-jobs-legacy">Execute Legacy Jobs</button>
           </div>
         </div>
       </div>
@@ -34,8 +33,11 @@
           <div class="card-header border-0"><h3 class="card-title">Retention & Cleanup</h3></div>
           <div class="card-body text-center">
             <p class="text-muted fs-8">Remove old audit logs, expired tokens, and inactive sessions.</p>
+            <div class="input-group input-group-sm mb-2">
+              <span class="input-group-text">Retention Days</span>
+              <input type="number" id="cleanup-days" class="form-control" value="30">
+            </div>
             <button class="btn btn-danger btn-sm w-100" id="btn-run-cleanup">Perform System Cleanup</button>
-            <button class="btn btn-outline-danger btn-sm w-100 mt-2" id="btn-run-cleanup-legacy">Legacy Cleanup Endpoint</button>
           </div>
         </div>
       </div>
