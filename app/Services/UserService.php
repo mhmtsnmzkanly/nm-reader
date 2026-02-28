@@ -372,8 +372,17 @@ final class UserService
      */
     public function notifications(string $userId, int $page, int $perPage): array
     {
-        $rows = $this->users->listNotifications($userId, $page, $perPage);
-        return OutputSanitizer::sanitizeRows($rows, ['title', 'body', 'actor_username']);
+        try {
+            $rows = $this->users->listNotifications($userId, $page, $perPage);
+            if (!is_array($rows)) {
+                return [];
+            }
+            return OutputSanitizer::sanitizeRows($rows, ['title', 'body', 'actor_username']);
+        } catch (\Throwable $e) {
+            // Log the error for diagnosis but don't crash the entire page load
+            error_log('UserService::notifications error: ' . $e->getMessage());
+            return [];
+        }
     }
 
     /**
