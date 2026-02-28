@@ -19,8 +19,55 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class AuthController
 {
-    public function __construct(private readonly AuthService $authService)
+    public function __construct(
+        private readonly AuthService $authService,
+        private readonly \App\Services\SiteConfigService $siteConfig
+    ) {
+    }
+
+    /**
+     * Verifies the Cloudflare Turnstile token.
+     */
+    private function verifyTurnstile(array $payload, string $ip): void
     {
+        $siteKey = $this->siteConfig->get('integrations')['cloudflare_turnstile_site_key'] ?? '';
+        $secretKey = $this->siteConfig->get('integrations')['cloudflare_turnstile_secret_key'] ?? '';
+
+        if (empty($siteKey) || empty($secretKey)) {
+            return;
+        }
+
+        $token = (string) ($payload['turnstile_token'] ?? '');
+        if ($token === '') {
+            throw new \InvalidArgumentException('Please complete the security check.');
+        }
+
+        $url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+        $data = [
+            'secret' => $secretKey,
+            'response' => $token,
+            'remoteip' => $ip
+        ];
+
+        $options = [
+            'http' => [
+                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method'  => 'POST',
+                'content' => http_build_query($data)
+            ]
+        ];
+
+        $context  = stream_context_create($options);
+        $result = @file_get_contents($url, false, $context);
+        
+        if ($result === false) {
+            return; // Fail gracefully if API is down
+        }
+
+        $response = json_decode($result, true);
+        if (!($response['success'] ?? false)) {
+            throw new \InvalidArgumentException('Security check failed. Please try again.');
+        }
     }
 
     /**
@@ -34,6 +81,9 @@ final class AuthController
     {
         try {
             $payload = (array) $request->getParsedBody();
+            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $this->verifyTurnstile($payload, $ip);
+
             $user = $this->authService->register($payload);
             return ResponseHelper::created($user);
         } catch (\InvalidArgumentException $exception) {
@@ -56,6 +106,9 @@ final class AuthController
             $payload = (array) $request->getParsedBody();
             $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
             $ua = (string) ($request->getHeaderLine('User-Agent') ?: 'unknown');
+            
+            $this->verifyTurnstile($payload, $ip);
+            
             $user = $this->authService->login($payload, $ip, $ua);
 
             $res = ResponseHelper::success($user);

@@ -253,20 +253,38 @@ $(function () {
     // Event Delegation: Auth Forms
     $('body').on('submit', '#loginForm', async function (e) {
       e.preventDefault();
+      const fd = new FormData(this);
       try {
-        await Connection.login($(this).find('input[type="email"]').val(), $(this).find('input[type="password"]').val());
+        await Connection.login(
+          $(this).find('input[type="email"]').val(), 
+          $(this).find('input[type="password"]').val(),
+          $('#loginRemember').is(':checked'),
+          fd.get('cf-turnstile-response')
+        );
         showPopup(NMR.__t('msg_login_success'), 'success');
         setTimeout(() => location.reload(), 1000);
-      } catch (err) { showPopup(err.message || NMR.__t('msg_generic_error'), 'error'); }
+      } catch (err) { 
+        showPopup(err.message || NMR.__t('msg_generic_error'), 'error'); 
+        if (window.turnstile) turnstile.reset('#loginForm .cf-turnstile');
+      }
     });
 
     $('body').on('submit', '#registerForm', async function (e) {
       e.preventDefault();
+      const fd = new FormData(this);
       try {
-        await Connection.register($(this).find('input[type="text"]').val(), $(this).find('input[type="email"]').val(), $(this).find('input[type="password"]').val());
+        await Connection.register(
+          $(this).find('input[type="text"]').val(), 
+          $(this).find('input[type="email"]').val(), 
+          $(this).find('input[type="password"]').val(),
+          fd.get('cf-turnstile-response')
+        );
         showPopup(NMR.__t('msg_register_success'), 'success');
         openModal('loginModal');
-      } catch (err) { showPopup(err.message || NMR.__t('msg_generic_error'), 'error'); }
+      } catch (err) { 
+        showPopup(err.message || NMR.__t('msg_generic_error'), 'error'); 
+        if (window.turnstile) turnstile.reset('#registerForm .cf-turnstile');
+      }
     });
 
     // Event Delegation: Global UI Actions

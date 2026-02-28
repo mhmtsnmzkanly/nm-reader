@@ -110,6 +110,8 @@ final class Config
                 'google_analytics_id' => (string) self::env('GOOGLE_ANALYTICS_ID', ''),
                 'google_recaptcha_site_key' => (string) self::env('GOOGLE_RECAPTCHA_SITE_KEY', ''),
                 'google_recaptcha_secret_key' => (string) self::env('GOOGLE_RECAPTCHA_SECRET_KEY', ''),
+                'cloudflare_turnstile_site_key' => (string) self::env('CLOUDFLARE_TURNSTILE_SITE_KEY', ''),
+                'cloudflare_turnstile_secret_key' => (string) self::env('CLOUDFLARE_TURNSTILE_SECRET_KEY', ''),
             ],
         ];
     }

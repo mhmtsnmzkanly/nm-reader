@@ -48,6 +48,10 @@
   <script src="/assets/js/connection.js"></script>
   <script src="/assets/js/main.js"></script>
   
+  <?php if (!empty($siteConfig['integrations']['cloudflare_turnstile_site_key'] ?? '')): ?>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <?php endif; ?>
+  
   <?php if (!empty($siteConfig['integrations']['google_analytics_id'] ?? '')): ?>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=<?= htmlspecialchars($siteConfig['integrations']['google_analytics_id']) ?>"></script>

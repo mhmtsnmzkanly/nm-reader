@@ -94,6 +94,17 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Cloudflare Turnstile Integration (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Need bot protection for Login and Register forms.
+- **Fix**:
+  - Added `CLOUDFLARE_TURNSTILE_SITE_KEY` and `CLOUDFLARE_TURNSTILE_SECRET_KEY` to `app/Config.php` and `.env.example`.
+  - Updated CSP in `app/middleware.php` to allow `challenges.cloudflare.com`.
+  - Included Turnstile JS in `storage/views/layout_main.php`.
+  - Added Turnstile widget to Login and Register modals in `storage/views/partials_modals.php`.
+  - Updated `public/assets/js/connection.js` and `public/assets/js/main.js` to pass the Turnstile token to the backend.
+  - Implemented backend verification in `app/Controllers/AuthController.php`.
+
 ### Follow Action 500 Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Follow/Unfollow actions were returning 500.

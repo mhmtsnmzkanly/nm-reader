@@ -153,13 +153,13 @@ const Connection = (function () {
     }),
 
     // --- Authentication ---
-    login: (email, password, remember = false) => request('/auth/login', {
+    login: (email, password, remember = false, turnstileToken = null) => request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password, remember })
+      body: JSON.stringify({ email, password, remember, turnstile_token: turnstileToken })
     }),
-    register: (username, email, password) => request('/auth/register', {
+    register: (username, email, password, turnstileToken = null) => request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username, email, password })
+      body: JSON.stringify({ username, email, password, turnstile_token: turnstileToken })
     }),
     logout: () => request('/auth/logout', { method: 'POST' }),
     refresh: (refreshToken) => request('/auth/refresh', { method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }) }),
