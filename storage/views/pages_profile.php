@@ -4,6 +4,7 @@
 /** @var array $history */
 /** @var array $library */
 /** @var array $preferences */
+/** @var string $person */
 /** @var callable $__t */
 
 $user = $profile["user"] ?? [];
@@ -12,8 +13,8 @@ $isFollowing = $profile["is_following"] ?? false;
 $blogs = $profile["blogs"] ?? [];
 $comments = $profile["recent_comments"] ?? [];
 
-$defaultAvatar = "/assets/img/user.png";
-$defaultCover = "/assets/img/default-cover.png";
+$defaultAvatar = "//api.dicebear.com/9.x/bottts/svg";
+$defaultCover = "//placehold.co/1200x400?text=Profile\nCover";
 ?>
 
 <div class="container py-5" id="profileApp">
@@ -146,6 +147,7 @@ $defaultCover = "/assets/img/default-cover.png";
 
 <script>
     window.__NMR_CONTEXT = window.__NMR_CONTEXT || {};
+    window.__NMR_CONTEXT.person = <?= json_encode($person ?? "") ?>;
     window.__NMR_CONTEXT.user = <?= json_encode($user) ?>;
     window.__NMR_CONTEXT.preferences = <?= json_encode($preferences) ?>;
 </script>

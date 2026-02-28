@@ -94,6 +94,15 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Profile UI & Social Fix (2026-02-28)
+- **Status**: Completed.
+- **Problem**: 
+  - Profile page was showing 404 for missing `user.png` and `default-cover.png`.
+  - Follow button was failing with 405 because `window.__NMR_CONTEXT.person` was missing.
+- **Fix**:
+  - Updated `storage/views/pages_profile.php` to use CDN placeholders for default images.
+  - Injected `person` variable into the JavaScript context in `pages_profile.php`.
+
 ### Database Schema Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: `profile/memo` (User: memo) was failing with `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'c.content_id' in 'SELECT'`.
