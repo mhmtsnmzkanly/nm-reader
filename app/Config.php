@@ -232,18 +232,9 @@ final class Config
             $group->post('/auth/refresh', [AuthController::class, 'refresh'])
                 ->add(new RateLimitMiddleware($cache, 'refresh', 20, 60));
 
+            $group->map(['GET', 'POST'], '/auth/logout', [AuthController::class, 'logout']);
+
             $group->group('', function (RouteCollectorProxy $secure) use ($typePattern, $users): void {
-                $secure->post('/content/{type:' . $typePattern . '}/{slug}/follow', [SeriesController::class, 'followByType']);
-                $secure->delete('/content/{type:' . $typePattern . '}/{slug}/follow', [SeriesController::class, 'unfollowByType']);
-                $secure->post('/content/{type:' . $typePattern . '}/{slug}/rate', [RatingController::class, 'rateByType']);
-                $secure->post('/chapter/{chapterId:[a-z0-9]{6}}/comment', [CommentController::class, 'create'])->add(new RestrictedActionMiddleware($users, 'commenting'));
-                $secure->post('/comments/{commentId:[0-9]+}/vote', [CommentController::class, 'vote'])->add(new RestrictedActionMiddleware($users, 'voting'));
-                $secure->post('/user/profile', [UserController::class, 'updateProfile']);
-                $secure->get('/user/profile', [UserController::class, 'profile']);
-                $secure->get('/user/history', [UserController::class, 'history']);
-                $secure->get('/user/preferences', [UserController::class, 'preferences']);
-                $secure->put('/user/preferences', [UserController::class, 'updatePreferences']);
-                $secure->post('/auth/logout', [AuthController::class, 'logout']);
                 $secure->get('/user/follows', [SeriesController::class, 'followed']);
                 $secure->get('/user/blogs', [BlogController::class, 'listMyBlogs']);
                 $secure->post('/blogs', [BlogController::class, 'create'])->add(new RestrictedActionMiddleware($users, 'blog creation'));

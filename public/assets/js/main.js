@@ -204,7 +204,7 @@ $(function () {
             <a href="#" class="dropdown-item" onclick="openModal('readerSettingsModal');return false;">⚙️ ${NMR.__t('reader_settings')}</a>
             ${adminLink}
             <hr class="my-1 border-0 border-t opacity-10">
-            <button class="dropdown-item text-danger w-100 text-left btn-none" id="realLogoutBtn">🚪 ${NMR.__t('logout')}</button>
+            <a class="dropdown-item text-danger w-100 text-left" href="/logout">🚪 ${NMR.__t('logout')}</a>
           </div>
         </div>
       `);
@@ -288,23 +288,6 @@ $(function () {
     });
 
     // Event Delegation: Global UI Actions
-    $('body').on('click', '#realLogoutBtn', async function (e) {
-      e.preventDefault();
-      try {
-        await Connection.logout();
-      } catch (err) {
-        console.error('Logout API failed, forcing client-side cleanup', err);
-      } finally {
-        sessionStorage.clear();
-        // Manually expire known cookies just in case
-        document.cookie = 'nm_remember=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        document.cookie = 'nm_reader_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        
-        // Hard redirect to home
-        window.location.href = '/' + window.NMR.getLangPrefix() + '/';
-      }
-    });
-
     $('body').on('click', '#headerNotifBtn', async function (e) {
       e.preventDefault();
       openModal('notifModal');

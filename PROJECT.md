@@ -94,6 +94,14 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Failsafe Logout Implementation (2026-02-28)
+- **Status**: Completed.
+- **Problem**: AJAX-based logout was unreliable due to session/CSRF state conflicts.
+- **Fix**:
+  - Moved logout route to a top-level GET/POST route `/logout` in `app/Config.php`, bypassing strict CSRF/Auth middleware.
+  - Converted the logout button in the UI (`main.js`) from a button with an AJAX listener to a standard `<a>` link to `/logout`.
+  - This ensures the browser performs a full navigation, forcing the server to kill the session and the browser to reload all state.
+
 ### Aggressive Logout Reliability (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Logout button was still failing for some users.
