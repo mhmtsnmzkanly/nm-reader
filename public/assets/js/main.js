@@ -288,8 +288,17 @@ $(function () {
     });
 
     // Event Delegation: Global UI Actions
-    $('body').on('click', '#realLogoutBtn', () => {
-      Connection.logout().finally(() => { location.href = '/'; });
+    $('body').on('click', '#realLogoutBtn', async function (e) {
+      e.preventDefault();
+      try {
+        await Connection.logout();
+      } catch (err) {
+        console.error('Logout API failed, forcing client-side cleanup', err);
+      } finally {
+        sessionStorage.removeItem('csrf_token');
+        // Force a hard redirect to the home page to clear any remaining in-memory state
+        location.href = '/' + window.NMR.getLangPrefix() + '/';
+      }
     });
 
     $('body').on('click', '#headerNotifBtn', async function (e) {

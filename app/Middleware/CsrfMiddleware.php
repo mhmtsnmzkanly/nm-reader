@@ -33,6 +33,11 @@ final class CsrfMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
+        // Skip CSRF for logout to prevent edge cases when session is expiring
+        if ($request->getUri()->getPath() === '/api/v1/auth/logout') {
+            return $handler->handle($request);
+        }
+
         $headerToken = $request->getHeaderLine('X-CSRF-Token');
         $sessionToken = $_SESSION['csrf_token'] ?? null;
 

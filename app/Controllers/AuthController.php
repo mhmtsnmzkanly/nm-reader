@@ -161,13 +161,23 @@ final class AuthController
     {
         $this->authService->logout(isset($_SESSION['session_key']) ? (string) $_SESSION['session_key'] : null);
         
+        // Thoroughly clear session data
+        $_SESSION = [];
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params["path"], $params["domain"],
+                $params["secure"], $params["httponly"]
+            );
+        }
         if (session_status() === PHP_SESSION_ACTIVE) {
-            session_unset();
             session_destroy();
         }
 
-        $res = ResponseHelper::success(['logged_out' => true])
-            ->withHeader('Set-Cookie', 'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax');
+        $res = ResponseHelper::success(['logged_out' => true]);
+        
+        // Expire remember-me cookie
+        $res = $res->withHeader('Set-Cookie', 'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax');
 
         if ($request->getMethod() === 'GET') {
             return $res->withStatus(302)->withHeader('Location', '/');

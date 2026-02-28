@@ -94,6 +94,14 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Logout Fix & Robustness (2026-02-28)
+- **Status**: Completed.
+- **Problem**: Logout button was not reliably logging users out.
+- **Fix**:
+  - Improved `AuthController::logout` to thoroughly clear `$_SESSION` and expire the session cookie.
+  - Updated `CsrfMiddleware` to skip validation for the logout endpoint to avoid 419 errors during session transitions.
+  - Refactored `main.js` to clear `sessionStorage` and force a localized hard redirect after logout.
+
 ### Performance & CLS Optimizations (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Poor performance metrics (FCP 3.0s, CLS 0.839).
