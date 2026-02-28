@@ -79,10 +79,9 @@ final class InstallController
 
             // 3. Create Admin User
             $userId = EntityIdService::generate();
-            $hashedPassword = password_hash($admin['password'], PASSWORD_DEFAULT);
+            $hashedPassword = password_hash($admin['password'], PASSWORD_BCRYPT, ['cost' => 12]);
             
-            // Check if roles exist (schema.sql should have created them)
-            $stmt = $pdo->prepare("INSERT INTO users (id, username, email, password, roles, created_at) VALUES (?, ?, ?, ?, '1', NOW())");
+            $stmt = $pdo->prepare("INSERT INTO users (id, username, email, password_hash, roles, created_at) VALUES (?, ?, ?, ?, '1', NOW())");
             $stmt->execute([$userId, $admin['username'], $admin['email'], $hashedPassword]);
 
             // 4. Generate .env file
