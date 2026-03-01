@@ -94,6 +94,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Browser Cache Busting (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Persistent 404 errors on comment submission despite code fixes, likely due to browsers caching old JavaScript files.
+- **Fix**: Added dynamic versioning (timestamp-based cache busting) to `content.js` and `connection.js` script inclusions to ensure clients always load the latest logic.
+
 ### Taxonomy Visibility Fix (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Not all genres and tags were appearing in the content management modals.

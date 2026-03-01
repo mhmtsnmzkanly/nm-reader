@@ -192,7 +192,7 @@ final class WebController
                 "ssr_data" => $content,
                 "start_chapter_number" => $startChapterNumber,
             ],
-            ["/assets/js/content.js"],
+            ["/assets/js/content.js?v=" . time()],
             $seo["title"],
             "container",
             $seo,
