@@ -197,7 +197,7 @@ $(function () {
       const adminLink = (ctx.auth && ctx.auth.is_admin) ? `<a href="/${lang}/admin" class="dropdown-item text-warning">🛠 ${NMR.__t('admin_panel')}</a>` : '';
       authTarget.html(`
         <div class="dropdown">
-          <button class="nav-link dropdown-toggle btn-none" onclick="event.stopPropagation(); this.parentElement.classList.toggle('active')">👤 ${window.NMR.currentUser} <span id="headerNotifBadge" class="badge bg-danger hidden">0</span></button>
+          <button class="nav-link dropdown-toggle btn-none">👤 ${window.NMR.currentUser} <span id="headerNotifBadge" class="badge bg-danger hidden">0</span></button>
           <div class="dropdown-menu card p-2" style="right: 0; left: auto; min-width: 200px">
             <a href="/${lang}/profile" class="dropdown-item">👤 ${NMR.__t('my_profile')}</a>
             <a href="#" class="dropdown-item" id="headerNotifBtn">🔔 ${NMR.__t('notifications')}</a>
@@ -436,6 +436,16 @@ $(function () {
     });
 
     $('body').on('click', '.modal-overlay', function (e) { if (e.target === this) closeModal(); });
+
+    // Dropdown Toggle (Event Delegation)
+    $('body').on('click', '.dropdown-toggle', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const $parent = $(this).parent();
+      const isActive = $parent.hasClass('active');
+      $('.dropdown').removeClass('active');
+      if (!isActive) $parent.addClass('active');
+    });
   };
 
   init();
