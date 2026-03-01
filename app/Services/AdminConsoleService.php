@@ -315,7 +315,7 @@ final class AdminConsoleService
     public function updateContentTaxonomy(string $contentId, array $genreIds, array $tagIds, string $moderatorId): void
     {
         $this->repo->updateContentTaxonomy($contentId, $genreIds, $tagIds);
-        $this->repo->createModerationAction($moderatorId, 'series', $contentId, 'update_taxonomy', 'Genre/Tag assignments updated');
+        $this->repo->createModerationAction($moderatorId, 'content', $contentId, 'update', 'Genre/Tag assignments updated');
     }
 
     public function cleanupRetention(int $days): array

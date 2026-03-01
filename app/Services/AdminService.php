@@ -121,7 +121,7 @@ final class AdminService
         $this->upsertContentMetadata($id, $author, $artist, $country, $releaseYear);
 
         if ($moderatorId !== null) {
-            $this->adminConsole->createModerationAction($moderatorId, 'series', $id, 'create', "New series created: $title");
+            $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'update', "New series created: $title");
         }
 
         $this->invalidateListingCaches();
@@ -207,7 +207,7 @@ final class AdminService
             $this->upsertContentMetadata($id, $author, $artist, $country, $releaseYear);
 
             if ($moderatorId !== null && !empty($diff)) {
-                $this->adminConsole->createModerationAction($moderatorId, 'series', $id, 'update', json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE));
+                $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'update', json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE));
             }
 
             $this->pdo->commit();
