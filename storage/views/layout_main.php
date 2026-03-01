@@ -98,7 +98,7 @@
                                 </div>
                                 
                                             <div class="dropdown">
-                                              <button class="nav-link dropdown-toggle btn-none" onclick="this.parentElement.classList.toggle('active')">📚 <?= $__t('library') ?></button>
+                                              <button class="nav-link dropdown-toggle btn-none" onclick="event.stopPropagation(); this.parentElement.classList.toggle('active')">📚 <?= $__t('library') ?></button>
                                               <div class="dropdown-menu card p-2">                                    <a href="<?= $url('/light-novel') ?>" class="dropdown-item">📖 Light Novel</a>
                                     <a href="<?= $url('/web-novel') ?>" class="dropdown-item">🌐 Web Novel</a>
                                     <a href="<?= $url('/novel') ?>" class="dropdown-item">📝 Novel</a>
@@ -114,7 +114,7 @@
                                 <span class="header-divider hide-md"></span>
 
                                 <div class="dropdown">
-                                  <button class="nav-link dropdown-toggle btn-none" onclick="this.parentElement.classList.toggle('active')">🌐 <?= strtoupper($langCode ?? 'TR') ?></button>
+                                  <button class="nav-link dropdown-toggle btn-none" onclick="event.stopPropagation(); this.parentElement.classList.toggle('active')">🌐 <?= strtoupper($langCode ?? 'TR') ?></button>
                                   <div class="dropdown-menu card p-1 min-w-80">
                                     <a class="dropdown-item py-1" href="<?= $trUrl ?>" onclick="NMR.changeLanguage('tr');">🇹🇷 TR</a>
                                     <a class="dropdown-item py-1" href="<?= $enUrl ?>" onclick="NMR.changeLanguage('en');">🇺🇸 EN</a>
