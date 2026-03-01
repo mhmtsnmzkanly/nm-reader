@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Markdown Library Fix (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Markdown rendering (descriptions, comments) was failing because the library was not being loaded in the public layout.
+- **Fix**:
+  - Added `marked.min.js` script inclusion to `storage/views/layout_main.php`.
+  - Refactored `NMR.parseMarkdown` in `public/assets/js/utils.js` to ensure synchronous execution and improved error handling for the library.
+
 ### Browser Cache Busting (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Persistent 404 errors on comment submission despite code fixes, likely due to browsers caching old JavaScript files.

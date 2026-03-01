@@ -43,6 +43,7 @@
   <?php endif; ?>
   <script>window.__NMR_CONTEXT = <?= $contextJson ?? "{}" ?>;</script>
   <script src="/assets/js/utils.js"></script>
+  <script src="/assets/js/marked.min.js"></script>
   <script src="/assets/js/melt.js"></script>
   <script src="/assets/js/api.js"></script>
   <script src="/assets/js/connection.js?v=<?= time() ?>"></script>

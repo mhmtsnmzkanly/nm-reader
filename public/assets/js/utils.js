@@ -146,14 +146,21 @@ window.getCookie = function (name) {
    * @returns {string} HTML content.
    */
   window.NMR.parseMarkdown = function (text) {
-    if (typeof marked === 'undefined') return text || '';
+    if (typeof marked === 'undefined') {
+      console.warn('marked.js is not loaded');
+      return text || '';
+    }
     try {
       const cleanText = String(text || '').trim();
+      // Ensure sync parsing if using newer marked versions
       if (typeof marked.parse === 'function') {
-        return marked.parse(cleanText);
+        return marked.parse(cleanText, { async: false });
       }
-      return marked(cleanText);
-    } catch (e) { return text || ''; }
+      return typeof marked === 'function' ? marked(cleanText) : cleanText;
+    } catch (e) { 
+      console.error('Markdown parse error:', e);
+      return text || ''; 
+    }
   };
 
   /**
