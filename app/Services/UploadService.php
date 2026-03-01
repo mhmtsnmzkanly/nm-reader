@@ -48,7 +48,13 @@ final class UploadService
         $file = $dto->file;
 
         if ($file->getError() !== UPLOAD_ERR_OK) {
-            throw new InvalidArgumentException('File upload error: ' . $file->getError());
+            $msg = match ($file->getError()) {
+                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'File is too large. Check server limits (upload_max_filesize).',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded.',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+                default => 'Upload failed with error code: ' . $file->getError(),
+            };
+            throw new InvalidArgumentException($msg);
         }
 
         $mimeType = $file->getClientMediaType() ?? 'application/octet-stream';
