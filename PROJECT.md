@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Dropdown UX & Hover Fix (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Dropdowns in the header had conflicting hover and click behaviors, causing flickering and inconsistent visibility.
+- **Fix**:
+  - Disabled hover-based triggering for dropdowns in `site.css` to prevent conflicts with JS-based click toggles.
+  - Ensured dropdowns only open via the `.active` class, which is managed by the existing `onclick` handlers and the global click-outside listener in `main.js`.
+
 ### Content Page UI Overhaul (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Layout flaws on the series detail page, including z-index issues in the hero section, tight spacing, and poor mobile responsiveness.

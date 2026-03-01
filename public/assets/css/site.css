@@ -539,8 +539,7 @@ footer {
     height: 0.7rem;
     background: transparent;
 }
-/* Show on hover for desktop, show on .active class for both */
-.dropdown:hover .dropdown-menu,
+/* Show on .active class for both click and hover simulation */
 .dropdown.active .dropdown-menu {
     display: flex;
 }
@@ -1041,8 +1040,7 @@ body {
         gap: 0.5rem;
     }
 
-    /* Show dropdown when parent is hovered or has a show class (if needed) */
-    header .dropdown:hover .dropdown-menu,
+    /* Show dropdown when parent has an active class */
     header .dropdown.active .dropdown-menu {
         display: flex;
     }
