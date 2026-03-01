@@ -94,6 +94,16 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Content Taxonomy Update Fix (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Updating tags and genres for a content item was failing with a 404 error.
+- **Root Cause**:
+  - Missing route for `PUT /api/v1/admin/contents/{id}/taxonomy` in `app/Config.php`.
+  - Mismatch between the JSON payload keys sent by the frontend (`genres`, `tags`) and those expected by the backend controller (`series_genres`, `series_tags`).
+- **Fix**:
+  - Added the missing route to the admin API group in `app/Config.php`.
+  - Updated `AdminConsoleController::updateTaxonomy` to support both sets of keys (`series_genres`/`genres` and `series_tags`/`tags`).
+
 ### Auth Form Robustness Fix (2026-02-28)
 - **Status**: Completed.
 - **Problem**: Login/Register forms were occasionally failing with 400 Bad Request due to unreliable field extraction.

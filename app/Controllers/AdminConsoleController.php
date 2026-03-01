@@ -424,10 +424,12 @@ final class AdminConsoleController
     {
         $payload = (array) $request->getParsedBody();
         $moderatorId = (string) $request->getAttribute('user_id');
+        $genres = (array)($payload['series_genres'] ?? $payload['genres'] ?? []);
+        $tags = (array)($payload['series_tags'] ?? $payload['tags'] ?? []);
         $this->console->updateContentTaxonomy(
             (string)$args['id'],
-            (array)($payload['series_genres'] ?? []),
-            (array)($payload['series_tags'] ?? []),
+            $genres,
+            $tags,
             $moderatorId
         );
         return ResponseHelper::success();
