@@ -101,10 +101,10 @@ final class AdminService
 
         $sql = 'INSERT INTO series (
                     id, title, slug, description, type, status, cover_image,
-                    rating_avg, rating_count, chapter_count, comment_count, created_by, created_at
+                    rating_avg, rating_count, chapter_count, comment_count, created_at
                 ) VALUES (
                     :id, :title, :slug, :description, :type, :status, :cover_image,
-                    0, 0, 0, 0, :created_by, NOW()
+                    0, 0, 0, 0, NOW()
                 )';
 
         $stmt = $this->pdo->prepare($sql);
@@ -116,7 +116,6 @@ final class AdminService
             'type' => $dbType,
             'status' => $status,
             'cover_image' => $coverImage,
-            'created_by' => $moderatorId,
         ]);
 
         $this->upsertContentMetadata($id, $author, $artist, $country, $releaseYear);

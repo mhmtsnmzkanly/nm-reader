@@ -306,6 +306,7 @@ final class Config
             $group->get('/metrics/insights', [MetricsController::class, 'insights'])->add($perm(['admin.metrics.view']));
 
             $group->post('/content', [AdminController::class, 'createContent'])->add($perm(['admin.content.create']));
+            $group->post('/upload-images', [AdminController::class, 'uploadImages'])->add($perm(['admin.content.create']));
             $group->put('/content/{id}', [AdminController::class, 'updateContent'])->add($perm(['admin.content.update']));
             $group->post('/content/{type:' . $typePattern . '}/{slug}/chapters', [AdminController::class, 'createChapter'])->add($perm(['admin.chapter.create']));
             $group->get('/content/{id}/chapters', [AdminController::class, 'listChapters'])->add($perm(['admin.panel.access']));
