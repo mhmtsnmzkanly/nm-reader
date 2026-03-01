@@ -41,7 +41,6 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -73,7 +72,6 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    c.accent_color,
                     cm.author,
                     cm.artist,
                     MAX(ch.created_at) as last_chapter_at
@@ -107,7 +105,6 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -143,10 +140,8 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
-                    c.accent_color,
                     cm.author,
                     cm.artist,
-                    cm.alternative_titles,
                     cm.country,
                     cm.release_year,
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
@@ -187,10 +182,8 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
-                    c.accent_color,
                     cm.author,
                     cm.artist,
-                    cm.alternative_titles,
                     cm.country,
                     cm.release_year,
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
@@ -315,7 +308,6 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -350,7 +342,6 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -387,7 +378,6 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -456,14 +446,12 @@ final class SeriesRepository
                        c.chapter_count,
                        c.comment_count,
                        c.cover_image,
-                       c.accent_color,
                        cm.author,
-                       cm.artist,
-                       cm.alternative_titles
+                       cm.artist
                    FROM series c
                    LEFT JOIN series_metadata cm ON cm.content_id = c.id
                    WHERE MATCH(c.title, c.slug, c.description) AGAINST(:q IN BOOLEAN MODE)
-                      OR cm.author LIKE :q_like OR cm.artist LIKE :q_like OR cm.alternative_titles LIKE :q_like
+                      OR cm.author LIKE :q_like OR cm.artist LIKE :q_like
                    ORDER BY c.rating_count DESC, c.created_at DESC
                    LIMIT :limit OFFSET :offset';
 
@@ -494,8 +482,7 @@ final class SeriesRepository
                         c.comment_count,
                         c.cover_image,
                         cm.author,
-                        cm.artist,
-                        cm.alternative_titles
+                        cm.artist
                     FROM series c
                     LEFT JOIN series_metadata cm ON cm.content_id = c.id
                     WHERE c.title LIKE :query1 
@@ -503,7 +490,6 @@ final class SeriesRepository
                        OR c.description LIKE :query3
                        OR cm.author LIKE :query4
                        OR cm.artist LIKE :query5
-                       OR cm.alternative_titles LIKE :query6
                     ORDER BY c.rating_count DESC, c.created_at DESC
                     LIMIT :limit OFFSET :offset';
 
@@ -513,7 +499,6 @@ final class SeriesRepository
         $stmt->bindValue(':query3', $searchParam);
         $stmt->bindValue(':query4', $searchParam);
         $stmt->bindValue(':query5', $searchParam);
-        $stmt->bindValue(':query6', $searchParam);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -656,7 +641,6 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
-                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM user_series_follows ucf
