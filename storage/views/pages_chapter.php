@@ -6,6 +6,28 @@ $slug = (string) ($slug ?? '');
 ?>
 
 <div class="reader-container mx-auto max-w-1400" id="readerApp" data-chapter-id="<?= htmlspecialchars((string)($chapter['id'] ?? '')) ?>">
+  <?php if (!empty($breadcrumbs)): ?>
+    <nav class="breadcrumb-nav mb-2 px-2" aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small" itemscope itemtype="https://schema.org/BreadcrumbList">
+        <?php foreach ($breadcrumbs as $i => $bc): ?>
+          <li class="breadcrumb-item <?= $bc['url'] ? '' : 'active text-truncate' ?>" 
+              style="max-width: 200px;"
+              itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"
+              <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>
+            <?php if ($bc['url']): ?>
+              <a href="<?= htmlspecialchars($bc['url']) ?>" itemprop="item" class="text-muted">
+                <span itemprop="name"><?= htmlspecialchars($bc['title']) ?></span>
+              </a>
+            <?php else: ?>
+              <span itemprop="name" class="fw-bold"><?= htmlspecialchars($bc['title']) ?></span>
+            <?php endif; ?>
+            <meta itemprop="position" content="<?= $i + 1 ?>" />
+          </li>
+        <?php endforeach; ?>
+      </ol>
+    </nav>
+  <?php endif; ?>
+
   <div class="card reader-toolbar mb-4 flex items-center justify-between p-2 sticky top-0 z-10">
     <div class="flex items-center gap-2">
       <a href="<?= $adj['prev'] ? $url('/' . $type . '/' . $slug . '/chapter/' . rawurlencode((string)$adj['prev'])) : '#' ?>" 

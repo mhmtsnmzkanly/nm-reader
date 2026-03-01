@@ -1491,6 +1491,39 @@ body {
     }
 }
 
+/* Breadcrumbs */
+.breadcrumb-nav .breadcrumb {
+    background: transparent;
+    padding: 0;
+    font-size: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    gap: 0.5rem;
+}
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "/";
+    padding-right: 0.5rem;
+    color: var(--text-dim);
+    opacity: 0.5;
+}
+.breadcrumb-item a {
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.breadcrumb-item a:hover {
+    color: var(--primary);
+}
+.breadcrumb-item.active {
+    color: var(--text);
+    font-weight: 600;
+}
+
 /* Spinner Animation */
 @keyframes spin {
     to { transform: rotate(360deg); }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 return [
     'welcome' => 'NovelMangaReader',
+    'home' => 'Home',
+    'genres' => 'Genres',
+    'tags' => 'Tags',
     'login' => 'Login',
     'signup' => 'Sign Up',
     'profile' => 'Profile',

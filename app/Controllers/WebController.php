@@ -10,6 +10,7 @@ use App\Services\AuthorizationService;
 use App\Services\SiteConfigService;
 use App\Services\SeriesService;
 use App\Services\UserService;
+use App\Helpers\BreadcrumbHelper;
 use App\Services\I18nService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -157,6 +158,20 @@ final class WebController
             ];
         }
 
+        if (isset($content['rating_avg']) && (float)$content['rating_avg'] > 0) {
+            $jsonLd["aggregateRating"] = [
+                "@type" => "AggregateRating",
+                "ratingValue" => (float)$content['rating_avg'],
+                "reviewCount" => (int)($content['rating_count'] ?? 1),
+                "bestRating" => 5,
+                "worstRating" => 1
+            ];
+        }
+
+        if (is_array($content['series_genres'] ?? null)) {
+            $jsonLd["genre"] = array_column($content['series_genres'], 'name');
+        }
+
         if ($releaseYear !== "" && $releaseYear !== "0") {
             $jsonLd["copyrightYear"] = $releaseYear;
         }
@@ -178,9 +193,20 @@ final class WebController
             "type" => "book",
             "image" => $cover,
             "keywords" => $keywords,
-            "robots" => "index,follow",
             "json_ld" => $jsonLd,
+            "canonical" => $this->absoluteUrl($request, sprintf("/%s/%s", $type, $slug))
         ];
+
+        $langCode = $this->i18n->resolveLocale($request);
+        $lang = $this->i18n->getDictionary($langCode);
+        $urlHelper = function(string $path) use ($langCode) {
+            return "/" . $langCode . "/" . ltrim($path, "/");
+        };
+
+        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'content', [
+            'type' => $type,
+            'title' => $title
+        ]);
 
         return $this->render(
             $request,
@@ -189,8 +215,9 @@ final class WebController
             [
                 "type" => $type,
                 "slug" => $slug,
-                "ssr_data" => $content,
                 "start_chapter_number" => $startChapterNumber,
+                "ssr_data" => $content,
+                "breadcrumbs" => $breadcrumbs,
             ],
             ["/assets/js/content.js?v=" . time()],
             $seo["title"],
@@ -224,12 +251,14 @@ final class WebController
             $ip,
         );
 
-        $title =
-            $chapter && isset($chapter["series_title"])
-                ? "{$chapter["series_title"]} - Chapter {$chapterNumber}"
-                : "Chapter {$chapterNumber}";
+        if ($chapter === null) {
+            return $response->withStatus(404);
+        }
 
+        $seriesTitle = (string) ($chapter["series_title"] ?? "");
+        $seoTitle = $seriesTitle . " - Bolum " . $chapterNumber;
         $siteName = $this->siteConfig->siteName();
+
         $nextNum = $chapter["adjacent_chapters"]["next"] ?? null;
         if ($nextNum !== null) {
             $nextUrl = $this->absoluteUrl(
@@ -239,25 +268,33 @@ final class WebController
             $response = $response->withHeader("Link", "<{$nextUrl}>; rel=prefetch; as=document");
         }
 
+        $langCode = $this->i18n->resolveLocale($request);
+        $lang = $this->i18n->getDictionary($langCode);
+        $urlHelper = function(string $path) use ($langCode) {
+            return "/" . $langCode . "/" . ltrim($path, "/");
+        };
+
+        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'chapter', [
+            'content_type' => $type,
+            'content_slug' => $slug,
+            'content_title' => $seriesTitle,
+            'chapter_number' => $chapterNumber
+        ]);
+
         return $this->render(
             $request,
             $response,
             "chapter.php",
             [
-                "type" => $type,
-                "slug" => $slug,
-                "chapterNumber" => $chapterNumber,
-                "ssr_data" => $chapter,
+                "chapter" => $chapter,
+                "breadcrumbs" => $breadcrumbs,
             ],
             ["/assets/js/reader.js?v=" . time()],
-            $seo["title"],
+            $seoTitle,
             "container-fluid",
             [
-                "title" => $title . " - " . $siteName,
-                "description" =>
-                    $chapter && isset($chapter["series_title"])
-                        ? "Read {$chapter["series_title"]} chapter {$chapterNumber} online."
-                        : "Chapter reading page.",
+                "title" => $seoTitle . " - " . $siteName,
+                "description" => "Read " . $seriesTitle . " chapter " . $chapterNumber . " online.",
                 "type" => "article",
                 "robots" => "index,follow",
             ],
@@ -418,11 +455,25 @@ final class WebController
             }
         }
 
+        $langCode = $this->i18n->resolveLocale($request);
+        $lang = $this->i18n->getDictionary($langCode);
+        $urlHelper = function(string $path) use ($langCode) {
+            return "/" . $langCode . "/" . ltrim($path, "/");
+        };
+
+        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'blog', [
+            'title' => $ssrData ? ($ssrData['title'] ?? '') : ''
+        ]);
+
         return $this->render(
             $request,
             $response,
             "blog.php",
-            ["slug" => $slug, "ssr_data" => $ssrData],
+            [
+                "slug" => $slug,
+                "ssr_data" => $ssrData,
+                "breadcrumbs" => $breadcrumbs,
+            ],
             ["/assets/js/blog.js"],
             $seo["title"],
             "container",
@@ -528,6 +579,16 @@ final class WebController
         $slug = (string) ($args["slug"] ?? "");
         $display = ucwords(str_replace("-", " ", $slug));
 
+        $langCode = $this->i18n->resolveLocale($request);
+        $lang = $this->i18n->getDictionary($langCode);
+        $urlHelper = function(string $path) use ($langCode) {
+            return "/" . $langCode . "/" . ltrim($path, "/");
+        };
+
+        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'genre', [
+            'name' => $display
+        ]);
+
         return $this->render(
             $request,
             $response,
@@ -535,6 +596,7 @@ final class WebController
             [
                 "list_type" => "genre",
                 "value" => $slug,
+                "breadcrumbs" => $breadcrumbs,
             ],
             ["/assets/js/series_list.js"],
             "Genre: " . ucfirst($slug),
@@ -559,6 +621,16 @@ final class WebController
         $slug = (string) ($args["slug"] ?? "");
         $display = ucwords(str_replace("-", " ", $slug));
 
+        $langCode = $this->i18n->resolveLocale($request);
+        $lang = $this->i18n->getDictionary($langCode);
+        $urlHelper = function(string $path) use ($langCode) {
+            return "/" . $langCode . "/" . ltrim($path, "/");
+        };
+
+        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'tag', [
+            'name' => $display
+        ]);
+
         return $this->render(
             $request,
             $response,
@@ -566,6 +638,7 @@ final class WebController
             [
                 "list_type" => "tag",
                 "value" => $slug,
+                "breadcrumbs" => $breadcrumbs,
             ],
             ["/assets/js/series_list.js"],
             "Tag: " . ucfirst($slug),

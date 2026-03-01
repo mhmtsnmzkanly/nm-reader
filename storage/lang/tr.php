@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 return [
     'welcome' => 'NovelMangaReader',
+    'home' => 'Ana Sayfa',
+    'genres' => 'Türler',
+    'tags' => 'Etiketler',
     'login' => 'Giriş Yap',
     'signup' => 'Kayıt Ol',
     'profile' => 'Profil',
