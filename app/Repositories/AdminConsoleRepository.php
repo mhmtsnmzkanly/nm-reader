@@ -523,7 +523,7 @@ final class AdminConsoleRepository
             'target_type' => $targetType,
             'target_id' => $targetId,
             'action' => $action,
-            'reason' => $reason,
+            'reason' => $reason !== null ? mb_substr($reason, 0, 255) : null,
         ]);
 
         return (int) $this->pdo->lastInsertId();

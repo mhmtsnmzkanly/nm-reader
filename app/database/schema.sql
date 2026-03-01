@@ -323,7 +323,7 @@ CREATE TABLE `admin_actions` (
   `target_type` enum('comment','blog','content','user','system','role','series') NOT NULL,
   `target_id` varchar(32) NOT NULL,
   `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy') NOT NULL,
-  `reason` varchar(255) DEFAULT NULL,
+  `reason` text DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
