@@ -611,7 +611,7 @@ final class WebController
             $request,
             $response,
             "admin_content.php",
-            ["/assets/js/admin-content.js", "/assets/js/admin-chapters.js"],
+            ["/assets/js/admin-content.js?v=" . time(), "/assets/js/admin-chapters.js?v=" . time()],
             "Content Management - " . $siteName,
         );
     }

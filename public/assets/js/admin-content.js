@@ -103,17 +103,24 @@
   };
 
   const loadTaxonomy = async () => {
-    if (!$('#genres-list-body')) return;
     try {
       const g = await api('/admin/genres');
       _ALL_GENRES = g.data || [];
-      setHtml('#genres-list-body', _ALL_GENRES.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
+      if ($('#genres-list-body')) {
+        setHtml('#genres-list-body', _ALL_GENRES.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
+      }
+      
       const t = await api('/admin/tags');
       _ALL_TAGS = t.data || [];
-      setHtml('#tags-list-body', _ALL_TAGS.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
+      if ($('#tags-list-body')) {
+        setHtml('#tags-list-body', _ALL_TAGS.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
+      }
+      
       renderCreateTaxonomyButtons();
     } catch (e) {
-      setHtml('#genres-list-body', '<tr><td colspan="2" class="text-center text-danger">Error</td></tr>');
+      if ($('#genres-list-body')) {
+        setHtml('#genres-list-body', '<tr><td colspan="2" class="text-center text-danger">Error</td></tr>');
+      }
     }
   };
 

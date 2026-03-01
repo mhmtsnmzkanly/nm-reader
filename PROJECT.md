@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Taxonomy Loading Fix (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Genres and tags were missing from content modals unless the page was manually refreshed or certain elements were present.
+- **Fix**:
+  - Refactored `loadTaxonomy` in `public/assets/js/admin-content.js` to always fetch data from the API regardless of whether the listing table elements exist on the current page.
+  - Added versioning to admin-specific script tags in `WebController.php` to ensure the latest fixes are loaded by the browser.
+
 ### Markdown Library Fix (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Markdown rendering (descriptions, comments) was failing because the library was not being loaded in the public layout.
