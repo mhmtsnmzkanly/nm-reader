@@ -755,6 +755,12 @@ final class Config
                 ])
                 ->add($perm(["admin.logs.view"]));
             $group
+                ->get("/moderation-actions", [
+                    AdminConsoleController::class,
+                    "moderationActions",
+                ])
+                ->add($perm(["admin.logs.view"]));
+            $group
                 ->get("/logs/access", [
                     AdminConsoleController::class,
                     "systemAccessLogs",

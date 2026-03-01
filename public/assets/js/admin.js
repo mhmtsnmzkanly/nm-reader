@@ -260,6 +260,54 @@
     }
   };
 
+  const loadAuditLogs = async () => {
+    if (!$('#audit-logs-body')) return;
+    try {
+      const res = await api('/admin/audit-logs?per_page=10');
+      const items = res.data || [];
+      setHtml('#audit-logs-body', items.map(l => `
+        <tr>
+          <td><small class="${l.username ? 'fw-bold' : 'text-muted'}">${l.username || 'guest'}</small></td>
+          <td><span class="badge ${l.status_code >= 400 ? 'bg-danger' : 'bg-secondary'}">${l.method}</span></td>
+          <td class="text-truncate" style="max-width:150px" title="${l.path}">${l.path}</td>
+          <td><small>${l.created_at.split(' ')[1]}</small></td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="text-center">No audit logs</td></tr>');
+    } catch (e) { console.error('Audit logs load error:', e); }
+  };
+
+  const loadLoginEvents = async () => {
+    if (!$('#login-logs-body')) return;
+    try {
+      const res = await api('/admin/login-events?per_page=10');
+      const items = res.data || [];
+      setHtml('#login-logs-body', items.map(l => `
+        <tr>
+          <td class="text-truncate" style="max-width:120px">${l.email}</td>
+          <td><small>${l.ip_hash.slice(0,8)}</small></td>
+          <td><i class="bi ${l.success ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'}"></i></td>
+          <td><small>${l.attempted_at.split(' ')[1]}</small></td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="text-center">No events</td></tr>');
+    } catch (e) { console.error('Login events load error:', e); }
+  };
+
+  const loadModActions = async () => {
+    if (!$('#mod-actions-body')) return;
+    try {
+      const res = await api('/admin/moderation-actions?per_page=10');
+      const items = res.data || [];
+      setHtml('#mod-actions-body', items.map(l => `
+        <tr>
+          <td><small class="fw-bold">${l.username || 'system'}</small></td>
+          <td><span class="badge bg-info">${l.action}</span></td>
+          <td><small>${l.target_type}:${l.target_id}</small></td>
+          <td class="text-truncate" style="max-width:150px" title="${l.reason || ''}">${l.reason || '-'}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="text-center">No moderation actions</td></tr>');
+    } catch (e) { console.error('Mod actions load error:', e); }
+  };
+
   /** --- Namespace Export --- **/
   window.NMR_ADMIN = {
     approveBlog: async (id) => { try { await api(`/admin/blogs/${id}/approve`, { method: 'POST', body: '{}' }); location.reload(); } catch (e) { alert(e.message); } },
@@ -285,12 +333,26 @@
     loadTaxonomy();
     loadSiteVisits();
     loadReputation();
+    loadAuditLogs();
+    loadLoginEvents();
+    loadModActions();
     fetchLegacyMetrics('/admin/metrics');
 
     $('#btn-metrics-dashboard')?.addEventListener('click', () => fetchLegacyMetrics('/admin/dashboard'));
     $('#btn-metrics-snapshot')?.addEventListener('click', () => fetchLegacyMetrics('/admin/metrics'));
     $('#btn-metrics-insights')?.addEventListener('click', () => fetchLegacyMetrics('/admin/metrics/insights'));
     $('#btn-refresh-reputation')?.addEventListener('click', loadReputation);
+
+    $('#form-create-mod-action')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = Object.fromEntries(fd.entries());
+      try {
+        await api('/admin/moderation-actions', { method: 'POST', body: JSON.stringify(body) });
+        e.target.reset();
+        loadModActions();
+      } catch (err) { alert(err.message); }
+    });
   };
 
   document.addEventListener('DOMContentLoaded', init);
