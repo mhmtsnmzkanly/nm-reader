@@ -46,7 +46,7 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
         <div class="container">
             <div class="hero-content">
                 <div class="hero-side">
-                    <div class="hero-cover-container" style="background-color: <?= htmlspecialchars((string)($content['accent_color'] ?? '#2a2a2a')) ?>; border-radius: var(--radius-lg);">
+                    <div class="hero-cover-container">
                         <img
                             src="<?= $coverImage ?>"
                             onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';"
@@ -93,7 +93,7 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
 
     <!-- Main Content Detail -->
     <div id="contentDetailTarget">
-        <div class="content-info-grid">
+        <div class="content-info-grid container">
             <!-- Sidebar with Actions -->
             <div class="content-sidebar">
                 <div class="sidebar-actions">
@@ -118,16 +118,12 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
                         </div>
                     </div>
                 </div>
-
-                <div class="mt-4 hidden hide-md">
-                   <!-- Placeholder if needed for more content -->
-                </div>
             </div>
 
             <!-- Body with Info -->
             <div class="content-body-main">
                 <div class="main-desc-card">
-                    <div class="desc-title">📝 <?= $__t('summary') ?></div>
+                    <div class="desc-title"><i class="bi bi-journal-text me-2"></i> <?= $__t('summary') ?></div>
                     <div class="desc-text markdown-body" id="contentDescription"><?= htmlspecialchars((string) ($content['description'] ?? '')) ?></div>
                     
                     <div class="flex flex-wrap gap-2 mt-4">
@@ -146,15 +142,15 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
 
                     <div class="info-stat-grid">
                         <div class="stat-item">
-                            <span class="stat-label">� <?= $__t('chapters') ?></span>
+                            <span class="stat-label"><i class="bi bi-journals me-1"></i> <?= $__t('chapters') ?></span>
                             <span class="stat-value"><?= !empty($content['chapter_count']) ? htmlspecialchars((string)$content['chapter_count']) : '0' ?></span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">📅 <?= $__t('created') ?></span>
+                            <span class="stat-label"><i class="bi bi-calendar-event me-1"></i> <?= $__t('created') ?></span>
                             <span class="stat-value"><?= !empty($content['created_at']) ? htmlspecialchars(explode(' ', (string)$content['created_at'])[0]) : $__t('unknown') ?></span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">🎨 <?= $__t('artist') ?></span>
+                            <span class="stat-label"><i class="bi bi-palette me-1"></i> <?= $__t('artist') ?></span>
                             <?php if (!empty($content['artist'])): ?>
                                 <a href="<?= $url('/search?q=' . urlencode((string)$content['artist'])) ?>" class="stat-value hover-primary transition-all">
                                     <?= htmlspecialchars((string)$content['artist']) ?>
@@ -164,7 +160,7 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
                             <?php endif; ?>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">🌍 <?= $__t('country') ?></span>
+                            <span class="stat-label"><i class="bi bi-geo-alt me-1"></i> <?= $__t('country') ?></span>
                             <?php if (!empty($content['country'])): ?>
                                 <a href="<?= $url('/search?q=' . urlencode((string)$content['country'])) ?>" class="stat-value hover-primary transition-all">
                                     <?= htmlspecialchars((string)$content['country']) ?>
@@ -174,7 +170,7 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
                             <?php endif; ?>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">🚀 <?= $__t('release') ?></span>
+                            <span class="stat-label"><i class="bi bi-rocket-takeoff me-1"></i> <?= $__t('release') ?></span>
                             <?php if (!empty($content['release_year']) && $content['release_year'] !== '0'): ?>
                                 <a href="<?= $url('/search?q=' . urlencode((string)$content['release_year'])) ?>" class="stat-value hover-primary transition-all">
                                     <?= htmlspecialchars((string)$content['release_year']) ?>
@@ -190,7 +186,7 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
     </div>
 <?php endif; ?>
 
-<div class="main-content-grid mt-5">
+<div class="main-content-grid container mt-5">
   <div id="chapterListTarget"></div>
 
   <!-- Comments Section (Separate Box) -->

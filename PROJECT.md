@@ -94,6 +94,17 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Content Page UI Overhaul (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Layout flaws on the series detail page, including z-index issues in the hero section, tight spacing, and poor mobile responsiveness.
+- **Fix**:
+  - Overhauled `storage/views/pages_content.php` and `public/assets/css/site.css`.
+  - Fixed hero backdrop z-index and overlay transparency.
+  - Adjusted margins and padding for better alignment with the global header.
+  - Improved mobile responsiveness with better stacking and spacing.
+  - Refined metadata section with Bootstrap icons and a better grid layout.
+  - Implemented a two-column layout for chapter lists and comments on desktop for better space utilization.
+
 ### Taxonomy Loading Fix (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Genres and tags were missing from content modals unless the page was manually refreshed or certain elements were present.
