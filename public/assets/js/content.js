@@ -229,4 +229,3 @@ $(function() {
 
   Connection.getContentComments(type, slug).then(c => renderComments(c.data));
 });
-});

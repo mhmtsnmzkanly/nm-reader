@@ -247,10 +247,10 @@ final class WebController
                 "type" => $type,
                 "slug" => $slug,
                 "chapterNumber" => $chapterNumber,
-                "ssr_chapter" => $chapter,
+                "ssr_data" => $chapter,
             ],
-            ["/assets/js/reader.js"],
-            $title,
+            ["/assets/js/reader.js?v=" . time()],
+            $seo["title"],
             "container-fluid",
             [
                 "title" => $title . " - " . $siteName,
