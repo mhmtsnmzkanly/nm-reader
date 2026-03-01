@@ -169,6 +169,7 @@
     if (!c) return;
     $('#edit-content-id').value = c.id;
     $('#edit-content-title').value = c.title;
+    $('#edit-content-alt-titles').value = c.alternative_titles || '';
     $('#edit-content-desc').value = c.description || '';
     $('#edit-content-status').value = c.status;
     $('#edit-content-cover').value = c.cover_image || '';

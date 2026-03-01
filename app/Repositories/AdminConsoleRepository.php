@@ -89,6 +89,7 @@ final class AdminConsoleRepository
                 c.id,
                 c.title,
                 c.slug,
+                c.alternative_titles,
                 c.type,
                 c.status,
                 c.cover_image,

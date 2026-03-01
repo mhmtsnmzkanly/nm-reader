@@ -76,11 +76,13 @@ final class AdminService
         }
 
         $description = trim((string) ($payload['description'] ?? ''));
+        $alternativeTitles = trim((string) ($payload['alternative_titles'] ?? ''));
         $author = $this->sanitizePerson((string) ($payload['author'] ?? ''));
         $artist = $this->sanitizePerson((string) ($payload['artist'] ?? ''));
         $country = $this->sanitizeCountry((string) ($payload['country'] ?? ''));
         $releaseYear = $this->sanitizeYear((string) ($payload['release_year'] ?? ''));
         $description = $description === '' ? null : $description;
+        $alternativeTitles = $alternativeTitles === '' ? null : $alternativeTitles;
         $coverImage = trim((string) ($payload['cover_image'] ?? ''));
         $coverImage = $coverImage === '' ? null : $coverImage;
 
@@ -100,10 +102,10 @@ final class AdminService
         $id = $this->entityIds->generateContentId();
 
         $sql = 'INSERT INTO series (
-                    id, title, slug, description, type, status, cover_image,
+                    id, title, slug, description, alternative_titles, type, status, cover_image,
                     rating_avg, rating_count, chapter_count, comment_count, created_at
                 ) VALUES (
-                    :id, :title, :slug, :description, :type, :status, :cover_image,
+                    :id, :title, :slug, :description, :alternative_titles, :type, :status, :cover_image,
                     0, 0, 0, 0, NOW()
                 )';
 
@@ -113,6 +115,7 @@ final class AdminService
             'title' => $title,
             'slug' => $slug,
             'description' => $description,
+            'alternative_titles' => $alternativeTitles,
             'type' => $dbType,
             'status' => $status,
             'cover_image' => $coverImage,
@@ -152,6 +155,7 @@ final class AdminService
         $title = isset($payload['title']) ? Validator::sanitizeText((string) $payload['title']) : null;
         $status = isset($payload['status']) ? strtolower(trim((string) $payload['status'])) : null;
         $description = isset($payload['description']) ? trim((string) $payload['description']) : null;
+        $alternativeTitles = isset($payload['alternative_titles']) ? trim((string) $payload['alternative_titles']) : null;
         $coverImage = isset($payload['cover_image']) ? trim((string) $payload['cover_image']) : null;
         
         $author = isset($payload['author']) ? $this->sanitizePerson((string) $payload['author']) : null;
@@ -178,6 +182,10 @@ final class AdminService
         if ($description !== null) {
             $updates[] = 'description = :description';
             $params['description'] = $description === '' ? null : $description;
+        }
+        if ($alternativeTitles !== null) {
+            $updates[] = 'alternative_titles = :alternative_titles';
+            $params['alternative_titles'] = $alternativeTitles === '' ? null : $alternativeTitles;
         }
         if ($status !== null) {
             $updates[] = 'status = :status';

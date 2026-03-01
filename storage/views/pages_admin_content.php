@@ -104,6 +104,10 @@
             <input class="form-control" name="title" id="create-content-title" required>
           </div>
           <div class="col-md-4">
+            <label class="form-label small">Alternative Titles</label>
+            <input class="form-control" name="alternative_titles" placeholder="Japanese, Romanized, etc.">
+          </div>
+          <div class="col-md-4">
             <label class="form-label small">Slug</label>
             <input class="form-control" name="slug" id="create-content-slug" required>
           </div>
@@ -160,6 +164,10 @@
           <div class="col-md-4">
             <label class="form-label small">Title</label>
             <input class="form-control" name="title" id="edit-content-title" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">Alternative Titles</label>
+            <input class="form-control" name="alternative_titles" id="edit-content-alt-titles" placeholder="Japanese, Romanized, etc.">
           </div>
           <div class="col-md-4">
             <label class="form-label small">Status</label>
