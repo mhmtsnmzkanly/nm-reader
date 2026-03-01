@@ -260,6 +260,26 @@
     }
   };
 
+  const loadQueue = async () => {
+    if (!$('#queue-jobs-list')) return;
+    try {
+      const res = await api('/admin/queue/jobs');
+      const items = res.data || [];
+      setHtml('#queue-jobs-list', items.map(j => `<div>[${j.id}] ${j.job_type || j.task} - <span class="text-info">${j.status}</span></div>`).join('') || 'Empty');
+    } catch (e) {
+      console.error('Queue load error:', e);
+      setHtml('#queue-jobs-list', `<div class="text-danger">${e.message}</div>`);
+    }
+  };
+
+  const runQueueOnce = async () => {
+    const limit = Math.max(1, Math.min(100, parseInt($('#jobs-limit')?.value || '5', 10)));
+    try {
+      await api('/admin/queue/run-once', { method: 'POST', body: JSON.stringify({ limit }) });
+      loadQueue();
+    } catch (e) { alert(e.message); }
+  };
+
   const loadAuditLogs = async () => {
     if (!$('#audit-logs-body')) return;
     try {
@@ -336,12 +356,14 @@
     loadAuditLogs();
     loadLoginEvents();
     loadModActions();
+    loadQueue();
     fetchLegacyMetrics('/admin/metrics');
 
     $('#btn-metrics-dashboard')?.addEventListener('click', () => fetchLegacyMetrics('/admin/dashboard'));
     $('#btn-metrics-snapshot')?.addEventListener('click', () => fetchLegacyMetrics('/admin/metrics'));
     $('#btn-metrics-insights')?.addEventListener('click', () => fetchLegacyMetrics('/admin/metrics/insights'));
     $('#btn-refresh-reputation')?.addEventListener('click', loadReputation);
+    $('#btn-run-jobs')?.addEventListener('click', runQueueOnce);
 
     $('#form-create-mod-action')?.addEventListener('submit', async (e) => {
       e.preventDefault();
