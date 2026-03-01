@@ -225,7 +225,7 @@ final class CommentService
 
     /**
      * Lists all comments for a specific blog post.
-     */
+     *
      * @param string $slug
      * @param int $page
      * @param int $perPage

@@ -70,7 +70,7 @@ final class CommentController
 
     /**
      * Adds a new comment or reply to a blog post.
-     */
+     *
      * @param array $args Must contain 'slug'.
      */
     public function createBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
