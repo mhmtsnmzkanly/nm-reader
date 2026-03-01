@@ -25,6 +25,7 @@ final class ContentDto
      * @param int $chapterCount Total number of chapters.
      * @param int $commentCount Total number of comments.
      * @param string|null $coverImage Relative path to cover image asset.
+     * @param string|null $accentColor Hex color code for placeholders.
      * @param bool $isFollowed Whether the current viewer follows this series.
      * @param string|null $author Primary creator name.
      * @param string|null $artist Primary illustrator name.
@@ -45,6 +46,7 @@ final class ContentDto
         public readonly int $chapterCount,
         public readonly int $commentCount,
         public readonly ?string $coverImage,
+        public readonly ?string $accentColor = '#2a2a2a',
         public readonly bool $isFollowed = false,
         public readonly ?string $author = null,
         public readonly ?string $artist = null,
@@ -72,6 +74,7 @@ final class ContentDto
             chapterCount: (int) $row['chapter_count'],
             commentCount: (int) $row['comment_count'],
             coverImage: $row['cover_image'] ?? null,
+            accentColor: $row['accent_color'] ?? '#2a2a2a',
             isFollowed: (bool) ($row['is_followed'] ?? false),
             author: $row['author'] ?? null,
             artist: $row['artist'] ?? null,
@@ -104,6 +107,7 @@ final class ContentDto
             'chapter_count' => $this->chapterCount,
             'comment_count' => $this->commentCount,
             'cover_image' => $cover,
+            'accent_color' => $this->accentColor,
             'is_followed' => $this->isFollowed,
             'author' => $this->author,
             'artist' => $this->artist,

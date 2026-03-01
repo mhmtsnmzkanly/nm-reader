@@ -230,6 +230,15 @@ final class WebController
                 : "Chapter {$chapterNumber}";
 
         $siteName = $this->siteConfig->siteName();
+        $nextNum = $chapter["adjacent_chapters"]["next"] ?? null;
+        if ($nextNum !== null) {
+            $nextUrl = $this->absoluteUrl(
+                $request,
+                sprintf("/%s/%s/chapter/%s", $type, $slug, rawurlencode((string)$nextNum))
+            );
+            $response = $response->withHeader("Link", "<{$nextUrl}>; rel=prefetch; as=document");
+        }
+
         return $this->render(
             $request,
             $response,
@@ -1053,12 +1062,31 @@ final class WebController
         
         $theme = $prefs["theme"] ?? "dark";
         
+        // ETag Generation: Create a hash based on inputs that affect the final HTML
+        // This includes template name, context data, user state, language, and theme.
+        $etagInput = [
+            'template' => $template,
+            'context' => $context,
+            'user_id' => $userId,
+            'lang' => $langCode,
+            'theme' => $theme,
+            'seo' => $seo,
+            'title' => $title,
+            'app_version' => '1.1.0' // Incremented on UI changes
+        ];
+        $etag = md5((string) json_encode($etagInput));
+
+        // Check for If-None-Match header
+        $noneMatch = $request->getHeaderLine('If-None-Match');
+        if ($noneMatch === '"' . $etag . '"') {
+            return $response->withStatus(304);
+        }
+
         // SEO Strategy: URL Lang takes precedence. 
         if ($urlLang === null && $template !== "robotsTxt" && $template !== "sitemapXml") {
             $uri = $request->getUri();
             $path = $uri->getPath();
             
-            // Check if path already starts with a supported language to prevent infinite redirects on 404s
             $supportedLangs = $this->i18n->getSupportedLanguages();
             $pathParts = explode("/", ltrim($path, "/"));
             $firstPart = $pathParts[0] ?? "";
@@ -1076,8 +1104,6 @@ final class WebController
 
         // Load language for SSR
         $lang = $this->i18n->getDictionary($langCode);
-        $langHash = md5((string) json_encode($lang, JSON_UNESCAPED_UNICODE));
-
         $username = $_SESSION["username"] ?? null;
         if ($userId !== null && $username === null) {
             $profile = $this->userService->profile((string) $userId);
@@ -1098,8 +1124,6 @@ final class WebController
             "preferences" => $prefs,
         ];
         
-        // Helper to generate localized URLs
-        // Helper to generate localized URLs
         $url = function(string $path) use ($langCode) {
             $cleanPath = ltrim($path, "/");
             return "/" . $langCode . "/" . $cleanPath;
@@ -1114,12 +1138,7 @@ final class WebController
                 "lang_code" => $langCode,
                 "site_config" => $this->siteConfig->all(),
             ],
-            JSON_HEX_TAG |
-                JSON_HEX_AMP |
-                JSON_HEX_APOS |
-                JSON_HEX_QUOT |
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES,
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
         );
 
         $fullContext = array_merge($context, [
@@ -1158,25 +1177,21 @@ final class WebController
 
         $jsonLd = null;
         if (is_array($seo["json_ld"])) {
-            $jsonLd = json_encode(
-                $seo["json_ld"],
-                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
-            );
+            $jsonLd = json_encode($seo["json_ld"], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
         $__t = fn(string $key) => $lang[$key] ?? $key;
         $fullContext['__t'] = $__t;
         $fullContext['siteConfig'] = $this->siteConfig->all();
 
-        // 1. Capture Template Output
+        // Capture Output
         ob_start();
         extract($fullContext, EXTR_SKIP);
         include $templatePath;
         $capturedContent = (string) ob_get_clean();
 
-        // 2. Capture Layout Output (Passing captured content)
         ob_start();
-        $content = $capturedContent; // Explicitly define for layout
+        $content = $capturedContent;
         extract($fullContext, EXTR_SKIP);
         include $layoutPath;
         $layoutContent = (string) ob_get_clean();
@@ -1185,12 +1200,8 @@ final class WebController
         return $response
             ->withHeader("Content-Type", "text/html; charset=utf-8")
             ->withHeader("Content-Language", $langCode)
-            ->withHeader(
-                "Cache-Control",
-                "no-store, no-cache, must-revalidate, max-age=0",
-            )
-            ->withHeader("Pragma", "no-cache")
-            ->withHeader("Expires", "0");
+            ->withHeader("ETag", '"' . $etag . '"')
+            ->withHeader("Cache-Control", "public, max-age=0, must-revalidate");
     }
 
     private function loadLang(string $basePath, string $code): array

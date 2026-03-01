@@ -230,6 +230,20 @@ final class SeriesController
     }
 
     /**
+     * Provides fast autocomplete search suggestions.
+     */
+    public function suggest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $query = trim((string) (($request->getQueryParams()['q'] ?? '')));
+        if (mb_strlen($query) < 2) {
+            return ResponseHelper::success([]);
+        }
+
+        $items = $this->seriesService->suggest($query);
+        return ResponseHelper::success($items);
+    }
+
+    /**
      * Allows a user to follow a series by slug.
      */
     public function follow(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

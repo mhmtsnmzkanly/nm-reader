@@ -24,6 +24,9 @@ final class ChapterDto
      * @param string|null $title Optional chapter title.
      * @param string $type Either 'text' or 'image'.
      * @param string $createdAt ISO-formatted date string.
+     * @param string|null $body Textual body for novels.
+     * @param array $pages Image pages for manga.
+     * @param array $navigation Next/Prev navigation info.
      */
     public function __construct(
         public readonly string $id,
@@ -31,15 +34,15 @@ final class ChapterDto
         public readonly string $chapterNumber,
         public readonly ?string $title,
         public readonly string $type,
-        public readonly string $createdAt
+        public readonly string $createdAt,
+        public readonly ?string $body = null,
+        public readonly array $pages = [],
+        public readonly array $navigation = ['next' => null, 'prev' => null]
     ) {
     }
 
     /**
      * Factory method to create a DTO instance from a database row.
-     *
-     * @param array $row Associative array from PDO fetch.
-     * @return self
      */
     public static function fromArray(array $row): self
     {
@@ -49,7 +52,10 @@ final class ChapterDto
             chapterNumber: ChapterNumber::normalize($row['chapter_number'] ?? ''),
             title: $row['title'] ?? null,
             type: (string) $row['type'],
-            createdAt: (string) $row['created_at']
+            createdAt: (string) ($row['created_at'] ?? ''),
+            body: $row['body'] ?? null,
+            pages: $row['pages'] ?? [],
+            navigation: $row['adjacent_chapters'] ?? ['next' => null, 'prev' => null]
         );
     }
 
@@ -65,6 +71,9 @@ final class ChapterDto
             'title' => $this->title,
             'type' => $this->type,
             'created_at' => $this->createdAt,
+            'body' => $this->body,
+            'pages' => $this->pages,
+            'adjacent_chapters' => $this->navigation,
         ];
     }
 }

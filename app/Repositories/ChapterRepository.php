@@ -213,6 +213,37 @@ final class ChapterRepository
     }
 
     /**
+     * Finds the next and previous chapters for navigation.
+     */
+    public function findAdjacentChapters(string $contentId, string $currentNumber): array
+    {
+        $nextSql = 'SELECT chapter_number FROM chapters 
+                    WHERE content_id = :content_id 
+                      AND CAST(chapter_number AS DECIMAL(10,2)) > CAST(:current AS DECIMAL(10,2))
+                    ORDER BY CAST(chapter_number AS DECIMAL(10,2)) ASC 
+                    LIMIT 1';
+        
+        $prevSql = 'SELECT chapter_number FROM chapters 
+                    WHERE content_id = :content_id 
+                      AND CAST(chapter_number AS DECIMAL(10,2)) < CAST(:current AS DECIMAL(10,2))
+                    ORDER BY CAST(chapter_number AS DECIMAL(10,2)) DESC 
+                    LIMIT 1';
+
+        $nextStmt = $this->pdo->prepare($nextSql);
+        $nextStmt->execute(['content_id' => $contentId, 'current' => $currentNumber]);
+        $next = $nextStmt->fetchColumn();
+
+        $prevStmt = $this->pdo->prepare($prevSql);
+        $prevStmt->execute(['content_id' => $contentId, 'current' => $currentNumber]);
+        $prev = $prevStmt->fetchColumn();
+
+        return [
+            'next' => $next !== false ? (string) $next : null,
+            'prev' => $prev !== false ? (string) $prev : null
+        ];
+    }
+
+    /**
      * Total chapter count for a series.
      */
     public function countByContentId(string $contentId): int

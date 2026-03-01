@@ -1,17 +1,34 @@
-<div class="reader-container mx-auto max-w-1400">
-  <div class="card reader-toolbar mb-4 flex items-center justify-between p-2">
+<?php
+$chapter = is_array($ssr_chapter ?? null) ? $ssr_chapter : [];
+$adj = $chapter['adjacent_chapters'] ?? ['next' => null, 'prev' => null];
+$type = (string) ($type ?? '');
+$slug = (string) ($slug ?? '');
+?>
+
+<div class="reader-container mx-auto max-w-1400" id="readerApp" data-chapter-id="<?= htmlspecialchars((string)($chapter['id'] ?? '')) ?>">
+  <div class="card reader-toolbar mb-4 flex items-center justify-between p-2 sticky top-0 z-10">
     <div class="flex items-center gap-2">
-      <button id="prevChapterBtn" class="btn btn-sm btn-outline" onclick="Reader.prevChapter()">&laquo; Prev</button>
-      <select class="form-item py-1 px-3 w-180" id="chapterSelect">
-        <?php if (isset($ssr_chapter)): ?>
-          <option value="<?= $ssr_chapter[
-              "chapter_number"
-          ] ?>" selected>Chapter <?= $ssr_chapter["chapter_number"] ?></option>
-        <?php endif; ?>
+      <a href="<?= $adj['prev'] ? $url('/' . $type . '/' . $slug . '/chapter/' . rawurlencode((string)$adj['prev'])) : '#' ?>" 
+         id="prevChapterBtn" 
+         class="btn btn-sm btn-outline <?= !$adj['prev'] ? 'disabled opacity-30' : '' ?>">
+         &laquo; <?= $__t('prev') ?>
+      </a>
+      
+      <select class="form-item py-1 px-3 w-180" id="chapterSelect" onchange="location.href=this.value">
+          <option value="" selected><?= $__t('chapter') ?> <?= $chapter['chapter_number'] ?? '' ?></option>
       </select>
-      <button id="nextChapterBtn" class="btn btn-sm btn-outline" onclick="Reader.nextChapter()">Next &raquo;</button>
+
+      <a href="<?= $adj['next'] ? $url('/' . $type . '/' . $slug . '/chapter/' . rawurlencode((string)$adj['next'])) : '#' ?>" 
+         id="nextChapterBtn" 
+         class="btn btn-sm btn-primary <?= !$adj['next'] ? 'disabled opacity-30' : '' ?>">
+         <?= $__t('next') ?> &raquo;
+      </a>
     </div>
-    <button class="btn btn-sm btn-outline" id="openReaderSettings">⚙️ Settings</button>
+    
+    <div class="flex items-center gap-2">
+      <a href="<?= $url('/' . $type . '/' . $slug) ?>" class="btn btn-sm btn-outline hide-md">🏠 <?= $__t('series_home') ?></a>
+      <button class="btn btn-sm btn-outline" id="openReaderSettings">⚙️</button>
+    </div>
   </div>
 
   <div class="reader-main">

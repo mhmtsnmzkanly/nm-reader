@@ -49,13 +49,14 @@ final class ChapterService
         if ($chapter['type'] === 'text') {
             $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
             $chapter['pages'] = [];
-            return $chapter;
+        } else {
+            $chapter['body'] = null;
+            $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
         }
+        
+        $chapter['adjacent_chapters'] = $this->chapters->findAdjacentChapters($contentId, (string) $chapter['chapter_number']);
 
-        $chapter['body'] = null;
-        $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
-
-        return $chapter;
+        return \App\DTO\ChapterDto::fromArray($chapter)->toArray();
     }
 
     public function getByTypeSlugAndNumber(string $typeSegment, string $slug, string $chapterNumber, string $ip, ?string $userId = null): ?array
@@ -82,13 +83,14 @@ final class ChapterService
         if ($chapter['type'] === 'text') {
             $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
             $chapter['pages'] = [];
-            return $chapter;
+        } else {
+            $chapter['body'] = null;
+            $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
         }
+        
+        $chapter['adjacent_chapters'] = $this->chapters->findAdjacentChapters($contentId, (string) $chapter['chapter_number']);
 
-        $chapter['body'] = null;
-        $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
-
-        return $chapter;
+        return \App\DTO\ChapterDto::fromArray($chapter)->toArray();
     }
 
     public function markRead(string $userId, string $chapterId): void

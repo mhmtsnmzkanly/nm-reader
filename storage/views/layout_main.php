@@ -83,8 +83,9 @@
 
         <div class="flex-grow max-w-md hide-md">
           <form id="globalSearchForm" class="position-relative">
-            <input type="text" id="globalSearchInput" class="form-item pr-5" placeholder="<?= $__t('search_placeholder') ?>">
+            <input type="text" id="globalSearchInput" class="form-item pr-5" placeholder="<?= $__t('search_placeholder') ?>" autocomplete="off">
             <button type="submit" class="search-icon-btn">🔍</button>
+            <div id="searchSuggestions" class="search-suggestions-dropdown card hidden"></div>
           </form>
         </div>
 

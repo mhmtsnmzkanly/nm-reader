@@ -22,8 +22,11 @@ $(function() {
       const typePath = String(item.type || 'novel').replace(/_/g, '-');
       return `
       <div class="card p-0 overflow-hidden hover-lift cursor-pointer content-card" onclick="location.href='/${langPrefix}/${typePath}/${item.slug}'">
-        <div class="position-relative">
-          <img src="${item.cover_image || ''}" onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';" class="w-100" alt="${item.title}">
+        <div class="position-relative img-placeholder" style="background-color: ${item.accent_color || '#2a2a2a'}; min-height: 200px;">
+          <img src="${item.cover_image || ''}" 
+               onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';" 
+               onload="this.classList.add('loaded')"
+               class="w-100" alt="${item.title}">
           <span class="badge position-absolute top-0 right-0 m-2 text-xs bg-primary">${String(item.type || '').toUpperCase()}</span>
         </div>
         <div class="p-3">

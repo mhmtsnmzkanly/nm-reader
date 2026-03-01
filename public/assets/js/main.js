@@ -375,6 +375,59 @@ $(function () {
       location.href = `/${lang}/search?q=${encodeURIComponent(query)}`;
     });
 
+    let searchDebounce = null;
+    $('#globalSearchInput').on('input', function () {
+      clearTimeout(searchDebounce);
+      const query = $(this).val().trim();
+      const $suggestions = $('#searchSuggestions');
+      const lang = window.NMR.getLangPrefix();
+
+      if (query.length < 2) {
+        $suggestions.hide().html('');
+        return;
+      }
+
+      searchDebounce = setTimeout(() => {
+        const langPrefix = window.NMR.getLangPrefix();
+        const apiPath = `/api/v1/search/suggest?q=${encodeURIComponent(query)}`;
+        
+        // Use the native melt.js or jQuery ajax
+        fetch(apiPath)
+          .then(res => res.json())
+          .then(res => {
+            const items = res.data || [];
+            if (items.length === 0) {
+              $suggestions.hide();
+              return;
+            }
+
+            const html = items.map(item => {
+              const typePath = String(item.type || 'novel').replace(/_/g, '-');
+              const url = `/${langPrefix}/${typePath}/${item.slug}`;
+              return `
+                <div class="suggestion-item" onclick="location.href='${url}'">
+                  <img src="${item.cover_image || '/assets/img/covers/one-piece.jpg'}" class="suggestion-img" alt="">
+                  <div class="suggestion-info">
+                    <div class="suggestion-title">${item.title}</div>
+                    <div class="suggestion-type">${item.type}</div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+            $suggestions.html(html).fadeIn(150);
+          })
+          .catch(() => $suggestions.hide());
+      }, 300);
+    });
+
+    // Close search suggestions on click outside
+    $(document).on('click', function (e) {
+      if (!$(e.target).closest('#globalSearchForm').length) {
+        $('#searchSuggestions').hide();
+      }
+    });
+
     // Close dropdowns on click outside
     $(document).on('click', function (e) {
       if (!$(e.target).closest('.dropdown').length) {

@@ -218,6 +218,7 @@ final class Config
             $group->get('/blogs/{slug}', [BlogController::class, 'show'])->add(new AuthMiddleware(true, $authorization));
             $group->get('/content/{type:' . $typePattern . '}/{slug}/chapter/{chapterNumber}', [ChapterController::class, 'showByContent']);
             $group->get('/search', [SeriesController::class, 'search']);
+            $group->get('/search/suggest', [SeriesController::class, 'suggest']);
             $group->get('/i18n/{lang:[a-z]{2}}', [WebController::class, 'i18nJson']);
             $group->post('/log/error', [WebController::class, 'logError']);
             $group->post('/user/activity', [ActivityController::class, 'track'])->add(new AuthMiddleware(true, $authorization));

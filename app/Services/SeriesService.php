@@ -293,6 +293,20 @@ final class SeriesService
     }
 
     /**
+     * Gets fast autocomplete suggestions for a search query.
+     */
+    public function suggest(string $query): array
+    {
+        $query = trim($query);
+        if (mb_strlen($query) < 2) {
+            return [];
+        }
+
+        $cacheKey = 'search_suggest_' . md5($query);
+        return $this->cache->remember($cacheKey, 1800, fn () => $this->series->suggest($query, 8));
+    }
+
+    /**
      * Performs a text-based search across content titles and descriptions.
      *
      * @param string $query Search term.
@@ -528,6 +542,7 @@ final class SeriesService
             $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
         }
         $chapter['chapter_number'] = ChapterNumber::normalize($chapter['chapter_number'] ?? '');
+        $chapter['adjacent_chapters'] = $this->chapters->findAdjacentChapters((string) ($chapter['content_id'] ?? ''), (string) $chapter['chapter_number']);
 
         return $chapter;
     }

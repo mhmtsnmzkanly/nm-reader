@@ -41,6 +41,7 @@ CREATE TABLE `series` (
   `type` enum('manga','manhua','manhwa','webtoon','light-novel','web-novel','novel') NOT NULL,
   `status` enum('ongoing','completed','hiatus','dropped') NOT NULL DEFAULT 'ongoing',
   `cover_image` varchar(255) DEFAULT NULL,
+  `accent_color` varchar(7) DEFAULT '#2a2a2a',
   `description` text DEFAULT NULL,
   `rating_avg` decimal(3,2) DEFAULT 0.00,
   `rating_count` int(11) DEFAULT 0,

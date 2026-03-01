@@ -42,13 +42,16 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
         <div class="container">
             <div class="hero-content">
                 <div class="hero-side">
-                    <img
-                        src="<?= $coverImage ?>"
-                        onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';"
-                        class="hero-cover rounded-lg shadow-lg"
-                        alt="<?= htmlspecialchars((string) ($content['title'] ?? 'Content')) ?>"
-                        loading="lazy"
-                    >
+                    <div class="hero-cover-container" style="background-color: <?= htmlspecialchars((string)($content['accent_color'] ?? '#2a2a2a')) ?>; border-radius: var(--radius-lg);">
+                        <img
+                            src="<?= $coverImage ?>"
+                            onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';"
+                            onload="this.classList.add('loaded')"
+                            class="hero-cover rounded-lg shadow-lg"
+                            alt="<?= htmlspecialchars((string) ($content['title'] ?? 'Content')) ?>"
+                            loading="lazy"
+                        >
+                    </div>
                 </div>
                 <div class="hero-main">
                     <div class="hero-badges">

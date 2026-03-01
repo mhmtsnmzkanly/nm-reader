@@ -23,6 +23,8 @@ final class AnalyticsAggregationService
             'hourly_views_rows' => $this->aggregateHourlyViews(2),
             'top_content_rows' => $this->aggregateTopContent($days),
             'top_chapter_rows' => $this->aggregateTopChapters($days),
+            'top_author_rows' => $this->aggregateTopAuthors($days),
+            'top_type_rows' => $this->aggregateTopTypes($days),
             'search_rows' => $this->aggregateSearchSnapshot($days),
             'auth_rows' => $this->aggregateAuthSnapshot($days),
             'health_rows' => $this->aggregateSystemHealth(),
@@ -152,6 +154,43 @@ final class AnalyticsAggregationService
         $stmt->bindValue(':days', $days, PDO::PARAM_INT);
         $stmt->execute();
 
+        return $stmt->rowCount();
+    }
+
+    private function aggregateTopAuthors(int $days): int
+    {
+        // Using analytics_snapshots_daily with a special prefix for simplicity, 
+        // or we can just count them. Let's use snapshots_daily with metric_name like 'author_views:Author Name'
+        $sql = "INSERT INTO analytics_snapshots_daily (stat_date, metric_name, metric_value)
+                SELECT CURRENT_DATE(), CONCAT('author_views:', m.author), COUNT(*)
+                FROM analytics_events e
+                INNER JOIN series_metadata m ON m.content_id = e.entity_id
+                WHERE e.event_type = 'content_view' AND e.entity_type = 'content'
+                  AND m.author IS NOT NULL AND m.author <> ''
+                  AND e.created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
+                GROUP BY m.author
+                ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->rowCount();
+    }
+
+    private function aggregateTopTypes(int $days): int
+    {
+        $sql = "INSERT INTO analytics_snapshots_daily (stat_date, metric_name, metric_value)
+                SELECT CURRENT_DATE(), CONCAT('type_views:', s.type), COUNT(*)
+                FROM analytics_events e
+                INNER JOIN series s ON s.id = e.entity_id
+                WHERE e.event_type = 'content_view' AND e.entity_type = 'content'
+                  AND e.created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
+                GROUP BY s.type
+                ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->rowCount();
     }
 

@@ -53,8 +53,11 @@ $(function () {
       const type = typeSegment(item);
       return `
       <div class="card p-0 overflow-hidden hover-lift cursor-pointer content-card" onclick="location.href='/${lang}/${type}/${item.slug}'">
-        <div class="position-relative">
-          <img src="${item.cover_image || "/assets/img/covers/one-piece.jpg"}" onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';" class="w-100" alt="${item.title}" loading="lazy">
+        <div class="position-relative img-placeholder" style="background-color: ${item.accent_color || '#2a2a2a'}; min-height: 200px;">
+          <img src="${item.cover_image || "/assets/img/covers/one-piece.jpg"}" 
+               onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';" 
+               onload="this.classList.add('loaded')"
+               class="w-100" alt="${item.title}" loading="lazy">
           <span class="badge position-absolute top-0 right-0 m-2 text-xs" style="background:${getTypeColor(item.type)}">${String(item.type || "").toUpperCase()}</span>
         </div>
         <div class="p-3">

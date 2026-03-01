@@ -41,6 +41,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
+                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -72,6 +73,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
+                    c.accent_color,
                     cm.author,
                     cm.artist,
                     MAX(ch.created_at) as last_chapter_at
@@ -105,6 +107,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
+                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -140,6 +143,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
+                    c.accent_color,
                     cm.author,
                     cm.artist,
                     cm.alternative_titles,
@@ -183,6 +187,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
+                    c.accent_color,
                     cm.author,
                     cm.artist,
                     cm.alternative_titles,
@@ -310,6 +315,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
+                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -344,6 +350,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
+                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -380,6 +387,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
+                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM series c
@@ -394,6 +402,31 @@ final class SeriesRepository
         $stmt->bindValue(':slug', $slug);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Performs a lightweight search for autocomplete suggestions.
+     * Returns minimal data to ensure high performance.
+     */
+    public function suggest(string $query, int $limit = 5): array
+    {
+        $sql = 'SELECT 
+                    id, 
+                    title, 
+                    slug, 
+                    type, 
+                    cover_image 
+                FROM series 
+                WHERE title LIKE :q OR slug LIKE :q 
+                ORDER BY rating_count DESC 
+                LIMIT :limit';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':q', '%' . $query . '%');
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -423,6 +456,7 @@ final class SeriesRepository
                        c.chapter_count,
                        c.comment_count,
                        c.cover_image,
+                       c.accent_color,
                        cm.author,
                        cm.artist,
                        cm.alternative_titles
@@ -622,6 +656,7 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
+                    c.accent_color,
                     cm.author,
                     cm.artist
                 FROM user_series_follows ucf

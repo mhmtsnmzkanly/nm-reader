@@ -205,6 +205,12 @@ const Reader = (function () {
      * Logic to find and trigger navigation to the next sequential chapter.
      */
     nextChapter() {
+      if (currentData && currentData.adjacent_chapters && currentData.adjacent_chapters.next) {
+          const next = currentData.adjacent_chapters.next;
+          const url = window.location.pathname.replace(/\/chapter\/[^\/]+/, '/chapter/' + encodeURIComponent(next));
+          location.href = url;
+          return;
+      }
       const select = $('#chapterSelect').elements[0];
       if (select && select.selectedIndex < select.options.length - 1) {
         select.selectedIndex += 1;
@@ -216,6 +222,12 @@ const Reader = (function () {
      * Logic to find and trigger navigation to the previous sequential chapter.
      */
     prevChapter() {
+      if (currentData && currentData.adjacent_chapters && currentData.adjacent_chapters.prev) {
+          const prev = currentData.adjacent_chapters.prev;
+          const url = window.location.pathname.replace(/\/chapter\/[^\/]+/, '/chapter/' + encodeURIComponent(prev));
+          location.href = url;
+          return;
+      }
       const select = $('#chapterSelect').elements[0];
       if (select && select.selectedIndex > 0) {
         select.selectedIndex -= 1;
@@ -224,6 +236,17 @@ const Reader = (function () {
     }
   };
 })();
+
+// Global Keyboard Navigation
+$(document).on('keydown', function(e) {
+    if (['input', 'textarea'].includes(e.target.tagName.toLowerCase())) return;
+    
+    if (e.key === 'ArrowRight') {
+        Reader.nextPage ? Reader.nextPage() : Reader.nextChapter();
+    } else if (e.key === 'ArrowLeft') {
+        Reader.prevPage ? Reader.prevPage() : Reader.prevChapter();
+    }
+});
 
 $(function () {
   const ctx = window.__NMR_CONTEXT || {};
