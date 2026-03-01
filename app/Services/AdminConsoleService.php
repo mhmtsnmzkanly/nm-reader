@@ -89,7 +89,7 @@ final class AdminConsoleService
     public function listContents(int $page, int $perPage): array
     {
         $result = $this->repo->listContents($page, $perPage);
-        $items = OutputSanitizer::sanitizeRows($result['items'], ['title']);
+        $items = OutputSanitizer::sanitizeRows($result['items'], ['title', 'description']);
 
         return $this->withMeta($items, $result['total'], $page, $perPage);
     }

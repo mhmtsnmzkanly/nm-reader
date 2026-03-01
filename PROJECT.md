@@ -94,6 +94,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Content Metadata Visibility Fix (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Description field was appearing empty when editing content in the admin panel.
+- **Root Cause**: The `AdminConsoleService::listContents` method was only allowing the `title` field to pass through its sanitization layer for administrative listings, effectively stripping `description`, `cover_image`, and other metadata before they reached the frontend.
+- **Fix**: Updated `AdminConsoleService::listContents` to include `description` in the list of allowed and sanitized fields, ensuring full metadata is available for administrative operations.
+
 ### Content Management & Upload Fixes (2026-03-01)
 - **Status**: Completed.
 - **Problem**: 
