@@ -94,6 +94,18 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Content UI & Search & Social Fixes (2026-03-01)
+- **Status**: Completed.
+- **Problem**: 
+  - Tag chips on content pages were white and unreadable.
+  - Comment system was failing with 404 because it was targeting chapter-level endpoints even on series pages.
+  - Search page was showing "Please enter a search term" even when a query was provided.
+- **Fix**:
+  - Added missing theme color variables (`--primary`, `--success`, etc.) to `:root` in `public/assets/css/site.css`.
+  - Implemented series-level comment API endpoints and updated `CommentService` and `CommentRepository` to support them.
+  - Updated `public/assets/js/connection.js` and `public/assets/js/content.js` to correctly route comments based on context (chapter vs series).
+  - Updated `WebController::render` to include SSR context data in `window.__NMR_CONTEXT`, allowing `search.js` to correctly identify the search query.
+
 ### Content Taxonomy Update Fix (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Updating tags and genres for a content item was failing with a 404 error.

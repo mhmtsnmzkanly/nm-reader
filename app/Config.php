@@ -224,6 +224,7 @@ final class Config
             $group->post('/user/activity', [ActivityController::class, 'track'])->add(new AuthMiddleware(true, $authorization));
             $group->get('/chapter/{chapterNumber}', [ChapterController::class, 'show']);
             $group->get('/chapter/{chapterId:[a-z0-9]{6}}/comments', [CommentController::class, 'list']);
+            $group->get('/content/{type:' . $typePattern . '}/{slug}/comments', [CommentController::class, 'listSeries']);
             $group->get('/blogs/{slug}/comments', [CommentController::class, 'listBlog']);
 
             $group->post('/auth/register', [AuthController::class, 'register'])
@@ -239,6 +240,7 @@ final class Config
                 $secure->post('/content/{type:' . $typePattern . '}/{slug}/follow', [SeriesController::class, 'followByType']);
                 $secure->delete('/content/{type:' . $typePattern . '}/{slug}/follow', [SeriesController::class, 'unfollowByType']);
                 $secure->post('/content/{type:' . $typePattern . '}/{slug}/rate', [RatingController::class, 'rateByType']);
+                $secure->post('/content/{type:' . $typePattern . '}/{slug}/comment', [CommentController::class, 'createSeries'])->add(new RestrictedActionMiddleware($users, 'commenting'));
                 $secure->post('/chapter/{chapterId:[a-z0-9]{6}}/comment', [CommentController::class, 'create'])->add(new RestrictedActionMiddleware($users, 'commenting'));
                 $secure->post('/comments/{commentId:[0-9]+}/vote', [CommentController::class, 'vote'])->add(new RestrictedActionMiddleware($users, 'voting'));
                 $secure->post('/user/profile', [UserController::class, 'updateProfile']);

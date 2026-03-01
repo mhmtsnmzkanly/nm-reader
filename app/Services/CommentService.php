@@ -96,6 +96,52 @@ final class CommentService
     }
 
     /**
+     * Adds a comment to a specific series.
+     */
+    public function addToSeries(string $userId, string $type, string $slug, string $body, ?int $parentId = null): int
+    {
+        if ($parentId !== null && $parentId <= 0) {
+            throw new \InvalidArgumentException('parent_id must be a positive integer');
+        }
+
+        $body = Validator::sanitizeMultilineText($body);
+        if ($body === '') {
+            throw new \InvalidArgumentException('Comment body is required');
+        }
+        if (strlen($body) > 1000) {
+            throw new \InvalidArgumentException('Comment body must be at most 1000 characters');
+        }
+
+        $contentId = $this->series->findContentIdBySlug($slug);
+        if ($contentId === null) {
+            throw new \DomainException('Series not found');
+        }
+
+        if ($parentId !== null) {
+            $parent = $this->comments->findById($parentId);
+            if ($parent === null || (string) ($parent['content_id'] ?? '') !== $contentId || ($parent['chapter_id'] ?? null) !== null) {
+                throw new \InvalidArgumentException('parent_id must belong to the same series');
+            }
+        }
+
+        $commentId = $this->comments->addComment(
+            userId: $userId,
+            contentId: $contentId,
+            chapterId: null,
+            body: $body,
+            parentId: $parentId
+        );
+        $this->analytics->track('comment_create', $userId, 'series', $contentId, ['comment_id' => $commentId]);
+        $this->series->incrementCommentCount($contentId);
+
+        $this->cache->delete(sprintf('content_%s', $slug));
+        $this->cache->delete(sprintf('content_%s_%s', $type, $slug));
+        $this->invalidateListingCaches();
+
+        return $commentId;
+    }
+
+    /**
      * Adds a comment to a specific blog post.
      *
      * @param string $userId
@@ -164,8 +210,22 @@ final class CommentService
     }
 
     /**
+     * Lists all comments for a specific series.
+     */
+    public function listBySeriesSlug(string $slug, int $page, int $perPage, ?string $viewerUserId = null): array
+    {
+        $contentId = $this->series->findContentIdBySlug($slug);
+        if ($contentId === null) {
+            throw new \DomainException('Series not found');
+        }
+
+        $rows = $this->comments->getByContentId($contentId, $page, $perPage, $viewerUserId);
+        return OutputSanitizer::sanitizeRows($rows, ['body', 'username']);
+    }
+
+    /**
      * Lists all comments for a specific blog post.
-     *
+     */
      * @param string $slug
      * @param int $page
      * @param int $perPage

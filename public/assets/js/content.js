@@ -149,13 +149,12 @@ $(function() {
     const body = $('#contentCommentInput').val().trim();
     if (!body) return;
 
-    const firstChapterId = $('#commentsTarget').attr('data-first-chapter-id');
     try {
-      await Connection.postChapterComment(firstChapterId, body);
+      await Connection.postContentComment(type, slug, body);
       $('#contentCommentInput').val('');
       $('#commentPreview').html('<span class="text-muted italic">...</span>');
       showPopup(NMR.__t('msg_comment_posted'), 'success');
-      const commentsRes = await Connection.getChapterComments(firstChapterId);
+      const commentsRes = await Connection.getContentComments(type, slug);
       renderComments(commentsRes.data);
     } catch (err) { showPopup(err.message, 'error'); }
   });
@@ -219,11 +218,8 @@ $(function() {
     const chapters = Array.isArray(res.data) ? res.data : [];
     renderChapters(chapters);
     updateStartReadingLink(chapters);
-
-    const firstChapterId = chapters[0]?.id || null;
-    if (firstChapterId) {
-      $('#commentsTarget').attr('data-first-chapter-id', firstChapterId);
-      Connection.getChapterComments(firstChapterId).then(c => renderComments(c.data));
-    }
   });
+
+  Connection.getContentComments(type, slug).then(c => renderComments(c.data));
+});
 });

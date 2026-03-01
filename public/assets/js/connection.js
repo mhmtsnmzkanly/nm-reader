@@ -138,6 +138,11 @@ const Connection = (function () {
       method: 'POST',
       body: JSON.stringify(parentId ? { body, parent_id: parentId } : { body })
     }),
+    getContentComments: (type, slug, page = 1, perPage = 20) => request(`/content/${encodeURIComponent(type)}/${encodeURIComponent(slug)}/comments?page=${page}&per_page=${perPage}`),
+    postContentComment: (type, slug, body, parentId = null) => request(`/content/${encodeURIComponent(type)}/${encodeURIComponent(slug)}/comment`, {
+      method: 'POST',
+      body: JSON.stringify(parentId ? { body, parent_id: parentId } : { body })
+    }),
     getBlogComments: (slug) => request(`/blogs/${encodeURIComponent(slug)}/comments`),
     postBlogComment: (slug, body, parentId = null) => request(`/blogs/${encodeURIComponent(slug)}/comments`, {
       method: 'POST',
