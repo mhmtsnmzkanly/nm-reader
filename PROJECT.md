@@ -94,6 +94,14 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Taxonomy Data Update (2026-03-01)
+- **Status**: Completed.
+- **Change**: Updated the default list of genres and tags to be more comprehensive and specifically tailored for a novel/manga platform.
+- **Details**:
+  - Genres now include specific icons (e.g., `bi-fire` for Action, `bi-heart` for Romance).
+  - Tags now include color mappings for UI badges (e.g., `danger` for OP Protagonist, `success` for Leveling).
+  - Updated both `app/database/schema.sql` and `app/Console/seed_default_data.php` to ensure consistency between new installs and existing data syncs.
+
 ### Content Description Markdown Fix (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Content descriptions on series detail pages were rendered as plain text, ignoring Markdown formatting.
