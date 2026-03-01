@@ -423,14 +423,14 @@ $(function () {
 
     // Close search suggestions on click outside
     $(document).on('click', function (e) {
-      if (!$(e.target).closest('#globalSearchForm').length) {
+      if (!$(e.target).closest('#globalSearchForm').elements.length) {
         $('#searchSuggestions').hide();
       }
     });
 
     // Close dropdowns on click outside
     $(document).on('click', function (e) {
-      if (!$(e.target).closest('.dropdown').length) {
+      if (!$(e.target).closest('.dropdown').elements.length) {
         $('.dropdown').removeClass('active');
       }
     });
