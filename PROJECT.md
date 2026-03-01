@@ -94,6 +94,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Content Description Markdown Fix (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Content descriptions on series detail pages were rendered as plain text, ignoring Markdown formatting.
+- **Fix**:
+  - Updated `storage/views/pages_content.php` to include an ID and the `markdown-body` class for the description container.
+  - Updated `public/assets/js/content.js` to automatically parse and render the description using `marked.js` (via `NMR.parseMarkdown`) on page load.
+
 ### Content Metadata Visibility Fix (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Description field was appearing empty when editing content in the admin panel.

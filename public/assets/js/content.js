@@ -214,6 +214,13 @@ $(function() {
 
   // Main Execution
   initActions();
+
+  // Render description markdown
+  const descEl = $('#contentDescription');
+  if (descEl.elements.length && descEl.text().trim()) {
+    descEl.html(NMR.parseMarkdown(descEl.text()));
+  }
+
   Connection.getChapters(type, slug).then((res) => {
     const chapters = Array.isArray(res.data) ? res.data : [];
     renderChapters(chapters);

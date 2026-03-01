@@ -123,8 +123,8 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
             <!-- Body with Info -->
             <div class="content-body-main">
                 <div class="main-desc-card">
-                    <div class="desc-title">� <?= $__t('summary') ?></div>
-                    <p class="desc-text"><?= htmlspecialchars((string) ($content['description'] ?? '')) ?></p>
+                    <div class="desc-title">📝 <?= $__t('summary') ?></div>
+                    <div class="desc-text markdown-body" id="contentDescription"><?= htmlspecialchars((string) ($content['description'] ?? '')) ?></div>
                     
                     <div class="flex flex-wrap gap-2 mt-4">
                         <?php foreach ($chipItems as $chip): ?>
