@@ -108,7 +108,8 @@ final class AdminConsoleRepository
              FROM series c
              LEFT JOIN series_metadata cm ON cm.content_id = c.id
              ORDER BY c.created_at DESC
-             LIMIT :limit OFFSET :offset'        );
+             LIMIT :limit OFFSET :offset'
+        );
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
