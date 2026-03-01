@@ -530,6 +530,64 @@ final class AdminConsoleRepository
     }
 
     /**
+     * Creates a new genre.
+     */
+    public function createGenre(string $name): array
+    {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
+        $stmt = $this->pdo->prepare('INSERT INTO series_genres (name, slug) VALUES (:name, :slug)');
+        $stmt->execute(['name' => $name, 'slug' => $slug]);
+        $id = (int)$this->pdo->lastInsertId();
+
+        return ['id' => $id, 'name' => $name, 'slug' => $slug];
+    }
+
+    /**
+     * Creates a new tag.
+     */
+    public function createTag(string $name): array
+    {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
+        $stmt = $this->pdo->prepare('INSERT INTO series_tags (name, slug) VALUES (:name, :slug)');
+        $stmt->execute(['name' => $name, 'slug' => $slug]);
+        $id = (int)$this->pdo->lastInsertId();
+
+        return ['id' => $id, 'name' => $name, 'slug' => $slug];
+    }
+
+    /**
+     * Updates genres and tags for a content item.
+     */
+    public function updateContentTaxonomy(string $contentId, array $genreIds, array $tagIds): void
+    {
+        $this->pdo->beginTransaction();
+        try {
+            // Genres
+            $this->pdo->prepare('DELETE FROM series_genre_map WHERE content_id = :id')->execute(['id' => $contentId]);
+            if (!empty($genreIds)) {
+                $stmt = $this->pdo->prepare('INSERT INTO series_genre_map (content_id, genre_id) VALUES (:id, :gid)');
+                foreach ($genreIds as $gid) {
+                    if ($gid) $stmt->execute(['id' => $contentId, 'gid' => $gid]);
+                }
+            }
+
+            // Tags
+            $this->pdo->prepare('DELETE FROM series_tag_map WHERE content_id = :id')->execute(['id' => $contentId]);
+            if (!empty($tagIds)) {
+                $stmt = $this->pdo->prepare('INSERT INTO series_tag_map (content_id, tag_id) VALUES (:id, :tid)');
+                foreach ($tagIds as $tid) {
+                    if ($tid) $stmt->execute(['id' => $contentId, 'tid' => $tid]);
+                }
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
      * Fetches all roles and their mapped permission codes.
      */
     public function listRolesWithPermissions(): array

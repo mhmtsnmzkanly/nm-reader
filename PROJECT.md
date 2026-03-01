@@ -103,6 +103,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Fix**:
   - Added the missing route to the admin API group in `app/Config.php`.
   - Updated `AdminConsoleController::updateTaxonomy` to support both sets of keys (`series_genres`/`genres` and `series_tags`/`tags`).
+  - Implemented `updateContentTaxonomy`, `createGenre`, and `createTag` in `AdminConsoleRepository` to resolve the 500 Internal Server Error (Call to undefined method).
 
 ### Auth Form Robustness Fix (2026-02-28)
 - **Status**: Completed.
