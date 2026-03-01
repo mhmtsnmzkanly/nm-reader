@@ -222,8 +222,10 @@ final class AdminController
             }
 
             $userId = (string) $request->getAttribute('user_id');
-            $body = (array) $request->getParsedBody();
-            $type = (string) ($body['type'] ?? 'chapters');
+            $body = (array) ($request->getParsedBody() ?? []);
+            $queryParams = $request->getQueryParams();
+            // Try multiple sources for 'type' to ensure reliability across environments
+            $type = (string) ($queryParams['type'] ?? $body['type'] ?? $_POST['type'] ?? 'chapters');
             
             $paths = $this->uploadService->handleBulkImageUpload($userId, $toProcess, $type);
             return ResponseHelper::success(['paths' => $paths]);

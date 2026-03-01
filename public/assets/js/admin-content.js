@@ -210,10 +210,10 @@
         const file = input.files[0];
         if (!file) return;
         const formData = new FormData();
-        formData.append('images[]', file);
         formData.append('type', type);
+        formData.append('images[]', file);
         try {
-          const res = await api('/admin/upload-images', { method: 'POST', body: formData });
+          const res = await api(`/admin/upload-images?type=${type}`, { method: 'POST', body: formData });
           if (res.data?.paths?.length > 0) {
             document.getElementById(targetId).value = res.data.paths[0];
           }
