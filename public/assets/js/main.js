@@ -421,31 +421,40 @@ $(function () {
       }, 300);
     });
 
-    // Close search suggestions on click outside
+    // Consolidated Dropdown Handler (Toggle & Click-Outside)
     $(document).on('click', function (e) {
-      if (!$(e.target).closest('#globalSearchForm').elements.length) {
+      const $target = $(e.target);
+      const $toggle = $target.closest('.dropdown-toggle');
+      const $dropdown = $target.closest('.dropdown');
+
+      // 1. Handle clicking a toggle button
+      if ($toggle.elements.length > 0) {
+        e.preventDefault();
+        const $parent = $toggle.parent();
+        const isActive = $parent.hasClass('active');
+        
+        // Close all other dropdowns
+        $('.dropdown').removeClass('active');
+        
+        // Toggle this one
+        if (!isActive) {
+          $parent.addClass('active');
+        }
+        return;
+      }
+
+      // 2. Handle clicking outside any dropdown
+      if ($dropdown.elements.length === 0) {
+        $('.dropdown').removeClass('active');
+      }
+      
+      // 3. Close search suggestions if clicking outside search form
+      if (!$target.closest('#globalSearchForm').elements.length) {
         $('#searchSuggestions').hide();
       }
     });
 
-    // Close dropdowns on click outside
-    $(document).on('click', function (e) {
-      if (!$(e.target).closest('.dropdown').elements.length) {
-        $('.dropdown').removeClass('active');
-      }
-    });
-
     $('body').on('click', '.modal-overlay', function (e) { if (e.target === this) closeModal(); });
-
-    // Dropdown Toggle (Event Delegation)
-    $('body').on('click', '.dropdown-toggle', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      const $parent = $(this).parent();
-      const isActive = $parent.hasClass('active');
-      $('.dropdown').removeClass('active');
-      if (!isActive) $parent.addClass('active');
-    });
   };
 
   init();
