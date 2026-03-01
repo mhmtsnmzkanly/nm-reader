@@ -206,11 +206,12 @@
   const init = () => {
     window.NMR_ADMIN_CONTENT = Object.assign(window.NMR_ADMIN_CONTENT || {}, {
       promptCreateTaxonomy,
-      uploadSpecificImage: async (input, targetId) => {
+      uploadSpecificImage: async (input, targetId, type = 'chapters') => {
         const file = input.files[0];
         if (!file) return;
         const formData = new FormData();
         formData.append('images[]', file);
+        formData.append('type', type);
         try {
           const res = await api('/admin/upload-images', { method: 'POST', body: formData });
           if (res.data?.paths?.length > 0) {

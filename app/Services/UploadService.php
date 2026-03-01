@@ -70,6 +70,7 @@ final class UploadService
             'users/profile' => 'user.profile',
             'users/cover'   => 'user.cover',
             'chapters'      => 'chapter',
+            'series_cover'  => 'cover',
             'blogs', 'system' => 'content.cover',
             default => str_replace('/', '.', trim($dto->targetSubdir ?? 'misc', '/'))
         };

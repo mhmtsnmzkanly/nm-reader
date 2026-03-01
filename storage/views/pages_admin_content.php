@@ -113,7 +113,7 @@
               <input class="form-control" name="cover_image" id="create-content-cover">
               <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('upload-cover-input').click()">Upload</button>
             </div>
-            <input type="file" id="upload-cover-input" class="d-none" accept="image/*" onchange="NMR_ADMIN_CONTENT.uploadSpecificImage(this, 'create-content-cover')">
+            <input type="file" id="upload-cover-input" class="d-none" accept="image/*" onchange="NMR_ADMIN_CONTENT.uploadSpecificImage(this, 'create-content-cover', 'series_cover')">
           </div>
           <div class="col-12">
             <label class="form-label small">Description</label>
@@ -174,7 +174,7 @@
               <input class="form-control" name="cover_image" id="edit-content-cover">
               <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('upload-cover-edit-input').click()">Upload</button>
             </div>
-            <input type="file" id="upload-cover-edit-input" class="d-none" accept="image/*" onchange="NMR_ADMIN_CONTENT.uploadSpecificImage(this, 'edit-content-cover')">
+            <input type="file" id="upload-cover-edit-input" class="d-none" accept="image/*" onchange="NMR_ADMIN_CONTENT.uploadSpecificImage(this, 'edit-content-cover', 'series_cover')">
           </div>
           <div class="col-12">
             <label class="form-label small">Description</label>
