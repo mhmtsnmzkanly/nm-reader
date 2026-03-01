@@ -149,20 +149,17 @@ final class AdminService
      */
     public function updateContent(string $id, array $payload, ?string $moderatorId = null): void
     {
-        $title = Validator::sanitizeText((string) ($payload['title'] ?? ''));
-        $status = strtolower(trim((string) ($payload['status'] ?? 'ongoing')));
-        $description = trim((string) ($payload['description'] ?? ''));
-        $coverImage = trim((string) ($payload['cover_image'] ?? ''));
-        $author = $this->sanitizePerson((string) ($payload['author'] ?? ''));
-        $artist = $this->sanitizePerson((string) ($payload['artist'] ?? ''));
-        $country = $this->sanitizeCountry((string) ($payload['country'] ?? ''));
-        $releaseYear = $this->sanitizeYear((string) ($payload['release_year'] ?? ''));
+        $title = isset($payload['title']) ? Validator::sanitizeText((string) $payload['title']) : null;
+        $status = isset($payload['status']) ? strtolower(trim((string) $payload['status'])) : null;
+        $description = isset($payload['description']) ? trim((string) $payload['description']) : null;
+        $coverImage = isset($payload['cover_image']) ? trim((string) $payload['cover_image']) : null;
+        
+        $author = isset($payload['author']) ? $this->sanitizePerson((string) $payload['author']) : null;
+        $artist = isset($payload['artist']) ? $this->sanitizePerson((string) $payload['artist']) : null;
+        $country = isset($payload['country']) ? $this->sanitizeCountry((string) $payload['country']) : null;
+        $releaseYear = isset($payload['release_year']) ? $this->sanitizeYear((string) $payload['release_year']) : null;
 
-        if ($title === '') {
-            throw new \InvalidArgumentException('title is required');
-        }
-
-        // Fetch current to calculate diff
+        // Fetch current to check existence and for cache clearing
         $stmt = $this->pdo->prepare('SELECT title, description, status, cover_image, slug, type FROM series WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $current = $stmt->fetch();
@@ -171,43 +168,37 @@ final class AdminService
             throw new \DomainException('Content not found');
         }
 
-        $diff = [];
-        $newValues = [
-            'title' => $title,
-            'description' => $description === '' ? null : $description,
-            'status' => $status,
-            'cover_image' => $coverImage === '' ? null : $coverImage,
-        ];
+        $updates = [];
+        $params = ['id' => $id];
 
-        foreach ($newValues as $key => $val) {
-            if (($current[$key] ?? null) !== $val) {
-                $diff[$key] = ['before' => $current[$key], 'after' => $val];
-            }
+        if ($title !== null && $title !== '') {
+            $updates[] = 'title = :title';
+            $params['title'] = $title;
+        }
+        if ($description !== null) {
+            $updates[] = 'description = :description';
+            $params['description'] = $description === '' ? null : $description;
+        }
+        if ($status !== null) {
+            $updates[] = 'status = :status';
+            $params['status'] = $status;
+        }
+        if ($coverImage !== null) {
+            $updates[] = 'cover_image = :cover_image';
+            $params['cover_image'] = $coverImage === '' ? null : $coverImage;
         }
 
         $this->pdo->beginTransaction();
         try {
-            $stmt = $this->pdo->prepare(
-                'UPDATE series SET 
-                    title = :title, 
-                    description = :description, 
-                    status = :status, 
-                    cover_image = :cover_image 
-                 WHERE id = :id'
-            );
-            
-            $stmt->execute([
-                'id' => $id,
-                'title' => $title,
-                'description' => $newValues['description'],
-                'status' => $status,
-                'cover_image' => $newValues['cover_image'],
-            ]);
+            if (!empty($updates)) {
+                $sql = 'UPDATE series SET ' . implode(', ', $updates) . ' WHERE id = :id';
+                $this->pdo->prepare($sql)->execute($params);
+            }
 
             $this->upsertContentMetadata($id, $author, $artist, $country, $releaseYear);
 
-            if ($moderatorId !== null && !empty($diff)) {
-                $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'update', json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE));
+            if ($moderatorId !== null) {
+                $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'update', "Content updated: " . ($title ?? $current['title']));
             }
 
             $this->pdo->commit();

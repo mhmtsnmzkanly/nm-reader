@@ -94,6 +94,18 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Content Management & Upload Fixes (2026-03-01)
+- **Status**: Completed.
+- **Problem**: 
+  - Content covers and descriptions were being cleared when editing a series.
+  - All uploads were using the "chapter" prefix, regardless of type.
+  - The upload tracking table was missing from the schema.
+- **Fix**:
+  - Added `cover_image` and `description` to `AdminConsoleRepository::listContents` so they are correctly populated in the edit modal.
+  - Refactored `AdminService::updateContent` to only update fields that are explicitly provided in the API payload, preventing accidental data loss.
+  - Updated `public/assets/js/admin-content.js` and `storage/views/pages_admin_content.php` to correctly pass the `type` parameter during bulk and specific image uploads.
+  - Restored the `system_uploads` table to `app/database/schema.sql` for persistent tracking of all image assets.
+
 ### Content UI & Search & Social Fixes (2026-03-01)
 - **Status**: Completed.
 - **Problem**: 

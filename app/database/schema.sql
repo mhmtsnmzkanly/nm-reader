@@ -342,6 +342,20 @@ CREATE TABLE `system_audit_logs` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `system_uploads`;
+CREATE TABLE `system_uploads` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `image_id` varchar(32) NOT NULL,
+  `original_name` varchar(255) NOT NULL,
+  `mime_type` varchar(100) NOT NULL,
+  `file_size` int(11) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_upload_user` (`user_id`),
+  CONSTRAINT `fk_uploads_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `analytics_series_daily`;
 CREATE TABLE `analytics_series_daily` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,

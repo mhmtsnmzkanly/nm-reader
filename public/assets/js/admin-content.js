@@ -223,12 +223,12 @@
         }
         input.value = '';
       },
-      handleBulkUpload: async (input) => {
+      handleBulkUpload: async (input, type = 'chapters') => {
         const files = Array.from(input.files);
         if (files.length === 0) return;
 
         const total = files.length;
-        console.log(`[Bulk Upload] Starting sequential upload for ${total} files.`);
+        console.log(`[Bulk Upload] Starting sequential upload for ${total} files of type ${type}.`);
 
         const area = document.getElementById('create-chapter-pages');
         if (!area) return;
@@ -239,13 +239,12 @@
         for (let i = 0; i < total; i++) {
           const file = files[i];
           const formData = new FormData();
+          formData.append('type', type);
           formData.append('images[]', file);
 
           try {
-            // UI Feedback (optional but helpful)
             console.log(`[Bulk Upload] Progress: ${i + 1}/${total} - Uploading ${file.name}...`);
-
-            const res = await api('/admin/upload-images', { method: 'POST', body: formData });
+            const res = await api(`/admin/upload-images?type=${type}`, { method: 'POST', body: formData });
 
             if (res.data?.paths?.length > 0) {
               const existing = area.value.trim();

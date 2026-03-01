@@ -251,7 +251,7 @@
               <label class="form-label small mb-0">Pages (image chapter)</label>
               <button type="button" class="btn btn-xs btn-success" onclick="document.getElementById('bulk-upload-chapter').click()">Bulk Upload Images</button>
             </div>
-            <input type="file" id="bulk-upload-chapter" class="d-none" multiple accept="image/*" onchange="NMR_ADMIN_CONTENT.handleBulkUpload(this)">
+            <input type="file" id="bulk-upload-chapter" class="d-none" multiple accept="image/*" onchange="NMR_ADMIN_CONTENT.handleBulkUpload(this, 'chapters')">
             <textarea class="form-control" id="create-chapter-pages" rows="8"></textarea>
             <small class="text-muted">One image path/URL per line, in reading order. Names will be randomized (32 chars).</small>
           </div>
