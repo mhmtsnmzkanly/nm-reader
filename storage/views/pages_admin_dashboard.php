@@ -239,54 +239,6 @@
       </div>
     </div>
 
-    <!-- Modals -->
-    <div class="modal fade" id="modal-create-content" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <form id="form-create-content">
-            <div class="modal-header"><h5 class="modal-title">Create New Content</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body">
-              <div class="mb-2"><input class="form-control" name="title" placeholder="Title" required></div>
-              <div class="mb-2"><input class="form-control" name="slug" placeholder="Slug (optional)"></div>
-              <div class="mb-2"><textarea class="form-control" name="description" rows="2" placeholder="Description"></textarea></div>
-              <div class="row g-2">
-                <div class="col-md-6"><select class="form-select" name="type" required><option value="light-novel">Novel</option><option value="manga">Manga</option></select></div>
-                <div class="col-md-6"><select class="form-select" name="status"><option value="ongoing">Ongoing</option><option value="completed">Completed</option></select></div>
-              </div>
-            </div>
-            <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Content</button></div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade" id="modal-edit-content" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <form id="form-edit-content">
-            <input type="hidden" name="id" id="edit-content-id">
-            <div class="modal-header text-bg-info"><h5 class="modal-title">Edit Content</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body">
-              <div class="mb-2"><label class="form-label small">Title</label><input class="form-control" name="title" id="edit-content-title" required></div>
-              <div class="mb-2"><label class="form-label small">Description</label><textarea class="form-control" name="description" id="edit-content-desc" rows="3"></textarea></div>
-              <div class="row g-2 mb-3">
-                <div class="col-md-6"><label class="form-label small">Status</label><select class="form-select" name="status" id="edit-content-status"><option value="ongoing">Ongoing</option><option value="completed">Completed</option></select></div>
-                <div class="col-md-6"><label class="form-label small">Cover Image</label><input class="form-control" name="cover_image" id="edit-content-cover"></div>
-              </div>
-              <div class="border-top pt-2">
-                <label class="form-label small d-block mb-1">Genres (Click to toggle)</label>
-                <div id="edit-content-genres-btns" class="d-flex flex-wrap gap-1 mb-2"></div>
-                
-                <label class="form-label small d-block mb-1">Tags (Click to toggle)</label>
-                <div id="edit-content-tags-btns" class="d-flex flex-wrap gap-1 mb-2"></div>
-              </div>
-            </div>
-            <div class="modal-footer"><button type="submit" class="btn btn-info">Update Content</button></div>
-          </form>
-        </div>
-      </div>
-    </div>
-
     <!-- Blogs & Users -->
     <div class="row mt-4">
       <div class="col-md-6" id="blogs-section">

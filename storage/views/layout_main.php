@@ -181,19 +181,12 @@
             shuffle($combined);
             foreach ($combined as $item):
 
-                $color =
-                    $item["t"] === "genre"
-                        ? "var(--success)"
-                        : "var(--primary)";
-                $itemPath =
-                    $item["t"] === "genre"
-                        ? "/genre/{$item["s"]}"
-                        : "/tag/{$item["s"]}";
+                $colorKey = $item["t"] === "genre" ? "success" : "primary";
+                $color = "var(--$colorKey)";
+                $itemPath = $item["t"] === "genre" ? "/genre/{$item["s"]}" : "/tag/{$item["s"]}";
                 $localizedItemUrl = $url($itemPath);
                 ?>
-              <a href="<?= $localizedItemUrl ?>" class="tag-chip" style="--chip-color: <?= $color ?>"><?= htmlspecialchars(
-    $item["n"],
-) ?></a>
+              <a href="<?= $localizedItemUrl ?>" class="tag-chip" style="--chip-color: <?= $color ?>"><?= htmlspecialchars($item["n"]) ?></a>
             <?php
             endforeach;
             ?>

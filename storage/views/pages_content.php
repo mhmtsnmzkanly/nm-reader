@@ -9,19 +9,23 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
 $chipItems = [];
 foreach ($genres as $g) {
     $cfg = $g['ui_config'] ?? [];
+    $color = $cfg['color'] ?? 'success';
+    $colorValue = (str_starts_with($color, '#') || str_starts_with($color, 'rgb')) ? $color : "var(--$color)";
     $chipItems[] = [
         'name' => (string) $g['name'],
         'url' => $url('/genre/' . (string)($g['slug'] ?? '')),
-        'color' => $cfg['color'] ?? 'var(--success)',
+        'color' => $colorValue,
         'icon' => $cfg['icon'] ?? null,
     ];
 }
 foreach ($tags as $t) {
     $cfg = $t['ui_config'] ?? [];
+    $color = $cfg['color'] ?? 'primary';
+    $colorValue = (str_starts_with($color, '#') || str_starts_with($color, 'rgb')) ? $color : "var(--$color)";
     $chipItems[] = [
         'name' => (string) $t['name'],
         'url' => $url('/tag/' . (string)($t['slug'] ?? '')),
-        'color' => $cfg['color'] ?? 'var(--primary)',
+        'color' => $colorValue,
         'icon' => $cfg['icon'] ?? null,
     ];
 }

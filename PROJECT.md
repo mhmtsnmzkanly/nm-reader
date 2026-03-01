@@ -94,6 +94,19 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Content Admin & UI Final Fixes (2026-03-01)
+- **Status**: Completed.
+- **Problem**:
+  - Description field still appearing empty in admin content edit.
+  - Tag and genre chips on content pages were still visually broken (no background color).
+- **Fix**:
+  - **Admin Description**: 
+    - Removed `description` from `OutputSanitizer::sanitizeRows` in `AdminConsoleService::listContents`. Sanitizing for the admin list was stripping content needed for editing.
+    - Removed redundant Edit/Create Content modals from `pages_admin_dashboard.php` to prevent ID conflicts with the dedicated `pages_admin_content.php`.
+  - **Tag UI**:
+    - Added CSS background utility classes (`.bg-primary`, `.bg-success`, etc.) to `public/assets/css/site.css`.
+    - Updated `storage/views/pages_content.php` and `storage/views/layout_main.php` to correctly wrap theme color names (like `primary`, `success`) in `var()` for the `--chip-color` variable.
+
 ### Taxonomy Data Update (2026-03-01)
 - **Status**: Completed.
 - **Change**: Updated the default list of genres and tags to be more comprehensive and specifically tailored for a novel/manga platform.
