@@ -8,9 +8,9 @@ $slug = (string) ($slug ?? '');
 <div class="reader-container mx-auto max-w-1400" id="readerApp" data-chapter-id="<?= htmlspecialchars((string)($chapter['id'] ?? '')) ?>">
   <?php if (!empty($breadcrumbs)): ?>
     <nav class="breadcrumb-nav mb-2 px-2" aria-label="breadcrumb">
-      <ol class="breadcrumb mb-0 small" itemscope itemtype="https://schema.org/BreadcrumbList">
+      <ol class="nmr-breadcrumb mb-0 small" itemscope itemtype="https://schema.org/BreadcrumbList">
         <?php foreach ($breadcrumbs as $i => $bc): ?>
-          <li class="breadcrumb-item <?= $bc['url'] ? '' : 'active text-truncate' ?>" 
+          <li class="nmr-breadcrumb-item <?= $bc['url'] ? '' : 'active text-truncate' ?>" 
               style="max-width: 200px;"
               itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"
               <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>

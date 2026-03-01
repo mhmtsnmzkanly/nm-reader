@@ -1,8 +1,8 @@
 <?php if (!empty($breadcrumbs)): ?>
 <nav class="breadcrumb-nav mb-4 px-2" aria-label="breadcrumb">
-    <ol class="breadcrumb mb-0 small" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <ol class="nmr-breadcrumb mb-0 small" itemscope itemtype="https://schema.org/BreadcrumbList">
         <?php foreach ($breadcrumbs as $i => $bc): ?>
-            <li class="breadcrumb-item <?= $bc['url'] ? '' : 'active' ?>" 
+            <li class="nmr-breadcrumb-item <?= $bc['url'] ? '' : 'active' ?>" 
                 itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"
                 <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>
                 <?php if ($bc['url']): ?>
