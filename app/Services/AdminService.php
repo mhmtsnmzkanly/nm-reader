@@ -102,10 +102,10 @@ final class AdminService
         $id = $this->entityIds->generateContentId();
 
         $sql = 'INSERT INTO series (
-                    id, title, slug, description, alternative_titles, type, status, cover_image,
+                    id, title, slug, description, type, status, cover_image,
                     rating_avg, rating_count, chapter_count, comment_count, created_at
                 ) VALUES (
-                    :id, :title, :slug, :description, :alternative_titles, :type, :status, :cover_image,
+                    :id, :title, :slug, :description, :type, :status, :cover_image,
                     0, 0, 0, 0, NOW()
                 )';
 
@@ -115,13 +115,12 @@ final class AdminService
             'title' => $title,
             'slug' => $slug,
             'description' => $description,
-            'alternative_titles' => $alternativeTitles,
             'type' => $dbType,
             'status' => $status,
             'cover_image' => $coverImage,
         ]);
 
-        $this->upsertContentMetadata($id, $author, $artist, $country, $releaseYear);
+        $this->upsertContentMetadata($id, $author, $artist, $alternativeTitles, $country, $releaseYear);
 
         if ($moderatorId !== null) {
             $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'update', "New series created: $title");
@@ -183,10 +182,6 @@ final class AdminService
             $updates[] = 'description = :description';
             $params['description'] = $description === '' ? null : $description;
         }
-        if ($alternativeTitles !== null) {
-            $updates[] = 'alternative_titles = :alternative_titles';
-            $params['alternative_titles'] = $alternativeTitles === '' ? null : $alternativeTitles;
-        }
         if ($status !== null) {
             $updates[] = 'status = :status';
             $params['status'] = $status;
@@ -203,7 +198,7 @@ final class AdminService
                 $this->pdo->prepare($sql)->execute($params);
             }
 
-            $this->upsertContentMetadata($id, $author, $artist, $country, $releaseYear);
+            $this->upsertContentMetadata($id, $author, $artist, $alternativeTitles, $country, $releaseYear);
 
             if ($moderatorId !== null) {
                 $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'update', "Content updated: " . ($title ?? $current['title']));
@@ -219,18 +214,19 @@ final class AdminService
         $this->invalidateListingCaches();
     }
 
-    private function upsertContentMetadata(string $contentId, ?string $author, ?string $artist, ?string $country, ?int $releaseYear): void
+    private function upsertContentMetadata(string $contentId, ?string $author, ?string $artist, ?string $alternativeTitles, ?string $country, ?int $releaseYear): void
     {
         try {
             $stmt = $this->pdo->prepare(
-                'INSERT INTO series_metadata (content_id, author, artist, country, release_year, created_at, updated_at)
-                 VALUES (:content_id, :author, :artist, :country, :release_year, NOW(), NOW())
-                 ON DUPLICATE KEY UPDATE author = VALUES(author), artist = VALUES(artist), country = VALUES(country), release_year = VALUES(release_year), updated_at = NOW()'
+                'INSERT INTO series_metadata (content_id, author, artist, alternative_titles, country, release_year, created_at, updated_at)
+                 VALUES (:content_id, :author, :artist, :alternative_titles, :country, :release_year, NOW(), NOW())
+                 ON DUPLICATE KEY UPDATE author = VALUES(author), artist = VALUES(artist), alternative_titles = VALUES(alternative_titles), country = VALUES(country), release_year = VALUES(release_year), updated_at = NOW()'
             );
             $stmt->execute([
                 'content_id' => $contentId,
                 'author' => $author,
                 'artist' => $artist,
+                'alternative_titles' => $alternativeTitles,
                 'country' => $country,
                 'release_year' => $releaseYear,
             ]);
