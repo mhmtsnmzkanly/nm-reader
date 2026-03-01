@@ -318,6 +318,16 @@ final class AdminConsoleService
         $this->repo->createModerationAction($moderatorId, 'content', $contentId, 'update', 'Genre/Tag assignments updated');
     }
 
+    public function listAllGenres(): array
+    {
+        return $this->repo->listAllGenres();
+    }
+
+    public function listAllTags(): array
+    {
+        return $this->repo->listAllTags();
+    }
+
     public function cleanupRetention(int $days): array
     {
         return $this->retention->cleanup($days);

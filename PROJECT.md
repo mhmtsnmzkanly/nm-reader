@@ -94,6 +94,15 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Taxonomy Visibility Fix (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Not all genres and tags were appearing in the content management modals.
+- **Root Cause**: The frontend was using public API endpoints which had pagination limits (capped at 20-50 items).
+- **Fix**:
+  - Added dedicated administrative endpoints (`/admin/genres` and `/admin/tags`) that return all taxonomy items without pagination.
+  - Updated `AdminConsoleService` and `AdminConsoleRepository` to support full listing of taxonomy data.
+  - Updated `public/assets/js/admin-content.js` to use these new non-paginated endpoints for populating modals.
+
 ### Content Admin & UI Final Fixes (2026-03-01)
 - **Status**: Completed.
 - **Problem**:

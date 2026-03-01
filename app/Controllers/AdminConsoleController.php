@@ -500,6 +500,22 @@ final class AdminConsoleController
     }
 
     /**
+     * Lists all genres for administrative use.
+     */
+    public function listGenres(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->listAllGenres());
+    }
+
+    /**
+     * Lists all tags for administrative use.
+     */
+    public function listTags(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->listAllTags());
+    }
+
+    /**
      * Helper to extract pagination metadata from query string.
      */
     private function pagination(ServerRequestInterface $request): array

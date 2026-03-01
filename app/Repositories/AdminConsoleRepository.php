@@ -589,6 +589,24 @@ final class AdminConsoleRepository
     }
 
     /**
+     * Lists all genres without pagination for administrative use.
+     */
+    public function listAllGenres(): array
+    {
+        $stmt = $this->pdo->query('SELECT id, name, slug, ui_config FROM series_genres ORDER BY name ASC');
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Lists all tags without pagination for administrative use.
+     */
+    public function listAllTags(): array
+    {
+        $stmt = $this->pdo->query('SELECT id, name, slug, ui_config FROM series_tags ORDER BY name ASC');
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Fetches all roles and their mapped permission codes.
      */
     public function listRolesWithPermissions(): array

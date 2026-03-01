@@ -278,6 +278,8 @@ final class Config
             $group->get('/overview', [AdminConsoleController::class, 'overview'])->add($perm(['admin.panel.access']));
             $group->get('/series', [AdminConsoleController::class, 'series'])->add($perm(['admin.panel.access']));
             $group->get('/contents', [AdminConsoleController::class, 'series'])->add($perm(['admin.panel.access']));
+            $group->get('/genres', [AdminConsoleController::class, 'listGenres'])->add($perm(['admin.panel.access']));
+            $group->get('/tags', [AdminConsoleController::class, 'listTags'])->add($perm(['admin.panel.access']));
             $group->get('/users', [AdminConsoleController::class, 'users'])->add($perm(['admin.panel.access']));
             $group->get('/blogs', [AdminConsoleController::class, 'blogs'])->add($perm(['admin.panel.access']));
             $group->get('/blogs/pending', [BlogController::class, 'pending'])->add($perm(['admin.panel.access']));

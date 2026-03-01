@@ -105,10 +105,10 @@
   const loadTaxonomy = async () => {
     if (!$('#genres-list-body')) return;
     try {
-      const g = await api('/genres');
+      const g = await api('/admin/genres');
       _ALL_GENRES = g.data || [];
       setHtml('#genres-list-body', _ALL_GENRES.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
-      const t = await api('/tags');
+      const t = await api('/admin/tags');
       _ALL_TAGS = t.data || [];
       setHtml('#tags-list-body', _ALL_TAGS.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
       renderCreateTaxonomyButtons();
