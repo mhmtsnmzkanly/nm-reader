@@ -94,6 +94,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Content Alternative Titles Visibility (2026-03-01)
+- **Status**: Completed.
+- **Problem**: Alternative titles were cluttering the hero section and weren't easily readable.
+- **Fix**: Moved alternative titles from the hero section to a dedicated box within the main description card in `pages_content.php`, improving detail visibility and overall layout balance.
+
 ### Dropdown UX & Hover Fix (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Dropdowns in the header had conflicting hover and click behaviors, causing flickering and inconsistent visibility.

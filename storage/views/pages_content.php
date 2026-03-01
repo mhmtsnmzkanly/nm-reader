@@ -63,12 +63,6 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
                         <span class="meta-pill">⭐ <?= htmlspecialchars((string) ($content['rating_avg'] ?? '-')) ?></span>
                     </div>
                     <h1 class="hero-title"><?= htmlspecialchars((string) ($content['title'] ?? '')) ?></h1>
-                    <?php if (!empty($content['alternative_titles'])): ?>
-                        <div class="mb-3 opacity-70 text-sm">
-                            <i class="bi bi-translate me-1"></i>
-                            <?= htmlspecialchars((string) $content['alternative_titles']) ?>
-                        </div>
-                    <?php endif; ?>
                     
                     <div class="hero-meta-strip">
                         <div class="flex items-center gap-2">
@@ -124,6 +118,14 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
             <div class="content-body-main">
                 <div class="main-desc-card">
                     <div class="desc-title"><i class="bi bi-journal-text me-2"></i> <?= $__t('summary') ?></div>
+                    
+                    <?php if (!empty($content['alternative_titles'])): ?>
+                        <div class="mb-4 p-3 bg-surface-elevated rounded-lg border-l-4 border-primary">
+                            <div class="text-xs text-muted font-bold uppercase mb-1 tracking-wider"><?= $__t('alternative_titles') ?></div>
+                            <div class="text-sm italic opacity-90"><?= htmlspecialchars((string) $content['alternative_titles']) ?></div>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="desc-text markdown-body" id="contentDescription"><?= htmlspecialchars((string) ($content['description'] ?? '')) ?></div>
                     
                     <div class="flex flex-wrap gap-2 mt-4">
