@@ -7,19 +7,12 @@ window.AdminApp = (function($) {
   const ctx = window.__NMR_CONTEXT || {};
   const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
 
-  /**
-   * Universal Modal Opener
-   * Works with both custom overlays and AdminLTE/Bootstrap modals.
-   */
+  // Global Modal System
   window.openModal = (id) => {
     const el = document.getElementById(id);
     if (!el) return;
-    
-    // Clean up existing
     $('.modal-overlay, .modal').removeClass('active show');
     $(el).css('display', 'block').addClass('active show');
-    
-    // AdminLTE/Bootstrap compatibility: Add backdrop if missing
     if ($(el).hasClass('modal') && !$('.modal-backdrop').length) {
       $('body').append('<div class="modal-backdrop fade show"></div>').addClass('modal-open');
     }
@@ -31,7 +24,6 @@ window.AdminApp = (function($) {
     $('body').removeClass('modal-open');
   };
 
-  // Close triggers
   $(document).on('click', '.modal-overlay, .modal', function(e) {
     if (e.target === this || $(e.target).hasClass('modal-close') || $(e.target).attr('data-bs-dismiss') === 'modal') {
       window.closeModal();
@@ -68,7 +60,6 @@ window.AdminApp = (function($) {
         setText('#kpi-contents', d.kpis?.contents_total || 0);
         setText('#kpi-chapters', d.kpis?.chapters_total || 0);
         setText('#kpi-unread', d.kpis?.blogs_pending_total || 0);
-        
         const m = d.metrics || {};
         setHtml('#metrics-top-contents', (m.top_contents_7d || []).map(c => `
           <tr>
@@ -83,15 +74,20 @@ window.AdminApp = (function($) {
 
   const Content = {
     _CONTENTS: [],
+    _ALL_GENRES: [],
+    _ALL_TAGS: [],
+    _SELECTED_GENRES: new Set(),
+    _SELECTED_TAGS: new Set(),
+
     init: function() {
       this.load();
+      this.loadTaxonomy();
       $('#btn-refresh-contents').on('click', () => this.load());
       
       $('#create-content-title').on('input', function() {
         $('#create-content-slug').val($(this).val().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''));
       });
 
-      // Delegate click events for content list
       $('#contents-list-body').on('click', 'button[data-action]', (e) => {
         const btn = e.currentTarget;
         const id = btn.dataset.id;
@@ -110,6 +106,18 @@ window.AdminApp = (function($) {
         }
       });
 
+      $('#edit-content-genres-btns').on('click', 'button', (e) => {
+        const id = String(e.currentTarget.dataset.id);
+        if (this._SELECTED_GENRES.has(id)) this._SELECTED_GENRES.delete(id); else this._SELECTED_GENRES.add(id);
+        this.renderTaxonomyButtons();
+      });
+
+      $('#edit-content-tags-btns').on('click', 'button', (e) => {
+        const id = String(e.currentTarget.dataset.id);
+        if (this._SELECTED_TAGS.has(id)) this._SELECTED_TAGS.delete(id); else this._SELECTED_TAGS.add(id);
+        this.renderTaxonomyButtons();
+      });
+
       $('#form-create-content').on('submit', async (e) => {
         e.preventDefault();
         try {
@@ -122,8 +130,10 @@ window.AdminApp = (function($) {
       $('#form-edit-content').on('submit', async (e) => {
         e.preventDefault();
         const fd = new FormData(e.target);
+        const id = fd.get('id');
         try {
-          await api(`/admin/content/${fd.find('[name="id"]').val() || fd.get('id')}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
+          await api(`/admin/content/${id}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
+          await api(`/admin/contents/${id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._SELECTED_GENRES), tags: Array.from(this._SELECTED_TAGS) }) });
           window.closeModal(); this.load();
         } catch (err) { alert(err.message); }
       });
@@ -156,6 +166,24 @@ window.AdminApp = (function($) {
         }
       } catch (e) {}
     },
+    loadTaxonomy: async function() {
+      try {
+        const [g, t] = await Promise.all([api('/admin/genres'), api('/admin/tags')]);
+        this._ALL_GENRES = g.data || [];
+        this._ALL_TAGS = t.data || [];
+        this.renderTaxonomyButtons();
+      } catch (e) {}
+    },
+    renderTaxonomyButtons: function() {
+      setHtml('#edit-content-genres-btns', this._ALL_GENRES.map(g => {
+        const active = this._SELECTED_GENRES.has(String(g.id));
+        return `<button type="button" class="btn btn-xs ${active ? 'btn-success' : 'btn-outline-secondary'} m-1" data-id="${g.id}">${g.name}</button>`;
+      }).join(''));
+      setHtml('#edit-content-tags-btns', this._ALL_TAGS.map(t => {
+        const active = this._SELECTED_TAGS.has(String(t.id));
+        return `<button type="button" class="btn btn-xs ${active ? 'btn-success' : 'btn-outline-secondary'} m-1" data-id="${t.id}">${t.name}</button>`;
+      }).join(''));
+    },
     openEdit: function(c) {
       const f = $('#form-edit-content');
       if (!f.length) return;
@@ -170,6 +198,10 @@ window.AdminApp = (function($) {
       f.find('[name="artist"]').val(c.artist || '');
       f.find('[name="country"]').val(c.country || '');
       f.find('[name="release_year"]').val(c.release_year || '');
+      
+      this._SELECTED_GENRES = new Set(String(c.genre_ids || '').split(',').filter(Boolean));
+      this._SELECTED_TAGS = new Set(String(c.tag_ids || '').split(',').filter(Boolean));
+      this.renderTaxonomyButtons();
       window.openModal('modal-edit-content');
     }
   };
@@ -276,13 +308,10 @@ window.AdminApp = (function($) {
             <td>${item.mime_type.split('/')[1]}</td>
             <td>${(item.file_size/1024).toFixed(1)}KB</td>
             <td>${item.username || 'System'}</td>
-            <td><button class="btn btn-xs btn-danger" onclick="AdminApp.Modules.Uploads.delete(${item.id})"><i class="bi bi-trash"></i></button></td>
+            <td><button class="btn btn-xs btn-danger" data-id="${item.id}" data-action="delete-upload"><i class="bi bi-trash"></i></button></td>
           </tr>
         `).join(''));
       } catch (e) {}
-    },
-    delete: async function(id) {
-      if (confirm('Delete?')) { await api(`/admin/uploads/${id}`, { method: 'DELETE' }); this.load(1); }
     }
   };
 
