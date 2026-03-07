@@ -135,6 +135,25 @@ final class AdminConsoleService
     }
 
     /**
+     * Lists all system uploads with pagination.
+     */
+    public function listUploads(int $page, int $perPage): array
+    {
+        return $this->repo->listUploads($page, $perPage);
+    }
+
+    /**
+     * Deletes a specific upload entry.
+     */
+    public function deleteUpload(int $id, string $moderatorId): void
+    {
+        $imageId = $this->repo->deleteUpload($id);
+        if ($imageId) {
+            $this->createModerationAction($moderatorId, 'system', (string)$id, 'delete', "Deleted system upload record: $imageId");
+        }
+    }
+
+    /**
      * Updates user details and moderation status.
      */
     public function updateUser(string $id, array $payload, string $moderatorId): array

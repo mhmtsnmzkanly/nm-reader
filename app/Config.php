@@ -308,6 +308,7 @@ final class Config
             $group->get("/admin/users", [WebController::class, "adminUsers"]);
             $group->get("/admin/ops", [WebController::class, "adminOps"]);
             $group->get("/admin/config", [WebController::class, "adminConfig"]);
+            $group->get("/admin/uploads", [WebController::class, "adminUploads"]);
             $group->get("/admin/logs", [WebController::class, "adminLogs"]);
             $group->get("/admin/tutorial", [
                 WebController::class,
@@ -654,6 +655,15 @@ final class Config
                 ->add($perm(["admin.panel.access"]));
             $group
                 ->get("/users", [AdminConsoleController::class, "users"])
+                ->add($perm(["admin.panel.access"]));
+            $group
+                ->get("/uploads", [AdminConsoleController::class, "uploads"])
+                ->add($perm(["admin.panel.access"]));
+            $group
+                ->delete("/uploads/{id:[0-9]+}", [
+                    AdminConsoleController::class,
+                    "deleteUpload",
+                ])
                 ->add($perm(["admin.panel.access"]));
             $group
                 ->get("/blogs", [AdminConsoleController::class, "blogs"])

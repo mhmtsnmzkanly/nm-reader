@@ -6,6 +6,8 @@ namespace App\Services;
 
 use App\Repositories\RatingRepository;
 use App\Repositories\SeriesRepository;
+use App\Services\CacheService;
+use App\Services\AnalyticsService;
 
 /**
  * Service for managing user Ratings for content.

@@ -221,6 +221,27 @@ final class AdminConsoleController
     }
 
     /**
+     * Lists all platform uploads with pagination.
+     */
+    public function uploads(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->console->listUploads($page, $perPage);
+
+        return ResponseHelper::success($result['items'] ?? $result, $result['meta'] ?? null);
+    }
+
+    /**
+     * Deletes a specific system upload record.
+     */
+    public function deleteUpload(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $moderatorId = (string) $request->getAttribute('user_id');
+        $this->console->deleteUpload((int) ($args['id'] ?? 0), $moderatorId);
+        return ResponseHelper::success(['deleted' => true]);
+    }
+
+    /**
      * Retrieves content performance statistics.
      */
     public function viewStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

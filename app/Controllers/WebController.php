@@ -774,6 +774,23 @@ final class WebController
         );
     }
 
+    public function adminUploads(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+    ): ResponseInterface {
+        if (!$this->canAccessAdminPanel()) {
+            return $response->withHeader("Location", "/")->withStatus(302);
+        }
+
+        return $this->renderAdmin(
+            $request,
+            $response,
+            "admin_uploads.php",
+            ["/assets/js/admin-uploads.js"],
+            "System Uploads - Admin",
+        );
+    }
+
     public function adminLogs(
         ServerRequestInterface $request,
         ResponseInterface $response,

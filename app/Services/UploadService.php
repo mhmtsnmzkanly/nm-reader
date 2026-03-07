@@ -89,17 +89,19 @@ final class UploadService
 
         try {
             $file->moveTo($targetPath);
+            $publicPath = '/uploads/' . $fileName;
             
             $this->repository->logImageUpload(
                 $dto->userId,
                 $imageId,
                 $file->getClientFilename() ?? 'unknown',
                 $mimeType,
-                (int)$file->getSize()
+                (int)$file->getSize(),
+                $publicPath
             );
 
             // Return relative path from public root - flattened
-            return '/uploads/' . $fileName;
+            return $publicPath;
         } catch (Throwable $e) {
             throw new RuntimeException('Failed to move uploaded file: ' . $e->getMessage(), 0, $e);
         }

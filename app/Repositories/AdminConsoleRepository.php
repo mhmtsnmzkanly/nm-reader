@@ -533,6 +533,52 @@ final class AdminConsoleRepository
     }
 
     /**
+     * Lists all system uploads with pagination.
+     */
+    public function listUploads(int $page, int $perPage): array
+    {
+        $offset = ($page - 1) * $perPage;
+        $stmt = $this->pdo->prepare(
+            'SELECT u.*, us.username 
+             FROM system_uploads u
+             LEFT JOIN users us ON u.user_id = us.id
+             ORDER BY u.created_at DESC 
+             LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':limit', $perPage, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+        $items = $stmt->fetchAll();
+
+        $total = (int)$this->pdo->query('SELECT COUNT(*) FROM system_uploads')->fetchColumn();
+
+        return [
+            'items' => $items,
+            'meta' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'total_pages' => ceil($total / $perPage)
+            ]
+        ];
+    }
+
+    /**
+     * Deletes a specific upload record and returns the image_id.
+     */
+    public function deleteUpload(int $id): ?string
+    {
+        $stmt = $this->pdo->prepare('SELECT image_id FROM system_uploads WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        if (!$row) return null;
+
+        $stmt = $this->pdo->prepare('DELETE FROM system_uploads WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        return (string)$row['image_id'];
+    }
+
+    /**
      * Creates a new genre.
      */
     public function createGenre(string $name): array

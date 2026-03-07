@@ -110,6 +110,9 @@
           <?php if ($canAny(['admin.logs.view', 'admin.metrics.view'])): ?>
             <li class="nav-item"><a href="<?= $url('/admin/logs') ?>" class="nav-link"><i class="nav-icon bi bi-shield-lock"></i><p>Logs & Security</p></a></li>
           <?php endif; ?>
+          <?php if ($can('admin.panel.access')): ?>
+            <li class="nav-item"><a href="<?= $url('/admin/uploads') ?>" class="nav-link"><i class="nav-icon bi bi-image"></i><p>Uploads</p></a></li>
+          <?php endif; ?>
           <li class="nav-item"><a href="<?= $url('/admin/tutorial') ?>" class="nav-link"><i class="nav-icon bi bi-question-circle"></i><p><?= $__t('admin.tutorial') ?></p></a></li>
         </ul>
       </nav>
