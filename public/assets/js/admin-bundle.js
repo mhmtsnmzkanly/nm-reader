@@ -25,7 +25,7 @@ window.AdminApp = (function($) {
   };
 
   $(document).on('click', '.modal-overlay, .modal', function(e) {
-    if (e.target === this || $(e.target).hasClass('modal-close') || $(e.target).attr('data-bs-dismiss') === 'modal') {
+    if (e.target === this || $(e.target).hasClass('modal-close') || $(e.target).attr('data-bs-dismiss') === 'modal' || $(e.target).hasClass('btn-close')) {
       window.closeModal();
     }
   });
@@ -78,6 +78,8 @@ window.AdminApp = (function($) {
     _ALL_TAGS: [],
     _SELECTED_GENRES: new Set(),
     _SELECTED_TAGS: new Set(),
+    _CREATE_GENRES: new Set(),
+    _CREATE_TAGS: new Set(),
 
     init: function() {
       this.load();
@@ -102,28 +104,49 @@ window.AdminApp = (function($) {
             if (!sel.find(`option[value="${c.id}"]`).length) sel.append(new Option(c.title, c.id));
             sel.val(c.id).trigger('change');
           }
-          if (action === 'add-chapter') window.openModal('modal-create-chapter');
+          if (action === 'add-chapter') {
+            $('#create-chapter-content').val(c.title);
+            window.openModal('modal-create-chapter');
+          }
         }
       });
 
+      // Taxonomy Button Clicks
       $('#edit-content-genres-btns').on('click', 'button', (e) => {
         const id = String(e.currentTarget.dataset.id);
         if (this._SELECTED_GENRES.has(id)) this._SELECTED_GENRES.delete(id); else this._SELECTED_GENRES.add(id);
-        this.renderTaxonomyButtons();
+        this.renderTaxonomyButtons('edit');
       });
-
       $('#edit-content-tags-btns').on('click', 'button', (e) => {
         const id = String(e.currentTarget.dataset.id);
         if (this._SELECTED_TAGS.has(id)) this._SELECTED_TAGS.delete(id); else this._SELECTED_TAGS.add(id);
-        this.renderTaxonomyButtons();
+        this.renderTaxonomyButtons('edit');
+      });
+      $('#create-content-genres-btns').on('click', 'button', (e) => {
+        const id = String(e.currentTarget.dataset.id);
+        if (this._CREATE_GENRES.has(id)) this._CREATE_GENRES.delete(id); else this._CREATE_GENRES.add(id);
+        this.renderTaxonomyButtons('create');
+      });
+      $('#create-content-tags-btns').on('click', 'button', (e) => {
+        const id = String(e.currentTarget.dataset.id);
+        if (this._CREATE_TAGS.has(id)) this._CREATE_TAGS.delete(id); else this._CREATE_TAGS.add(id);
+        this.renderTaxonomyButtons('create');
       });
 
       $('#form-create-content').on('submit', async (e) => {
         e.preventDefault();
         try {
           const data = Object.fromEntries(new FormData(e.target));
-          await api('/admin/content', { method: 'POST', body: JSON.stringify(data) });
-          window.closeModal(); e.target.reset(); this.load();
+          const res = await api('/admin/content', { method: 'POST', body: JSON.stringify(data) });
+          if (res.data?.id) {
+            await api(`/admin/contents/${res.data.id}/taxonomy`, { 
+              method: 'PUT', 
+              body: JSON.stringify({ genres: Array.from(this._CREATE_GENRES), tags: Array.from(this._CREATE_TAGS) }) 
+            });
+          }
+          window.closeModal(); e.target.reset(); 
+          this._CREATE_GENRES.clear(); this._CREATE_TAGS.clear();
+          this.load();
         } catch (err) { alert(err.message); }
       });
 
@@ -133,7 +156,10 @@ window.AdminApp = (function($) {
         const id = fd.get('id');
         try {
           await api(`/admin/content/${id}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
-          await api(`/admin/contents/${id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._SELECTED_GENRES), tags: Array.from(this._SELECTED_TAGS) }) });
+          await api(`/admin/contents/${id}/taxonomy`, { 
+            method: 'PUT', 
+            body: JSON.stringify({ genres: Array.from(this._SELECTED_GENRES), tags: Array.from(this._SELECTED_TAGS) }) 
+          });
           window.closeModal(); this.load();
         } catch (err) { alert(err.message); }
       });
@@ -171,16 +197,27 @@ window.AdminApp = (function($) {
         const [g, t] = await Promise.all([api('/admin/genres'), api('/admin/tags')]);
         this._ALL_GENRES = g.data || [];
         this._ALL_TAGS = t.data || [];
-        this.renderTaxonomyButtons();
+        this.renderTaxonomyButtons('create');
+        this.renderTaxonomyButtons('edit');
+        
+        // Also populate the reference tables below if they exist
+        setHtml('#genres-list-body', this._ALL_GENRES.map(x => `<tr><td>${x.id}</td><td>${x.name}</td></tr>`).join(''));
+        setHtml('#tags-list-body', this._ALL_TAGS.map(x => `<tr><td>${x.id}</td><td>${x.name}</td></tr>`).join(''));
       } catch (e) {}
     },
-    renderTaxonomyButtons: function() {
-      setHtml('#edit-content-genres-btns', this._ALL_GENRES.map(g => {
-        const active = this._SELECTED_GENRES.has(String(g.id));
+    renderTaxonomyButtons: function(mode = 'edit') {
+      const isEdit = mode === 'edit';
+      const genSet = isEdit ? this._SELECTED_GENRES : this._CREATE_GENRES;
+      const tagSet = isEdit ? this._SELECTED_TAGS : this._CREATE_TAGS;
+      const prefix = isEdit ? '#edit-content' : '#create-content';
+
+      setHtml(`${prefix}-genres-btns`, this._ALL_GENRES.map(g => {
+        const active = genSet.has(String(g.id));
         return `<button type="button" class="btn btn-xs ${active ? 'btn-success' : 'btn-outline-secondary'} m-1" data-id="${g.id}">${g.name}</button>`;
       }).join(''));
-      setHtml('#edit-content-tags-btns', this._ALL_TAGS.map(t => {
-        const active = this._SELECTED_TAGS.has(String(t.id));
+
+      setHtml(`${prefix}-tags-btns`, this._ALL_TAGS.map(t => {
+        const active = tagSet.has(String(t.id));
         return `<button type="button" class="btn btn-xs ${active ? 'btn-success' : 'btn-outline-secondary'} m-1" data-id="${t.id}">${t.name}</button>`;
       }).join(''));
     },
@@ -201,8 +238,39 @@ window.AdminApp = (function($) {
       
       this._SELECTED_GENRES = new Set(String(c.genre_ids || '').split(',').filter(Boolean));
       this._SELECTED_TAGS = new Set(String(c.tag_ids || '').split(',').filter(Boolean));
-      this.renderTaxonomyButtons();
+      this.renderTaxonomyButtons('edit');
       window.openModal('modal-edit-content');
+    },
+    promptCreateTaxonomy: async function(type) {
+      const name = prompt(`New ${type} name:`);
+      if (!name) return;
+      try {
+        await api(`/admin/series_${type}s`, { method: 'POST', body: JSON.stringify({ name }) });
+        this.loadTaxonomy();
+      } catch (e) { alert(e.message); }
+    },
+    uploadSpecificImage: async function(input, targetId, type = 'chapters') {
+      const file = input.files[0]; if (!file) return;
+      const fd = new FormData(); fd.append('type', type); fd.append('images[]', file);
+      try {
+        const res = await api(`/admin/upload-images?type=${type}`, { method: 'POST', body: fd });
+        if (res.data?.paths?.length > 0) document.getElementById(targetId).value = res.data.paths[0];
+      } catch (e) { alert('Upload failed: ' + e.message); }
+      input.value = '';
+    },
+    handleBulkUpload: async function(input, type = 'chapters') {
+      let files = Array.from(input.files); if (files.length === 0) return;
+      files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+      const area = document.getElementById('create-chapter-pages'); if (!area) return;
+      let ok = 0, err = 0;
+      for (const file of files) {
+        const fd = new FormData(); fd.append('type', type); fd.append('images[]', file);
+        try {
+          const res = await api(`/admin/upload-images?type=${type}`, { method: 'POST', body: fd });
+          if (res.data?.paths?.length > 0) { area.value = (area.value.trim() ? area.value + '\n' : '') + res.data.paths[0]; ok++; }
+        } catch (e) { err++; }
+      }
+      alert(`Upload complete! Success: ${ok}, Fail: ${err}`); input.value = '';
     }
   };
 
@@ -220,7 +288,9 @@ window.AdminApp = (function($) {
         const fd = new FormData(e.target);
         const cid = $('#chapters-content-id').val();
         const payload = Object.fromEntries(fd);
-        if (fd.get('type') === 'image') payload.data = fd.get('pages').split('\n').map(l => l.trim()).filter(Boolean).join('|');
+        if (fd.get('type') === 'image') payload.data = $('#create-chapter-pages').val().split('\n').map(l => l.trim()).filter(Boolean).join('|');
+        else payload.data = $('#create-chapter-body').val();
+        
         try {
           await api(`/admin/content/${cid}/chapters`, { method: 'POST', body: JSON.stringify(payload) });
           window.closeModal(); e.target.reset(); this.load();
@@ -231,7 +301,9 @@ window.AdminApp = (function($) {
         e.preventDefault();
         const fd = new FormData(e.target);
         const payload = Object.fromEntries(fd);
-        if (fd.get('type') === 'image') payload.data = fd.get('pages').split('\n').map(l => l.trim()).filter(Boolean).join('|');
+        if (fd.get('type') === 'image') payload.data = $('#edit-chapter-pages').val().split('\n').map(l => l.trim()).filter(Boolean).join('|');
+        else payload.data = $('#edit-chapter-body').val();
+        
         try {
           await api(`/admin/chapters/${fd.get('id')}`, { method: 'PUT', body: JSON.stringify(payload) });
           window.closeModal(); this.load();
@@ -280,8 +352,8 @@ window.AdminApp = (function($) {
         f.find('[name="chapter_number"]').val(ch.chapter_number);
         f.find('[name="title"]').val(ch.title || '');
         f.find('[name="type"]').val(ch.type);
-        if (ch.type === 'image') f.find('[name="pages"]').val((ch.data || '').split('|').join('\n'));
-        else f.find('[name="body"]').val(ch.data || '');
+        if (ch.type === 'image') $('#edit-chapter-pages').val((ch.data || '').split('|').join('\n'));
+        else $('#edit-chapter-body').val(ch.data || '');
         this.toggleEditor(ch.type, 'edit');
         window.openModal('modal-edit-chapter');
       } catch (e) { alert(e.message); }
@@ -308,10 +380,13 @@ window.AdminApp = (function($) {
             <td>${item.mime_type.split('/')[1]}</td>
             <td>${(item.file_size/1024).toFixed(1)}KB</td>
             <td>${item.username || 'System'}</td>
-            <td><button class="btn btn-xs btn-danger" data-id="${item.id}" data-action="delete-upload"><i class="bi bi-trash"></i></button></td>
+            <td><button class="btn btn-xs btn-danger" onclick="AdminApp.Modules.Uploads.delete(${item.id})"><i class="bi bi-trash"></i></button></td>
           </tr>
         `).join(''));
       } catch (e) {}
+    },
+    delete: async function(id) {
+      if (confirm('Delete?')) { await api(`/admin/uploads/${id}`, { method: 'DELETE' }); this.load(1); }
     }
   };
 
@@ -319,6 +394,7 @@ window.AdminApp = (function($) {
 
   return {
     Modules: { Dashboard, Content, Chapters, Uploads },
+    formatDuration: (s) => { if (!s || s <= 0) return '0s'; const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h}h ${m}m` : (m > 0 ? `${m}m` : `${s}s`); },
     init: function() {
       const path = window.location.pathname;
       const lang = (path.split('/')[1] === 'tr' || path.split('/')[1] === 'en') ? '/' + path.split('/')[1] : '';
