@@ -24,6 +24,22 @@ window.getCookie = function (name) {
   return null;
 };
 
+/**
+ * Global helper to set cookie values.
+ * @param {string} name
+ * @param {string} value
+ * @param {number} days
+ */
+window.setCookie = function (name, value, days) {
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.now ? date.now() : Date.now() + (days * 24 * 60 * 60 * 1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+};
+
 (function () {
   /** @type {Object} SSR Context injected by the server. */
   const ctx = window.__NMR_CONTEXT || {};

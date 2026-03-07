@@ -504,4 +504,28 @@ $(function () {
       showPopup(err.message || NMR.__t('msg_comment_failed'), 'error');
     }
   });
+
+  // Reader Settings Interaction
+  const settingsModal = document.getElementById('readerSettingsModal');
+  if (settingsModal) {
+    settingsModal.addEventListener('show.bs.modal', function () {
+      const layout = getCookie('melt_reader_layout') || 'vertical';
+      const fit = getCookie('melt_reader_imageFit') || 'width';
+      
+      $(`input[name="layoutMode"][value="${layout}"]`).prop('checked', true);
+      $(`input[name="imageFit"][value="${fit}"]`).prop('checked', true);
+    });
+
+    $('input[name="layoutMode"]').on('change', function() {
+      const val = $(this).val();
+      setCookie('melt_reader_layout', val, 30);
+      Reader.setLayout(val);
+    });
+
+    $('input[name="imageFit"]').on('change', function() {
+      const val = $(this).val();
+      setCookie('melt_reader_imageFit', val, 30);
+      Reader.setFit(val);
+    });
+  }
 });
