@@ -389,6 +389,6 @@ window.App = (function($) {
 
   return { init, Modules: { Global, Reader, Blog }, Utils, Connection };
 
-})(window.$ || window.melt);
+})(window.jQuery || window.$ || window.melt);
 
 document.addEventListener('DOMContentLoaded', () => App.init());

@@ -266,6 +266,6 @@ window.AdminApp = (function($) {
       // Add other modules as needed...
     }
   };
-})(window.melt || window.$);
+})(window.jQuery || window.melt || window.$);
 
 document.addEventListener('DOMContentLoaded', () => AdminApp.init());
