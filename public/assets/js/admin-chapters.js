@@ -195,6 +195,7 @@
           <td>${ch.chapter_number}</td>
           <td>${ch.title || ''}</td>
           <td>${ch.type}</td>
+          <td><span class="badge bg-light text-dark">${ch.username || 'System'}</span></td>
           <td><small>${(ch.created_at || '').split(' ')[0]}</small></td>
           <td class="text-end">
             <div class="btn-group btn-group-sm">
@@ -203,9 +204,9 @@
             </div>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="5" class="text-center">No chapters</td></tr>');
+      `).join('') || '<tr><td colspan="6" class="text-center">No chapters</td></tr>');
     } catch (e) {
-      setHtml('#chapters-list-body', `<tr><td colspan="5" class="text-center text-danger">${e.message}</td></tr>`);
+      setHtml('#chapters-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`);
     }
   };
 

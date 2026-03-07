@@ -43,7 +43,7 @@
       </div>
       <div class="card-body p-0 table-responsive scroll-y-auto max-h-320">
         <table class="table table-sm table-hover align-middle mb-0 fs-8">
-          <thead><tr><th>#</th><th>Title</th><th>Type</th><th>Date</th><th class="text-end">Actions</th></tr></thead>
+          <thead><tr><th>#</th><th>Title</th><th>Type</th><th>Uploader</th><th>Date</th><th class="text-end">Actions</th></tr></thead>
           <tbody id="chapters-list-body"></tbody>
         </table>
       </div>

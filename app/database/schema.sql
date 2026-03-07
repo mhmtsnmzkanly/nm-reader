@@ -230,11 +230,14 @@ CREATE TABLE `chapters` (
   `title` varchar(200) DEFAULT NULL,
   `data` longtext NOT NULL,
   `type` enum('text','image') NOT NULL DEFAULT 'image',
+  `created_by` char(8) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_chapter` (`content_id`,`chapter_number`),
-  CONSTRAINT `fk_chapters_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  KEY `idx_chapters_content` (`content_id`),
+  KEY `idx_chapters_creator` (`created_by`),
+  CONSTRAINT `fk_chapters_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_chapters_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `blogs`;
 CREATE TABLE `blogs` (

@@ -28,7 +28,10 @@ final class ChapterRepository
      */
     public function findById(string $chapterId): ?array
     {
-        $sql = 'SELECT id, content_id, chapter_number, title, type, created_at FROM chapters WHERE id = :id LIMIT 1';
+        $sql = 'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.created_at, ch.created_by, u.username
+                FROM chapters ch
+                LEFT JOIN users u ON u.id = ch.created_by
+                WHERE ch.id = :id LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $chapterId]);
         $chapter = $stmt->fetch();
@@ -199,10 +202,11 @@ final class ChapterRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $stmt = $this->pdo->prepare(
-            'SELECT id, content_id, chapter_number, title, type, created_at
-             FROM chapters
-             WHERE content_id = :content_id
-             ORDER BY CAST(chapter_number AS DECIMAL(10,2)) DESC
+            'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.created_at, u.username
+             FROM chapters ch
+             LEFT JOIN users u ON u.id = ch.created_by
+             WHERE ch.content_id = :content_id
+             ORDER BY CAST(ch.chapter_number AS DECIMAL(10,2)) DESC
              LIMIT :limit OFFSET :offset'
         );
         $stmt->bindValue(':content_id', $contentId, PDO::PARAM_STR);
