@@ -1,5 +1,6 @@
 /**
  * admin-bundle.js - Unified Administrative Controller for NovelMangaReader.
+ * Fully migrated to jQuery 3.7+
  */
 
 window.AdminApp = (function($) {
@@ -31,13 +32,13 @@ window.AdminApp = (function($) {
     } catch (e) { console.error(`Admin API Error [${path}]:`, e); throw e; }
   };
 
-  const setHtml = (sel, html) => { const el = $(sel); if (el.elements.length) el.html(html); };
-  const setText = (sel, val) => { const el = $(sel); if (el.elements.length) el.elements[0].textContent = String(val); };
+  const setHtml = (sel, html) => { const el = $(sel); if (el.length) el.html(html); };
+  const setText = (sel, val) => { const el = $(sel); if (el.length) el.text(String(val)); };
 
   const Dashboard = {
     init: function() {
       this.loadOverview();
-      $('#btn-refresh-reputation')?.on('click', () => this.loadOverview());
+      $('#btn-refresh-reputation').on('click', () => this.loadOverview());
     },
     loadOverview: async function() {
       try {
@@ -81,46 +82,42 @@ window.AdminApp = (function($) {
     _CONTENTS: [],
     init: function() {
       this.load();
-      $('#btn-refresh-contents')?.on('click', () => this.load());
+      $('#btn-refresh-contents').on('click', () => this.load());
       
-      // Slug Auto-fill
-      const tIn = document.getElementById('create-content-title');
-      const sIn = document.getElementById('create-content-slug');
-      if (tIn && sIn) {
-        tIn.addEventListener('input', () => { sIn.value = tIn.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''); });
-      }
+      $('#create-content-title').on('input', function() {
+        $('#create-content-slug').val($(this).val().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''));
+      });
 
-      $('#contents-list-body')?.on('click', (e) => {
-        const btn = e.target.closest('button[data-action]');
-        if (!btn) return;
+      $('#contents-list-body').on('click', 'button[data-action]', (e) => {
+        const btn = e.currentTarget;
         const id = btn.dataset.id;
+        const action = btn.dataset.action;
         const c = this._CONTENTS.find(x => x.id == id);
         if (!c) return;
 
-        if (btn.dataset.action === 'edit') this.openEdit(c);
-        if (btn.dataset.action === 'chapter' || btn.dataset.action === 'add-chapter') {
-          const sel = document.getElementById('chapters-content-id');
-          if (sel) {
-            if (!Array.from(sel.options).some(o => o.value == c.id)) {
-              const o = document.createElement('option'); o.value = c.id; o.textContent = c.title; sel.appendChild(o);
+        if (action === 'edit') this.openEdit(c);
+        if (action === 'chapter' || action === 'add-chapter') {
+          const sel = $('#chapters-content-id');
+          if (sel.length) {
+            if (!sel.find(`option[value="${c.id}"]`).length) {
+              sel.append(new Option(c.title, c.id));
             }
-            sel.value = c.id;
-            $(sel).trigger('change');
+            sel.val(c.id).trigger('change');
           }
-          if (btn.dataset.action === 'add-chapter') window.openModal('modal-create-chapter');
+          if (action === 'add-chapter') window.openModal('modal-create-chapter');
         }
       });
 
-      $('#form-create-content')?.on('submit', async (e) => {
+      $('#form-create-content').on('submit', async (e) => {
         e.preventDefault();
         try {
-          const fd = new FormData(e.target);
-          await api('/admin/content', { method: 'POST', body: JSON.stringify(Object.fromEntries(fd)) });
+          const data = Object.fromEntries(new FormData(e.target));
+          await api('/admin/content', { method: 'POST', body: JSON.stringify(data) });
           window.closeModal(); e.target.reset(); this.load();
         } catch (err) { alert(err.message); }
       });
 
-      $('#form-edit-content')?.on('submit', async (e) => {
+      $('#form-edit-content').on('submit', async (e) => {
         e.preventDefault();
         const fd = new FormData(e.target);
         try {
@@ -149,34 +146,40 @@ window.AdminApp = (function($) {
             </td>
           </tr>
         `).join('') || '<tr><td colspan="6" class="text-center">No contents found</td></tr>');
+        
+        const sel = $('#chapters-content-id');
+        if (sel.length) {
+          const cur = sel.val();
+          sel.html('<option value="">-- Select Series --</option>' + this._CONTENTS.map(c => `<option value="${c.id}" ${c.id == cur ? 'selected' : ''}>${c.title}</option>`).join(''));
+        }
       } catch (e) {}
     },
     openEdit: function(c) {
-      const f = document.getElementById('form-edit-content');
-      if (!f) return;
-      f.elements['id'].value = c.id;
-      f.elements['title'].value = c.title;
-      f.elements['slug'].value = c.slug;
-      f.elements['status'].value = c.status;
-      f.elements['description'].value = c.description || '';
-      f.elements['cover_image'].value = c.cover_image || '';
+      const f = $('#form-edit-content');
+      if (!f.length) return;
+      f.find('[name="id"]').val(c.id);
+      f.find('[name="title"]').val(c.title);
+      f.find('[name="slug"]').val(c.slug);
+      f.find('[name="status"]').val(c.status);
+      f.find('[name="description"]').val(c.description || '');
+      f.find('[name="cover_image"]').val(c.cover_image || '');
       window.openModal('modal-edit-content');
     }
   };
 
   const Chapters = {
     init: function() {
-      $('#chapters-content-id')?.on('change', () => this.load());
-      $('#btn-refresh-chapters')?.on('click', () => this.load());
-      $('#btn-add-chapter')?.on('click', () => window.openModal('modal-create-chapter'));
+      $('#chapters-content-id').on('change', () => this.load());
+      $('#btn-refresh-chapters').on('click', () => this.load());
+      $('#btn-add-chapter').on('click', () => window.openModal('modal-create-chapter'));
 
-      $('#create-chapter-type')?.on('change', (e) => this.toggleEditor(e.target.value, 'create'));
-      $('#edit-chapter-type')?.on('change', (e) => this.toggleEditor(e.target.value, 'edit'));
+      $('#create-chapter-type').on('change', (e) => this.toggleEditor($(e.target).val(), 'create'));
+      $('#edit-chapter-type').on('change', (e) => this.toggleEditor($(e.target).val(), 'edit'));
 
-      $('#form-create-chapter')?.on('submit', async (e) => {
+      $('#form-create-chapter').on('submit', async (e) => {
         e.preventDefault();
         const fd = new FormData(e.target);
-        const cid = document.getElementById('chapters-content-id').value;
+        const cid = $('#chapters-content-id').val();
         const payload = Object.fromEntries(fd);
         if (fd.get('type') === 'image') payload.data = fd.get('pages').split('\n').map(l => l.trim()).filter(Boolean).join('|');
         try {
@@ -185,14 +188,16 @@ window.AdminApp = (function($) {
         } catch (err) { alert(err.message); }
       });
 
-      $('#chapters-list-body')?.on('click', (e) => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        if (btn.dataset.action === 'delete') this.delete(btn.dataset.id);
+      $('#chapters-list-body').on('click', 'button[data-action="delete"]', async (e) => {
+        if (!confirm('Delete chapter?')) return;
+        try { 
+          await api(`/admin/chapters/${e.currentTarget.dataset.id}`, { method: 'DELETE' }); 
+          this.load(); 
+        } catch (err) { alert(err.message); }
       });
     },
     load: async function() {
-      const cid = document.getElementById('chapters-content-id')?.value;
+      const cid = $('#chapters-content-id').val();
       if (!cid) return;
       try {
         const res = await api(`/admin/content/${cid}/chapters`);
@@ -212,20 +217,16 @@ window.AdminApp = (function($) {
       } catch (e) {}
     },
     toggleEditor: function(type, prefix) {
-      document.getElementById(`${prefix}-chapter-body-wrap`)?.classList.toggle('d-none', type === 'image');
-      document.getElementById(`${prefix}-chapter-pages-wrap`)?.classList.toggle('d-none', type !== 'image');
-    },
-    delete: async function(id) {
-      if (!confirm('Delete chapter?')) return;
-      try { await api(`/admin/chapters/${id}`, { method: 'DELETE' }); this.load(); } catch (e) { alert(e.message); }
+      $(`#${prefix}-chapter-body-wrap`).toggleClass('d-none', type === 'image');
+      $(`#${prefix}-chapter-pages-wrap`).toggleClass('d-none', type !== 'image');
     }
   };
 
   const Uploads = {
     init: function() {
-      if (!document.getElementById('uploads-list')) return;
+      if (!$('#uploads-list').length) return;
       this.load(1);
-      $('#refresh-uploads')?.on('click', () => this.load(1));
+      $('#refresh-uploads').on('click', () => this.load(1));
     },
     load: async function(page) {
       try {
@@ -249,23 +250,21 @@ window.AdminApp = (function($) {
   };
 
   window.previewImg = (url) => { 
-    const img = document.getElementById('full-preview');
-    if (img) img.src = url;
+    $('#full-preview').attr('src', url);
     window.openModal('preview-modal');
   };
 
   return {
     Modules: { Dashboard, Content, Chapters, Uploads },
+    formatDuration: (s) => { if (!s || s <= 0) return '0s'; const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h}h ${m}m` : (m > 0 ? `${m}m` : `${s}s`); },
     init: function() {
       const path = window.location.pathname;
       const lang = (path.split('/')[1] === 'tr' || path.split('/')[1] === 'en') ? '/' + path.split('/')[1] : '';
-      
       if (path === lang + '/admin') this.Modules.Dashboard.init();
       if (path.includes('/admin/content')) { this.Modules.Content.init(); this.Modules.Chapters.init(); }
       if (path.includes('/admin/uploads')) this.Modules.Uploads.init();
-      // Add other modules as needed...
     }
   };
-})(window.jQuery || window.melt || window.$);
+})(window.jQuery);
 
-document.addEventListener('DOMContentLoaded', () => AdminApp.init());
+$(function() { AdminApp.init(); });
