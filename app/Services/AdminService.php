@@ -340,8 +340,8 @@ final class AdminService
             }
 
             $stmt = $this->pdo->prepare(
-                'INSERT INTO chapters (id, content_id, chapter_number, title, type, data, created_by, created_at)
-                 VALUES (:cid, :content_id, :chapter_number, :title, :type, :data, :created_by, NOW())'
+                'INSERT INTO chapters (id, content_id, chapter_number, title, type, data, created_at)
+                 VALUES (:cid, :content_id, :chapter_number, :title, :type, :data, NOW())'
             );
             $stmt->execute([
                 'cid' => $chapterId,
@@ -350,10 +350,7 @@ final class AdminService
                 'title' => $title,
                 'type' => $chapterType,
                 'data' => $dataVal,
-                'created_by' => $moderatorId,
             ]);
-
-            $stmt->execute(['id' => $contentId]);
 
             if ($moderatorId !== null) {
                 $this->adminConsole->createModerationAction(
