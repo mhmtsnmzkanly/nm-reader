@@ -453,6 +453,10 @@ final class WebController
                     "description" => $seo["description"],
                 ];
             }
+        } else {
+            $ssrData = [
+                'blog_list' => $this->blogRepository->listApproved(1, 20)
+            ];
         }
 
         $langCode = $this->i18n->resolveLocale($request);
@@ -462,7 +466,7 @@ final class WebController
         };
 
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'blog', [
-            'title' => $ssrData ? ($ssrData['title'] ?? '') : ''
+            'title' => ($slug !== "" && $ssrData) ? ($ssrData['title'] ?? '') : ''
         ]);
 
         return $this->render(

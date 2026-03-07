@@ -310,6 +310,55 @@ window.App = (function($) {
     };
   })();
 
+  /**
+   * BLOG MODULE
+   */
+  const Blog = (function() {
+    return {
+      init: function() {
+        console.log("[App] Initializing Blog...");
+        const slug = window.location.pathname.split('/').pop();
+        const isDetail = window.location.pathname.includes('/blogs/') && slug !== 'blogs';
+
+        if (isDetail) {
+          this.initDetail(slug);
+        }
+      },
+      initDetail: function(slug) {
+        // Comments loading for blog
+        Connection.request(`/blogs/${slug}/comments`).then(res => {
+          this.renderComments(res.data);
+        });
+
+        // Vote handlers
+        $('body').on('click', '.blog-vote-btn', async function() {
+          if (!ctx.auth?.is_logged_in) return window.showPopup(window.NMR.__t('msg_login_required'), 'info');
+          const btn = $(this);
+          const vote = parseInt(btn.attr('data-vote'));
+          try {
+            const res = await Connection.request(`/blogs/${slug}/vote`, { method: 'POST', body: JSON.stringify({ vote }) });
+            $('.blog-score-val').text(parseInt(res.data.upvote_count) - parseInt(res.data.downvote_count));
+            $('.blog-vote-btn').removeClass('text-primary text-danger');
+            if (res.data.my_vote === 1) $('.upvote').addClass('text-primary');
+            if (res.data.my_vote === -1) $('.downvote').addClass('text-danger');
+          } catch(e) { window.showPopup(e.message, 'error'); }
+        });
+      },
+      renderComments: function(rows) {
+        const html = (rows || []).map(c => `
+          <div class="comment pb-3 border-bottom">
+            <div class="flex justify-between mb-1">
+              <strong>@${c.username}</strong>
+              <small class="text-muted">${c.created_at}</small>
+            </div>
+            <div class="text-sm">${Utils.parseMarkdown(c.body)}</div>
+          </div>
+        `).join('');
+        $('#blogCommentsList').html(html || '<div class="text-muted">No comments yet</div>');
+      }
+    };
+  })();
+
   // --- INITIALIZATION ---
   const init = async () => {
     // 1. Wait for i18n
@@ -335,10 +384,10 @@ window.App = (function($) {
     const cleanPath = path.replace(langPrefix, '');
 
     if (cleanPath.includes('/chapter/')) Reader.init();
-    // Add other module initializers here as needed
+    if (cleanPath.includes('/blogs')) Blog.init();
   };
 
-  return { init, Modules: { Global, Reader }, Utils, Connection };
+  return { init, Modules: { Global, Reader, Blog }, Utils, Connection };
 
 })(window.$ || window.melt);
 

@@ -24,15 +24,40 @@
   <div class="mt-2 text-muted"><?= $__t('loading') ?></div>
 </div>
 
-<div id="blogListArea" class="hidden">
+<div id="blogListArea" class="<?= (!empty($ssr_data) && isset($ssr_data['blog_list'])) ? '' : 'hidden' ?>">
   <div class="mb-5 text-center">
     <h1 class="text-4xl font-black mb-2"><?= $__t('news_and_articles') ?></h1>
     <p class="text-muted max-w-520 mx-auto"><?= $__t('latest_updates_desc') ?></p>
   </div>
-  <div class="grid grid-3 gap-4" id="blogGrid"></div>
+  <div class="grid grid-3 gap-4" id="blogGrid">
+    <?php if (!empty($ssr_data['blog_list'])): ?>
+      <?php foreach ($ssr_data['blog_list'] as $b): 
+          $bImg = !empty($b['cover_image']) ? $b['cover_image'] : '/assets/img/covers/one-piece.jpg';
+          $bUrl = $url('/blogs/' . $b['slug']);
+      ?>
+        <div class="card overflow-hidden hover-lift border-0 shadow-sm blog-card">
+          <a href="<?= $bUrl ?>" class="block aspect-video bg-surface relative">
+            <img src="<?= htmlspecialchars((string)$bImg) ?>" class="w-100 h-100 object-cover" alt="<?= htmlspecialchars((string)$b['title']) ?>">
+          </a>
+          <div class="p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="badge bg-primary-subtle text-primary border-0"><?= $__t('article') ?></span>
+              <small class="text-muted"><?= htmlspecialchars(explode(' ', (string)($b['approved_at'] ?? $b['created_at']))[0]) ?></small>
+            </div>
+            <h3 class="h5 mb-2 line-clamp-2"><a href="<?= $bUrl ?>" class="text-inherit no-underline"><?= htmlspecialchars((string)$b['title']) ?></a></h3>
+            <p class="text-muted small line-clamp-3 mb-3"><?= htmlspecialchars(strip_tags((string)$b['body'])) ?></p>
+            <div class="flex items-center justify-between mt-auto">
+              <small class="text-muted">👤 @<?= htmlspecialchars((string)($b['author_username'] ?? 'User')) ?></small>
+              <a href="<?= $bUrl ?>" class="text-primary fw-bold small no-underline"><?= $__t('read_more') ?> →</a>
+            </div>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </div>
 </div>
 
-<div id="blogDetailArea" class="<?= empty($ssr_data) ? 'hidden' : '' ?>">
+<div id="blogDetailArea" class="<?= (!empty($ssr_data) && !isset($ssr_data['blog_list'])) ? '' : 'hidden' ?>">
   <?php if (!empty($ssr_data)): 
       $post = $ssr_data;
       $score = (int)($post['upvote_count'] ?? 0) - (int)($post['downvote_count'] ?? 0);
