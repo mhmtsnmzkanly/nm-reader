@@ -401,10 +401,45 @@ window.AdminApp = (function($) {
     }
   };
 
+  const Comments = {
+    init: function() {
+      if (!$('#comments-list-body').length) return;
+      console.log("[AdminApp] Initializing Comments...");
+      this.load();
+      $('#btn-refresh-comments').on('click', () => this.load());
+      $('#comments-list-body').on('click', 'button[data-action="delete"]', (e) => {
+        this.delete(e.currentTarget.dataset.id);
+      });
+    },
+    load: async function() {
+      try {
+        const res = await api('/admin/comments');
+        const items = res.data?.items || res.data || [];
+        setHtml('#comments-list-body', items.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td>@${c.username}</td>
+            <td style="max-width:300px" class="text-truncate">${c.body}</td>
+            <td><small class="text-muted">${c.content_title || c.blog_title || 'N/A'}</small></td>
+            <td>
+              <button class="btn btn-xs btn-outline-danger" data-action="delete" data-id="${c.id}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('') || '<tr><td colspan="5" class="text-center">No comments found</td></tr>');
+      } catch (e) { setHtml('#comments-list-body', `<tr><td colspan="5" class="text-center text-danger">${e.message}</td></tr>`); }
+    },
+    delete: async function(id) {
+      if (!confirm('Delete comment?')) return;
+      try { await api(`/admin/comments/${id}`, { method: 'DELETE' }); this.load(); } catch (e) { alert(e.message); }
+    }
+  };
+
   window.previewImg = (url) => { $('#full-preview').attr('src', url); window.openModal('preview-modal'); };
 
   return {
-    Modules: { Dashboard, Content, Chapters, Uploads },
+    Modules: { Dashboard, Content, Chapters, Uploads, Comments },
     formatDuration: (s) => { if (!s || s <= 0) return '0s'; const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h}h ${m}m` : (m > 0 ? `${m}m` : `${s}s`); },
     init: function() {
       const path = window.location.pathname;
@@ -412,6 +447,7 @@ window.AdminApp = (function($) {
       if (path === lang + '/admin') this.Modules.Dashboard.init();
       if (path.includes('/admin/content')) { this.Modules.Content.init(); this.Modules.Chapters.init(); }
       if (path.includes('/admin/uploads')) this.Modules.Uploads.init();
+      if (path.includes('/admin/comments')) this.Modules.Comments.init();
     }
   };
 })(window.jQuery);
