@@ -47,9 +47,11 @@ CREATE TABLE `series` (
   `rating_count` int(11) DEFAULT 0,
   `chapter_count` int(11) DEFAULT 0,
   `comment_count` int(11) DEFAULT 0,
+  `deleted_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `slug` (`slug`)
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_series_deleted` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `series_metadata`;
@@ -232,12 +234,27 @@ CREATE TABLE `chapters` (
   `type` enum('text','image') NOT NULL DEFAULT 'image',
   `created_by` char(8) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_chapters_content` (`content_id`),
   KEY `idx_chapters_creator` (`created_by`),
+  KEY `idx_chapters_deleted` (`deleted_at`),
   CONSTRAINT `fk_chapters_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_chapters_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_reading_progress`;
+CREATE TABLE `user_reading_progress` (
+  `user_id` char(8) NOT NULL,
+  `series_id` char(6) NOT NULL,
+  `last_chapter_id` char(6) DEFAULT NULL,
+  `last_page` int(11) DEFAULT 0,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`user_id`,`series_id`),
+  CONSTRAINT `fk_progress_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_progress_series` FOREIGN KEY (`series_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_progress_chapter` FOREIGN KEY (`last_chapter_id`) REFERENCES `chapters` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `blogs`;
 CREATE TABLE `blogs` (

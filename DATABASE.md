@@ -82,6 +82,13 @@ Stores user scores (1-5) for series.
 #### `user_series_follows`
 Many-to-many mapping for the library/bookmark system.
 
+#### `user_notifications`
+Centralized notification system for user-to-user and system-to-user alerts.
+- `type`: Category of notification (`follow`, `upvote`, `system`).
+- `actor_user_id`: The user who triggered the notification (optional).
+- `is_read`: Boolean flag for read/unread status.
+- `data` (JSON): Context-specific metadata (e.g., links, IDs).
+
 ---
 
 ## 4. Tracking & Analytics

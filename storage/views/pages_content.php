@@ -139,14 +139,26 @@ $coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img
             <!-- Sidebar with Actions -->
             <div class="content-sidebar">
                 <div class="sidebar-actions">
-                    <a
-                        id="startReadingBtn"
-                        href="<?= $startChapter !== '' ? $url('/' . $contentType . '/' . $contentSlug . '/chapter/' . rawurlencode($startChapter)) : '#' ?>"
-                        class="btn btn-primary w-100 justify-center py-3 fs-1-2<?= $startChapter === '' ? ' disabled' : '' ?>"
-                        <?= $startChapter === '' ? 'aria-disabled="true"' : '' ?>
-                    >
-                        🚀 <?= $__t('start_reading') ?>
-                    </a>
+                    <?php if (!empty($content['reading_progress'])): 
+                        $prog = $content['reading_progress'];
+                        $progUrl = $url('/' . $contentType . '/' . $contentSlug . '/chapter/' . rawurlencode((string)$prog['chapter_number']));
+                    ?>
+                        <a id="continueReadingBtn" href="<?= $progUrl ?>" class="btn btn-primary w-100 justify-center py-3 fs-1-2">
+                            🚀 <?= $__t('continue_reading') ?> (Ch. <?= htmlspecialchars((string)$prog['chapter_number']) ?>)
+                        </a>
+                        <div class="text-center mt-1 mb-3">
+                            <small class="text-muted fs-8"><?= $__t('last_read') ?>: <?= htmlspecialchars((string)$prog['title'] ?: 'Chapter ' . $prog['chapter_number']) ?></small>
+                        </div>
+                    <?php else: ?>
+                        <a
+                            id="startReadingBtn"
+                            href="<?= $startChapter !== '' ? $url('/' . $contentType . '/' . $contentSlug . '/chapter/' . rawurlencode($startChapter)) : '#' ?>"
+                            class="btn btn-primary w-100 justify-center py-3 fs-1-2<?= $startChapter === '' ? ' disabled' : '' ?>"
+                            <?= $startChapter === '' ? 'aria-disabled="true"' : '' ?>
+                        >
+                            🚀 <?= $__t('start_reading') ?>
+                        </a>
+                    <?php endif; ?>
                     
                     <div class="flex gap-2">
                         <button id="followBtn" class="btn btn-outline flex-grow py-2">🤍 <?= $__t('follow') ?></button>

@@ -178,6 +178,12 @@ final class SeriesService
         $content['series_genres'] = $parseTaxonomy($row['series_genres_raw'] ?? null);
         $content['series_tags'] = $parseTaxonomy($row['series_tags_raw'] ?? null);
 
+        // Fetch reading progress if user is logged in
+        $content['reading_progress'] = null;
+        if ($userId !== null) {
+            $content['reading_progress'] = $this->chapters->findReadingProgress($userId, (string)$row['id']);
+        }
+
         $content = OutputSanitizer::sanitizeFields($content, ['title', 'description']);
         return $this->appendTypePathFields($content);
     }

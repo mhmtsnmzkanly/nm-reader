@@ -114,6 +114,13 @@ Follow a series.
 Pulsing for reading duration.
 - **Payload**: `{ "chapter_id": "...", "duration": 30 }`
 
+#### **GET /user/notifications**
+Retrieve paginated notifications for the current user.
+- **Query Params**: `page` (int), `per_page` (int).
+
+#### **POST /user/notifications/read**
+Mark all unread notifications as read for the current user.
+
 ---
 
 ## 5. Admin Console API (Requires admin.panel.access)

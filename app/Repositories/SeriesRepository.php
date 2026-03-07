@@ -45,6 +45,7 @@ final class SeriesRepository
                     cm.artist
                 FROM series c
                 LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                WHERE c.deleted_at IS NULL
                 ORDER BY c.rating_count DESC, c.rating_avg DESC, c.chapter_count DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -78,6 +79,7 @@ final class SeriesRepository
                 FROM series c
                 INNER JOIN chapters ch ON ch.content_id = c.id
                 LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                WHERE c.deleted_at IS NULL AND ch.deleted_at IS NULL
                 GROUP BY c.id
                 ORDER BY last_chapter_at DESC
                 LIMIT :limit';
@@ -109,6 +111,7 @@ final class SeriesRepository
                     cm.artist
                 FROM series c
                 LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                WHERE c.deleted_at IS NULL
                 ORDER BY c.created_at DESC
                 LIMIT :limit';
 
@@ -147,14 +150,14 @@ final class SeriesRepository
                     cm.release_year,
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
                     GROUP_CONCAT(DISTINCT CONCAT(t.name, "::", t.slug, "::", COALESCE(t.ui_config, "{}")) ORDER BY t.name SEPARATOR "||") AS series_tags_raw
-                FROM series c
+                FROM series c WHERE c.deleted_at IS NULL
                                  LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 
                 LEFT JOIN series_genre_map cg ON cg.content_id = c.id
                 LEFT JOIN series_genres g ON g.id = cg.genre_id
                 LEFT JOIN series_tag_map ct ON ct.content_id = c.id
                 LEFT JOIN series_tags t ON t.id = ct.tag_id
-                WHERE c.slug = :slug
+                WHERE c.slug = :slug AND c.deleted_at IS NULL
                 GROUP BY c.id
                 LIMIT 1';
 
@@ -191,7 +194,7 @@ final class SeriesRepository
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
                     GROUP_CONCAT(DISTINCT CONCAT(t.name, "::", t.slug, "::", COALESCE(t.ui_config, "{}")) ORDER BY t.name SEPARATOR "||") AS series_tags_raw,
                     (CASE WHEN ucf.user_id IS NOT NULL THEN 1 ELSE 0 END) AS is_followed
-                FROM series c
+                FROM series c WHERE c.deleted_at IS NULL
                                  LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 
                 LEFT JOIN series_genre_map cg ON cg.content_id = c.id
@@ -199,7 +202,7 @@ final class SeriesRepository
                 LEFT JOIN series_tag_map ct ON ct.content_id = c.id
                 LEFT JOIN series_tags t ON t.id = ct.tag_id
                 LEFT JOIN user_series_follows ucf ON ucf.content_id = c.id AND ucf.user_id = :user_id
-                WHERE c.type = :type AND c.slug = :slug
+                WHERE c.type = :type AND c.deleted_at IS NULL AND c.slug = :slug
                 GROUP BY c.id
                 LIMIT 1';
 
@@ -229,7 +232,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.slug = :slug
+                WHERE c.slug = :slug AND c.deleted_at IS NULL
                 ORDER BY ch.chapter_number DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -257,7 +260,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.type = :type AND c.slug = :slug
+                WHERE c.type = :type AND c.deleted_at IS NULL AND c.slug = :slug
                 ORDER BY ch.chapter_number DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -280,7 +283,7 @@ final class SeriesRepository
             'SELECT ch.chapter_number
              FROM chapters ch
              INNER JOIN series c ON c.id = ch.content_id
-             WHERE c.type = :type AND c.slug = :slug
+             WHERE c.type = :type AND c.deleted_at IS NULL AND c.slug = :slug
              ORDER BY CAST(ch.chapter_number AS DECIMAL(10,2)) ASC, ch.id ASC
              LIMIT 1'
         );
@@ -312,9 +315,9 @@ final class SeriesRepository
                     c.cover_image,
                     cm.author,
                     cm.artist
-                FROM series c
+                FROM series c WHERE c.deleted_at IS NULL
                 LEFT JOIN series_metadata cm ON cm.content_id = c.id
-                WHERE c.type = :type
+                WHERE c.type = :type AND c.deleted_at IS NULL
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -346,7 +349,7 @@ final class SeriesRepository
                     c.cover_image,
                     cm.author,
                     cm.artist
-                FROM series c
+                FROM series c WHERE c.deleted_at IS NULL
                 INNER JOIN series_genre_map cg ON cg.content_id = c.id
                 INNER JOIN series_genres g ON g.id = cg.genre_id
                 LEFT JOIN series_metadata cm ON cm.content_id = c.id
@@ -382,7 +385,7 @@ final class SeriesRepository
                     c.cover_image,
                     cm.author,
                     cm.artist
-                FROM series c
+                FROM series c WHERE c.deleted_at IS NULL
                 INNER JOIN series_tag_map ct ON ct.content_id = c.id
                 INNER JOIN series_tags t ON t.id = ct.tag_id
                 LEFT JOIN series_metadata cm ON cm.content_id = c.id
@@ -450,7 +453,7 @@ final class SeriesRepository
                        c.cover_image,
                        cm.author,
                        cm.artist
-                   FROM series c
+                   FROM series c WHERE c.deleted_at IS NULL
                    LEFT JOIN series_metadata cm ON cm.content_id = c.id
                    WHERE MATCH(c.title, c.slug, c.description) AGAINST(:q IN BOOLEAN MODE)
                       OR cm.author LIKE :q_like OR cm.artist LIKE :q_like
@@ -485,7 +488,7 @@ final class SeriesRepository
                         c.cover_image,
                         cm.author,
                         cm.artist
-                    FROM series c
+                    FROM series c WHERE c.deleted_at IS NULL
                     LEFT JOIN series_metadata cm ON cm.content_id = c.id
                     WHERE c.title LIKE :query1 
                        OR c.slug LIKE :query2 
@@ -736,7 +739,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.type = :type
+                WHERE c.type = :type AND c.deleted_at IS NULL
                 ORDER BY ch.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);

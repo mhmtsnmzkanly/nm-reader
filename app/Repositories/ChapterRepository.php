@@ -31,7 +31,7 @@ final class ChapterRepository
         $sql = 'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.created_at, ch.created_by, u.username
                 FROM chapters ch
                 LEFT JOIN users u ON u.id = ch.created_by
-                WHERE ch.id = :id LIMIT 1';
+                WHERE ch.id = :id AND ch.deleted_at IS NULL LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $chapterId]);
         $chapter = $stmt->fetch();
@@ -44,7 +44,7 @@ final class ChapterRepository
      */
     public function existsChapterId(string $id): bool
     {
-        $stmt = $this->pdo->prepare('SELECT id FROM chapters WHERE id = :id LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT id FROM chapters WHERE id = :id AND deleted_at IS NULL LIMIT 1');
         $stmt->execute(['id' => $id]);
         return $stmt->fetch() !== false;
     }
@@ -57,7 +57,7 @@ final class ChapterRepository
         $sql = 'SELECT c.id AS content_id, c.slug, c.type
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE ch.id = :chapter_id
+                WHERE ch.id = :chapter_id AND ch.deleted_at IS NULL
                 LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['chapter_id' => $chapterId]);
@@ -77,7 +77,7 @@ final class ChapterRepository
     {
         $sql = 'SELECT id, content_id, chapter_number, title, type, created_at
                 FROM chapters
-                WHERE chapter_number = :chapter_number
+                WHERE chapter_number = :chapter_number AND deleted_at IS NULL
                 ORDER BY id DESC
                 LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
@@ -97,6 +97,7 @@ final class ChapterRepository
             'SELECT id, content_id, chapter_number, title, type, created_at
              FROM chapters
              WHERE CAST(chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
+               AND deleted_at IS NULL
              ORDER BY id DESC
              LIMIT 1'
         );
@@ -124,6 +125,7 @@ final class ChapterRepository
                 WHERE c.type = :type
                   AND c.slug = :slug
                   AND ch.chapter_number = :chapter_number
+                  AND ch.deleted_at IS NULL
                 LIMIT 1';
 
         $stmt = $this->pdo->prepare($sql);
@@ -155,6 +157,7 @@ final class ChapterRepository
              WHERE c.type = :type
                AND c.slug = :slug
                AND CAST(ch.chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
+               AND ch.deleted_at IS NULL
              ORDER BY ch.id ASC
              LIMIT 1'
         );
@@ -170,7 +173,7 @@ final class ChapterRepository
 
     public function findChapterText(string $chapterId): ?string
     {
-        $stmt = $this->pdo->prepare('SELECT data FROM chapters WHERE id = :chapter_id LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT data FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
         $stmt->execute(['chapter_id' => $chapterId]);
         $row = $stmt->fetch();
 
@@ -179,7 +182,7 @@ final class ChapterRepository
 
     public function findChapterPages(string $chapterId): array
     {
-        $stmt = $this->pdo->prepare('SELECT data FROM chapters WHERE id = :chapter_id LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT data FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
         $stmt->execute(['chapter_id' => $chapterId]);
         $row = $stmt->fetch();
         
@@ -205,7 +208,7 @@ final class ChapterRepository
             'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.created_at, u.username
              FROM chapters ch
              LEFT JOIN users u ON u.id = ch.created_by
-             WHERE ch.content_id = :content_id
+             WHERE ch.content_id = :content_id AND ch.deleted_at IS NULL
              ORDER BY CAST(ch.chapter_number AS DECIMAL(10,2)) DESC
              LIMIT :limit OFFSET :offset'
         );
@@ -224,12 +227,14 @@ final class ChapterRepository
         $nextSql = 'SELECT chapter_number FROM chapters 
                     WHERE content_id = :content_id 
                       AND CAST(chapter_number AS DECIMAL(10,2)) > CAST(:current AS DECIMAL(10,2))
+                      AND deleted_at IS NULL
                     ORDER BY CAST(chapter_number AS DECIMAL(10,2)) ASC 
                     LIMIT 1';
         
         $prevSql = 'SELECT chapter_number FROM chapters 
                     WHERE content_id = :content_id 
                       AND CAST(chapter_number AS DECIMAL(10,2)) < CAST(:current AS DECIMAL(10,2))
+                      AND deleted_at IS NULL
                     ORDER BY CAST(chapter_number AS DECIMAL(10,2)) DESC 
                     LIMIT 1';
 
@@ -252,14 +257,14 @@ final class ChapterRepository
      */
     public function countByContentId(string $contentId): int
     {
-        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM chapters WHERE content_id = :content_id');
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM chapters WHERE content_id = :content_id AND deleted_at IS NULL');
         $stmt->execute(['content_id' => $contentId]);
         return (int) $stmt->fetchColumn();
     }
 
     public function deleteChapter(string $chapterId): void
     {
-        $this->pdo->prepare('DELETE FROM chapters WHERE id = :id')->execute(['id' => $chapterId]);
+        $this->pdo->prepare('UPDATE chapters SET deleted_at = NOW() WHERE id = :id')->execute(['id' => $chapterId]);
     }
 
     /**
@@ -281,19 +286,46 @@ final class ChapterRepository
     }
 
     /**
-     * Marks a chapter as read by a specific user.
+     * Marks a chapter as read and updates global reading progress for the user.
      */
     public function markRead(string $userId, string $chapterId): void
     {
-        $sql = 'INSERT INTO user_chapters_reads (user_id, chapter_id, read_at)
-                VALUES (:user_id, :chapter_id, NOW())
-                ON DUPLICATE KEY UPDATE read_at = NOW()';
+        // 1. Log individual chapter read history
+        $this->pdo->prepare(
+            'INSERT INTO user_chapters_reads (user_id, chapter_id, read_at)
+             VALUES (:user_id, :chapter_id, NOW())
+             ON DUPLICATE KEY UPDATE read_at = NOW()'
+        )->execute(['user_id' => $userId, 'chapter_id' => $chapterId]);
 
+        // 2. Identify the series for this chapter
+        $contentId = $this->pdo->query(
+            "SELECT content_id FROM chapters WHERE id = '$chapterId'"
+        )->fetchColumn();
+
+        if ($contentId) {
+            // 3. Update or Insert overall series reading progress
+            $this->pdo->prepare(
+                'INSERT INTO user_reading_progress (user_id, series_id, last_chapter_id, updated_at)
+                 VALUES (:user_id, :series_id, :chapter_id, NOW())
+                 ON DUPLICATE KEY UPDATE last_chapter_id = VALUES(last_chapter_id), updated_at = NOW()'
+            )->execute(['user_id' => $userId, 'series_id' => $contentId, 'chapter_id' => $chapterId]);
+        }
+    }
+
+    /**
+     * Retrieves the last read chapter for a specific user in a series.
+     */
+    public function findReadingProgress(string $userId, string $seriesId): ?array
+    {
+        $sql = 'SELECT ch.id, ch.chapter_number, ch.title
+                FROM user_reading_progress p
+                INNER JOIN chapters ch ON ch.id = p.last_chapter_id
+                WHERE p.user_id = :user_id AND p.series_id = :series_id
+                LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'user_id' => $userId,
-            'chapter_id' => $chapterId,
-        ]);
+        $stmt->execute(['user_id' => $userId, 'series_id' => $seriesId]);
+        $res = $stmt->fetch();
+        return $res === false ? null : $res;
     }
 
     /**

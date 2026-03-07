@@ -17,6 +17,8 @@ return [
     'library' => 'Kütüphane',
     'blogs' => 'Bloglar',
     'start_reading' => 'Okumaya Başla',
+    'continue_reading' => 'Devam Et',
+    'last_read' => 'Son Okunan',
     'follow' => 'Takip Et',
     'following' => 'Takip Ediliyor',
     'unfollow' => 'Takipten Çık',

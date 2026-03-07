@@ -17,6 +17,8 @@ return [
     'library' => 'Library',
     'blogs' => 'Blogs',
     'start_reading' => 'Start Reading',
+    'continue_reading' => 'Continue Reading',
+    'last_read' => 'Last Read',
     'follow' => 'Follow',
     'following' => 'Following',
     'unfollow' => 'Unfollow',
