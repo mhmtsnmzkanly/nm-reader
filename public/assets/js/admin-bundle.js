@@ -32,13 +32,14 @@ window.AdminApp = (function($) {
     try {
       const res = await fetch(`/api/v1${p}`, { method: m, credentials: 'include', headers: h, body: o.body });
       const d = await res.json();
-      if (!res.ok || d.status === 'error') throw new Error(d?.message || `HTTP ${res.status}`);
+      if (!res.ok || d.status === 'error') throw new Error(d?.error?.message || d?.message || `HTTP ${res.status}`);
       return d;
     } catch (e) { console.error(`Admin API Error [${p}]:`, e); throw e; }
   };
 
   const setH = (s, h) => { const el = $(s); if (el.length) el.html(h); };
   const setT = (s, v) => { const el = $(s); if (el.length) el.text(String(v)); };
+  const esc = (v) => $('<div>').text(v == null ? '' : String(v)).html();
 
   // --- MODULES ---
 
@@ -86,13 +87,14 @@ window.AdminApp = (function($) {
         if (b.dataset.action === 'edit') this.openEdit(c);
         if (b.dataset.action === 'chapter' || b.dataset.action === 'add-chapter') {
           const s = $('#chapters-content-id'); if (s.length) { if (!s.find(`option[value="${c.id}"]`).length) s.append(new Option(c.title, c.id)); s.val(c.id).trigger('change'); }
+          $('#create-chapter-content-id').val(c.id); $('#create-chapter-content-type').val(c.type); $('#create-chapter-content-slug').val(c.slug); $('#create-chapter-content').val(c.title);
           if (b.dataset.action === 'add-chapter') window.openModal('modal-create-chapter');
         }
       });
       $('#form-create-content').on('submit', async (e) => {
         e.preventDefault(); try { const d = Object.fromEntries(new FormData(e.target)); const r = await api('/admin/content', { method: 'POST', body: JSON.stringify(d) });
-        if (r.data?.id) await api(`/admin/contents/${r.data.id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._SEL_G), tags: Array.from(this._SEL_T) }) });
-        window.closeModal(); e.target.reset(); this.load(); } catch (e) { alert(e.message); }
+        if (r.data?.id) await api(`/admin/contents/${r.data.id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._CRE_G || []), tags: Array.from(this._CRE_T || []) }) });
+        this._CRE_G = new Set(); this._CRE_T = new Set(); this.renderTax('create'); window.closeModal(); e.target.reset(); this.load(); } catch (e) { alert(e.message); }
       });
       $('#form-edit-content').on('submit', async (e) => {
         e.preventDefault(); const fd = new FormData(e.target); const id = fd.get('id'); try {
@@ -100,7 +102,8 @@ window.AdminApp = (function($) {
         await api(`/admin/contents/${id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._SEL_G), tags: Array.from(this._SEL_T) }) });
         window.closeModal(); this.load(); } catch (e) { alert(e.message); }
       });
-      $('#edit-content-genres-btns, #create-content-genres-btns').on('click', 'button', (e) => { const id = String(e.currentTarget.dataset.id); const isE = e.delegateTarget.id.includes('edit'); const set = isE ? this._SEL_G : this._CRE_G || new Set(); if (set.has(id)) set.delete(id); else set.add(id); this.renderTax(isE ? 'edit' : 'create'); });
+      $('#edit-content-genres-btns, #create-content-genres-btns').on('click', 'button', (e) => { const id = String(e.currentTarget.dataset.id); const isE = e.delegateTarget.id.includes('edit'); const localSet = isE ? this._SEL_G : (this._CRE_G = this._CRE_G || new Set()); if (localSet.has(id)) localSet.delete(id); else localSet.add(id); this.renderTax(isE ? 'edit' : 'create'); });
+      $('#edit-content-tags-btns, #create-content-tags-btns').on('click', 'button', (e) => { const id = String(e.currentTarget.dataset.id); const isE = e.delegateTarget.id.includes('edit'); const localSet = isE ? this._SEL_T : (this._CRE_T = this._CRE_T || new Set()); if (localSet.has(id)) localSet.delete(id); else localSet.add(id); this.renderTax(isE ? 'edit' : 'create'); });
     },
     load: async function() {
       try {
@@ -109,12 +112,55 @@ window.AdminApp = (function($) {
         const s = $('#chapters-content-id'); if (s.length) { const cur = s.val(); s.html('<option value="">-- Select Series --</option>' + this._DATA.map(c => `<option value="${c.id}" ${c.id == cur ? 'selected' : ''}>${c.title}</option>`).join('')); }
       } catch (e) {}
     },
-    loadTax: async function() { try { const [g, t] = await Promise.all([api('/admin/genres'), api('/admin/tags')]); this._GENRES = g.data || []; this._TAGS = t.data || []; this.renderTax('create'); this.renderTax('edit'); } catch (e) {} },
-    renderTax: function(m) { const isE = m === 'edit'; const gS = isE ? this._SEL_G : this._CRE_G || new Set(); setH(isE ? '#edit-content-genres-btns' : '#create-content-genres-btns', this._GENRES.map(g => `<button type="button" class="btn btn-xs ${gS.has(String(g.id)) ? 'btn-success' : 'btn-outline-secondary'} m-1" data-id="${g.id}">${g.name}</button>`).join('')); },
+    loadTax: async function() {
+      try {
+        const [g, t] = await Promise.all([api('/admin/genres'), api('/admin/tags')]);
+        this._GENRES = g.data || []; this._TAGS = t.data || [];
+        setH('#genres-list-body', this._GENRES.map(x => `<tr><td class="w-40">${x.id}</td><td>${esc(x.name)}</td></tr>`).join('') || '<tr><td colspan="2">No data</td></tr>');
+        setH('#tags-list-body', this._TAGS.map(x => `<tr><td class="w-40">${x.id}</td><td>${esc(x.name)}</td></tr>`).join('') || '<tr><td colspan="2">No data</td></tr>');
+        this.renderTax('create'); this.renderTax('edit');
+      } catch (e) {}
+    },
+    renderTax: function(m) {
+      const isE = m === 'edit';
+      const gS = isE ? this._SEL_G : (this._CRE_G || new Set());
+      const tS = isE ? this._SEL_T : (this._CRE_T || new Set());
+      setH(isE ? '#edit-content-genres-btns' : '#create-content-genres-btns', this._GENRES.map(g => `<button type="button" class="btn btn-xs ${gS.has(String(g.id)) ? 'btn-success' : 'btn-outline-secondary'} m-1" data-id="${g.id}">${esc(g.name)}</button>`).join(''));
+      setH(isE ? '#edit-content-tags-btns' : '#create-content-tags-btns', this._TAGS.map(t => `<button type="button" class="btn btn-xs ${tS.has(String(t.id)) ? 'btn-success' : 'btn-outline-secondary'} m-1" data-id="${t.id}">${esc(t.name)}</button>`).join(''));
+    },
     openEdit: function(c) {
       const f = $('#form-edit-content'); if (!f.length) return;
-      f.find('[name="id"]').val(c.id); f.find('[name="title"]').val(c.title); f.find('[name="alternative_titles"]').val(c.alternative_titles || ''); f.find('[name="slug"]').val(c.slug); f.find('[name="status"]').val(c.status); f.find('[name="description"]').val(c.description || ''); f.find('[name="author"]').val(c.author || ''); f.find('[name="artist"]').val(c.artist || ''); f.find('[name="country"]').val(c.country || ''); f.find('[name="release_year"]').val(c.release_year || '');
-      this._SEL_G = new Set(String(c.genre_ids || '').split(',').filter(Boolean)); this.renderTax('edit'); window.openModal('modal-edit-content');
+      f.find('[name="id"]').val(c.id); f.find('[name="title"]').val(c.title); f.find('[name="alternative_titles"]').val(c.alternative_titles || ''); f.find('[name="slug"]').val(c.slug); f.find('[name="status"]').val(c.status); f.find('[name="description"]').val(c.description || ''); f.find('[name="author"]').val(c.author || ''); f.find('[name="artist"]').val(c.artist || ''); f.find('[name="country"]').val(c.country || ''); f.find('[name="release_year"]').val(c.release_year || ''); f.find('[name="cover_image"]').val(c.cover_image || '');
+      this._SEL_G = new Set(String(c.genre_ids || '').split(',').filter(Boolean)); this._SEL_T = new Set(String(c.tag_ids || '').split(',').filter(Boolean)); this.renderTax('edit'); window.openModal('modal-edit-content');
+    },
+    promptCreateTaxonomy: async function(kind) {
+      const label = kind === 'genre' ? 'genre' : 'tag';
+      const name = window.prompt(`New ${label} name`);
+      if (!name) return;
+      const endpoint = kind === 'genre' ? '/admin/series_genres' : '/admin/series_tags';
+      try { await api(endpoint, { method: 'POST', body: JSON.stringify({ name }) }); await this.loadTax(); } catch (e) { alert(e.message); }
+    },
+    uploadSpecificImage: async function(input, targetId, type) {
+      const file = input?.files?.[0]; if (!file) return;
+      const fd = new FormData(); fd.append('images[]', file);
+      try {
+        const r = await api(`/admin/upload-images?type=${encodeURIComponent(type || 'chapters')}`, { method: 'POST', body: fd, headers: {} });
+        const path = r.data?.paths?.[0] || '';
+        if (path) document.getElementById(targetId)?.setAttribute('value', path), $(`#${targetId}`).val(path);
+      } catch (e) { alert(e.message); }
+      input.value = '';
+    },
+    handleBulkUpload: async function(input, type) {
+      const files = Array.from(input?.files || []);
+      if (!files.length) return;
+      const fd = new FormData(); files.forEach(file => fd.append('images[]', file));
+      try {
+        const r = await api(`/admin/upload-images?type=${encodeURIComponent(type || 'chapters')}`, { method: 'POST', body: fd, headers: {} });
+        const paths = r.data?.paths || [];
+        const textarea = document.getElementById('create-chapter-pages');
+        if (textarea) textarea.value = paths.join('\n');
+      } catch (e) { alert(e.message); }
+      input.value = '';
     }
   };
 
@@ -127,8 +173,10 @@ window.AdminApp = (function($) {
       $('#create-chapter-type, #edit-chapter-type').on('change', (e) => this.toggle($(e.target).val(), e.target.id.includes('edit') ? 'edit' : 'create'));
       $('#form-create-chapter, #form-edit-chapter').on('submit', async (e) => {
         e.preventDefault(); const isE = e.target.id.includes('edit'); const fd = new FormData(e.target); const cid = $('#chapters-content-id').val();
-        const p = Object.fromEntries(fd); p.data = $(isE ? '#edit-chapter-pages' : '#create-chapter-pages').val().split('\n').map(l => l.trim()).filter(Boolean).join('|') || $(isE ? '#edit-chapter-body' : '#create-chapter-body').val();
-        try { await api(isE ? `/admin/chapters/${fd.get('id')}` : `/admin/content/${cid}/chapters`, { method: isE ? 'PUT' : 'POST', body: JSON.stringify(p) }); window.closeModal(); this.load(); } catch (e) { alert(e.message); }
+        const p = Object.fromEntries(fd);
+        if ((p.type || '').toLowerCase() === 'image') p.pages = $(isE ? '#edit-chapter-pages' : '#create-chapter-pages').val().split('\n').map(l => l.trim()).filter(Boolean);
+        else p.body = $(isE ? '#edit-chapter-body' : '#create-chapter-body').val();
+        try { await api(isE ? `/admin/chapters/${fd.get('id')}` : `/admin/content/${cid}/chapters`, { method: isE ? 'PUT' : 'POST', body: JSON.stringify(p) }); window.closeModal(); e.target.reset(); this.toggle('text', isE ? 'edit' : 'create'); this.load(); } catch (e) { alert(e.message); }
       });
       $('#chapters-list-body').on('click', 'button[data-action]', async (e) => {
         const id = e.currentTarget.dataset.id; const act = e.currentTarget.dataset.action;
@@ -146,7 +194,7 @@ window.AdminApp = (function($) {
       try {
         const r = await api(`/admin/chapters/${id}`); const ch = r.data; const f = $('#form-edit-chapter');
         f.find('[name="id"]').val(ch.id); f.find('[name="chapter_number"]').val(ch.chapter_number); f.find('[name="title"]').val(ch.title || ''); f.find('[name="type"]').val(ch.type);
-        if (ch.type === 'image') $('#edit-chapter-pages').val((ch.data || '').split('|').join('\n')); else $('#edit-chapter-body').val(ch.data || '');
+        if (ch.type === 'image') { $('#edit-chapter-pages').val((ch.pages || []).join('\n')); $('#edit-chapter-body').val(''); } else { $('#edit-chapter-body').val(ch.body || ch.data || ''); $('#edit-chapter-pages').val(''); }
         this.toggle(ch.type, 'edit'); window.openModal('modal-edit-chapter');
       } catch (e) { alert(e.message); }
     },
@@ -155,24 +203,50 @@ window.AdminApp = (function($) {
 
   const Blogs = {
     init: function() {
-      this.load(); $('#btn-refresh-blogs-all')?.on('click', () => this.load());
+      this.load(); this.loadPending(); $('#btn-refresh-blogs-all, #btn-refresh-blogs')?.on('click', () => { this.load(); this.loadPending(); });
       $('#all-blogs-body').on('click', 'button[data-action]', async (e) => {
         const id = e.currentTarget.dataset.id; const act = e.currentTarget.dataset.action;
         try { if (act === 'approve') await api(`/admin/blogs/${id}/approve`, { method: 'POST', body: '{}' }); if (act === 'hide') await api(`/admin/blogs/${id}/hide`, { method: 'POST', body: '{}' }); if (act === 'delete' && confirm('Delete?')) await api(`/admin/blogs/${id}`, { method: 'DELETE' }); this.load(); } catch (e) { alert(e.message); }
       });
+      $('#pending-blogs-body').on('click', 'button[data-action]', async (e) => {
+        const id = e.currentTarget.dataset.id; const act = e.currentTarget.dataset.action;
+        try { if (act === 'approve') await api(`/admin/blogs/${id}/approve`, { method: 'POST', body: '{}' }); if (act === 'hide') await api(`/admin/blogs/${id}/hide`, { method: 'POST', body: '{}' }); this.loadPending(); this.load(); } catch (e) { alert(e.message); }
+      });
     },
-    load: async function() { try { const r = await api('/admin/blogs'); const items = r.data?.items || r.data || []; setH('#all-blogs-body', items.map(b => `<tr><td>${b.id}</td><td>${b.title}</td><td>@${b.author_username}</td><td>${b.approved ? 'Yes' : 'No'}</td><td>${(b.created_at || '').split(' ')[0]}</td><td><div class="btn-group btn-group-sm"><button class="btn btn-outline-success" data-action="approve" data-id="${b.id}">Approve</button><button class="btn btn-outline-secondary" data-action="hide" data-id="${b.id}">Hide</button><button class="btn btn-outline-danger" data-action="delete" data-id="${b.id}">Delete</button></div></td></tr>`).join('')); } catch (e) {} }
+    load: async function() { try { const r = await api('/admin/blogs'); const items = r.data?.items || r.data || []; setH('#all-blogs-body', items.map(b => `<tr><td>${b.id}</td><td>${esc(b.title)}</td><td>@${esc(b.username || b.author_username || '')}</td><td>${b.approved ? 'Yes' : 'No'}</td><td>${(b.created_at || '').split(' ')[0]}</td><td><div class="btn-group btn-group-sm"><button class="btn btn-outline-success" data-action="approve" data-id="${b.id}">Approve</button><button class="btn btn-outline-secondary" data-action="hide" data-id="${b.id}">Hide</button><button class="btn btn-outline-danger" data-action="delete" data-id="${b.id}">Delete</button></div></td></tr>`).join('') || '<tr><td colspan="6">No data</td></tr>'); } catch (e) {} },
+    loadPending: async function() { try { const r = await api('/admin/blogs/pending'); const items = r.data?.items || r.data || []; setH('#pending-blogs-body', items.map(b => `<tr><td>${b.id}</td><td>${esc(b.title)}</td><td>@${esc(b.username || b.author_username || '')}</td><td><span class="badge bg-warning text-dark">Pending</span></td><td><div class="btn-group btn-group-sm"><button class="btn btn-outline-success" data-action="approve" data-id="${b.id}">Approve</button><button class="btn btn-outline-secondary" data-action="hide" data-id="${b.id}">Hide</button></div></td></tr>`).join('') || '<tr><td colspan="5">No data</td></tr>'); } catch (e) {} }
   };
 
   const Users = {
-    _U: [],
+    _U: [], _R: [],
     init: function() {
-      this.load(); $('#btn-refresh-users')?.on('click', () => this.load());
+      this.loadRoles(); this.load(); $('#btn-refresh-users')?.on('click', () => { this.loadRoles(); this.load(); });
       $('#users-list-body').on('click', 'button[data-action="edit"]', (e) => this.open(e.currentTarget.dataset.id));
       $('#form-edit-user').on('submit', async (e) => { e.preventDefault(); const fd = new FormData(e.target); try { await api(`/admin/users/${fd.get('id')}`, { method: 'PUT', body: JSON.stringify({ role: fd.get('role'), is_banned: !!fd.get('is_banned'), email: fd.get('email'), bio: fd.get('bio') }) }); window.closeModal(); this.load(); } catch (e) { alert(e.message); } });
     },
+    loadRoles: async function() { try { const r = await api('/admin/rbac/roles'); this._R = r.data?.items || r.data || []; setH('#edit-user-role', this._R.map(x => `<option value="${esc(x.slug)}">${esc(x.name || x.slug)}</option>`).join('') || '<option value="user">User</option>'); } catch (e) {} },
     load: async function() { try { const r = await api('/admin/users'); this._U = r.data?.items || r.data || []; setH('#users-list-body', this._U.map(u => `<tr><td>${u.id}</td><td><b>${u.username}</b></td><td>${u.email || ''}</td><td><span class="badge bg-secondary">${u.role_names || 'user'}</span></td><td class="text-end"><button class="btn btn-xs btn-outline-secondary" data-action="edit" data-id="${u.id}"><i class="bi bi-person-gear"></i></button></td></tr>`).join('')); } catch (e) {} },
-    open: function(id) { const u = this._U.find(x => x.id == id); if (!u) return; $('#edit-user-id').val(u.id); $('#edit-user-username').val(u.username); $('#edit-user-email').val(u.email || ''); $('#edit-user-bio').val(u.bio || ''); $('#edit-user-banned').prop('checked', !!u.is_banned); window.openModal('modal-edit-user'); }
+    open: function(id) { const u = this._U.find(x => x.id == id); if (!u) return; $('#edit-user-id').val(u.id); $('#edit-user-username').val(u.username); $('#edit-user-email').val(u.email || ''); $('#edit-user-bio').val(u.bio || ''); $('#edit-user-banned').prop('checked', !!u.is_banned); $('#edit-user-role').val(((u.role_names || 'user').split(',')[0] || 'user').trim()); window.openModal('modal-edit-user'); }
+  };
+
+  const Comments = {
+    init: function() {
+      if (!$('#comments-list-body').length) return;
+      this.load();
+      $('#btn-refresh-comments')?.on('click', () => this.load());
+      $('#comments-list-body').on('click', 'button[data-action="delete"]', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (!id || !confirm('Delete?')) return;
+        try { await api(`/admin/comments/${id}`, { method: 'DELETE' }); this.load(); } catch (err) { alert(err.message); }
+      });
+    },
+    load: async function() {
+      try {
+        const r = await api('/admin/comments');
+        const items = r.data?.items || r.data || [];
+        setH('#comments-list-body', items.map(c => `<tr><td>@${esc(c.username || 'guest')}</td><td class="text-break">${esc(c.body || '')}</td><td>${esc(c.content_title || c.blog_title || '-')}</td><td><small>${esc((c.created_at || '').split(' ')[0])}</small></td><td><button class="btn btn-xs btn-outline-danger" data-action="delete" data-id="${c.id}"><i class="bi bi-trash"></i></button></td></tr>`).join('') || '<tr><td colspan="5">No data</td></tr>');
+      } catch (e) {}
+    }
   };
 
   const Uploads = {
@@ -188,6 +262,7 @@ window.AdminApp = (function($) {
   };
 
   window.previewImg = (url) => { $('#full-preview').attr('src', url); window.openModal('preview-modal'); };
+  window.NMR_ADMIN_CONTENT = Content;
 
   return {
     init: function() {
@@ -196,6 +271,7 @@ window.AdminApp = (function($) {
       if (c === '/admin') Dashboard.init();
       if (c.includes('/admin/content')) { Content.init(); Chapters.init(); }
       if (c.includes('/admin/blogs')) Blogs.init();
+      if (c.includes('/admin/comments')) Comments.init();
       if (c.includes('/admin/users')) Users.init();
       if (c.includes('/admin/uploads')) Uploads.init();
       if (c.includes('/admin/ops')) Ops.init();

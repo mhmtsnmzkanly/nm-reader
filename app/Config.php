@@ -308,13 +308,17 @@ final class Config
             $group->post("/upload-images", [AdminPanelController::class, "uploadImages"])->add($perm(["admin.content.create"]));
             $group->put("/content/{id}", [AdminPanelController::class, "updateContent"])->add($perm(["admin.content.update"]));
             $group->put("/contents/{id}/taxonomy", [AdminPanelController::class, "updateTaxonomy"])->add($perm(["admin.content.update"]));
+            $group->post("/content/{id}/chapters", [AdminPanelController::class, "createChapterByContentId"])->add($perm(["admin.chapter.create"]));
             $group->post("/content/{type:" . $typePattern . "}/{slug}/chapters", [AdminPanelController::class, "createChapter"])->add($perm(["admin.chapter.create"]));
             $group->get("/content/{id}/chapters", [AdminPanelController::class, "listChapters"])->add($perm(["admin.panel.access"]));
             $group->get("/chapters/{id}", [AdminPanelController::class, "getChapter"])->add($perm(["admin.panel.access"]));
+            $group->put("/chapters/{id}", [AdminPanelController::class, "updateChapter"])->add($perm(["admin.content.update"]));
             $group->delete("/chapters/{id}", [AdminPanelController::class, "deleteChapter"])->add($perm(["admin.content.update"]));
             $group->post("/series_genres", [AdminPanelController::class, "createGenre"])->add($perm(["admin.content.create"]));
             $group->post("/series_tags", [AdminPanelController::class, "createTag"])->add($perm(["admin.content.create"]));
             $group->post("/blogs/{id}/approve", [BlogController::class, "approve"])->add($perm(["admin.blog.hide"]));
+            $group->post("/blogs/{id}/hide", [AdminPanelController::class, "hideBlog"])->add($perm(["admin.blog.hide"]));
+            $group->delete("/blogs/{id}", [AdminPanelController::class, "deleteBlog"])->add($perm(["admin.blog.hide"]));
         })->add(new RateLimitMiddleware($cache, "admin_api", 120, 300))->add(new CsrfMiddleware())->add(new AuthMiddleware($authorization));
     }
 }

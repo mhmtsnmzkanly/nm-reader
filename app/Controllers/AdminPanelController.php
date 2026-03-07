@@ -84,6 +84,13 @@ final class AdminPanelController
         return ResponseHelper::created($this->adminService->createChapter((string)$args['type'], (string)$args['slug'], $payload, $modId));
     }
 
+    public function createChapterByContentId(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::created($this->adminService->createChapterByContentId((string)$args['id'], $payload, $modId));
+    }
+
     public function updateChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $payload = (array) $request->getParsedBody();
@@ -220,6 +227,20 @@ final class AdminPanelController
         return ResponseHelper::success();
     }
 
+    public function createGenre(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::created($this->console->createGenre((string) ($payload['name'] ?? ''), $modId));
+    }
+
+    public function createTag(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::created($this->console->createTag((string) ($payload['name'] ?? ''), $modId));
+    }
+
     public function uploads(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
@@ -248,6 +269,101 @@ final class AdminPanelController
         $userId = (string) $request->getAttribute('user_id');
         $type = (string) ($request->getQueryParams()['type'] ?? 'chapters');
         return ResponseHelper::success(['paths' => $this->uploadService->handleBulkImageUpload($userId, $toProcess, $type)]);
+    }
+
+    public function queueJobs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->console->listQueueJobs($page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
+    public function runQueueOnce(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        $limit = max(1, min(100, (int) ($payload['limit'] ?? 10)));
+        $jobType = isset($payload['job_type']) ? (string) $payload['job_type'] : null;
+
+        return ResponseHelper::success($this->queueService->runOnce($limit), ['job_type' => $jobType, 'requested_limit' => $limit, 'moderator_id' => $modId]);
+    }
+
+    public function cleanupRetention(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $days = max(1, min(3650, (int) ($payload['days'] ?? 30)));
+        return ResponseHelper::success($this->console->cleanupRetention($days));
+    }
+
+    public function triggerBackup(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->console->triggerBackup($modId));
+    }
+
+    public function triggerSitemap(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->console->triggerSitemap($modId));
+    }
+
+    public function triggerCacheWarmup(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->console->triggerCacheWarmup($modId));
+    }
+
+    public function triggerAnalytics(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->console->triggerAnalytics($modId));
+    }
+
+    public function getEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->console->readEnv($modId));
+    }
+
+    public function saveEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        $this->console->updateEnv($payload, $modId);
+        return ResponseHelper::success(['saved' => true]);
+    }
+
+    public function systemAccessLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->console->listSystemAccessLogs($page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
+    public function systemErrorLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->console->listSystemErrorLogs($page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
+    public function metricsSnapshot(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->overview());
+    }
+
+    public function metricsInsights(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $q = $request->getQueryParams();
+        $days = (int) ($q['days'] ?? 30);
+        $limit = (int) ($q['limit'] ?? 10);
+
+        return ResponseHelper::success([
+            'views' => $this->console->viewStats($days, $limit),
+            'blogs' => $this->console->blogStats($days, $limit),
+            'visits' => $this->console->siteVisits(),
+            'reputation' => $this->console->userReputation($limit),
+        ]);
     }
 
     // --- UTILS ---

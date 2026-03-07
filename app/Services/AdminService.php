@@ -395,6 +395,19 @@ final class AdminService
         ];
     }
 
+    public function createChapterByContentId(string $contentId, array $payload, ?string $moderatorId = null): array
+    {
+        $stmt = $this->pdo->prepare('SELECT slug, type FROM series WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $contentId]);
+        $content = $stmt->fetch();
+        if (!$content) {
+            throw new \DomainException('Content not found');
+        }
+
+        $typeSegment = str_replace('_', '-', (string) $content['type']);
+        return $this->createChapter($typeSegment, (string) $content['slug'], $payload, $moderatorId);
+    }
+
     /**
      * Lists chapters for a content with pagination.
      *
@@ -573,7 +586,8 @@ final class AdminService
         try {
             $this->chapters->updateChapter($chapterId, $chapterNumber, $title, $type);
 
-            $stmt->execute(['data' => $dataVal, 'id' => $chapterId]);
+            $this->pdo->prepare('UPDATE chapters SET data = :data WHERE id = :id')
+                ->execute(['data' => $dataVal, 'id' => $chapterId]);
 
             if ($moderatorId !== null && !empty($diff)) {
                 $this->adminConsole->createModerationAction($moderatorId, "chapter", $chapterId, "update", json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE));

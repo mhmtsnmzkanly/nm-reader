@@ -217,19 +217,36 @@ final class AdminConsoleService
     /**
      * Records a moderation action.
      */
-    public function createModerationAction(?string $moderatorId, array $payload): int
+    public function createModerationAction(
+        ?string $moderatorId,
+        array|string $payload,
+        ?string $targetId = null,
+        ?string $action = null,
+        ?string $reason = null
+    ): int
     {
-        $error = Validator::requireFields($payload, ['target_type', 'target_id', 'action']);
+        if (is_array($payload)) {
+            $data = $payload;
+        } else {
+            $data = [
+                'target_type' => $payload,
+                'target_id' => $targetId,
+                'action' => $action,
+                'reason' => $reason,
+            ];
+        }
+
+        $error = Validator::requireFields($data, ['target_type', 'target_id', 'action']);
         if ($error) {
             throw new \InvalidArgumentException($error);
         }
 
         return $this->repo->createModerationAction(
             $moderatorId,
-            (string) $payload['target_type'],
-            (string) $payload['target_id'],
-            (string) $payload['action'],
-            (string) ($payload['reason'] ?? '')
+            (string) $data['target_type'],
+            (string) $data['target_id'],
+            (string) $data['action'],
+            (string) ($data['reason'] ?? '')
         );
     }
 
