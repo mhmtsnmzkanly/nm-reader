@@ -1,14 +1,27 @@
 /**
  * admin-bundle.js - Unified Administrative Controller for NovelMangaReader.
  *
- * This bundle consolidates all administrative logic into a single file with
+ * This bundle consolidates all administrative logic into a single file.
  * page-specific routing to prevent execution conflicts.
  * Uses native openModal/closeModal system (no Bootstrap).
  */
 
-window.AdminApp = (function() {
+window.AdminApp = (function($) {
   const ctx = window.__NMR_CONTEXT || {};
   const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+
+  /**
+   * Global Modal System for Admin
+   */
+  window.openModal = (id) => {
+    $('.modal-overlay').removeClass('active');
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }, 30);
+  };
+  window.closeModal = () => $('.modal-overlay').removeClass('active');
+  $('body').on('click', '.modal-overlay', function(e) { if (e.target === this) window.closeModal(); });
 
   /**
    * Central API Bridge for Admin Panel.
@@ -42,9 +55,8 @@ window.AdminApp = (function() {
     }
   };
 
-  const $ = (sel) => document.querySelector(sel);
-  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
-  const setText = (sel, val) => { const el = $(sel); if (el) el.textContent = String(val); };
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.html(html); };
+  const setText = (sel, val) => { const el = $(sel); if (el && el.elements[0]) el.elements[0].textContent = String(val); };
 
   // --- MODULES ---
 
@@ -63,11 +75,11 @@ window.AdminApp = (function() {
       this.loadQueue();
       this.fetchLegacyMetrics('/admin/metrics');
 
-      $('#btn-metrics-dashboard')?.addEventListener('click', () => this.fetchLegacyMetrics('/admin/dashboard'));
-      $('#btn-metrics-snapshot')?.addEventListener('click', () => this.fetchLegacyMetrics('/admin/metrics'));
-      $('#btn-metrics-insights')?.addEventListener('click', () => this.fetchLegacyMetrics('/admin/metrics/insights'));
-      $('#btn-refresh-reputation')?.addEventListener('click', () => this.loadReputation());
-      $('#btn-run-jobs')?.addEventListener('click', () => this.runQueueOnce());
+      $('#btn-metrics-dashboard')?.on('click', () => this.fetchLegacyMetrics('/admin/dashboard'));
+      $('#btn-metrics-snapshot')?.on('click', () => this.fetchLegacyMetrics('/admin/metrics'));
+      $('#btn-metrics-insights')?.on('click', () => this.fetchLegacyMetrics('/admin/metrics/insights'));
+      $('#btn-refresh-reputation')?.on('click', () => this.loadReputation());
+      $('#btn-run-jobs')?.on('click', () => this.runQueueOnce());
     },
     loadOverview: async function() {
       try {
@@ -150,7 +162,7 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     loadReputation: async function() {
-      if (!$('#reputation-body')) return;
+      if (!$('#reputation-body').elements.length) return;
       try {
         const res = await api('/admin/stats/reputation');
         const items = res.data || [];
@@ -168,7 +180,7 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     loadAuditLogs: async function() {
-      if (!$('#audit-logs-body')) return;
+      if (!$('#audit-logs-body').elements.length) return;
       try {
         const res = await api('/admin/audit-logs?per_page=10');
         const items = res.data || [];
@@ -183,7 +195,7 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     loadLoginEvents: async function() {
-      if (!$('#login-logs-body')) return;
+      if (!$('#login-logs-body').elements.length) return;
       try {
         const res = await api('/admin/login-events?per_page=10');
         const items = res.data || [];
@@ -198,7 +210,7 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     loadModActions: async function() {
-      if (!$('#mod-actions-body')) return;
+      if (!$('#mod-actions-body').elements.length) return;
       try {
         const res = await api('/admin/moderation-actions?per_page=10');
         const items = res.data || [];
@@ -213,7 +225,7 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     loadQueue: async function() {
-      if (!$('#queue-jobs-list')) return;
+      if (!$('#queue-jobs-list').elements.length) return;
       try {
         const res = await api('/admin/queue/jobs');
         const items = res.data || [];
@@ -221,7 +233,7 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     runQueueOnce: async function() {
-      const limit = Math.max(1, Math.min(100, parseInt($('#jobs-limit')?.value || '5', 10)));
+      const limit = Math.max(1, Math.min(100, parseInt(document.getElementById('jobs-limit')?.value || '5', 10)));
       try {
         await api('/admin/queue/run-once', { method: 'POST', body: JSON.stringify({ limit }) });
         this.loadQueue();
@@ -269,14 +281,14 @@ window.AdminApp = (function() {
       console.log("[AdminApp] Initializing Blogs...");
       this.loadBlogs();
       this.loadAllBlogs();
-      $('#btn-refresh-blogs')?.addEventListener('click', () => this.loadBlogs());
-      $('#btn-refresh-blogs-all')?.addEventListener('click', () => this.loadAllBlogs());
-      document.addEventListener('click', (e) => {
+      $('#btn-refresh-blogs')?.on('click', () => this.loadBlogs());
+      $('#btn-refresh-blogs-all')?.on('click', () => this.loadAllBlogs());
+      $('body').on('click', 'button[data-action]', (e) => {
         const btn = e.target.closest('button[data-action]');
-        if (!btn || !document.getElementById('pending-blogs-body')) return;
+        if (!btn || !document.getElementById('all-blogs-body')) return;
         const id = btn.dataset.id;
         const kind = btn.dataset.action;
-        this.action(id, kind);
+        if (['approve','hide','delete'].includes(kind)) this.action(id, kind);
       });
     },
     loadBlogs: async function() {
@@ -340,9 +352,9 @@ window.AdminApp = (function() {
       console.log("[AdminApp] Initializing Content...");
       this.loadContents();
       this.loadTaxonomy();
-      $('#btn-refresh-contents')?.addEventListener('click', () => { this.loadContents(); this.loadTaxonomy(); });
+      $('#btn-refresh-contents')?.on('click', () => { this.loadContents(); this.loadTaxonomy(); });
 
-      $('#contents-list-body')?.addEventListener('click', (e) => {
+      $('#contents-list-body')?.on('click', (e) => {
         const btn = e.target.closest('button[data-action]');
         if (!btn) return;
         const id = btn.dataset.id;
@@ -352,56 +364,45 @@ window.AdminApp = (function() {
         if (action === 'edit') this.openEditContent(id);
         if (action === 'chapter' || action === 'add-chapter') {
           const detail = { id: c.id, title: c.title, slug: c.slug, type: c.type };
-          
-          // Add to select box if missing
-          const sel = $('#chapters-content-id');
+          const sel = document.getElementById('chapters-content-id');
           if (sel) {
             let opt = Array.from(sel.options).find(o => o.value == c.id);
-            if (!opt) {
-              opt = document.createElement('option');
-              opt.value = c.id;
-              opt.textContent = c.title;
-              sel.appendChild(opt);
-            }
+            if (!opt) { opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.title; sel.appendChild(opt); }
             sel.value = c.id;
           }
-
           document.dispatchEvent(new CustomEvent('nmr:admin-content:selected', { detail }));
           if (action === 'add-chapter') document.dispatchEvent(new CustomEvent('nmr:admin-chapter:create', { detail }));
         }
       });
 
-      // Taxonomy button events
-      $('#edit-content-genres-btns')?.addEventListener('click', (e) => {
+      $('#edit-content-genres-btns')?.on('click', (e) => {
         const btn = e.target.closest('button[data-action="toggle-genre"]');
         if (btn) this.toggleTax('genre', btn.dataset.id);
       });
-      $('#edit-content-tags-btns')?.addEventListener('click', (e) => {
+      $('#edit-content-tags-btns')?.on('click', (e) => {
         const btn = e.target.closest('button[data-action="toggle-tag"]');
         if (btn) this.toggleTax('tag', btn.dataset.id);
       });
-      $('#create-content-genres-btns')?.addEventListener('click', (e) => {
+      $('#create-content-genres-btns')?.on('click', (e) => {
         const btn = e.target.closest('button[data-action="c-toggle-genre"]');
         if (btn) this.toggleCreateTax('genre', btn.dataset.id);
       });
-      $('#create-content-tags-btns')?.addEventListener('click', (e) => {
+      $('#create-content-tags-btns')?.on('click', (e) => {
         const btn = e.target.closest('button[data-action="c-toggle-tag"]');
         if (btn) this.toggleCreateTax('tag', btn.dataset.id);
       });
 
-      $('#form-create-content')?.addEventListener('submit', (e) => this.handleCreate(e));
-      $('#form-edit-content')?.addEventListener('submit', (e) => this.handleEdit(e));
+      $('#form-create-content')?.on('submit', (e) => this.handleCreate(e));
+      $('#form-edit-content')?.on('submit', (e) => this.handleEdit(e));
 
-      // Slug Auto-fill
-      const titleIn = $('#create-content-title');
-      const slugIn = $('#create-content-slug');
+      const titleIn = document.getElementById('create-content-title');
+      const slugIn = document.getElementById('create-content-slug');
       if (titleIn && slugIn) {
         let userEdited = false;
         slugIn.addEventListener('input', () => { userEdited = slugIn.value.trim() !== ''; });
         titleIn.addEventListener('input', () => { if (!userEdited) slugIn.value = this.slugify(titleIn.value); });
       }
 
-      // Bulk Upload Helpers
       window.NMR_ADMIN_CONTENT = {
         promptCreateTaxonomy: (type) => this.promptCreateTaxonomy(type),
         uploadSpecificImage: (input, targetId, type) => this.uploadSpecificImage(input, targetId, type),
@@ -412,8 +413,6 @@ window.AdminApp = (function() {
       try {
         const res = await api('/admin/content');
         this._CONTENTS = res.data || [];
-        
-        // Populate the table
         setHtml('#contents-list-body', this._CONTENTS.map(c => `
           <tr>
             <td>${c.id}</td>
@@ -430,23 +429,19 @@ window.AdminApp = (function() {
             </td>
           </tr>
         `).join('') || '<tr><td colspan="6" class="text-center">No contents found</td></tr>');
-
-        // Also populate the chapter selection dropdown
-        const sel = $('#chapters-content-id');
+        const sel = document.getElementById('chapters-content-id');
         if (sel) {
           const currentVal = sel.value;
-          sel.innerHTML = '<option value="">-- Select Series --</option>' + 
-            this._CONTENTS.map(c => `<option value="${c.id}" ${c.id == currentVal ? 'selected' : ''}>${c.title}</option>`).join('');
+          sel.innerHTML = '<option value="">-- Select Series --</option>' + this._CONTENTS.map(c => `<option value="${c.id}" ${c.id == currentVal ? 'selected' : ''}>${c.title}</option>`).join('');
         }
       } catch (e) { setHtml('#contents-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`); }
     },
     loadTaxonomy: async function() {
       try {
         const [g, t] = await Promise.all([api('/admin/genres'), api('/admin/tags')]);
-        this._ALL_GENRES = g.data || [];
-        this._ALL_TAGS = t.data || [];
-        if ($('#genres-list-body')) setHtml('#genres-list-body', this._ALL_GENRES.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
-        if ($('#tags-list-body')) setHtml('#tags-list-body', this._ALL_TAGS.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
+        this._ALL_GENRES = g.data || []; this._ALL_TAGS = t.data || [];
+        if ($('#genres-list-body').elements.length) setHtml('#genres-list-body', this._ALL_GENRES.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
+        if ($('#tags-list-body').elements.length) setHtml('#tags-list-body', this._ALL_TAGS.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
         this.renderCreateTaxonomyButtons();
       } catch (e) {}
     },
@@ -481,22 +476,21 @@ window.AdminApp = (function() {
       this.renderCreateTaxonomyButtons();
     },
     openEditContent: function(id) {
-      const c = this._CONTENTS.find(x => x.id == id);
-      if (!c) return;
-      $('#edit-content-id').value = c.id;
-      $('#edit-content-title').value = c.title;
-      $('#edit-content-alt-titles').value = c.alternative_titles || '';
-      $('#edit-content-desc').value = c.description || '';
-      $('#edit-content-status').value = c.status;
-      $('#edit-content-cover').value = c.cover_image || '';
-      $('#edit-content-author').value = c.author || '';
-      $('#edit-content-artist').value = c.artist || '';
-      $('#edit-content-country').value = c.country || '';
-      $('#edit-content-release-year').value = c.release_year || '';
+      const c = this._CONTENTS.find(x => x.id == id); if (!c) return;
+      document.getElementById('edit-content-id').value = c.id;
+      document.getElementById('edit-content-title').value = c.title;
+      document.getElementById('edit-content-alt-titles').value = c.alternative_titles || '';
+      document.getElementById('edit-content-desc').value = c.description || '';
+      document.getElementById('edit-content-status').value = c.status;
+      document.getElementById('edit-content-cover').value = c.cover_image || '';
+      document.getElementById('edit-content-author').value = c.author || '';
+      document.getElementById('edit-content-artist').value = c.artist || '';
+      document.getElementById('edit-content-country').value = c.country || '';
+      document.getElementById('edit-content-release-year').value = c.release_year || '';
       this._SELECTED_GENRES = new Set((String(c.genre_ids || '')).split(',').map(x => x.trim()).filter(Boolean));
       this._SELECTED_TAGS = new Set((String(c.tag_ids || '')).split(',').map(x => x.trim()).filter(Boolean));
       this.renderTaxonomyButtons();
-      if (window.openModal) window.openModal('modal-edit-content');
+      window.openModal('modal-edit-content');
     },
     handleCreate: async function(e) {
       e.preventDefault();
@@ -504,28 +498,22 @@ window.AdminApp = (function() {
         const payload = Object.fromEntries(new FormData(e.target));
         const res = await api('/admin/content', { method: 'POST', body: JSON.stringify(payload) });
         if (res?.data?.id) await api(`/admin/contents/${res.data.id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._CREATE_GENRES), tags: Array.from(this._CREATE_TAGS) }) });
-        if (window.closeModal) window.closeModal();
-        e.target.reset();
-        this._CREATE_GENRES.clear(); this._CREATE_TAGS.clear();
+        window.closeModal(); e.target.reset(); this._CREATE_GENRES.clear(); this._CREATE_TAGS.clear();
         this.renderCreateTaxonomyButtons(); this.loadContents();
       } catch (err) { alert(err.message); }
     },
     handleEdit: async function(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const id = fd.get('id');
+      e.preventDefault(); const fd = new FormData(e.target); const id = fd.get('id');
       try {
         await api(`/admin/content/${id}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
         await api(`/admin/contents/${id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._SELECTED_GENRES), tags: Array.from(this._SELECTED_TAGS) }) });
-        if (window.closeModal) window.closeModal();
-        this.loadContents();
+        window.closeModal(); this.loadContents();
         if (window.showPopup) window.showPopup('Content saved', 'success');
       } catch (err) { alert(err.message); }
     },
     slugify: (text) => text.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-'),
     promptCreateTaxonomy: async function(type) {
-      const name = prompt(`New ${type} name:`);
-      if (!name) return;
+      const name = prompt(`New ${type} name:`); if (!name) return;
       try { await api(`/admin/${type}s`, { method: 'POST', body: JSON.stringify({ name }) }); this.loadTaxonomy(); } catch (e) { alert(e.message); }
     },
     uploadSpecificImage: async function(input, targetId, type = 'chapters') {
@@ -538,8 +526,7 @@ window.AdminApp = (function() {
       input.value = '';
     },
     handleBulkUpload: async function(input, type = 'chapters') {
-      let files = Array.from(input.files);
-      if (files.length === 0) return;
+      let files = Array.from(input.files); if (files.length === 0) return;
       files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
       const area = document.getElementById('create-chapter-pages'); if (!area) return;
       let ok = 0, err = 0;
@@ -550,8 +537,7 @@ window.AdminApp = (function() {
           if (res.data?.paths?.length > 0) { area.value = (area.value.trim() ? area.value + '\n' : '') + res.data.paths[0]; ok++; }
         } catch (e) { err++; }
       }
-      alert(`Upload complete! Success: ${ok}, Fail: ${err}`);
-      input.value = '';
+      alert(`Upload complete! Success: ${ok}, Fail: ${err}`); input.value = '';
     }
   };
 
@@ -560,30 +546,26 @@ window.AdminApp = (function() {
       console.log("[AdminApp] Initializing Chapters...");
       document.addEventListener('nmr:admin-content:selected', (e) => this.handleContentSelected(e.detail));
       document.addEventListener('nmr:admin-chapter:create', (e) => this.handleChapterCreate(e.detail));
-      $('#btn-refresh-chapters')?.addEventListener('click', () => this.loadChapters());
-      $('#chapters-content-id')?.addEventListener('change', () => this.loadChapters());
-      $('#create-chapter-type')?.addEventListener('change', (e) => this.toggleEditor(e.target.value, 'create'));
-      $('#edit-chapter-type')?.addEventListener('change', (e) => this.toggleEditor(e.target.value, 'edit'));
-      $('#form-create-chapter')?.addEventListener('submit', (e) => this.handleCreate(e));
-      $('#form-edit-chapter')?.addEventListener('submit', (e) => this.handleEdit(e));
+      $('#btn-refresh-chapters')?.on('click', () => this.loadChapters());
+      $('#chapters-content-id')?.on('change', () => this.loadChapters());
+      $('#create-chapter-type')?.on('change', (e) => this.toggleEditor(e.target.value, 'create'));
+      $('#edit-chapter-type')?.on('change', (e) => this.toggleEditor(e.target.value, 'edit'));
+      $('#form-create-chapter')?.on('submit', (e) => this.handleCreate(e));
+      $('#form-edit-chapter')?.on('submit', (e) => this.handleEdit(e));
       
-      $('#chapters-list-body')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-action]');
-        if (!btn) return;
-        const id = btn.dataset.id;
+      $('#chapters-list-body')?.on('click', (e) => {
+        const btn = e.target.closest('button[data-action]'); if (!btn) return;
         if (btn.dataset.action === 'edit') this.openEdit(btn.dataset);
-        if (btn.dataset.action === 'delete') this.handleDelete(id);
+        if (btn.dataset.action === 'delete') this.handleDelete(btn.dataset.id);
       });
     },
     handleContentSelected: function(detail) {
       setText('#chapters-card-title', `Chapters: ${detail.title}`);
       this.loadChapters();
     },
-    handleChapterCreate: function(detail) {
-      if (window.openModal) window.openModal('modal-create-chapter');
-    },
+    handleChapterCreate: function(detail) { window.openModal('modal-create-chapter'); },
     loadChapters: async function() {
-      const contentId = $('#chapters-content-id')?.value;
+      const contentId = document.getElementById('chapters-content-id')?.value;
       if (!contentId) return;
       try {
         const res = await api(`/admin/content/${contentId}/chapters`);
@@ -606,41 +588,28 @@ window.AdminApp = (function() {
       } catch (e) { setHtml('#chapters-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`); }
     },
     toggleEditor: function(type, prefix) {
-      const bodyWrap = $(`#${prefix}-chapter-body-wrap`);
-      const pagesWrap = $(`#${prefix}-chapter-pages-wrap`);
-      if (bodyWrap) bodyWrap.classList.toggle('d-none', type === 'image');
-      if (pagesWrap) pagesWrap.classList.toggle('d-none', type !== 'image');
+      const bW = document.getElementById(`${prefix}-chapter-body-wrap`);
+      const pW = document.getElementById(`${prefix}-chapter-pages-wrap`);
+      if (bW) bW.classList.toggle('d-none', type === 'image');
+      if (pW) pW.classList.toggle('d-none', type !== 'image');
     },
     openEdit: function(data) {
-      $('#edit-chapter-id').value = data.id;
-      $('#edit-chapter-number').value = data.num;
-      $('#edit-chapter-title').value = data.title;
-      $('#edit-chapter-type').value = data.type;
+      document.getElementById('edit-chapter-id').value = data.id;
+      document.getElementById('edit-chapter-number').value = data.num;
+      document.getElementById('edit-chapter-title').value = data.title;
+      document.getElementById('edit-chapter-type').value = data.type;
       this.toggleEditor(data.type, 'edit');
-      if (window.openModal) window.openModal('modal-edit-chapter');
+      window.openModal('modal-edit-chapter');
     },
     handleCreate: async function(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const contentId = $('#chapters-content-id').value;
-      const type = fd.get('type');
-      const payload = Object.fromEntries(fd);
+      e.preventDefault(); const fd = new FormData(e.target); const contentId = document.getElementById('chapters-content-id').value;
+      const type = fd.get('type'); const payload = Object.fromEntries(fd);
       if (type === 'image') payload.data = fd.get('pages').split('\n').map(l => l.trim()).filter(Boolean).join('|');
-      try {
-        await api(`/admin/content/${contentId}/chapters`, { method: 'POST', body: JSON.stringify(payload) });
-        if (window.closeModal) window.closeModal();
-        e.target.reset(); this.loadChapters();
-      } catch (e) { alert(e.message); }
+      try { await api(`/admin/content/${contentId}/chapters`, { method: 'POST', body: JSON.stringify(payload) }); window.closeModal(); e.target.reset(); this.loadChapters(); } catch (e) { alert(e.message); }
     },
     handleEdit: async function(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const id = fd.get('id');
-      try {
-        await api(`/admin/chapters/${id}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
-        if (window.closeModal) window.closeModal();
-        this.loadChapters();
-      } catch (e) { alert(e.message); }
+      e.preventDefault(); const fd = new FormData(e.target); const id = fd.get('id');
+      try { await api(`/admin/chapters/${id}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) }); window.closeModal(); this.loadChapters(); } catch (e) { alert(e.message); }
     },
     handleDelete: async function(id) {
       if (!confirm('Delete chapter?')) return;
@@ -652,28 +621,24 @@ window.AdminApp = (function() {
     _USERS: [],
     init: function() {
       console.log("[AdminApp] Initializing Users...");
-      this.loadUsers();
-      this.loadRoles();
-      $('#btn-refresh-users')?.addEventListener('click', () => this.loadUsers());
-      $('#users-list-body')?.addEventListener('click', (e) => {
+      this.loadUsers(); this.loadRoles();
+      $('#btn-refresh-users')?.on('click', () => this.loadUsers());
+      $('#users-list-body')?.on('click', (e) => {
         const btn = e.target.closest('button[data-action="edit"]');
         if (btn) this.openEdit(btn.dataset.id);
       });
-      $('#form-edit-user')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
+      $('#form-edit-user')?.on('submit', async (e) => {
+        e.preventDefault(); const fd = new FormData(e.target);
         try {
           await api(`/admin/users/${fd.get('id')}`, { method: 'PUT', body: JSON.stringify({ role: fd.get('role'), is_banned: !!fd.get('is_banned'), email: fd.get('email'), bio: fd.get('bio') }) });
-          if (window.closeModal) window.closeModal();
-          this.loadUsers();
+          window.closeModal(); this.loadUsers();
         } catch (e) { alert(e.message); }
       });
     },
     loadUsers: async function() {
-      if (!$('#users-list-body')) return;
+      if (!$('#users-list-body').elements.length) return;
       try {
-        const res = await api('/admin/users');
-        this._USERS = res.data || [];
+        const res = await api('/admin/users'); this._USERS = res.data || [];
         setHtml('#users-list-body', this._USERS.map(u => `
           <tr>
             <td>${u.id}</td>
@@ -687,42 +652,35 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     loadRoles: async function() {
-      const sel = $('#edit-user-role'); if (!sel) return;
-      try {
-        const res = await api('/admin/rbac/roles');
-        const items = res.data.items || res.data || [];
-        sel.innerHTML = items.map(r => `<option value="${r.slug}">${r.name || r.slug}</option>`).join('');
-      } catch (e) {}
+      const sel = document.getElementById('edit-user-role'); if (!sel) return;
+      try { const res = await api('/admin/rbac/roles'); const items = res.data.items || res.data || []; sel.innerHTML = items.map(r => `<option value="${r.slug}">${r.name || r.slug}</option>`).join(''); } catch (e) {}
     },
     firstRole: (u) => (u.role_names ? u.role_names.split(',')[0].trim() : (u.role || (Array.isArray(u.roles) ? u.roles[0] : (typeof u.roles === 'string' ? u.roles.split(',')[0] : 'user')))),
     openEdit: function(id) {
       const u = this._USERS.find(x => x.id == id); if (!u) return;
-      $('#edit-user-id').value = u.id;
-      $('#edit-user-username').value = u.username;
-      $('#edit-user-email').value = u.email || '';
-      $('#edit-user-bio').value = u.bio || '';
-      $('#edit-user-role').value = this.firstRole(u);
-      $('#edit-user-banned').checked = !!u.is_banned;
-      if (window.openModal) window.openModal('modal-edit-user');
+      document.getElementById('edit-user-id').value = u.id;
+      document.getElementById('edit-user-username').value = u.username;
+      document.getElementById('edit-user-email').value = u.email || '';
+      document.getElementById('edit-user-bio').value = u.bio || '';
+      document.getElementById('edit-user-role').value = this.firstRole(u);
+      document.getElementById('edit-user-banned').checked = !!u.is_banned;
+      window.openModal('modal-edit-user');
     }
   };
 
   const Uploads = {
-    currentPage: 1,
-    perPage: 20,
+    currentPage: 1, perPage: 20,
     init: function() {
-      if (!$('#uploads-list')) return;
+      if (!$('#uploads-list').elements.length) return;
       console.log("[AdminApp] Initializing Uploads...");
       this.load(1);
-      $('#refresh-uploads')?.addEventListener('click', () => this.load(this.currentPage));
-      $('#uploads-list')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('.delete-upload');
-        if (btn) this.delete(btn.dataset.id);
+      $('#refresh-uploads')?.on('click', () => this.load(this.currentPage));
+      $('#uploads-list')?.on('click', (e) => {
+        const btn = e.target.closest('.delete-upload'); if (btn) this.delete(btn.dataset.id);
       });
       window.previewImage = (url) => { 
-        const img = document.getElementById('full-preview');
-        if (img) img.src = url; 
-        if (window.openModal) window.openModal('preview-modal');
+        const img = document.getElementById('full-preview'); if (img) img.src = url; 
+        window.openModal('preview-modal');
       };
     },
     load: async function(page = 1) {
@@ -745,7 +703,7 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     renderPager: function(meta) {
-      const container = $('#uploads-pagination'); if (!container || meta.total_pages <= 1) { if(container) container.innerHTML = ''; return; }
+      const container = document.getElementById('uploads-pagination'); if (!container || meta.total_pages <= 1) { if(container) container.innerHTML = ''; return; }
       let html = '';
       for (let i = 1; i <= meta.total_pages; i++) html += `<li class="page-item ${i === meta.page ? 'active' : ''}"><a class="page-link" href="#" onclick="AdminApp.Modules.Uploads.load(${i});return false;">${i}</a></li>`;
       container.innerHTML = html;
@@ -758,15 +716,15 @@ window.AdminApp = (function() {
 
   const Ops = {
     init: function() {
-      if (!$('#btn-run-jobs')) return;
+      if (!$('#btn-run-jobs').elements.length) return;
       console.log("[AdminApp] Initializing System Ops...");
       this.loadQueue();
-      $('#btn-run-jobs')?.addEventListener('click', () => this.runQueueOnce());
-      $('#btn-run-cleanup')?.addEventListener('click', () => this.runCleanup());
-      $('#btn-trigger-backup')?.addEventListener('click', () => this.handleMaint('btn-trigger-backup', '/admin/maintenance/backup', 'Backup complete'));
-      $('#btn-trigger-analytics')?.addEventListener('click', () => this.handleMaint('btn-trigger-analytics', '/admin/maintenance/analytics', 'Analytics updated'));
-      $('#btn-trigger-sitemap')?.addEventListener('click', () => this.handleMaint('btn-trigger-sitemap', '/admin/maintenance/sitemap', 'Sitemap updated'));
-      $('#btn-trigger-warmup')?.addEventListener('click', () => this.handleMaint('btn-trigger-warmup', '/admin/maintenance/warmup', 'Cache warmed up'));
+      $('#btn-run-jobs')?.on('click', () => this.runQueueOnce());
+      $('#btn-run-cleanup')?.on('click', () => this.runCleanup());
+      $('#btn-trigger-backup')?.on('click', () => this.handleMaint('btn-trigger-backup', '/admin/maintenance/backup', 'Backup complete'));
+      $('#btn-trigger-analytics')?.on('click', () => this.handleMaint('btn-trigger-analytics', '/admin/maintenance/analytics', 'Analytics updated'));
+      $('#btn-trigger-sitemap')?.on('click', () => this.handleMaint('btn-trigger-sitemap', '/admin/maintenance/sitemap', 'Sitemap updated'));
+      $('#btn-trigger-warmup')?.on('click', () => this.handleMaint('btn-trigger-warmup', '/admin/maintenance/warmup', 'Cache warmed up'));
     },
     loadQueue: async function() {
       try {
@@ -775,34 +733,34 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     runQueueOnce: async function() {
-      const limit = $('#jobs-limit')?.value || 5;
+      const limit = document.getElementById('jobs-limit')?.value || 5;
       await api('/admin/queue/run-once', { method: 'POST', body: JSON.stringify({ limit }) });
       this.loadQueue();
     },
     runCleanup: async function() {
-      const days = $('#cleanup-days')?.value || 30;
+      const days = document.getElementById('cleanup-days')?.value || 30;
       try { await api('/admin/retention/cleanup', { method: 'POST', body: JSON.stringify({ days }) }); alert('Done'); } catch (e) {}
     },
     handleMaint: async function(id, path, msg) {
       const btn = $(`#${id}`); const out = $('#maintenance-output'); if (!btn || !out) return;
-      const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '...'; out.classList.remove('d-none');
+      const old = btn.html(); btn.prop('disabled', true); btn.html('...'); out.removeClass('d-none');
       try {
         const res = await api(path, { method: 'POST', body: '{}' });
-        out.innerHTML = (Array.isArray(res.data?.output) ? res.data.output.join('\n') : res.data?.output) || 'Done';
+        out.html((Array.isArray(res.data?.output) ? res.data.output.join('\n') : res.data?.output) || 'Done');
         if (window.showPopup) window.showPopup(msg, 'success');
-      } catch (e) { out.innerHTML = e.message; } finally { btn.disabled = false; btn.innerHTML = old; }
+      } catch (e) { out.html(e.message); } finally { btn.prop('disabled', false); btn.html(old); }
     }
   };
 
   const Logs = {
     init: function() {
-      if (!$('#logs-body')) return;
+      if (!$('#logs-body').elements.length) return;
       console.log("[AdminApp] Initializing Logs...");
       this.loadAll();
-      $('#btn-refresh-logs')?.addEventListener('click', () => this.loadAudit());
-      $('#btn-refresh-logins')?.addEventListener('click', () => this.loadLogins());
-      $('#btn-refresh-access')?.addEventListener('click', () => this.loadAccess());
-      $('#btn-refresh-error')?.addEventListener('click', () => this.loadError());
+      $('#btn-refresh-logs')?.on('click', () => this.loadAudit());
+      $('#btn-refresh-logins')?.on('click', () => this.loadLogins());
+      $('#btn-refresh-access')?.on('click', () => this.loadAccess());
+      $('#btn-refresh-error')?.on('click', () => this.loadError());
     },
     loadAll: function() { this.loadAudit(); this.loadLogins(); this.loadAccess(); this.loadError(); },
     loadAudit: async function() {
@@ -818,27 +776,21 @@ window.AdminApp = (function() {
       } catch (e) {}
     },
     loadAccess: async function() {
-      const c = $('#access-logs-container'); if (!c) return;
-      try {
-        const res = await api('/admin/logs/access');
-        c.innerHTML = (res.data || []).map(l => `<div class="card mb-1 p-2 small border-l-3"><b>${l.method}</b> ${l.path} <span class="badge">${l.status}</span></div>`).join('');
-      } catch (e) {}
+      const c = document.getElementById('access-logs-container'); if (!c) return;
+      try { const res = await api('/admin/logs/access'); c.innerHTML = (res.data || []).map(l => `<div class="card mb-1 p-2 small border-l-3"><b>${l.method}</b> ${l.path} <span class="badge">${l.status}</span></div>`).join(''); } catch (e) {}
     },
     loadError: async function() {
-      const c = $('#error-logs-container'); if (!c) return;
-      try {
-        const res = await api('/admin/logs/error');
-        c.innerHTML = (res.data || []).map(l => `<div class="card mb-1 p-2 small border-l-3 text-danger"><b>${l.level}</b> ${l.message}</div>`).join('');
-      } catch (e) {}
+      const c = document.getElementById('error-logs-container'); if (!c) return;
+      try { const res = await api('/admin/logs/error'); c.innerHTML = (res.data || []).map(l => `<div class="card mb-1 p-2 small border-l-3 text-danger"><b>${l.level}</b> ${l.message}</div>`).join(''); } catch (e) {}
     }
   };
 
   const Config = {
     init: function() {
-      if (!$('#site-settings-form')) return;
+      if (!$('#site-settings-form').elements.length) return;
       console.log("[AdminApp] Initializing Config...");
       this.load();
-      $('#site-settings-form')?.addEventListener('submit', (e) => this.save(e));
+      $('#site-settings-form')?.on('submit', (e) => this.save(e));
     },
     load: async function() {
       try {
@@ -859,11 +811,11 @@ window.AdminApp = (function() {
 
   const Comments = {
     init: function() {
-      if (!$('#comments-list-body')) return;
+      if (!$('#comments-list-body').elements.length) return;
       console.log("[AdminApp] Initializing Comments...");
       this.load();
-      $('#btn-refresh-comments')?.addEventListener('click', () => this.load());
-      $('#comments-list-body')?.addEventListener('click', (e) => {
+      $('#btn-refresh-comments')?.on('click', () => this.load());
+      $('#comments-list-body')?.on('click', (e) => {
         const btn = e.target.closest('button[data-action="delete"]');
         if (btn) this.delete(btn.dataset.id);
       });
@@ -898,6 +850,6 @@ window.AdminApp = (function() {
       if (path.includes('/admin/comments')) this.Modules.Comments.init();
     }
   };
-})();
+})(window.melt || window.$);
 
 document.addEventListener('DOMContentLoaded', () => AdminApp.init());
