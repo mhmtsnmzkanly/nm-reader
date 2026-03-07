@@ -82,6 +82,12 @@ Stores user scores (1-5) for series.
 #### `user_series_follows`
 Many-to-many mapping for the library/bookmark system.
 
+#### `user_reading_progress`
+Tracks the exact position where a user stopped reading in a specific series.
+- `last_chapter_id`: Foreign key to the last read chapter.
+- `last_page`: (Optional) The specific page index.
+- Enables the "Continue Reading" feature on series pages.
+
 #### `user_notifications`
 Centralized notification system for user-to-user and system-to-user alerts.
 - `type`: Category of notification (`follow`, `upvote`, `system`).

@@ -427,11 +427,19 @@ This document serves as the absolute authority on the project's architecture, co
 
 ### Reader Experience & "Long Strip" Support (2026-03-07)
 - **Status**: Completed.
-- **Problem**: No UI to toggle between Vertical (Long Strip) and Single-Page modes.
-- **Fix**:
-  - Added a **Reader Settings Modal** (⚙️) to the chapter view.
-  - Users can now toggle between **Vertical, Single Page, and Double Page** layouts.
-  - Added **Image Fit** options (Width, Height, Original).
-  - Preferences are now persisted in browser cookies via new `setCookie` global helper in `utils.js`.
+- **Fix**: Implemented settings modal for layout (Vertical/Single/Double) and image fit options.
+
+### User Retention: Reading Progress (2026-03-07)
+- **Status**: Completed.
+- **Feature**: Implemented "Continue Reading" logic. The system now tracks the last read chapter per series for each user.
+- **UI**: Added a dynamic button on series pages that replaces "Start Reading" with "Continue Reading (Ch. X)" if progress exists.
+- **Backend**: New `user_reading_progress` table and logic integrated into `ChapterService` and `SeriesService`.
+
+### Security & Data Integrity: Soft Delete (2026-03-07)
+- **Status**: Completed.
+- **Feature**: Implemented **Soft Delete** for `series` and `chapters`. Deleted items are now marked with a `deleted_at` timestamp instead of being physically removed.
+- **Refactor**: Updated `SeriesRepository` and `ChapterRepository` to filter out deleted items in all public and admin queries using `deleted_at IS NULL`.
+- **Database**: Added indices on `deleted_at` columns to maintain high query performance.
+
 
 
