@@ -232,8 +232,11 @@
         input.value = '';
       },
       handleBulkUpload: async (input, type = 'chapters') => {
-        const files = Array.from(input.files);
+        let files = Array.from(input.files);
         if (files.length === 0) return;
+
+        // Sort files by name naturally (1.png, 2.png, 10.png)
+        files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
         const total = files.length;
         console.log(`[Bulk Upload] Starting sequential upload for ${total} files of type ${type}.`);

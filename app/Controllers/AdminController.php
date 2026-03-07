@@ -221,6 +221,11 @@ final class AdminController
                 return ResponseHelper::error(400, "No valid files detected in the request. Content-Length: $postSize. PSR7-Count: " . count($files));
             }
 
+            // Sort files by original filename using natural sort (1.png, 2.png, 10.png)
+            usort($toProcess, function ($a, $b) {
+                return strnatcasecmp($a->getClientFilename() ?? '', $b->getClientFilename() ?? '');
+            });
+
             $userId = (string) $request->getAttribute('user_id');
             $body = (array) ($request->getParsedBody() ?? []);
             $queryParams = $request->getQueryParams();
