@@ -63,11 +63,11 @@
       <div class="modal-content-area flex-grow p-4">
         <div id="tab-layout" class="settings-tab">
           <div class="form-group mb-3"><label class="text-xs"><?= $__t('page_layout') ?></label>
-            <div class="btn-group w-100" id="layoutButtonGroup">
-              <button class="btn btn-sm btn-outline" data-val="single"><?= $__t('single_page') ?></button>
-              <button class="btn btn-sm btn-outline" data-val="double"><?= $__t('double_page') ?></button>
-              <button class="btn btn-sm btn-outline" data-val="vertical"><?= $__t('vertical_scroll') ?></button>
-            </div>
+            <select class="form-item" name="reader_layout" id="readerLayoutSelect">
+              <option value="vertical"><?= $__t('vertical_scroll') ?></option>
+              <option value="single"><?= $__t('single_page') ?></option>
+              <option value="double"><?= $__t('double_page') ?></option>
+            </select>
           </div>
           <div class="form-group"><label class="text-xs"><?= $__t('image_fit') ?></label>
             <select class="form-item" name="reader_image_fit">

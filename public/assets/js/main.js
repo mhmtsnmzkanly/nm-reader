@@ -23,8 +23,7 @@ window.openModal = (id) => {
   if (id === 'readerSettingsModal') {
     const r = (ctx.auth && ctx.auth.preferences) ? ctx.auth.preferences.reader : {};
     const layout = window.getCookie('melt_reader_layout') || r.layout || 'vertical';
-    $('#layoutButtonGroup .btn').removeClass('active');
-    $(`#layoutButtonGroup .btn[data-val="${layout}"]`).addClass('active');
+    $('#readerLayoutSelect').val(layout);
     $('[name="reader_image_fit"]').val(getCookie('melt_reader_imageFit') || r.imageFit || 'width');
     $('[name="reader_font_family"]').val(getCookie('melt_reader_fontFamily') || r.fontFamily || 'var(--font-sans)');
     const fSize = getCookie('melt_reader_fontSize') || r.fontSize || '18';
@@ -326,10 +325,11 @@ $(function () {
     });
 
     $('body').on('click', '#saveAllSettingsBtn', async function () {
+      const layout = $('#readerLayoutSelect').val();
       const payload = {
         theme: $('body').attr('theme'),
         reader: {
-          layout: $('#layoutButtonGroup .btn.active').attr('data-val'),
+          layout: layout,
           imageFit: $('[name="reader_image_fit"]').val(),
           fontFamily: $('[name="reader_font_family"]').val(),
           fontSize: parseInt($('[name="reader_font_size"]').val()),
@@ -338,6 +338,8 @@ $(function () {
         }
       };
       try {
+        // Also update cookie for immediate client-side effect
+        setCookie('melt_reader_layout', layout, 30);
         await Connection.updatePreferences(payload);
         showPopup(NMR.__t('msg_settings_saved'), 'success');
         setTimeout(() => location.reload(), 800);
@@ -350,11 +352,6 @@ $(function () {
       $(this).addClass('active');
       $('.settings-tab').addClass('hidden');
       $(`#tab-${tab}`).removeClass('hidden');
-    });
-
-    $('body').on('click', '#layoutButtonGroup .btn', function () {
-      $('#layoutButtonGroup .btn').removeClass('active');
-      $(this).addClass('active');
     });
 
     $('body').on('input', '[name="reader_font_size"]', function () { $('#fontSizeVal').text($(this).val()); });
