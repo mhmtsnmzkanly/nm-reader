@@ -161,10 +161,15 @@ window.AdminApp = (function($) {
       if (!f.length) return;
       f.find('[name="id"]').val(c.id);
       f.find('[name="title"]').val(c.title);
+      f.find('[name="alternative_titles"]').val(c.alternative_titles || '');
       f.find('[name="slug"]').val(c.slug);
       f.find('[name="status"]').val(c.status);
       f.find('[name="description"]').val(c.description || '');
       f.find('[name="cover_image"]').val(c.cover_image || '');
+      f.find('[name="author"]').val(c.author || '');
+      f.find('[name="artist"]').val(c.artist || '');
+      f.find('[name="country"]').val(c.country || '');
+      f.find('[name="release_year"]').val(c.release_year || '');
       window.openModal('modal-edit-content');
     }
   };
