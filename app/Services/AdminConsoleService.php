@@ -23,9 +23,13 @@ final class AdminConsoleService
     /**
      * Aggregates key system metrics for the dashboard.
      * Uses caching to reduce database load.
+     * Automatically triggers analytics aggregation every 12 hours.
      */
     public function overview(): array
     {
+        // Lazy-cron: Check if we need to aggregate data (every 12 hours)
+        $this->checkAndAutoTriggerAnalytics();
+
         $data = $this->cache->remember(self::CACHE_KEY_KPI, self::CACHE_TTL_KPI, function () {
             return $this->repo->summaryKpis();
         });
@@ -514,5 +518,32 @@ final class AdminConsoleService
                 'per_page' => $perPage,
             ],
         ];
+    }
+
+    /**
+     * Internal helper to check and run analytics aggregation if 12 hours have passed.
+     */
+    private function checkAndAutoTriggerAnalytics(): void
+    {
+        $lastRunKey = 'system_last_analytics_run';
+        $twelveHoursInSeconds = 12 * 3600;
+        
+        $lastRun = (int)$this->cache->get($lastRunKey);
+        $now = time();
+
+        if (($now - $lastRun) >= $twelveHoursInSeconds) {
+            try {
+                // Perform aggregation directly via service
+                $this->aggregation->aggregateAll(30);
+                
+                // Record completion time
+                $this->cache->set($lastRunKey, (string)$now, 86400 * 7);
+                
+                // Invalidate KPI cache to show new data
+                $this->cache->delete(self::CACHE_KEY_KPI);
+            } catch (\Throwable $e) {
+                error_log("Auto-Analytics Failed: " . $e->getMessage());
+            }
+        }
     }
 }
