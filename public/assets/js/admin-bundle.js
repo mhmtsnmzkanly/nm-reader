@@ -1,26 +1,46 @@
 /**
  * admin-bundle.js - Unified Administrative Controller for NovelMangaReader.
- * Fully migrated to jQuery 3.7+ with native modal support.
+ * Fully optimized for jQuery 3.7+ and AdminLTE Compatibility.
  */
 
 window.AdminApp = (function($) {
   const ctx = window.__NMR_CONTEXT || {};
   const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
 
-  // Global Modal System
+  /**
+   * Universal Modal Opener
+   * Works with both custom overlays and AdminLTE/Bootstrap modals.
+   */
   window.openModal = (id) => {
-    $('.modal-overlay').removeClass('active');
-    setTimeout(() => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('active');
-    }, 10);
+    const el = document.getElementById(id);
+    if (!el) return;
+    
+    // Clean up existing
+    $('.modal-overlay, .modal').removeClass('active show');
+    $(el).css('display', 'block').addClass('active show');
+    
+    // AdminLTE/Bootstrap compatibility: Add backdrop if missing
+    if ($(el).hasClass('modal') && !$('.modal-backdrop').length) {
+      $('body').append('<div class="modal-backdrop fade show"></div>').addClass('modal-open');
+    }
   };
-  window.closeModal = () => $('.modal-overlay').removeClass('active');
-  $('body').on('click', '.modal-overlay', function(e) { if (e.target === this) window.closeModal(); });
+
+  window.closeModal = () => {
+    $('.modal-overlay, .modal').removeClass('active show').css('display', 'none');
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+  };
+
+  // Close triggers
+  $(document).on('click', '.modal-overlay, .modal', function(e) {
+    if (e.target === this || $(e.target).hasClass('modal-close') || $(e.target).attr('data-bs-dismiss') === 'modal') {
+      window.closeModal();
+    }
+  });
 
   const api = async (path, options = {}) => {
     const method = (options.method || 'GET').toUpperCase();
-    const headers = Object.assign({}, options.headers || {});
+    const headers = { 'X-Requested-With': 'XMLHttpRequest', ...(options.headers || {}) };
     if (options.body && !(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
     if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
 
@@ -48,6 +68,7 @@ window.AdminApp = (function($) {
         setText('#kpi-contents', d.kpis?.contents_total || 0);
         setText('#kpi-chapters', d.kpis?.chapters_total || 0);
         setText('#kpi-unread', d.kpis?.blogs_pending_total || 0);
+        
         const m = d.metrics || {};
         setHtml('#metrics-top-contents', (m.top_contents_7d || []).map(c => `
           <tr>
@@ -65,10 +86,12 @@ window.AdminApp = (function($) {
     init: function() {
       this.load();
       $('#btn-refresh-contents').on('click', () => this.load());
+      
       $('#create-content-title').on('input', function() {
         $('#create-content-slug').val($(this).val().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''));
       });
 
+      // Delegate click events for content list
       $('#contents-list-body').on('click', 'button[data-action]', (e) => {
         const btn = e.currentTarget;
         const id = btn.dataset.id;
@@ -100,7 +123,7 @@ window.AdminApp = (function($) {
         e.preventDefault();
         const fd = new FormData(e.target);
         try {
-          await api(`/admin/content/${fd.get('id')}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
+          await api(`/admin/content/${fd.find('[name="id"]').val() || fd.get('id')}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
           window.closeModal(); this.load();
         } catch (err) { alert(err.message); }
       });
