@@ -415,19 +415,22 @@ window.AdminApp = (function($) {
       try {
         const res = await api('/admin/comments');
         const items = res.data?.items || res.data || [];
-        setHtml('#comments-list-body', items.map(c => `
-          <tr>
-            <td>${c.id}</td>
-            <td>@${c.username}</td>
-            <td style="max-width:300px" class="text-truncate">${c.body}</td>
-            <td><small class="text-muted">${c.content_title || c.blog_title || 'N/A'}</small></td>
-            <td>
-              <button class="btn btn-xs btn-outline-danger" data-action="delete" data-id="${c.id}">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        `).join('') || '<tr><td colspan="5" class="text-center">No comments found</td></tr>');
+        setHtml('#comments-list-body', items.map(c => {
+          const targetTitle = c.content_title ? `${c.content_title} (Ch. ${c.chapter_number || '?'})` : (c.blog_title || 'N/A');
+          return `
+            <tr>
+              <td><strong class="text-sm">@${c.username}</strong></td>
+              <td style="max-width:400px"><div class="text-truncate" title="${c.body}">${c.body}</div></td>
+              <td><small class="text-muted">${targetTitle}</small></td>
+              <td><small>${(c.created_at || '').split(' ')[1] || (c.created_at || '')}</small></td>
+              <td>
+                <button class="btn btn-xs btn-outline-danger" data-action="delete" data-id="${c.id}">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('') || '<tr><td colspan="5" class="text-center">No comments found</td></tr>');
       } catch (e) { setHtml('#comments-list-body', `<tr><td colspan="5" class="text-center text-danger">${e.message}</td></tr>`); }
     },
     delete: async function(id) {
