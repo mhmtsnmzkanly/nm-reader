@@ -184,8 +184,11 @@ $(function () {
   const updateChapterNavButtons = () => {
     const select = document.getElementById('chapterSelect');
     if (!select) return;
-    $('#prevChapterBtn').toggleClass('disabled opacity-30', select.selectedIndex <= 0);
-    $('#nextChapterBtn').toggleClass('disabled opacity-30', select.selectedIndex >= select.options.length - 1);
+    const isFirst = select.selectedIndex <= 0;
+    const isLast = select.selectedIndex >= select.options.length - 1;
+
+    $('#prevChapterBtn').toggleClass('disabled', isFirst).toggleClass('opacity-30', isFirst);
+    $('#nextChapterBtn').toggleClass('disabled', isLast).toggleClass('opacity-30', isLast);
   };
 
   const loadChapter = async (num) => {
