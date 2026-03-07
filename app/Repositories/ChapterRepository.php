@@ -28,7 +28,7 @@ final class ChapterRepository
      */
     public function findById(string $chapterId): ?array
     {
-        $sql = 'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.created_at, ch.created_by, u.username
+        $sql = 'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.data, ch.created_at, ch.created_by, u.username
                 FROM chapters ch
                 LEFT JOIN users u ON u.id = ch.created_by
                 WHERE ch.id = :id AND ch.deleted_at IS NULL LIMIT 1';

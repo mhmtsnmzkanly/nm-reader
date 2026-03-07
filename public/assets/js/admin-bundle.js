@@ -350,12 +350,21 @@ window.AdminApp = (function($) {
         const res = await api(`/admin/chapters/${id}`);
         const ch = res.data;
         const f = $('#form-edit-chapter');
+        if (!f.length) return;
+
         f.find('[name="id"]').val(ch.id);
         f.find('[name="chapter_number"]').val(ch.chapter_number);
         f.find('[name="title"]').val(ch.title || '');
         f.find('[name="type"]').val(ch.type);
-        if (ch.type === 'image') $('#edit-chapter-pages').val((ch.data || '').split('|').join('\n'));
-        else $('#edit-chapter-body').val(ch.data || '');
+        
+        if (ch.type === 'image') {
+          $('#edit-chapter-pages').val((ch.data || '').split('|').join('\n'));
+          $('#edit-chapter-body').val('');
+        } else {
+          $('#edit-chapter-body').val(ch.data || '');
+          $('#edit-chapter-pages').val('');
+        }
+        
         this.toggleEditor(ch.type, 'edit');
         window.openModal('modal-edit-chapter');
       } catch (e) { alert(e.message); }
