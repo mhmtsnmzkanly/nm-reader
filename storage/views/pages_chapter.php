@@ -49,48 +49,7 @@ $slug = (string) ($slug ?? '');
     
     <div class="flex items-center gap-2">
       <a href="<?= $url('/' . $type . '/' . $slug) ?>" class="btn btn-sm btn-outline hide-md">🏠 <?= $__t('series_home') ?></a>
-      <button class="btn btn-sm btn-outline" data-bs-toggle="modal" data-bs-target="#readerSettingsModal">⚙️</button>
-    </div>
-  </div>
-
-  <!-- Reader Settings Modal -->
-  <div class="modal fade" id="readerSettingsModal" tabindex="-1" aria-labelledby="readerSettingsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="readerSettingsModalLabel"><?= $__t('reader_settings') ?></h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-4">
-            <label class="form-label font-bold mb-2 d-block"><?= $__t('reading_mode') ?></label>
-            <div class="btn-group w-100" role="group">
-              <input type="radio" class="btn-check" name="layoutMode" id="layoutVertical" value="vertical" autocomplete="off">
-              <label class="btn btn-outline-primary" for="layoutVertical"><?= $__t('vertical') ?></label>
-
-              <input type="radio" class="btn-check" name="layoutMode" id="layoutSingle" value="single" autocomplete="off">
-              <label class="btn btn-outline-primary" for="layoutSingle"><?= $__t('single_page') ?></label>
-
-              <input type="radio" class="btn-check" name="layoutMode" id="layoutDouble" value="double" autocomplete="off">
-              <label class="btn btn-outline-primary" for="layoutDouble"><?= $__t('double_page') ?></label>
-            </div>
-          </div>
-
-          <div class="mb-0">
-            <label class="form-label font-bold mb-2 d-block"><?= $__t('image_fit') ?></label>
-            <div class="btn-group w-100" role="group">
-              <input type="radio" class="btn-check" name="imageFit" id="fitWidth" value="width" autocomplete="off">
-              <label class="btn btn-outline-primary" for="fitWidth"><?= $__t('fit_width') ?></label>
-
-              <input type="radio" class="btn-check" name="imageFit" id="fitHeight" value="height" autocomplete="off">
-              <label class="btn btn-outline-primary" for="fitHeight"><?= $__t('fit_height') ?></label>
-
-              <input type="radio" class="btn-check" name="imageFit" id="fitOriginal" value="original" autocomplete="off">
-              <label class="btn btn-outline-primary" for="fitOriginal"><?= $__t('original') ?></label>
-            </div>
-          </div>
-        </div>
-      </div>
+      <button class="btn btn-sm btn-outline" id="openReaderSettings">⚙️</button>
     </div>
   </div>
 
