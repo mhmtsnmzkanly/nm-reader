@@ -127,9 +127,19 @@ Full series list with administrative controls.
 #### **GET /admin/users**
 User list with role management.
 
+#### **GET /admin/uploads**
+List all system-wide file uploads with uploader details and image previews.
+- **Query Params**: `page` (int), `per_page` (int).
+
+#### **DELETE /admin/uploads/{id}**
+Delete a specific upload record from the database.
+
 #### **PUT /admin/users/{id}**
 Update user role/ban status.
 - **Payload**: `{ "role": "slug", "is_banned": bool }`
+
+#### **POST /admin/maintenance/analytics**
+Trigger manual analytics aggregation for the dashboard.
 
 #### **POST /admin/maintenance/backup**
 Trigger full system backup (**ROOT_USER ONLY**).
@@ -153,3 +163,5 @@ Trigger full system backup (**ROOT_USER ONLY**).
 | `id` | `char(6)` | Unique ID |
 | `chapter_number` | `string` | e.g. "1", "1.5" |
 | `title` | `string` | Chapter title |
+| `username` | `string` | Uploader's username (Admin/Mod) |
+| `created_at` | `string` | Upload timestamp |

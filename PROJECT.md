@@ -389,13 +389,49 @@ This document serves as the absolute authority on the project's architecture, co
     ```
 
 ### Google Analytics 4 Integration (2026-02-28)
-...
+### Google Analytics 4 Integration (2026-02-28)
 - **Status**: Completed.
 - **Components**:
   - Integrated `gtag.js` in `storage/views/layout_main.php`.
   - Configured `GOOGLE_ANALYTICS_ID` in `app/Config.php` (via `.env`).
-  - Updated `app/middleware.php` to include necessary Content Security Policy (CSP) directives:
-    - `script-src`: added `https://www.googletagmanager.com` and `https://www.google-analytics.com`.
-    - `img-src`: added `https://www.google-analytics.com` and `https://www.googletagmanager.com`.
-    - `connect-src`: added `https://www.google-analytics.com` and `https://region1.google-analytics.com`.
+  - Updated `app/middleware.php` to include necessary Content Security Policy (CSP) directives.
+
+### Admin Dashboard & Analytics Overhaul (2026-03-07)
+- **Status**: Completed.
+- **Problem**: Dashboard metrics (Funnel, Retention, Top Contents) were hardcoded to zero, and analytics required manual CLI execution.
+- **Fix**:
+  - Implemented real database queries for all dashboard KPIs in `AdminConsoleRepository`.
+  - Introduced a **Lazy Cron** system in `AdminConsoleService`: The dashboard now automatically triggers analytics aggregation every 12 hours if data is stale.
+  - Added "Retention & Search" metrics to track user loyalty and search quality (Zero Results rate).
+  - Fixed a critical "Undefined property" error in the aggregation service injection.
+
+### Uploads Management & Preview (2026-03-07)
+- **Status**: Completed.
+- **Feature**: Added a dedicated "Uploads" tab in the Admin Panel to track all system-wide image assets.
+- **Components**:
+  - Added `file_path` column to `system_uploads` table for reliable image rendering.
+  - Created `pages_admin_uploads.php` and `admin-uploads.js` for a paginated, searchable upload gallery.
+  - Implemented image preview modals and deletion controls.
+  - Updated `UploadService` to persistently log the relative file path of every upload.
+
+### Chapter Ordering & Metadata Fixes (2026-03-07)
+- **Status**: Completed.
+- **Problem**: 
+  - Chapter images were uploading in random order.
+  - Uploader information was missing from the chapter list.
+  - 500 errors during chapter creation due to missing `created_by` column.
+- **Fix**:
+  - Implemented **Natural Sorting** (1.png, 2.png, 10.png) on both Frontend (`admin-content.js`) and Backend (`AdminController.php`) to guarantee correct reading order.
+  - Added `created_by` column to the `chapters` table and updated the admin list to show the uploader's username.
+  - Fixed SQL syntax errors in the Admin Creation CLI tool.
+
+### Reader Experience & "Long Strip" Support (2026-03-07)
+- **Status**: Completed.
+- **Problem**: No UI to toggle between Vertical (Long Strip) and Single-Page modes.
+- **Fix**:
+  - Added a **Reader Settings Modal** (⚙️) to the chapter view.
+  - Users can now toggle between **Vertical, Single Page, and Double Page** layouts.
+  - Added **Image Fit** options (Width, Height, Original).
+  - Preferences are now persisted in browser cookies via new `setCookie` global helper in `utils.js`.
+
 
