@@ -42,7 +42,7 @@
     <script type="application/ld+json"><?= $jsonLd ?></script>
   <?php endif; ?>
   <script>window.__NMR_CONTEXT = <?= $contextJson ?? "{}" ?>;</script>
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
   <script src="/assets/js/melt.js"></script>
   <script src="/assets/js/marked.min.js"></script>
   <script src="/assets/js/app-bundle.js?v=<?= time() ?>"></script>
