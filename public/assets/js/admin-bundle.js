@@ -167,7 +167,9 @@ window.AdminApp = (function($) {
     load: async function() {
       try {
         const res = await api('/admin/content');
-        this._CONTENTS = res.data || [];
+        this._CONTENTS = res.data?.items || res.data || [];
+        if (!Array.isArray(this._CONTENTS)) this._CONTENTS = [];
+
         setHtml('#contents-list-body', this._CONTENTS.map(c => `
           <tr>
             <td>${c.id}</td>
@@ -190,7 +192,7 @@ window.AdminApp = (function($) {
           const cur = sel.val();
           sel.html('<option value="">-- Select Series --</option>' + this._CONTENTS.map(c => `<option value="${c.id}" ${c.id == cur ? 'selected' : ''}>${c.title}</option>`).join(''));
         }
-      } catch (e) {}
+      } catch (e) { setHtml('#contents-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`); }
     },
     loadTaxonomy: async function() {
       try {
