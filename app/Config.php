@@ -195,7 +195,7 @@ final class Config
         $container = $app->getContainer();
         $cache = $container->get(CacheService::class);
         $authorization = $container->get(AuthorizationService::class);
-        $users = $container->get(UserRepository::class);
+        $users = static fn() => $container->get(UserRepository::class);
 
         $app->group("/api/v1", function (RouteCollectorProxy $group) use ($typePattern, $cache, $authorization, $users): void {
             $group->get("/home", [ContentController::class, "home"]);

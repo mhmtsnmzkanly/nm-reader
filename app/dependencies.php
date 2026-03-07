@@ -39,6 +39,7 @@ use App\Services\SiteConfigService;
 use App\Services\SlugService;
 use App\Services\SystemLogService;
 use App\Services\UploadService;
+use App\Services\UserActivityService;
 use App\Services\UserService;
 use App\Services\QueueService;
 use App\Services\MetricsService;
