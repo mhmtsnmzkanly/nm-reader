@@ -266,6 +266,40 @@ final class AdminPanelController
         return ResponseHelper::success($result['items'], $result['meta']);
     }
 
+    public function moderationActions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->console->listModerationActions($page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
+    public function siteVisits(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->getSiteVisits());
+    }
+
+    public function viewStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->getViewStats());
+    }
+
+    public function blogStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->getBlogStats());
+    }
+
+    public function userReputation(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->getUserReputation());
+    }
+
+    public function queueJobs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->console->listQueueJobs($page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
     public function runQueueOnce(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $payload = (array) $request->getParsedBody();
