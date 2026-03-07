@@ -347,10 +347,12 @@ window.AdminApp = (function() {
         const id = btn.dataset.id;
         const action = btn.dataset.action;
         const c = this._CONTENTS.find(x => x.id == id);
+        if (!c) return;
         if (action === 'edit') this.openEditContent(id);
         if (action === 'chapter' || action === 'add-chapter') {
           const detail = { id: c.id, title: c.title, slug: c.slug, type: c.type };
-          $('#chapters-content-id').value = c.id;
+          const idInput = $('#chapters-content-id');
+          if (idInput) idInput.value = c.id;
           document.dispatchEvent(new CustomEvent('nmr:admin-content:selected', { detail }));
           if (action === 'add-chapter') document.dispatchEvent(new CustomEvent('nmr:admin-chapter:create', { detail }));
         }
@@ -564,9 +566,6 @@ window.AdminApp = (function() {
       try {
         const res = await api(`/admin/content/${contentId}/chapters`);
         const items = res.data || [];
-        const body = $('#chapters-list-body');
-        if (!body) return;
-        
         setHtml('#chapters-list-body', items.map(ch => `
           <tr>
             <td>${ch.chapter_number}</td>
@@ -604,7 +603,7 @@ window.AdminApp = (function() {
       const payload = Object.fromEntries(fd);
       if (type === 'image') payload.data = fd.get('pages').split('\n').map(l => l.trim()).filter(Boolean).join('|');
       try {
-        await api(`/admin/series/${contentId}/chapters`, { method: 'POST', body: JSON.stringify(payload) });
+        await api(`/admin/content/${contentId}/chapters`, { method: 'POST', body: JSON.stringify(payload) });
         bootstrap.Modal.getInstance($('#modal-create-chapter')).hide();
         e.target.reset(); this.loadChapters();
       } catch (e) { alert(e.message); }
