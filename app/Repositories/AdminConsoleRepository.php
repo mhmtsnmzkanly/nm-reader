@@ -38,6 +38,32 @@ final class AdminConsoleRepository
     public function summaryKpis(): array
     {
         $todayViews = $this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'total_views'");
+        
+        // Fetch Performance & Health
+        $health = $this->pdo->query("SELECT * FROM analytics_snapshots_health ORDER BY stat_date DESC LIMIT 1")->fetch();
+        $errorRate = 0;
+        if ($health && ($health['request_total_24h'] ?? 0) > 0) {
+            $errorRate = round(($health['server_error_total_24h'] / $health['request_total_24h']) * 100, 2);
+        }
+
+        // Fetch Funnel Metrics
+        $homeViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'home_view_total'");
+        $contentViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'content_view_total'");
+        $chapterViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'chapter_view_total'");
+
+        $homeToContent = $homeViews > 0 ? round(($contentViews / $homeViews) * 100, 1) : 0;
+        $contentToChapter = $contentViews > 0 ? round(($chapterViews / $contentViews) * 100, 1) : 0;
+
+        // Fetch Top Contents 7d
+        $topContents = $this->pdo->query(
+            "SELECT s.title, s.type, s.slug, SUM(t.view_count) as view_count_7d, 0 as comment_count_7d
+             FROM analytics_snapshots_series_top t
+             JOIN series s ON s.id = t.content_id
+             WHERE t.stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+             GROUP BY t.content_id
+             ORDER BY view_count_7d DESC
+             LIMIT 5"
+        )->fetchAll();
 
         return [
             'users_total' => $this->count('SELECT COUNT(*) FROM users'),
@@ -50,14 +76,14 @@ final class AdminConsoleRepository
             'queue_failed_total' => $this->count("SELECT COUNT(*) FROM system_jobs WHERE status = 'failed'"),
             'audit_24h_total' => $this->count('SELECT COUNT(*) FROM system_audit_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)'),
             'funnel' => [
-                'home_to_content_pct' => 0,
-                'content_to_chapter_pct' => 0,
+                'home_to_content_pct' => $homeToContent,
+                'content_to_chapter_pct' => $contentToChapter,
             ],
             'performance_slo' => [
-                'server_error_rate_pct_24h' => 0,
-                'p95_duration_ms_24h' => 0,
+                'server_error_rate_pct_24h' => $errorRate,
+                'p95_duration_ms_24h' => (int)($health['p95_duration_ms_24h'] ?? 0),
             ],
-            'top_contents_7d' => []
+            'top_contents_7d' => $topContents
         ];
     }
 
