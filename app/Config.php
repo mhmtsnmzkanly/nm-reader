@@ -271,6 +271,7 @@ final class Config
             $group->get("/overview", [AdminPanelController::class, "overview"])->add($perm(["admin.panel.access"]));
             $group->get("/series", [AdminPanelController::class, "listSeries"])->add($perm(["admin.panel.access"]));
             $group->get("/contents", [AdminPanelController::class, "listSeries"])->add($perm(["admin.panel.access"]));
+            $group->get("/content", [AdminPanelController::class, "listSeries"])->add($perm(["admin.panel.access"]));
             $group->get("/genres", [AdminPanelController::class, "listGenres"])->add($perm(["admin.panel.access"]));
             $group->get("/tags", [AdminPanelController::class, "listTags"])->add($perm(["admin.panel.access"]));
             $group->get("/users", [AdminPanelController::class, "listUsers"])->add($perm(["admin.panel.access"]));
