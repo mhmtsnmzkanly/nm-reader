@@ -352,6 +352,11 @@ final class AdminService
                 'data' => $dataVal,
             ]);
 
+            // Update series chapter_count
+            $this->pdo->prepare(
+                'UPDATE series SET chapter_count = (SELECT COUNT(*) FROM chapters WHERE content_id = :cid) WHERE id = :sid'
+            )->execute(['cid' => $contentId, 'sid' => $contentId]);
+
             if ($moderatorId !== null) {
                 $this->adminConsole->createModerationAction(
                     $moderatorId, 
