@@ -360,7 +360,7 @@ final class AdminService
             if ($moderatorId !== null) {
                 $this->adminConsole->createModerationAction(
                     $moderatorId, 
-                    'series', 
+                    'chapter', 
                     $chapterId, 
                     'create', 
                     "Chapter $chapterNumber added to series $contentId"
@@ -474,7 +474,7 @@ final class AdminService
                 ->execute(['cnt' => $count, 'id' => $contentId]);
 
             if ($moderatorId !== null) {
-                $this->adminConsole->createModerationAction($moderatorId, 'series', $chapterId, 'delete', "Chapter deleted from series $contentId");
+                $this->adminConsole->createModerationAction($moderatorId, 'chapter', $chapterId, 'delete', "Chapter deleted from series $contentId");
             }
 
             $this->pdo->commit();

@@ -406,7 +406,7 @@ DROP TABLE IF EXISTS `admin_actions`;
 CREATE TABLE `admin_actions` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `moderator_user_id` char(8) DEFAULT NULL,
-  `target_type` enum('comment','blog','content','user','system','role','series') NOT NULL,
+  `target_type` enum('comment','blog','content','user','system','role','series','chapter') NOT NULL,
   `target_id` varchar(32) NOT NULL,
   `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy') NOT NULL,
   `reason` text DEFAULT NULL,
