@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Helpers\Validator;
 use App\Helpers\OutputSanitizer;
 use App\Repositories\AdminConsoleRepository;
+use App\Services\AnalyticsAggregationService;
 
 final class AdminConsoleService
 {
@@ -16,7 +17,8 @@ final class AdminConsoleService
     public function __construct(
         private readonly AdminConsoleRepository $repo,
         private readonly CacheService $cache,
-        private readonly RetentionService $retention
+        private readonly RetentionService $retention,
+        private readonly AnalyticsAggregationService $aggregation
     ) {
     }
 
