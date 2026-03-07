@@ -37,7 +37,7 @@ final class AdminConsoleRepository
      */
     public function summaryKpis(): array
     {
-        $todayViews = $this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'total_views'");
+        $todayViews = $this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'total_views' ORDER BY stat_date DESC LIMIT 1");
         
         // Fetch Performance & Health
         $health = $this->pdo->query("SELECT * FROM analytics_snapshots_health ORDER BY stat_date DESC LIMIT 1")->fetch();
@@ -47,31 +47,37 @@ final class AdminConsoleRepository
         }
 
         // Fetch Funnel Metrics
-        $homeViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'home_view_total'");
-        $contentViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'content_view_total'");
-        $chapterViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'chapter_view_total'");
+        $homeViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'home_view_total' ORDER BY stat_date DESC LIMIT 1");
+        $contentViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'content_view_total' ORDER BY stat_date DESC LIMIT 1");
+        $chapterViews = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'chapter_view_total' ORDER BY stat_date DESC LIMIT 1");
 
         $homeToContent = $homeViews > 0 ? round(($contentViews / $homeViews) * 100, 1) : 0;
         $contentToChapter = $contentViews > 0 ? round(($chapterViews / $contentViews) * 100, 1) : 0;
 
-        // Fetch Retention & Search
-        $searchTotal = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'search_total_7d'");
-        $zeroResults = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'zero_result_total_7d'");
-        $d1Retained = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'd1_retained_total'");
-        $newUsers = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'new_users_7d_total'");
+        // Fetch Retention & Search (Last available snapshot)
+        $searchTotal = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'search_total_7d' ORDER BY stat_date DESC LIMIT 1");
+        $zeroResults = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'zero_result_total_7d' ORDER BY stat_date DESC LIMIT 1");
+        $d1Retained = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'd1_retained_total' ORDER BY stat_date DESC LIMIT 1");
+        $newUsers = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'new_users_7d_total' ORDER BY stat_date DESC LIMIT 1");
 
         $retentionPct = $newUsers > 0 ? round(($d1Retained / $newUsers) * 100, 1) : 0;
 
-        // Fetch Top Contents 7d
-        $topContents = $this->pdo->query(
-            "SELECT s.title, s.type, s.slug, SUM(t.view_count) as view_count_7d, 0 as comment_count_7d
-             FROM analytics_snapshots_series_top t
-             JOIN series s ON s.id = t.content_id
-             WHERE t.stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
-             GROUP BY t.content_id
-             ORDER BY view_count_7d DESC
-             LIMIT 5"
-        )->fetchAll();
+        // Fetch Top Contents 7d (most recent date available in snapshots)
+        $latestDate = $this->queryValue("SELECT MAX(stat_date) FROM analytics_snapshots_series_top");
+        $topContents = [];
+        if ($latestDate) {
+            $stmt = $this->pdo->prepare(
+                "SELECT s.title, s.type, s.slug, SUM(t.view_count) as view_count_7d, 0 as comment_count_7d
+                 FROM analytics_snapshots_series_top t
+                 JOIN series s ON s.id = t.content_id
+                 WHERE t.stat_date >= DATE_SUB(:latest, INTERVAL 7 DAY)
+                 GROUP BY t.content_id
+                 ORDER BY view_count_7d DESC
+                 LIMIT 5"
+            );
+            $stmt->execute(['latest' => $latestDate]);
+            $topContents = $stmt->fetchAll();
+        }
 
         return [
             'users_total' => $this->count('SELECT COUNT(*) FROM users'),

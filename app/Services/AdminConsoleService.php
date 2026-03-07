@@ -12,7 +12,7 @@ use App\Services\AnalyticsAggregationService;
 final class AdminConsoleService
 {
     private const CACHE_KEY_KPI = 'admin_kpi_summary';
-    private const CACHE_TTL_KPI = 300;
+    private const CACHE_TTL_KPI = 10;
 
     public function __construct(
         private readonly AdminConsoleRepository $repo,
