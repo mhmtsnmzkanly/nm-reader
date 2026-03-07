@@ -238,7 +238,9 @@ window.AdminApp = (function($) {
     _USERS: [],
     init: function() {
       console.log("[AdminApp] Users Init");
-      this.load(); $('#btn-refresh-users')?.on('click', () => this.load());
+      this.load(); 
+      this.loadRoles();
+      $('#btn-refresh-users')?.on('click', () => this.load());
       $('#users-list-body').on('click', 'button[data-action="edit"]', (e) => this.openEdit(e.currentTarget.dataset.id));
       $('#form-edit-user').on('submit', async (e) => {
         e.preventDefault(); const fd = new FormData(e.target);
@@ -248,12 +250,27 @@ window.AdminApp = (function($) {
     load: async function() {
       try {
         const res = await api('/admin/users'); this._USERS = res.data?.items || res.data || [];
-        setHtml('#users-list-body', this._USERS.map(u => `<tr><td>${u.id}</td><td><b>${u.username}</b></td><td>${u.email || ''}</td><td><span class="badge bg-secondary">${u.role_names || 'user'}</span></td><td class="text-end"><button class="btn btn-xs btn-outline-secondary" data-action="edit" data-id="${u.id}"><i class="bi bi-person-gear"></i></button></td></tr>`).join(''));
+        setHtml('#users-list-body', this._USERS.map(u => `<tr><td>${u.id}</td><td><b>${u.username}</b></td><td>${u.email || ''}</td><td><span class="badge bg-secondary">${this.firstRole(u)}</span></td><td class="text-end"><button class="btn btn-xs btn-outline-secondary" data-action="edit" data-id="${u.id}"><i class="bi bi-person-gear"></i></button></td></tr>`).join(''));
       } catch (e) {}
+    },
+    loadRoles: async function() {
+      const sel = $('#edit-user-role'); if (!sel.length) return;
+      try {
+        const res = await api('/admin/rbac/roles');
+        const items = res.data?.items || res.data || [];
+        sel.html(items.map(r => `<option value="${r.slug}">${r.name || r.slug}</option>`).join(''));
+      } catch (e) {}
+    },
+    firstRole: function(u) {
+      if (u.role_names) return u.role_names.split(',')[0].trim();
+      if (u.roles) return typeof u.roles === 'string' ? u.roles.split(',')[0] : (Array.isArray(u.roles) ? u.roles[0] : 'user');
+      return 'user';
     },
     openEdit: function(id) {
       const u = this._USERS.find(x => x.id == id); if (!u) return;
-      $('#edit-user-id').val(u.id); $('#edit-user-username').val(u.username); $('#edit-user-email').val(u.email || ''); $('#edit-user-bio').val(u.bio || ''); $('#edit-user-banned').prop('checked', !!u.is_banned);
+      $('#edit-user-id').val(u.id); $('#edit-user-username').val(u.username); $('#edit-user-email').val(u.email || ''); $('#edit-user-bio').val(u.bio || ''); 
+      $('#edit-user-role').val(this.firstRole(u));
+      $('#edit-user-banned').prop('checked', !!u.is_banned);
       window.openModal('modal-edit-user');
     }
   };
