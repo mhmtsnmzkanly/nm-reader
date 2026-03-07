@@ -550,18 +550,23 @@ window.AdminApp = (function() {
       });
     },
     handleContentSelected: function(detail) {
-      $('#chapters-card-title').textContent = `Chapters: ${detail.title}`;
+      const titleEl = $('#chapters-card-title');
+      if (titleEl) titleEl.textContent = `Chapters: ${detail.title}`;
       this.loadChapters();
     },
     handleChapterCreate: function(detail) {
-      new bootstrap.Modal($('#modal-create-chapter')).show();
+      const modalEl = $('#modal-create-chapter');
+      if (modalEl) new bootstrap.Modal(modalEl).show();
     },
     loadChapters: async function() {
-      const contentId = $('#chapters-content-id').value;
+      const contentId = $('#chapters-content-id')?.value;
       if (!contentId) return;
       try {
-        const res = await api(`/admin/series/${contentId}/chapters`);
+        const res = await api(`/admin/content/${contentId}/chapters`);
         const items = res.data || [];
+        const body = $('#chapters-list-body');
+        if (!body) return;
+        
         setHtml('#chapters-list-body', items.map(ch => `
           <tr>
             <td>${ch.chapter_number}</td>
