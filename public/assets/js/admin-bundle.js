@@ -412,6 +412,8 @@ window.AdminApp = (function() {
       try {
         const res = await api('/admin/content');
         this._CONTENTS = res.data || [];
+        
+        // Populate the table
         setHtml('#contents-list-body', this._CONTENTS.map(c => `
           <tr>
             <td>${c.id}</td>
@@ -428,6 +430,14 @@ window.AdminApp = (function() {
             </td>
           </tr>
         `).join('') || '<tr><td colspan="6" class="text-center">No contents found</td></tr>');
+
+        // Also populate the chapter selection dropdown
+        const sel = $('#chapters-content-id');
+        if (sel) {
+          const currentVal = sel.value;
+          sel.innerHTML = '<option value="">-- Select Series --</option>' + 
+            this._CONTENTS.map(c => `<option value="${c.id}" ${c.id == currentVal ? 'selected' : ''}>${c.title}</option>`).join('');
+        }
       } catch (e) { setHtml('#contents-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`); }
     },
     loadTaxonomy: async function() {
