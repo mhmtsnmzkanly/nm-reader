@@ -1,6 +1,6 @@
 /**
  * admin-bundle.js - Unified Administrative Controller for NovelMangaReader.
- * Fully migrated to jQuery 3.7+
+ * Fully migrated to jQuery 3.7+ with native modal support.
  */
 
 window.AdminApp = (function($) {
@@ -48,32 +48,14 @@ window.AdminApp = (function($) {
         setText('#kpi-contents', d.kpis?.contents_total || 0);
         setText('#kpi-chapters', d.kpis?.chapters_total || 0);
         setText('#kpi-unread', d.kpis?.blogs_pending_total || 0);
-        
         const m = d.metrics || {};
         setHtml('#metrics-top-contents', (m.top_contents_7d || []).map(c => `
           <tr>
             <td><a href="/admin/content" class="text-decoration-none">${c.title}</a></td>
-            <td><small class="badge bg-light text-dark">${c.type}</small></td>
             <td class="text-end fw-bold">${c.view_count_7d}</td>
             <td class="text-end text-muted">${c.comment_count_7d || 0}</td>
           </tr>
-        `).join('') || '<tr><td colspan="4" class="text-center">No data</td></tr>');
-
-        setHtml('#metrics-funnel-health', `
-          <div class="mb-2 small">Home-to-Content: ${m.funnel?.home_to_content_pct || 0}%</div>
-          <div class="mb-2 small">Content-to-Chapter: ${m.funnel?.content_to_chapter_pct || 0}%</div>
-          <hr class="my-2 opacity-10">
-          <div class="small">Error Rate: ${m.performance_slo?.server_error_rate_pct_24h || 0}%</div>
-          <div class="small">P95 Latency: ${m.performance_slo?.p95_duration_ms_24h || 0}ms</div>
-        `);
-
-        setHtml('#metrics-retention-search', `
-          <div class="mb-2 small">Searches (7d): ${m.retention_search?.search_total_7d || 0}</div>
-          <div class="mb-2 small">Zero Results: ${m.retention_search?.zero_result_pct_7d || 0}%</div>
-          <hr class="my-2 opacity-10">
-          <div class="small">D1 Retention: ${m.retention_search?.d1_retention_pct || 0}%</div>
-          <div class="small">New Users (7d): ${m.retention_search?.new_users_7d || 0}</div>
-        `);
+        `).join('') || '<tr><td colspan="3" class="text-center">No data</td></tr>');
       } catch (e) {}
     }
   };
@@ -83,7 +65,6 @@ window.AdminApp = (function($) {
     init: function() {
       this.load();
       $('#btn-refresh-contents').on('click', () => this.load());
-      
       $('#create-content-title').on('input', function() {
         $('#create-content-slug').val($(this).val().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, ''));
       });
@@ -99,9 +80,7 @@ window.AdminApp = (function($) {
         if (action === 'chapter' || action === 'add-chapter') {
           const sel = $('#chapters-content-id');
           if (sel.length) {
-            if (!sel.find(`option[value="${c.id}"]`).length) {
-              sel.append(new Option(c.title, c.id));
-            }
+            if (!sel.find(`option[value="${c.id}"]`).length) sel.append(new Option(c.title, c.id));
             sel.val(c.id).trigger('change');
           }
           if (action === 'add-chapter') window.openModal('modal-create-chapter');
@@ -188,12 +167,25 @@ window.AdminApp = (function($) {
         } catch (err) { alert(err.message); }
       });
 
-      $('#chapters-list-body').on('click', 'button[data-action="delete"]', async (e) => {
-        if (!confirm('Delete chapter?')) return;
-        try { 
-          await api(`/admin/chapters/${e.currentTarget.dataset.id}`, { method: 'DELETE' }); 
-          this.load(); 
+      $('#form-edit-chapter').on('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const payload = Object.fromEntries(fd);
+        if (fd.get('type') === 'image') payload.data = fd.get('pages').split('\n').map(l => l.trim()).filter(Boolean).join('|');
+        try {
+          await api(`/admin/chapters/${fd.get('id')}`, { method: 'PUT', body: JSON.stringify(payload) });
+          window.closeModal(); this.load();
         } catch (err) { alert(err.message); }
+      });
+
+      $('#chapters-list-body').on('click', 'button[data-action]', async (e) => {
+        const btn = e.currentTarget;
+        const id = btn.dataset.id;
+        if (btn.dataset.action === 'edit') this.openEdit(id);
+        if (btn.dataset.action === 'delete') {
+          if (!confirm('Delete chapter?')) return;
+          try { await api(`/admin/chapters/${id}`, { method: 'DELETE' }); this.load(); } catch (err) { alert(err.message); }
+        }
       });
     },
     load: async function() {
@@ -210,11 +202,29 @@ window.AdminApp = (function($) {
             <td><span class="badge bg-light text-dark">${ch.username || 'System'}</span></td>
             <td><small>${(ch.created_at || '').split(' ')[0]}</small></td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${ch.id}"><i class="bi bi-trash"></i></button>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-info" data-action="edit" data-id="${ch.id}"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-danger" data-action="delete" data-id="${ch.id}"><i class="bi bi-trash"></i></button>
+              </div>
             </td>
           </tr>
         `).join('') || '<tr><td colspan="6" class="text-center">No chapters</td></tr>');
       } catch (e) {}
+    },
+    openEdit: async function(id) {
+      try {
+        const res = await api(`/admin/chapters/${id}`);
+        const ch = res.data;
+        const f = $('#form-edit-chapter');
+        f.find('[name="id"]').val(ch.id);
+        f.find('[name="chapter_number"]').val(ch.chapter_number);
+        f.find('[name="title"]').val(ch.title || '');
+        f.find('[name="type"]').val(ch.type);
+        if (ch.type === 'image') f.find('[name="pages"]').val((ch.data || '').split('|').join('\n'));
+        else f.find('[name="body"]').val(ch.data || '');
+        this.toggleEditor(ch.type, 'edit');
+        window.openModal('modal-edit-chapter');
+      } catch (e) { alert(e.message); }
     },
     toggleEditor: function(type, prefix) {
       $(`#${prefix}-chapter-body-wrap`).toggleClass('d-none', type === 'image');
@@ -231,8 +241,7 @@ window.AdminApp = (function($) {
     load: async function(page) {
       try {
         const res = await api(`/admin/uploads?page=${page}`);
-        const items = res.data || [];
-        setHtml('#uploads-list', items.map(item => `
+        setHtml('#uploads-list', (res.data || []).map(item => `
           <tr>
             <td><img src="${item.file_path}" class="img-thumbnail" style="height:40px;cursor:pointer" onclick="window.previewImg('${item.file_path}')"></td>
             <td><small>${item.original_name}</small></td>
@@ -249,14 +258,10 @@ window.AdminApp = (function($) {
     }
   };
 
-  window.previewImg = (url) => { 
-    $('#full-preview').attr('src', url);
-    window.openModal('preview-modal');
-  };
+  window.previewImg = (url) => { $('#full-preview').attr('src', url); window.openModal('preview-modal'); };
 
   return {
     Modules: { Dashboard, Content, Chapters, Uploads },
-    formatDuration: (s) => { if (!s || s <= 0) return '0s'; const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h}h ${m}m` : (m > 0 ? `${m}m` : `${s}s`); },
     init: function() {
       const path = window.location.pathname;
       const lang = (path.split('/')[1] === 'tr' || path.split('/')[1] === 'en') ? '/' + path.split('/')[1] : '';
