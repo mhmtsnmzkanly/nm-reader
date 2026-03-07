@@ -27,7 +27,7 @@ $container = require __DIR__ . '/../dependencies.php';
 /** @var AuthService $auth */
 $auth = $container->get(AuthService::class);
 /** @var AdminConsoleService $admin */
-$admin = $container->get(AdminConsoleService.class);
+$admin = $container->get(AdminConsoleService::class);
 
 echo "--- Admin Creation Tool ---
 ";
