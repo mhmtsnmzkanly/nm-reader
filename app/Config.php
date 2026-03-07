@@ -310,6 +310,7 @@ final class Config
             $group->put("/contents/{id}/taxonomy", [AdminPanelController::class, "updateTaxonomy"])->add($perm(["admin.content.update"]));
             $group->post("/content/{type:" . $typePattern . "}/{slug}/chapters", [AdminPanelController::class, "createChapter"])->add($perm(["admin.chapter.create"]));
             $group->get("/content/{id}/chapters", [AdminPanelController::class, "listChapters"])->add($perm(["admin.panel.access"]));
+            $group->get("/chapters/{id}", [AdminPanelController::class, "getChapter"])->add($perm(["admin.panel.access"]));
             $group->delete("/chapters/{id}", [AdminPanelController::class, "deleteChapter"])->add($perm(["admin.content.update"]));
             $group->post("/series_genres", [AdminPanelController::class, "createGenre"])->add($perm(["admin.content.create"]));
             $group->post("/series_tags", [AdminPanelController::class, "createTag"])->add($perm(["admin.content.create"]));
