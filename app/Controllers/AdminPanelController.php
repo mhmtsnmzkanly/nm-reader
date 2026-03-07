@@ -178,27 +178,27 @@ final class AdminPanelController
         return ResponseHelper::success($result['items'], $result['meta']);
     }
 
-    public function systemAccessLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function siteVisits(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        return ResponseHelper::success($this->logs->getAccessLogs(100));
+        return ResponseHelper::success($this->console->siteVisits());
     }
 
-    public function systemErrorLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function viewStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        return ResponseHelper::success($this->logs->getErrorLogs(100));
+        $q = $request->getQueryParams();
+        return ResponseHelper::success($this->console->viewStats((int)($q['days'] ?? 30), (int)($q['limit'] ?? 10)));
     }
 
-    public function runQueueOnce(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function blogStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $body = (array) $request->getParsedBody();
-        $modId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->runQueueOnce(null, (int)($body['limit'] ?? 10), $modId));
+        $q = $request->getQueryParams();
+        return ResponseHelper::success($this->console->blogStats((int)($q['days'] ?? 30), (int)($q['limit'] ?? 10)));
     }
 
-    public function triggerAnalytics(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function userReputation(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $modId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerAnalytics($modId));
+        $q = $request->getQueryParams();
+        return ResponseHelper::success($this->console->userReputation((int)($q['limit'] ?? 10)));
     }
 
     // --- TAXONOMY & UPLOADS ---
