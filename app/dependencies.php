@@ -2,17 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Controllers\ActivityController;
+use App\Controllers\AdminPanelController;
+use App\Controllers\ContentController;
+use App\Controllers\UserInteractionController;
 use App\Controllers\AuthController;
-use App\Controllers\AdminController;
-use App\Controllers\AdminConsoleController;
 use App\Controllers\BlogController;
-use App\Controllers\ChapterController;
-use App\Controllers\CommentController;
 use App\Controllers\InstallController;
-use App\Controllers\MetricsController;
-use App\Controllers\RatingController;
-use App\Controllers\SeriesController;
 use App\Controllers\UserController;
 use App\Controllers\WebController;
 use App\Repositories\BlogRepository;
@@ -51,7 +46,6 @@ use App\Services\RetentionService;
 use App\Middleware\I18nMiddleware;
 use App\Middleware\RequestIdMiddleware;
 use DI\ContainerBuilder;
-use function DI\get;
 use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Level;
@@ -65,31 +59,12 @@ $builder->addDefinitions([
 
     \PDO::class => static function () use ($settings): \PDO {
         $db = $settings['database'];
-        
-        // If we are in the middle of an installation, the DB might not be ready.
-        // We only try to connect if we have a database name or if we are not on the install route.
-        // However, for Simplicity, we just catch the error and throw a more helpful one
-        // ONLY when PDO is actually requested.
-        try {
-            $dsn = sprintf(
-                'mysql:host=%s;port=%d;dbname=%s;charset=%s',
-                $db['host'],
-                $db['port'],
-                $db['database'],
-                $db['charset']
-            );
-
-            return new \PDO($dsn, $db['username'], $db['password'], [
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-                \PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
-        } catch (\PDOException $e) {
-            // Check if we are on the install page. If so, don't crash yet.
-            // But wait, DI factories are only called when needed.
-            // The problem is some middleware might be requesting a service that needs PDO.
-            throw $e; 
-        }
+        $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $db['host'], $db['port'], $db['database'], $db['charset']);
+        return new \PDO($dsn, $db['username'], $db['password'], [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
     },
 
     CacheService::class => DI\autowire(CacheService::class)
@@ -98,11 +73,7 @@ $builder->addDefinitions([
 
     'logger.error' => static function () use ($settings): Logger {
         $logger = new Logger('error');
-        $handler = new RotatingFileHandler(
-            $settings['app']['base_path'] . '/storage/logs/error.log',
-            30,
-            Level::Warning
-        );
+        $handler = new RotatingFileHandler($settings['app']['base_path'] . '/storage/logs/error.log', 30, Level::Warning);
         $handler->setFormatter(new JsonFormatter(JsonFormatter::BATCH_MODE_NEWLINES, true));
         $logger->pushHandler($handler);
         return $logger;
@@ -110,11 +81,7 @@ $builder->addDefinitions([
 
     'logger.access' => static function () use ($settings): Logger {
         $logger = new Logger('access');
-        $handler = new RotatingFileHandler(
-            $settings['app']['base_path'] . '/storage/logs/access.log',
-            30,
-            Level::Info
-        );
+        $handler = new RotatingFileHandler($settings['app']['base_path'] . '/storage/logs/access.log', 30, Level::Info);
         $handler->setFormatter(new JsonFormatter(JsonFormatter::BATCH_MODE_NEWLINES, true));
         $logger->pushHandler($handler);
         return $logger;
@@ -122,11 +89,7 @@ $builder->addDefinitions([
 
     'logger.audit' => static function () use ($settings): Logger {
         $logger = new Logger('audit');
-        $handler = new RotatingFileHandler(
-            $settings['app']['base_path'] . '/storage/logs/audit.log',
-            30,
-            Level::Info
-        );
+        $handler = new RotatingFileHandler($settings['app']['base_path'] . '/storage/logs/audit.log', 30, Level::Info);
         $handler->setFormatter(new JsonFormatter(JsonFormatter::BATCH_MODE_NEWLINES, true));
         $logger->pushHandler($handler);
         return $logger;
@@ -180,15 +143,10 @@ $builder->addDefinitions([
 
     AuthController::class => DI\autowire(AuthController::class),
     BlogController::class => DI\autowire(BlogController::class),
-    SeriesController::class => DI\autowire(SeriesController::class),
-    ChapterController::class => DI\autowire(ChapterController::class),
-    CommentController::class => DI\autowire(CommentController::class),
-    RatingController::class => DI\autowire(RatingController::class),
+    ContentController::class => DI\autowire(ContentController::class),
+    UserInteractionController::class => DI\autowire(UserInteractionController::class),
     UserController::class => DI\autowire(UserController::class),
-    AdminController::class => DI\autowire(AdminController::class),
-    AdminConsoleController::class => DI\autowire(AdminConsoleController::class),
-    MetricsController::class => DI\autowire(MetricsController::class),
-    ActivityController::class => DI\autowire(ActivityController::class),
+    AdminPanelController::class => DI\autowire(AdminPanelController::class),
     InstallController::class => static fn () => new InstallController($settings),
     WebController::class => static fn (\Psr\Container\ContainerInterface $c) => new WebController(
         $settings, 
