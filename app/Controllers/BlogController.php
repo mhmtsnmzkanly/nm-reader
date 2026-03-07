@@ -94,7 +94,7 @@ final class BlogController
     /**
      * Lists blog posts written by the authenticated user.
      */
-    public function myBlogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function listMyBlogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $userId = (string) $request->getAttribute('user_id');
         [$page, $perPage] = $this->pagination($request);

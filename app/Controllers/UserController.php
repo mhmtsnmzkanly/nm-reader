@@ -189,7 +189,7 @@ final class UserController
     /**
      * Lists other users currently followed by the authenticated user.
      */
-    public function follows(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function followedUsers(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $userId = (string) $request->getAttribute('user_id');
         $query = $request->getQueryParams();

@@ -163,7 +163,7 @@ final class CommentController
     /**
      * Specialised endpoint for voting on blog-related comments.
      */
-    public function voteBlogComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    public function voteBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {
             $userId = (string) $request->getAttribute('user_id');
