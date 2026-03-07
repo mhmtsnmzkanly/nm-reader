@@ -18,11 +18,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Unified Controller for all Administrative API operations.
- *
- * Consolidates Content CRUD, System Operations, Metrics, and Console management.
- *
- * @package App\Controllers
+ * Final Unified Admin Controller.
+ * Handles all backend interactions for the Management Console.
  */
 final class AdminPanelController
 {
@@ -39,138 +36,70 @@ final class AdminPanelController
     ) {
     }
 
-    // --- DASHBOARD & METRICS ---
-
-    public function dashboard(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        return ResponseHelper::success([
-            'message' => 'Admin dashboard is active',
-            'metrics' => $this->metricsService->snapshot(),
-        ]);
-    }
-
+    // --- DASHBOARD ---
     public function overview(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         return ResponseHelper::success($this->console->overview());
     }
 
-    public function metricsSnapshot(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        return ResponseHelper::success($this->metricsService->snapshot());
-    }
-
-    public function metricsInsights(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $query = $request->getQueryParams();
-        $days = (int) ($query['days'] ?? 7);
-        return ResponseHelper::success($this->metricsService->insights($days));
-    }
-
-    public function genreInterest(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
-    {
-        $query = $request->getQueryParams();
-        $days = (int) ($query['days'] ?? 7);
-        $slug = (string) ($args['slug'] ?? '');
-        try {
-            return ResponseHelper::success($this->metricsService->genreInterest($slug, $days));
-        } catch (\DomainException $e) {
-            return ResponseHelper::error(404, $e->getMessage());
-        }
-    }
-
-    // --- CONTENT MANAGEMENT (SERIES) ---
-
+    // --- CONTENT & CHAPTERS ---
     public function listSeries(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listContents($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::success($result['items'], ['page' => $page, 'per_page' => $perPage, 'total' => $result['total'] ?? 0]);
     }
 
     public function createContent(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $created = $this->adminService->createContent($payload, $moderatorId);
-            return ResponseHelper::created($created);
-        } catch (\InvalidArgumentException $e) {
-            return ResponseHelper::error(400, $e->getMessage());
-        }
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::created($this->adminService->createContent($payload, $modId));
     }
 
     public function updateContent(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $this->adminService->updateContent((string) $args['id'], $payload, $moderatorId);
-            return ResponseHelper::success();
-        } catch (\InvalidArgumentException $e) {
-            return ResponseHelper::error(400, $e->getMessage());
-        }
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        $this->adminService->updateContent((string)$args['id'], $payload, $modId);
+        return ResponseHelper::success();
     }
-
-    // --- CHAPTER MANAGEMENT ---
 
     public function listChapters(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $contentId = (string) $args['id'];
-        $result = $this->adminService->listChapters($contentId, $page, $perPage);
+        $result = $this->adminService->listChapters((string)$args['id'], $page, $perPage);
         return ResponseHelper::success($result['items'], $result['meta']);
     }
 
     public function getChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        try {
-            return ResponseHelper::success($this->adminService->getChapter((string) $args['id']));
-        } catch (\DomainException $e) {
-            return ResponseHelper::error(404, $e->getMessage());
-        }
+        return ResponseHelper::success($this->adminService->getChapter((string)$args['id']));
     }
 
     public function createChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $created = $this->adminService->createChapter((string)$args['type'], (string)$args['slug'], $payload, $moderatorId);
-            return ResponseHelper::created($created);
-        } catch (\InvalidArgumentException $e) {
-            return ResponseHelper::error(400, $e->getMessage());
-        } catch (\DomainException $e) {
-            return ResponseHelper::error(404, $e->getMessage());
-        }
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::created($this->adminService->createChapter((string)$args['type'], (string)$args['slug'], $payload, $modId));
     }
 
     public function updateChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $this->adminService->updateChapter((string) $args['id'], $payload, $moderatorId);
-            return ResponseHelper::success(['updated' => true]);
-        } catch (\InvalidArgumentException $e) {
-            return ResponseHelper::error(400, $e->getMessage());
-        } catch (\DomainException $e) {
-            return ResponseHelper::error(404, $e->getMessage());
-        }
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        $this->adminService->updateChapter((string)$args['id'], $payload, $modId);
+        return ResponseHelper::success();
     }
 
     public function deleteChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        try {
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $this->adminService->deleteChapter((string) $args['id'], $moderatorId);
-            return ResponseHelper::success(['deleted' => true]);
-        } catch (\DomainException $e) {
-            return ResponseHelper::error(404, $e->getMessage());
-        }
+        $modId = (string) $request->getAttribute('user_id');
+        $this->adminService->deleteChapter((string)$args['id'], $modId);
+        return ResponseHelper::success(['deleted' => true]);
     }
 
-    // --- USER & RBAC MANAGEMENT ---
-
+    // --- USERS & RBAC ---
     public function listUsers(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
@@ -180,78 +109,54 @@ final class AdminPanelController
 
     public function updateUser(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $this->console->updateUser((string) $args['id'], $payload, $moderatorId);
-            return ResponseHelper::success();
-        } catch (\InvalidArgumentException $e) {
-            return ResponseHelper::error(400, $e->getMessage());
-        }
-    }
-
-    public function revokeUserSession(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $userId = (string) ($payload['user_id'] ?? '');
-            $sessionKey = (string) ($payload['session_key'] ?? '');
-            $moderatorId = (string) $request->getAttribute('user_id');
-            if ($userId === '' || $sessionKey === '') return ResponseHelper::error(400, 'ID and Key required');
-            $this->console->revokeUserSession($userId, $sessionKey, $moderatorId);
-            return ResponseHelper::success(['revoked' => true]);
-        } catch (\Throwable $e) {
-            return ResponseHelper::error(500, $e->getMessage());
-        }
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        $this->console->updateUser((string)$args['id'], $payload, $modId);
+        return ResponseHelper::success();
     }
 
     public function rbacRoles(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $result = $this->console->listRbacRoles();
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::success($this->console->listRbacRoles());
     }
 
-    public function rbacAssignments(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    // --- BLOGS & COMMENTS ---
+    public function blogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listRbacAssignments($page, $perPage);
+        $result = $this->console->listBlogs($page, $perPage);
         return ResponseHelper::success($result['items'], $result['meta']);
     }
 
-    public function assignPermission(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function hideBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $moderatorId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::success($this->console->assignPermissionToRole($payload, $moderatorId));
-        } catch (\Exception $e) { return ResponseHelper::error(400, $e->getMessage()); }
+        $modId = (string) $request->getAttribute('user_id');
+        $this->console->hideBlog((string)$args['id'], $modId);
+        return ResponseHelper::success();
     }
 
-    public function revokePermission(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function deleteBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $moderatorId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::success($this->console->revokePermissionFromRole($payload, $moderatorId));
-        } catch (\Exception $e) { return ResponseHelper::error(400, $e->getMessage()); }
+        $modId = (string) $request->getAttribute('user_id');
+        $this->console->deleteBlog((string)$args['id'], $modId);
+        return ResponseHelper::success();
     }
 
-    // --- SYSTEM LOGS & OPS ---
-
-    public function systemAccessLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function comments(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $query = $request->getQueryParams();
-        $limit = max(1, min(200, (int) ($query['limit'] ?? 50)));
-        return ResponseHelper::success($this->logs->getAccessLogs($limit));
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->console->listComments($page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
     }
 
-    public function systemErrorLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function deleteComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $query = $request->getQueryParams();
-        $limit = max(1, min(200, (int) ($query['limit'] ?? 50)));
-        return ResponseHelper::success($this->logs->getErrorLogs($limit));
+        $modId = (string) $request->getAttribute('user_id');
+        $this->console->deleteComment((int)$args['id'], $modId);
+        return ResponseHelper::success();
     }
 
+    // --- LOGS & OPS ---
     public function auditLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
@@ -273,61 +178,30 @@ final class AdminPanelController
         return ResponseHelper::success($result['items'], $result['meta']);
     }
 
-    public function siteVisits(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function systemAccessLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        return ResponseHelper::success($this->console->siteVisits());
+        return ResponseHelper::success($this->logs->getAccessLogs(100));
     }
 
-    public function viewStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function systemErrorLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $query = $request->getQueryParams();
-        $days = (int) ($query['days'] ?? 30);
-        $limit = (int) ($query['limit'] ?? 10);
-        return ResponseHelper::success($this->console->viewStats($days, $limit));
-    }
-
-    public function blogStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $query = $request->getQueryParams();
-        $days = (int) ($query['days'] ?? 30);
-        $limit = (int) ($query['limit'] ?? 10);
-        return ResponseHelper::success($this->console->blogStats($days, $limit));
-    }
-
-    public function userReputation(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $query = $request->getQueryParams();
-        $limit = (int) ($query['limit'] ?? 10);
-        return ResponseHelper::success($this->console->userReputation($limit));
-    }
-
-    public function queueJobs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listQueueJobs($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::success($this->logs->getErrorLogs(100));
     }
 
     public function runQueueOnce(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $payload = (array) $request->getParsedBody();
-        $jobType = isset($payload['type']) ? (string)$payload['type'] : null;
-        $limit = (int) ($payload['limit'] ?? 10);
-        $moderatorId = (string) $request->getAttribute('user_id');
-        $results = $this->console->runQueueOnce($jobType, $limit, $moderatorId);
-        try { $this->aggregation->aggregateAll(); } catch (\Throwable) {}
-        return ResponseHelper::success($results);
+        $body = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->console->runQueueOnce(null, (int)($body['limit'] ?? 10), $modId));
     }
 
-    public function cleanupRetention(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function triggerAnalytics(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $payload = (array) $request->getParsedBody();
-        $days = (int) ($payload['days'] ?? 30);
-        return ResponseHelper::success($this->console->cleanupRetention($days));
+        $modId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->console->triggerAnalytics($modId));
     }
 
-    // --- TAXONOMY & ASSETS ---
-
+    // --- TAXONOMY & UPLOADS ---
     public function listGenres(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         return ResponseHelper::success($this->console->listAllGenres());
@@ -338,153 +212,48 @@ final class AdminPanelController
         return ResponseHelper::success($this->console->listAllTags());
     }
 
-    public function createGenre(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $payload = (array) $request->getParsedBody();
-        $moderatorId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::created($this->console->createGenre((string)($payload['name'] ?? ''), $moderatorId));
-    }
-
-    public function createTag(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $payload = (array) $request->getParsedBody();
-        $moderatorId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::created($this->console->createTag((string)($payload['name'] ?? ''), $moderatorId));
-    }
-
     public function updateTaxonomy(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $payload = (array) $request->getParsedBody();
-        $moderatorId = (string) $request->getAttribute('user_id');
-        $genres = (array)($payload['series_genres'] ?? $payload['genres'] ?? []);
-        $tags = (array)($payload['series_tags'] ?? $payload['tags'] ?? []);
-        $this->console->updateContentTaxonomy((string)$args['id'], $genres, $tags, $moderatorId);
+        $modId = (string) $request->getAttribute('user_id');
+        $this->console->updateContentTaxonomy((string)$args['id'], (array)($payload['genres'] ?? []), (array)($payload['tags'] ?? []), $modId);
         return ResponseHelper::success();
-    }
-
-    public function uploadImages(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        try {
-            $postSize = (int) ($request->getHeaderLine('Content-Length') ?: 0);
-            $files = $request->getUploadedFiles();
-            if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($files) && $postSize > 0) {
-                return ResponseHelper::error(400, "Files too large.");
-            }
-            $toProcess = [];
-            $collector = function($item) use (&$collector, &$toProcess) {
-                if ($item instanceof \Psr\Http\Message\UploadedFileInterface) $toProcess[] = $item;
-                elseif (is_array($item)) foreach ($item as $sub) $collector($sub);
-            };
-            $collector($files);
-            if (empty($toProcess)) return ResponseHelper::error(400, "No files.");
-            usort($toProcess, fn($a, $b) => strnatcasecmp($a->getClientFilename() ?? '', $b->getClientFilename() ?? ''));
-            $userId = (string) $request->getAttribute('user_id');
-            $type = (string) ($request->getQueryParams()['type'] ?? $request->getParsedBody()['type'] ?? 'chapters');
-            $paths = $this->uploadService->handleBulkImageUpload($userId, $toProcess, $type);
-            return ResponseHelper::success(['paths' => $paths]);
-        } catch (\Throwable $e) { return ResponseHelper::error(500, $e->getMessage()); }
     }
 
     public function uploads(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listUploads($page, $perPage);
-        return ResponseHelper::success($result['items'] ?? $result, $result['meta'] ?? null);
+        return ResponseHelper::success($result['items'], $result['meta']);
     }
 
     public function deleteUpload(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $moderatorId = (string) $request->getAttribute('user_id');
-        $this->console->deleteUpload((int) ($args['id'] ?? 0), $moderatorId);
-        return ResponseHelper::success(['deleted' => true]);
+        $modId = (string) $request->getAttribute('user_id');
+        $this->console->deleteUpload((int)$args['id'], $modId);
+        return ResponseHelper::success();
     }
 
-    // --- OTHER ADMIN ---
-
-    public function blogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function uploadImages(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listBlogs($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        $files = $request->getUploadedFiles();
+        $toProcess = [];
+        $collector = function($item) use (&$collector, &$toProcess) {
+            if ($item instanceof \Psr\Http\Message\UploadedFileInterface) $toProcess[] = $item;
+            elseif (is_array($item)) foreach ($item as $sub) $collector($sub);
+        };
+        $collector($files);
+        if (empty($toProcess)) return ResponseHelper::error(400, "No files.");
+        usort($toProcess, fn($a, $b) => strnatcasecmp($a->getClientFilename() ?? '', $b->getClientFilename() ?? ''));
+        $userId = (string) $request->getAttribute('user_id');
+        $type = (string) ($request->getQueryParams()['type'] ?? 'chapters');
+        return ResponseHelper::success(['paths' => $this->uploadService->handleBulkImageUpload($userId, $toProcess, $type)]);
     }
 
-    public function hideBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
-    {
-        try {
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $this->console->hideBlog((string)$args['id'], $moderatorId);
-            return ResponseHelper::success(['hidden' => true]);
-        } catch (\Exception $e) { return ResponseHelper::error(404, $e->getMessage()); }
-    }
-
-    public function deleteBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
-    {
-        try {
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $this->console->deleteBlog((string)$args['id'], $moderatorId);
-            return ResponseHelper::success(['deleted' => true]);
-        } catch (\Exception $e) { return ResponseHelper::error(404, $e->getMessage()); }
-    }
-
-    public function comments(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listComments($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
-    }
-
-    public function deleteComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
-    {
-        $moderatorId = (string) $request->getAttribute('user_id');
-        $this->console->deleteComment((int) ($args['id'] ?? 0), $moderatorId);
-        return ResponseHelper::success(['deleted' => true]);
-    }
-
-    public function triggerBackup(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $moderatorId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerBackup($moderatorId));
-    }
-
-    public function triggerAnalytics(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $moderatorId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerAnalytics($moderatorId));
-    }
-
-    public function triggerSitemap(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $moderatorId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerSitemap($moderatorId));
-    }
-
-    public function triggerCacheWarmup(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $moderatorId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerCacheWarmup($moderatorId));
-    }
-
-    public function getEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        try {
-            $moderatorId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::success($this->console->readEnv($moderatorId));
-        } catch (\Throwable $e) { return ResponseHelper::error(403, $e->getMessage()); }
-    }
-
-    public function saveEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        try {
-            $payload = (array) $request->getParsedBody();
-            $moderatorId = (string) $request->getAttribute('user_id');
-            $this->console->updateEnv($payload, $moderatorId);
-            return ResponseHelper::success(['updated' => true]);
-        } catch (\Throwable $e) { return ResponseHelper::error(403, $e->getMessage()); }
-    }
-
+    // --- UTILS ---
     private function pagination(ServerRequestInterface $request): array
     {
-        $query = $request->getQueryParams();
-        return [max(1, (int) ($query['page'] ?? 1)), max(1, min(100, (int) ($query['per_page'] ?? 20)))];
+        $q = $request->getQueryParams();
+        return [max(1, (int)($q['page'] ?? 1)), max(1, min(100, (int)($q['per_page'] ?? 20)))];
     }
 }
