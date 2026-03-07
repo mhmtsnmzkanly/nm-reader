@@ -666,7 +666,7 @@ final class WebController
             $request,
             $response,
             "admin_dashboard.php",
-            ["/assets/js/admin.js"],
+            ["/assets/js/admin-bundle.js"],
             "Admin Dashboard - " . $this->siteConfig->siteName(),
         );
     }
@@ -684,7 +684,7 @@ final class WebController
             $request,
             $response,
             "admin_content.php",
-            ["/assets/js/admin-content.js?v=" . time(), "/assets/js/admin-chapters.js?v=" . time()],
+            ["/assets/js/admin-bundle.js"],
             "Content Management - " . $siteName,
         );
     }
@@ -701,7 +701,7 @@ final class WebController
             $request,
             $response,
             "admin_blogs.php",
-            ["/assets/js/admin-blogs.js"],
+            ["/assets/js/admin-bundle.js"],
             "Blogs - Admin",
         );
     }
@@ -718,7 +718,7 @@ final class WebController
             $request,
             $response,
             "admin_comments.php",
-            ["/assets/js/admin-comments.js"],
+            ["/assets/js/admin-bundle.js"],
             "Comments - Admin",
         );
     }
@@ -735,7 +735,7 @@ final class WebController
             $request,
             $response,
             "admin_users.php",
-            ["/assets/js/admin-users.js"],
+            ["/assets/js/admin-bundle.js"],
             "Users - Admin",
         );
     }
@@ -752,7 +752,7 @@ final class WebController
             $request,
             $response,
             "admin_ops.php",
-            ["/assets/js/admin-ops.js"],
+            ["/assets/js/admin-bundle.js"],
             "System Ops - Admin",
         );
     }
@@ -769,7 +769,7 @@ final class WebController
             $request,
             $response,
             "admin_config.php",
-            ["/assets/js/admin-config.js"],
+            ["/assets/js/admin-bundle.js"],
             "System Config - Admin",
         );
     }
@@ -786,7 +786,7 @@ final class WebController
             $request,
             $response,
             "admin_uploads.php",
-            ["/assets/js/admin-uploads.js"],
+            ["/assets/js/admin-bundle.js"],
             "System Uploads - Admin",
         );
     }
@@ -803,7 +803,7 @@ final class WebController
             $request,
             $response,
             "admin_logs.php",
-            ["/assets/js/admin-logs.js"],
+            ["/assets/js/admin-bundle.js"],
             "Logs - Admin",
         );
     }

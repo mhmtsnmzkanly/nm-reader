@@ -1,0 +1,1978 @@
+/**
+ * admin.js - Comprehensive Controller for the Administrative Dashboard.
+ *
+ * This module manages:
+ * - Admin API Wrapper: Secure 'api' function with automatic CSRF injection.
+ * - Dashboard KPIs: Real-time system performance metrics.
+ * - Interactive Charts: Data visualization for traffic, content, and blogs.
+ * - Management Loaders: Populates tables for contents, users, blogs, and logs.
+ * - Legacy Support: Bridges old metrics APIs into the new dashboard.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+
+  /**
+   * Secure Fetch wrapper for administrative API calls.
+   */
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+
+    try {
+      const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+      const text = await res.text();
+      let payload;
+      try { payload = text ? JSON.parse(text) : { status: 'error', error: { message: 'Empty response' } }; }
+      catch { payload = { status: 'error', error: { message: text || 'Invalid API response' } }; }
+      if (!res.ok || payload.status === 'error') throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+      return payload;
+    } catch (e) {
+      console.error(`API Error [${path}]:`, e);
+      throw e;
+    }
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
+  const setText = (sel, val) => { const el = $(sel); if (el) el.textContent = String(val); };
+
+  /** --- Global State --- **/
+  let _ALL_GENRES = [];
+  let _ALL_TAGS = [];
+  const _CHARTS = {};
+
+  const toNumber = (value) => { const n = Number(value); return Number.isFinite(n) ? n : 0; };
+
+  const chartCtx = (id) => {
+    const canvas = document.getElementById(id);
+    if (!canvas || typeof canvas.getContext !== 'function') return null;
+    return canvas.getContext('2d');
+  };
+
+  const destroyChart = (id) => {
+    if (_CHARTS[id]) {
+      _CHARTS[id].destroy();
+      delete _CHARTS[id];
+    }
+  };
+
+  /** --- Chart Rendering Helpers --- **/
+
+  const renderBarChart = (id, title, labels, values, color, horizontal = false) => {
+    if (typeof Chart === 'undefined') return;
+    const ctx2d = chartCtx(id);
+    if (!ctx2d) return;
+    destroyChart(id);
+
+    _CHARTS[id] = new Chart(ctx2d, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: title,
+          data: values,
+          backgroundColor: color,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: horizontal ? 'y' : 'x',
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  };
+
+  const renderLineChart = (id, datasets, labels) => {
+    if (typeof Chart === 'undefined') return;
+    const ctx2d = chartCtx(id);
+    if (!ctx2d) return;
+    destroyChart(id);
+
+    _CHARTS[id] = new Chart(ctx2d, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  };
+
+  /** --- Data Loaders --- **/
+
+  const loadOverview = async () => {
+    try {
+      const res = await api('/admin/overview');
+      const data = res.data || {};
+      const kpis = data.kpis || {};
+      const m = data.metrics || {};
+
+      setText('#kpi-users', kpis.users_total || 0);
+      setText('#kpi-contents', kpis.contents_total || 0);
+      setText('#kpi-chapters', kpis.chapters_total || 0);
+      setText('#kpi-unread', kpis.blogs_pending_total || 0);
+
+      const topContents = m.top_contents_7d || [];
+      setHtml('#metrics-top-contents', topContents.map(c => `
+        <tr>
+          <td><a href="/${String(c.type || 'novel').replace(/_/g, '-')}/${c.slug}" class="text-decoration-none" target="_blank">${c.title}</a></td>
+          <td><small class="badge bg-light text-dark">${c.type}</small></td>
+          <td class="text-end fw-bold">${c.view_count_7d}</td>
+          <td class="text-end text-muted">${c.comment_count_7d}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="text-center">No data</td></tr>');
+
+      // Health & Funnel
+      const funnel = m.funnel || {};
+      const health = m.performance_slo || {};
+      setHtml('#metrics-funnel-health', `
+        <div class="mb-2 small">Home-to-Content: ${funnel.home_to_content_pct}%</div>
+        <div class="mb-2 small">Content-to-Chapter: ${funnel.content_to_chapter_pct}%</div>
+        <hr class="my-2 opacity-10">
+        <div class="small">Error Rate: ${health.server_error_rate_pct_24h}%</div>
+        <div class="small">P95 Latency: ${health.p95_duration_ms_24h}ms</div>
+      `);
+
+      // Retention & Search
+      const rs = m.retention_search || {};
+      setHtml('#metrics-retention-search', `
+        <div class="mb-2 small">Searches (7d): ${rs.search_total_7d}</div>
+        <div class="mb-2 small">Zero Results: ${rs.zero_result_pct_7d}%</div>
+        <hr class="my-2 opacity-10">
+        <div class="small">D1 Retention: ${rs.d1_retention_pct}%</div>
+        <div class="small">New Users (7d): ${rs.new_users_7d}</div>
+      `);
+    } catch (e) { console.error('Overview load error:', e); }
+  };
+
+  const loadViewStats = async () => {
+    try {
+      const res = await api('/admin/stats/views');
+      const s = res.data || {};
+
+      const prep = (arr, key) => ({ labels: (arr || []).map(x => x.name || x.title || x.type || x.slug || 'N/A'), values: (arr || []).map(x => toNumber(x[key])) });
+
+      const tags = prep(s.series_tags, 'view_total');
+      renderBarChart('chartTopTags', 'Views', tags.labels, tags.values, 'rgba(13,110,253,0.6)');
+
+      const genres = prep(s.series_genres, 'view_total');
+      renderBarChart('chartTopGenres', 'Views', genres.labels, genres.values, 'rgba(25,135,84,0.6)');
+
+      const types = prep(s.types, 'view_total');
+      renderBarChart('chartTopTypes', 'Views', types.labels, types.values, 'rgba(255,193,7,0.6)');
+
+      const contents = prep(s.series, 'view_total');
+      renderBarChart('chartTopContents', 'Views', contents.labels, contents.values, 'rgba(13,110,253,0.6)', true);
+
+      const chapters = prep(s.chapters, 'view_total');
+      const chapLabels = (s.chapters || []).map(x => `${x.content_slug} #${x.chapter_number}`);
+      renderBarChart('chartTopChapters', 'Views', chapLabels, chapters.values, 'rgba(33,37,41,0.6)', true);
+    } catch (e) { console.error('View stats error:', e); }
+  };
+
+  const loadBlogStats = async () => {
+    try {
+      const res = await api('/admin/stats/blogs');
+      const s = res.data || {};
+      const sum = s.summary || {};
+
+      setText('#blog-stat-total', sum.total || 0);
+      setText('#blog-stat-visible', sum.visible_total || 0);
+      setText('#blog-stat-hidden', sum.hidden_total || 0);
+      setText('#blog-stat-deleted', sum.deleted_total || 0);
+
+      const createdMap = new Map((s.daily_created || []).map(x => [x.day, x.total]));
+      const approvedMap = new Map((s.daily_approved || []).map(x => [x.day, x.total]));
+      const labels = Array.from(new Set([...createdMap.keys(), ...approvedMap.keys()])).sort();
+
+      renderLineChart('chartBlogDaily', [
+        { label: 'Created', data: labels.map(l => createdMap.get(l) || 0), borderColor: '#0d6efd', fill: false },
+        { label: 'Approved', data: labels.map(l => approvedMap.get(l) || 0), borderColor: '#198754', fill: false }
+      ], labels);
+
+      const authors = s.top_authors || [];
+      renderBarChart('chartBlogAuthors', 'Blogs', authors.map(a => a.username), authors.map(a => a.blog_total), 'rgba(13,202,240,0.6)', true);
+    } catch (e) { console.error('Blog stats error:', e); }
+  };
+
+  const fetchLegacyMetrics = async (path) => {
+    try {
+      const res = await api(path);
+      const data = res.data || {};
+      setHtml('#legacy-metrics-output', JSON.stringify(data, null, 2));
+
+      if (path === '/admin/metrics') {
+        const kHtml = Object.entries(data).filter(([k]) => typeof data[k] !== 'object').map(([k, v]) => `<div class="small"><b>${k}:</b> ${v}</div>`).join('');
+        setHtml('#legacy-kpis', kHtml || 'No data');
+
+        const top = data.top_contents_7d || [];
+        renderBarChart('chartLegacyTopContents', 'Views', top.map(x => x.slug), top.map(x => x.view_count_7d), 'rgba(13,110,253,0.5)');
+      }
+    } catch (e) { setHtml('#legacy-metrics-output', `Error: ${e.message}`); }
+  };
+
+  const loadContents = async () => {
+    if (!$('#contents-list-body')) return;
+    try {
+      const res = await api('/admin/series');
+      const items = res.data || [];
+      window._NMR_CONTENTS = items;
+      setHtml('#contents-list-body', items.map(c => `<tr><td>${c.id}</td><td>${c.type}</td><td>${c.title}</td><td><code>${c.slug}</code></td><td>${c.status}</td><td><button class="btn btn-xs btn-info" onclick="NMR_ADMIN.editContent('${c.id}')">Edit</button></td></tr>`).join(''));
+    } catch (e) { }
+  };
+
+  const loadTaxonomy = async () => {
+    if (!$('#genres-list-body')) return;
+    try {
+      const g = await api('/series_genres');
+      setHtml('#genres-list-body', (g.data || []).map(x => `<tr><td>${x.id}</td><td>${x.name}</td></tr>`).join(''));
+      const t = await api('/series_tags');
+      setHtml('#tags-list-body', (t.data || []).map(x => `<tr><td>${x.id}</td><td>${x.name}</td></tr>`).join(''));
+    } catch (e) { }
+  };
+
+  const loadSiteVisits = async () => {
+    try {
+      const res = await api('/admin/stats/visits');
+      const d = res.data || {};
+      setText('#visits-daily', d.daily || 0);
+      setText('#visits-weekly', d.weekly || 0);
+      setText('#visits-monthly', d.monthly || 0);
+    } catch (e) { }
+  };
+
+  const loadReputation = async () => {
+    if (!$('#reputation-body')) return;
+    try {
+      const res = await api('/admin/stats/reputation');
+      const items = res.data || [];
+      setHtml('#reputation-body', items.map(u => `
+        <tr>
+          <td><a href="/${window.NMR.getLangPrefix()}/profile/${u.username}" class="fw-bold text-decoration-none">${u.username}</a></td>
+          <td class="text-end fw-bold text-primary">${Number(u.score).toFixed(1)}</td>
+          <td class="text-end">${u.comment_count}</td>
+          <td class="text-end">${u.votes_given}</td>
+          <td class="text-end text-success">${u.up_votes}</td>
+          <td class="text-end text-danger">${u.down_votes}</td>
+          <td class="text-end text-muted small"><i class="bi bi-clock-history me-1"></i>${window.NMR.formatDuration(u.total_seconds)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="text-center">No data</td></tr>');
+    } catch (e) {
+      console.error('Reputation load error:', e);
+      setHtml('#reputation-body', `<tr><td colspan="7" class="text-center text-danger">${e.message}</td></tr>`);
+    }
+  };
+
+  const loadQueue = async () => {
+    if (!$('#queue-jobs-list')) return;
+    try {
+      const res = await api('/admin/queue/jobs');
+      const items = res.data || [];
+      setHtml('#queue-jobs-list', items.map(j => `<div>[${j.id}] ${j.job_type || j.task} - <span class="text-info">${j.status}</span></div>`).join('') || 'Empty');
+    } catch (e) {
+      console.error('Queue load error:', e);
+      setHtml('#queue-jobs-list', `<div class="text-danger">${e.message}</div>`);
+    }
+  };
+
+  const runQueueOnce = async () => {
+    const limit = Math.max(1, Math.min(100, parseInt($('#jobs-limit')?.value || '5', 10)));
+    try {
+      await api('/admin/queue/run-once', { method: 'POST', body: JSON.stringify({ limit }) });
+      loadQueue();
+    } catch (e) { alert(e.message); }
+  };
+
+  const loadAuditLogs = async () => {
+    if (!$('#audit-logs-body')) return;
+    try {
+      const res = await api('/admin/audit-logs?per_page=10');
+      const items = res.data || [];
+      setHtml('#audit-logs-body', items.map(l => `
+        <tr>
+          <td><small class="${l.username ? 'fw-bold' : 'text-muted'}">${l.username || 'guest'}</small></td>
+          <td><span class="badge ${l.status_code >= 400 ? 'bg-danger' : 'bg-secondary'}">${l.method}</span></td>
+          <td class="text-truncate" style="max-width:150px" title="${l.path}">${l.path}</td>
+          <td><small>${l.created_at.split(' ')[1]}</small></td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="text-center">No audit logs</td></tr>');
+    } catch (e) { console.error('Audit logs load error:', e); }
+  };
+
+  const loadLoginEvents = async () => {
+    if (!$('#login-logs-body')) return;
+    try {
+      const res = await api('/admin/login-events?per_page=10');
+      const items = res.data || [];
+      setHtml('#login-logs-body', items.map(l => `
+        <tr>
+          <td class="text-truncate" style="max-width:120px">${l.email}</td>
+          <td><small>${l.ip_hash.slice(0,8)}</small></td>
+          <td><i class="bi ${l.success ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'}"></i></td>
+          <td><small>${l.attempted_at.split(' ')[1]}</small></td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="text-center">No events</td></tr>');
+    } catch (e) { console.error('Login events load error:', e); }
+  };
+
+  const loadModActions = async () => {
+    if (!$('#mod-actions-body')) return;
+    try {
+      const res = await api('/admin/moderation-actions?per_page=10');
+      const items = res.data || [];
+      setHtml('#mod-actions-body', items.map(l => `
+        <tr>
+          <td><small class="fw-bold">${l.username || 'system'}</small></td>
+          <td><span class="badge bg-info">${l.action}</span></td>
+          <td><small>${l.target_type}:${l.target_id}</small></td>
+          <td class="text-truncate" style="max-width:150px" title="${l.reason || ''}">${l.reason || '-'}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="text-center">No moderation actions</td></tr>');
+    } catch (e) { console.error('Mod actions load error:', e); }
+  };
+
+  /** --- Namespace Export --- **/
+  window.NMR_ADMIN = {
+    approveBlog: async (id) => { try { await api(`/admin/blogs/${id}/approve`, { method: 'POST', body: '{}' }); location.reload(); } catch (e) { alert(e.message); } },
+    promptCreateTaxonomy: async (type) => {
+      const name = prompt(`New ${type} name:`);
+      if (!name) return;
+      try { await api(`/admin/series_${type}s`, { method: 'POST', body: JSON.stringify({ name }) }); loadTaxonomy(); } catch (e) { alert(e.message); }
+    },
+    editContent: (id) => {
+      const c = (window._NMR_CONTENTS || []).find(x => x.id == id);
+      if (!c) return;
+      $('#edit-content-id').value = c.id;
+      $('#edit-content-title').value = c.title;
+      new bootstrap.Modal($('#modal-edit-content')).show();
+    }
+  };
+
+  const init = () => {
+    loadOverview();
+    loadViewStats();
+    loadBlogStats();
+    loadContents();
+    loadTaxonomy();
+    loadSiteVisits();
+    loadReputation();
+    loadAuditLogs();
+    loadLoginEvents();
+    loadModActions();
+    loadQueue();
+    fetchLegacyMetrics('/admin/metrics');
+
+    $('#btn-metrics-dashboard')?.addEventListener('click', () => fetchLegacyMetrics('/admin/dashboard'));
+    $('#btn-metrics-snapshot')?.addEventListener('click', () => fetchLegacyMetrics('/admin/metrics'));
+    $('#btn-metrics-insights')?.addEventListener('click', () => fetchLegacyMetrics('/admin/metrics/insights'));
+    $('#btn-refresh-reputation')?.addEventListener('click', loadReputation);
+    $('#btn-run-jobs')?.addEventListener('click', runQueueOnce);
+
+    $('#form-create-mod-action')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = Object.fromEntries(fd.entries());
+      try {
+        await api('/admin/moderation-actions', { method: 'POST', body: JSON.stringify(body) });
+        e.target.reset();
+        loadModActions();
+      } catch (err) { alert(err.message); }
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();/**
+ * admin-blogs.js - specialized logic for Administrative Blog Management.
+ *
+ * This module manages:
+ * - Approval Workflow: Lists and manages pending user blog posts.
+ * - Global Moderation: Provides visibility into all approved posts with hide/delete options.
+ * - Social Integration: Links authors to their public profiles.
+ * - Action Orchestration: Centralized handler for approval, hiding, and removal.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+    const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+    const payload = await res.json().catch(() => ({ status: 'error', error: { message: 'Invalid API response' } }));
+    if (!res.ok || payload.status === 'error') throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+    return payload;
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
+
+  const loadBlogs = async () => {
+    try {
+      const res = await api('/admin/blogs/pending');
+      const items = res.data || [];
+      setHtml('#pending-blogs-body', items.map(b => `
+        <tr>
+          <td>${b.id}</td>
+          <td>${b.title}</td>
+          <td><a href="/${window.NMR.getLangPrefix()}/profile/${b.author_username}" style="color:inherit; text-decoration:none;" class="fw-bold">@${b.author_username}</a></td>
+          <td><span class="badge bg-warning">Pending</span></td>
+          <td><button class="btn btn-xs btn-success" data-action="approve" data-id="${b.id}">Approve</button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" class="text-center">No pending blogs</td></tr>');
+    } catch (e) {
+      setHtml('#pending-blogs-body', `<tr><td colspan="5" class="text-center text-danger">${e.message}</td></tr>`);
+    }
+  };
+
+  const loadAllBlogs = async () => {
+    try {
+      const res = await api('/admin/blogs');
+      const items = res.data || [];
+      setHtml('#all-blogs-body', items.map(b => `
+        <tr>
+          <td>${b.id}</td>
+          <td>${b.title}</td>
+          <td><a href="/${window.NMR.getLangPrefix()}/profile/${b.author_username}" style="color:inherit; text-decoration:none;" class="fw-bold">@${b.author_username}</a></td>
+          <td>${b.approved ? 'Yes' : 'No'}</td>
+          <td>${(b.created_at || '').split(' ')[0]}</td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-success" data-action="approve" data-id="${b.id}">Approve</button>
+              <button class="btn btn-outline-secondary" data-action="hide" data-id="${b.id}">Hide</button>
+              <button class="btn btn-outline-danger" data-action="delete" data-id="${b.id}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="text-center">No blogs found</td></tr>');
+    } catch (e) {
+      setHtml('#all-blogs-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`);
+    }
+  };
+
+  const action = async (id, kind) => {
+    if (kind === 'approve') await api(`/admin/blogs/${id}/approve`, { method: 'POST', body: '{}' });
+    if (kind === 'hide') await api(`/admin/blogs/${id}/hide`, { method: 'POST', body: '{}' });
+    if (kind === 'delete') {
+      if (!confirm('Delete blog?')) return;
+      await api(`/admin/blogs/${id}`, { method: 'DELETE' });
+    }
+    await loadBlogs();
+    await loadAllBlogs();
+  };
+
+  const init = () => {
+    loadBlogs();
+    loadAllBlogs();
+    $('#btn-refresh-blogs')?.addEventListener('click', loadBlogs);
+    $('#btn-refresh-blogs-all')?.addEventListener('click', loadAllBlogs);
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const kind = btn.dataset.action;
+      action(id, kind);
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+/**
+ * admin-chapters.js - Administrative Controller for Chapter Management.
+ *
+ * This module manages the lifecycle of individual chapters (Novels & Manga).
+ * Complex features include:
+ * - Content Resolution: Maintains a dynamic lookup map to resolve series by ID/Slug/Type.
+ * - Multi-Mode Editor: Swaps between Markdown (text) and Image Path (list) editors.
+ * - Orchestration: Listens for events from 'admin-content.js' to auto-select series.
+ * - UI Sync: Handles modal pre-population, validation, and table refreshes.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+    const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+    const payload = await res.json().catch(() => ({ status: 'error', error: { message: 'Invalid API response' } }));
+    if (!res.ok || payload.status === 'error') throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+    return payload;
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
+  const setValue = (sel, value) => {
+    const el = $(sel);
+    if (el) el.value = value;
+  };
+  const chapterPlaceholder = () => '<tr><td colspan="5"></td></tr>';
+  const getContentId = () => {
+    const input = $('#chapters-content-id');
+    if (!input) return '';
+    return String(input.value || '').trim();
+  };
+  const toRouteType = (value) => String(value || '').trim().toLowerCase().replace(/_/g, '-');
+  const parsePagesInput = (value) => String(value || '')
+    .split(/\r\n|\r|\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const toggleEditorByType = (type, prefix = 'edit') => {
+    const bodyWrap = $(`#${prefix}-chapter-body-wrap`);
+    const pagesWrap = $(`#${prefix}-chapter-pages-wrap`);
+    const normalized = String(type || 'text').toLowerCase();
+    if (normalized === 'image') {
+      bodyWrap?.classList.add('d-none');
+      pagesWrap?.classList.remove('d-none');
+      return;
+    }
+    bodyWrap?.classList.remove('d-none');
+    pagesWrap?.classList.add('d-none');
+  };
+  const hideModal = (selector) => {
+    const el = $(selector);
+    if (!el) return;
+    const instance = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+    instance.hide();
+  };
+
+  const contentLookup = new Map();
+  let contentOptions = [];
+  let selectedContent = null;
+
+  const formatTypeLabel = (value) => {
+    const normalized = toRouteType(value);
+    if (normalized === '') return 'Unknown';
+    return normalized
+      .split('-')
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+  const formatContentLabel = (content) => {
+    const typeLabel = formatTypeLabel(content.type);
+    const name = String(content.title || content.slug || content.id).trim();
+    return `${typeLabel} - ${name}`;
+  };
+  const renderContentSelectOptions = () => {
+    const select = $('#chapters-content-id');
+    if (!select) return;
+
+    const currentId = String(select.value || '').trim();
+    const selectedId = String(selectedContent?.id || '').trim();
+    const preferredId = currentId || selectedId;
+
+    select.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = '';
+    select.appendChild(empty);
+
+    contentOptions.forEach((item) => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = formatContentLabel(item);
+      select.appendChild(opt);
+    });
+
+    if (preferredId !== '' && contentOptions.some((item) => item.id === preferredId)) {
+      select.value = preferredId;
+    }
+  };
+
+  const saveContentLookup = (raw) => {
+    const id = String(raw?.id || '').trim();
+    if (id === '') return null;
+    const next = {
+      id,
+      title: String(raw?.title || '').trim(),
+      slug: String(raw?.slug || '').trim(),
+      type: toRouteType(raw?.type || ''),
+    };
+    const prev = contentLookup.get(id) || {};
+    const merged = {
+      id,
+      title: next.title || String(prev.title || ''),
+      slug: next.slug || String(prev.slug || ''),
+      type: next.type || String(prev.type || ''),
+    };
+    contentLookup.set(id, merged);
+    return merged;
+  };
+  const upsertContentOption = (raw) => {
+    const saved = saveContentLookup(raw);
+    if (!saved) return null;
+    const idx = contentOptions.findIndex((item) => item.id === saved.id);
+    if (idx === -1) {
+      contentOptions.push(saved);
+      return saved;
+    }
+    contentOptions[idx] = {
+      ...contentOptions[idx],
+      ...saved,
+    };
+    return contentOptions[idx];
+  };
+
+  const selectContent = (raw) => {
+    const saved = saveContentLookup(raw || {});
+    if (saved) {
+      selectedContent = { ...saved };
+      return selectedContent;
+    }
+    const id = String(raw?.id || '').trim();
+    if (id !== '') {
+      selectedContent = { id, title: '', slug: '', type: '' };
+      return selectedContent;
+    }
+    selectedContent = null;
+    return null;
+  };
+
+  const resolveContent = (contentId = '') => {
+    const id = String(contentId || getContentId()).trim();
+    if (id === '') return null;
+    const fromLookup = contentLookup.get(id) || {};
+    const fromSelected = selectedContent && selectedContent.id === id ? selectedContent : {};
+    return {
+      id,
+      title: String(fromSelected.title || fromLookup.title || '').trim(),
+      slug: String(fromSelected.slug || fromLookup.slug || '').trim(),
+      type: toRouteType(fromSelected.type || fromLookup.type || ''),
+    };
+  };
+
+  const syncSelectedFromInput = () => {
+    const id = getContentId();
+    if (id === '') {
+      selectedContent = null;
+      return;
+    }
+    const known = contentLookup.get(id);
+    if (known) {
+      selectedContent = { ...known };
+      return;
+    }
+    if (!selectedContent || selectedContent.id !== id) {
+      selectedContent = { id, title: '', slug: '', type: '' };
+    }
+  };
+
+  const loadChapters = async () => {
+    const contentId = getContentId();
+    if (!contentId) {
+      setHtml('#chapters-list-body', chapterPlaceholder());
+      return;
+    }
+    try {
+      const res = await api(`/admin/content/${contentId}/chapters`);
+      const items = res.data || [];
+      setHtml('#chapters-list-body', items.map(ch => `
+        <tr>
+          <td>${ch.chapter_number}</td>
+          <td>${ch.title || ''}</td>
+          <td>${ch.type}</td>
+          <td><span class="badge bg-light text-dark">${ch.username || 'System'}</span></td>
+          <td><small>${(ch.created_at || '').split(' ')[0]}</small></td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-info" data-action="edit" data-id="${ch.id}" data-num="${ch.chapter_number}" data-title="${ch.title || ''}" data-type="${ch.type}"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger" data-action="delete" data-id="${ch.id}"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="text-center">No chapters</td></tr>');
+    } catch (e) {
+      setHtml('#chapters-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`);
+    }
+  };
+
+  const deleteChapter = async (id) => {
+    if (!confirm('Delete this chapter?')) return;
+    await api(`/admin/chapters/${id}`, { method: 'DELETE' });
+    loadChapters();
+  };
+
+  const openEditChapter = async (btn) => {
+    const chapterId = String(btn.dataset.id || '').trim();
+    if (chapterId === '') return;
+
+    try {
+      const res = await api(`/admin/chapters/${chapterId}`);
+      const chapter = res.data || {};
+      const chapterType = String(chapter.type || btn.dataset.type || 'text');
+
+      $('#edit-chapter-id').value = chapter.id || chapterId;
+      $('#edit-chapter-number').value = chapter.chapter_number || btn.dataset.num || '';
+      $('#edit-chapter-title').value = chapter.title || btn.dataset.title || '';
+      $('#edit-chapter-type').value = chapterType;
+      $('#edit-chapter-body').value = chapter.body || '';
+      $('#edit-chapter-pages').value = Array.isArray(chapter.pages) ? chapter.pages.join('\n') : '';
+      toggleEditorByType(chapterType);
+
+      new bootstrap.Modal($('#modal-edit-chapter')).show();
+    } catch (e) {
+      alert(e.message || 'Failed to load chapter detail');
+    }
+  };
+
+  const openCreateChapter = (raw = null) => {
+    if (raw && raw.id) {
+      upsertContentOption(raw);
+      selectContent(raw);
+      renderContentSelectOptions();
+      setValue('#chapters-content-id', String(raw.id || '').trim());
+    } else {
+      syncSelectedFromInput();
+    }
+
+    const content = resolveContent();
+    if (!content || content.id === '') {
+      alert('Select a content first.');
+      return;
+    }
+    if (content.slug === '' || content.type === '') {
+      alert('Cannot resolve content type/slug. Select the content from the list first.');
+      return;
+    }
+
+    $('#form-create-chapter')?.reset();
+    setValue('#create-chapter-content-id', content.id);
+    setValue('#create-chapter-content-type', content.type);
+    setValue('#create-chapter-content-slug', content.slug);
+    setValue(
+      '#create-chapter-content',
+      `${content.title ? `${content.title} (${content.id})` : content.id} - ${content.type}/${content.slug}`
+    );
+    setValue('#create-chapter-body', '');
+    setValue('#create-chapter-pages', '');
+    setValue('#create-chapter-type', 'text');
+    toggleEditorByType('text', 'create');
+    new bootstrap.Modal($('#modal-create-chapter')).show();
+  };
+
+  const init = () => {
+    const contentInput = $('#chapters-content-id');
+    renderContentSelectOptions();
+    syncSelectedFromInput();
+    if (contentInput && contentInput.value.trim() !== '') {
+      loadChapters();
+    } else {
+      setHtml('#chapters-list-body', chapterPlaceholder());
+    }
+
+    $('#btn-add-chapter')?.addEventListener('click', () => openCreateChapter());
+    $('#btn-refresh-chapters')?.addEventListener('click', loadChapters);
+    contentInput?.addEventListener('change', () => {
+      syncSelectedFromInput();
+      loadChapters();
+    });
+
+    $('#chapters-list-body')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      if (action === 'edit') void openEditChapter(btn);
+      if (action === 'delete') deleteChapter(btn.dataset.id);
+    });
+
+    $('#edit-chapter-type')?.addEventListener('change', (e) => {
+      toggleEditorByType(e.target.value, 'edit');
+    });
+    $('#create-chapter-type')?.addEventListener('change', (e) => {
+      toggleEditorByType(e.target.value, 'create');
+    });
+    toggleEditorByType($('#edit-chapter-type')?.value || 'text', 'edit');
+    toggleEditorByType($('#create-chapter-type')?.value || 'text', 'create');
+
+    $('#form-create-chapter')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const contentId = String($('#create-chapter-content-id')?.value || '').trim();
+      const contentType = toRouteType($('#create-chapter-content-type')?.value || '');
+      const contentSlug = String($('#create-chapter-content-slug')?.value || '').trim();
+      const type = String(fd.get('type') || 'text').toLowerCase();
+      const payload = {
+        chapter_number: String(fd.get('chapter_number') || '').trim(),
+        title: String(fd.get('title') || '').trim(),
+        type,
+      };
+
+      if (contentId === '' || contentType === '' || contentSlug === '') {
+        alert('Content identity is missing. Select content from the list and try again.');
+        return;
+      }
+      if (payload.chapter_number === '') {
+        alert('Chapter number is required.');
+        return;
+      }
+      if (type === 'image') {
+        const pages = parsePagesInput($('#create-chapter-pages')?.value);
+        if (pages.length === 0) {
+          alert('At least one image path is required.');
+          return;
+        }
+        payload.pages = pages;
+      } else {
+        const body = String($('#create-chapter-body')?.value || '').trim();
+        if (body === '') {
+          alert('Body is required for text chapters.');
+          return;
+        }
+        payload.body = body;
+      }
+
+      try {
+        await api(`/admin/content/${encodeURIComponent(contentType)}/${encodeURIComponent(contentSlug)}/chapters`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        hideModal('#modal-create-chapter');
+        setValue('#chapters-content-id', contentId);
+        syncSelectedFromInput();
+        loadChapters();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    $('#form-edit-chapter')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const id = fd.get('id');
+      const type = String(fd.get('type') || 'text').toLowerCase();
+      const payload = {
+        chapter_number: String(fd.get('chapter_number') || '').trim(),
+        title: String(fd.get('title') || '').trim(),
+        type,
+      };
+      if (type === 'image') {
+        const pages = parsePagesInput($('#edit-chapter-pages')?.value);
+        if (pages.length === 0) {
+          alert('At least one image path is required.');
+          return;
+        }
+        payload.pages = pages;
+      } else {
+        const body = String($('#edit-chapter-body')?.value || '').trim();
+        if (body === '') {
+          alert('Body is required for text chapters.');
+          return;
+        }
+        payload.body = body;
+      }
+      try {
+        await api(`/admin/chapters/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+        hideModal('#modal-edit-chapter');
+        loadChapters();
+      } catch (err) { alert(err.message); }
+    });
+
+    document.addEventListener('nmr:admin-contents:loaded', (e) => {
+      const items = Array.isArray(e?.detail?.items) ? e.detail.items : [];
+      contentOptions = items
+        .map((item) => saveContentLookup(item))
+        .filter((item) => item !== null);
+      renderContentSelectOptions();
+      syncSelectedFromInput();
+      if (getContentId() !== '') {
+        loadChapters();
+      }
+    });
+
+    document.addEventListener('nmr:admin-content:selected', (e) => {
+      const detail = e?.detail || {};
+      const id = String(detail.id || '').trim();
+      if (!id) return;
+      upsertContentOption(detail);
+      selectContent(detail);
+      renderContentSelectOptions();
+      if (contentInput) contentInput.value = id;
+      loadChapters();
+      contentInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      contentInput?.focus();
+    });
+
+    document.addEventListener('nmr:admin-chapter:create', (e) => {
+      const detail = e?.detail || {};
+      const id = String(detail.id || '').trim();
+      if (!id) return;
+      upsertContentOption(detail);
+      renderContentSelectOptions();
+      if (contentInput) contentInput.value = id;
+      openCreateChapter(detail);
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+/**
+ * admin-comments.js - specialized logic for Administrative Comment Moderation.
+ *
+ * This module manages:
+ * - Global Moderation: Fetches and renders all user comments across the platform.
+ * - Contextual UI: Displays comments with links to user profiles and parent content.
+ * - Interaction: Permanent deletion of inappropriate or flagged comments.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+
+    const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+    const payload = await res.json().catch(() => ({ status: 'error', error: { message: 'Invalid API response' } }));
+    if (!res.ok || payload.status === 'error') throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+    return payload;
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
+
+  const loadComments = async () => {
+    const body = $('#comments-list-body');
+    if (!body) return;
+    try {
+      const res = await api('/admin/comments');
+      const items = res.data || [];
+      setHtml('#comments-list-body', items.map(c => `
+        <tr>
+          <td><a href="/${window.NMR.getLangPrefix()}/profile/${c.username}" style="color:inherit; text-decoration:none;" class="fw-bold">@${c.username}</a></td>
+          <td><div class="text-truncate" style="max-width: 260px;" title="${c.body}">${c.body}</div></td>
+          <td><small>${c.content_title || c.blog_title || (c.chapter_number ? 'Chapter ' + c.chapter_number : 'N/A')}</small></td>
+          <td><small class="text-muted">${(c.created_at || '').split(' ')[0]}</small></td>
+          <td>
+            <button class="btn btn-xs btn-outline-danger" data-id="${c.id}" data-action="delete"><i class="bi bi-trash"></i></button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" class="text-center">No comments found</td></tr>');
+    } catch (e) {
+      setHtml('#comments-list-body', `<tr><td colspan=\"5\" class=\"text-center text-danger\">${e.message}</td></tr>`);
+    }
+  };
+
+  const deleteComment = async (id) => {
+    if (!confirm('Delete this comment permanently?')) return;
+    await api(`/admin/comments/${id}`, { method: 'DELETE' });
+    await loadComments();
+  };
+
+  const init = () => {
+    loadComments();
+    $('#btn-refresh-comments')?.addEventListener('click', loadComments);
+    $('#comments-list-body')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action=\"delete\"]');
+      if (btn) deleteComment(btn.dataset.id);
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+/**
+ * admin-config.js - Secure .env management for ROOT_USER.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+  
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+    const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+    const payload = await res.json().catch(() => ({ status: 'error', error: { message: 'Invalid API response' } }));
+    if (!res.ok || payload.status === 'error') throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+    return payload;
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const wrapper = $('#env-sections-wrapper');
+
+  const categories = {
+    'APP': { label: 'Application', icon: 'bi-cpu', keys: ['APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'APP_TIMEZONE'] },
+    'DB': { label: 'Database', icon: 'bi-database', keys: ['DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'DB_CHARSET'] },
+    'SITE': { label: 'Site Identity', icon: 'bi-globe', keys: ['SITE_NAME', 'SITE_ABBREVIATION', 'SITE_DESCRIPTION', 'SITE_LOGO', 'SITE_ADDRESS'] },
+    'DEFAULT': { label: 'Defaults', icon: 'bi-palette', keys: ['DEFAULT_LANGUAGE', 'DEFAULT_THEME', 'DEFAULT_PROFILE_IMAGE', 'DEFAULT_CONTENT_COVER_IMAGE'] },
+    'SECURITY': { label: 'Security & Session', icon: 'bi-shield-lock', keys: ['ENFORCE_HTTPS', 'ROOT_USER', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY', 'SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL'] }
+  };
+
+  const createRow = (key = '', value = '') => {
+    const div = document.createElement('div');
+    div.className = 'col-12 col-lg-6 env-row p-2 rounded mb-1';
+    div.innerHTML = `
+      <div class="env-key-label">${key}</div>
+      <div class="input-group input-group-sm shadow-sm">
+        <input type="text" class="form-control fw-bold env-key d-none" value="${key}">
+        <input type="text" class="form-control env-value py-2" value="${value}" placeholder="Value">
+        <button class="btn btn-outline-danger btn-remove" type="button" title="Delete"><i class="bi bi-trash"></i></button>
+      </div>
+    `;
+    div.querySelector('.btn-remove').addEventListener('click', () => {
+      if(confirm(`Remove ${key}?`)) div.remove();
+    });
+    return div;
+  };
+
+  const createSection = (id, title, icon) => {
+    const section = document.createElement('div');
+    section.id = `cat-${id}`;
+    section.className = 'card card-outline card-secondary shadow-sm env-section mb-4';
+    section.innerHTML = `
+      <div class="card-header"><h3 class="card-title text-uppercase fs-7 fw-bold"><i class="bi ${icon} me-2"></i>${title}</h3></div>
+      <div class="card-body"><div class="row g-3 env-container"></div></div>
+    `;
+    return section;
+  };
+
+  const loadEnv = async () => {
+    if (!wrapper) return;
+    try {
+      const res = await api('/admin/maintenance/env');
+      wrapper.innerHTML = '';
+      const data = res.data || {};
+      
+      const sectionEls = {};
+      Object.entries(categories).forEach(([id, info]) => {
+        const el = createSection(id, info.label, info.icon);
+        sectionEls[id] = el;
+        wrapper.appendChild(el);
+      });
+
+      const otherSection = createSection('OTHER', 'Other Variables', 'bi-three-dots');
+      wrapper.appendChild(otherSection);
+
+      Object.entries(data).forEach(([k, v]) => {
+        let assigned = false;
+        for (const [id, info] of Object.entries(categories)) {
+          if (info.keys.includes(k) || k.startsWith(id + '_')) {
+            sectionEls[id].querySelector('.env-container').appendChild(createRow(k, v));
+            assigned = true;
+            break;
+          }
+        }
+        if (!assigned) {
+          otherSection.querySelector('.env-container').appendChild(createRow(k, v));
+        }
+      });
+
+      document.querySelectorAll('.env-section').forEach(s => {
+        if (s.querySelector('.env-container').children.length === 0) s.remove();
+      });
+
+    } catch (e) {
+      wrapper.innerHTML = `<div class="col-12 alert alert-danger">${e.message}</div>`;
+    }
+  };
+
+  const saveEnv = async (e) => {
+    e.preventDefault();
+    const btn = $('#btn-save-env');
+    const originalText = btn.innerHTML;
+    
+    if (!confirm('Are you absolutely sure? Incorrect settings will crash the site immediately.')) return;
+
+    const payload = {};
+    document.querySelectorAll('.env-row').forEach(row => {
+      const k = row.querySelector('.env-key').value.trim();
+      const v = row.querySelector('.env-value').value;
+      if (k !== '') payload[k] = v;
+    });
+
+    try {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+      await api('/admin/maintenance/env', { method: 'POST', body: JSON.stringify(payload) });
+      if (typeof window.showPopup === 'function') window.showPopup('Configuration saved!', 'success');
+      else alert('Saved!');
+      loadEnv();
+    } catch (e) {
+      alert('Save failed: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  };
+
+  const init = () => {
+    loadEnv();
+    $('#form-env-config')?.addEventListener('submit', saveEnv);
+    $('#btn-reload-env')?.addEventListener('click', loadEnv);
+    $('#btn-add-var')?.addEventListener('click', () => {
+      const key = prompt('Enter variable name:');
+      if (key) {
+        let other = $('#cat-OTHER');
+        if (!other) {
+          other = createSection('OTHER', 'Other Variables', 'bi-three-dots');
+          wrapper.appendChild(other);
+        }
+        other.querySelector('.env-container').appendChild(createRow(key.toUpperCase(), ''));
+      }
+    });
+
+    document.querySelectorAll('#env-category-nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href').substring(1);
+        const target = document.getElementById(targetId);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+        document.querySelectorAll('#env-category-nav a').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+/**
+ * admin-content.js - specialized logic for Administrative Content Management.
+ *
+ * This module manages:
+ * - Content Discovery: Fetches and renders the primary content table.
+ * - Series Management: Handles CRUD operations for manga and novels.
+ * - Taxonomy: Dynamic genre and tag selection for series.
+ * - Automation: Real-time slug generation from series titles.
+ * - Orchestration: Inter-module events for chapter management and modal flows.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined && !(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+    const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+    const payload = await res.json().catch(() => ({ status: 'error', error: { message: 'Invalid API response' } }));
+    if (!res.ok || payload.status === 'error') {
+      const msg = payload?.error?.message || payload?.message || `HTTP ${res.status}`;
+      console.error('[API Error]', { path, method, status: res.status, payload });
+      throw new Error(msg);
+    }
+    return payload;
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
+  let _ALL_GENRES = [];
+  let _ALL_TAGS = [];
+  let _SELECTED_GENRES = new Set();
+  let _SELECTED_TAGS = new Set();
+  let _CREATE_GENRES = new Set();
+  let _CREATE_TAGS = new Set();
+  let _CONTENTS = [];
+
+  const slugify = (text) => {
+    return (text || '')
+      .toString()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/--+/g, '-')
+      .slice(0, 80);
+  };
+
+  const toRouteType = (value) => String(value || '').trim().toLowerCase().replace(/_/g, '-');
+  const findContentById = (id) => _CONTENTS.find((item) => String(item.id) === String(id));
+  const toContentSelection = (contentId, content = null) => {
+    const source = content || findContentById(contentId) || {};
+    return {
+      id: String(contentId || source.id || '').trim(),
+      title: String(source.title || '').trim(),
+      slug: String(source.slug || '').trim(),
+      type: toRouteType(source.type || source.route_type || ''),
+    };
+  };
+
+  const loadContents = async () => {
+    if (!$('#contents-list-body')) return;
+    try {
+      const res = await api('/admin/contents');
+      const items = (res.data || []).map((item) => ({
+        ...item,
+        route_type: toRouteType(item.type),
+      }));
+      _CONTENTS = items;
+      setHtml('#contents-list-body', items.map(c => `
+        <tr>
+          <td>${c.id}</td>
+          <td>${c.type}</td>
+          <td>${c.title}</td>
+          <td><code>${c.slug}</code></td>
+          <td><span class="badge bg-${c.status === 'ongoing' ? 'primary' : 'success'}">${c.status}</span></td>
+          <td>
+            <div class="btn-group">
+              <button class="btn btn-xs btn-outline-info" data-action="chapter" data-id="${c.id}">Chapters</button>
+              <button class="btn btn-xs btn-outline-primary" data-action="add-chapter" data-id="${c.id}" title="Create chapter"><i class="bi bi-plus-lg"></i></button>
+              <button class="btn btn-xs btn-info" data-action="edit" data-id="${c.id}"><i class="bi bi-pencil"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="text-center">No contents found</td></tr>');
+      document.dispatchEvent(new CustomEvent('nmr:admin-contents:loaded', {
+        detail: {
+          items: items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            slug: item.slug,
+            type: item.route_type,
+          })),
+        },
+      }));
+    } catch (e) {
+      setHtml('#contents-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`);
+    }
+  };
+
+  const loadTaxonomy = async () => {
+    try {
+      const g = await api('/admin/genres');
+      _ALL_GENRES = g.data || [];
+      if ($('#genres-list-body')) {
+        setHtml('#genres-list-body', _ALL_GENRES.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
+      }
+      
+      const t = await api('/admin/tags');
+      _ALL_TAGS = t.data || [];
+      if ($('#tags-list-body')) {
+        setHtml('#tags-list-body', _ALL_TAGS.map(x => `<tr><td style="width:40px">${x.id}</td><td>${x.name}</td></tr>`).join(''));
+      }
+      
+      renderCreateTaxonomyButtons();
+    } catch (e) {
+      if ($('#genres-list-body')) {
+        setHtml('#genres-list-body', '<tr><td colspan="2" class="text-center text-danger">Error</td></tr>');
+      }
+    }
+  };
+
+  const renderTaxonomyButtons = () => {
+    setHtml('#edit-content-genres-btns', _ALL_GENRES.map(g => {
+      const active = _SELECTED_GENRES.has(String(g.id));
+      return `<button type="button" class="btn btn-xs ${active ? 'btn-success' : 'btn-outline-secondary'}" data-action="toggle-genre" data-id="${g.id}">${g.name}</button>`;
+    }).join(''));
+    setHtml('#edit-content-tags-btns', _ALL_TAGS.map(t => {
+      const active = _SELECTED_TAGS.has(String(t.id));
+      return `<button type="button" class="btn btn-xs ${active ? 'btn-success' : 'btn-outline-secondary'}" data-action="toggle-tag" data-id="${t.id}">${t.name}</button>`;
+    }).join(''));
+  };
+
+  const renderCreateTaxonomyButtons = () => {
+    setHtml('#create-content-genres-btns', _ALL_GENRES.map(g => {
+      const active = _CREATE_GENRES.has(String(g.id));
+      return `<button type="button" class="btn btn-xs ${active ? 'btn-success' : 'btn-outline-secondary'}" data-action="c-toggle-genre" data-id="${g.id}">${g.name}</button>`;
+    }).join(''));
+    setHtml('#create-content-tags-btns', _ALL_TAGS.map(t => {
+      const active = _CREATE_TAGS.has(String(t.id));
+      return `<button type="button" class="btn btn-xs ${active ? 'btn-success' : 'btn-outline-secondary'}" data-action="c-toggle-tag" data-id="${t.id}">${t.name}</button>`;
+    }).join(''));
+  };
+
+  const toggleTax = (type, id) => {
+    const set = type === 'genre' ? _SELECTED_GENRES : _SELECTED_TAGS;
+    const idStr = String(id);
+    if (set.has(idStr)) {
+      set.delete(idStr);
+    } else {
+      set.add(idStr);
+    }
+    renderTaxonomyButtons();
+  };
+
+  const toggleCreateTax = (type, id) => {
+    const set = type === 'genre' ? _CREATE_GENRES : _CREATE_TAGS;
+    const idStr = String(id);
+    if (set.has(idStr)) set.delete(idStr); else set.add(idStr);
+    renderCreateTaxonomyButtons();
+  };
+
+  const openEditContent = (id) => {
+    const c = _CONTENTS.find(x => x.id == id);
+    if (!c) return;
+    $('#edit-content-id').value = c.id;
+    $('#edit-content-title').value = c.title;
+    $('#edit-content-alt-titles').value = c.alternative_titles || '';
+    $('#edit-content-desc').value = c.description || '';
+    $('#edit-content-status').value = c.status;
+    $('#edit-content-cover').value = c.cover_image || '';
+    $('#edit-content-author').value = c.author || '';
+    $('#edit-content-artist').value = c.artist || '';
+    $('#edit-content-country').value = c.country || '';
+    $('#edit-content-release-year').value = c.release_year || '';
+    _SELECTED_GENRES = new Set((String(c.genre_ids || '')).split(',').map(x => x.trim()).filter(Boolean));
+    _SELECTED_TAGS = new Set((String(c.tag_ids || '')).split(',').map(x => x.trim()).filter(Boolean));
+    renderTaxonomyButtons();
+    new bootstrap.Modal($('#modal-edit-content')).show();
+  };
+
+  const openChapterManager = (contentId, content = null) => {
+    const detail = toContentSelection(contentId, content);
+    if (!detail.id) return;
+    const input = $('#chapters-content-id');
+    if (input) input.value = detail.id;
+    document.dispatchEvent(new CustomEvent('nmr:admin-content:selected', { detail }));
+  };
+
+  const openCreateChapter = (contentId, content = null) => {
+    const detail = toContentSelection(contentId, content);
+    if (!detail.id) return;
+    openChapterManager(detail.id, detail);
+    document.dispatchEvent(new CustomEvent('nmr:admin-chapter:create', { detail }));
+  };
+
+  const promptCreateTaxonomy = async (type) => {
+    const normalized = String(type || '').trim().toLowerCase();
+    if (!['genre', 'tag'].includes(normalized)) return;
+    const name = prompt(`Enter new ${normalized} name:`);
+    if (!name) return;
+    try {
+      await api(`/admin/${normalized}s`, { method: 'POST', body: JSON.stringify({ name }) });
+      loadTaxonomy();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const init = () => {
+    window.NMR_ADMIN_CONTENT = Object.assign(window.NMR_ADMIN_CONTENT || {}, {
+      promptCreateTaxonomy,
+      uploadSpecificImage: async (input, targetId, type = 'chapters') => {
+        const file = input.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('images[]', file);
+        try {
+          const res = await api(`/admin/upload-images?type=${type}`, { method: 'POST', body: formData });
+          if (res.data?.paths?.length > 0) {
+            document.getElementById(targetId).value = res.data.paths[0];
+          }
+        } catch (e) {
+          console.error('[Upload Specific Error]', e);
+          alert('Upload failed: ' + e.message);
+        }
+        input.value = '';
+      },
+      handleBulkUpload: async (input, type = 'chapters') => {
+        let files = Array.from(input.files);
+        if (files.length === 0) return;
+
+        // Sort files by name naturally (1.png, 2.png, 10.png)
+        files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+        const total = files.length;
+        console.log(`[Bulk Upload] Starting sequential upload for ${total} files of type ${type}.`);
+
+        const area = document.getElementById('create-chapter-pages');
+        if (!area) return;
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (let i = 0; i < total; i++) {
+          const file = files[i];
+          const formData = new FormData();
+          formData.append('type', type);
+          formData.append('images[]', file);
+
+          try {
+            console.log(`[Bulk Upload] Progress: ${i + 1}/${total} - Uploading ${file.name}...`);
+            const res = await api(`/admin/upload-images?type=${type}`, { method: 'POST', body: formData });
+
+            if (res.data?.paths?.length > 0) {
+              const existing = area.value.trim();
+              const newPath = res.data.paths[0];
+              area.value = existing ? existing + '\n' + newPath : newPath;
+              successCount++;
+            }
+          } catch (e) {
+            console.error(`[Bulk Upload] Failed file: ${file.name}`, e);
+            failCount++;
+          }
+        }
+
+        alert(`Upload complete!\nSuccess: ${successCount}\nFailed: ${failCount}`);
+        input.value = '';
+      },
+    });
+
+    loadContents();
+    loadTaxonomy();
+    $('#btn-refresh-contents')?.addEventListener('click', loadContents);
+    $('#btn-refresh-contents')?.addEventListener('click', loadTaxonomy);
+
+    $('#contents-list-body')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const content = findContentById(btn.dataset.id);
+      if (action === 'edit') openEditContent(btn.dataset.id);
+      if (action === 'chapter') openChapterManager(btn.dataset.id, content || null);
+      if (action === 'add-chapter') openCreateChapter(btn.dataset.id, content || null);
+    });
+
+    $('#edit-content-genres-btns')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action="toggle-genre"]');
+      if (btn) toggleTax('genre', btn.dataset.id);
+    });
+    $('#edit-content-tags-btns')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action="toggle-tag"]');
+      if (btn) toggleTax('tag', btn.dataset.id);
+    });
+
+    $('#form-create-content')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const payload = Object.fromEntries(new FormData(e.target));
+        const createRes = await api('/admin/content', { method: 'POST', body: JSON.stringify(payload) });
+        if (createRes?.data?.id) {
+          await api(`/admin/contents/${createRes.data.id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(_CREATE_GENRES), tags: Array.from(_CREATE_TAGS) }) });
+        }
+        bootstrap.Modal.getInstance($('#modal-create-content')).hide();
+        e.target.reset();
+        _CREATE_GENRES = new Set();
+        _CREATE_TAGS = new Set();
+        renderCreateTaxonomyButtons();
+        loadContents();
+      } catch (err) { alert(err.message); }
+    });
+
+    $('#form-edit-content')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const id = fd.get('id');
+      try {
+        await api(`/admin/content/${id}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
+        await api(`/admin/contents/${id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(_SELECTED_GENRES), tags: Array.from(_SELECTED_TAGS) }) });
+        bootstrap.Modal.getInstance($('#modal-edit-content')).hide();
+        loadContents();
+        if (typeof showPopup === 'function') {
+          showPopup('Content saved', 'success');
+        }
+      } catch (err) {
+        if (typeof showPopup === 'function') {
+          showPopup(err.message || 'Failed to save content', 'error');
+        } else {
+          alert(err.message);
+        }
+      }
+    });
+
+    $('#create-content-genres-btns')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action=\"c-toggle-genre\"]');
+      if (btn) toggleCreateTax('genre', btn.dataset.id);
+    });
+    $('#create-content-tags-btns')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action=\"c-toggle-tag\"]');
+      if (btn) toggleCreateTax('tag', btn.dataset.id);
+    });
+
+    const titleInput = $('#create-content-title');
+    const slugInput = $('#create-content-slug');
+    if (titleInput && slugInput) {
+      let userEditedSlug = false;
+      slugInput.addEventListener('input', () => { userEditedSlug = slugInput.value.trim() !== ''; });
+      titleInput.addEventListener('input', () => {
+        if (userEditedSlug) return;
+        slugInput.value = slugify(titleInput.value);
+      });
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+/**
+ * admin-logs.js - Administrative Logging and Audit Dashboard.
+ *
+ * This module manages:
+ * - HTTP Audit Logs: Tracks method, path, and user identity for platform requests.
+ * - Login Events: Monitors successful and failed authentication attempts with IP/UA data.
+ * - Server Access Logs: Visualizes raw web server access records.
+ * - Error Logs: Displays critical application and PHP error reports.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+
+    const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+    const payload = await res.json().catch(() => ({ status: 'error', error: { message: 'Invalid API response' } }));
+    if (!res.ok || payload.status === 'error') throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+    return payload;
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
+
+  const loadAuditLogs = async () => {
+    try {
+      const res = await api('/admin/audit-logs');
+      const items = res.data || [];
+      setHtml('#logs-body', items.map(l => `
+        <tr>
+          <td><small>${l.created_at.split(' ')[1]}</small></td>
+          <td><span class="badge ${l.status_code >= 400 ? 'bg-danger' : 'bg-secondary'}">${l.method}</span></td>
+          <td class="text-truncate" style="max-width:150px" title="${l.path}">${l.path}</td>
+          <td><small title="${l.ip_hash}">${l.ip_hash.slice(0,12)}...</small></td>
+          <td><small class="${l.username ? 'fw-bold' : 'text-muted'}" title="ID: ${l.user_id || 'N/A'}">
+            ${l.username ? `<a href="/${window.NMR.getLangPrefix()}/profile/${l.username}" style="color:inherit; text-decoration:none;">${l.username}</a>` : 'guest'}
+          </small></td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" class="text-center">No audit logs</td></tr>');
+    } catch (e) { setHtml('#logs-body', `<tr><td colspan="5" class="text-center text-danger">${e.message}</td></tr>`); }
+  };
+
+  const loadLoginEvents = async () => {
+    try {
+      const res = await api('/admin/login-events');
+      const items = res.data || [];
+      setHtml('#logins-body', items.map(l => `
+        <tr>
+          <td class="text-truncate" style="max-width:120px">${l.email}</td>
+          <td><small>${l.ip_hash.slice(0,8)}</small></td>
+          <td title="${l.user_agent}"><i class="bi bi-info-circle"></i></td>
+          <td><i class="bi ${l.success ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'}"></i></td>
+          <td><small>${l.attempted_at.split(' ')[1]}</small></td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" class="text-center">No events</td></tr>');
+    } catch (e) { setHtml('#logins-body', `<tr><td colspan="5" class="text-center text-danger">${e.message}</td></tr>`); }
+  };
+
+  const renderAccessLogCard = (l) => `
+    <div class="card mb-2 shadow-none border-left-3" style="border-left: 4px solid var(--bs-primary); border-radius: 8px;">
+      <div class="card-body p-2 px-3">
+        <div class="d-flex justify-content-between align-items-start mb-1">
+          <span class="badge bg-primary text-uppercase" style="font-size: 0.7rem;">${l.method}</span>
+          <small class="text-muted font-monospace" style="font-size: 0.75rem;">${l.date}</small>
+        </div>
+        <div class="mb-1 text-dark fw-bold text-truncate" title="${l.path}">${l.path}</div>
+        <div class="d-flex justify-content-between align-items-center">
+          <small class="text-muted"><i class="bi bi-pc-display me-1"></i> ${l.ip}</small>
+          <span class="badge ${l.status >= 400 ? 'bg-warning' : 'bg-light text-dark'} border">${l.status}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const renderErrorLogCard = (l) => `
+    <div class="card mb-2 shadow-none border-left-3" style="border-left: 4px solid var(--bs-danger); border-radius: 8px;">
+      <div class="card-body p-2 px-3">
+        <div class="d-flex justify-content-between align-items-start mb-1">
+          <span class="badge bg-danger text-uppercase" style="font-size: 0.7rem;">${l.level}</span>
+          <small class="text-muted font-monospace" style="font-size: 0.75rem;">${l.date}</small>
+        </div>
+        <div class="text-danger small font-monospace" style="word-break: break-all;">${l.message}</div>
+      </div>
+    </div>
+  `;
+
+  const loadAccessLogs = async () => {
+    const container = $('#access-logs-container');
+    if (!container) return;
+    try {
+      const res = await api('/admin/logs/access?limit=50');
+      const items = res.data || [];
+      const html = items.map(renderAccessLogCard).join('') || '<div class="text-center py-4 text-muted">No access logs found.</div>';
+      container.innerHTML = html;
+    } catch (e) { container.innerHTML = `<div class="alert alert-danger p-2 small">${e.message}</div>`; }
+  };
+
+  const loadErrorLogs = async () => {
+    const container = $('#error-logs-container');
+    if (!container) return;
+    try {
+      const res = await api('/admin/logs/error?limit=50');
+      const items = res.data || [];
+      const html = items.map(renderErrorLogCard).join('') || '<div class="text-center py-4 text-muted">No errors found.</div>';
+      container.innerHTML = html;
+    } catch (e) { container.innerHTML = `<div class="alert alert-danger p-2 small">${e.message}</div>`; }
+  };
+
+  const init = () => {
+    loadAuditLogs();
+    loadLoginEvents();
+    loadAccessLogs();
+    loadErrorLogs();
+
+    $('#btn-refresh-logs')?.addEventListener('click', loadAuditLogs);
+    $('#btn-refresh-logins')?.addEventListener('click', loadLoginEvents);
+    $('#btn-refresh-access')?.addEventListener('click', loadAccessLogs);
+    $('#btn-refresh-error')?.addEventListener('click', loadErrorLogs);
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+/**
+ * admin-ops.js - Administrative Operations and Configuration Dashboard.
+ *
+ * This module manages:
+ * - Background Tasks: Provides UI to manually trigger job queue and cleanup retention.
+ * - Platform Monitoring: Real-time visibility into the job queue status.
+ * - Global Configuration: Fetches and updates site-wide settings (SEO, Integrations, Defaults).
+ * - Maintenance: Handles legacy job and cleanup triggers for backward compatibility.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+    const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+    const payload = await res.json().catch(() => ({ status: 'error', error: { message: 'Invalid API response' } }));
+    if (!res.ok || payload.status === 'error') throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+    return payload;
+  };
+  const $ = (sel) => document.querySelector(sel);
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
+  const setValue = (id, value) => { const el = $(`#${id}`); if (el) el.value = value ?? ''; };
+  const setChecked = (id, value) => { const el = $(`#${id}`); if (el) el.checked = !!value; };
+  const status = (text, isError = false) => setHtml('#site-settings-status', `<span class=\"${isError ? 'text-danger' : 'text-success'}\">${text}</span>`);
+
+  const loadQueue = async () => {
+    try {
+      const res = await api('/admin/queue/jobs');
+      setHtml('#queue-jobs-list', (res.data || []).map(j => `<div>[${j.id}] ${j.job_type || j.task} - <span class="text-info">${j.status}</span></div>`).join('') || 'Empty');
+    } catch (e) {
+      setHtml('#queue-jobs-list', `<div class="text-danger">${e.message}</div>`);
+    }
+  };
+
+  const runQueueOnce = async () => {
+    const limit = Math.max(1, Math.min(100, parseInt($('#jobs-limit')?.value || '5', 10)));
+    await api('/admin/queue/run-once', { method: 'POST', body: JSON.stringify({ limit }) });
+    loadQueue();
+  };
+
+  const runCleanup = async () => {
+    const days = $('#cleanup-days')?.value || 30;
+    try {
+      await api('/admin/retention/cleanup', { method: 'POST', body: JSON.stringify({ days }) });
+      alert('Cleanup done');
+    } catch (e) {
+      alert('Cleanup failed: ' + e.message);
+    }
+  };
+
+  const init = () => {
+    loadQueue();
+    $('#btn-run-jobs')?.addEventListener('click', runQueueOnce);
+    $('#btn-run-cleanup')?.addEventListener('click', runCleanup);
+
+    const handleMaintenance = async (btnId, path, successMsg) => {
+      const btn = $(`#${btnId}`);
+      const output = $('#maintenance-output');
+      if (!btn || !output) return;
+
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
+      output.classList.remove('d-none');
+      output.innerHTML = 'Starting operation...\n';
+
+      try {
+        const res = await api(path, { method: 'POST', body: '{}' });
+        const data = res.data || {};
+        const consoleOutput = Array.isArray(data.output) ? data.output.join('\n') : String(data.output || '');
+        output.innerHTML += consoleOutput;
+        if (data.success) {
+          if (typeof showPopup === 'function') showPopup(successMsg, 'success');
+        } else {
+          output.innerHTML += '\nOperation failed.';
+        }
+      } catch (e) {
+        output.innerHTML += `\nERROR: ${e.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    };
+
+    $('#btn-trigger-backup')?.addEventListener('click', () => 
+      handleMaintenance('btn-trigger-backup', '/admin/maintenance/backup', 'System backup completed successfully!')
+    );
+
+    $('#btn-trigger-analytics')?.addEventListener('click', () => 
+      handleMaintenance('btn-trigger-analytics', '/admin/maintenance/analytics', 'Daily analytics aggregated successfully!')
+    );
+
+    $('#btn-trigger-sitemap')?.addEventListener('click', () => 
+      handleMaintenance('btn-trigger-sitemap', '/admin/maintenance/sitemap', 'Physical sitemap.xml updated!')
+    );
+
+    $('#btn-trigger-warmup')?.addEventListener('click', () => 
+      handleMaintenance('btn-trigger-warmup', '/admin/maintenance/warmup', 'System cache warmed up!')
+    );
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPage = 1;
+    const perPage = 20;
+
+    function loadUploads(page = 1) {
+        currentPage = page;
+        const listBody = document.getElementById('uploads-list');
+        const pagination = document.getElementById('uploads-pagination');
+
+        fetch(`/api/v1/admin/uploads?page=${page}&per_page=${perPage}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(res => {
+            if (!res.success) throw new Error(res.message);
+            
+            const data = res.data || [];
+            const meta = res.meta || { page: 1, total_pages: 1 };
+
+            listBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                listBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No uploads found.</td></tr>';
+                pagination.innerHTML = '';
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                // Construct URL from image_id and original name if possible
+                // Based on UploadService, files are in /uploads/prefix.id.ext
+                // But we'll try to guess or use a generic path if not stored.
+                // Assuming standard naming convention: prefix.id.ext
+                // In a real scenario, we might want to store the full path in the DB.
+                
+                const previewUrl = `/uploads/${item.image_id}`; // Fallback if direct ID is used
+                
+                tr.innerHTML = `
+                    <td>
+                        <img src="${item.file_path || previewUrl}" class="img-thumbnail" style="height: 50px; cursor: pointer;" 
+                             onclick="window.previewImage('${item.file_path || previewUrl}')"
+                             onerror="this.src='/assets/img/placeholder.png'">
+                    </td>
+                    <td><small class="text-muted">${item.original_name}</small></td>
+                    <td><span class="badge badge-info">${item.mime_type.split('/')[1] || item.mime_type}</span></td>
+                    <td>${(item.file_size / 1024).toFixed(1)} KB</td>
+                    <td>${item.username || 'System'}</td>
+                    <td>${new Date(item.created_at).toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger delete-upload" data-id="${item.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                listBody.appendChild(tr);
+            });
+
+            // Handle Pagination
+            renderPagination(meta, pagination, loadUploads);
+        })
+        .catch(err => {
+            console.error('Upload load error:', err);
+            listBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+        });
+    }
+
+    function renderPagination(meta, container, loader) {
+        container.innerHTML = '';
+        if (meta.total_pages <= 1) return;
+
+        for (let i = 1; i <= meta.total_pages; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === meta.page ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            li.addEventListener('click', (e) => {
+                e.preventDefault();
+                loader(i);
+            });
+            container.appendChild(li);
+        }
+    }
+
+    window.previewImage = function(url) {
+        document.getElementById('full-preview').src = url;
+        $('#preview-modal').modal('show');
+    };
+
+    document.getElementById('refresh-uploads').addEventListener('click', () => loadUploads(currentPage));
+
+    // Event delegation for delete buttons
+    document.getElementById('uploads-list').addEventListener('click', function(e) {
+        const btn = e.target.closest('.delete-upload');
+        if (!btn) return;
+
+        if (!confirm('Are you sure you want to delete this upload record? This will NOT delete the physical file from the server.')) {
+            return;
+        }
+
+        const id = btn.dataset.id;
+        fetch(`/api/v1/admin/uploads/${id}`, {
+            method: 'DELETE',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                loadUploads(currentPage);
+            } else {
+                alert('Error: ' + res.message);
+            }
+        });
+    });
+
+    loadUploads(1);
+});
+/**
+ * admin-users.js - specialized logic for Administrative User Management.
+ *
+ * This module manages:
+ * - User Discovery: Fetches and renders the primary user table with roles.
+ * - Role Management: Dynamically loads and assigns system roles to accounts.
+ * - Moderation: Provides UI for banning and updating user profile data.
+ * - Form Handling: Securely submits updates to the User administrative API.
+ */
+(() => {
+  const ctx = window.__NMR_CONTEXT || {};
+  const csrfToken = (ctx.auth && ctx.auth.csrf_token) || sessionStorage.getItem('csrf_token') || null;
+
+  const api = async (path, options = {}) => {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = Object.assign({}, options.headers || {});
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (csrfToken && !['GET', 'HEAD', 'OPTIONS'].includes(method)) headers['X-CSRF-Token'] = csrfToken;
+
+    const res = await fetch(`/api/v1${path}`, { method, credentials: 'include', headers, body: options.body });
+    const payload = await res.json().catch(() => ({ status: 'error', error: { message: 'Invalid API response' } }));
+    if (!res.ok || payload.status === 'error') throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+    return payload;
+  };
+
+  const $ = (sel) => document.querySelector(sel);
+  const setHtml = (sel, html) => { const el = $(sel); if (el) el.innerHTML = html; };
+  const firstRole = (u) => {
+    if (u.role_names) {
+      const parts = u.role_names.split(',');
+      return parts[0].trim();
+    }
+    if (u.role) return u.role;
+    if (Array.isArray(u.roles) && u.roles.length > 0) return u.roles[0];
+    if (typeof u.roles === 'string' && u.roles.trim() !== '') return u.roles.split(',')[0].trim();
+    return 'user';
+  };
+
+  const formatDuration = (s) => {
+    if (!s || s <= 0) return '0s';
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m`;
+    return `${s}s`;
+  };
+
+  const loadUsers = async () => {
+    const body = $('#users-list-body');
+    if (!body) return;
+    try {
+      const res = await api('/admin/users');
+      const items = res.data || [];
+      window._NMR_USERS = items;
+      setHtml('#users-list-body', items.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td><a href="/${window.NMR.getLangPrefix()}/profile/${u.username}" style="color:inherit; text-decoration:none;" class="fw-bold">${u.username}</a></td>
+          <td>${u.email || ''}</td>
+          <td><span class="badge bg-light text-dark">${firstRole(u)}</span></td>
+          <td class="text-muted"><i class="bi bi-clock-history me-1"></i>${formatDuration(u.total_seconds)}</td>
+          <td><button class="btn btn-xs btn-outline-secondary" data-action="edit" data-id="${u.id}"><i class="bi bi-person-gear"></i></button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="text-center">No users</td></tr>');
+    } catch (e) {
+      setHtml('#users-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`);
+    }
+  };
+
+  const loadRoles = async () => {
+    const roleSelect = $('#edit-user-role');
+    if (!roleSelect) return;
+    try {
+      const res = await api('/admin/rbac/roles');
+      const items = res.data.items || res.data || [];
+      roleSelect.innerHTML = items.map(r => `<option value="${r.slug}">${r.name || r.slug}</option>`).join('');
+    } catch (e) {
+      console.error('Failed to load roles:', e);
+    }
+  };
+
+  const openEditModal = (id) => {
+    const u = (window._NMR_USERS || []).find(x => x.id == id);
+    if (!u) return;
+    $('#edit-user-id').value = u.id;
+    $('#edit-user-username').value = u.username;
+    $('#edit-user-email').value = u.email || '';
+    $('#edit-user-bio').value = u.bio || '';
+    $('#edit-user-role').value = firstRole(u);
+    $('#edit-user-banned').checked = !!u.is_banned;
+    new bootstrap.Modal($('#modal-edit-user')).show();
+  };
+
+  const saveUser = async (fd) => {
+    try {
+      await api(`/admin/users/${fd.get('id')}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          role: fd.get('role'),
+          is_banned: !!fd.get('is_banned'),
+          email: fd.get('email'),
+          bio: fd.get('bio')
+        })
+      });
+      bootstrap.Modal.getInstance($('#modal-edit-user')).hide();
+      loadUsers();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const init = () => {
+    loadUsers();
+    loadRoles();
+    $('#btn-refresh-users')?.addEventListener('click', loadUsers);
+    $('#users-list-body')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action=\"edit\"]');
+      if (btn) openEditModal(btn.dataset.id);
+    });
+    $('#form-edit-user')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveUser(new FormData(e.target));
+    });
+  };
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
