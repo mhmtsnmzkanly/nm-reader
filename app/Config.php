@@ -84,6 +84,11 @@ final class Config
         return self::$cachedSettings;
     }
 
+    public static function getInstance(): array
+    {
+        return self::getSettings();
+    }
+
     public static function getSystemConfig(): array
     {
         return [
