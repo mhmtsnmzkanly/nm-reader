@@ -42,12 +42,9 @@
     <script type="application/ld+json"><?= $jsonLd ?></script>
   <?php endif; ?>
   <script>window.__NMR_CONTEXT = <?= $contextJson ?? "{}" ?>;</script>
-  <script src="/assets/js/utils.js"></script>
-  <script src="/assets/js/marked.min.js"></script>
   <script src="/assets/js/melt.js"></script>
-  <script src="/assets/js/api.js"></script>
-  <script src="/assets/js/connection.js?v=<?= time() ?>"></script>
-  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/marked.min.js"></script>
+  <script src="/assets/js/app-bundle.js?v=<?= time() ?>"></script>
   
   <?php if (!empty($siteConfig['integrations']['cloudflare_turnstile_site_key'] ?? '')): ?>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
