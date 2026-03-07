@@ -139,6 +139,16 @@
         <div class="small">Error Rate: ${health.server_error_rate_pct_24h}%</div>
         <div class="small">P95 Latency: ${health.p95_duration_ms_24h}ms</div>
       `);
+
+      // Retention & Search
+      const rs = m.retention_search || {};
+      setHtml('#metrics-retention-search', `
+        <div class="mb-2 small">Searches (7d): ${rs.search_total_7d}</div>
+        <div class="mb-2 small">Zero Results: ${rs.zero_result_pct_7d}%</div>
+        <hr class="my-2 opacity-10">
+        <div class="small">D1 Retention: ${rs.d1_retention_pct}%</div>
+        <div class="small">New Users (7d): ${rs.new_users_7d}</div>
+      `);
     } catch (e) { console.error('Overview load error:', e); }
   };
 

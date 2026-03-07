@@ -53,6 +53,12 @@ final class AdminConsoleService
                     'server_error_rate_pct_24h' => $data['performance_slo']['server_error_rate_pct_24h'] ?? 0,
                     'p95_duration_ms_24h' => $data['performance_slo']['p95_duration_ms_24h'] ?? 0,
                 ],
+                'retention_search' => [
+                    'search_total_7d' => $data['retention_search']['search_total_7d'] ?? 0,
+                    'zero_result_pct_7d' => $data['retention_search']['zero_result_pct_7d'] ?? 0,
+                    'd1_retention_pct' => $data['retention_search']['d1_retention_pct'] ?? 0,
+                    'new_users_7d' => $data['retention_search']['new_users_7d'] ?? 0,
+                ],
                 'top_contents_7d' => $data['top_contents_7d'] ?? []
             ]
         ];

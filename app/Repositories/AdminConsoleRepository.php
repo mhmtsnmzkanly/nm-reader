@@ -54,6 +54,14 @@ final class AdminConsoleRepository
         $homeToContent = $homeViews > 0 ? round(($contentViews / $homeViews) * 100, 1) : 0;
         $contentToChapter = $contentViews > 0 ? round(($chapterViews / $contentViews) * 100, 1) : 0;
 
+        // Fetch Retention & Search
+        $searchTotal = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'search_total_7d'");
+        $zeroResults = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'zero_result_total_7d'");
+        $d1Retained = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'd1_retained_total'");
+        $newUsers = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE stat_date = CURRENT_DATE() AND metric_name = 'new_users_7d_total'");
+
+        $retentionPct = $newUsers > 0 ? round(($d1Retained / $newUsers) * 100, 1) : 0;
+
         // Fetch Top Contents 7d
         $topContents = $this->pdo->query(
             "SELECT s.title, s.type, s.slug, SUM(t.view_count) as view_count_7d, 0 as comment_count_7d
@@ -78,6 +86,12 @@ final class AdminConsoleRepository
             'funnel' => [
                 'home_to_content_pct' => $homeToContent,
                 'content_to_chapter_pct' => $contentToChapter,
+            ],
+            'retention_search' => [
+                'search_total_7d' => $searchTotal,
+                'zero_result_pct_7d' => $searchTotal > 0 ? round(($zeroResults / $searchTotal) * 100, 1) : 0,
+                'd1_retention_pct' => $retentionPct,
+                'new_users_7d' => $newUsers
             ],
             'performance_slo' => [
                 'server_error_rate_pct_24h' => $errorRate,
