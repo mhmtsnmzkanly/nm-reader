@@ -275,22 +275,30 @@ final class AdminPanelController
 
     public function siteVisits(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        return ResponseHelper::success($this->console->getSiteVisits());
+        return ResponseHelper::success($this->console->siteVisits());
     }
 
     public function viewStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        return ResponseHelper::success($this->console->getViewStats());
+        $query = $request->getQueryParams();
+        $days = (int) ($query['days'] ?? 30);
+        $limit = (int) ($query['limit'] ?? 10);
+        return ResponseHelper::success($this->console->viewStats($days, $limit));
     }
 
     public function blogStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        return ResponseHelper::success($this->console->getBlogStats());
+        $query = $request->getQueryParams();
+        $days = (int) ($query['days'] ?? 30);
+        $limit = (int) ($query['limit'] ?? 10);
+        return ResponseHelper::success($this->console->blogStats($days, $limit));
     }
 
     public function userReputation(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        return ResponseHelper::success($this->console->getUserReputation());
+        $query = $request->getQueryParams();
+        $limit = (int) ($query['limit'] ?? 10);
+        return ResponseHelper::success($this->console->userReputation($limit));
     }
 
     public function queueJobs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
