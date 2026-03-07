@@ -553,8 +553,7 @@ window.AdminApp = (function() {
       });
     },
     handleContentSelected: function(detail) {
-      const titleEl = $('#chapters-card-title');
-      if (titleEl) titleEl.textContent = `Chapters: ${detail.title}`;
+      setText('#chapters-card-title', `Chapters: ${detail.title}`);
       this.loadChapters();
     },
     handleChapterCreate: function(detail) {

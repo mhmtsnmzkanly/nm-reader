@@ -135,7 +135,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-<script src="/assets/js/admin-bundle.js"></script>
+<script src="/assets/js/admin-bundle.js?v=<?= time() ?>"></script>
 
 <script>
   const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
