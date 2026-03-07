@@ -3,6 +3,7 @@
  *
  * This bundle consolidates all administrative logic into a single file with
  * page-specific routing to prevent execution conflicts.
+ * Uses native openModal/closeModal system (no Bootstrap).
  */
 
 window.AdminApp = (function() {
@@ -397,7 +398,7 @@ window.AdminApp = (function() {
     },
     loadContents: async function() {
       try {
-        const res = await api('/admin/series');
+        const res = await api('/admin/content');
         this._CONTENTS = res.data || [];
         setHtml('#contents-list-body', this._CONTENTS.map(c => `
           <tr>
@@ -473,7 +474,7 @@ window.AdminApp = (function() {
       this._SELECTED_GENRES = new Set((String(c.genre_ids || '')).split(',').map(x => x.trim()).filter(Boolean));
       this._SELECTED_TAGS = new Set((String(c.tag_ids || '')).split(',').map(x => x.trim()).filter(Boolean));
       this.renderTaxonomyButtons();
-      new bootstrap.Modal($('#modal-edit-content')).show();
+      if (window.openModal) window.openModal('modal-edit-content');
     },
     handleCreate: async function(e) {
       e.preventDefault();
@@ -481,7 +482,7 @@ window.AdminApp = (function() {
         const payload = Object.fromEntries(new FormData(e.target));
         const res = await api('/admin/content', { method: 'POST', body: JSON.stringify(payload) });
         if (res?.data?.id) await api(`/admin/contents/${res.data.id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._CREATE_GENRES), tags: Array.from(this._CREATE_TAGS) }) });
-        bootstrap.Modal.getInstance($('#modal-create-content')).hide();
+        if (window.closeModal) window.closeModal();
         e.target.reset();
         this._CREATE_GENRES.clear(); this._CREATE_TAGS.clear();
         this.renderCreateTaxonomyButtons(); this.loadContents();
@@ -494,7 +495,7 @@ window.AdminApp = (function() {
       try {
         await api(`/admin/content/${id}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
         await api(`/admin/contents/${id}/taxonomy`, { method: 'PUT', body: JSON.stringify({ genres: Array.from(this._SELECTED_GENRES), tags: Array.from(this._SELECTED_TAGS) }) });
-        bootstrap.Modal.getInstance($('#modal-edit-content')).hide();
+        if (window.closeModal) window.closeModal();
         this.loadContents();
         if (window.showPopup) window.showPopup('Content saved', 'success');
       } catch (err) { alert(err.message); }
@@ -557,8 +558,7 @@ window.AdminApp = (function() {
       this.loadChapters();
     },
     handleChapterCreate: function(detail) {
-      const modalEl = $('#modal-create-chapter');
-      if (modalEl) new bootstrap.Modal(modalEl).show();
+      if (window.openModal) window.openModal('modal-create-chapter');
     },
     loadChapters: async function() {
       const contentId = $('#chapters-content-id')?.value;
@@ -584,8 +584,10 @@ window.AdminApp = (function() {
       } catch (e) { setHtml('#chapters-list-body', `<tr><td colspan="6" class="text-center text-danger">${e.message}</td></tr>`); }
     },
     toggleEditor: function(type, prefix) {
-      $(`#${prefix}-chapter-body-wrap`)?.classList.toggle('d-none', type === 'image');
-      $(`#${prefix}-chapter-pages-wrap`)?.classList.toggle('d-none', type !== 'image');
+      const bodyWrap = $(`#${prefix}-chapter-body-wrap`);
+      const pagesWrap = $(`#${prefix}-chapter-pages-wrap`);
+      if (bodyWrap) bodyWrap.classList.toggle('d-none', type === 'image');
+      if (pagesWrap) pagesWrap.classList.toggle('d-none', type !== 'image');
     },
     openEdit: function(data) {
       $('#edit-chapter-id').value = data.id;
@@ -593,7 +595,7 @@ window.AdminApp = (function() {
       $('#edit-chapter-title').value = data.title;
       $('#edit-chapter-type').value = data.type;
       this.toggleEditor(data.type, 'edit');
-      new bootstrap.Modal($('#modal-edit-chapter')).show();
+      if (window.openModal) window.openModal('modal-edit-chapter');
     },
     handleCreate: async function(e) {
       e.preventDefault();
@@ -604,7 +606,7 @@ window.AdminApp = (function() {
       if (type === 'image') payload.data = fd.get('pages').split('\n').map(l => l.trim()).filter(Boolean).join('|');
       try {
         await api(`/admin/content/${contentId}/chapters`, { method: 'POST', body: JSON.stringify(payload) });
-        bootstrap.Modal.getInstance($('#modal-create-chapter')).hide();
+        if (window.closeModal) window.closeModal();
         e.target.reset(); this.loadChapters();
       } catch (e) { alert(e.message); }
     },
@@ -614,7 +616,7 @@ window.AdminApp = (function() {
       const id = fd.get('id');
       try {
         await api(`/admin/chapters/${id}`, { method: 'PUT', body: JSON.stringify(Object.fromEntries(fd)) });
-        bootstrap.Modal.getInstance($('#modal-edit-chapter')).hide();
+        if (window.closeModal) window.closeModal();
         this.loadChapters();
       } catch (e) { alert(e.message); }
     },
@@ -640,7 +642,7 @@ window.AdminApp = (function() {
         const fd = new FormData(e.target);
         try {
           await api(`/admin/users/${fd.get('id')}`, { method: 'PUT', body: JSON.stringify({ role: fd.get('role'), is_banned: !!fd.get('is_banned'), email: fd.get('email'), bio: fd.get('bio') }) });
-          bootstrap.Modal.getInstance($('#modal-edit-user')).hide();
+          if (window.closeModal) window.closeModal();
           this.loadUsers();
         } catch (e) { alert(e.message); }
       });
@@ -679,7 +681,7 @@ window.AdminApp = (function() {
       $('#edit-user-bio').value = u.bio || '';
       $('#edit-user-role').value = this.firstRole(u);
       $('#edit-user-banned').checked = !!u.is_banned;
-      new bootstrap.Modal($('#modal-edit-user')).show();
+      if (window.openModal) window.openModal('modal-edit-user');
     }
   };
 
@@ -695,7 +697,11 @@ window.AdminApp = (function() {
         const btn = e.target.closest('.delete-upload');
         if (btn) this.delete(btn.dataset.id);
       });
-      window.previewImage = (url) => { document.getElementById('full-preview').src = url; $('#preview-modal').classList.add('active'); };
+      window.previewImage = (url) => { 
+        const img = document.getElementById('full-preview');
+        if (img) img.src = url; 
+        if (window.openModal) window.openModal('preview-modal');
+      };
     },
     load: async function(page = 1) {
       this.currentPage = page;
@@ -814,17 +820,16 @@ window.AdminApp = (function() {
     },
     load: async function() {
       try {
-        const res = await api('/admin/config'); const d = res.data || {};
+        const res = await api('/admin/maintenance/env'); const d = res.data || {};
         const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
-        setVal('site_name', d.site_name); setVal('site_abbreviation', d.site_abbreviation);
-        setVal('site_description', d.site_description); setVal('site_logo', d.site_logo);
-        if ($('#allow_registration')) $('#allow_registration').checked = !!d.allow_registration;
+        setVal('site_name', d.SITE_NAME); setVal('site_abbreviation', d.SITE_ABBREVIATION);
+        setVal('site_description', d.SITE_DESCRIPTION); setVal('site_logo', d.SITE_LOGO);
       } catch (e) {}
     },
     save: async function(e) {
       e.preventDefault();
       try {
-        await api('/admin/config', { method: 'PUT', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
+        await api('/admin/maintenance/env', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
         alert('Config saved');
       } catch (e) { alert(e.message); }
     }
