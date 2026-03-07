@@ -74,7 +74,7 @@ final class WebController
             $response,
             "home.php",
             [],
-            ["/assets/js/home.js"],
+            [],
             "Home - " . $siteName,
             "container",
             [
@@ -219,7 +219,7 @@ final class WebController
                 "ssr_data" => $content,
                 "breadcrumbs" => $breadcrumbs,
             ],
-            ["/assets/js/content.js?v=" . time()],
+            [],
             $seo["title"],
             "container",
             $seo,
@@ -289,7 +289,7 @@ final class WebController
                 "chapter" => $chapter,
                 "breadcrumbs" => $breadcrumbs,
             ],
-            ["/assets/js/reader.js?v=" . time()],
+            [],
             $seoTitle,
             "container-fluid",
             [
@@ -392,7 +392,7 @@ final class WebController
                 "library" => $library,
                 "preferences" => $preferences,
             ],
-            ["/assets/js/profile.js"],
+            [],
             "$username - Profile",
             "container",
             [
@@ -474,7 +474,7 @@ final class WebController
                 "ssr_data" => $ssrData,
                 "breadcrumbs" => $breadcrumbs,
             ],
-            ["/assets/js/blog.js"],
+            [],
             $seo["title"],
             "container",
             $seo,
@@ -491,7 +491,7 @@ final class WebController
             $response,
             "chat.php",
             [],
-            ["/assets/js/chat.js"],
+            [],
             "Chat - " . $siteName,
             "container",
             [
@@ -521,7 +521,7 @@ final class WebController
             $response,
             "search.php",
             ["q" => $query],
-            ["/assets/js/search.js"],
+            [],
             "Search - " . $siteName,
             "container",
             [
@@ -555,7 +555,7 @@ final class WebController
                 "list_type" => "category",
                 "value" => $type,
             ],
-            ["/assets/js/series_list.js"],
+            [],
             "Browse - " . $siteName,
             "container",
             [
@@ -598,7 +598,7 @@ final class WebController
                 "value" => $slug,
                 "breadcrumbs" => $breadcrumbs,
             ],
-            ["/assets/js/series_list.js"],
+            [],
             "Genre: " . ucfirst($slug),
             "container",
             [
@@ -640,7 +640,7 @@ final class WebController
                 "value" => $slug,
                 "breadcrumbs" => $breadcrumbs,
             ],
-            ["/assets/js/series_list.js"],
+            [],
             "Tag: " . ucfirst($slug),
             "container",
             [
@@ -666,7 +666,7 @@ final class WebController
             $request,
             $response,
             "admin_dashboard.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "Admin Dashboard - " . $this->siteConfig->siteName(),
         );
     }
@@ -684,7 +684,7 @@ final class WebController
             $request,
             $response,
             "admin_content.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "Content Management - " . $siteName,
         );
     }
@@ -701,7 +701,7 @@ final class WebController
             $request,
             $response,
             "admin_blogs.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "Blogs - Admin",
         );
     }
@@ -718,7 +718,7 @@ final class WebController
             $request,
             $response,
             "admin_comments.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "Comments - Admin",
         );
     }
@@ -735,7 +735,7 @@ final class WebController
             $request,
             $response,
             "admin_users.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "Users - Admin",
         );
     }
@@ -752,7 +752,7 @@ final class WebController
             $request,
             $response,
             "admin_ops.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "System Ops - Admin",
         );
     }
@@ -769,7 +769,7 @@ final class WebController
             $request,
             $response,
             "admin_config.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "System Config - Admin",
         );
     }
@@ -786,7 +786,7 @@ final class WebController
             $request,
             $response,
             "admin_uploads.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "System Uploads - Admin",
         );
     }
@@ -803,7 +803,7 @@ final class WebController
             $request,
             $response,
             "admin_logs.php",
-            ["/assets/js/admin-bundle.js"],
+            [],
             "Logs - Admin",
         );
     }

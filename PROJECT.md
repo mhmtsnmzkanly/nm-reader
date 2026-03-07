@@ -441,5 +441,15 @@ This document serves as the absolute authority on the project's architecture, co
 - **Refactor**: Updated `SeriesRepository` and `ChapterRepository` to filter out deleted items in all public and admin queries using `deleted_at IS NULL`.
 - **Database**: Added indices on `deleted_at` columns to maintain high query performance.
 
+### Asset Optimization: Unified JS Bundling (2026-03-07)
+- **Status**: Completed.
+- **Feature**: Consolidated all fragmented JavaScript files into two primary bundles: `app-bundle.js` (Frontend) and `admin-bundle.js` (Administration).
+- **Architecture**: Implemented a modular namespace-based structure with path-based routing to prevent cross-page execution conflicts.
+- **Refactor**:
+  - Removed redundant script tags from all view files and `WebController` render calls.
+  - Standardized API communication and CSRF handling within the bundles.
+  - Improved reader stability and settings persistence.
+
+
 
 
