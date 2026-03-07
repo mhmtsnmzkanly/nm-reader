@@ -352,8 +352,20 @@ window.AdminApp = (function() {
         if (action === 'edit') this.openEditContent(id);
         if (action === 'chapter' || action === 'add-chapter') {
           const detail = { id: c.id, title: c.title, slug: c.slug, type: c.type };
-          const idInput = $('#chapters-content-id');
-          if (idInput) idInput.value = c.id;
+          
+          // Add to select box if missing
+          const sel = $('#chapters-content-id');
+          if (sel) {
+            let opt = Array.from(sel.options).find(o => o.value == c.id);
+            if (!opt) {
+              opt = document.createElement('option');
+              opt.value = c.id;
+              opt.textContent = c.title;
+              sel.appendChild(opt);
+            }
+            sel.value = c.id;
+          }
+
           document.dispatchEvent(new CustomEvent('nmr:admin-content:selected', { detail }));
           if (action === 'add-chapter') document.dispatchEvent(new CustomEvent('nmr:admin-chapter:create', { detail }));
         }
@@ -539,6 +551,7 @@ window.AdminApp = (function() {
       document.addEventListener('nmr:admin-content:selected', (e) => this.handleContentSelected(e.detail));
       document.addEventListener('nmr:admin-chapter:create', (e) => this.handleChapterCreate(e.detail));
       $('#btn-refresh-chapters')?.addEventListener('click', () => this.loadChapters());
+      $('#chapters-content-id')?.addEventListener('change', () => this.loadChapters());
       $('#create-chapter-type')?.addEventListener('change', (e) => this.toggleEditor(e.target.value, 'create'));
       $('#edit-chapter-type')?.addEventListener('change', (e) => this.toggleEditor(e.target.value, 'edit'));
       $('#form-create-chapter')?.addEventListener('submit', (e) => this.handleCreate(e));
@@ -564,7 +577,7 @@ window.AdminApp = (function() {
       if (!contentId) return;
       try {
         const res = await api(`/admin/content/${contentId}/chapters`);
-        const items = res.data || [];
+        const items = res.data?.items || res.data || [];
         setHtml('#chapters-list-body', items.map(ch => `
           <tr>
             <td>${ch.chapter_number}</td>
