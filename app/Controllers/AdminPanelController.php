@@ -127,6 +127,29 @@ final class AdminPanelController
         return ResponseHelper::success($this->console->listRbacRoles());
     }
 
+    public function rbacAssignments(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->console->listRbacAssignments($page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
+    public function assignPermissionToRole(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        $this->console->assignPermissionToRole($payload, $modId);
+        return ResponseHelper::success(['assigned' => true]);
+    }
+
+    public function createModerationAction(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $modId = (string) $request->getAttribute('user_id');
+        $id = $this->console->createModerationAction($modId, $payload);
+        return ResponseHelper::created(['id' => $id]);
+    }
+
     // --- BLOGS & COMMENTS ---
     public function blogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {

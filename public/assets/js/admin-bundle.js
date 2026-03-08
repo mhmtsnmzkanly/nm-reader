@@ -52,6 +52,23 @@ window.AdminApp = (function($) {
       this.load();
       $('#btn-refresh-reputation')?.on('click', () => this.load());
       $('#btn-refresh-legacy-metrics, #btn-metrics-dashboard, #btn-metrics-snapshot, #btn-metrics-insights, #btn-metrics-genre')?.on('click', () => this.load());
+      $('#btn-refresh-rbac')?.on('click', () => this.loadRbac());
+      $('#form-assign-permission')?.on('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await api('/admin/rbac/permissions/assign', { method: 'POST', body: JSON.stringify({ role: $('#role-slug-input').val(), permission: $('#perm-code-input').val() }) });
+          e.target.reset();
+          this.loadRbac();
+        } catch (err) { alert(err.message); }
+      });
+      $('#form-create-mod-action')?.on('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await api('/admin/moderation-actions', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
+          e.target.reset();
+          this.loadModerationActions();
+        } catch (err) { alert(err.message); }
+      });
     },
     load: async function() {
       try {
@@ -89,6 +106,24 @@ window.AdminApp = (function($) {
         this.loadCharts(viewsRes.data || {}, blogStats);
         setH('#legacy-kpis', `Users: ${d.kpis?.users_total || 0}<br>Contents: ${d.kpis?.contents_total || 0}<br>Chapters: ${d.kpis?.chapters_total || 0}<br>Pending Blogs: ${d.kpis?.blogs_pending_total || 0}`);
         setH('#legacy-metrics-output', esc(JSON.stringify({ overview: d, views: viewsRes.data || {}, visits, blogs: blogStats }, null, 2)));
+        this.loadRbac();
+        this.loadModerationActions();
+      } catch (e) {}
+    },
+    loadRbac: async function() {
+      try {
+        const [rolesRes, assignmentsRes] = await Promise.all([api('/admin/rbac/roles'), api('/admin/rbac/assignments')]);
+        const roles = rolesRes.data?.items || rolesRes.data || [];
+        const assignments = assignmentsRes.data?.items || assignmentsRes.data || [];
+        setH('#rbac-roles-body', roles.map(r => `<tr><td><strong>${esc(r.slug)}</strong></td><td>${esc(r.name || r.description || '')}<div class="small text-muted">${esc(r.permissions || '')}</div></td></tr>`).join('') || '<tr><td colspan="2">No data</td></tr>');
+        setH('#rbac-assignments-body', assignments.map(a => `<tr><td>@${esc(a.username)}</td><td>${esc(a.roles || '-')}</td><td>${esc(a.roles || '-')}</td></tr>`).join('') || '<tr><td colspan="3">No data</td></tr>');
+      } catch (e) {}
+    },
+    loadModerationActions: async function() {
+      try {
+        const r = await api('/admin/moderation-actions');
+        const items = r.data?.items || r.data || [];
+        setH('#mod-actions-body', items.map(m => `<tr><td>@${esc(m.moderator_username || m.username || 'system')}</td><td>${esc(m.action || '-')}</td><td>${esc(`${m.target_type || '-'}:${m.target_id || '-'}`)}</td><td>${esc(m.reason || '')}</td></tr>`).join('') || '<tr><td colspan="4">No data</td></tr>');
       } catch (e) {}
     },
     loadCharts: function(s, b) {

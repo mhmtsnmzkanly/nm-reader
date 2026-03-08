@@ -283,6 +283,8 @@ final class Config
             $group->delete("/comments/{id:[0-9]+}", [AdminPanelController::class, "deleteComment"])->add($perm(["admin.comment.delete"]));
             $group->put("/users/{id}", [AdminPanelController::class, "updateUser"])->add($perm(["admin.users.manage"]));
             $group->get("/rbac/roles", [AdminPanelController::class, "rbacRoles"])->add($perm(["admin.panel.access"]));
+            $group->get("/rbac/assignments", [AdminPanelController::class, "rbacAssignments"])->add($perm(["admin.panel.access"]));
+            $group->post("/rbac/permissions/assign", [AdminPanelController::class, "assignPermissionToRole"])->add($perm(["admin.permissions.grant"]));
             $group->get("/queue/jobs", [AdminPanelController::class, "queueJobs"])->add($perm(["admin.panel.access"]));
             $group->post("/queue/run-once", [AdminPanelController::class, "runQueueOnce"])->add($perm(["admin.jobs.run"]));
             $group->post("/retention/cleanup", [AdminPanelController::class, "cleanupRetention"])->add($perm(["admin.jobs.run"]));
@@ -295,6 +297,7 @@ final class Config
             $group->get("/audit-logs", [AdminPanelController::class, "auditLogs"])->add($perm(["admin.logs.view"]));
             $group->get("/login-events", [AdminPanelController::class, "loginEvents"])->add($perm(["admin.logs.view"]));
             $group->get("/moderation-actions", [AdminPanelController::class, "moderationActions"])->add($perm(["admin.logs.view"]));
+            $group->post("/moderation-actions", [AdminPanelController::class, "createModerationAction"])->add($perm(["admin.logs.view"]));
             $group->get("/logs/access", [AdminPanelController::class, "systemAccessLogs"])->add($perm(["admin.logs.view"]));
             $group->get("/logs/error", [AdminPanelController::class, "systemErrorLogs"])->add($perm(["admin.logs.view"]));
             $group->get("/stats/visits", [AdminPanelController::class, "siteVisits"])->add($perm(["admin.metrics.view"]));
