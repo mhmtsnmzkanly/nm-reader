@@ -95,6 +95,12 @@ final class AdminConsoleService
         return $this->withMeta($items, $result['total'], $page, $perPage);
     }
 
+    public function listAllUsersForSelect(): array
+    {
+        $items = $this->repo->listAllUsersForSelect();
+        return OutputSanitizer::sanitizeRows($items, ['username']);
+    }
+
     /**
      * Paginated list of content (series) for management.
      */

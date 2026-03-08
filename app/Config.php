@@ -288,6 +288,7 @@ final class Config
             $group->get("/genres", [AdminPanelController::class, "listGenres"])->add($perm(["admin.panel.access"]));
             $group->get("/tags", [AdminPanelController::class, "listTags"])->add($perm(["admin.panel.access"]));
             $group->get("/users", [AdminPanelController::class, "listUsers"])->add($perm(["admin.panel.access"]));
+            $group->get("/users/options", [AdminPanelController::class, "userOptions"])->add($perm(["admin.wallet.view"]));
             $group->get("/uploads", [AdminPanelController::class, "uploads"])->add($perm(["admin.panel.access"]));
             $group->delete("/uploads/{id:[0-9]+}", [AdminPanelController::class, "deleteUpload"])->add($perm(["admin.panel.access"]));
             $group->get("/blogs", [AdminPanelController::class, "blogs"])->add($perm(["admin.panel.access"]));

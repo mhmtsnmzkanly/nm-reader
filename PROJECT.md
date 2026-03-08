@@ -128,6 +128,7 @@ This document serves as the absolute authority on the project's architecture, co
   - Added a new `Monetization` admin page and sidebar entry.
   - Added UI forms for wallet credit/debit, package grant, package management, ad-free product configuration, and series/chapter pricing updates.
   - Added wallet summary lookup and transaction listing for a target user inside the admin panel.
+  - Replaced manual `user_id` entry with a selectable user list fed from an admin user-options endpoint.
 
 ### Content Alternative Titles Visibility (2026-03-01)
 - **Status**: Completed.

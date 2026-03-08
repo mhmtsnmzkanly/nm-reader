@@ -124,6 +124,11 @@ final class AdminPanelController
         return ResponseHelper::success();
     }
 
+    public function userOptions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->listAllUsersForSelect());
+    }
+
     public function rbacRoles(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         return ResponseHelper::success($this->console->listRbacRoles());

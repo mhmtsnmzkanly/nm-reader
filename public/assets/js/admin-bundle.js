@@ -367,17 +367,19 @@ window.AdminApp = (function($) {
 
   const Monetization = {
     _packages: [],
+    _users: [],
     _userId: '',
     init: function() {
       if (!$('#packages-table-body').length) return;
       this.bind();
+      this.loadUsers();
       this.loadPackages();
       this.loadFeatures();
     },
     bind: function() {
       $('#btn-refresh-packages').on('click', () => this.loadPackages());
-      $('#btn-load-wallet').on('click', () => this.loadWallet());
       $('#btn-refresh-wallet-transactions').on('click', () => this.loadTransactions());
+      $('#money-user-id').on('change', () => this.loadWallet());
 
       $('#form-wallet-adjust').on('submit', async (e) => {
         e.preventDefault();
@@ -506,6 +508,15 @@ window.AdminApp = (function($) {
       this._userId = uid;
       return uid;
     },
+    loadUsers: async function() {
+      try {
+        const r = await api('/admin/users/options');
+        this._users = r.data || [];
+        setH('#money-user-id', `<option value="">-- Select User --</option>` + this._users.map(u => `<option value="${u.id}">${esc(u.username)} (${u.id})${u.email ? ' - ' + esc(u.email) : ''}</option>`).join(''));
+      } catch (err) {
+        setH('#money-user-id', `<option value="">${esc(err.message)}</option>`);
+      }
+    },
     loadPackages: async function() {
       try {
         const r = await api('/admin/shop/packages');
@@ -546,7 +557,11 @@ window.AdminApp = (function($) {
     },
     loadWallet: async function() {
       const uid = this.currentUserId();
-      if (!uid) return alert('User ID gerekli.');
+      if (!uid) {
+        setH('#wallet-summary-box', 'Select a user to inspect wallet data.');
+        setH('#wallet-transactions-body', '<tr><td colspan="6" class="text-center">Select a user first.</td></tr>');
+        return;
+      }
       try {
         const r = await api(`/admin/wallets/${uid}`);
         const w = r.data || {};

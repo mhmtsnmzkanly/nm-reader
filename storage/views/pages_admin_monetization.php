@@ -20,13 +20,12 @@
           <div class="card-header border-0"><h3 class="card-title">User Wallet</h3></div>
           <div class="card-body">
             <div class="mb-3">
-              <label class="form-label small">User ID</label>
-              <div class="input-group input-group-sm">
-                <input type="text" id="money-user-id" class="form-control" placeholder="usr00001">
-                <button class="btn btn-outline-primary" id="btn-load-wallet">Load</button>
-              </div>
+              <label class="form-label small">User Select</label>
+              <select id="money-user-id" class="form-select form-select-sm">
+                <option value="">Loading users...</option>
+              </select>
             </div>
-            <div id="wallet-summary-box" class="small bg-light border rounded p-3">Enter a user ID to inspect wallet data.</div>
+            <div id="wallet-summary-box" class="small bg-light border rounded p-3">Select a user to inspect wallet data.</div>
           </div>
         </div>
 

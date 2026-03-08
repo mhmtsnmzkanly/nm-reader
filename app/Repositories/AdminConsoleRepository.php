@@ -225,6 +225,17 @@ final class AdminConsoleRepository
         ];
     }
 
+    public function listAllUsersForSelect(): array
+    {
+        $stmt = $this->pdo->query(
+            'SELECT id, username, email
+             FROM users
+             ORDER BY username ASC, created_at DESC'
+        );
+
+        return $stmt->fetchAll();
+    }
+
     /**
      * Atomically updates user details, roles, and moderation (ban) status.
      */
