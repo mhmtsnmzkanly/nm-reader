@@ -29,6 +29,11 @@ window.App = (function($) {
       const parts = window.location.pathname.split('/').filter(Boolean);
       return (parts[0] === 'tr' || parts[0] === 'en') ? parts[0] : 'tr';
     },
+    hasMeltPrefix: () => {
+      const parts = window.location.pathname.split('/').filter(Boolean);
+      const offset = (parts[0] === 'tr' || parts[0] === 'en') ? 1 : 0;
+      return parts[offset] === 'melt';
+    },
     parseMarkdown: (text) => {
       if (typeof marked === 'undefined') return text || '';
       try {
@@ -95,7 +100,10 @@ window.App = (function($) {
       $('#globalSearchForm').on('submit', (e) => {
         e.preventDefault();
         const q = $('#globalSearchInput').val().trim();
-        if (q.length >= 2) location.href = `/${Utils.getLangPrefix()}/search?q=${encodeURIComponent(q)}`;
+        if (q.length >= 2) {
+          const base = Utils.hasMeltPrefix() ? `/${Utils.getLangPrefix()}/melt/search` : `/${Utils.getLangPrefix()}/search`;
+          location.href = `${base}?q=${encodeURIComponent(q)}`;
+        }
       });
     },
     setupSettings: function() {
@@ -184,7 +192,8 @@ window.App = (function($) {
         const path = window.location.pathname.split('/').filter(Boolean);
         const lang = (path[0] === 'tr' || path[0] === 'en') ? path[0] : '';
         const offset = lang ? 1 : 0;
-        const type = path[offset], slug = path[offset+1], num = path[offset+3];
+        const meltOffset = path[offset] === 'melt' ? 1 : 0;
+        const type = path[offset + meltOffset], slug = path[offset + meltOffset + 1], num = path[offset + meltOffset + 3];
 
         Connection.getChapters(type, slug).then(res => {
           const chapters = (res.data || []).sort((a,b) => parseFloat(a.chapter_number) - parseFloat(b.chapter_number));
@@ -196,7 +205,8 @@ window.App = (function($) {
           
           select.on('change', function() {
             const val = $(this).val();
-            window.history.replaceState({}, '', `/${lang ? lang+'/' : ''}${type}/${slug}/chapter/${val}`);
+            const meltSegment = meltOffset ? 'melt/' : '';
+            window.history.replaceState({}, '', `/${lang ? lang+'/' : ''}${meltSegment}${type}/${slug}/chapter/${val}`);
             location.reload();
           });
 

@@ -99,6 +99,17 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Melt Frontend Preview Routes & Flores-Inspired UI Rebuild (2026-03-08)
+- **Status**: Completed.
+- **Problem**:
+  - The existing public frontend was functionally usable but visually behind the desired reading/browsing UX target.
+  - A separate Next.js design reference existed under `floresscans.com/`, but it needed to be reinterpreted for the current PHP + Melt stack without rewriting the backend.
+- **Fix**:
+  - Added `melt`-prefixed SSR web routes for home, search, listing, content, genre/tag listing, and chapter reader flows so the legacy pages remain intact.
+  - Added a dedicated `layout_melt.php`, new `pages_melt_*.php` templates, and `public/assets/css/melt-nm.css` for the redesigned mobile-first presentation layer.
+  - Added `public/assets/js/melt-front.js` to handle Melt-specific mobile navigation, search suggestions, chapter list rendering, comment flows, and unlock/follow/rate interactions against the existing API.
+  - Updated `public/assets/js/app-bundle.js` so reader routing and global search also work correctly on `melt`-prefixed URLs.
+
 ### Wallet, Coin Unlocks & Schema Alignment (2026-03-08)
 - **Status**: Completed.
 - **Problem**:

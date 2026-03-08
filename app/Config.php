@@ -184,12 +184,27 @@ final class Config
             $group->get("/admin/logs", [WebController::class, "adminLogs"]);
             $group->get("/admin/tutorial", [WebController::class, "adminTutorial"]);
         };
+        $addMeltRoutes = function (RouteCollectorProxy $group) use ($typePattern): void {
+            $group->get("/melt", [WebController::class, "meltHome"]);
+            $group->get("/melt/search", [WebController::class, "meltSearch"]);
+            $group->get("/melt/genre/{slug}", [WebController::class, "meltGenre"]);
+            $group->get("/melt/tag/{slug}", [WebController::class, "meltTag"]);
+            $group->get("/melt/{type:" . $typePattern . "}", [WebController::class, "meltListing"]);
+            $group->get("/melt/{type:" . $typePattern . "}/{slug}/chapter/{chapterNumber}", [WebController::class, "meltChapter"]);
+            $group->get("/melt/{type:" . $typePattern . "}/{slug}", [WebController::class, "meltContent"]);
+        };
         $app->get("/robots.txt", [WebController::class, "robotsTxt"]);
         $app->get("/sitemap.xml", [WebController::class, "sitemapXml"]);
         $app->get("/logout", [AuthController::class, "logout"]);
         $app->get("/", fn($req, $res) => $res->withHeader("Location", "/tr")->withStatus(302));
-        $app->group("/{lang:tr|en}", fn($g) => $addWebRoutes($g, true));
-        $app->group("", fn($g) => $addWebRoutes($g, false));
+        $app->group("/{lang:tr|en}", function ($g) use ($addWebRoutes, $addMeltRoutes): void {
+            $addWebRoutes($g, true);
+            $addMeltRoutes($g);
+        });
+        $app->group("", function ($g) use ($addWebRoutes, $addMeltRoutes): void {
+            $addWebRoutes($g, false);
+            $addMeltRoutes($g);
+        });
     }
 
     private static function registerApiRoutes(App $app, string $typePattern): void
