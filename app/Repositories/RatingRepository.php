@@ -29,11 +29,11 @@ final class RatingRepository
      */
     public function upsert(string $userId, string $contentId, int $rating): void
     {
-        $sql = 'INSERT INTO series_ratings (user_id, content_id, rating)
-                VALUES (:user_id, :content_id, :rating)
+        $sql = 'INSERT INTO ratings (user_id, content_id, score, created_at)
+                VALUES (:user_id, :content_id, :rating, NOW())
                 ON DUPLICATE KEY UPDATE
-                    rating = VALUES(rating),
-                    updated_at = NOW()';
+                    score = VALUES(score),
+                    created_at = NOW()';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -46,7 +46,7 @@ final class RatingRepository
     /**
      * Recalculates and updates the average rating and total count for a content entry.
      *
-     * This syncs data from the 'series_ratings' table back to the 'series' table for performance.
+     * This syncs data from the 'ratings' table back to the 'series' table for performance.
      *
      * @param string $contentId
      */
@@ -56,9 +56,9 @@ final class RatingRepository
                 INNER JOIN (
                     SELECT 
                         content_id,
-                        AVG(rating) AS rating_avg,
+                        AVG(score) AS rating_avg,
                         COUNT(id) AS rating_count
-                    FROM series_ratings
+                    FROM ratings
                     WHERE content_id = :content_id
                     GROUP BY content_id
                 ) r ON r.content_id = c.id

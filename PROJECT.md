@@ -99,6 +99,18 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Wallet, Coin Unlocks & Schema Alignment (2026-03-08)
+- **Status**: Completed.
+- **Problem**:
+  - The backend had no monetization model for paid chapter/series access.
+  - Active code referenced multiple tables that were missing from `app/database/schema.sql`, creating schema drift and deployment risk.
+- **Fix**:
+  - Added wallet, ledger, package, pricing, and unlock backend flows for coin-based access.
+  - Added authenticated user endpoints for wallet balance, transaction history, owned unlocks, and chapter/series unlock actions.
+  - Added administrative endpoints for manual wallet credit/debit, package management, and per-series/per-chapter pricing.
+  - Extended content/chapter API responses with access metadata so frontend changes can consume lock state without backend rework.
+  - Re-aligned `schema.sql` with active backend dependencies by restoring missing queue, preferences, follows, read-history, and analytics tables.
+
 ### Content Alternative Titles Visibility (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Alternative titles were cluttering the hero section and weren't easily readable.
@@ -454,6 +466,5 @@ This document serves as the absolute authority on the project's architecture, co
   - Removed redundant script tags from all view files and `WebController` render calls.
   - Standardized API communication and CSRF handling within the bundles.
   - Improved reader stability and settings persistence.
-
 
 

@@ -8,6 +8,7 @@ use App\Helpers\ResponseHelper;
 use App\Services\AnalyticsService;
 use App\Services\SeriesService;
 use App\Services\ChapterService;
+use App\Services\WalletService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -24,7 +25,8 @@ final class ContentController
     public function __construct(
         private readonly SeriesService $seriesService,
         private readonly ChapterService $chapterService,
-        private readonly AnalyticsService $analytics
+        private readonly AnalyticsService $analytics,
+        private readonly WalletService $wallets
     ) {
     }
 
@@ -86,7 +88,8 @@ final class ContentController
     {
         try {
             [$page, $perPage] = $this->pagination($request);
-            $items = $this->seriesService->chaptersByType((string)$args['type'], (string)$args['slug'], $page, $perPage);
+            $userId = $request->getAttribute('user_id');
+            $items = $this->seriesService->chaptersByType((string)$args['type'], (string)$args['slug'], $page, $perPage, is_string($userId) ? $userId : null);
             return ResponseHelper::success($items, ['page' => $page, 'per_page' => $perPage]);
         } catch (\DomainException $e) { return ResponseHelper::error(400, $e->getMessage()); }
     }
@@ -102,7 +105,7 @@ final class ContentController
         try {
             $chapter = $this->chapterService->getByTypeSlugAndNumber($type, $slug, $num, $ip, $userId);
             if (!$chapter) return ResponseHelper::error(404, 'Chapter not found');
-            if ($userId) $this->chapterService->markRead($userId, (string)$chapter['id']);
+            if ($userId && (($chapter['access']['granted'] ?? false) === true)) $this->chapterService->markRead($userId, (string)$chapter['id']);
             return ResponseHelper::success($chapter);
         } catch (\DomainException $e) { return ResponseHelper::error(400, $e->getMessage()); }
     }
@@ -153,6 +156,13 @@ final class ContentController
         return ResponseHelper::success($this->seriesService->suggest($query));
     }
 
+    public function shopPackages(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->wallets->packages($page, $perPage, true);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
     // --- USER INTERACTIONS (FOLLOWS) ---
 
     public function followByType(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -178,6 +188,29 @@ final class ContentController
         $userId = (string) $request->getAttribute('user_id');
         [$page, $perPage] = $this->pagination($request);
         return ResponseHelper::success($this->seriesService->followedContents($userId, $page, $perPage), ['page' => $page, 'per_page' => $perPage]);
+    }
+
+    public function unlockByType(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->wallets->unlockSeries($userId, (string) $args['type'], (string) $args['slug']));
+        } catch (\DomainException $e) {
+            $code = str_contains(strtolower($e->getMessage()), 'not found') ? 404 : 402;
+            return ResponseHelper::error($code, $e->getMessage());
+        }
+    }
+
+    public function unlockChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->wallets->unlockChapter($userId, (string) $args['chapterId']));
+        } catch (\DomainException $e) {
+            $message = strtolower($e->getMessage());
+            $code = str_contains($message, 'not found') ? 404 : (str_contains($message, 'not individually') ? 400 : 402);
+            return ResponseHelper::error($code, $e->getMessage());
+        }
     }
 
     private function pagination(ServerRequestInterface $request): array

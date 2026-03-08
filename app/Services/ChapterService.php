@@ -21,7 +21,8 @@ final class ChapterService
 
     public function __construct(
         private readonly ChapterRepository $chapters,
-        private readonly AnalyticsService $analytics
+        private readonly AnalyticsService $analytics,
+        private readonly WalletService $wallets
     )
     {
     }
@@ -80,17 +81,28 @@ final class ChapterService
         $this->chapters->recordChapterView($chapterId, hash('sha256', $ip));
         $chapter['chapter_number'] = ChapterNumber::normalize($chapter['chapter_number'] ?? '');
 
-        if ($chapter['type'] === 'text') {
-            $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
-            $chapter['pages'] = [];
+        $access = $this->wallets->chapterAccess($contentId, $chapterId, $userId);
+
+        if (($access['granted'] ?? false) === true) {
+            if ($chapter['type'] === 'text') {
+                $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
+                $chapter['pages'] = [];
+            } else {
+                $chapter['body'] = null;
+                $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
+            }
         } else {
             $chapter['body'] = null;
-            $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
+            $chapter['pages'] = [];
         }
         
         $chapter['adjacent_chapters'] = $this->chapters->findAdjacentChapters($contentId, (string) $chapter['chapter_number']);
+        $chapter = \App\DTO\ChapterDto::fromArray($chapter)->toArray();
+        $chapter['access'] = $access;
+        $chapter['price_coin'] = (int) ($access['chapter_unlock_price'] ?? 0);
+        $chapter['is_locked'] = !(bool) ($access['granted'] ?? false);
 
-        return \App\DTO\ChapterDto::fromArray($chapter)->toArray();
+        return $chapter;
     }
 
     public function markRead(string $userId, string $chapterId): void

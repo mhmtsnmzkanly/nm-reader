@@ -256,6 +256,17 @@ CREATE TABLE `user_reading_progress` (
   CONSTRAINT `fk_progress_chapter` FOREIGN KEY (`last_chapter_id`) REFERENCES `chapters` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `user_chapters_reads`;
+CREATE TABLE `user_chapters_reads` (
+  `user_id` char(8) NOT NULL,
+  `chapter_id` char(6) NOT NULL,
+  `read_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`user_id`,`chapter_id`),
+  KEY `idx_user_reads_read_at` (`read_at`),
+  CONSTRAINT `fk_user_reads_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_reads_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `blogs`;
 CREATE TABLE `blogs` (
   `id` char(6) NOT NULL,
@@ -418,6 +429,132 @@ CREATE TABLE `user_series_follows` (
   CONSTRAINT `fk_follows_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `user_preferences`;
+CREATE TABLE `user_preferences` (
+  `user_id` char(8) NOT NULL,
+  `lang` varchar(8) NOT NULL DEFAULT 'tr',
+  `theme` varchar(32) NOT NULL DEFAULT 'default',
+  `reader_layout` varchar(32) NOT NULL DEFAULT 'vertical',
+  `reader_font_size` int(11) NOT NULL DEFAULT 18,
+  `reader_font_family` varchar(64) NOT NULL DEFAULT 'var(--font-sans)',
+  `reader_line_height` decimal(3,1) NOT NULL DEFAULT 1.8,
+  `reader_font_weight` int(11) NOT NULL DEFAULT 400,
+  `reader_reading_direction` varchar(8) NOT NULL DEFAULT 'ltr',
+  `reader_image_fit` varchar(16) NOT NULL DEFAULT 'width',
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `fk_user_preferences_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_follows`;
+CREATE TABLE `user_follows` (
+  `follower_id` char(8) NOT NULL,
+  `followed_id` char(8) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`follower_id`,`followed_id`),
+  KEY `idx_user_follows_followed` (`followed_id`),
+  CONSTRAINT `fk_user_follows_follower` FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_follows_followed` FOREIGN KEY (`followed_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_wallets`;
+CREATE TABLE `user_wallets` (
+  `user_id` char(8) NOT NULL,
+  `balance_coin` int(10) unsigned NOT NULL DEFAULT 0,
+  `total_coin_purchased` int(10) unsigned NOT NULL DEFAULT 0,
+  `total_coin_spent` int(10) unsigned NOT NULL DEFAULT 0,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `fk_wallets_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `wallet_transactions`;
+CREATE TABLE `wallet_transactions` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `type` enum('manual_credit','manual_debit','chapter_unlock','series_unlock','refund','adjustment') NOT NULL,
+  `coin_delta` int(11) NOT NULL,
+  `balance_after` int(10) unsigned NOT NULL,
+  `reference_type` varchar(32) DEFAULT NULL,
+  `reference_id` varchar(32) DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `metadata` longtext DEFAULT NULL,
+  `created_by` char(8) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_wallet_transactions_user_created` (`user_id`,`created_at`),
+  CONSTRAINT `fk_wallet_transactions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_wallet_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `shop_packages`;
+CREATE TABLE `shop_packages` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(120) NOT NULL,
+  `coin_amount` int(10) unsigned NOT NULL,
+  `bonus_coin` int(10) unsigned NOT NULL DEFAULT 0,
+  `display_price` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `currency` char(3) NOT NULL DEFAULT 'TRY',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `series_access_products`;
+CREATE TABLE `series_access_products` (
+  `content_id` char(6) NOT NULL,
+  `price_coin` int(10) unsigned NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`content_id`),
+  CONSTRAINT `fk_series_access_products_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `chapter_access_products`;
+CREATE TABLE `chapter_access_products` (
+  `chapter_id` char(6) NOT NULL,
+  `price_coin` int(10) unsigned NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`chapter_id`),
+  CONSTRAINT `fk_chapter_access_products_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_series_unlocks`;
+CREATE TABLE `user_series_unlocks` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `content_id` char(6) NOT NULL,
+  `price_coin` int(10) unsigned NOT NULL,
+  `transaction_id` bigint(20) unsigned DEFAULT NULL,
+  `unlocked_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_user_series_unlock` (`user_id`,`content_id`),
+  CONSTRAINT `fk_user_series_unlocks_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_series_unlocks_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_series_unlocks_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `wallet_transactions` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_chapter_unlocks`;
+CREATE TABLE `user_chapter_unlocks` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `chapter_id` char(6) NOT NULL,
+  `content_id` char(6) NOT NULL,
+  `price_coin` int(10) unsigned NOT NULL,
+  `transaction_id` bigint(20) unsigned DEFAULT NULL,
+  `unlocked_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_user_chapter_unlock` (`user_id`,`chapter_id`),
+  KEY `idx_user_chapter_unlocks_content` (`user_id`,`content_id`),
+  CONSTRAINT `fk_user_chapter_unlocks_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_chapter_unlocks_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_chapter_unlocks_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_chapter_unlocks_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `wallet_transactions` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --------------------------------------------------------
 -- Audit & Analytics
 -- --------------------------------------------------------
@@ -428,7 +565,7 @@ CREATE TABLE `admin_actions` (
   `moderator_user_id` char(8) DEFAULT NULL,
   `target_type` enum('comment','blog','content','user','system','role','series','chapter') NOT NULL,
   `target_id` varchar(32) NOT NULL,
-  `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy') NOT NULL,
+  `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','refund','series_unlock','chapter_unlock','package_create','package_update','pricing_update') NOT NULL,
   `reason` text DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
@@ -472,6 +609,126 @@ CREATE TABLE `analytics_series_daily` (
   `comment_count` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_content_daily` (`content_id`,`stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_series_views`;
+CREATE TABLE `analytics_series_views` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `content_id` char(6) NOT NULL,
+  `ip_hash` char(64) NOT NULL,
+  `viewed_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_analytics_series_views_content` (`content_id`,`viewed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_chapters_views`;
+CREATE TABLE `analytics_chapters_views` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `chapter_id` char(6) NOT NULL,
+  `ip_hash` char(64) NOT NULL,
+  `viewed_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_analytics_chapters_views_chapter` (`chapter_id`,`viewed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_chapters_daily`;
+CREATE TABLE `analytics_chapters_daily` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `chapter_id` char(6) NOT NULL,
+  `stat_date` date NOT NULL,
+  `view_count` int(11) NOT NULL DEFAULT 0,
+  `comment_count` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_chapter_daily` (`chapter_id`,`stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_events`;
+CREATE TABLE `analytics_events` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `event_type` varchar(64) NOT NULL,
+  `user_id` char(8) DEFAULT NULL,
+  `entity_type` varchar(32) DEFAULT NULL,
+  `entity_id` varchar(32) DEFAULT NULL,
+  `metadata` longtext DEFAULT NULL,
+  `ip_hash` char(64) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_analytics_events_type_date` (`event_type`,`created_at`),
+  KEY `idx_analytics_events_entity` (`entity_type`,`entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_snapshots_daily`;
+CREATE TABLE `analytics_snapshots_daily` (
+  `stat_date` date NOT NULL,
+  `metric_name` varchar(120) NOT NULL,
+  `metric_value` bigint(20) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`stat_date`,`metric_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_snapshots_hourly`;
+CREATE TABLE `analytics_snapshots_hourly` (
+  `bucket_start` datetime NOT NULL,
+  `metric_name` varchar(120) NOT NULL,
+  `metric_value` bigint(20) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`bucket_start`,`metric_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_snapshots_series_top`;
+CREATE TABLE `analytics_snapshots_series_top` (
+  `content_id` char(6) NOT NULL,
+  `stat_date` date NOT NULL,
+  `view_count` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`content_id`,`stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_snapshots_chapters_top`;
+CREATE TABLE `analytics_snapshots_chapters_top` (
+  `chapter_id` char(6) NOT NULL,
+  `stat_date` date NOT NULL,
+  `view_count` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`chapter_id`,`stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_snapshots_search`;
+CREATE TABLE `analytics_snapshots_search` (
+  `stat_date` date NOT NULL,
+  `query` varchar(255) NOT NULL,
+  `search_count` int(11) NOT NULL DEFAULT 0,
+  `zero_result_count` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`stat_date`,`query`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_snapshots_auth`;
+CREATE TABLE `analytics_snapshots_auth` (
+  `stat_date` date NOT NULL,
+  `failed_login_count` int(11) NOT NULL DEFAULT 0,
+  `rate_limited_count` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `analytics_snapshots_health`;
+CREATE TABLE `analytics_snapshots_health` (
+  `stat_date` date NOT NULL,
+  `request_total_24h` int(11) NOT NULL DEFAULT 0,
+  `server_error_total_24h` int(11) NOT NULL DEFAULT 0,
+  `p95_duration_ms_24h` int(11) NOT NULL DEFAULT 0,
+  `suspicious_login_ips_24h` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `system_jobs`;
+CREATE TABLE `system_jobs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `job_type` varchar(64) NOT NULL,
+  `payload` longtext DEFAULT NULL,
+  `status` enum('pending','done','failed') NOT NULL DEFAULT 'pending',
+  `attempts` int(11) NOT NULL DEFAULT 0,
+  `available_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `last_error` varchar(500) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_system_jobs_status_available` (`status`,`available_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

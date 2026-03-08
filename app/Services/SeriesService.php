@@ -38,7 +38,8 @@ final class SeriesService
         private readonly ChapterRepository $chapters,
         private readonly BlogRepository $blogs,
         private readonly CacheService $cache,
-        private readonly AnalyticsService $analytics
+        private readonly AnalyticsService $analytics,
+        private readonly WalletService $wallets
     ) {
     }
 
@@ -184,6 +185,8 @@ final class SeriesService
             $content['reading_progress'] = $this->chapters->findReadingProgress($userId, (string)$row['id']);
         }
 
+        $content = array_merge($content, $this->wallets->contentAccess((string) $row['id'], $userId));
+
         $content = OutputSanitizer::sanitizeFields($content, ['title', 'description']);
         return $this->appendTypePathFields($content);
     }
@@ -212,12 +215,18 @@ final class SeriesService
      * @param int $perPage
      * @return array
      */
-    public function chaptersByType(string $typeSegment, string $slug, int $page, int $perPage): array
+    public function chaptersByType(string $typeSegment, string $slug, int $page, int $perPage, ?string $userId = null): array
     {
         $dbType = $this->toDbType($typeSegment);
         $items = $this->series->getChaptersByTypeAndSlug($dbType, $slug, $page, $perPage);
 
-        return array_map(static fn (array $row) => ChapterDto::fromArray($row)->toArray(), $items);
+        return array_map(function (array $row) use ($userId): array {
+            $chapter = ChapterDto::fromArray($row)->toArray();
+            $chapter['access'] = $this->wallets->chapterAccess((string) $row['content_id'], (string) $row['id'], $userId);
+            $chapter['price_coin'] = (int) ($chapter['access']['chapter_unlock_price'] ?? 0);
+            $chapter['is_locked'] = !(bool) ($chapter['access']['granted'] ?? false);
+            return $chapter;
+        }, $items);
     }
 
     /**

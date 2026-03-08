@@ -14,6 +14,7 @@ use App\Services\RetentionService;
 use App\Services\UploadService;
 use App\Services\SystemLogService;
 use App\Services\AnalyticsAggregationService;
+use App\Services\WalletService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -32,7 +33,8 @@ final class AdminPanelController
         private readonly RetentionService $retentionService,
         private readonly UploadService $uploadService,
         private readonly SystemLogService $logs,
-        private readonly AnalyticsAggregationService $aggregation
+        private readonly AnalyticsAggregationService $aggregation,
+        private readonly WalletService $wallets
     ) {
     }
 
@@ -387,6 +389,103 @@ final class AdminPanelController
             'visits' => $this->console->siteVisits(),
             'reputation' => $this->console->userReputation($limit),
         ]);
+    }
+
+    public function shopPackages(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $result = $this->wallets->packages($page, $perPage, false);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
+    public function createShopPackage(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::created($this->wallets->createPackage($payload, $modId));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        }
+    }
+
+    public function updateShopPackage(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->wallets->updatePackage((int) $args['id'], $payload, $modId));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        }
+    }
+
+    public function creditWallet(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            $amount = (int) ($payload['amount'] ?? 0);
+            $reason = (string) ($payload['reason'] ?? '');
+            return ResponseHelper::success($this->wallets->creditCoins((string) $args['userId'], $amount, $reason, $modId));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
+    public function debitWallet(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            $amount = (int) ($payload['amount'] ?? 0);
+            $reason = (string) ($payload['reason'] ?? '');
+            return ResponseHelper::success($this->wallets->debitCoins((string) $args['userId'], $amount, $reason, $modId));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\DomainException $exception) {
+            $code = str_contains(strtolower($exception->getMessage()), 'not found') ? 404 : 402;
+            return ResponseHelper::error($code, $exception->getMessage());
+        }
+    }
+
+    public function walletTransactions(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            [$page, $perPage] = $this->pagination($request);
+            $result = $this->wallets->transactions((string) $args['userId'], $page, $perPage);
+            return ResponseHelper::success($result['items'], $result['meta']);
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
+    public function updateSeriesPricing(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->wallets->updateSeriesPricing((string) $args['id'], $payload, $modId));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
+    public function updateChapterPricing(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->wallets->updateChapterPricing((string) $args['id'], $payload, $modId));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
     }
 
     // --- UTILS ---

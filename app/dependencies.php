@@ -21,6 +21,7 @@ use App\Repositories\RatingRepository;
 use App\Repositories\SeriesRepository;
 use App\Repositories\UploadRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\WalletRepository;
 use App\Services\AuthService;
 use App\Services\AdminService;
 use App\Services\AdminConsoleService;
@@ -44,6 +45,7 @@ use App\Services\UserService;
 use App\Services\QueueService;
 use App\Services\MetricsService;
 use App\Services\RetentionService;
+use App\Services\WalletService;
 use App\Middleware\I18nMiddleware;
 use App\Middleware\RequestIdMiddleware;
 use DI\ContainerBuilder;
@@ -114,6 +116,7 @@ $builder->addDefinitions([
     UserActivityRepository::class => DI\autowire(UserActivityRepository::class),
     RatingRepository::class => DI\autowire(RatingRepository::class),
     UploadRepository::class => DI\autowire(UploadRepository::class),
+    WalletRepository::class => DI\autowire(WalletRepository::class),
 
     AuthService::class => DI\autowire(AuthService::class)
         ->constructorParameter('sessionLifetimeSeconds', (int) ($settings['app']['session_lifetime_seconds'] ?? 7200))
@@ -141,6 +144,7 @@ $builder->addDefinitions([
         ->constructorParameter('cache', DI\get(CacheService::class)),
     RetentionService::class => DI\autowire(RetentionService::class),
     SiteConfigService::class => DI\autowire(SiteConfigService::class),
+    WalletService::class => DI\autowire(WalletService::class),
 
     AuthController::class => DI\autowire(AuthController::class),
     BlogController::class => DI\autowire(BlogController::class),

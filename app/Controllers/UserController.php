@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Helpers\ResponseHelper;
 use App\Services\UserService;
+use App\Services\WalletService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -20,7 +21,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class UserController
 {
-    public function __construct(private readonly UserService $users)
+    public function __construct(
+        private readonly UserService $users,
+        private readonly WalletService $wallets
+    )
     {
     }
 
@@ -238,5 +242,49 @@ final class UserController
         } catch (\DomainException $exception) {
             return ResponseHelper::error(404, $exception->getMessage());
         }
+    }
+
+    public function wallet(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->wallets->wallet($userId));
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
+    public function walletTransactions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            $query = $request->getQueryParams();
+            $page = max(1, (int) ($query['page'] ?? 1));
+            $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
+            $result = $this->wallets->transactions($userId, $page, $perPage);
+            return ResponseHelper::success($result['items'], $result['meta']);
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
+    public function seriesUnlocks(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $userId = (string) $request->getAttribute('user_id');
+        $query = $request->getQueryParams();
+        $page = max(1, (int) ($query['page'] ?? 1));
+        $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
+        $result = $this->wallets->seriesUnlocks($userId, $page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
+    public function chapterUnlocks(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $userId = (string) $request->getAttribute('user_id');
+        $query = $request->getQueryParams();
+        $page = max(1, (int) ($query['page'] ?? 1));
+        $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
+        $result = $this->wallets->chapterUnlocks($userId, $page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
     }
 }

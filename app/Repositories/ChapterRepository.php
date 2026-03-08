@@ -298,9 +298,9 @@ final class ChapterRepository
         )->execute(['user_id' => $userId, 'chapter_id' => $chapterId]);
 
         // 2. Identify the series for this chapter
-        $contentId = $this->pdo->query(
-            "SELECT content_id FROM chapters WHERE id = '$chapterId'"
-        )->fetchColumn();
+        $contentStmt = $this->pdo->prepare('SELECT content_id FROM chapters WHERE id = :chapter_id');
+        $contentStmt->execute(['chapter_id' => $chapterId]);
+        $contentId = $contentStmt->fetchColumn();
 
         if ($contentId) {
             // 3. Update or Insert overall series reading progress

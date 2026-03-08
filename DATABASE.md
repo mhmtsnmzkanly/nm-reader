@@ -113,6 +113,42 @@ Persistent log of every image uploaded to the server.
 - `file_path`: Relative URL to the asset (e.g., `/uploads/chapter.abc.jpg`).
 - Tracks file size and MIME type for auditing.
 
+### 4.1 Monetization & Access Control
+
+#### `user_wallets`
+Cached wallet balance per user.
+- Stores the current spendable coin balance.
+- Tracks cumulative purchased and spent coin totals for reporting.
+
+#### `wallet_transactions`
+Immutable wallet ledger.
+- Every manual credit, debit, chapter unlock, and series unlock is recorded here.
+- `balance_after` stores a post-transaction snapshot for auditability.
+- `reference_type` / `reference_id` link entries to user, series, chapter, or admin actions.
+
+#### `shop_packages`
+Admin-managed storefront package definitions.
+- Supports base coin, bonus coin, display fiat price, currency, activation state, and sorting.
+- In the current phase, packages are display and operations data; payment provider settlement is not yet integrated.
+
+#### `series_access_products`
+Series-level pricing table.
+- When active and `price_coin > 0`, the series can be unlocked as a whole.
+
+#### `chapter_access_products`
+Chapter-level pricing table.
+- Used for per-chapter unlocks independent of full-series purchase.
+
+#### `user_series_unlocks`
+Ownership record for full-series unlocks.
+- Prevents double billing.
+- Future chapters in the same series are considered accessible after unlock.
+
+#### `user_chapter_unlocks`
+Ownership record for individually unlocked chapters.
+- Prevents re-purchase of the same chapter.
+- Stores the effective paid price and linked ledger transaction.
+
 ---
 
 ## 5. Security & Logs
@@ -120,12 +156,25 @@ Persistent log of every image uploaded to the server.
 #### `admin_actions`
 Audit trail for every moderator action (delete, ban, update).
 - `target_type`: The entity being moderated (`chapter`, `user`, etc.).
+- Also stores wallet and pricing operations such as manual credit/debit and pricing updates.
 
 #### `system_audit_logs`
 HTTP-level access logs including duration (ms) and IP hashes.
 
 #### `user_sessions` & `user_refresh_tokens`
 Secure session management with expiration and revocation support.
+
+#### Supporting Consistency Tables
+To align the documented schema with active backend code, the schema now also includes:
+- `user_preferences`
+- `user_follows`
+- `user_chapters_reads`
+- `system_jobs`
+- `analytics_events`
+- `analytics_snapshots_*`
+- `analytics_series_views`
+- `analytics_chapters_views`
+- `analytics_chapters_daily`
 
 ---
 

@@ -71,6 +71,10 @@ Search series by title.
 - **Query Params**: `q` (string).
 - **Response**: `[ContentDto]`
 
+#### **GET /shop/packages**
+Lists active coin packages for the storefront.
+- **Response**: `[ShopPackageDto]`
+
 ---
 
 ## 3. Auth & Identity
@@ -121,6 +125,25 @@ Retrieve paginated notifications for the current user.
 #### **POST /user/notifications/read**
 Mark all unread notifications as read for the current user.
 
+#### **GET /user/wallet**
+Returns the authenticated user's coin wallet summary.
+
+#### **GET /user/wallet/transactions**
+Returns paginated wallet ledger entries.
+- **Query Params**: `page` (int), `per_page` (int).
+
+#### **GET /user/unlocks/series**
+Returns paginated list of purchased series unlocks.
+
+#### **GET /user/unlocks/chapters**
+Returns paginated list of purchased chapter unlocks.
+
+#### **POST /content/{type}/{slug}/unlock**
+Unlocks a full series with coins.
+
+#### **POST /chapter/{chapterId}/unlock**
+Unlocks an individual chapter with coins when chapter-level pricing exists.
+
 ---
 
 ## 5. Admin Console API (Requires admin.panel.access)
@@ -151,6 +174,34 @@ Trigger manual analytics aggregation for the dashboard.
 #### **POST /admin/maintenance/backup**
 Trigger full system backup (**ROOT_USER ONLY**).
 
+#### **GET /admin/shop/packages**
+Lists all shop packages, including inactive ones.
+
+#### **POST /admin/shop/packages**
+Creates a new shop package.
+
+#### **PUT /admin/shop/packages/{id}**
+Updates an existing shop package.
+
+#### **POST /admin/wallets/{userId}/credit**
+Adds coins to a user's wallet manually.
+- **Payload**: `{ "amount": 100, "reason": "manual top-up" }`
+
+#### **POST /admin/wallets/{userId}/debit**
+Removes coins from a user's wallet manually.
+- **Payload**: `{ "amount": 25, "reason": "correction" }`
+
+#### **GET /admin/wallets/{userId}/transactions**
+Returns paginated wallet ledger entries for a specific user.
+
+#### **PUT /admin/series/{id}/pricing**
+Sets or updates series-level coin unlock pricing.
+- **Payload**: `{ "price_coin": 120, "is_active": true }`
+
+#### **PUT /admin/chapters/{id}/pricing**
+Sets or updates chapter-level coin unlock pricing.
+- **Payload**: `{ "price_coin": 8, "is_active": true }`
+
 ---
 
 ## 6. Entity Data Transfer Objects (DTOs)
@@ -172,3 +223,24 @@ Trigger full system backup (**ROOT_USER ONLY**).
 | `title` | `string` | Chapter title |
 | `username` | `string` | Uploader's username (Admin/Mod) |
 | `created_at` | `string` | Upload timestamp |
+
+### ShopPackageDto
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `int` | Package identifier |
+| `name` | `string` | Admin-defined package label |
+| `coin_amount` | `int` | Base coin amount |
+| `bonus_coin` | `int` | Promotional bonus coin |
+| `total_coin` | `int` | `coin_amount + bonus_coin` |
+| `display_price` | `string` | Presentational fiat price |
+| `currency` | `string` | ISO 4217 code |
+
+### Access Fields
+Content and chapter payloads may now include:
+- `series_unlock_price`
+- `chapter_unlock_price`
+- `is_series_unlocked`
+- `is_chapter_unlocked`
+- `has_any_premium`
+- `is_locked`
+- `access`

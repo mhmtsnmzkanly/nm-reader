@@ -89,6 +89,7 @@ final class ResponseHelper
         return match ($code) {
             400 => 'BAD_REQUEST',
             401 => 'UNAUTHORIZED',
+            402 => 'PAYMENT_REQUIRED',
             403 => 'FORBIDDEN',
             404 => 'NOT_FOUND',
             409 => 'CONFLICT',

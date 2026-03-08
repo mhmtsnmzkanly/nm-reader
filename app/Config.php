@@ -122,14 +122,15 @@ final class Config
                         "admin.panel.access", "admin.users.manage", "admin.content.create", "admin.content.update",
                         "admin.chapter.create", "admin.blog.hide", "admin.comment.delete", "admin.logs.view",
                         "admin.metrics.view", "admin.jobs.run", "admin.settings.modify", "admin.permissions.grant",
-                        "admin.permissions.revoke", "admin.roles.assign",
+                        "admin.permissions.revoke", "admin.roles.assign", "admin.wallet.manage", "admin.wallet.view",
+                        "admin.shop.manage", "admin.finance.refund",
                     ],
                 ],
                 "moderator" => [
                     "name" => "Moderator", "priority" => 50,
                     "permissions" => [
                         "admin.panel.access", "admin.blog.hide", "admin.comment.delete", "admin.content.create",
-                        "admin.content.update", "admin.chapter.create", "admin.metrics.view",
+                        "admin.content.update", "admin.chapter.create", "admin.metrics.view", "admin.wallet.view",
                     ],
                 ],
                 "editor" => [
@@ -207,6 +208,7 @@ final class Config
             $group->get("/genre/{slug}", [ContentController::class, "genre"]);
             $group->get("/tag/{slug}", [ContentController::class, "tag"]);
             $group->get("/latest-chapters", [ContentController::class, "latestChapters"]);
+            $group->get("/shop/packages", [ContentController::class, "shopPackages"]);
             $group->get("/series_genres", [ContentController::class, "genres"]);
             $group->get("/series_tags", [ContentController::class, "tags"]);
             $group->get("/content/{type:" . $typePattern . "}/chapters", [ContentController::class, "latestChaptersByType"]);
@@ -243,6 +245,12 @@ final class Config
                 $secure->get("/user/preferences", [UserController::class, "preferences"]);
                 $secure->put("/user/preferences", [UserController::class, "updatePreferences"]);
                 $secure->get("/user/follows", [ContentController::class, "followed"]);
+                $secure->get("/user/wallet", [UserController::class, "wallet"]);
+                $secure->get("/user/wallet/transactions", [UserController::class, "walletTransactions"]);
+                $secure->get("/user/unlocks/series", [UserController::class, "seriesUnlocks"]);
+                $secure->get("/user/unlocks/chapters", [UserController::class, "chapterUnlocks"]);
+                $secure->post("/content/{type:" . $typePattern . "}/{slug}/unlock", [ContentController::class, "unlockByType"]);
+                $secure->post("/chapter/{chapterId:[a-z0-9]{6}}/unlock", [ContentController::class, "unlockChapter"]);
                 $secure->get("/user/blogs", [BlogController::class, "listMyBlogs"]);
                 $secure->post("/blogs", [BlogController::class, "create"])->add(new RestrictedActionMiddleware($users, "blog creation"));
                 $secure->post("/blogs/image", [BlogController::class, "uploadImage"]);
@@ -292,6 +300,14 @@ final class Config
             $group->post("/maintenance/sitemap", [AdminPanelController::class, "triggerSitemap"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/warmup", [AdminPanelController::class, "triggerCacheWarmup"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/analytics", [AdminPanelController::class, "triggerAnalytics"])->add($perm(["admin.jobs.run"]));
+            $group->get("/shop/packages", [AdminPanelController::class, "shopPackages"])->add($perm(["admin.shop.manage"]));
+            $group->post("/shop/packages", [AdminPanelController::class, "createShopPackage"])->add($perm(["admin.shop.manage"]));
+            $group->put("/shop/packages/{id:[0-9]+}", [AdminPanelController::class, "updateShopPackage"])->add($perm(["admin.shop.manage"]));
+            $group->post("/wallets/{userId:[a-z0-9]{8}}/credit", [AdminPanelController::class, "creditWallet"])->add($perm(["admin.wallet.manage"]));
+            $group->post("/wallets/{userId:[a-z0-9]{8}}/debit", [AdminPanelController::class, "debitWallet"])->add($perm(["admin.wallet.manage"]));
+            $group->get("/wallets/{userId:[a-z0-9]{8}}/transactions", [AdminPanelController::class, "walletTransactions"])->add($perm(["admin.wallet.view"]));
+            $group->put("/series/{id:[a-z0-9]{6}}/pricing", [AdminPanelController::class, "updateSeriesPricing"])->add($perm(["admin.shop.manage"]));
+            $group->put("/chapters/{id:[a-z0-9]{6}}/pricing", [AdminPanelController::class, "updateChapterPricing"])->add($perm(["admin.shop.manage"]));
             $group->get("/maintenance/env", [AdminPanelController::class, "getEnvConfig"])->add($perm(["admin.panel.access"]));
             $group->post("/maintenance/env", [AdminPanelController::class, "saveEnvConfig"])->add($perm(["admin.panel.access"]));
             $group->get("/audit-logs", [AdminPanelController::class, "auditLogs"])->add($perm(["admin.logs.view"]));

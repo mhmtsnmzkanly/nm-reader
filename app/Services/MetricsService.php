@@ -25,7 +25,7 @@ final class MetricsService
             'contents_total' => $this->countSafe('SELECT COUNT(*) FROM series'),
             'chapters_total' => $this->countSafe('SELECT COUNT(*) FROM chapters'),
             'comments_total' => $this->countSafe('SELECT COUNT(*) FROM social_comments'),
-            'ratings_total' => $this->countSafe('SELECT COUNT(*) FROM series_ratings'),
+            'ratings_total' => $this->countSafe('SELECT COUNT(*) FROM ratings'),
             'content_follows_total' => $this->countSafe('SELECT COUNT(*) FROM user_series_follows'),
             'user_follows_total' => $this->countSafe('SELECT COUNT(*) FROM user_follows'),
             'notifications_unread_total' => $this->countSafe('SELECT COUNT(*) FROM user_notifications WHERE is_read = 0'),
@@ -191,8 +191,8 @@ final class MetricsService
              WHERE created_at >= {$startExpr} AND created_at < {$endExpr}"
         );
         $ratings = $this->countSafe(
-            "SELECT COUNT(*) FROM series_ratings
-             WHERE updated_at >= {$startExpr} AND updated_at < {$endExpr}"
+            "SELECT COUNT(*) FROM ratings
+             WHERE created_at >= {$startExpr} AND created_at < {$endExpr}"
         );
         $comments = $this->countSafe(
             "SELECT COUNT(*) FROM social_comments
@@ -235,7 +235,7 @@ final class MetricsService
 
         $ratings = $this->countSafe(
             "SELECT COUNT(*)
-             FROM series_ratings r
+             FROM ratings r
              INNER JOIN series_genre_map cg ON cg.content_id = r.content_id
              INNER JOIN series_genres g ON g.id = cg.genre_id
              WHERE g.slug = " . $this->pdo->quote($slug) . "
@@ -297,7 +297,7 @@ final class MetricsService
             ) f ON f.genre_id = g.id
             LEFT JOIN (
                 SELECT cg.genre_id, COUNT(*) AS rating_total
-                FROM series_ratings r
+                FROM ratings r
                 INNER JOIN series_genre_map cg ON cg.content_id = r.content_id
                 WHERE r.updated_at >= {$startExpr} AND r.updated_at < {$endExpr}
                 GROUP BY cg.genre_id
