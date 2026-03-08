@@ -7,7 +7,30 @@ $startChapter = (string) ($start_chapter_number ?? '');
 $coverImage = (string) ($content['cover_image'] ?? '/assets/img/covers/one-piece.jpg');
 $genres = is_array($content['series_genres'] ?? null) ? $content['series_genres'] : [];
 $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : [];
-$chips = array_merge($genres, $tags);
+$chips = [];
+foreach ($genres as $genre) {
+    $chips[] = ['kind' => 'genre', 'item' => $genre];
+}
+foreach ($tags as $tag) {
+    $chips[] = ['kind' => 'tag', 'item' => $tag];
+}
+$meltBreadcrumbUrl = static function ($rawUrl) use ($langCode): string {
+    $rawUrl = (string) ($rawUrl ?? '');
+    if ($rawUrl === '' || str_contains($rawUrl, '/' . $langCode . '/melt/')) {
+        return $rawUrl;
+    }
+
+    $prefix = '/' . $langCode;
+    if ($rawUrl === $prefix) {
+        return $prefix . '/melt';
+    }
+
+    if (str_starts_with($rawUrl, $prefix . '/')) {
+        return $prefix . '/melt' . substr($rawUrl, strlen($prefix));
+    }
+
+    return $rawUrl;
+};
 ?>
 
 <?php if (!empty($breadcrumbs)): ?>
@@ -16,7 +39,7 @@ $chips = array_merge($genres, $tags);
       <?php foreach ($breadcrumbs as $i => $bc): ?>
         <li class="nmr-breadcrumb-item <?= $bc['url'] ? '' : 'active' ?>" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>
           <?php if ($bc['url']): ?>
-            <a href="<?= htmlspecialchars((string) str_replace('/' . $langCode . '/', '/' . $langCode . '/melt/', (string) $bc['url']), ENT_QUOTES, 'UTF-8') ?>" itemprop="item"><span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span></a>
+            <a href="<?= htmlspecialchars($meltBreadcrumbUrl($bc['url']), ENT_QUOTES, 'UTF-8') ?>" itemprop="item"><span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span></a>
           <?php else: ?>
             <span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span>
           <?php endif; ?>
@@ -27,6 +50,12 @@ $chips = array_merge($genres, $tags);
   </nav>
 <?php endif; ?>
 
+<?php if ($content === []): ?>
+  <div class="melt-empty-state">
+    <h2><?= $__t('content_not_found') ?></h2>
+    <p>This series could not be rendered in the Melt interface.</p>
+  </div>
+<?php else: ?>
 <div class="melt-detail-page" id="meltContentPage" data-type="<?= htmlspecialchars($contentType, ENT_QUOTES, 'UTF-8') ?>" data-slug="<?= htmlspecialchars($contentSlug, ENT_QUOTES, 'UTF-8') ?>">
   <section class="melt-detail-hero">
     <div class="melt-detail-hero__backdrop" style="background-image:url('<?= htmlspecialchars($coverImage, ENT_QUOTES, 'UTF-8') ?>')"></div>
@@ -90,12 +119,20 @@ $chips = array_merge($genres, $tags);
         <div class="markdown-body melt-summary-body" id="contentDescription"><?= htmlspecialchars((string) ($content['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
         <?php if ($chips !== []): ?>
           <div class="melt-chip-cloud">
-            <?php foreach ($chips as $chip): ?>
+            <?php foreach ($chips as $chipData): ?>
               <?php
-                $isTag = in_array($chip, $tags, true);
-                $href = $meltUrl(($isTag ? '/tag/' : '/genre/') . (string) ($chip['slug'] ?? ''));
+                $chip = (array) ($chipData['item'] ?? []);
+                $config = is_array($chip['ui_config'] ?? null) ? $chip['ui_config'] : [];
+                $rawColor = (string) ($config['color'] ?? ($chipData['kind'] === 'tag' ? 'primary' : 'success'));
+                $chipColor = (str_starts_with($rawColor, '#') || str_starts_with($rawColor, 'rgb')) ? $rawColor : 'var(--' . $rawColor . ')';
+                $href = $meltUrl('/' . $chipData['kind'] . '/' . (string) ($chip['slug'] ?? ''));
               ?>
-              <a href="<?= $href ?>" class="tag-chip"><?= htmlspecialchars((string) ($chip['name'] ?? 'item'), ENT_QUOTES, 'UTF-8') ?></a>
+              <a href="<?= $href ?>" class="tag-chip" style="--chip-color: <?= htmlspecialchars($chipColor, ENT_QUOTES, 'UTF-8') ?>;">
+                <?php if (!empty($config['icon'])): ?>
+                  <i class="bi <?= htmlspecialchars((string) $config['icon'], ENT_QUOTES, 'UTF-8') ?> me-1"></i>
+                <?php endif; ?>
+                <?= htmlspecialchars((string) ($chip['name'] ?? 'item'), ENT_QUOTES, 'UTF-8') ?>
+              </a>
             <?php endforeach; ?>
           </div>
         <?php endif; ?>
@@ -161,3 +198,4 @@ $chips = array_merge($genres, $tags);
     </aside>
   </section>
 </div>
+<?php endif; ?>

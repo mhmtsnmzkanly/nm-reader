@@ -99,6 +99,16 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Melt View Template Hardening (2026-03-08)
+- **Status**: Completed.
+- **Problem**:
+  - `pages_melt_*.php` templates had brittle Melt breadcrumb rewriting and weak empty-state handling, making some catalogue/detail screens feel broken when data was sparse.
+  - Melt content chips were also losing taxonomy color/icon metadata compared with the main UI.
+- **Fix**:
+  - Hardened Melt breadcrumb URL conversion for content, chapter, and listing templates so locale-aware links consistently point to Melt routes without duplicate path segments.
+  - Added explicit empty-state rendering for Melt content/listing views to avoid blank sections when no SSR items are available.
+  - Restored taxonomy chip color/icon rendering in the Melt content template and made the chapter template tolerant of both `chapter` and `ssr_chapter` payload keys.
+
 ### Melt Frontend Preview Routes & Flores-Inspired UI Rebuild (2026-03-08)
 - **Status**: Completed.
 - **Problem**:

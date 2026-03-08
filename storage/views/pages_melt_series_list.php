@@ -2,6 +2,23 @@
 $items = is_array($items ?? null) ? $items : [];
 $latestItems = is_array($latest_items ?? null) ? $latest_items : [];
 $heading = (string) ($page_heading ?? ucfirst((string) ($value ?? 'Browse')));
+$meltBreadcrumbUrl = static function ($rawUrl) use ($langCode): string {
+    $rawUrl = (string) ($rawUrl ?? '');
+    if ($rawUrl === '' || str_contains($rawUrl, '/' . $langCode . '/melt/')) {
+        return $rawUrl;
+    }
+
+    $prefix = '/' . $langCode;
+    if ($rawUrl === $prefix) {
+        return $prefix . '/melt';
+    }
+
+    if (str_starts_with($rawUrl, $prefix . '/')) {
+        return $prefix . '/melt' . substr($rawUrl, strlen($prefix));
+    }
+
+    return $rawUrl;
+};
 ?>
 
 <?php if (!empty($breadcrumbs)): ?>
@@ -10,7 +27,7 @@ $heading = (string) ($page_heading ?? ucfirst((string) ($value ?? 'Browse')));
       <?php foreach ($breadcrumbs as $i => $bc): ?>
         <li class="nmr-breadcrumb-item <?= $bc['url'] ? '' : 'active' ?>" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>
           <?php if ($bc['url']): ?>
-            <a href="<?= htmlspecialchars((string) $bc['url'], ENT_QUOTES, 'UTF-8') ?>" itemprop="item"><span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span></a>
+            <a href="<?= htmlspecialchars($meltBreadcrumbUrl($bc['url']), ENT_QUOTES, 'UTF-8') ?>" itemprop="item"><span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span></a>
           <?php else: ?>
             <span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span>
           <?php endif; ?>
@@ -46,26 +63,33 @@ $heading = (string) ($page_heading ?? ucfirst((string) ($value ?? 'Browse')));
     </section>
   <?php endif; ?>
 
-  <section class="melt-poster-grid">
-    <?php foreach ($items as $item): ?>
-      <?php $itemHref = $meltUrl('/' . (string) ($item['type_path'] ?? $item['type'] ?? 'novel') . '/' . (string) ($item['slug'] ?? '')); ?>
-      <article class="melt-poster-card">
-        <a href="<?= $itemHref ?>" class="melt-poster-card__cover">
-          <img src="<?= htmlspecialchars((string) ($item['cover_image'] ?? '/assets/img/covers/one-piece.jpg'), ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['title'] ?? 'Series'), ENT_QUOTES, 'UTF-8') ?>">
-          <span class="melt-badge"><?= htmlspecialchars((string) strtoupper((string) ($item['type_path'] ?? $item['type'] ?? 'novel')), ENT_QUOTES, 'UTF-8') ?></span>
-        </a>
-        <div class="melt-poster-card__body">
-          <a href="<?= $itemHref ?>" class="melt-poster-card__title"><?= htmlspecialchars((string) ($item['title'] ?? 'Series'), ENT_QUOTES, 'UTF-8') ?></a>
-          <div class="melt-poster-card__meta">
-            <span><?= htmlspecialchars((string) ($item['author'] ?? $__t('unknown')), ENT_QUOTES, 'UTF-8') ?></span>
-            <span>★ <?= htmlspecialchars((string) ($item['rating_avg'] ?? '0'), ENT_QUOTES, 'UTF-8') ?></span>
+  <?php if ($items === []): ?>
+    <div class="melt-empty-state">
+      <h2><?= htmlspecialchars($heading, ENT_QUOTES, 'UTF-8') ?></h2>
+      <p>This catalogue is currently empty. Check another type, genre, or tag.</p>
+    </div>
+  <?php else: ?>
+    <section class="melt-poster-grid">
+      <?php foreach ($items as $item): ?>
+        <?php $itemHref = $meltUrl('/' . (string) ($item['type_path'] ?? $item['type'] ?? 'novel') . '/' . (string) ($item['slug'] ?? '')); ?>
+        <article class="melt-poster-card">
+          <a href="<?= $itemHref ?>" class="melt-poster-card__cover">
+            <img src="<?= htmlspecialchars((string) ($item['cover_image'] ?? '/assets/img/covers/one-piece.jpg'), ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['title'] ?? 'Series'), ENT_QUOTES, 'UTF-8') ?>">
+            <span class="melt-badge"><?= htmlspecialchars((string) strtoupper((string) ($item['type_path'] ?? $item['type'] ?? 'novel')), ENT_QUOTES, 'UTF-8') ?></span>
+          </a>
+          <div class="melt-poster-card__body">
+            <a href="<?= $itemHref ?>" class="melt-poster-card__title"><?= htmlspecialchars((string) ($item['title'] ?? 'Series'), ENT_QUOTES, 'UTF-8') ?></a>
+            <div class="melt-poster-card__meta">
+              <span><?= htmlspecialchars((string) ($item['author'] ?? $__t('unknown')), ENT_QUOTES, 'UTF-8') ?></span>
+              <span>★ <?= htmlspecialchars((string) ($item['rating_avg'] ?? '0'), ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
+            <div class="melt-poster-card__meta">
+              <span><?= $__t('chapters') ?> <?= htmlspecialchars((string) ($item['chapter_count'] ?? '0'), ENT_QUOTES, 'UTF-8') ?></span>
+              <span><?= htmlspecialchars((string) ($item['status'] ?? $__t('unknown')), ENT_QUOTES, 'UTF-8') ?></span>
+            </div>
           </div>
-          <div class="melt-poster-card__meta">
-            <span><?= $__t('chapters') ?> <?= htmlspecialchars((string) ($item['chapter_count'] ?? '0'), ENT_QUOTES, 'UTF-8') ?></span>
-            <span><?= htmlspecialchars((string) ($item['status'] ?? $__t('unknown')), ENT_QUOTES, 'UTF-8') ?></span>
-          </div>
-        </div>
-      </article>
-    <?php endforeach; ?>
-  </section>
+        </article>
+      <?php endforeach; ?>
+    </section>
+  <?php endif; ?>
 </div>

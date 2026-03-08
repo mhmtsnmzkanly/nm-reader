@@ -1,9 +1,27 @@
 <?php
-$chapter = is_array($chapter ?? null) ? $chapter : [];
+$chapterData = $chapter ?? $ssr_chapter ?? null;
+$chapter = is_array($chapterData) ? $chapterData : [];
 $adj = $chapter['adjacent_chapters'] ?? ['next' => null, 'prev' => null];
 $seriesTitle = (string) ($chapter['series_title'] ?? '');
 $isLocked = (bool) ($chapter['is_locked'] ?? false);
 $priceCoin = (int) ($chapter['price_coin'] ?? 0);
+$meltBreadcrumbUrl = static function ($rawUrl) use ($langCode): string {
+    $rawUrl = (string) ($rawUrl ?? '');
+    if ($rawUrl === '' || str_contains($rawUrl, '/' . $langCode . '/melt/')) {
+        return $rawUrl;
+    }
+
+    $prefix = '/' . $langCode;
+    if ($rawUrl === $prefix) {
+        return $prefix . '/melt';
+    }
+
+    if (str_starts_with($rawUrl, $prefix . '/')) {
+        return $prefix . '/melt' . substr($rawUrl, strlen($prefix));
+    }
+
+    return $rawUrl;
+};
 ?>
 
 <?php if (!empty($breadcrumbs)): ?>
@@ -12,7 +30,7 @@ $priceCoin = (int) ($chapter['price_coin'] ?? 0);
       <?php foreach ($breadcrumbs as $i => $bc): ?>
         <li class="nmr-breadcrumb-item <?= $bc['url'] ? '' : 'active' ?>" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem" <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>
           <?php if ($bc['url']): ?>
-            <a href="<?= htmlspecialchars((string) str_replace('/' . $langCode . '/', '/' . $langCode . '/melt/', (string) $bc['url']), ENT_QUOTES, 'UTF-8') ?>" itemprop="item"><span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span></a>
+            <a href="<?= htmlspecialchars($meltBreadcrumbUrl($bc['url']), ENT_QUOTES, 'UTF-8') ?>" itemprop="item"><span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span></a>
           <?php else: ?>
             <span itemprop="name"><?= htmlspecialchars((string) $bc['title'], ENT_QUOTES, 'UTF-8') ?></span>
           <?php endif; ?>
