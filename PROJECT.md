@@ -479,16 +479,20 @@ This document serves as the absolute authority on the project's architecture, co
 
 ### Monetization Schema Alignment (2026-03-08)
 - **Status**: Completed.
-- **Problem**: `grant-package` operations were failing with `SQLSTATE[01000]: Warning: 1265 Data truncated for column 'type'` on the remote server.
-- **Root Cause**: The `wallet_transactions` table on the remote database was using an outdated ENUM definition for the `type` column, missing `package_credit` and `feature_unlock` values.
+- **Problem**: `grant-package` operations were failing with `SQLSTATE[01000]: Warning: 1265 Data truncated for column 'type'` on the remote server. Also, manual schema updates for `admin_actions` failed due to missing ENUM values.
+- **Root Cause**: 
+  - The `wallet_transactions` table on the remote database was using an outdated ENUM definition for the `type` column.
+  - The `admin_actions` table was missing several values used in the codebase (`security` target type, and multiple action types).
 - **Fix**:
-  - Verified `app/database/schema.sql` contains the correct ENUM values.
+  - Updated `app/database/schema.sql` with the comprehensive ENUM lists.
   - Recommended SQL for existing installations to align the schema:
     ```sql
     ALTER TABLE wallet_transactions MODIFY COLUMN `type` enum('manual_credit','manual_debit','package_credit','chapter_unlock','series_unlock','feature_unlock','refund','adjustment') NOT NULL;
     
-    -- Also ensure admin_actions is up to date:
-    ALTER TABLE admin_actions MODIFY COLUMN `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update') NOT NULL;
+    -- Align admin_actions with all values used in the codebase:
+    ALTER TABLE admin_actions MODIFY COLUMN `target_type` enum('comment','blog','content','user','system','role','series','chapter','security') NOT NULL;
+    
+    ALTER TABLE admin_actions MODIFY COLUMN `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update','auth_fail','permission_denied','create_genre','create_tag','env_update') NOT NULL;
     ```
 
 ### Queue & Notification Fix (2026-03-08)

@@ -591,9 +591,9 @@ DROP TABLE IF EXISTS `admin_actions`;
 CREATE TABLE `admin_actions` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `moderator_user_id` char(8) DEFAULT NULL,
-  `target_type` enum('comment','blog','content','user','system','role','series','chapter') NOT NULL,
+  `target_type` enum('comment','blog','content','user','system','role','series','chapter','security') NOT NULL,
   `target_id` varchar(32) NOT NULL,
-  `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update') NOT NULL,
+  `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update','auth_fail','permission_denied','create_genre','create_tag','env_update') NOT NULL,
   `reason` text DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
