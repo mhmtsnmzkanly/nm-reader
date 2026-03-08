@@ -211,6 +211,9 @@ Removes coins from a user's wallet manually.
 #### **GET /admin/wallets/{userId}/transactions**
 Returns paginated wallet ledger entries for a specific user.
 
+#### **GET /admin/wallets/{userId}**
+Returns wallet summary and feature status for a specific user.
+
 #### **PUT /admin/series/{id}/pricing**
 Sets or updates series-level coin unlock pricing.
 - **Payload**: `{ "price_coin": 120, "is_active": true }`

@@ -121,6 +121,14 @@ This document serves as the absolute authority on the project's architecture, co
   - Added feature product and user entitlement storage for coin-purchased site features.
   - Added `ad_free` product management in the admin API and user endpoints for feature status, entitlement history, and ad-free purchase with coins.
 
+### Admin Monetization Console UI (2026-03-08)
+- **Status**: Completed.
+- **Problem**: The monetization backend endpoints existed, but there was no dedicated admin panel page to operate wallet, package, pricing, and ad-free flows.
+- **Fix**:
+  - Added a new `Monetization` admin page and sidebar entry.
+  - Added UI forms for wallet credit/debit, package grant, package management, ad-free product configuration, and series/chapter pricing updates.
+  - Added wallet summary lookup and transaction listing for a target user inside the admin panel.
+
 ### Content Alternative Titles Visibility (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Alternative titles were cluttering the hero section and weren't easily readable.
@@ -487,4 +495,3 @@ This document serves as the absolute authority on the project's architecture, co
   - Removed redundant script tags from all view files and `WebController` render calls.
   - Standardized API communication and CSRF handling within the bundles.
   - Improved reader stability and settings persistence.
-

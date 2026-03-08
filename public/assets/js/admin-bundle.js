@@ -365,6 +365,223 @@ window.AdminApp = (function($) {
     }
   };
 
+  const Monetization = {
+    _packages: [],
+    _userId: '',
+    init: function() {
+      if (!$('#packages-table-body').length) return;
+      this.bind();
+      this.loadPackages();
+      this.loadFeatures();
+    },
+    bind: function() {
+      $('#btn-refresh-packages').on('click', () => this.loadPackages());
+      $('#btn-load-wallet').on('click', () => this.loadWallet());
+      $('#btn-refresh-wallet-transactions').on('click', () => this.loadTransactions());
+
+      $('#form-wallet-adjust').on('submit', async (e) => {
+        e.preventDefault();
+        const uid = this.currentUserId();
+        if (!uid) return alert('User ID gerekli.');
+        const fd = new FormData(e.target);
+        const action = fd.get('action');
+        const endpoint = action === 'debit' ? 'debit' : 'credit';
+        try {
+          await api(`/admin/wallets/${uid}/${endpoint}`, { method: 'POST', body: JSON.stringify({ amount: Number(fd.get('amount') || 0), reason: fd.get('reason') || '' }) });
+          this.loadWallet();
+          this.loadTransactions();
+        } catch (err) { alert(err.message); }
+      });
+
+      $('#form-grant-package').on('submit', async (e) => {
+        e.preventDefault();
+        const uid = this.currentUserId();
+        if (!uid) return alert('User ID gerekli.');
+        const fd = new FormData(e.target);
+        try {
+          await api(`/admin/wallets/${uid}/grant-package`, {
+            method: 'POST',
+            body: JSON.stringify({
+              package_id: Number(fd.get('package_id') || 0),
+              cash_amount: fd.get('cash_amount') || '',
+              reason: fd.get('reason') || ''
+            })
+          });
+          this.loadWallet();
+          this.loadTransactions();
+        } catch (err) { alert(err.message); }
+      });
+
+      $('#form-package').on('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const id = fd.get('id');
+        const payload = {
+          name: fd.get('name') || '',
+          coin_amount: Number(fd.get('coin_amount') || 0),
+          bonus_coin: Number(fd.get('bonus_coin') || 0),
+          display_price: fd.get('display_price') || '0.00',
+          currency: fd.get('currency') || 'TRY',
+          sort_order: Number(fd.get('sort_order') || 0),
+          is_active: String(fd.get('is_active')) === '1'
+        };
+        try {
+          await api(id ? `/admin/shop/packages/${id}` : '/admin/shop/packages', { method: id ? 'PUT' : 'POST', body: JSON.stringify(payload) });
+          e.target.reset();
+          $('#package-id').val('');
+          $('[name="currency"]', e.target).val('TRY');
+          $('[name="is_active"]', e.target).val('1');
+          this.loadPackages();
+        } catch (err) { alert(err.message); }
+      });
+
+      $('#packages-table-body').on('click', 'button[data-action="edit-package"]', (e) => {
+        const id = Number(e.currentTarget.dataset.id || 0);
+        const item = this._packages.find(x => Number(x.id) === id);
+        if (!item) return;
+        const f = $('#form-package');
+        $('#package-id').val(item.id);
+        f.find('[name="name"]').val(item.name || '');
+        f.find('[name="coin_amount"]').val(item.coin_amount || 0);
+        f.find('[name="bonus_coin"]').val(item.bonus_coin || 0);
+        f.find('[name="display_price"]').val(item.display_price || '0.00');
+        f.find('[name="currency"]').val(item.currency || 'TRY');
+        f.find('[name="sort_order"]').val(item.sort_order || 0);
+        f.find('[name="is_active"]').val(Number(item.is_active) ? '1' : '0');
+      });
+
+      $('#form-adfree').on('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        try {
+          await api('/admin/features/ad-free', {
+            method: 'PUT',
+            body: JSON.stringify({
+              name: fd.get('name') || '',
+              coin_price: Number(fd.get('coin_price') || 0),
+              duration_days: Number(fd.get('duration_days') || 30),
+              is_active: String(fd.get('is_active')) === '1'
+            })
+          });
+          this.loadFeatures();
+        } catch (err) { alert(err.message); }
+      });
+
+      $('#form-series-price').on('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const contentId = String(fd.get('content_id') || '').trim();
+        if (!contentId) return alert('Series ID gerekli.');
+        try {
+          await api(`/admin/series/${contentId}/pricing`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              price_coin: Number(fd.get('price_coin') || 0),
+              is_active: String(fd.get('is_active')) === '1'
+            })
+          });
+          alert('Series pricing kaydedildi.');
+        } catch (err) { alert(err.message); }
+      });
+
+      $('#form-chapter-price').on('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const chapterId = String(fd.get('chapter_id') || '').trim();
+        if (!chapterId) return alert('Chapter ID gerekli.');
+        try {
+          await api(`/admin/chapters/${chapterId}/pricing`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              price_coin: Number(fd.get('price_coin') || 0),
+              is_active: String(fd.get('is_active')) === '1'
+            })
+          });
+          alert('Chapter pricing kaydedildi.');
+        } catch (err) { alert(err.message); }
+      });
+    },
+    currentUserId: function() {
+      const uid = String($('#money-user-id').val() || '').trim();
+      this._userId = uid;
+      return uid;
+    },
+    loadPackages: async function() {
+      try {
+        const r = await api('/admin/shop/packages');
+        this._packages = r.data || [];
+        setH('#packages-table-body', this._packages.map(p => `<tr>
+          <td>${p.id}</td>
+          <td>${esc(p.name)}</td>
+          <td>${p.coin_amount}</td>
+          <td>${p.bonus_coin}</td>
+          <td>${p.total_coin || (Number(p.coin_amount || 0) + Number(p.bonus_coin || 0))}</td>
+          <td>${esc(p.display_price)} ${esc(p.currency || 'TRY')}</td>
+          <td><span class="badge bg-${Number(p.is_active) ? 'success' : 'secondary'}">${Number(p.is_active) ? 'Active' : 'Inactive'}</span></td>
+          <td class="text-end"><button class="btn btn-xs btn-outline-primary" data-action="edit-package" data-id="${p.id}"><i class="bi bi-pencil"></i></button></td>
+        </tr>`).join('') || '<tr><td colspan="8" class="text-center">No packages</td></tr>');
+        setH('#grant-package-id', this._packages.map(p => `<option value="${p.id}">${esc(p.name)} (${p.total_coin || (Number(p.coin_amount || 0) + Number(p.bonus_coin || 0))} coin)</option>`).join(''));
+      } catch (err) {
+        setH('#packages-table-body', `<tr><td colspan="8" class="text-center text-danger">${esc(err.message)}</td></tr>`);
+      }
+    },
+    loadFeatures: async function() {
+      try {
+        const r = await api('/admin/features');
+        const items = r.data || [];
+        const adFree = items.find(x => x.feature_key === 'ad_free');
+        if (!adFree) {
+          setH('#adfree-summary', 'Ad-free urunu henuz tanimli degil.');
+          return;
+        }
+        const f = $('#form-adfree');
+        f.find('[name="name"]').val(adFree.name || '');
+        f.find('[name="coin_price"]').val(adFree.coin_price || 0);
+        f.find('[name="duration_days"]').val(adFree.duration_days || 30);
+        f.find('[name="is_active"]').val(Number(adFree.is_active) ? '1' : '0');
+        setH('#adfree-summary', `Current: <strong>${esc(adFree.name)}</strong> | ${adFree.coin_price} coin | ${adFree.duration_days} day | ${Number(adFree.is_active) ? 'active' : 'inactive'}`);
+      } catch (err) {
+        setH('#adfree-summary', `<span class="text-danger">${esc(err.message)}</span>`);
+      }
+    },
+    loadWallet: async function() {
+      const uid = this.currentUserId();
+      if (!uid) return alert('User ID gerekli.');
+      try {
+        const r = await api(`/admin/wallets/${uid}`);
+        const w = r.data || {};
+        setH('#wallet-summary-box', `
+          <div><strong>User:</strong> ${esc(w.user_id || uid)}</div>
+          <div><strong>Coin Balance:</strong> ${Number(w.balance_coin || 0)}</div>
+          <div><strong>Total Purchased:</strong> ${Number(w.total_coin_purchased || 0)}</div>
+          <div><strong>Total Spent:</strong> ${Number(w.total_coin_spent || 0)}</div>
+          <div><strong>Ad Free:</strong> ${w.features?.ad_free?.active ? `Active until ${esc(w.features.ad_free.expires_at || '')}` : 'Inactive'}</div>
+        `);
+        this.loadTransactions();
+      } catch (err) {
+        setH('#wallet-summary-box', `<span class="text-danger">${esc(err.message)}</span>`);
+      }
+    },
+    loadTransactions: async function() {
+      const uid = this.currentUserId();
+      if (!uid) return;
+      try {
+        const r = await api(`/admin/wallets/${uid}/transactions`);
+        const items = r.data || [];
+        setH('#wallet-transactions-body', items.map(t => `<tr>
+          <td>${t.id}</td>
+          <td>${esc(t.type)}</td>
+          <td class="${Number(t.coin_delta) >= 0 ? 'text-success' : 'text-danger'}">${Number(t.coin_delta)}</td>
+          <td>${Number(t.balance_after || 0)}</td>
+          <td>${esc([t.reference_type, t.reference_id].filter(Boolean).join(':') || '-')}</td>
+          <td>${esc(t.created_at || '')}</td>
+        </tr>`).join('') || '<tr><td colspan="6" class="text-center">No transactions</td></tr>');
+      } catch (err) {
+        setH('#wallet-transactions-body', `<tr><td colspan="6" class="text-center text-danger">${esc(err.message)}</td></tr>`);
+      }
+    }
+  };
+
   const Logs = {
     init: function() {
       if (!$('#logs-body').length && !$('#audit-logs-body').length && !$('#logins-body').length) return;
@@ -466,6 +683,7 @@ window.AdminApp = (function($) {
       if (c.includes('/admin/users')) Users.init();
       if (c.includes('/admin/uploads')) Uploads.init();
       if (c.includes('/admin/ops')) Ops.init();
+      if (c.includes('/admin/monetization')) Monetization.init();
       if (c.includes('/admin/logs')) Logs.init();
       if (c.includes('/admin/config')) Config.init();
     }

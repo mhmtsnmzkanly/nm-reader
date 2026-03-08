@@ -778,6 +778,23 @@ final class WebController
         );
     }
 
+    public function adminMonetization(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+    ): ResponseInterface {
+        if (!$this->canAccessAdminPanel()) {
+            return $response->withHeader("Location", "/")->withStatus(302);
+        }
+
+        return $this->renderAdmin(
+            $request,
+            $response,
+            "admin_monetization.php",
+            [],
+            "Monetization - Admin",
+        );
+    }
+
     public function adminUploads(
         ServerRequestInterface $request,
         ResponseInterface $response,

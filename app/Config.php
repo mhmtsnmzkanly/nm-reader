@@ -178,6 +178,7 @@ final class Config
             $group->get("/admin/comments", [WebController::class, "adminComments"]);
             $group->get("/admin/users", [WebController::class, "adminUsers"]);
             $group->get("/admin/ops", [WebController::class, "adminOps"]);
+            $group->get("/admin/monetization", [WebController::class, "adminMonetization"]);
             $group->get("/admin/config", [WebController::class, "adminConfig"]);
             $group->get("/admin/uploads", [WebController::class, "adminUploads"]);
             $group->get("/admin/logs", [WebController::class, "adminLogs"]);
@@ -310,6 +311,7 @@ final class Config
             $group->post("/wallets/{userId:[a-z0-9]{8}}/grant-package", [AdminPanelController::class, "grantShopPackage"])->add($perm(["admin.wallet.manage"]));
             $group->post("/wallets/{userId:[a-z0-9]{8}}/credit", [AdminPanelController::class, "creditWallet"])->add($perm(["admin.wallet.manage"]));
             $group->post("/wallets/{userId:[a-z0-9]{8}}/debit", [AdminPanelController::class, "debitWallet"])->add($perm(["admin.wallet.manage"]));
+            $group->get("/wallets/{userId:[a-z0-9]{8}}", [AdminPanelController::class, "walletSummary"])->add($perm(["admin.wallet.view"]));
             $group->get("/wallets/{userId:[a-z0-9]{8}}/transactions", [AdminPanelController::class, "walletTransactions"])->add($perm(["admin.wallet.view"]));
             $group->put("/series/{id:[a-z0-9]{6}}/pricing", [AdminPanelController::class, "updateSeriesPricing"])->add($perm(["admin.shop.manage"]));
             $group->put("/chapters/{id:[a-z0-9]{6}}/pricing", [AdminPanelController::class, "updateChapterPricing"])->add($perm(["admin.shop.manage"]));

@@ -479,6 +479,15 @@ final class AdminPanelController
         }
     }
 
+    public function walletSummary(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            return ResponseHelper::success($this->wallets->wallet((string) $args['userId']));
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
     public function updateSeriesPricing(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {
