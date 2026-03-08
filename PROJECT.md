@@ -22,7 +22,7 @@ This document serves as the absolute authority on the project's architecture, co
 ### ROOT_USER (Superuser)
 - Defined by the `ROOT_USER` ID in `.env`.
 - **Bypass Mode**: Automatically granted all permissions, bypassing the RBAC logic.
-- **Exclusive Actions**: Only the ROOT_USER can trigger system backups, sitemap generation, and cache warming via the UI.
+- **Exclusive Actions**: Only the ROOT_USER can trigger system backups, sitemap generation, cache warming, and manual analytics aggregation via the admin/API flows.
 
 ### Static RBAC
 - Roles (`admin`, `moderator`, `editor`, `user`) and their permission nodes are defined in `Config.php`.
@@ -129,6 +129,15 @@ This document serves as the absolute authority on the project's architecture, co
   - Added UI forms for wallet credit/debit, package grant, package management, ad-free product configuration, and series/chapter pricing updates.
   - Added wallet summary lookup and transaction listing for a target user inside the admin panel.
   - Replaced manual `user_id` entry with a selectable user list fed from an admin user-options endpoint.
+
+### Documentation Sync For Route/Auth Drift (2026-03-08)
+- **Status**: Completed.
+- **Problem**:
+  - Markdown references for API/admin behavior had drifted from the registered Slim routes.
+  - `ROOT_USER` restrictions were under-documented for maintenance operations.
+- **Fix**:
+  - Updated `PROJECT.md` and `API_REFERENCE.md` to match current public, authenticated, and admin endpoint coverage.
+  - Clarified that manual analytics aggregation is also restricted to `ROOT_USER`, alongside backup, sitemap, and cache warmup actions.
 
 ### Content Alternative Titles Visibility (2026-03-01)
 - **Status**: Completed.
