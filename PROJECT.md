@@ -458,6 +458,17 @@ This document serves as the absolute authority on the project's architecture, co
 - **Refactor**: Updated `SeriesRepository` and `ChapterRepository` to filter out deleted items in all public and admin queries using `deleted_at IS NULL`.
 - **Database**: Added indices on `deleted_at` columns to maintain high query performance.
 
+### Queue & Notification Fix (2026-03-08)
+- **Status**: Completed.
+- **Problem**: `notify_new_chapter` jobs were failing with `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'data' in 'INSERT INTO'`.
+- **Root Cause**: The `user_notifications` table in the remote database was missing the `data` column, or the column name was conflicting with reserved keywords in some environments.
+- **Fix**:
+  - Added backticks to the `data` column in all SQL queries involving `user_notifications` and `chapters` tables across `QueueService`, `UserRepository`, `CommentVoteRepository`, `ChapterRepository`, and `AdminService`.
+  - Recommended SQL for existing installations to ensure the `data` column exists:
+    ```sql
+    ALTER TABLE user_notifications ADD COLUMN `data` longtext DEFAULT NULL AFTER body;
+    ```
+
 ### Asset Optimization: Unified JS Bundling (2026-03-07)
 - **Status**: Completed.
 - **Feature**: Consolidated all fragmented JavaScript files into two primary bundles: `app-bundle.js` (Frontend) and `admin-bundle.js` (Administration).

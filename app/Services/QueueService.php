@@ -96,7 +96,7 @@ final class QueueService
                 throw new \RuntimeException('Invalid notify_new_chapter payload');
             }
 
-            $sql = 'INSERT INTO user_notifications (user_id, actor_user_id, type, title, body, data, is_read, created_at)
+            $sql = 'INSERT INTO user_notifications (user_id, actor_user_id, type, title, body, `data`, is_read, created_at)
                     SELECT
                         f.user_id,
                         NULL,

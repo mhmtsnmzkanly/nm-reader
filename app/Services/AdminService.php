@@ -340,7 +340,7 @@ final class AdminService
             }
 
             $stmt = $this->pdo->prepare(
-                'INSERT INTO chapters (id, content_id, chapter_number, title, type, data, created_by, created_at)
+                'INSERT INTO chapters (id, content_id, chapter_number, title, type, `data`, created_by, created_at)
                  VALUES (:cid, :content_id, :chapter_number, :title, :type, :data, :created_by, NOW())'
             );
             $stmt->execute([
@@ -537,7 +537,7 @@ final class AdminService
         }
 
         // Fetch current to calculate diff
-        $stmt = $this->pdo->prepare('SELECT chapter_number, title, type, data FROM chapters WHERE id = :id');
+        $stmt = $this->pdo->prepare('SELECT chapter_number, title, type, `data` FROM chapters WHERE id = :id');
         $stmt->execute(['id' => $chapterId]);
         $current = $stmt->fetch();
 
@@ -586,7 +586,7 @@ final class AdminService
         try {
             $this->chapters->updateChapter($chapterId, $chapterNumber, $title, $type);
 
-            $this->pdo->prepare('UPDATE chapters SET data = :data WHERE id = :id')
+            $this->pdo->prepare('UPDATE chapters SET `data` = :data WHERE id = :id')
                 ->execute(['data' => $dataVal, 'id' => $chapterId]);
 
             if ($moderatorId !== null && !empty($diff)) {
