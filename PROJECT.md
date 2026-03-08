@@ -63,6 +63,11 @@ This document serves as the absolute authority on the project's architecture, co
 ### Git Mandate (CRITICAL)
 - **Descriptive Commits**: AFTER every logical change or feature, a Git commit MUST be created with a clear description (e.g., `git commit -m "feat: add localized footer taxonomy"`).
 - **Restoration**: This ensures every step is a verifiable checkpoint for potential rollbacks.
+- **Push Requirement**: After local verification passes, push the commit to `origin/main` so the remote deployment source stays current.
+
+### Documentation Mandate
+- **Markdown Change Log**: Every requested code or behavior change must also be recorded in the relevant Markdown documentation file(s), at minimum in `PROJECT.md` and additionally in `API_REFERENCE.md` or `DATABASE.md` when interface or schema behavior changes.
+- **Development Context**: This repository checkout is a development workspace. Production runs on a remote server, so local changes must be treated as staged development work until they are verified and pushed.
 
 ### Feature Implementation Steps:
 1. **DB**: Update `app/database/schema.sql` and run migration.
@@ -449,7 +454,6 @@ This document serves as the absolute authority on the project's architecture, co
   - Removed redundant script tags from all view files and `WebController` render calls.
   - Standardized API communication and CSRF handling within the bundles.
   - Improved reader stability and settings persistence.
-
 
 
 
