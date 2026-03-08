@@ -129,6 +129,10 @@ Returns a public profile view for a username or user ID.
 #### **GET /i18n/{lang}**
 Returns frontend translation strings for the requested language.
 
+#### **POST /log/error**
+Endpoint for frontend JS error logging.
+- **Payload**: `{ "message": "...", "url": "...", "stack": "...", "context": {} }`
+
 ---
 
 ## 3. Auth & Identity
@@ -477,6 +481,12 @@ Returns paginated blog moderation data.
 
 #### **GET /admin/blogs/pending**
 Returns pending blog submissions.
+
+#### **GET /admin/comments**
+Returns paginated comment moderation data.
+
+#### **DELETE /admin/comments/{id}**
+Deletes a specific comment from the system.
 
 #### **POST /admin/blogs/{id}/approve**
 Approves a pending blog post.

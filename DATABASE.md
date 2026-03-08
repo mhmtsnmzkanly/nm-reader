@@ -183,10 +183,17 @@ To align the documented schema with active backend code, the schema now also inc
 - `user_chapters_reads`
 - `system_jobs`
 - `analytics_events`
-- `analytics_snapshots_*`
+- `analytics_series_daily`
 - `analytics_series_views`
-- `analytics_chapters_views`
 - `analytics_chapters_daily`
+- `analytics_chapters_views`
+- `analytics_snapshots_daily`
+- `analytics_snapshots_hourly`
+- `analytics_snapshots_series_top`
+- `analytics_snapshots_chapters_top`
+- `analytics_snapshots_search`
+- `analytics_snapshots_auth`
+- `analytics_snapshots_health`
 
 ---
 

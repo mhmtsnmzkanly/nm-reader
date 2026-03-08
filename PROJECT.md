@@ -526,6 +526,11 @@ This document serves as the absolute authority on the project's architecture, co
     ALTER TABLE user_notifications ADD COLUMN `data` longtext DEFAULT NULL AFTER body;
     ```
 
+### API Documentation Refresh (2026-03-08)
+- **Status**: Completed.
+- **Problem**: Several endpoints (`POST /log/error`, `GET /admin/comments`, `DELETE /admin/comments/{id}`) and analytics tables were missing or incomplete in `API_REFERENCE.md` and `DATABASE.md`.
+- **Fix**: Synchronized Markdown documentation with the current `app/Config.php` routing and `app/database/schema.sql` definitions to ensure absolute authority for AI agents and developers.
+
 ### Asset Optimization: Unified JS Bundling (2026-03-07)
 - **Status**: Completed.
 - **Feature**: Consolidated all fragmented JavaScript files into two primary bundles: `app-bundle.js` (Frontend) and `admin-bundle.js` (Administration).
