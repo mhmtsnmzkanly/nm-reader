@@ -40,6 +40,9 @@ window.AdminApp = (function($) {
   const setH = (s, h) => { const el = $(s); if (el.length) el.html(h); };
   const setT = (s, v) => { const el = $(s); if (el.length) el.text(String(v)); };
   const esc = (v) => $('<div>').text(v == null ? '' : String(v)).html();
+  const fmtDate = (v) => v ? String(v).split(' ')[0] : '';
+  const fmtTime = (v) => v ? (String(v).split(' ')[1] || String(v)) : '';
+  const lineList = (items) => Array.isArray(items) ? items.map(x => esc(x)).join('<br>') : '';
 
   // --- MODULES ---
 
@@ -48,30 +51,63 @@ window.AdminApp = (function($) {
       console.log("[AdminApp] Dashboard Active");
       this.load();
       $('#btn-refresh-reputation')?.on('click', () => this.load());
+      $('#btn-refresh-legacy-metrics, #btn-metrics-dashboard, #btn-metrics-snapshot, #btn-metrics-insights, #btn-metrics-genre')?.on('click', () => this.load());
     },
     load: async function() {
       try {
-        const res = await api('/admin/overview'); const d = res.data || {};
+        const [overviewRes, viewsRes, visitsRes, blogsRes, repRes] = await Promise.all([
+          api('/admin/overview'),
+          api('/admin/stats/views'),
+          api('/admin/stats/visits'),
+          api('/admin/stats/blogs'),
+          api('/admin/stats/reputation')
+        ]);
+        const d = overviewRes.data || {};
         setT('#kpi-users', d.kpis?.users_total || 0); setT('#kpi-contents', d.kpis?.contents_total || 0);
         setT('#kpi-chapters', d.kpis?.chapters_total || 0); setT('#kpi-unread', d.kpis?.blogs_pending_total || 0);
         const m = d.metrics || {};
         setH('#metrics-top-contents', (m.top_contents_7d || []).map(c => `<tr><td><a href="/admin/content" class="text-decoration-none">${c.title}</a></td><td><small class="badge bg-light text-dark">${c.type}</small></td><td class="text-end fw-bold">${c.view_count_7d}</td><td class="text-end text-muted">${c.comment_count_7d || 0}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center">No data</td></tr>');
         setH('#metrics-funnel-health', `<div class="mb-2 small">Home-to-Content: ${m.funnel?.home_to_content_pct || 0}%</div><div class="mb-2 small">Content-to-Chapter: ${m.funnel?.content_to_chapter_pct || 0}%</div><hr class="my-2 opacity-10"><div class="small">Error Rate: ${m.performance_slo?.server_error_rate_pct_24h || 0}%</div><div class="small">P95 Latency: ${m.performance_slo?.p95_duration_ms_24h || 0}ms</div>`);
         setH('#metrics-retention-search', `<div class="mb-2 small">Searches (7d): ${m.retention_search?.search_total_7d || 0}</div><div class="mb-2 small">Zero Results: ${m.retention_search?.zero_result_pct_7d || 0}%</div><hr class="my-2 opacity-10"><div class="small">D1 Retention: ${m.retention_search?.d1_retention_pct || 0}%</div><div class="small">New Users (7d): ${m.retention_search?.new_users_7d || 0}</div>`);
-        this.loadCharts();
+        const visits = visitsRes.data || {};
+        setT('#visits-daily', visits.daily || 0);
+        setT('#visits-weekly', visits.weekly || 0);
+        setT('#visits-monthly', visits.monthly || 0);
+
+        const blogStats = blogsRes.data || {};
+        const summary = blogStats.summary || {};
+        setT('#blog-stat-total', summary.total || 0);
+        setT('#blog-stat-visible', summary.visible_total || 0);
+        setT('#blog-stat-hidden', summary.hidden_total || 0);
+        setT('#blog-stat-deleted', summary.deleted_total || 0);
+        setT('#blog-stat-created-period', summary.created_last_days || 0);
+        setT('#blog-stat-approved-period', summary.approved_last_days || 0);
+
+        const rep = repRes.data || [];
+        setH('#reputation-body', rep.map(u => `<tr><td>@${esc(u.username)}</td><td class="text-end fw-bold">${Number(u.score || 0).toFixed(1)}</td><td class="text-end">${u.comment_count || 0}</td><td class="text-end">${u.votes_given || 0}</td><td class="text-end">${u.up_votes || 0}</td><td class="text-end">${u.down_votes || 0}</td><td class="text-end">${Math.round((u.total_seconds || 0) / 60)}m</td></tr>`).join('') || '<tr><td colspan="7">No data</td></tr>');
+
+        this.loadCharts(viewsRes.data || {}, blogStats);
+        setH('#legacy-kpis', `Users: ${d.kpis?.users_total || 0}<br>Contents: ${d.kpis?.contents_total || 0}<br>Chapters: ${d.kpis?.chapters_total || 0}<br>Pending Blogs: ${d.kpis?.blogs_pending_total || 0}`);
+        setH('#legacy-metrics-output', esc(JSON.stringify({ overview: d, views: viewsRes.data || {}, visits, blogs: blogStats }, null, 2)));
       } catch (e) {}
     },
-    loadCharts: async function() {
-      try {
-        const v = await api('/admin/stats/views'); const s = v.data || {};
-        this.chart('chartTopTags', s.series_tags, 'view_total');
-        this.chart('chartTopGenres', s.series_genres, 'view_total');
-        this.chart('chartTopContents', s.series, 'view_total');
-      } catch (e) {}
+    loadCharts: function(s, b) {
+      this.chart('chartTopTags', s.series_tags, 'view_total');
+      this.chart('chartTopGenres', s.series_genres, 'view_total');
+      this.chart('chartTopTypes', s.types, 'view_total');
+      this.chart('chartTopContents', s.series, 'view_total');
+      this.chart('chartTopChapters', s.chapters, 'view_total');
+      this.chart('chartLegacyTopContents', s.series, 'view_total');
+      this.chart('chartLegacyTopGenres', s.series_genres, 'view_total');
+      this.chart('chartLegacyGenreInterest', s.series_tags, 'view_total');
+      this.chart('chartBlogAuthors', b.top_authors, 'blog_total');
+      this.chart('chartBlogDaily', (b.daily_created || []).map((x, idx) => ({ name: x.day || `Day ${idx + 1}`, total: x.total || 0 })), 'total');
     },
     chart: function(id, data, key) {
       if (typeof Chart === 'undefined') return; const el = document.getElementById(id); if (!el) return;
+      if (el._nmrChart) el._nmrChart.destroy();
       new Chart(el.getContext('2d'), { type: 'bar', data: { labels: (data || []).map(x => x.name || x.title || 'N/A'), datasets: [{ data: (data || []).map(x => x[key]), backgroundColor: 'rgba(13,110,253,0.6)' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+      el._nmrChart = Chart.getChart(el);
     }
   };
 
@@ -251,24 +287,144 @@ window.AdminApp = (function($) {
 
   const Uploads = {
     init: function() { if (!$('#uploads-list').length) return; this.load(1); $('#refresh-uploads').on('click', () => this.load(1)); $('#uploads-list').on('click', 'button[data-action="delete-upload"]', async (e) => { if(confirm('Delete?')) { await api(`/admin/uploads/${e.currentTarget.dataset.id}`, { method: 'DELETE' }); this.load(1); } }); },
-    load: async function(p) { try { const r = await api(`/admin/uploads?page=${p}`); const items = r.data?.items || r.data || []; setH('#uploads-list', items.map(i => `<tr><td><img src="${i.file_path}" class="img-thumbnail" style="height:40px;cursor:pointer" onclick="window.previewImg('${i.file_path}')"></td><td><small>${i.original_name}</small></td><td>${i.mime_type.split('/')[1]}</td><td>${(i.file_size/1024).toFixed(1)}KB</td><td>@${i.username || 'System'}</td><td><button class="btn btn-xs btn-outline-danger" data-id="${i.id}" data-action="delete-upload"><i class="bi bi-trash"></i></button></td></tr>`).join('')); } catch (e) {} }
+    load: async function(p) { try { const r = await api(`/admin/uploads?page=${p}`); const items = r.data?.items || r.data || []; setH('#uploads-list', items.map(i => `<tr><td><img src="${i.file_path}" class="img-thumbnail" style="height:40px;cursor:pointer" onclick="window.previewImg('${i.file_path}')"></td><td><small>${esc(i.original_name)}</small></td><td>${esc((i.mime_type || '').split('/')[1] || i.mime_type || '-')}</td><td>${((i.file_size || 0)/1024).toFixed(1)}KB</td><td>@${esc(i.username || 'System')}</td><td>${fmtDate(i.created_at)}</td><td><button class="btn btn-xs btn-outline-danger" data-id="${i.id}" data-action="delete-upload"><i class="bi bi-trash"></i></button></td></tr>`).join('') || '<tr><td colspan="7">No data</td></tr>'); } catch (e) {} }
   };
 
-  const Ops = { init: function() { $('#btn-run-jobs')?.on('click', async () => { await api('/admin/queue/run-once', { method: 'POST', body: '{}' }); alert('Done'); }); $('#btn-trigger-analytics')?.on('click', async () => { await api('/admin/maintenance/analytics', { method: 'POST', body: '{}' }); alert('Analytics Triggered'); }); } };
+  const Ops = {
+    init: function() {
+      if (!$('#queue-jobs-list').length && !$('#btn-trigger-analytics').length) return;
+      this.loadQueue();
+      $('#btn-run-jobs')?.on('click', async () => {
+        try {
+          const limit = parseInt($('#jobs-limit').val(), 10) || 5;
+          const r = await api('/admin/queue/run-once', { method: 'POST', body: JSON.stringify({ limit }) });
+          this.printOutput(r.data || r.meta || { ok: true });
+          this.loadQueue();
+        } catch (e) { alert(e.message); }
+      });
+      $('#btn-run-cleanup')?.on('click', async () => {
+        try {
+          const days = parseInt($('#cleanup-days').val(), 10) || 30;
+          const r = await api('/admin/retention/cleanup', { method: 'POST', body: JSON.stringify({ days }) });
+          this.printOutput(r.data || { cleaned: true });
+        } catch (e) { alert(e.message); }
+      });
+      $('#btn-trigger-analytics')?.on('click', async () => { try { const r = await api('/admin/maintenance/analytics', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
+      $('#btn-trigger-backup')?.on('click', async () => { try { const r = await api('/admin/maintenance/backup', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
+      $('#btn-trigger-sitemap')?.on('click', async () => { try { const r = await api('/admin/maintenance/sitemap', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
+      $('#btn-trigger-warmup')?.on('click', async () => { try { const r = await api('/admin/maintenance/warmup', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
+    },
+    loadQueue: async function() {
+      try {
+        const r = await api('/admin/queue/jobs');
+        const items = r.data?.items || r.data || [];
+        setH('#queue-jobs-list', items.map(j => `<div class="border-bottom pb-1 mb-1"><strong>#${j.id}</strong> <code>${esc(j.job_type)}</code> <span class="badge bg-${j.status === 'done' ? 'success' : (j.status === 'failed' ? 'danger' : 'secondary')}">${esc(j.status)}</span><div class="small text-muted">${fmtDate(j.created_at)} ${fmtTime(j.created_at)} | attempts: ${j.attempts || 0}</div>${j.last_error ? `<div class="small text-danger">${esc(j.last_error)}</div>` : ''}</div>`).join('') || 'No queued jobs.');
+      } catch (e) {
+        setH('#queue-jobs-list', esc(e.message));
+      }
+    },
+    printOutput: function(payload) {
+      const box = $('#maintenance-output');
+      if (!box.length) return;
+      box.removeClass('d-none').html(`<pre class="mb-0 text-light">${esc(JSON.stringify(payload, null, 2))}</pre>`);
+    }
+  };
 
   const Logs = {
-    init: function() { if (!$('#logs-body').length) return; this.load(); $('#btn-refresh-logs')?.on('click', () => this.load()); },
-    load: async function() { try { const r = await api('/admin/audit-logs'); const items = r.data?.items || r.data || []; setH('#logs-body', items.map(l => `<tr><td><small>${l.created_at.split(' ')[1]}</small></td><td><span class="badge bg-secondary">${l.method}</span></td><td class="truncate">${l.path}</td><td>@${l.username || 'guest'}</td></tr>`).join('')); } catch (e) {} }
+    init: function() {
+      if (!$('#logs-body').length && !$('#audit-logs-body').length && !$('#logins-body').length) return;
+      this.loadAll();
+      $('#btn-refresh-logs')?.on('click', () => this.loadAudit());
+      $('#btn-refresh-logins')?.on('click', () => this.loadLogins());
+      $('#btn-refresh-access')?.on('click', () => this.loadAccess());
+      $('#btn-refresh-error')?.on('click', () => this.loadErrors());
+    },
+    loadAll: function() { this.loadAudit(); this.loadLogins(); this.loadAccess(); this.loadErrors(); },
+    loadAudit: async function() {
+      try {
+        const r = await api('/admin/audit-logs');
+        const items = r.data?.items || r.data || [];
+        setH('#logs-body', items.map(l => `<tr><td><small>${fmtTime(l.created_at)}</small></td><td><span class="badge bg-secondary">${esc(l.method)}</span></td><td class="truncate">${esc(l.path)}</td><td>${esc(l.ip_hash || '-')}</td><td>@${esc(l.username || 'guest')}</td></tr>`).join('') || '<tr><td colspan="5">No data</td></tr>');
+        setH('#audit-logs-body', items.map(l => `<tr><td>@${esc(l.username || 'guest')}</td><td><span class="badge bg-secondary">${esc(l.method)}</span> ${esc(l.status_code || '')}</td><td>${esc(l.path)}</td><td>${esc(l.created_at || '')}</td></tr>`).join('') || '<tr><td colspan="4">No data</td></tr>');
+      } catch (e) {}
+    },
+    loadLogins: async function() {
+      try {
+        const r = await api('/admin/login-events');
+        const items = r.data?.items || r.data || [];
+        setH('#logins-body', items.map(l => `<tr><td>${esc(l.email || '-')}</td><td>${esc(l.ip_hash || '-')}</td><td>${esc((l.user_agent || '').slice(0, 60))}</td><td><span class="badge bg-${Number(l.success) ? 'success' : 'danger'}">${Number(l.success) ? 'Yes' : 'No'}</span></td><td>${esc(l.attempted_at || '')}</td></tr>`).join('') || '<tr><td colspan="5">No data</td></tr>');
+        setH('#login-logs-body', items.map(l => `<tr><td>${esc(l.email || '-')}</td><td>${esc(l.ip_hash || '-')}</td><td>${Number(l.success) ? 'success' : esc(l.failure_reason || 'failed')}</td><td>${esc(l.attempted_at || '')}</td></tr>`).join('') || '<tr><td colspan="4">No data</td></tr>');
+      } catch (e) {}
+    },
+    loadAccess: async function() {
+      try {
+        const r = await api('/admin/logs/access');
+        const items = r.data?.items || r.data || [];
+        setH('#access-logs-container', items.map(l => `<div class="border-bottom pb-2 mb-2"><div><strong>${esc(l.method || 'GET')}</strong> ${esc(l.path || '-')}</div><div class="small text-muted">${esc(l.created_at || '')} | ${esc(l.ip_hash || '-')} | ${esc(l.duration_ms || 0)}ms</div></div>`).join('') || '<div class="text-muted">No data</div>');
+      } catch (e) { setH('#access-logs-container', `<div class="text-danger">${esc(e.message)}</div>`); }
+    },
+    loadErrors: async function() {
+      try {
+        const r = await api('/admin/logs/error');
+        const items = r.data?.items || r.data || [];
+        setH('#error-logs-container', items.length ? items.map(l => `<div class="border-bottom pb-2 mb-2"><pre class="mb-0">${esc(JSON.stringify(l, null, 2))}</pre></div>`).join('') : '<div class="text-muted">No data</div>');
+      } catch (e) { setH('#error-logs-container', `<div class="text-danger">${esc(e.message)}</div>`); }
+    }
+  };
+
+  const Config = {
+    init: function() {
+      if (!$('#form-env-config').length) return;
+      this.load();
+      $('#btn-reload-env')?.on('click', () => this.load());
+      $('#btn-add-var')?.on('click', () => this.addVar());
+      $('#form-env-config').on('submit', async (e) => {
+        e.preventDefault();
+        const payload = {};
+        $('#form-env-config').find('[data-env-key]').each((_, el) => { payload[$(el).data('envKey')] = $(el).val(); });
+        try {
+          await api('/admin/maintenance/env', { method: 'POST', body: JSON.stringify(payload) });
+          this.flash('Saved');
+        } catch (err) { alert(err.message); }
+      });
+      $('#env-sections-wrapper').on('click', '.btn-remove', (e) => { $(e.currentTarget).closest('.env-row').remove(); });
+    },
+    load: async function() {
+      try {
+        const r = await api('/admin/maintenance/env');
+        const data = r.data || {};
+        const rows = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
+        setH('#env-sections-wrapper', rows.map(([k, v]) => this.row(k, v)).join('') || '<div class="text-muted">No variables.</div>');
+      } catch (e) {
+        setH('#env-sections-wrapper', `<div class="alert alert-danger mb-0">${esc(e.message)}</div>`);
+      }
+    },
+    row: function(key, value) {
+      return `<div class="card env-section"><div class="card-body env-row"><div class="row g-2 align-items-center"><div class="col-md-4"><div class="env-key-label">KEY</div><input class="form-control form-control-sm" value="${esc(key)}" data-env-key="${esc(key)}" readonly></div><div class="col-md-7"><div class="env-key-label">VALUE</div><input class="form-control form-control-sm" value="${esc(value)}" data-env-key="${esc(key)}"></div><div class="col-md-1 text-end"><button type="button" class="btn btn-outline-danger btn-sm btn-remove">&times;</button></div></div></div></div>`;
+    },
+    addVar: function() {
+      const key = window.prompt('ENV key');
+      if (!key) return;
+      $('#env-sections-wrapper').prepend(this.row(key.trim().toUpperCase(), ''));
+    },
+    flash: function(text) {
+      const btn = $('#btn-save-env');
+      if (!btn.length) return;
+      const old = btn.html();
+      btn.html(`<i class="bi bi-check2 me-2"></i>${esc(text)}`);
+      setTimeout(() => btn.html(old), 1500);
+    }
   };
 
   window.previewImg = (url) => { $('#full-preview').attr('src', url); window.openModal('preview-modal'); };
   window.NMR_ADMIN_CONTENT = Content;
+  window.NMR_ADMIN = { promptCreateTaxonomy: (...args) => Content.promptCreateTaxonomy(...args) };
 
   return {
     init: function() {
       const p = window.location.pathname; const l = (p.split('/')[1] === 'tr' || p.split('/')[1] === 'en') ? '/' + p.split('/')[1] : '';
       const c = p.replace(l, '');
-      if (c === '/admin') Dashboard.init();
+      if (c === '/admin') { Dashboard.init(); Content.init(); Blogs.init(); Ops.init(); Logs.init(); }
       if (c.includes('/admin/content')) { Content.init(); Chapters.init(); }
       if (c.includes('/admin/blogs')) Blogs.init();
       if (c.includes('/admin/comments')) Comments.init();
@@ -276,6 +432,7 @@ window.AdminApp = (function($) {
       if (c.includes('/admin/uploads')) Uploads.init();
       if (c.includes('/admin/ops')) Ops.init();
       if (c.includes('/admin/logs')) Logs.init();
+      if (c.includes('/admin/config')) Config.init();
     }
   };
 })(window.jQuery);
