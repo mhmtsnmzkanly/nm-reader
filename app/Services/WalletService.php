@@ -9,10 +9,13 @@ use App\Repositories\ChapterRepository;
 use App\Repositories\SeriesRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
-use PDO;
+use DateInterval;
+use DateTimeImmutable;
 
 final class WalletService
 {
+    private const FEATURE_AD_FREE = 'ad_free';
+
     public function __construct(
         private readonly WalletRepository $wallets,
         private readonly UserRepository $users,
@@ -32,6 +35,7 @@ final class WalletService
             'balance_coin' => (int) ($row['balance_coin'] ?? 0),
             'total_coin_purchased' => (int) ($row['total_coin_purchased'] ?? 0),
             'total_coin_spent' => (int) ($row['total_coin_spent'] ?? 0),
+            'features' => $this->featureStatus($userId),
             'updated_at' => (string) ($row['updated_at'] ?? ''),
         ];
     }
@@ -65,6 +69,11 @@ final class WalletService
                 'total' => $this->wallets->countPackages($activeOnly),
             ],
         ];
+    }
+
+    public function featureProducts(bool $activeOnly = true): array
+    {
+        return $this->wallets->listFeatureProducts($activeOnly);
     }
 
     public function createPackage(array $payload, string $moderatorId): array
@@ -191,6 +200,64 @@ final class WalletService
 
         return [
             'transaction_id' => $transactionId,
+            'wallet' => $this->wallet($targetUserId),
+        ];
+    }
+
+    public function grantPackageToUser(string $targetUserId, int $packageId, ?string $cashAmount, string $reason, string $moderatorId): array
+    {
+        $this->assertUserExists($targetUserId);
+        $pkg = $this->wallets->findPackageById($packageId);
+        if ($pkg === null) {
+            throw new \DomainException('Package not found');
+        }
+        if (!(bool) ($pkg['is_active'] ?? false)) {
+            throw new \DomainException('Package is inactive');
+        }
+
+        $coinAmount = (int) ($pkg['coin_amount'] ?? 0) + (int) ($pkg['bonus_coin'] ?? 0);
+        if ($coinAmount <= 0) {
+            throw new \InvalidArgumentException('Package has no coin value');
+        }
+
+        $description = trim($reason) !== '' ? $reason : sprintf('Applied package %s', (string) ($pkg['name'] ?? $packageId));
+        $pdo = $this->wallets->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $wallet = $this->wallets->getWalletForUpdate($targetUserId);
+            $newBalance = (int) $wallet['balance_coin'] + $coinAmount;
+            $newPurchased = (int) $wallet['total_coin_purchased'] + $coinAmount;
+            $this->wallets->updateWalletBalances($targetUserId, $newBalance, $newPurchased, (int) $wallet['total_coin_spent']);
+            $transactionId = $this->wallets->createTransaction(
+                $targetUserId,
+                'package_credit',
+                $coinAmount,
+                $newBalance,
+                'shop_package',
+                (string) $packageId,
+                $description,
+                [
+                    'package_name' => (string) ($pkg['name'] ?? ''),
+                    'cash_amount' => $cashAmount,
+                    'display_price' => (string) ($pkg['display_price'] ?? '0.00'),
+                    'currency' => (string) ($pkg['currency'] ?? 'TRY'),
+                ],
+                $moderatorId
+            );
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+
+        $this->recordAdminAction($moderatorId, 'user', $targetUserId, 'wallet_package_credit', $description);
+
+        return [
+            'transaction_id' => $transactionId,
+            'package_id' => $packageId,
+            'credited_coin' => $coinAmount,
             'wallet' => $this->wallet($targetUserId),
         ];
     }
@@ -453,6 +520,137 @@ final class WalletService
                 'page' => $page,
                 'per_page' => $perPage,
                 'total' => $this->wallets->countChapterUnlocks($userId),
+            ],
+        ];
+    }
+
+    public function featureEntitlements(string $userId, int $page, int $perPage): array
+    {
+        return [
+            'items' => $this->wallets->listFeatureEntitlements($userId, $page, $perPage),
+            'meta' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $this->wallets->countFeatureEntitlements($userId),
+            ],
+        ];
+    }
+
+    public function configureAdFree(array $payload, string $moderatorId): array
+    {
+        $coinPrice = max(0, (int) ($payload['coin_price'] ?? 0));
+        $durationDays = max(1, (int) ($payload['duration_days'] ?? 30));
+        $isActive = (bool) ($payload['is_active'] ?? true);
+        $name = trim((string) ($payload['name'] ?? 'Reklamsiz Deneyim'));
+        if ($name === '') {
+            $name = 'Reklamsiz Deneyim';
+        }
+
+        $this->wallets->upsertFeatureProduct(self::FEATURE_AD_FREE, mb_substr($name, 0, 120), $coinPrice, $durationDays, $isActive);
+        $this->recordAdminAction($moderatorId, 'system', self::FEATURE_AD_FREE, 'feature_update', sprintf('Updated ad-free plan to %d coin / %d day', $coinPrice, $durationDays));
+
+        return $this->adFreeProduct();
+    }
+
+    public function adFreeProduct(): array
+    {
+        $product = $this->wallets->getFeatureProduct(self::FEATURE_AD_FREE);
+        if ($product === null) {
+            return [
+                'feature_key' => self::FEATURE_AD_FREE,
+                'name' => 'Reklamsiz Deneyim',
+                'coin_price' => 0,
+                'duration_days' => 30,
+                'is_active' => false,
+            ];
+        }
+        return $product;
+    }
+
+    public function purchaseAdFree(string $userId): array
+    {
+        $this->assertUserExists($userId);
+        $product = $this->wallets->getFeatureProduct(self::FEATURE_AD_FREE);
+        if ($product === null || !(bool) ($product['is_active'] ?? false)) {
+            throw new \DomainException('Ad-free product is unavailable');
+        }
+
+        $coinPrice = (int) ($product['coin_price'] ?? 0);
+        $durationDays = max(1, (int) ($product['duration_days'] ?? 30));
+        if ($coinPrice <= 0) {
+            throw new \DomainException('Ad-free product price is invalid');
+        }
+
+        $pdo = $this->wallets->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $wallet = $this->wallets->getWalletForUpdate($userId);
+            $balance = (int) $wallet['balance_coin'];
+            if ($balance < $coinPrice) {
+                throw new \DomainException('Insufficient coin balance');
+            }
+
+            $newBalance = $balance - $coinPrice;
+            $this->wallets->updateWalletBalances(
+                $userId,
+                $newBalance,
+                (int) $wallet['total_coin_purchased'],
+                (int) $wallet['total_coin_spent'] + $coinPrice
+            );
+
+            $transactionId = $this->wallets->createTransaction(
+                $userId,
+                'feature_unlock',
+                -$coinPrice,
+                $newBalance,
+                'feature',
+                self::FEATURE_AD_FREE,
+                sprintf('Purchased ad-free access for %d day(s)', $durationDays),
+                ['duration_days' => $durationDays]
+            );
+
+            $now = new DateTimeImmutable('now');
+            $current = $this->wallets->getLatestActiveFeatureEntitlement($userId, self::FEATURE_AD_FREE);
+            $startsAt = $current !== null ? new DateTimeImmutable((string) $current['expires_at']) : $now;
+            if ($startsAt < $now) {
+                $startsAt = $now;
+            }
+            $expiresAt = $startsAt->add(new DateInterval(sprintf('P%dD', $durationDays)));
+            $entitlementId = $this->wallets->createFeatureEntitlement(
+                $userId,
+                self::FEATURE_AD_FREE,
+                'feature_product',
+                self::FEATURE_AD_FREE,
+                $transactionId,
+                $startsAt->format('Y-m-d H:i:s'),
+                $expiresAt->format('Y-m-d H:i:s')
+            );
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+
+        return [
+            'transaction_id' => $transactionId,
+            'entitlement_id' => $entitlementId,
+            'feature' => $this->featureStatus($userId)[self::FEATURE_AD_FREE],
+            'wallet' => $this->wallet($userId),
+        ];
+    }
+
+    public function featureStatus(string $userId): array
+    {
+        $adFree = $this->wallets->getLatestActiveFeatureEntitlement($userId, self::FEATURE_AD_FREE);
+
+        return [
+            self::FEATURE_AD_FREE => [
+                'feature_key' => self::FEATURE_AD_FREE,
+                'active' => $adFree !== null,
+                'expires_at' => $adFree['expires_at'] ?? null,
+                'starts_at' => $adFree['starts_at'] ?? null,
             ],
         ];
     }

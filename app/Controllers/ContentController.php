@@ -163,6 +163,11 @@ final class ContentController
         return ResponseHelper::success($result['items'], $result['meta']);
     }
 
+    public function shopFeatures(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->wallets->featureProducts(true));
+    }
+
     // --- USER INTERACTIONS (FOLLOWS) ---
 
     public function followByType(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

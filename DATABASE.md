@@ -123,6 +123,7 @@ Cached wallet balance per user.
 #### `wallet_transactions`
 Immutable wallet ledger.
 - Every manual credit, debit, chapter unlock, and series unlock is recorded here.
+- Package credits and feature purchases are also recorded here.
 - `balance_after` stores a post-transaction snapshot for auditability.
 - `reference_type` / `reference_id` link entries to user, series, chapter, or admin actions.
 
@@ -130,6 +131,17 @@ Immutable wallet ledger.
 Admin-managed storefront package definitions.
 - Supports base coin, bonus coin, display fiat price, currency, activation state, and sorting.
 - In the current phase, packages are display and operations data; payment provider settlement is not yet integrated.
+- Can also be applied directly to a user wallet by an admin as a package-based credit action.
+
+#### `site_feature_products`
+Coin-purchasable site-wide features.
+- Used for non-content perks such as `ad_free`.
+- Stores coin cost, duration in days, and activation status.
+
+#### `user_feature_entitlements`
+User ownership and expiration tracking for feature products.
+- Supports time-bound entitlements such as ad-free access for 30 days.
+- Links the entitlement back to the wallet ledger transaction.
 
 #### `series_access_products`
 Series-level pricing table.

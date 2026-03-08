@@ -472,7 +472,7 @@ DROP TABLE IF EXISTS `wallet_transactions`;
 CREATE TABLE `wallet_transactions` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` char(8) NOT NULL,
-  `type` enum('manual_credit','manual_debit','chapter_unlock','series_unlock','refund','adjustment') NOT NULL,
+  `type` enum('manual_credit','manual_debit','package_credit','chapter_unlock','series_unlock','feature_unlock','refund','adjustment') NOT NULL,
   `coin_delta` int(11) NOT NULL,
   `balance_after` int(10) unsigned NOT NULL,
   `reference_type` varchar(32) DEFAULT NULL,
@@ -500,6 +500,34 @@ CREATE TABLE `shop_packages` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `site_feature_products`;
+CREATE TABLE `site_feature_products` (
+  `feature_key` varchar(32) NOT NULL,
+  `name` varchar(120) NOT NULL,
+  `coin_price` int(10) unsigned NOT NULL DEFAULT 0,
+  `duration_days` int(10) unsigned NOT NULL DEFAULT 30,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`feature_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_feature_entitlements`;
+CREATE TABLE `user_feature_entitlements` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `feature_key` varchar(32) NOT NULL,
+  `source_type` varchar(32) DEFAULT NULL,
+  `source_id` varchar(32) DEFAULT NULL,
+  `transaction_id` bigint(20) unsigned DEFAULT NULL,
+  `starts_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `expires_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_user_feature_entitlements_user_feature` (`user_id`,`feature_key`,`expires_at`),
+  CONSTRAINT `fk_user_feature_entitlements_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_feature_entitlements_tx` FOREIGN KEY (`transaction_id`) REFERENCES `wallet_transactions` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `series_access_products`;
@@ -565,7 +593,7 @@ CREATE TABLE `admin_actions` (
   `moderator_user_id` char(8) DEFAULT NULL,
   `target_type` enum('comment','blog','content','user','system','role','series','chapter') NOT NULL,
   `target_id` varchar(32) NOT NULL,
-  `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','refund','series_unlock','chapter_unlock','package_create','package_update','pricing_update') NOT NULL,
+  `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update') NOT NULL,
   `reason` text DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)

@@ -75,6 +75,10 @@ Search series by title.
 Lists active coin packages for the storefront.
 - **Response**: `[ShopPackageDto]`
 
+#### **GET /shop/features**
+Lists active feature products that can be purchased with coins.
+- **Response**: `[FeatureProductDto]`
+
 ---
 
 ## 3. Auth & Identity
@@ -144,6 +148,15 @@ Unlocks a full series with coins.
 #### **POST /chapter/{chapterId}/unlock**
 Unlocks an individual chapter with coins when chapter-level pricing exists.
 
+#### **GET /user/features**
+Returns the current user's active feature status (for example ad-free access).
+
+#### **GET /user/features/entitlements**
+Returns paginated feature entitlement history.
+
+#### **POST /user/features/ad-free/purchase**
+Purchases ad-free site usage with coins.
+
 ---
 
 ## 5. Admin Console API (Requires admin.panel.access)
@@ -183,6 +196,10 @@ Creates a new shop package.
 #### **PUT /admin/shop/packages/{id}**
 Updates an existing shop package.
 
+#### **POST /admin/wallets/{userId}/grant-package**
+Applies a configured package to a user's wallet and logs the package/cash metadata in the ledger.
+- **Payload**: `{ "package_id": 1, "cash_amount": "99.90", "reason": "manual payment confirmation" }`
+
 #### **POST /admin/wallets/{userId}/credit**
 Adds coins to a user's wallet manually.
 - **Payload**: `{ "amount": 100, "reason": "manual top-up" }`
@@ -201,6 +218,13 @@ Sets or updates series-level coin unlock pricing.
 #### **PUT /admin/chapters/{id}/pricing**
 Sets or updates chapter-level coin unlock pricing.
 - **Payload**: `{ "price_coin": 8, "is_active": true }`
+
+#### **GET /admin/features**
+Lists configured feature products.
+
+#### **PUT /admin/features/ad-free**
+Creates or updates the ad-free product.
+- **Payload**: `{ "coin_price": 50, "duration_days": 30, "is_active": true, "name": "Ad Free 30 Days" }`
 
 ---
 
@@ -244,3 +268,12 @@ Content and chapter payloads may now include:
 - `has_any_premium`
 - `is_locked`
 - `access`
+
+### FeatureProductDto
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `feature_key` | `string` | Stable feature identifier such as `ad_free` |
+| `name` | `string` | Display label |
+| `coin_price` | `int` | Purchase cost in coins |
+| `duration_days` | `int` | Access duration per purchase |
+| `is_active` | `bool` | Whether the feature can currently be purchased |

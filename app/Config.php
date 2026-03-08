@@ -209,6 +209,7 @@ final class Config
             $group->get("/tag/{slug}", [ContentController::class, "tag"]);
             $group->get("/latest-chapters", [ContentController::class, "latestChapters"]);
             $group->get("/shop/packages", [ContentController::class, "shopPackages"]);
+            $group->get("/shop/features", [ContentController::class, "shopFeatures"]);
             $group->get("/series_genres", [ContentController::class, "genres"]);
             $group->get("/series_tags", [ContentController::class, "tags"]);
             $group->get("/content/{type:" . $typePattern . "}/chapters", [ContentController::class, "latestChaptersByType"]);
@@ -247,6 +248,9 @@ final class Config
                 $secure->get("/user/follows", [ContentController::class, "followed"]);
                 $secure->get("/user/wallet", [UserController::class, "wallet"]);
                 $secure->get("/user/wallet/transactions", [UserController::class, "walletTransactions"]);
+                $secure->get("/user/features", [UserController::class, "featureStatus"]);
+                $secure->get("/user/features/entitlements", [UserController::class, "featureEntitlements"]);
+                $secure->post("/user/features/ad-free/purchase", [UserController::class, "purchaseAdFree"]);
                 $secure->get("/user/unlocks/series", [UserController::class, "seriesUnlocks"]);
                 $secure->get("/user/unlocks/chapters", [UserController::class, "chapterUnlocks"]);
                 $secure->post("/content/{type:" . $typePattern . "}/{slug}/unlock", [ContentController::class, "unlockByType"]);
@@ -303,11 +307,14 @@ final class Config
             $group->get("/shop/packages", [AdminPanelController::class, "shopPackages"])->add($perm(["admin.shop.manage"]));
             $group->post("/shop/packages", [AdminPanelController::class, "createShopPackage"])->add($perm(["admin.shop.manage"]));
             $group->put("/shop/packages/{id:[0-9]+}", [AdminPanelController::class, "updateShopPackage"])->add($perm(["admin.shop.manage"]));
+            $group->post("/wallets/{userId:[a-z0-9]{8}}/grant-package", [AdminPanelController::class, "grantShopPackage"])->add($perm(["admin.wallet.manage"]));
             $group->post("/wallets/{userId:[a-z0-9]{8}}/credit", [AdminPanelController::class, "creditWallet"])->add($perm(["admin.wallet.manage"]));
             $group->post("/wallets/{userId:[a-z0-9]{8}}/debit", [AdminPanelController::class, "debitWallet"])->add($perm(["admin.wallet.manage"]));
             $group->get("/wallets/{userId:[a-z0-9]{8}}/transactions", [AdminPanelController::class, "walletTransactions"])->add($perm(["admin.wallet.view"]));
             $group->put("/series/{id:[a-z0-9]{6}}/pricing", [AdminPanelController::class, "updateSeriesPricing"])->add($perm(["admin.shop.manage"]));
             $group->put("/chapters/{id:[a-z0-9]{6}}/pricing", [AdminPanelController::class, "updateChapterPricing"])->add($perm(["admin.shop.manage"]));
+            $group->get("/features", [AdminPanelController::class, "featureProducts"])->add($perm(["admin.shop.manage"]));
+            $group->put("/features/ad-free", [AdminPanelController::class, "configureAdFree"])->add($perm(["admin.shop.manage"]));
             $group->get("/maintenance/env", [AdminPanelController::class, "getEnvConfig"])->add($perm(["admin.panel.access"]));
             $group->post("/maintenance/env", [AdminPanelController::class, "saveEnvConfig"])->add($perm(["admin.panel.access"]));
             $group->get("/audit-logs", [AdminPanelController::class, "auditLogs"])->add($perm(["admin.logs.view"]));

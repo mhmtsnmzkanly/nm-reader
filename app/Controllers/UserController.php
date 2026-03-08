@@ -287,4 +287,30 @@ final class UserController
         $result = $this->wallets->chapterUnlocks($userId, $page, $perPage);
         return ResponseHelper::success($result['items'], $result['meta']);
     }
+
+    public function featureStatus(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $userId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->wallets->featureStatus($userId));
+    }
+
+    public function featureEntitlements(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $userId = (string) $request->getAttribute('user_id');
+        $query = $request->getQueryParams();
+        $page = max(1, (int) ($query['page'] ?? 1));
+        $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
+        $result = $this->wallets->featureEntitlements($userId, $page, $perPage);
+        return ResponseHelper::success($result['items'], $result['meta']);
+    }
+
+    public function purchaseAdFree(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->wallets->purchaseAdFree($userId));
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(402, $exception->getMessage());
+        }
+    }
 }

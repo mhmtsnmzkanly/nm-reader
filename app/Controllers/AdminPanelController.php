@@ -420,6 +420,23 @@ final class AdminPanelController
         }
     }
 
+    public function grantShopPackage(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            $packageId = (int) ($payload['package_id'] ?? 0);
+            $cashAmount = isset($payload['cash_amount']) ? (string) $payload['cash_amount'] : null;
+            $reason = (string) ($payload['reason'] ?? '');
+            return ResponseHelper::success($this->wallets->grantPackageToUser((string) $args['userId'], $packageId, $cashAmount, $reason, $modId));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\DomainException $exception) {
+            $code = str_contains(strtolower($exception->getMessage()), 'not found') ? 404 : 400;
+            return ResponseHelper::error($code, $exception->getMessage());
+        }
+    }
+
     public function creditWallet(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {
@@ -485,6 +502,22 @@ final class AdminPanelController
             return ResponseHelper::error(400, $exception->getMessage());
         } catch (\DomainException $exception) {
             return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
+    public function featureProducts(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->wallets->featureProducts(false));
+    }
+
+    public function configureAdFree(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->wallets->configureAdFree($payload, $modId));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
         }
     }
 

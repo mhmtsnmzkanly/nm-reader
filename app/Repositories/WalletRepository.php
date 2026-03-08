@@ -140,6 +140,19 @@ final class WalletRepository
         return (int) $this->pdo->lastInsertId();
     }
 
+    public function findPackageById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, name, coin_amount, bonus_coin, display_price, currency, is_active, sort_order, created_at, updated_at
+             FROM shop_packages
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        return $row === false ? null : $row;
+    }
+
     public function listTransactions(string $userId, int $page, int $perPage): array
     {
         $offset = max(0, ($page - 1) * $perPage);
@@ -399,6 +412,123 @@ final class WalletRepository
     public function countChapterUnlocks(string $userId): int
     {
         $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_chapter_unlocks WHERE user_id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function upsertFeatureProduct(string $featureKey, string $name, int $coinPrice, int $durationDays, bool $isActive): void
+    {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO site_feature_products (feature_key, name, coin_price, duration_days, is_active, updated_at)
+             VALUES (:feature_key, :name, :coin_price, :duration_days, :is_active, NOW())
+             ON DUPLICATE KEY UPDATE
+                name = VALUES(name),
+                coin_price = VALUES(coin_price),
+                duration_days = VALUES(duration_days),
+                is_active = VALUES(is_active),
+                updated_at = NOW()'
+        );
+        $stmt->execute([
+            'feature_key' => $featureKey,
+            'name' => $name,
+            'coin_price' => $coinPrice,
+            'duration_days' => $durationDays,
+            'is_active' => $isActive ? 1 : 0,
+        ]);
+    }
+
+    public function getFeatureProduct(string $featureKey): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT feature_key, name, coin_price, duration_days, is_active, updated_at
+             FROM site_feature_products
+             WHERE feature_key = :feature_key
+             LIMIT 1'
+        );
+        $stmt->execute(['feature_key' => $featureKey]);
+        $row = $stmt->fetch();
+        return $row === false ? null : $row;
+    }
+
+    public function listFeatureProducts(bool $activeOnly = true): array
+    {
+        $where = $activeOnly ? 'WHERE is_active = 1' : '';
+        $stmt = $this->pdo->query(
+            "SELECT feature_key, name, coin_price, duration_days, is_active, updated_at
+             FROM site_feature_products
+             {$where}
+             ORDER BY feature_key ASC"
+        );
+        return $stmt->fetchAll();
+    }
+
+    public function createFeatureEntitlement(
+        string $userId,
+        string $featureKey,
+        ?string $sourceType,
+        ?string $sourceId,
+        ?int $transactionId,
+        string $startsAt,
+        string $expiresAt
+    ): int {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO user_feature_entitlements (
+                user_id, feature_key, source_type, source_id, transaction_id, starts_at, expires_at, created_at
+             ) VALUES (
+                :user_id, :feature_key, :source_type, :source_id, :transaction_id, :starts_at, :expires_at, NOW()
+             )'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'feature_key' => $featureKey,
+            'source_type' => $sourceType,
+            'source_id' => $sourceId,
+            'transaction_id' => $transactionId,
+            'starts_at' => $startsAt,
+            'expires_at' => $expiresAt,
+        ]);
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    public function getLatestActiveFeatureEntitlement(string $userId, string $featureKey): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, user_id, feature_key, source_type, source_id, transaction_id, starts_at, expires_at, created_at
+             FROM user_feature_entitlements
+             WHERE user_id = :user_id
+               AND feature_key = :feature_key
+               AND expires_at > NOW()
+             ORDER BY expires_at DESC, id DESC
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'feature_key' => $featureKey,
+        ]);
+        $row = $stmt->fetch();
+        return $row === false ? null : $row;
+    }
+
+    public function listFeatureEntitlements(string $userId, int $page, int $perPage): array
+    {
+        $offset = max(0, ($page - 1) * $perPage);
+        $stmt = $this->pdo->prepare(
+            'SELECT id, feature_key, source_type, source_id, transaction_id, starts_at, expires_at, created_at
+             FROM user_feature_entitlements
+             WHERE user_id = :user_id
+             ORDER BY id DESC
+             LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function countFeatureEntitlements(string $userId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_feature_entitlements WHERE user_id = :user_id');
         $stmt->execute(['user_id' => $userId]);
         return (int) $stmt->fetchColumn();
     }

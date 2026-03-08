@@ -111,6 +111,16 @@ This document serves as the absolute authority on the project's architecture, co
   - Extended content/chapter API responses with access metadata so frontend changes can consume lock state without backend rework.
   - Re-aligned `schema.sql` with active backend dependencies by restoring missing queue, preferences, follows, read-history, and analytics tables.
 
+### Package Credit & Ad-Free Feature Expansion (2026-03-08)
+- **Status**: Completed.
+- **Problem**:
+  - Admin flows still lacked package-based credit assignment to a user wallet.
+  - The monetization backend had no feature-level purchase model for using the site without ads.
+- **Fix**:
+  - Added package grant support so admins can apply a configured package directly to a user's wallet and keep fiat/cash metadata in the wallet ledger.
+  - Added feature product and user entitlement storage for coin-purchased site features.
+  - Added `ad_free` product management in the admin API and user endpoints for feature status, entitlement history, and ad-free purchase with coins.
+
 ### Content Alternative Titles Visibility (2026-03-01)
 - **Status**: Completed.
 - **Problem**: Alternative titles were cluttering the hero section and weren't easily readable.
@@ -477,5 +487,4 @@ This document serves as the absolute authority on the project's architecture, co
   - Removed redundant script tags from all view files and `WebController` render calls.
   - Standardized API communication and CSRF handling within the bundles.
   - Improved reader stability and settings persistence.
-
 
