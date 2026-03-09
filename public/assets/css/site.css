@@ -430,6 +430,193 @@ footer {
 .border-white-20 { border-color: rgba(255,255,255,0.2); }
 
 
+/* --- Data Grid & Card Styling --- */
+.content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 2rem;
+}
+
+.content-card {
+    padding: 0 !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-image-link {
+    display: block;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+}
+
+.card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.content-card:hover .card-img {
+    transform: scale(1.08);
+}
+
+.card-body {
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.card-title a {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.card-title a:hover {
+    color: var(--primary);
+}
+
+.card-meta {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* --- Comment Styling --- */
+.comment-item {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.comment-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+
+.comment-author {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--primary);
+}
+
+.comment-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.comment-body {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+}
+
+.comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+}
+
+.vote-btn {
+    opacity: 0.6;
+    transition: all 0.2s;
+}
+
+.vote-btn:hover, .vote-btn.active {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.vote-btn.active[data-vote="1"] { color: var(--success); }
+.vote-btn.active[data-vote="-1"] { color: var(--danger); }
+
+.vote-count {
+    font-weight: 800;
+    font-size: 0.9rem;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* --- Blog Row Styling (Home) --- */
+.blog-row-item {
+    display: block;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.blog-row-item:hover {
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.blog-row-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+    line-height: 1.4;
+}
+
+.blog-row-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* --- Chapter Row Styling --- */
+.chapter-row {
+    transition: border-color 0.2s;
+}
+
+.chapter-row:hover {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.02);
+}
+
+.chapter-title {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.chapter-title:hover {
+    color: var(--primary);
+}
+
+/* --- Suggestions Overrides --- */
+#searchSuggestions {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2xl);
+    overflow: hidden;
+}
+
 /* Custom Project Overrides */
 .logo-text {
     font-size: 1.5rem;
