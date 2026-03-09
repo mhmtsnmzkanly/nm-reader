@@ -1,257 +1,86 @@
 <?php
 $content = is_array($ssr_data ?? null) ? $ssr_data : [];
-$startChapter = isset($start_chapter_number) ? (string) $start_chapter_number : '';
-$contentType = (string) ($type ?? '');
-$contentSlug = (string) ($slug ?? '');
+$chapterItems = is_array($chapters ?? null) ? $chapters : [];
 $genres = is_array($content['series_genres'] ?? null) ? $content['series_genres'] : [];
 $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : [];
-
-$chipItems = [];
-foreach ($genres as $g) {
-    $cfg = $g['ui_config'] ?? [];
-    $color = $cfg['color'] ?? 'success';
-    $colorValue = (str_starts_with($color, '#') || str_starts_with($color, 'rgb')) ? $color : "var(--$color)";
-    $chipItems[] = [
-        'name' => (string) $g['name'],
-        'url' => $url('/genre/' . (string)($g['slug'] ?? '')),
-        'color' => $colorValue,
-        'icon' => $cfg['icon'] ?? null,
-    ];
-}
-foreach ($tags as $t) {
-    $cfg = $t['ui_config'] ?? [];
-    $color = $cfg['color'] ?? 'primary';
-    $colorValue = (str_starts_with($color, '#') || str_starts_with($color, 'rgb')) ? $color : "var(--$color)";
-    $chipItems[] = [
-        'name' => (string) $t['name'],
-        'url' => $url('/tag/' . (string)($t['slug'] ?? '')),
-        'color' => $colorValue,
-        'icon' => $cfg['icon'] ?? null,
-    ];
-}
-shuffle($chipItems);
-
-$coverImage = htmlspecialchars((string) ($content['cover_image'] ?? '/assets/img/covers/one-piece.jpg'));
 ?>
 
-<?php if ($content === []): ?>
-    <div id="contentDetailTarget">
-        <div class="card p-4 text-center text-danger"><?= $__t('content_not_found') ?></div>
-    </div>
-<?php else: ?>
-    <!-- Hero Section -->
-    <div class="content-hero-wrapper">
-        <div class="hero-backdrop" style="background-image: url('<?= $coverImage ?>')"></div>
-        <div class="hero-overlay"></div>
-        <div class="container">
-            <?php if (!empty($breadcrumbs)): ?>
-                <nav class="breadcrumb-nav mb-3" aria-label="breadcrumb">
-                    <ol class="nmr-breadcrumb mb-0" itemscope itemtype="https://schema.org/BreadcrumbList">
-                        <?php foreach ($breadcrumbs as $i => $bc): ?>
-                            <li class="nmr-breadcrumb-item <?= $bc['url'] ? '' : 'active' ?>" 
-                                itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"
-                                <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>
-                                <?php if ($bc['url']): ?>
-                                    <a href="<?= htmlspecialchars($bc['url']) ?>" itemprop="item">
-                                        <span itemprop="name"><?= htmlspecialchars($bc['title']) ?></span>
-                                    </a>
-                                <?php else: ?>
-                                    <span itemprop="name"><?= htmlspecialchars($bc['title']) ?></span>
-                                <?php endif; ?>
-                                <meta itemprop="position" content="<?= $i + 1 ?>" />
-                            </li>
-                        <?php endforeach; ?>
-                    </ol>
-                </nav>
-            <?php endif; ?>
-
-            <div class="hero-content">
-                <div class="hero-side">
-                    <div class="hero-cover-container">
-                        <img
-                            src="<?= $coverImage ?>"
-                            onerror="this.onerror=null;this.src='/assets/img/covers/one-piece.jpg';"
-                            onload="this.classList.add('loaded')"
-                            class="hero-cover rounded-lg shadow-lg"
-                            alt="<?= htmlspecialchars((string) ($content['title'] ?? 'Content')) ?>"
-                            loading="lazy"
-                        >
-                    </div>
-                </div>
-                <div class="hero-main">
-                    <div class="hero-badges">
-                        <span class="badge bg-primary px-3 py-2 rounded-md uppercase badge-lg"><?= htmlspecialchars((string) ($content['type'] ?? '')) ?></span>
-                        <span class="meta-pill">⭐ <?= htmlspecialchars((string) ($content['rating_avg'] ?? '-')) ?></span>
-                    </div>
-                    <h1 class="hero-title"><?= htmlspecialchars((string) ($content['title'] ?? '')) ?></h1>
-                    
-                    <div class="hero-meta-strip flex-wrap">
-                        <div class="flex items-center gap-2">
-                            <span class="text-white-50 opacity-70"><i class="bi bi-person"></i> <?= $__t('author') ?>:</span>
-                            <?php if (!empty($content['author'])): ?>
-                                <a href="<?= $url('/search?q=' . urlencode((string)$content['author'])) ?>" class="font-bold text-white hover-primary transition-all">
-                                    <?= htmlspecialchars((string)$content['author']) ?>
-                                </a>
-                            <?php else: ?>
-                                <span class="font-bold"><?= $__t('unknown') ?></span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-white-50 opacity-70"><i class="bi bi-palette"></i> <?= $__t('artist') ?>:</span>
-                            <?php if (!empty($content['artist'])): ?>
-                                <a href="<?= $url('/search?q=' . urlencode((string)$content['artist'])) ?>" class="font-bold text-white hover-primary transition-all">
-                                    <?= htmlspecialchars((string)$content['artist']) ?>
-                                </a>
-                            <?php else: ?>
-                                <span class="font-bold"><?= $__t('unknown') ?></span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-white-50 opacity-70"><i class="bi bi-calendar-check"></i> <?= $__t('status') ?>:</span>
-                            <span class="text-success font-bold"><?= !empty($content['status']) ? htmlspecialchars((string)$content['status']) : $__t('unknown') ?></span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-white-50 opacity-70"><i class="bi bi-rocket-takeoff"></i> <?= $__t('release') ?>:</span>
-                            <?php if (!empty($content['release_year']) && $content['release_year'] !== '0'): ?>
-                                <a href="<?= $url('/search?q=' . urlencode((string)$content['release_year'])) ?>" class="font-bold text-white hover-primary transition-all">
-                                    <?= htmlspecialchars((string)$content['release_year']) ?>
-                                </a>
-                            <?php else: ?>
-                                <span class="font-bold"><?= $__t('unknown') ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <?php if (!empty($content['alternative_titles'])): ?>
-                        <div class="hero-alt-titles mt-3">
-                            <span class="text-white-50 opacity-60 text-xs uppercase font-bold tracking-wider me-2"><?= $__t('alternative_titles') ?>:</span>
-                            <span class="text-white opacity-80 italic fs-7"><?= htmlspecialchars((string) $content['alternative_titles']) ?></span>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Detail -->
-    <div id="contentDetailTarget">
-        <div class="content-info-grid container">
-            <!-- Sidebar with Actions -->
-            <div class="content-sidebar">
-                <div class="sidebar-actions">
-                    <?php if (!empty($content['reading_progress'])): 
-                        $prog = $content['reading_progress'];
-                        $progUrl = $url('/' . $contentType . '/' . $contentSlug . '/chapter/' . rawurlencode((string)$prog['chapter_number']));
-                    ?>
-                        <a id="continueReadingBtn" href="<?= $progUrl ?>" class="btn btn-primary w-100 justify-center py-3 fs-1-2">
-                            🚀 <?= $__t('continue_reading') ?> (Ch. <?= htmlspecialchars((string)$prog['chapter_number']) ?>)
-                        </a>
-                        <div class="text-center mt-1 mb-3">
-                            <small class="text-muted fs-8"><?= $__t('last_read') ?>: <?= htmlspecialchars((string)$prog['title'] ?: 'Chapter ' . $prog['chapter_number']) ?></small>
-                        </div>
-                    <?php else: ?>
-                        <a
-                            id="startReadingBtn"
-                            href="<?= $startChapter !== '' ? $url('/' . $contentType . '/' . $contentSlug . '/chapter/' . rawurlencode($startChapter)) : '#' ?>"
-                            class="btn btn-primary w-100 justify-center py-3 fs-1-2<?= $startChapter === '' ? ' disabled' : '' ?>"
-                            <?= $startChapter === '' ? 'aria-disabled="true"' : '' ?>
-                        >
-                            🚀 <?= $__t('start_reading') ?>
-                        </a>
-                    <?php endif; ?>
-                    
-                    <div class="flex gap-2">
-                        <button id="followBtn" class="btn btn-outline flex-grow py-2">🤍 <?= $__t('follow') ?></button>
-                        <div class="dropdown flex-grow">
-                            <button class="btn btn-outline w-100 py-2 dropdown-toggle">⭐ <?= $__t('rate') ?></button>
-                            <div class="dropdown-menu card p-2 min-w-120">
-                                <?php foreach ([5, 4, 3, 2, 1] as $n): ?>
-                                    <button class="btn-none dropdown-item rate-opt" data-val="<?= $n ?>">⭐ <?= $n ?> <?= $__t('stars') ?></button>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Body with Info -->
-            <div class="content-body-main">
-                <div class="main-desc-card">
-                    <div class="desc-title"><i class="bi bi-journal-text me-2"></i> <?= $__t('summary') ?></div>
-                    
-                    <div class="desc-text markdown-body" id="contentDescription"><?= htmlspecialchars((string) ($content['description'] ?? '')) ?></div>
-                    
-                    <div class="flex flex-wrap gap-2 mt-4">
-                        <?php foreach ($chipItems as $chip): ?>
-                            <a href="<?= htmlspecialchars($chip['url'], ENT_QUOTES, 'UTF-8') ?>"
-                               class="tag-chip"
-                               style="--chip-color: <?= $chip['color'] ?>;"
-                            >
-                                <?php if (!empty($chip['icon'])): ?>
-                                    <i class="bi <?= htmlspecialchars($chip['icon']) ?> me-1"></i>
-                                <?php endif; ?>
-                                <?= htmlspecialchars($chip['name']) ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <div class="info-stat-grid">
-                        <div class="stat-item">
-                            <span class="stat-label"><i class="bi bi-journals me-1"></i> <?= $__t('chapters') ?></span>
-                            <span class="stat-value"><?= !empty($content['chapter_count']) ? htmlspecialchars((string)$content['chapter_count']) : '0' ?></span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label"><i class="bi bi-calendar-event me-1"></i> <?= $__t('created') ?></span>
-                            <span class="stat-value"><?= !empty($content['created_at']) ? htmlspecialchars(explode(' ', (string)$content['created_at'])[0]) : $__t('unknown') ?></span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label"><i class="bi bi-geo-alt me-1"></i> <?= $__t('country') ?></span>
-                            <?php if (!empty($content['country'])): ?>
-                                <a href="<?= $url('/search?q=' . urlencode((string)$content['country'])) ?>" class="stat-value hover-primary transition-all">
-                                    <?= htmlspecialchars((string)$content['country']) ?>
-                                </a>
-                            <?php else: ?>
-                                <span class="stat-value"><?= $__t('unknown') ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<?php if (!empty($breadcrumbs)): ?>
+  <nav class="breadcrumbs" aria-label="breadcrumb">
+    <ol>
+      <?php foreach ($breadcrumbs as $crumb): ?>
+        <li>
+          <?php if (!empty($crumb['url'])): ?>
+            <a href="<?= htmlspecialchars((string) $crumb['url']) ?>"><?= htmlspecialchars((string) $crumb['title']) ?></a>
+          <?php else: ?>
+            <?= htmlspecialchars((string) $crumb['title']) ?>
+          <?php endif; ?>
+        </li>
+      <?php endforeach; ?>
+    </ol>
+  </nav>
 <?php endif; ?>
 
-<div class="main-content-grid container mt-5">
-  <div id="chapterListTarget"></div>
+<section class="split">
+  <div class="stack">
+    <header>
+      <h1 class="page-title"><?= htmlspecialchars((string) ($content['title'] ?? 'content')) ?></h1>
+      <p class="page-intro"><?= htmlspecialchars((string) ($content['type_path'] ?? $content['type'] ?? '')) ?></p>
+    </header>
 
-  <!-- Comments Section (Separate Box) -->
-  <div id="commentsTarget">
-    <div class="card p-4 shadow-lg border-0">
-      <div class="card-header border-bottom mb-4 bg-transparent p-0 pb-3 flex justify-between items-center">
-        <h3 class="m-0">💬 <?= $__t('comments') ?> <span id="commentsBadgeCount" class="badge bg-primary text-xs ml-2"></span></h3>
-      </div>
-      
-      <form id="contentCommentForm" class="mb-5 bg-surface-elevated p-4 rounded-lg border border-primary-10">
-        <div class="flex flex-col gap-3 mb-3">
-          <textarea id="contentCommentInput" class="form-item border-0 focus-ring" placeholder="<?= $__t('comments') ?>... (Markdown)" rows="4"></textarea>
-          <div class="flex items-center gap-2 mb-1 mt-2">
-            <span class="text-xs text-muted font-bold uppercase tracking-wider">👁️ <?= $__t('preview') ?></span>
-          </div>
-          <div id="commentPreview" class="form-item bg-surface overflow-auto markdown-body p-3 min-h-80 border-dashed opacity-80">
-            <span class="text-muted italic"><?= $__t('preview_will_appear') ?></span>
-          </div>
-        </div>
-        <div class="flex justify-end">
-          <button type="submit" class="btn btn-primary px-5 py-2 rounded-full shadow-primary"><?= $__t('post_comment') ?></button>
-        </div>
-      </form>
-
-      <div id="contentCommentsList" class="flex flex-col gap-5">
-        <div class="text-center py-5">
-            <div class="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-primary" role="status"></div>
-            <div class="mt-2 text-muted"><?= $__t('loading') ?></div>
-        </div>
-      </div>
+    <div class="panel">
+      <p><?= htmlspecialchars((string) ($content['description'] ?? '')) ?></p>
     </div>
+
+    <?php if ($chapterItems !== []): ?>
+      <section class="section-block">
+        <h2 class="section-title">chapters</h2>
+        <ol class="plain-list">
+          <?php foreach ($chapterItems as $chapter): ?>
+            <li>
+              <a href="<?= $url('/' . (string) ($content['type_path'] ?? $type ?? 'novel') . '/' . (string) ($content['slug'] ?? $slug ?? '') . '/chapter/' . rawurlencode((string) ($chapter['chapter_number'] ?? ''))) ?>">
+                chapter <?= htmlspecialchars((string) ($chapter['chapter_number'] ?? '')) ?>
+                <?php if (!empty($chapter['title'])): ?>
+                  - <?= htmlspecialchars((string) $chapter['title']) ?>
+                <?php endif; ?>
+              </a>
+            </li>
+          <?php endforeach; ?>
+        </ol>
+      </section>
+    <?php endif; ?>
   </div>
-</div>
+
+  <aside class="stack">
+    <div class="meta-grid">
+      <div><strong>author</strong><br><?= htmlspecialchars((string) ($content['author'] ?? '-')) ?></div>
+      <div><strong>artist</strong><br><?= htmlspecialchars((string) ($content['artist'] ?? '-')) ?></div>
+      <div><strong>status</strong><br><?= htmlspecialchars((string) ($content['status'] ?? '-')) ?></div>
+      <div><strong>release year</strong><br><?= htmlspecialchars((string) ($content['release_year'] ?? '-')) ?></div>
+      <div><strong>rating</strong><br><?= htmlspecialchars((string) ($content['rating_avg'] ?? '-')) ?></div>
+      <div><strong>chapter count</strong><br><?= htmlspecialchars((string) ($content['chapter_count'] ?? '0')) ?></div>
+    </div>
+
+    <?php if ($genres !== []): ?>
+      <section class="section-block">
+        <h2 class="section-title">genres</h2>
+        <div class="chip-row">
+          <?php foreach ($genres as $genre): ?>
+            <a class="chip" href="<?= $url('/genre/' . (string) ($genre['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($genre['name'] ?? '')) ?></a>
+          <?php endforeach; ?>
+        </div>
+      </section>
+    <?php endif; ?>
+
+    <?php if ($tags !== []): ?>
+      <section class="section-block">
+        <h2 class="section-title">tags</h2>
+        <div class="chip-row">
+          <?php foreach ($tags as $tag): ?>
+            <a class="chip" href="<?= $url('/tag/' . (string) ($tag['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($tag['name'] ?? '')) ?></a>
+          <?php endforeach; ?>
+        </div>
+      </section>
+    <?php endif; ?>
+  </aside>
+</section>

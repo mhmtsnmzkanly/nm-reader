@@ -1,143 +1,42 @@
+<?php
+$data = is_array($ssr_data ?? null) ? $ssr_data : [];
+$isList = isset($data['blog_list']);
+$blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
+?>
+
 <?php if (!empty($breadcrumbs)): ?>
-<nav class="breadcrumb-nav mb-4 px-2" aria-label="breadcrumb">
-    <ol class="nmr-breadcrumb mb-0 small" itemscope itemtype="https://schema.org/BreadcrumbList">
-        <?php foreach ($breadcrumbs as $i => $bc): ?>
-            <li class="nmr-breadcrumb-item <?= $bc['url'] ? '' : 'active' ?>" 
-                itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"
-                <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>
-                <?php if ($bc['url']): ?>
-                    <a href="<?= htmlspecialchars($bc['url']) ?>" itemprop="item" class="text-muted">
-                        <span itemprop="name"><?= htmlspecialchars($bc['title']) ?></span>
-                    </a>
-                <?php else: ?>
-                    <span itemprop="name" class="fw-bold"><?= htmlspecialchars($bc['title']) ?></span>
-                <?php endif; ?>
-                <meta itemprop="position" content="<?= $i + 1 ?>" />
-            </li>
-        <?php endforeach; ?>
+  <nav class="breadcrumbs" aria-label="breadcrumb">
+    <ol>
+      <?php foreach ($breadcrumbs as $crumb): ?>
+        <li>
+          <?php if (!empty($crumb['url'])): ?>
+            <a href="<?= htmlspecialchars((string) $crumb['url']) ?>"><?= htmlspecialchars((string) $crumb['title']) ?></a>
+          <?php else: ?>
+            <?= htmlspecialchars((string) $crumb['title']) ?>
+          <?php endif; ?>
+        </li>
+      <?php endforeach; ?>
     </ol>
-</nav>
+  </nav>
 <?php endif; ?>
 
-<div id="blogLoading" class="text-center py-5 <?= !empty($ssr_data) ? 'hidden' : '' ?>">
-  <div class="spinner-border animate-spin text-primary"></div>
-  <div class="mt-2 text-muted"><?= $__t('loading') ?></div>
-</div>
-
-<div id="blogListArea" class="<?= (!empty($ssr_data) && isset($ssr_data['blog_list'])) ? '' : 'hidden' ?>">
-  <div class="mb-5 text-center">
-    <h1 class="text-4xl font-black mb-2"><?= $__t('news_and_articles') ?></h1>
-    <p class="text-muted max-w-520 mx-auto"><?= $__t('latest_updates_desc') ?></p>
+<?php if ($isList): ?>
+  <h1 class="page-title">blogs</h1>
+  <div class="stack">
+    <?php foreach ($blogList as $blog): ?>
+      <article class="record">
+        <h2><a href="<?= $url('/blogs/' . (string) ($blog['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($blog['title'] ?? '')) ?></a></h2>
+        <p class="record-meta"><?= htmlspecialchars((string) ($blog['author_username'] ?? '')) ?> | <?= htmlspecialchars((string) ($blog['approved_at'] ?? $blog['created_at'] ?? '')) ?></p>
+        <p><?= htmlspecialchars(mb_substr(trim(strip_tags((string) ($blog['body'] ?? ''))), 0, 280)) ?></p>
+      </article>
+    <?php endforeach; ?>
   </div>
-  <div class="grid grid-3 gap-4" id="blogGrid">
-    <?php if (!empty($ssr_data['blog_list'])): ?>
-      <?php foreach ($ssr_data['blog_list'] as $b): 
-          $bImg = !empty($b['cover_image']) ? $b['cover_image'] : '/assets/img/covers/one-piece.jpg';
-          $bUrl = $url('/blogs/' . $b['slug']);
-      ?>
-        <div class="card overflow-hidden hover-lift border-0 shadow-sm blog-card">
-          <a href="<?= $bUrl ?>" class="block aspect-video bg-surface relative">
-            <img src="<?= htmlspecialchars((string)$bImg) ?>" class="w-100 h-100 object-cover" alt="<?= htmlspecialchars((string)$b['title']) ?>">
-          </a>
-          <div class="p-4">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="badge bg-primary-subtle text-primary border-0"><?= $__t('article') ?></span>
-              <small class="text-muted"><?= htmlspecialchars(explode(' ', (string)($b['approved_at'] ?? $b['created_at']))[0]) ?></small>
-            </div>
-            <h3 class="h5 mb-2 line-clamp-2"><a href="<?= $bUrl ?>" class="text-inherit no-underline"><?= htmlspecialchars((string)$b['title']) ?></a></h3>
-            <p class="text-muted small line-clamp-3 mb-3"><?= htmlspecialchars(strip_tags((string)$b['body'])) ?></p>
-            <div class="flex items-center justify-between mt-auto">
-              <small class="text-muted">👤 @<?= htmlspecialchars((string)($b['author_username'] ?? 'User')) ?></small>
-              <a href="<?= $bUrl ?>" class="text-primary fw-bold small no-underline"><?= $__t('read_more') ?> →</a>
-            </div>
-          </div>
-        </div>
-      <?php endforeach; ?>
-    <?php endif; ?>
-  </div>
-</div>
-
-<div id="blogDetailArea" class="<?= (!empty($ssr_data) && !isset($ssr_data['blog_list'])) ? '' : 'hidden' ?>">
-  <?php if (!empty($ssr_data)): 
-      $post = $ssr_data;
-      $score = (int)($post['upvote_count'] ?? 0) - (int)($post['downvote_count'] ?? 0);
-      $img = !empty($post['cover_image']) ? $post['cover_image'] : '/assets/img/covers/one-piece.jpg';
-      $myVote = (int)($post['my_vote'] ?? 0);
-  ?>
-    <div id="blogPostContent">
-      <div class="blog-hero-wrapper">
-        <div class="blog-hero-backdrop" style="background-image: url('<?= htmlspecialchars((string)$img) ?>')"></div>
-        <div class="blog-hero-overlay"></div>
-        <div class="container blog-hero-content">
-          <button class="blog-meta-pill btn-none mb-4 cursor-pointer hover-lift" id="backToBlog">← <?= $__t('back') ?></button>
-          <h1 class="blog-hero-title"><?= htmlspecialchars((string)$post['title']) ?></h1>
-          <div class="blog-hero-meta">
-             <a href="<?= $url('/profile/' . ($post['author_username'] ?? '')) ?>" class="blog-meta-pill no-underline">
-                 👤 @<?= htmlspecialchars((string)($post['author_username'] ?? '-')) ?>
-             </a>
-             <div class="blog-meta-pill">
-                 📅 <?= htmlspecialchars(explode(' ', (string)($post['approved_at'] ?? $post['created_at'] ?? ''))[0]) ?>
-             </div>
-             <div class="blog-meta-pill">
-                 🔥 <span class="blog-score-val"><?= $score ?></span>
-             </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="container blog-post-container" data-slug="<?= htmlspecialchars((string)$post['slug']) ?>">
-        <!-- Floating Vote for Desktop -->
-        <div class="blog-vote-floating">
-          <button class="btn-none blog-vote-btn upvote <?= $myVote === 1 ? 'text-primary' : '' ?>" data-vote="1" style="font-size:1.5rem">▲</button>
-          <span class="font-bold blog-score-val"><?= $score ?></span>
-          <button class="btn-none blog-vote-btn downvote <?= $myVote === -1 ? 'text-danger' : '' ?>" data-vote="-1" style="font-size:1.5rem">▼</button>
-        </div>
-
-        <div class="blog-content-card">
-          <div class="blog-content-main markdown-body" id="ssr-blog-body">
-            <?= htmlspecialchars((string)($post['body'] ?? '')) ?>
-          </div>
-          
-          <div class="mt-5 pt-5 border-t">
-            <div id="blogCommentsArea">
-              <h3 class="mb-4">💬 <?= $__t('comments') ?> <span id="blogCommentCount" class="badge bg-primary ml-2"></span></h3>
-              
-              <form id="blogCommentForm" class="mb-5 bg-surface-elevated p-4 rounded-xl border">
-                <div class="flex flex-col gap-3">
-                  <textarea id="blogCommentInput" class="form-item border-none focus-ring" placeholder="<?= $__t('comments') ?>..." rows="4"></textarea>
-                  <div class="text-xs text-muted font-bold uppercase tracking-wider">👁️ <?= $__t('preview') ?></div>
-                  <div id="blogCommentPreview" class="form-item bg-surface overflow-auto markdown-body p-3 min-h-80 border-dashed opacity-80">
-                    <span class="text-muted italic"><?= $__t('preview_will_appear') ?></span>
-                  </div>
-                  <div class="flex justify-end">
-                    <button type="submit" class="btn btn-primary px-5 py-2 rounded-full"><?= $__t('post_comment') ?></button>
-                  </div>
-                </div>
-              </form>
-              
-              <div id="blogCommentsList" class="flex flex-col gap-5">
-                <div class="text-center py-5">
-                    <div class="spinner-border animate-spin text-primary"></div>
-                    <div class="mt-2 text-muted"><?= $__t('loading') ?></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <script>
-        (function() {
-          const el = document.getElementById('ssr-blog-body');
-          if (el && window.NMR && window.NMR.parseMarkdown) {
-            const raw = el.textContent || el.innerText;
-            el.innerHTML = window.NMR.parseMarkdown(raw);
-          }
-        })();
-      </script>
-    </div>
-  <?php else: ?>
-    <div id="blogPostContent"></div>
-  <?php endif; ?>
-</div>
-
+<?php else: ?>
+  <article class="stack">
+    <header>
+      <h1 class="page-title"><?= htmlspecialchars((string) ($data['title'] ?? 'blog')) ?></h1>
+      <p class="page-intro"><?= htmlspecialchars((string) ($data['author_username'] ?? '')) ?> | <?= htmlspecialchars((string) ($data['approved_at'] ?? $data['created_at'] ?? '')) ?></p>
+    </header>
+    <div class="panel reader-body"><?= htmlspecialchars((string) ($data['body'] ?? '')) ?></div>
+  </article>
+<?php endif; ?>

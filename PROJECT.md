@@ -99,6 +99,16 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Public SSR Skeleton Pages Replace Previous Design Layers (2026-03-09)
+- **Status**: Completed.
+- **Problem**:
+  - Public-facing pages had accumulated multiple visual systems and JS-heavy presentation layers, making the frontend harder to maintain when only direct data output was needed.
+  - Core discovery and reading routes such as home, blogs, search, content, chapter, profile, genre, and tag were relying on decorative layouts instead of a stable minimal SSR baseline.
+- **Fix**:
+  - Replaced the main public layout with a minimal skeleton shell and removed the previous branded/interactive design layer from the standard SSR pages.
+  - Rebuilt `home`, `blogs`, `blog detail`, `content`, `chapter`, `profile`, `search`, `genre`, `tag`, and type listing pages as simple server-rendered data views.
+  - Moved home, search, category, genre, tag, and content chapter data needs into direct SSR context so the simplified pages no longer depend on client-side rendering for basic output.
+
 ### Documentation Synchronization & Maintenance (2026-03-09)
 - **Status**: Completed.
 - **Maintenance**:

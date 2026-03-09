@@ -69,11 +69,15 @@ final class WebController
         ResponseInterface $response,
     ): ResponseInterface {
         $siteName = $this->siteConfig->siteName();
+        $homeData = $this->seriesService->home(1, 20);
+
         return $this->render(
             $request,
             $response,
             "home.php",
-            [],
+            [
+                "home_data" => $homeData,
+            ],
             [],
             "Home - " . $siteName,
             "container",
@@ -246,6 +250,7 @@ final class WebController
                 "slug" => $slug,
                 "start_chapter_number" => $startChapterNumber,
                 "ssr_data" => $content,
+                "chapters" => $this->seriesService->chaptersByType($type, $slug, 1, 200, $userId),
                 "breadcrumbs" => $breadcrumbs,
             ],
             [],
@@ -678,12 +683,16 @@ final class WebController
             $query !== ""
                 ? sprintf("Arama: %s - %s", $query, $siteName)
                 : "Arama - " . $siteName;
+        $results = $query !== "" ? $this->seriesService->search($query, 1, 50) : [];
 
         return $this->render(
             $request,
             $response,
             "search.php",
-            ["q" => $query],
+            [
+                "q" => $query,
+                "results" => $results,
+            ],
             [],
             "Search - " . $siteName,
             "container",
@@ -741,6 +750,8 @@ final class WebController
         $siteName = $this->siteConfig->siteName();
         $type = (string) ($args["type"] ?? "");
         $display = ucwords(str_replace("-", " ", $type));
+        $items = $this->seriesService->byType($type, 1, 50);
+        $latest = $this->seriesService->latestChaptersByType($type, 1, 12);
 
         return $this->render(
             $request,
@@ -749,6 +760,9 @@ final class WebController
             [
                 "list_type" => "category",
                 "value" => $type,
+                "page_heading" => $display,
+                "items" => $items,
+                "latest_items" => $latest,
             ],
             [],
             "Browse - " . $siteName,
@@ -815,6 +829,7 @@ final class WebController
         $urlHelper = function(string $path) use ($langCode) {
             return "/" . $langCode . "/" . ltrim($path, "/");
         };
+        $items = $this->seriesService->byGenre($slug, 1, 50);
 
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'genre', [
             'name' => $display
@@ -827,6 +842,8 @@ final class WebController
             [
                 "list_type" => "genre",
                 "value" => $slug,
+                "page_heading" => $display,
+                "items" => $items,
                 "breadcrumbs" => $breadcrumbs,
             ],
             [],
@@ -900,6 +917,7 @@ final class WebController
         $urlHelper = function(string $path) use ($langCode) {
             return "/" . $langCode . "/" . ltrim($path, "/");
         };
+        $items = $this->seriesService->byTag($slug, 1, 50);
 
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'tag', [
             'name' => $display
@@ -912,6 +930,8 @@ final class WebController
             [
                 "list_type" => "tag",
                 "value" => $slug,
+                "page_heading" => $display,
+                "items" => $items,
                 "breadcrumbs" => $breadcrumbs,
             ],
             [],

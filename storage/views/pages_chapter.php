@@ -1,100 +1,47 @@
 <?php
-$chapter = is_array($ssr_chapter ?? null) ? $ssr_chapter : [];
-$adj = $chapter['adjacent_chapters'] ?? ['next' => null, 'prev' => null];
-$type = (string) ($type ?? '');
-$slug = (string) ($slug ?? '');
+$chapterData = is_array($chapter ?? null) ? $chapter : [];
+$adjacent = is_array($chapterData['adjacent_chapters'] ?? null) ? $chapterData['adjacent_chapters'] : ['prev' => null, 'next' => null];
+$chapterType = (string) ($chapterData['series_type'] ?? '');
+$chapterSlug = (string) ($chapterData['series_slug'] ?? '');
+$pages = is_array($chapterData['pages'] ?? null) ? $chapterData['pages'] : [];
 ?>
 
-<div class="reader-container mx-auto max-w-1400" id="readerApp" data-chapter-id="<?= htmlspecialchars((string)($chapter['id'] ?? '')) ?>">
-  <?php if (!empty($breadcrumbs)): ?>
-    <nav class="breadcrumb-nav mb-2 px-2" aria-label="breadcrumb">
-      <ol class="nmr-breadcrumb mb-0 small" itemscope itemtype="https://schema.org/BreadcrumbList">
-        <?php foreach ($breadcrumbs as $i => $bc): ?>
-          <li class="nmr-breadcrumb-item <?= $bc['url'] ? '' : 'active text-truncate' ?>" 
-              style="max-width: 200px;"
-              itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem"
-              <?= !$bc['url'] ? 'aria-current="page"' : '' ?>>
-            <?php if ($bc['url']): ?>
-              <a href="<?= htmlspecialchars($bc['url']) ?>" itemprop="item" class="text-muted">
-                <span itemprop="name"><?= htmlspecialchars($bc['title']) ?></span>
-              </a>
-            <?php else: ?>
-              <span itemprop="name" class="fw-bold"><?= htmlspecialchars($bc['title']) ?></span>
-            <?php endif; ?>
-            <meta itemprop="position" content="<?= $i + 1 ?>" />
-          </li>
-        <?php endforeach; ?>
-      </ol>
-    </nav>
-  <?php endif; ?>
+<?php if (!empty($breadcrumbs)): ?>
+  <nav class="breadcrumbs" aria-label="breadcrumb">
+    <ol>
+      <?php foreach ($breadcrumbs as $crumb): ?>
+        <li>
+          <?php if (!empty($crumb['url'])): ?>
+            <a href="<?= htmlspecialchars((string) $crumb['url']) ?>"><?= htmlspecialchars((string) $crumb['title']) ?></a>
+          <?php else: ?>
+            <?= htmlspecialchars((string) $crumb['title']) ?>
+          <?php endif; ?>
+        </li>
+      <?php endforeach; ?>
+    </ol>
+  </nav>
+<?php endif; ?>
 
-  <div class="card reader-toolbar mb-4 flex items-center justify-between p-2 sticky top-0 z-10">
-    <div class="flex items-center gap-2">
-      <a href="<?= $adj['prev'] ? $url('/' . $type . '/' . $slug . '/chapter/' . rawurlencode((string)$adj['prev'])) : '#' ?>" 
-         id="prevChapterBtn" 
-         class="btn btn-sm btn-outline <?= !$adj['prev'] ? 'disabled opacity-30' : '' ?>">
-         &laquo; <?= $__t('prev') ?>
-      </a>
-      
-      <select class="form-item py-1 px-3 w-180" id="chapterSelect" onchange="location.href=this.value">
-          <option value="" selected><?= $__t('chapter') ?> <?= $chapter['chapter_number'] ?? '' ?></option>
-      </select>
-
-      <a href="<?= $adj['next'] ? $url('/' . $type . '/' . $slug . '/chapter/' . rawurlencode((string)$adj['next'])) : '#' ?>" 
-         id="nextChapterBtn" 
-         class="btn btn-sm btn-primary <?= !$adj['next'] ? 'disabled opacity-30' : '' ?>">
-         <?= $__t('next') ?> &raquo;
-      </a>
-    </div>
-    
-    <div class="flex items-center gap-2">
-      <a href="<?= $url('/' . $type . '/' . $slug) ?>" class="btn btn-sm btn-outline hide-md">🏠 <?= $__t('series_home') ?></a>
-      <button class="btn btn-sm btn-outline" id="openReaderSettings">⚙️</button>
-    </div>
+<header class="section-block">
+  <h1 class="page-title"><?= htmlspecialchars((string) ($chapterData['series_title'] ?? 'chapter')) ?> / chapter <?= htmlspecialchars((string) ($chapterData['chapter_number'] ?? '')) ?></h1>
+  <p class="page-intro"><?= htmlspecialchars((string) ($chapterData['title'] ?? '')) ?></p>
+  <div class="chip-row">
+    <?php if (!empty($adjacent['prev'])): ?>
+      <a class="chip" href="<?= $url('/' . $chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode((string) $adjacent['prev'])) ?>">prev</a>
+    <?php endif; ?>
+    <a class="chip" href="<?= $url('/' . $chapterType . '/' . $chapterSlug) ?>">content page</a>
+    <?php if (!empty($adjacent['next'])): ?>
+      <a class="chip" href="<?= $url('/' . $chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode((string) $adjacent['next'])) ?>">next</a>
+    <?php endif; ?>
   </div>
+</header>
 
-  <div class="reader-main">
-    <div id="mangaView" class="card p-0 overflow-hidden hidden border-0 shadow-none bg-transparent unselectable">
-      <div class="manga-pages"></div>
-    </div>
-    <div id="novelView" class="card unselectable <?= isset($ssr_chapter) &&
-    $ssr_chapter["type"] === "text"
-        ? ""
-        : "hidden" ?> fs-1-2 lh-2">
-      <div class="novel-content markdown-body p-4 p-md-5">
-        <?php if (isset($ssr_chapter) && $ssr_chapter["type"] === "text"): ?>
-          <?= $ssr_chapter["body"]
-            // Note: Assuming body is already sanitized or will be parsed by JS hydration
-            ?>
-        <?php endif; ?>
-      </div>
-    </div>
+<?php if (($chapterData['type'] ?? '') === 'text'): ?>
+  <div class="panel reader-body"><?= htmlspecialchars((string) ($chapterData['body'] ?? '')) ?></div>
+<?php else: ?>
+  <div class="image-stack">
+    <?php foreach ($pages as $page): ?>
+      <div class="panel"><img src="<?= htmlspecialchars((string) $page) ?>" alt="chapter page"></div>
+    <?php endforeach; ?>
   </div>
-
-  <div class="reader-comments mt-5 max-w-900 mx-auto">
-    <div class="card">
-      <div class="card-header border-bottom bg-surface p-3 m-0">
-        <h3 class="m-0">Chapter Comments</h3>
-      </div>
-
-      <div class="p-4">
-        <form id="readerCommentForm" class="mb-4">
-          <div class="flex flex-col gap-3 mb-3">
-            <textarea id="readerCommentInput" class="form-item" placeholder="Write a comment (Markdown supported)..." rows="4"></textarea>
-            <div class="text-xs text-muted font-bold uppercase tracking-wider">Preview</div>
-            <div id="commentPreview" class="form-item bg-surface overflow-auto markdown-body p-3 min-h-80 border-dashed">
-              <span class="text-muted italic">Preview will appear here...</span>
-            </div>
-          </div>
-          <div class="flex justify-end">
-            <button type="submit" class="btn btn-primary">Post Comment</button>
-          </div>
-        </form>
-
-        <div id="readerCommentsList" class="flex flex-col gap-4">
-          <div class="text-center py-3 text-muted">Loading comments...</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<?php endif; ?>
