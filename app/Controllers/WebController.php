@@ -1473,7 +1473,7 @@ final class WebController
         $siteName = $this->siteConfig->siteName();
         $title = $title ?? $siteName;
         $basePath = (string) $this->settings["app"]["base_path"];
-        $templatePath = $basePath . "/storage/views/pages_" . $template;
+        $templatePath = $basePath . "/storage/views/" . $template;
         $isMeltTemplate = str_starts_with($template, "melt_");
         $layoutPath = $basePath . "/storage/views/" . ($isMeltTemplate ? "layout_melt.php" : "layout_main.php");
 
@@ -1681,7 +1681,7 @@ final class WebController
         string $title = "Admin Dashboard",
     ): ResponseInterface {
         $basePath = (string) $this->settings["app"]["base_path"];
-        $templatePath = $basePath . "/storage/views/pages_" . $template;
+        $templatePath = $basePath . "/storage/views/" . $template;
         $layoutPath = $basePath . "/storage/views/layout_adminlte.php";
 
         if (!is_file($templatePath) || !is_file($layoutPath)) {

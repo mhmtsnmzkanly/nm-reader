@@ -33,7 +33,7 @@ final class InstallController
             return $response->withHeader('Location', '/')->withStatus(302);
         }
 
-        $templatePath = $this->basePath . '/storage/views/pages_install.php';
+        $templatePath = $this->basePath . '/storage/views/install.php';
         if (!file_exists($templatePath)) {
             $response->getBody()->write("Installation template missing.");
             return $response->withStatus(500);

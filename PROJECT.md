@@ -110,6 +110,12 @@ This document serves as the absolute authority on the project's architecture, co
   - Moved home, search, category, genre, tag, and content chapter data needs into direct SSR context so the simplified pages no longer depend on client-side rendering for basic output.
   - Reduced `public/assets/js/app-bundle.js` to a minimal fetch wrapper so only CSR data access helpers remain and UI rendering logic is removed from the public bundle.
 
+### View Template Naming Cleanup (2026-03-09)
+- **Status**: Completed.
+- **Change**:
+  - Removed the `pages_` filename prefix from SSR and admin view templates under `storage/views/`.
+  - Updated the main render pipeline and install controller so templates resolve directly by their actual file names.
+
 ### Documentation Synchronization & Maintenance (2026-03-09)
 - **Status**: Completed.
 - **Maintenance**:
