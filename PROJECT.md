@@ -130,7 +130,8 @@ This document serves as the absolute authority on the project's architecture, co
 - **Maintenance**:
   - Hardened `.gitignore` by removing redundant exclusions for SSR PHP views. This ensures that essential layout, page, and partial templates (like `partials_modals.php`) are consistently tracked and deployed.
   - Synchronized `DATABASE.md` with the production schema by adding `user_login_logs` and descriptive entries for core supporting tables (preferences, follows, reading history, and analytics snapshots).
-  - Synchronized `API_REFERENCE.md` by documenting public aliases for taxonomy endpoints (`/series_genres`, `/series_tags`).
+  - Synchronized `API_REFERENCE.md` by documenting public aliases for taxonomy endpoints (`/series_genres`, `/series_tags`) and expanding it with complete coverage for all Administrative (`/api/v1/admin`) endpoints.
+  - Removed legacy `DESIGN_SPEC.md` as part of documentation consolidation and the transition to the minimal SSR skeleton.
   - Verified `melt`-prefixed routes in the backend controller to ensure alignment with the Flores-inspired UI rebuild from 2026-03-08.
 
 ### Melt View Template Hardening (2026-03-08)

@@ -336,3 +336,75 @@ Content and chapter payloads may now include:
 | `coin_price` | `int` | Purchase cost in coins |
 | `duration_days` | `int` | Access duration per purchase |
 | `is_active` | `bool` | Whether the feature can currently be purchased |
+
+---
+
+## 6. Administrative Endpoints (Requires Admin/Mod Permissions)
+
+Note: All routes in this group are prefixed with `/api/v1/admin` and require appropriate permission nodes.
+
+### 6.1 Content & Taxonomy
+- **GET `/contents`**: Lists all series with administrative metadata.
+- **POST `/content`**: Creates a new series.
+- **PUT `/content/{id}`**: Updates series metadata.
+- **PUT `/contents/{id}/taxonomy`**: Updates genres and tags for a series.
+- **POST `/content/{id}/chapters`**: Creates a chapter for a series ID.
+- **GET `/content/{id}/chapters`**: Lists all chapters for a series.
+- **GET `/chapters/{id}`**: Returns single chapter detail for editing.
+- **PUT `/chapters/{id}`**: Updates chapter data/metadata.
+- **DELETE `/chapters/{id}`**: Soft-deletes a chapter.
+- **GET `/genres`**: Returns non-paginated list of all genres for modals.
+- **POST `/series_genres`**: Creates a new genre.
+- **GET `/tags`**: Returns non-paginated list of all tags for modals.
+- **POST `/series_tags`**: Creates a new tag.
+- **POST `/upload-images`**: Bulk upload endpoint for chapter images or covers.
+
+### 6.2 User & RBAC
+- **GET `/users`**: Paginated list of all registered users.
+- **GET `/users/options`**: Lightweight user list for selection dropdowns.
+- **PUT `/users/{id}`**: Updates user roles, email, bio, or ban status.
+- **GET `/rbac/roles`**: Lists all defined roles and their priorities.
+- **GET `/rbac/assignments`**: Lists current role-to-permission mappings.
+- **POST `/rbac/permissions/assign`**: Grants a permission node to a role.
+
+### 6.3 Moderation
+- **GET `/blogs`**: Lists all blog posts for moderation.
+- **GET `/blogs/pending`**: Lists blog posts awaiting approval.
+- **POST `/blogs/{id}/approve`**: Approves a pending blog post.
+- **POST `/blogs/{id}/hide`**: Hides a published blog post.
+- **DELETE `/blogs/{id}`**: Soft-deletes a blog post.
+- **GET `/comments`**: Lists all system-wide comments.
+- **DELETE `/comments/{id}`**: Deletes a comment.
+- **GET `/moderation-actions`**: Lists historical moderation audit entries.
+- **POST `/moderation-actions`**: Manually records a moderation action.
+
+### 6.4 Monetization
+- **GET `/shop/packages`**: Admin view of coin packages.
+- **POST `/shop/packages`**: Creates a new package.
+- **PUT `/shop/packages/{id}`**: Updates package details.
+- **POST `/wallets/{userId}/grant-package`**: Credits a specific package to a user.
+- **POST `/wallets/{userId}/credit`**: Manually adds coins to a wallet.
+- **POST `/wallets/{userId}/debit`**: Manually removes coins from a wallet.
+- **GET `/wallets/{userId}`**: Returns wallet summary for a user.
+- **GET `/wallets/{userId}/transactions`**: Paginated ledger for a user.
+- **PUT `/series/{id}/pricing`**: Sets/updates full-series unlock price.
+- **PUT `/chapters/{id}/pricing`**: Sets/updates individual chapter price.
+- **GET `/features`**: Lists site-wide feature products.
+- **PUT `/features/ad-free`**: Configures pricing and duration for ad-free access.
+
+### 6.5 System & Maintenance
+- **GET `/overview`**: High-level dashboard stats.
+- **GET `/metrics`**: Current KPI snapshot.
+- **GET `/metrics/insights`**: Advanced retention and search quality metrics.
+- **GET `/stats/visits` / `/stats/views`**: Granular traffic analytics.
+- **GET `/queue/jobs`**: Lists pending and failed system jobs.
+- **POST `/queue/run-once`**: Manually triggers queue worker.
+- **POST `/maintenance/backup`**: Triggers a full system backup.
+- **POST `/maintenance/sitemap`**: Regenerates `sitemap.xml`.
+- **POST `/maintenance/warmup`**: Triggers cache warming.
+- **POST `/maintenance/analytics`**: Manually triggers analytics aggregation.
+- **GET `/maintenance/env`**: Reads sensitive `.env` configuration.
+- **POST `/maintenance/env`**: Updates `.env` variables.
+- **GET `/audit-logs`**: Access logs audit.
+- **GET `/login-events`**: Authentication attempt logs.
+- **GET `/logs/access` / `/logs/error`**: Raw system log viewer.
