@@ -4,246 +4,192 @@ This document provides a structured reference for the NMR API (v1) designed for 
 
 ---
 
-## 1. Public Endpoints (Discovery & Content)
+## 1. Authentication & Identity
 
-### **Home Feed**
+### **Register**
 #### **PATH**
-`GET /api/v1/home`
-
+`POST /api/v1/auth/register`
 #### **REQUEST**
-- **Method**: `GET`
-- **Query Params**: `page` (int), `per_page` (int)
-
+- **Body**: `{ "username": "...", "email": "...", "password": "..." }`
 #### **RESPONSE**
-```json
-{
-  "status": "success",
-  "data": {
-    "explore": [/* ContentDto */],
-    "recent_chapters": [/* ChapterDto */],
-    "recently_added": [/* ContentDto */],
-    "popular_blogs": [/* BlogDto */]
-  },
-  "meta": { "page": 1, "per_page": 20 }
-}
-```
-
+Standard user object on success.
 #### **ERROR**
-- **500 Internal Server Error**: Database or aggregation failure.
+- **400 Bad Request**: Validation failed or user exists.
 
----
-
-### **Content Detail**
-#### **PATH**
-`GET /api/v1/content/{type}/{slug}`
-
-#### **REQUEST**
-- **Method**: `GET`
-- **Path Variables**: 
-  - `type`: manga, novel, etc.
-  - `slug`: series-unique-slug
-
-#### **RESPONSE**
-```json
-{
-  "status": "success",
-  "data": {
-    "id": "abc123",
-    "title": "Series Title",
-    "description": "...",
-    "cover_image": "...",
-    "type": "manga",
-    "status": "ongoing",
-    "rating_avg": 4.5,
-    "chapter_count": 100,
-    "metadata": { "author": "...", "artist": "..." },
-    "genres": [],
-    "tags": [],
-    "access": { "is_locked": false, "unlock_price": 0 }
-  }
-}
-```
-
-#### **ERROR**
-- **404 Not Found**: Series does not exist.
-- **400 Bad Request**: Invalid content type.
-
----
-
-### **Chapter Detail (Reader)**
-#### **PATH**
-`GET /api/v1/content/{type}/{slug}/chapter/{chapterNumber}`
-
-#### **REQUEST**
-- **Method**: `GET`
-- **Path Variables**: 
-  - `chapterNumber`: e.g., "1", "1.5"
-
-#### **RESPONSE**
-```json
-{
-  "status": "success",
-  "data": {
-    "id": "ch123",
-    "chapter_number": "1",
-    "title": "Chapter Title",
-    "type": "image",
-    "data": "url1|url2|url3",
-    "access": { "granted": true, "is_locked": false }
-  }
-}
-```
-
-#### **ERROR**
-- **404 Not Found**: Chapter not found.
-- **402 Payment Required**: Chapter is locked and requires purchase.
-
----
-
-### **Search**
-#### **PATH**
-`GET /api/v1/search`
-
-#### **REQUEST**
-- **Method**: `GET`
-- **Query Params**: `q` (string, required)
-
-#### **RESPONSE**
-```json
-{
-  "status": "success",
-  "data": [/* ContentDto */],
-  "meta": { "q": "query", "page": 1 }
-}
-```
-
----
-
-## 2. Authentication
-
-### **User Login**
+### **Login**
 #### **PATH**
 `POST /api/v1/auth/login`
-
 #### **REQUEST**
-- **Method**: `POST`
-- **Body**:
-```json
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "cf-turnstile-response": "token"
-}
-```
-
+- **Body**: `{ "email": "...", "password": "...", "cf-turnstile-response": "..." }`
 #### **RESPONSE**
 ```json
-{
-  "status": "success",
-  "data": {
-    "id": "usr00001",
-    "username": "user",
-    "api_token": "...",
-    "roles": ["user"]
-  }
-}
+{ "status": "success", "data": { "id": "...", "username": "...", "api_token": "...", "roles": [] } }
 ```
-
 #### **ERROR**
 - **401 Unauthorized**: Invalid credentials.
-- **429 Too Many Requests**: Rate limit exceeded.
 
----
-
-## 3. Protected Endpoints (Requires Auth)
-
-### **Follow Series**
+### **Logout**
 #### **PATH**
-`POST /api/v1/content/{type}/{slug}/follow`
-
-#### **REQUEST**
-- **Method**: `POST`
-- **Headers**: `X-CSRF-Token: ...` (if cookie-based) or `Authorization: Bearer ...`
-
+`GET|POST /api/v1/auth/logout`
 #### **RESPONSE**
-```json
-{
-  "status": "success",
-  "data": { "followed": true }
-}
-```
+`{ "status": "success" }`
 
-#### **ERROR**
-- **401 Unauthorized**: User not logged in.
-
----
-
-### **Unlock Content (Coins)**
+### **Refresh Token**
 #### **PATH**
-`POST /api/v1/content/{type}/{slug}/unlock`
-
-#### **REQUEST**
-- **Method**: `POST`
-
+`POST /api/v1/auth/refresh`
 #### **RESPONSE**
-```json
-{
-  "status": "success",
-  "data": { "unlocked": true, "new_balance": 450 }
-}
-```
+New API token and session metadata.
 
-#### **ERROR**
-- **402 Payment Required**: Insufficient coins in wallet.
-- **404 Not Found**: Content not found.
-
----
-
-### **Track Activity (Pulsing)**
+### **Active Sessions**
 #### **PATH**
-`POST /api/v1/user/activity`
-
-#### **REQUEST**
-- **Method**: `POST`
-- **Body**:
-```json
-{
-  "tab_id": "unique_session_tab_id",
-  "duration": 30
-}
-```
-
+`GET /api/v1/auth/sessions`
 #### **RESPONSE**
-```json
-{
-  "status": "success",
-  "data": { "tracked": true }
-}
-```
+List of active devices/sessions for the user.
 
 ---
 
-## 4. User Data
+## 2. User Profile & Preferences
 
-### **User Profile**
+### **Get Profile**
 #### **PATH**
 `GET /api/v1/user/profile`
-
-#### **REQUEST**
-- **Method**: `GET`
-
 #### **RESPONSE**
-```json
-{
-  "status": "success",
-  "data": {
-    "is_guest": false,
-    "id": "usr00001",
-    "username": "user",
-    "email": "user@example.com",
-    "bio": "...",
-    "profile_image": "...",
-    "cover_image": "..."
-  }
-}
-```
+Private profile data (email, bio, etc.).
+
+### **Update Profile**
+#### **PATH**
+`POST /api/v1/user/profile`
+#### **REQUEST**
+- **Body (Multipart)**: `{ "bio": "...", "avatar": File, "cover": File }`
+
+### **Get Preferences**
+#### **PATH**
+`GET /api/v1/user/preferences`
+#### **RESPONSE**
+Reader settings (theme, layout, font-size).
+
+### **Update Preferences**
+#### **PATH**
+`PUT /api/v1/user/preferences`
+#### **REQUEST**
+- **Body**: `{ "theme": "dark", "reader_layout": "vertical", ... }`
+
+---
+
+## 3. Wallet & Monetization
+
+### **Get Wallet**
+#### **PATH**
+`GET /api/v1/user/wallet`
+#### **RESPONSE**
+Current coin balance.
+
+### **Transaction History**
+#### **PATH**
+`GET /api/v1/user/wallet/transactions`
+#### **QUERY PARAMS**
+`page`, `per_page`
+
+### **Owned Unlocks (Series)**
+#### **PATH**
+`GET /api/v1/user/unlocks/series`
+
+### **Owned Unlocks (Chapters)**
+#### **PATH**
+`GET /api/v1/user/unlocks/chapters`
+
+### **Unlock Content**
+#### **PATH**
+`POST /api/v1/content/{type}/{slug}/unlock`
+#### **ERROR**
+- **402 Payment Required**: Insufficient coins.
+
+### **Unlock Chapter**
+#### **PATH**
+`POST /api/v1/chapter/{chapterId}/unlock`
+
+### **Feature Status**
+#### **PATH**
+`GET /api/v1/user/features`
+#### **RESPONSE**
+Active site features (e.g., `ad_free` status).
+
+### **Purchase Ad-Free**
+#### **PATH**
+`POST /api/v1/user/features/ad-free/purchase`
+
+---
+
+## 4. Social & Library
+
+### **Follow/Unfollow Series**
+#### **PATH**
+`POST|DELETE /api/v1/content/{type}/{slug}/follow`
+
+### **Follow/Unfollow User**
+#### **PATH**
+`POST|DELETE /api/v1/user/follows/{person}`
+
+### **Get Following (Users)**
+#### **PATH**
+`GET /api/v1/user/follows/users`
+
+### **Get Library (Followed Content)**
+#### **PATH**
+`GET /api/v1/user/follows`
+
+### **Reading History**
+#### **PATH**
+`GET /api/v1/user/history`
+
+### **Notifications**
+#### **PATH**
+`GET /api/v1/user/notifications`
+
+### **Mark Notifications Read**
+#### **PATH**
+`POST /api/v1/user/notifications/read`
+
+---
+
+## 5. Interactions
+
+### **Rate Content**
+#### **PATH**
+`POST /api/v1/content/{type}/{slug}/rate`
+#### **REQUEST**
+- **Body**: `{ "rating": 5 }`
+
+### **Comment on Series**
+#### **PATH**
+`POST /api/v1/content/{type}/{slug}/comment`
+#### **REQUEST**
+- **Body**: `{ "body": "...", "parent_id": null }`
+
+### **Comment on Chapter**
+#### **PATH**
+`POST /api/v1/chapter/{chapterId}/comment`
+
+### **Vote on Comment**
+#### **PATH**
+`POST /api/v1/comments/{commentId}/vote`
+#### **REQUEST**
+- **Body**: `{ "vote": 1 }` (1 or -1)
+
+---
+
+## 6. Blog Management
+
+### **My Blogs**
+#### **PATH**
+`GET /api/v1/user/blogs`
+
+### **Create Blog**
+#### **PATH**
+`POST /api/v1/blogs`
+#### **REQUEST**
+- **Body**: `{ "title": "...", "body": "...", "cover_image": "..." }`
+
+### **Vote on Blog**
+#### **PATH**
+`POST /api/v1/blogs/{slug}/vote`
