@@ -8,7 +8,7 @@
 
 # Storage & Logs
 /storage/cache/*
-/storage/logs/*.log
+/storage/logs/*
 /storage/sessions/*
 /storage/backups/*
 
@@ -29,4 +29,3 @@ Thumbs.db
 !/storage/sessions/.gitkeep
 !/storage/backups/.gitkeep
 !/public/uploads/.gitkeep
-floresscans.com/

@@ -14,6 +14,8 @@ The project uses a custom design language called **Melt**.
 - **Glassmorphism**: Subtle blurs and semi-transparent surfaces for overlays and cards.
 - **Interactive Feedback**: Soft transitions, hover-lifts, and micro-animations.
 
+**NOTE (2026-03-09)**: The public-facing site is currently in a **Minimal SSR Skeleton** phase, prioritizing raw data delivery and performance over decorative styling. The "Melt Aesthetic" described below remains the long-term target for the platform's visual identity, while the current implementation focuses on semantic HTML without site-wide stylesheets.
+
 ## 3. Key User Personas
 1.  **The Binge Reader**: Needs a seamless, distraction-free "Zen mode" reader.
 2.  **The Discoverer**: Relies on high-quality cover art, tags, and "Latest Update" grids.

@@ -11,9 +11,9 @@ This document serves as the absolute authority on the project's architecture, co
 - **Singleton Pattern**: Use `Config::getInstance()` or `Config::getSettings()` for high-performance, memory-cached access.
 - **Environment Integration**: Values are pulled from `.env` via `$_ENV` with strict fallback defaults.
 
-### Hybrid Monolith
-- **Rendering**: Uses Server-Side Rendering (SSR) for SEO and initial page loads, and Client-Side Rendering (CSR) for high-interactivity modules.
-- **API**: Standardized JSON REST API under `/api/v1`.
+### Minimal SSR Skeleton
+- **Rendering**: Uses Server-Side Rendering (SSR) for all public pages. The public layout has been reduced to a minimal skeleton shell with plain HTML output, purposely avoiding site-wide stylesheets to maximize performance and SEO.
+- **API**: Standardized JSON REST API under `/api/v1` remains available for administrative and interactive features.
 
 ---
 
@@ -38,7 +38,7 @@ This document serves as the absolute authority on the project's architecture, co
     - `dependencies.php`: PHP-DI container definitions.
     - `database/`: Contains `schema.sql` (Source of Truth).
     - `Console/`: Standalone CLI tools for maintenance.
-    - `Controllers/`, `Services/`, `Repositories/`, `Middleware/`, `DTO/`, `Helpers/`: Core logic.
+    - `Controllers/`, `Services/`, `Repositories/`, `Middleware/`, `Models/`, `DTO/`, `Helpers/`: Core logic.
 - `public/`: Web root.
 - `storage/`:
     - `cache/`: File-based caching.
@@ -56,9 +56,12 @@ This document serves as the absolute authority on the project's architecture, co
 - **Layered Pattern**: Controller (HTTP) -> Service (Business Logic) -> Repository (SQL).
 - **ID Generation**: Use `App\Services\EntityIdService` for alphanumeric IDs.
 
-### Frontend (Melt.js)
-- **Library**: Use the custom `melt.js` utility. Avoid standard jQuery.
-- **i18n**: Use `window.NMR.__t('key')` for all UI strings.
+### Frontend (Minimalist)
+- **SSR Strategy**: Focus on semantic HTML and direct data output. Avoid client-side rendering for core content.
+- **JS Bundles**: 
+    - `public/assets/js/app-bundle.js`: A minimal fetch wrapper (`window.NMRData`) for CSR data access.
+    - `public/assets/js/admin-bundle.js`: Modular namespace-based structure for administration logic.
+- **i18n**: Handled server-side; strings are injected into views or fetched via `/api/v1/i18n/{lang}`.
 
 ### Git Mandate (CRITICAL)
 - **Descriptive Commits**: AFTER every logical change or feature, a Git commit MUST be created with a clear description (e.g., `git commit -m "feat: add localized footer taxonomy"`).
@@ -73,7 +76,7 @@ This document serves as the absolute authority on the project's architecture, co
 1. **DB**: Update `app/database/schema.sql` and run migration.
 2. **Backend**: DTO -> Repository -> Service -> Controller.
 3. **Routing**: Register in `app/Config.php`.
-4. **Frontend**: Update `connection.js` and implement UI logic.
+4. **Frontend**: Update `app-bundle.js` (public) or `admin-bundle.js` (admin) and implement UI logic.
 5. **Commit**: Perform Git commit for the task.
 
 ---
