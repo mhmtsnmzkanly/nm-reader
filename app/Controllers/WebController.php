@@ -101,35 +101,6 @@ final class WebController
         );
     }
 
-    public function meltHome(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        $siteName = $this->siteConfig->siteName();
-        $homeData = $this->seriesService->home(1, 20);
-
-        return $this->render(
-            $request,
-            $response,
-            "melt_home.php",
-            [
-                "home_data" => $homeData,
-                "melt_prefix" => true,
-            ],
-            [],
-            "Melt Home - " . $siteName,
-            "melt-shell",
-            [
-                "title" => $siteName . " - Manga, Manhwa, Webtoon ve Novel Oku",
-                "description" => "Manga, manhwa, webtoon ve novel serilerini tek yerde kesfet. Hizli okuma deneyimi ve duzenli guncellemeler.",
-                "keywords" => "manga oku, manhwa oku, webtoon oku, novel oku, light novel, web novel",
-                "type" => "website",
-                "robots" => "noindex,follow",
-                "canonical" => $this->absoluteUrl($request, "/"),
-            ],
-        );
-    }
-
     /**
      * Renders the detailed view for a single series (Novel/Manga).
      *
@@ -260,75 +231,6 @@ final class WebController
         );
     }
 
-    public function meltContent(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        array $args = [],
-    ): ResponseInterface {
-        $type = (string) ($args["type"] ?? "");
-        $slug = (string) ($args["slug"] ?? "");
-        $ip = (string) ($request->getServerParams()["REMOTE_ADDR"] ?? "unknown");
-        $userId = isset($_SESSION["user_id"]) ? (string) $_SESSION["user_id"] : null;
-
-        $content = $this->seriesService->contentDetailByType($type, $slug, $ip, $userId);
-        if ($content === null) {
-            return $response->withStatus(404);
-        }
-
-        $dbType = str_replace("-", "_", strtolower($type));
-        $startChapterNumber = $this->seriesRepository->findFirstChapterNumberByTypeAndSlug(
-            $dbType,
-            $slug,
-        );
-
-        $title = (string) ($content["title"] ?? "Content");
-        $description = $this->truncateDescription((string) ($content["description"] ?? ""));
-        $cover = (string) ($content["cover_image"] ?? "");
-        $recommendations = array_values(array_filter(
-            $this->seriesService->byType($type, 1, 8),
-            static fn(array $item): bool => (string) ($item["slug"] ?? "") !== $slug
-        ));
-        $recommendations = array_slice($recommendations, 0, 6);
-
-        $langCode = $this->i18n->resolveLocale($request);
-        $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
-        };
-
-        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'content', [
-            'type' => $type,
-            'title' => $title
-        ]);
-
-        return $this->render(
-            $request,
-            $response,
-            "melt_content.php",
-            [
-                "type" => $type,
-                "slug" => $slug,
-                "start_chapter_number" => $startChapterNumber,
-                "ssr_data" => $content,
-                "breadcrumbs" => $breadcrumbs,
-                "recommended_items" => $recommendations,
-                "melt_prefix" => true,
-            ],
-            [],
-            $title . " - Melt",
-            "melt-shell",
-            [
-                "title" => sprintf("%s - %s Oku", $title, ucfirst($type)),
-                "description" => $description !== "" ? $description : $title . " detaylari ve bolumleri",
-                "type" => "book",
-                "image" => $cover,
-                "keywords" => $title . ", " . ucfirst($type) . " oku",
-                "robots" => "noindex,follow",
-                "canonical" => $this->absoluteUrl($request, sprintf("/%s/%s", $type, $slug)),
-            ],
-        );
-    }
-
     /**
      * Renders the chapter reader view.
      *
@@ -400,67 +302,6 @@ final class WebController
                 "description" => "Read " . $seriesTitle . " chapter " . $chapterNumber . " online.",
                 "type" => "article",
                 "robots" => "index,follow",
-            ],
-        );
-    }
-
-    public function meltChapter(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        array $args = [],
-    ): ResponseInterface {
-        $type = (string) ($args["type"] ?? "");
-        $slug = (string) ($args["slug"] ?? "");
-        $chapterNumber = (string) ($args["chapterNumber"] ?? "");
-        $ip = (string) ($request->getServerParams()["REMOTE_ADDR"] ?? "unknown");
-        $chapter = $this->seriesService->chapterDetailByTypeSlugAndNumber(
-            $type,
-            $slug,
-            $chapterNumber,
-            $ip,
-        );
-
-        if ($chapter === null) {
-            return $response->withStatus(404);
-        }
-
-        $seriesTitle = (string) ($chapter["series_title"] ?? "");
-        $seoTitle = $seriesTitle . " - Bolum " . $chapterNumber;
-        $siteName = $this->siteConfig->siteName();
-
-        $langCode = $this->i18n->resolveLocale($request);
-        $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
-        };
-
-        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'chapter', [
-            'content_type' => $type,
-            'content_slug' => $slug,
-            'content_title' => $seriesTitle,
-            'chapter_number' => $chapterNumber
-        ]);
-
-        return $this->render(
-            $request,
-            $response,
-            "melt_chapter.php",
-            [
-                "chapter" => $chapter,
-                "breadcrumbs" => $breadcrumbs,
-                "type" => $type,
-                "slug" => $slug,
-                "melt_prefix" => true,
-            ],
-            [],
-            $seoTitle,
-            "melt-reader-shell",
-            [
-                "title" => $seoTitle . " - " . $siteName,
-                "description" => "Read " . $seriesTitle . " chapter " . $chapterNumber . " online.",
-                "type" => "article",
-                "robots" => "noindex,follow",
-                "canonical" => $this->absoluteUrl($request, sprintf("/%s/%s/chapter/%s", $type, $slug, rawurlencode($chapterNumber))),
             ],
         );
     }
@@ -705,38 +546,6 @@ final class WebController
         );
     }
 
-    public function meltSearch(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        $siteName = $this->siteConfig->siteName();
-        $query = trim((string) ($request->getQueryParams()["q"] ?? ""));
-        $results = $query !== "" ? $this->seriesService->search($query, 1, 24) : [];
-        $title = $query !== ""
-            ? sprintf("Arama: %s - %s", $query, $siteName)
-            : "Arama - " . $siteName;
-
-        return $this->render(
-            $request,
-            $response,
-            "melt_search.php",
-            [
-                "q" => $query,
-                "results" => $results,
-                "melt_prefix" => true,
-            ],
-            [],
-            "Melt Search - " . $siteName,
-            "melt-shell",
-            [
-                "title" => $title,
-                "description" => "Icerik arama sonuclari.",
-                "robots" => "noindex,follow",
-                "canonical" => $this->absoluteUrl($request, "/search"),
-            ],
-        );
-    }
-
     /**
      * Renders various series listings (By type, genre, or tag).
      *
@@ -775,42 +584,6 @@ final class WebController
                 ),
                 "type" => "website",
                 "robots" => "index,follow",
-            ],
-        );
-    }
-
-    public function meltListing(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        array $args = [],
-    ): ResponseInterface {
-        $siteName = $this->siteConfig->siteName();
-        $type = (string) ($args["type"] ?? "");
-        $display = ucwords(str_replace("-", " ", $type));
-        $items = $this->seriesService->byType($type, 1, 24);
-        $latest = $this->seriesService->latestChaptersByType($type, 1, 8);
-
-        return $this->render(
-            $request,
-            $response,
-            "melt_series_list.php",
-            [
-                "list_type" => "category",
-                "value" => $type,
-                "items" => $items,
-                "latest_items" => $latest,
-                "page_heading" => $display,
-                "melt_prefix" => true,
-            ],
-            [],
-            "Melt Browse - " . $siteName,
-            "melt-shell",
-            [
-                "title" => sprintf("%s Serileri - %s", $display, $siteName),
-                "description" => sprintf("%s turundeki serileri listele, incele ve okumaya basla.", $display),
-                "type" => "website",
-                "robots" => "noindex,follow",
-                "canonical" => $this->absoluteUrl($request, "/" . $type),
             ],
         );
     }
@@ -860,49 +633,6 @@ final class WebController
         );
     }
 
-    public function meltGenre(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        array $args = [],
-    ): ResponseInterface {
-        $siteName = $this->siteConfig->siteName();
-        $slug = (string) ($args["slug"] ?? "");
-        $display = ucwords(str_replace("-", " ", $slug));
-        $items = $this->seriesService->byGenre($slug, 1, 24);
-
-        $langCode = $this->i18n->resolveLocale($request);
-        $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
-        };
-        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'genre', [
-            'name' => $display
-        ]);
-
-        return $this->render(
-            $request,
-            $response,
-            "melt_series_list.php",
-            [
-                "list_type" => "genre",
-                "value" => $slug,
-                "items" => $items,
-                "page_heading" => $display,
-                "breadcrumbs" => $breadcrumbs,
-                "melt_prefix" => true,
-            ],
-            [],
-            "Melt Genre - " . ucfirst($slug),
-            "melt-shell",
-            [
-                "title" => sprintf("Genre: %s - %s", $display, $siteName),
-                "description" => sprintf("%s etiketine ait serileri kesfet.", $display),
-                "robots" => "noindex,follow",
-                "canonical" => $this->absoluteUrl($request, "/genre/" . $slug),
-            ],
-        );
-    }
-
     public function tag(
         ServerRequestInterface $request,
         ResponseInterface $response,
@@ -944,49 +674,6 @@ final class WebController
                     $display,
                 ),
                 "robots" => "index,follow",
-            ],
-        );
-    }
-
-    public function meltTag(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        array $args = [],
-    ): ResponseInterface {
-        $siteName = $this->siteConfig->siteName();
-        $slug = (string) ($args["slug"] ?? "");
-        $display = ucwords(str_replace("-", " ", $slug));
-        $items = $this->seriesService->byTag($slug, 1, 24);
-
-        $langCode = $this->i18n->resolveLocale($request);
-        $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
-        };
-        $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'tag', [
-            'name' => $display
-        ]);
-
-        return $this->render(
-            $request,
-            $response,
-            "melt_series_list.php",
-            [
-                "list_type" => "tag",
-                "value" => $slug,
-                "items" => $items,
-                "page_heading" => $display,
-                "breadcrumbs" => $breadcrumbs,
-                "melt_prefix" => true,
-            ],
-            [],
-            "Melt Tag - " . ucfirst($slug),
-            "melt-shell",
-            [
-                "title" => sprintf("Tag: %s - %s", $display, $siteName),
-                "description" => sprintf("%s tagine ait icerikleri goruntule.", $display),
-                "robots" => "noindex,follow",
-                "canonical" => $this->absoluteUrl($request, "/tag/" . $slug),
             ],
         );
     }
@@ -1474,8 +1161,7 @@ final class WebController
         $title = $title ?? $siteName;
         $basePath = (string) $this->settings["app"]["base_path"];
         $templatePath = $basePath . "/storage/views/" . $template;
-        $isMeltTemplate = str_starts_with($template, "melt_");
-        $layoutPath = $basePath . "/storage/views/" . ($isMeltTemplate ? "layout_melt.php" : "layout_main.php");
+        $layoutPath = $basePath . "/storage/views/layout_main.php";
 
         if (!is_file($templatePath)) {
             $response->getBody()->write("Template not found");
@@ -1573,11 +1259,6 @@ final class WebController
             $cleanPath = ltrim($path, "/");
             return "/" . $langCode . "/" . $cleanPath;
         };
-        $meltUrl = function(string $path) use ($langCode) {
-            $cleanPath = ltrim($path, "/");
-            return "/" . $langCode . "/melt" . ($cleanPath === "" ? "" : "/" . $cleanPath);
-        };
-
         $footerGenres = $this->seriesService->series_genres(1, 20);
         $footerTags = $this->seriesService->series_tags(1, 20);
 
@@ -1595,12 +1276,10 @@ final class WebController
             "lang" => $lang, 
             "langCode" => $langCode,
             "url" => $url,
-            "meltUrl" => $meltUrl,
             "footerGenres" => $footerGenres,
             "footerTags" => $footerTags,
             "contextJson" => $contextJson,
             "templateName" => $template,
-            "isMeltTemplate" => $isMeltTemplate,
         ]);
 
         $seoDefaults = [

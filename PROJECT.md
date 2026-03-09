@@ -116,6 +116,12 @@ This document serves as the absolute authority on the project's architecture, co
   - Removed the `pages_` filename prefix from SSR and admin view templates under `storage/views/`.
   - Updated the main render pipeline and install controller so templates resolve directly by their actual file names.
 
+### Melt Layer Removal & Asset Cleanup (2026-03-09)
+- **Status**: Completed.
+- **Change**:
+  - Removed the deprecated `melt` route set and deleted the related Melt-only templates and layout.
+  - Deleted Melt-specific JS/CSS assets plus orphaned backup stylesheet files that no longer have any runtime references.
+
 ### Documentation Synchronization & Maintenance (2026-03-09)
 - **Status**: Completed.
 - **Maintenance**:
