@@ -19,32 +19,29 @@
   <meta name="twitter:title" content="<?= htmlspecialchars((string) $seoTitle, ENT_QUOTES, 'UTF-8') ?>">
   <meta name="twitter:description" content="<?= htmlspecialchars((string) $seoDescription, ENT_QUOTES, 'UTF-8') ?>">
   <meta name="twitter:image" content="<?= htmlspecialchars((string) $seoImage, ENT_QUOTES, 'UTF-8') ?>">
-  <link rel="stylesheet" href="/assets/css/site.css?v=20260309a">
   <?php if (!empty($jsonLd)): ?>
     <script type="application/ld+json"><?= $jsonLd ?></script>
   <?php endif; ?>
 </head>
 <body>
-  <div class="shell">
-    <header class="site-header">
-      <div class="site-width header-row">
-        <a href="<?= $url('/') ?>" class="brand"><?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'NovelMangaReader'), ENT_QUOTES, 'UTF-8') ?></a>
-        <nav class="main-nav" aria-label="Main">
+  <header>
+    <div>
+      <a href="<?= $url('/') ?>"><?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'NovelMangaReader'), ENT_QUOTES, 'UTF-8') ?></a>
+      <nav aria-label="Main">
           <a href="<?= $url('/') ?>">home</a>
           <a href="<?= $url('/blogs') ?>">blogs</a>
           <a href="<?= $url('/search') ?>">search</a>
           <a href="<?= $url('/profile') ?>">profile</a>
-        </nav>
-        <form action="<?= $url('/search') ?>" method="get" class="search-form">
+      </nav>
+      <form action="<?= $url('/search') ?>" method="get">
           <input type="search" name="q" value="<?= htmlspecialchars((string) ($q ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="search">
           <button type="submit">go</button>
-        </form>
-      </div>
-    </header>
+      </form>
+    </div>
+  </header>
 
-    <main class="site-width page-shell">
-      <?= $content ?? '' ?>
-    </main>
-  </div>
+  <main>
+    <?= $content ?? '' ?>
+  </main>
 </body>
 </html>

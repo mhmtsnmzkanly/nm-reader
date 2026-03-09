@@ -6,7 +6,7 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
 ?>
 
 <?php if (!empty($breadcrumbs)): ?>
-  <nav class="breadcrumbs" aria-label="breadcrumb">
+  <nav aria-label="breadcrumb">
     <ol>
       <?php foreach ($breadcrumbs as $crumb): ?>
         <li>
@@ -21,66 +21,58 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
   </nav>
 <?php endif; ?>
 
-<section class="split">
-  <div class="stack">
-    <header>
-      <h1 class="page-title"><?= htmlspecialchars((string) ($content['title'] ?? 'content')) ?></h1>
-      <p class="page-intro"><?= htmlspecialchars((string) ($content['type_path'] ?? $content['type'] ?? '')) ?></p>
-    </header>
+<h1><?= htmlspecialchars((string) ($content['title'] ?? 'content')) ?></h1>
+<p><?= htmlspecialchars((string) ($content['type_path'] ?? $content['type'] ?? '')) ?></p>
+<p><?= htmlspecialchars((string) ($content['description'] ?? '')) ?></p>
 
-    <div class="panel">
-      <p><?= htmlspecialchars((string) ($content['description'] ?? '')) ?></p>
-    </div>
-
-    <?php if ($chapterItems !== []): ?>
-      <section class="section-block">
-        <h2 class="section-title">chapters</h2>
-        <ol class="plain-list">
-          <?php foreach ($chapterItems as $chapter): ?>
-            <li>
-              <a href="<?= $url('/' . (string) ($content['type_path'] ?? $type ?? 'novel') . '/' . (string) ($content['slug'] ?? $slug ?? '') . '/chapter/' . rawurlencode((string) ($chapter['chapter_number'] ?? ''))) ?>">
-                chapter <?= htmlspecialchars((string) ($chapter['chapter_number'] ?? '')) ?>
-                <?php if (!empty($chapter['title'])): ?>
-                  - <?= htmlspecialchars((string) $chapter['title']) ?>
-                <?php endif; ?>
-              </a>
-            </li>
-          <?php endforeach; ?>
-        </ol>
-      </section>
-    <?php endif; ?>
-  </div>
-
-  <aside class="stack">
-    <div class="meta-grid">
-      <div><strong>author</strong><br><?= htmlspecialchars((string) ($content['author'] ?? '-')) ?></div>
-      <div><strong>artist</strong><br><?= htmlspecialchars((string) ($content['artist'] ?? '-')) ?></div>
-      <div><strong>status</strong><br><?= htmlspecialchars((string) ($content['status'] ?? '-')) ?></div>
-      <div><strong>release year</strong><br><?= htmlspecialchars((string) ($content['release_year'] ?? '-')) ?></div>
-      <div><strong>rating</strong><br><?= htmlspecialchars((string) ($content['rating_avg'] ?? '-')) ?></div>
-      <div><strong>chapter count</strong><br><?= htmlspecialchars((string) ($content['chapter_count'] ?? '0')) ?></div>
-    </div>
-
-    <?php if ($genres !== []): ?>
-      <section class="section-block">
-        <h2 class="section-title">genres</h2>
-        <div class="chip-row">
-          <?php foreach ($genres as $genre): ?>
-            <a class="chip" href="<?= $url('/genre/' . (string) ($genre['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($genre['name'] ?? '')) ?></a>
-          <?php endforeach; ?>
-        </div>
-      </section>
-    <?php endif; ?>
-
-    <?php if ($tags !== []): ?>
-      <section class="section-block">
-        <h2 class="section-title">tags</h2>
-        <div class="chip-row">
-          <?php foreach ($tags as $tag): ?>
-            <a class="chip" href="<?= $url('/tag/' . (string) ($tag['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($tag['name'] ?? '')) ?></a>
-          <?php endforeach; ?>
-        </div>
-      </section>
-    <?php endif; ?>
-  </aside>
+<section>
+  <h2>metadata</h2>
+  <dl>
+    <dt>author</dt><dd><?= htmlspecialchars((string) ($content['author'] ?? '-')) ?></dd>
+    <dt>artist</dt><dd><?= htmlspecialchars((string) ($content['artist'] ?? '-')) ?></dd>
+    <dt>status</dt><dd><?= htmlspecialchars((string) ($content['status'] ?? '-')) ?></dd>
+    <dt>release year</dt><dd><?= htmlspecialchars((string) ($content['release_year'] ?? '-')) ?></dd>
+    <dt>rating</dt><dd><?= htmlspecialchars((string) ($content['rating_avg'] ?? '-')) ?></dd>
+    <dt>chapter count</dt><dd><?= htmlspecialchars((string) ($content['chapter_count'] ?? '0')) ?></dd>
+  </dl>
 </section>
+
+<?php if ($genres !== []): ?>
+  <section>
+    <h2>genres</h2>
+    <p>
+      <?php foreach ($genres as $genre): ?>
+        <a href="<?= $url('/genre/' . (string) ($genre['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($genre['name'] ?? '')) ?></a>
+      <?php endforeach; ?>
+    </p>
+  </section>
+<?php endif; ?>
+
+<?php if ($tags !== []): ?>
+  <section>
+    <h2>tags</h2>
+    <p>
+      <?php foreach ($tags as $tag): ?>
+        <a href="<?= $url('/tag/' . (string) ($tag['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($tag['name'] ?? '')) ?></a>
+      <?php endforeach; ?>
+    </p>
+  </section>
+<?php endif; ?>
+
+<?php if ($chapterItems !== []): ?>
+  <section>
+    <h2>chapters</h2>
+    <ol>
+      <?php foreach ($chapterItems as $chapter): ?>
+        <li>
+          <a href="<?= $url('/' . (string) ($content['type_path'] ?? $type ?? 'novel') . '/' . (string) ($content['slug'] ?? $slug ?? '') . '/chapter/' . rawurlencode((string) ($chapter['chapter_number'] ?? ''))) ?>">
+            chapter <?= htmlspecialchars((string) ($chapter['chapter_number'] ?? '')) ?>
+            <?php if (!empty($chapter['title'])): ?>
+              - <?= htmlspecialchars((string) $chapter['title']) ?>
+            <?php endif; ?>
+          </a>
+        </li>
+      <?php endforeach; ?>
+    </ol>
+  </section>
+<?php endif; ?>

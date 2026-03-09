@@ -5,7 +5,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
 ?>
 
 <?php if (!empty($breadcrumbs)): ?>
-  <nav class="breadcrumbs" aria-label="breadcrumb">
+  <nav aria-label="breadcrumb">
     <ol>
       <?php foreach ($breadcrumbs as $crumb): ?>
         <li>
@@ -21,22 +21,20 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
 <?php endif; ?>
 
 <?php if ($isList): ?>
-  <h1 class="page-title">blogs</h1>
-  <div class="stack">
-    <?php foreach ($blogList as $blog): ?>
-      <article class="record">
-        <h2><a href="<?= $url('/blogs/' . (string) ($blog['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($blog['title'] ?? '')) ?></a></h2>
-        <p class="record-meta"><?= htmlspecialchars((string) ($blog['author_username'] ?? '')) ?> | <?= htmlspecialchars((string) ($blog['approved_at'] ?? $blog['created_at'] ?? '')) ?></p>
-        <p><?= htmlspecialchars(mb_substr(trim(strip_tags((string) ($blog['body'] ?? ''))), 0, 280)) ?></p>
-      </article>
-    <?php endforeach; ?>
-  </div>
+  <h1>blogs</h1>
+  <?php foreach ($blogList as $blog): ?>
+    <article>
+      <h2><a href="<?= $url('/blogs/' . (string) ($blog['slug'] ?? '')) ?>"><?= htmlspecialchars((string) ($blog['title'] ?? '')) ?></a></h2>
+      <p><?= htmlspecialchars((string) ($blog['author_username'] ?? '')) ?> | <?= htmlspecialchars((string) ($blog['approved_at'] ?? $blog['created_at'] ?? '')) ?></p>
+      <p><?= htmlspecialchars(mb_substr(trim(strip_tags((string) ($blog['body'] ?? ''))), 0, 280)) ?></p>
+    </article>
+  <?php endforeach; ?>
 <?php else: ?>
-  <article class="stack">
+  <article>
     <header>
-      <h1 class="page-title"><?= htmlspecialchars((string) ($data['title'] ?? 'blog')) ?></h1>
-      <p class="page-intro"><?= htmlspecialchars((string) ($data['author_username'] ?? '')) ?> | <?= htmlspecialchars((string) ($data['approved_at'] ?? $data['created_at'] ?? '')) ?></p>
+      <h1><?= htmlspecialchars((string) ($data['title'] ?? 'blog')) ?></h1>
+      <p><?= htmlspecialchars((string) ($data['author_username'] ?? '')) ?> | <?= htmlspecialchars((string) ($data['approved_at'] ?? $data['created_at'] ?? '')) ?></p>
     </header>
-    <div class="panel reader-body"><?= htmlspecialchars((string) ($data['body'] ?? '')) ?></div>
+    <pre><?= htmlspecialchars((string) ($data['body'] ?? '')) ?></pre>
   </article>
 <?php endif; ?>

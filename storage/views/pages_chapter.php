@@ -7,7 +7,7 @@ $pages = is_array($chapterData['pages'] ?? null) ? $chapterData['pages'] : [];
 ?>
 
 <?php if (!empty($breadcrumbs)): ?>
-  <nav class="breadcrumbs" aria-label="breadcrumb">
+  <nav aria-label="breadcrumb">
     <ol>
       <?php foreach ($breadcrumbs as $crumb): ?>
         <li>
@@ -22,26 +22,22 @@ $pages = is_array($chapterData['pages'] ?? null) ? $chapterData['pages'] : [];
   </nav>
 <?php endif; ?>
 
-<header class="section-block">
-  <h1 class="page-title"><?= htmlspecialchars((string) ($chapterData['series_title'] ?? 'chapter')) ?> / chapter <?= htmlspecialchars((string) ($chapterData['chapter_number'] ?? '')) ?></h1>
-  <p class="page-intro"><?= htmlspecialchars((string) ($chapterData['title'] ?? '')) ?></p>
-  <div class="chip-row">
-    <?php if (!empty($adjacent['prev'])): ?>
-      <a class="chip" href="<?= $url('/' . $chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode((string) $adjacent['prev'])) ?>">prev</a>
-    <?php endif; ?>
-    <a class="chip" href="<?= $url('/' . $chapterType . '/' . $chapterSlug) ?>">content page</a>
-    <?php if (!empty($adjacent['next'])): ?>
-      <a class="chip" href="<?= $url('/' . $chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode((string) $adjacent['next'])) ?>">next</a>
-    <?php endif; ?>
-  </div>
-</header>
+<h1><?= htmlspecialchars((string) ($chapterData['series_title'] ?? 'chapter')) ?> / chapter <?= htmlspecialchars((string) ($chapterData['chapter_number'] ?? '')) ?></h1>
+<p><?= htmlspecialchars((string) ($chapterData['title'] ?? '')) ?></p>
+<p>
+  <?php if (!empty($adjacent['prev'])): ?>
+    <a href="<?= $url('/' . $chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode((string) $adjacent['prev'])) ?>">prev</a>
+  <?php endif; ?>
+  <a href="<?= $url('/' . $chapterType . '/' . $chapterSlug) ?>">content page</a>
+  <?php if (!empty($adjacent['next'])): ?>
+    <a href="<?= $url('/' . $chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode((string) $adjacent['next'])) ?>">next</a>
+  <?php endif; ?>
+</p>
 
 <?php if (($chapterData['type'] ?? '') === 'text'): ?>
-  <div class="panel reader-body"><?= htmlspecialchars((string) ($chapterData['body'] ?? '')) ?></div>
+  <pre><?= htmlspecialchars((string) ($chapterData['body'] ?? '')) ?></pre>
 <?php else: ?>
-  <div class="image-stack">
-    <?php foreach ($pages as $page): ?>
-      <div class="panel"><img src="<?= htmlspecialchars((string) $page) ?>" alt="chapter page"></div>
-    <?php endforeach; ?>
-  </div>
+  <?php foreach ($pages as $page): ?>
+    <p><img src="<?= htmlspecialchars((string) $page) ?>" alt="chapter page"></p>
+  <?php endforeach; ?>
 <?php endif; ?>
