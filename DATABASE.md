@@ -176,24 +176,21 @@ HTTP-level access logs including duration (ms) and IP hashes.
 #### `user_sessions` & `user_refresh_tokens`
 Secure session management with expiration and revocation support.
 
+#### `user_login_logs`
+Audit trail for authentication attempts.
+- Tracks email, IP hash, user agent, success status, and failure reasons.
+- Used for security monitoring and rate limiting.
+
 #### Supporting Consistency Tables
 To align the documented schema with active backend code, the schema now also includes:
-- `user_preferences`
-- `user_follows`
-- `user_chapters_reads`
-- `system_jobs`
-- `analytics_events`
-- `analytics_series_daily`
-- `analytics_series_views`
-- `analytics_chapters_daily`
-- `analytics_chapters_views`
-- `analytics_snapshots_daily`
-- `analytics_snapshots_hourly`
-- `analytics_snapshots_series_top`
-- `analytics_snapshots_chapters_top`
-- `analytics_snapshots_search`
-- `analytics_snapshots_auth`
-- `analytics_snapshots_health`
+- `user_preferences`: Stores site and reader settings (theme, layout, font sizes) per user.
+- `user_follows`: Tracks user-to-user follow relationships for social features.
+- `user_chapters_reads`: Detailed log of every chapter read by every user (used for history).
+- `system_jobs`: Internal queue for asynchronous tasks like notifications and analytics.
+- `analytics_events`: Raw event buffer for the aggregation engine.
+- `analytics_series_daily` / `analytics_chapters_daily`: Aggregated daily view/comment counts.
+- `analytics_series_views` / `analytics_chapters_views`: Raw view logs with IP hashing for unique counting.
+- `analytics_snapshots_*`: Final aggregated metrics for the admin dashboard (daily, hourly, top content, search, health).
 
 ---
 

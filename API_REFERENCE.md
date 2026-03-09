@@ -79,8 +79,14 @@ Lightweight search suggestions for autocomplete.
 #### **GET /genres**
 Paginated public genre listing.
 
+#### **GET /series_genres**
+Alias for public genre listing.
+
 #### **GET /tags**
 Paginated public tag listing.
+
+#### **GET /series_tags**
+Alias for public tag listing.
 
 #### **GET /genre/{slug}**
 Paginated series listing for a genre slug.

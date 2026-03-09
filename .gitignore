@@ -11,10 +11,6 @@
 /storage/logs/*.log
 /storage/sessions/*
 /storage/backups/*
-/storage/views/*.php
-!/storage/views/layout_*.php
-!/storage/views/pages_*.php
-!/storage/views/emails/
 
 # Public Assets
 /public/uploads/*
@@ -33,3 +29,4 @@ Thumbs.db
 !/storage/sessions/.gitkeep
 !/storage/backups/.gitkeep
 !/public/uploads/.gitkeep
+floresscans.com/
