@@ -426,85 +426,95 @@ final class SeriesRepository
     }
 
     /**
-     * Searches content using FULLTEXT index or LIKE fallback.
+     * Searches content with advanced filters.
      *
-     * @param string $query
+     * @param string $query Search term.
      * @param int $page
      * @param int $perPage
+     * @param array $filters Optional filters: genres (slug array), tags (slug array), status, sort.
      * @return array
      */
-    public function search(string $query, int $page, int $perPage): array
+    public function search(string $query, int $page, int $perPage, array $filters = []): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $searchParam = '%' . $query . '%';
+        
+        $params = [];
+        $where = ['c.deleted_at IS NULL'];
 
-        $ftsSql = 'SELECT
-                       c.id,
-                       c.title,
-                       c.slug,
-                       c.type,
-                       c.status,
-                       c.rating_avg,
-                       c.rating_count,
-                       c.chapter_count,
-                       c.comment_count,
-                       c.cover_image,
-                       cm.author,
-                       cm.artist
-                   FROM series c
-                   LEFT JOIN series_metadata cm ON cm.content_id = c.id
-                   WHERE MATCH(c.title, c.slug, c.description) AGAINST(:q IN BOOLEAN MODE)
-                      OR cm.author LIKE :q_like OR cm.artist LIKE :q_like
-                   ORDER BY c.rating_count DESC, c.created_at DESC
-                   LIMIT :limit OFFSET :offset';
-
-        try {
-            $stmt = $this->pdo->prepare($ftsSql);
-            $stmt->bindValue(':q', $this->toBooleanSearchQuery($query), PDO::PARAM_STR);
-            $stmt->bindValue(':q_like', $searchParam, PDO::PARAM_STR);
-            $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
-            $rows = $stmt->fetchAll();
-            if (count($rows) > 0) {
-                return $rows;
-            }
-        } catch (\Throwable) {
-            // Fallback below covers schemas without FULLTEXT support/index.
+        if ($query !== '') {
+            $searchParam = '%' . $query . '%';
+            $where[] = '(c.title LIKE :q1 OR c.slug LIKE :q2 OR c.description LIKE :q3 OR cm.author LIKE :q4 OR cm.artist LIKE :q5)';
+            $params['q1'] = $searchParam;
+            $params['q2'] = $searchParam;
+            $params['q3'] = $searchParam;
+            $params['q4'] = $searchParam;
+            $params['q5'] = $searchParam;
         }
 
-        $likeSql = 'SELECT
-                        c.id,
-                        c.title,
-                        c.slug,
-                        c.type,
-                        c.status,
-                        c.rating_avg,
-                        c.rating_count,
-                        c.chapter_count,
-                        c.comment_count,
-                        c.cover_image,
-                        cm.author,
-                        cm.artist
-                    FROM series c
-                    LEFT JOIN series_metadata cm ON cm.content_id = c.id
-                    WHERE c.title LIKE :query1 
-                       OR c.slug LIKE :query2 
-                       OR c.description LIKE :query3
-                       OR cm.author LIKE :query4
-                       OR cm.artist LIKE :query5
-                    ORDER BY c.rating_count DESC, c.created_at DESC
-                    LIMIT :limit OFFSET :offset';
+        if (!empty($filters['genres'])) {
+            $genreList = $filters['genres'];
+            $placeholders = [];
+            foreach ($genreList as $i => $slug) {
+                $key = 'genre' . $i;
+                $placeholders[] = ':' . $key;
+                $params[$key] = $slug;
+            }
+            $where[] = 'c.id IN (SELECT content_id FROM series_genre_map WHERE genre_id IN (SELECT id FROM series_genres WHERE slug IN (' . implode(',', $placeholders) . ')))';
+        }
 
-        $stmt = $this->pdo->prepare($likeSql);
-        $stmt->bindValue(':query1', $searchParam);
-        $stmt->bindValue(':query2', $searchParam);
-        $stmt->bindValue(':query3', $searchParam);
-        $stmt->bindValue(':query4', $searchParam);
-        $stmt->bindValue(':query5', $searchParam);
+        if (!empty($filters['tags'])) {
+            $tagList = $filters['tags'];
+            $placeholders = [];
+            foreach ($tagList as $i => $slug) {
+                $key = 'tag' . $i;
+                $placeholders[] = ':' . $key;
+                $params[$key] = $slug;
+            }
+            $where[] = 'c.id IN (SELECT content_id FROM series_tag_map WHERE tag_id IN (SELECT id FROM series_tags WHERE slug IN (' . implode(',', $placeholders) . ')))';
+        }
+
+        if (!empty($filters['status']) && $filters['status'] !== 'TÜMÜ') {
+            $where[] = 'c.status = :status';
+            $params['status'] = $filters['status'];
+        }
+
+        $orderBy = 'c.rating_count DESC, c.created_at DESC';
+        if (!empty($filters['sort'])) {
+            $orderBy = match ($filters['sort']) {
+                'EN YENİLER' => 'c.created_at DESC',
+                'EN ÇOK OKUNAN' => 'c.view_count DESC',
+                'EN YÜKSEK PUAN' => 'c.rating_avg DESC',
+                default => 'c.rating_count DESC',
+            };
+        }
+
+        $sql = 'SELECT
+                    c.id,
+                    c.title,
+                    c.slug,
+                    c.type,
+                    c.status,
+                    c.rating_avg,
+                    c.rating_count,
+                    c.chapter_count,
+                    c.comment_count,
+                    c.cover_image,
+                    cm.author,
+                    cm.artist
+                FROM series c
+                LEFT JOIN series_metadata cm ON cm.content_id = c.id
+                WHERE ' . implode(' AND ', $where) . '
+                ORDER BY ' . $orderBy . '
+                LIMIT :limit OFFSET :offset';
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $key => $val) {
+            $stmt->bindValue(':' . $key, $val);
+        }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
+
         return $stmt->fetchAll();
     }
 

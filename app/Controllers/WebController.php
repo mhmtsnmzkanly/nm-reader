@@ -519,12 +519,26 @@ final class WebController
         ResponseInterface $response,
     ): ResponseInterface {
         $siteName = $this->siteConfig->siteName();
-        $query = trim((string) ($request->getQueryParams()["q"] ?? ""));
-        $title =
-            $query !== ""
+        $params = $request->getQueryParams();
+        
+        $query = trim((string) ($params["q"] ?? ""));
+        $genres = array_filter(explode(',', (string) ($params["genres"] ?? "")));
+        $tags = array_filter(explode(',', (string) ($params["tags"] ?? "")));
+        $status = (string) ($params["status"] ?? "");
+        $sort = (string) ($params["sort"] ?? "");
+
+        $filters = [
+            "genres" => $genres,
+            "tags" => $tags,
+            "status" => $status,
+            "sort" => $sort
+        ];
+
+        $title = $query !== ""
                 ? sprintf("Arama: %s - %s", $query, $siteName)
                 : "Arama - " . $siteName;
-        $results = $query !== "" ? $this->seriesService->search($query, 1, 50) : [];
+        
+        $results = $this->seriesService->search($query, 1, 50, $filters);
 
         return $this->render(
             $request,
@@ -533,6 +547,10 @@ final class WebController
             [
                 "q" => $query,
                 "results" => $results,
+                "active_genres" => $genres,
+                "active_tags" => $tags,
+                "active_status" => $status,
+                "active_sort" => $sort
             ],
             [],
             "Search - " . $siteName,

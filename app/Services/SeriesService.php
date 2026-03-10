@@ -323,20 +323,17 @@ final class SeriesService
     }
 
     /**
-     * Performs a text-based search across content titles and descriptions.
+     * Performs a text-based search with advanced filters across content.
      *
      * @param string $query Search term.
      * @param int $page
      * @param int $perPage
+     * @param array $filters Advanced filters.
      * @return array
      */
-    public function search(string $query, int $page, int $perPage): array
+    public function search(string $query, int $page, int $perPage, array $filters = []): array
     {
-        if ($query === '') {
-            return [];
-        }
-
-        $items = $this->series->search($query, $page, $perPage);
+        $items = $this->series->search($query, $page, $perPage, $filters);
         $mapped = array_map(static fn (array $row) => ContentDto::fromArray($row)->toArray(), $items);
 
         return array_map(fn (array $row) => $this->appendTypePathFields($row), $mapped);

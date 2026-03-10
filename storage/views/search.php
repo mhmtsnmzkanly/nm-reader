@@ -3,10 +3,18 @@
 /** @var array $results */
 /** @var array $footerGenres */
 /** @var array $footerTags */
+/** @var array $active_genres */
+/** @var array $active_tags */
+/** @var string $active_status */
+/** @var string $active_sort */
 /** @var Closure $url */
 
 $query = (string) ($q ?? '');
 $items = is_array($results ?? null) ? $results : [];
+$activeGenres = is_array($active_genres ?? null) ? $active_genres : [];
+$activeTags = is_array($active_tags ?? null) ? $active_tags : [];
+$activeStatus = (string) ($active_status ?? 'TÜMÜ');
+$activeSort = (string) ($active_sort ?? 'EN YENİLER');
 ?>
 
 <style>
@@ -26,24 +34,28 @@ $items = is_array($results ?? null) ? $results : [];
         </p>
     </div>
 
-    <div class="flex flex-col lg:flex-row gap-10">
+    <form id="advancedSearchForm" action="<?= $url('search') ?>" method="GET" class="flex flex-col lg:flex-row gap-10">
+        <!-- Hidden Inputs for Filters -->
+        <input type="hidden" name="genres" id="genresInput" value="<?= htmlspecialchars(implode(',', $activeGenres)) ?>">
+        <input type="hidden" name="tags" id="tagsInput" value="<?= htmlspecialchars(implode(',', $activeTags)) ?>">
+
         <!-- Sidebar Filters -->
         <aside class="w-full lg:w-80 shrink-0 space-y-8">
-            <!-- Search Input Form -->
-            <form action="<?= $url('search') ?>" method="GET" class="relative">
+            <!-- Search Input -->
+            <div class="relative">
                 <input type="text" name="q" value="<?= htmlspecialchars($query) ?>" placeholder="Seri adı veya yazar..." class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-blue-500 transition-all text-white" />
-                <button type="submit" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
                     <i data-lucide="search" class="w-5 h-5"></i>
-                </button>
-            </form>
+                </div>
+            </div>
 
             <!-- Genres -->
             <div>
                 <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4">TÜRLER (GENRE)</h3>
                 <div class="flex flex-wrap gap-2">
-                    <span class="tag-pill active px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase">HEPSİ</span>
+                    <span class="tag-pill-genre <?= empty($activeGenres) ? 'active' : '' ?> px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tag-pill" data-slug="">HEPSİ</span>
                     <?php foreach ($footerGenres as $genre): ?>
-                    <span class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 hover:text-white transition-all">
+                    <span class="tag-pill-genre <?= in_array($genre['slug'], $activeGenres) ? 'active' : '' ?> px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 hover:text-white transition-all tag-pill" data-slug="<?= htmlspecialchars((string)$genre['slug']) ?>">
                         <?= htmlspecialchars((string)$genre['name']) ?>
                     </span>
                     <?php endforeach; ?>
@@ -55,14 +67,34 @@ $items = is_array($results ?? null) ? $results : [];
                 <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4">POPÜLER ETİKETLER</h3>
                 <div class="flex flex-wrap gap-2">
                     <?php foreach ($footerTags as $tag): ?>
-                    <span class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 italic hover:text-white transition-all">
+                    <span class="tag-pill-tag <?= in_array($tag['slug'], $activeTags) ? 'active' : '' ?> px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 italic hover:text-white transition-all tag-pill" data-slug="<?= htmlspecialchars((string)$tag['slug']) ?>">
                         #<?= htmlspecialchars((string)$tag['name']) ?>
                     </span>
                     <?php endforeach; ?>
                 </div>
             </div>
 
-            <button class="w-full py-4 bg-blue-600 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all text-white">
+            <!-- Status & Sort -->
+            <div class="space-y-4 pt-4 border-t border-white/5">
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">DURUM</label>
+                    <select name="status" class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none text-white appearance-none">
+                        <option value="TÜMÜ" <?= $activeStatus === 'TÜMÜ' ? 'selected' : '' ?>>TÜMÜ</option>
+                        <option value="ONGOING" <?= $activeStatus === 'ONGOING' ? 'selected' : '' ?>>DEVAM EDİYOR</option>
+                        <option value="COMPLETED" <?= $activeStatus === 'COMPLETED' ? 'selected' : '' ?>>TAMAMLANDI</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">SIRALAMA</label>
+                    <select name="sort" class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none text-white appearance-none">
+                        <option value="EN YENİLER" <?= $activeSort === 'EN YENİLER' ? 'selected' : '' ?>>EN YENİLER</option>
+                        <option value="EN ÇOK OKUNAN" <?= $activeSort === 'EN ÇOK OKUNAN' ? 'selected' : '' ?>>EN ÇOK OKUNANLAR</option>
+                        <option value="EN YÜKSEK PUAN" <?= $activeSort === 'EN YÜKSEK PUAN' ? 'selected' : '' ?>>EN YÜKSEK PUAN</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full py-4 bg-blue-600 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all text-white">
                 FİLTRELERİ UYGULA
             </button>
         </aside>
@@ -74,10 +106,10 @@ $items = is_array($results ?? null) ? $results : [];
                     TOPLAM <span class="text-white"><?= count($items) ?></span> SONUÇ BULUNDU
                 </p>
                 <div class="flex gap-2">
-                    <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-blue-500">
+                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-blue-500">
                         <i data-lucide="layout-grid" class="w-4 h-4"></i>
                     </button>
-                    <button class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500">
+                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500">
                         <i data-lucide="list" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -118,26 +150,50 @@ $items = is_array($results ?? null) ? $results : [];
                 <?php endif; ?>
             </div>
         </div>
-    </div>
+    </form>
 </main>
 
 <script>
     $(document).ready(function () {
         lucide.createIcons();
 
-        // Tag selection toggle logic
-        $(".tag-pill").click(function () {
-            if ($(this).text().trim() === "HEPSİ") {
-                $(".tag-pill").removeClass("active bg-blue-600").addClass("bg-white/5 text-gray-400");
+        function updateInputs() {
+            const genres = [];
+            $(".tag-pill-genre.active").each(function() {
+                const slug = $(this).data("slug");
+                if (slug) genres.push(slug);
+            });
+            $("#genresInput").val(genres.join(','));
+
+            const tags = [];
+            $(".tag-pill-tag.active").each(function() {
+                const slug = $(this).data("slug");
+                if (slug) tags.push(slug);
+            });
+            $("#tagsInput").val(tags.join(','));
+        }
+
+        // Genre selection
+        $(".tag-pill-genre").click(function () {
+            const slug = $(this).data("slug");
+            if (slug === "") {
+                $(".tag-pill-genre").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
                 $(this).addClass("active").removeClass("bg-white/5 text-gray-400");
             } else {
-                $('.tag-pill:contains("HEPSİ")').removeClass("active").addClass("bg-white/5 text-gray-400");
+                $(".tag-pill-genre[data-slug='']").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
                 $(this).toggleClass("active bg-white/5 text-gray-400");
 
-                if ($(".tag-pill.active").length === 0) {
-                    $('.tag-pill:contains("HEPSİ")').addClass("active").removeClass("bg-white/5 text-gray-400");
+                if ($(".tag-pill-genre.active").length === 0) {
+                    $(".tag-pill-genre[data-slug='']").addClass("active").removeClass("bg-white/5 text-gray-400");
                 }
             }
+            updateInputs();
+        });
+
+        // Tag selection
+        $(".tag-pill-tag").click(function () {
+            $(this).toggleClass("active bg-white/5 text-gray-400");
+            updateInputs();
         });
     });
 </script>
