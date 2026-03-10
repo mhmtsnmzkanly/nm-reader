@@ -8,7 +8,9 @@ $adjacent = is_array($chapterData['adjacent_chapters'] ?? null) ? $chapterData['
 $chapterType = (string) ($chapterData['series_type'] ?? '');
 $chapterSlug = (string) ($chapterData['series_slug'] ?? '');
 $pages = is_array($chapterData['pages'] ?? null) ? $chapterData['pages'] : [];
-$isText = ($chapterData['type'] ?? '') === 'text';
+
+// Check if it's text-based (Novel)
+$isText = (isset($chapterData['type']) && $chapterData['type'] === 'text');
 
 $contentPageUrl = $url($chapterType . '/' . $chapterSlug);
 $prevUrl = (!empty($adjacent['prev']) && is_string($adjacent['prev'])) ? $url($chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode($adjacent['prev'])) : null;
@@ -24,7 +26,7 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
     .glass-nav { background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
 </style>
 
-<!-- TOP NAVIGATION OVERRIDE (Hidden by CSS, logic in layout might need tweak but for now we put it inside main) -->
+<!-- TOP NAVIGATION -->
 <div class="fixed top-0 left-0 w-full z-[60] h-16 glass-nav flex items-center px-6 justify-between">
     <div class="flex items-center gap-4">
         <a href="<?= $contentPageUrl ?>" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 transition-all text-white">
@@ -58,17 +60,22 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
                 <?= nl2br(htmlspecialchars((string) ($chapterData['body'] ?? ''))) ?>
             </article>
         </section>
-    <?php else: ?>
+    <?php elseif (!empty($pages)): ?>
         <!-- MANGA MODE VIEW -->
         <section class="manga-vertical flex flex-col items-center">
             <?php foreach ($pages as $page): ?>
-                <?php $src = is_array($page) ? ($page['image_path'] ?? '') : (string)$page; ?>
+                <?php 
+                    $src = is_array($page) ? ($page['image_path'] ?? '') : (string)$page; 
+                    if (empty($src)) continue;
+                ?>
                 <img src="<?= htmlspecialchars((string) $src) ?>" alt="Page" class="max-w-4xl border-b border-black loading-lazy" />
             <?php endforeach; ?>
             <div class="py-12 text-center text-gray-600 text-[10px] font-black tracking-widest uppercase">
                 Bölüm Sonu - Okuduğunuz İçin Teşekkürler
             </div>
         </section>
+    <?php else: ?>
+        <div class="py-20 text-center text-gray-500 italic">Bölüm içeriği yüklenemedi.</div>
     <?php endif; ?>
 </main>
 

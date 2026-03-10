@@ -14,6 +14,8 @@
 /** @var array $siteConfig */
 /** @var array $footerGenres */
 /** @var array $footerTags */
+/** @var array $footerPopular */
+/** @var array $footerLatestChapters */
 /** @var string $contextJson */
 /** @var Closure $url */
 
@@ -163,6 +165,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
         .tag-red { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
         .tag-green { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
         .tag-orange { background: rgba(249, 115, 22, 0.1); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.2); }
+        .type-dot { width: 8px; height: 8px; border-radius: 50%; }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -282,55 +285,43 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                         <i data-lucide="trending-up" class="w-4 h-4 text-orange-500"></i>
                         Popüler İçerikler
                     </h3>
-                    <div class="space-y-3">
-                        <?php foreach (array_slice($footerPopular ?? [], 0, 3) as $pop): ?>
-                        <a href="<?= $url((string)($pop['url_path'] ?? '')) ?>" class="footer-item-link group">
-                            <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/5 overflow-hidden shrink-0">
-                                <img src="<?= htmlspecialchars((string)($pop['cover_image'] ?? '')) ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-black text-white uppercase italic group-hover:text-blue-500 transition-colors leading-tight">
-                                    <?= htmlspecialchars((string)($pop['title'] ?? '')) ?>
-                                </p>
-                                <p class="text-[8px] font-bold text-gray-600 uppercase">
-                                    <?= number_format((float)($pop['rating_avg'] ?? 0), 1) ?> Puan • <?= htmlspecialchars((string)($pop['type_path'] ?? $pop['type'] ?? '')) ?>
-                                </p>
-                            </div>
-                        </a>
+                    <nav class="space-y-3">
+                        <?php foreach (array_slice($footerPopular ?? [], 0, 5) as $pop): ?>
+                            <a href="<?= $url((string)($pop['url_path'] ?? '')) ?>" class="footer-link flex items-center gap-2">
+                                <span class="text-[10px] bg-blue-600/10 text-blue-500 px-1.5 py-0.5 rounded uppercase font-black italic"><?= htmlspecialchars((string)($pop['type_path'] ?? $pop['type'] ?? '')) ?></span>
+                                <span class="truncate"><?= htmlspecialchars((string)$pop['title']) ?></span>
+                            </a>
                         <?php endforeach; ?>
-                    </div>
+                    </nav>
                 </div>
 
-                <!-- Latest Chapters -->
+                <!-- New Chapters -->
                 <div>
                     <h3 class="footer-column-title">
                         <i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i>
                         Son Bölümler
                     </h3>
-                    <div class="space-y-4">
+                    <nav class="space-y-4">
                         <?php 
                         $typeColors = [
                             'manga' => 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]',
                             'novel' => 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]',
-                            'web-novel' => 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]',
-                            'light-novel' => 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]',
                             'webtoon' => 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
                         ];
-                        foreach (array_slice($footerLatestChapters ?? [], 0, 3) as $lat): 
-                            $rawType = strtolower((string)($lat['series_type'] ?? ''));
-                            $dotColor = $typeColors[$rawType] ?? 'bg-gray-500';
+                        foreach (array_slice($footerLatestChapters ?? [], 0, 4) as $lat): 
+                            $dotColor = $typeColors[strtolower((string)($lat['series_type'] ?? ''))] ?? 'bg-gray-500';
                         ?>
-                        <a href="<?= $url((string)($lat['series_type'] ?? 'novel') . '/' . (string)($lat['series_slug'] ?? '') . '/chapter/' . rawurlencode((string)($lat['chapter_number'] ?? ''))) ?>" class="flex flex-col gap-1 group">
-                            <div class="flex items-center gap-2">
-                                <span class="type-dot <?= $dotColor ?>"></span>
-                                <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest"><?= htmlspecialchars((string)($lat['series_type'] ?? '')) ?></span>
-                            </div>
-                            <p class="text-[11px] font-black text-white uppercase italic group-hover:text-blue-500 transition-colors leading-tight">
-                                <?= htmlspecialchars((string)($lat['series_title'] ?? '')) ?> - Bölüm <?= htmlspecialchars((string)($lat['chapter_number'] ?? '')) ?>
-                            </p>
-                        </a>
+                            <a href="<?= $url((string)($lat['series_type'] ?? 'novel') . '/' . (string)($lat['series_slug'] ?? '') . '/chapter/' . rawurlencode((string)($lat['chapter_number'] ?? ''))) ?>" class="footer-link group flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="type-dot <?= $dotColor ?>"></span>
+                                    <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest"><?= htmlspecialchars((string)($lat['series_type'] ?? '')) ?></span>
+                                </div>
+                                <p class="text-[11px] font-black text-white uppercase italic group-hover:text-blue-500 transition-colors leading-tight">
+                                    <?= htmlspecialchars((string)($lat['series_title'] ?? '')) ?> - Bölüm <?= htmlspecialchars((string)($lat['chapter_number'] ?? '')) ?>
+                                </p>
+                            </a>
                         <?php endforeach; ?>
-                    </div>
+                    </nav>
                 </div>
             </div>
 
