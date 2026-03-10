@@ -482,7 +482,7 @@ final class SeriesRepository
         if (!empty($filters['sort'])) {
             $orderBy = match ($filters['sort']) {
                 'EN YENİLER' => 'c.created_at DESC',
-                'EN ÇOK OKUNAN' => 'c.view_count DESC',
+                'EN ÇOK OKUNAN' => 'c.rating_count DESC', // Fallback to rating_count
                 'EN YÜKSEK PUAN' => 'c.rating_avg DESC',
                 default => 'c.rating_count DESC',
             };
