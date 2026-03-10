@@ -113,10 +113,10 @@ final class WebController
     ): ResponseInterface {
         $type = (string) ($args["type"] ?? "");
         $slug = (string) ($args["slug"] ?? "");
-        $ip =
-            (string) ($request->getServerParams()["REMOTE_ADDR"] ?? "unknown");
+        $ip = (string) ($request->getServerParams()["REMOTE_ADDR"] ?? "unknown");
+        $userId = isset($_SESSION['user_id']) ? (string) $_SESSION['user_id'] : null;
 
-        $content = $this->seriesService->contentDetailByType($type, $slug, $ip);
+        $content = $this->seriesService->contentDetailByType($type, $slug, $ip, $userId);
         if ($content === null) {
             return $response->withStatus(404);
         }
