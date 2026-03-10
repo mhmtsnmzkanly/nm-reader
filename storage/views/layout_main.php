@@ -61,6 +61,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/assets/css/main.css">
 
     <?php if (!empty($siteConfig['integrations']['google_analytics_id'])): ?>
         <!-- Google Analytics (GA4) -->
@@ -77,96 +78,6 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
         <!-- Cloudflare Turnstile -->
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <?php endif; ?>
-
-    <style>
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");
-        body { font-family: "Inter", sans-serif; background-color: #080808; color: #e3e2e6; display: flex; flex-direction: column; min-height: 100vh; }
-        .glass { background: rgba(10, 10, 10, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .modal-overlay { 
-            display: none; 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0, 0, 0, 0.85); 
-            backdrop-filter: blur(8px); 
-            z-index: 200; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 1rem;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal.card {
-            background: #121212;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 2rem;
-            width: 100%;
-            max-width: 400px;
-            padding: 2rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: modalShow 0.3s ease-out forwards;
-        }
-        @keyframes modalShow { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        
-        /* Feedback Toast */
-        #feedback-toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 300;
-            display: none;
-            padding: 1rem 2rem;
-            border-radius: 1rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        #feedback-toast.success { background: #10b981; color: white; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3); }
-        #feedback-toast.error { background: #ef4444; color: white; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3); }
-
-        .form-group { margin-bottom: 1rem; }
-        .form-label { display: block; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; color: #3b82f6; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
-        .form-item { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 0.75rem 1rem; color: white; outline: none; transition: all 0.2s; }
-        .form-item:focus { border-color: #3b82f6; background: rgba(255, 255, 255, 0.08); }
-        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; transition: all 0.2s; cursor: pointer; border: none; }
-        .btn-primary { background: #3b82f6; color: white; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3); }
-        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
-        .btn-outline { background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; }
-        .btn-outline:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-        .modal-header h3 { font-weight: 900; text-transform: uppercase; color: white; font-size: 1.25rem; margin: 0; }
-        .modal-close { background: none; border: none; color: #64748b; font-size: 1.5rem; cursor: pointer; transition: color 0.2s; }
-        .modal-close:hover { color: white; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-
-        .user-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 12px; transition: all 0.2s; color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-        .user-menu-item:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-        .user-menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-
-        /* Profile Edit Modal Specifics */
-        .edit-input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 12px 16px; color: white; font-size: 13px; outline: none; transition: all 0.2s; }
-        .edit-input:focus { border-color: #3b82f6; background: rgba(255, 255, 255, 0.08); }
-        .edit-input-locked { background: rgba(255, 255, 255, 0.02); border-color: transparent; color: #64748b; cursor: not-allowed; }
-        .edit-label { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #4b5563; margin-bottom: 6px; display: block; }
-
-        /* Footer New Styles */
-        .footer-column-title { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #ffffff; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
-        .footer-link { font-size: 13px; color: #94a3b8; transition: all 0.2s; display: block; margin-bottom: 0.75rem; font-weight: 500; }
-        .footer-link:hover { color: #3b82f6; transform: translateX(5px); }
-        
-        .tag-cloud { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 20px 0; }
-        .footer-tag { padding: 0.5rem 1rem; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); color: #94a3b8; }
-        .footer-tag:hover { transform: translateY(-3px); filter: brightness(1.3); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); background: #3b82f6; color: white; border-color: #3b82f6; }
-        
-        /* Tag Cloud Colors */
-        .tag-blue { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
-        .tag-purple { background: rgba(168, 85, 247, 0.1); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.2); }
-        .tag-red { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-        .tag-green { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
-        .tag-orange { background: rgba(249, 115, 22, 0.1); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.2); }
-        .type-dot { width: 8px; height: 8px; border-radius: 50%; }
-    </style>
 </head>
 <body class="overflow-x-hidden">
     <!-- HEADER -->
@@ -288,7 +199,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     <nav class="space-y-3">
                         <?php foreach (array_slice($footerPopular ?? [], 0, 5) as $pop): ?>
                             <a href="<?= $url((string)($pop['url_path'] ?? '')) ?>" class="footer-link flex items-center gap-2">
-                                <span class="text-[10px] bg-blue-600/10 text-blue-500 px-1.5 py-0.5 rounded uppercase font-black"><?= htmlspecialchars((string)($pop['type_path'] ?? $pop['type'] ?? '')) ?></span>
+                                <span class="text-[10px] bg-blue-600/10 text-blue-500 px-1.5 py-0.5 rounded uppercase font-black italic"><?= htmlspecialchars((string)($pop['type_path'] ?? $pop['type'] ?? '')) ?></span>
                                 <span class="truncate"><?= htmlspecialchars((string)$pop['title']) ?></span>
                             </a>
                         <?php endforeach; ?>
@@ -364,155 +275,6 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
 
     <!-- CORE JS -->
     <script src="/assets/js/app-bundle.js"></script>
-
-    <script>
-        // GLOBAL MODAL LOGIC
-        window.openModal = function(id) {
-            $(".modal-overlay").removeClass("active");
-            $("#" + id).addClass("active");
-            $("body").addClass("overflow-hidden");
-        };
-
-        window.closeModal = function() {
-            $(".modal-overlay").removeClass("active");
-            $("body").removeClass("overflow-hidden");
-        };
-
-        window.showFeedback = function(message, type = 'success') {
-            const $toast = $("#feedback-toast");
-            $toast.stop(true, true).removeClass('success error').addClass(type).text(message).fadeIn(300);
-            setTimeout(() => $toast.fadeOut(300), 4000);
-        };
-
-        window.logout = function() {
-            window.NMRData.post('/auth/logout', {})
-                .then(() => {
-                    showFeedback('Başarıyla çıkış yapıldı.');
-                    setTimeout(() => location.href = '/', 1000);
-                })
-                .catch(err => {
-                    // Fallback if API call fails
-                    location.href = '<?= $url("/logout") ?>';
-                });
-        };
-
-        $(document).ready(function () {
-            lucide.createIcons();
-            
-            // Handle Login Form
-            $("#loginForm").on("submit", function(e) {
-                e.preventDefault();
-                const $btn = $(this).find('button[type="submit"]');
-                const originalText = $btn.text();
-                $btn.prop('disabled', true).text('...');
-
-                const formData = {
-                    email: $(this).find('input[name="email"]').val(),
-                    password: $(this).find('input[name="password"]').val(),
-                    remember: $(this).find('input[name="remember"]').is(':checked'),
-                    'turnstile_token': $(this).find('[name="cf-turnstile-response"]').val()
-                };
-
-                window.NMRData.post('/auth/login', formData)
-                    .then(res => {
-                        showFeedback('Giriş başarılı! Yönlendiriliyorsunuz...');
-                        setTimeout(() => location.reload(), 1000);
-                    })
-                    .catch(err => {
-                        showFeedback(err.message || 'Giriş yapılamadı.', 'error');
-                        $btn.prop('disabled', false).text(originalText);
-                        if (typeof turnstile !== 'undefined') turnstile.reset();
-                    });
-            });
-
-            // Handle Register Form
-            $("#registerForm").on("submit", function(e) {
-                e.preventDefault();
-                const $btn = $(this).find('button[type="submit"]');
-                const originalText = $btn.text();
-                $btn.prop('disabled', true).text('...');
-
-                const formData = {
-                    username: $(this).find('input[name="username"]').val(),
-                    email: $(this).find('input[name="email"]').val(),
-                    password: $(this).find('input[name="password"]').val(),
-                    'turnstile_token': $(this).find('[name="cf-turnstile-response"]').val()
-                };
-
-                window.NMRData.post('/auth/register', formData)
-                    .then(res => {
-                        showFeedback('Kayıt başarılı! Giriş yapabilirsiniz.');
-                        setTimeout(() => openModal('loginModal'), 1500);
-                    })
-                    .catch(err => {
-                        showFeedback(err.message || 'Kayıt olunamadı.', 'error');
-                        $btn.prop('disabled', false).text(originalText);
-                        if (typeof turnstile !== 'undefined') turnstile.reset();
-                    });
-            });
-
-            // Handle Profile Edit Form
-            $("#userSettingsForm").on("submit", function(e) {
-                e.preventDefault();
-                const $btn = $(this).find('button[type="submit"]');
-                const originalText = $btn.text();
-                $btn.prop('disabled', true).text('...');
-
-                const formData = new FormData(this);
-
-                $.ajax({
-                    url: '/api/v1/user/profile',
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-CSRF-Token': window.__NMR_CONTEXT.auth.csrf_token
-                    },
-                    success: function(res) {
-                        showFeedback('Profil başarıyla güncellendi.');
-                        setTimeout(() => location.reload(), 1000);
-                    },
-                    error: function(xhr) {
-                        const err = xhr.responseJSON || {};
-                        showFeedback(err.message || 'Güncelleme başarısız.', 'error');
-                        $btn.prop('disabled', false).text(originalText);
-                    }
-                });
-            });
-
-            // Close modal on overlay click
-            $(".modal-overlay").on("click", function (e) {
-                if (e.target === this) closeModal();
-            });
-
-            // Mobile Menu Toggle
-            $("#menu-toggle").click(function () {
-                $("#mobile-menu").fadeToggle(200);
-                $("#user-modal").fadeOut(100);
-            });
-
-            // User Modal Toggle
-            $("#user-btn").click(function (e) {
-                e.stopPropagation();
-                $("#user-modal").fadeToggle(150);
-                $("#mobile-menu").fadeOut(100);
-            });
-
-            // Close modals on click outside
-            $(document).click(function () {
-                $("#user-modal").fadeOut(150);
-            });
-
-            $("#user-modal").click(function (e) {
-                e.stopPropagation();
-            });
-
-            // Auth system integration
-            $("#openAuthBtn").on("click", function () {
-                openModal('loginModal');
-            });
-        });
-    </script>
+    <script src="/assets/js/main.js"></script>
 </body>
 </html>
