@@ -103,6 +103,26 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
             animation: modalShow 0.3s ease-out forwards;
         }
         @keyframes modalShow { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        /* Feedback Toast */
+        #feedback-toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 300;
+            display: none;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        #feedback-toast.success { background: #10b981; color: white; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3); }
+        #feedback-toast.error { background: #ef4444; color: white; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3); }
+
         .form-group { margin-bottom: 1rem; }
         .form-label { display: block; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; color: #3b82f6; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
         .form-item { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 0.75rem 1rem; color: white; outline: none; transition: all 0.2s; }
@@ -309,6 +329,9 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <!-- MODALS -->
     <?php include dirname(__DIR__) . '/views/partials_modals.php'; ?>
 
+    <!-- Feedback Toast Element -->
+    <div id="feedback-toast"></div>
+
     <!-- CORE JS -->
     <script src="/assets/js/app-bundle.js"></script>
 
@@ -325,9 +348,67 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
             $("body").removeClass("overflow-hidden");
         };
 
+        window.showFeedback = function(message, type = 'success') {
+            const $toast = $("#feedback-toast");
+            $toast.stop(true, true).removeClass('success error').addClass(type).text(message).fadeIn(300);
+            setTimeout(() => $toast.fadeOut(300), 4000);
+        };
+
         $(document).ready(function () {
             lucide.createIcons();
             
+            // Handle Login Form
+            $("#loginForm").on("submit", function(e) {
+                e.preventDefault();
+                const $btn = $(this).find('button[type="submit"]');
+                const originalText = $btn.text();
+                $btn.prop('disabled', true).text('...');
+
+                const formData = {
+                    email: $(this).find('input[name="email"]').val(),
+                    password: $(this).find('input[name="password"]').val(),
+                    remember: $(this).find('input[name="remember"]').is(':checked'),
+                    'cf-turnstile-response': $(this).find('[name="cf-turnstile-response"]').val()
+                };
+
+                window.NMRData.post('/auth/login', formData)
+                    .then(res => {
+                        showFeedback('Giriş başarılı! Yönlendiriliyorsunuz...');
+                        setTimeout(() => location.reload(), 1000);
+                    })
+                    .catch(err => {
+                        showFeedback(err.message || 'Giriş yapılamadı.', 'error');
+                        $btn.prop('disabled', false).text(originalText);
+                        if (typeof turnstile !== 'undefined') turnstile.reset();
+                    });
+            });
+
+            // Handle Register Form
+            $("#registerForm").on("submit", function(e) {
+                e.preventDefault();
+                const $btn = $(this).find('button[type="submit"]');
+                const originalText = $btn.text();
+                $btn.prop('disabled', true).text('...');
+
+                const formData = {
+                    username: $(this).find('input[name="username"]').val(),
+                    email: $(this).find('input[name="email"]').val(),
+                    password: $(this).find('input[name="password"]').val(),
+                    'cf-turnstile-response': $(this).find('[name="cf-turnstile-response"]').val()
+                };
+
+                window.NMRData.post('/auth/register', formData)
+                    .then(res => {
+                        showFeedback('Kayıt başarılı! Giriş yapabilirsiniz.');
+                        setTimeout(() => openModal('loginModal'), 1500);
+                    })
+                    .catch(err => {
+                        showFeedback(err.message || 'Kayıt olunamadı.', 'error');
+                        $btn.prop('disabled', false).text(originalText);
+                        if (typeof turnstile !== 'undefined') turnstile.reset();
+                    });
+            });
+
             // Close modal on overlay click
             $(".modal-overlay").on("click", function (e) {
                 if (e.target === this) closeModal();
