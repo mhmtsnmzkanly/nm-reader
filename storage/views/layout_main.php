@@ -12,6 +12,8 @@
 /** @var string $jsonLd */
 /** @var string $content */
 /** @var array $siteConfig */
+/** @var array $footerGenres */
+/** @var array $footerTags */
 /** @var Closure $url */
 
 $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
@@ -55,7 +57,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
 
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");
-        body { font-family: "Inter", sans-serif; background-color: #080808; color: #e3e2e6; }
+        body { font-family: "Inter", sans-serif; background-color: #080808; color: #e3e2e6; display: flex; flex-direction: column; min-height: 100vh; }
         .glass { background: rgba(10, 10, 10, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -69,6 +71,15 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
         .user-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 12px; transition: all 0.2s; color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
         .user-menu-item:hover { background: rgba(255, 255, 255, 0.05); color: white; }
         .user-menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        /* Footer Specific Styles */
+        .footer-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: #ffffff; margin-bottom: 1.5rem; display: block; }
+        .footer-item-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; transition: all 0.2s; }
+        .footer-item-link:hover { transform: translateX(4px); }
+        .type-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 20px 0; }
+        .footer-tag { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 0.5rem 1rem; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .footer-tag:hover { background: #3b82f6; color: white; border-color: #3b82f6; transform: translateY(-3px) scale(1.05); box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4); }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -162,22 +173,83 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     </div>
 
     <!-- MAIN CONTENT AREA -->
-    <main id="content" class="min-h-screen pt-20">
+    <main id="content" class="min-h-screen pt-20 flex-grow">
         <?= $content ?? '' ?>
     </main>
 
     <!-- FOOTER -->
-    <footer class="py-20 border-t border-white/5 px-6 text-center bg-[#050505]">
-        <div class="font-black italic text-white/20 uppercase tracking-[0.5em] text-sm mb-4">
-            <?= htmlspecialchars(strtoupper($siteConfig['site_name'] ?? 'MANGA.APP'), ENT_QUOTES, 'UTF-8') ?> EXPERIENCE
-        </div>
-        <p class="text-gray-600 text-[10px] font-bold uppercase tracking-widest">
-            © <?= date('Y') ?> Tüm Hakları Saklıdır.
-        </p>
-        <div class="flex justify-center gap-6 mt-8">
-            <a href="#" class="text-gray-500 hover:text-blue-500 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
-            <a href="#" class="text-gray-500 hover:text-blue-500 transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
-            <a href="#" class="text-gray-500 hover:text-blue-500 transition-colors"><i data-lucide="github" class="w-5 h-5"></i></a>
+    <footer class="pt-20 pb-10 bg-[#0a0a0a] border-t border-white/5 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <!-- Brand Info -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center font-black italic text-white text-xs">
+                            <?= strtoupper(substr($siteConfig['site_name'] ?? 'M', 0, 1)) ?>
+                        </div>
+                        <span class="font-black tracking-tighter text-lg uppercase italic text-white">
+                            <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP'), ENT_QUOTES, 'UTF-8') ?>
+                        </span>
+                    </div>
+                    <p class="text-gray-500 text-sm leading-relaxed italic">
+                        <?= htmlspecialchars((string) ($siteConfig['site_description'] ?? 'Hayal dünyasına açılan kapı. En kaliteli içerikler her an cebinde.'), ENT_QUOTES, 'UTF-8') ?>
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="github" class="w-5 h-5"></i></a>
+                    </div>
+                </div>
+
+                <!-- Hızlı Menü -->
+                <div>
+                    <span class="footer-title">Hızlı Menü</span>
+                    <div class="flex flex-col space-y-2">
+                        <a href="<?= $url('/') ?>" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Anasayfa</a>
+                        <a href="<?= $url('/search') ?>" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Keşfet</a>
+                        <a href="<?= $url('/profile') ?>" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Kütüphane</a>
+                        <a href="<?= $url('/blogs') ?>" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Blog</a>
+                    </div>
+                </div>
+
+                <!-- Popüler Türler (Dynamic) -->
+                <div>
+                    <span class="footer-title">Popüler Türler</span>
+                    <div class="space-y-3">
+                        <?php foreach (array_slice($footerGenres ?? [], 0, 5) as $genre): ?>
+                        <a href="<?= $url('genre/' . (string)$genre['slug']) ?>" class="footer-item-link group">
+                            <div class="w-2 h-2 rounded-full bg-blue-600 group-hover:scale-125 transition-transform"></div>
+                            <span class="text-[10px] font-black text-gray-400 uppercase italic group-hover:text-blue-500 transition-colors"><?= htmlspecialchars((string)$genre['name']) ?></span>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <!-- Uygulama -->
+                <div>
+                    <span class="footer-title">Deneyim</span>
+                    <div class="space-y-4">
+                        <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
+                            © <?= date('Y') ?> <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?>
+                        </p>
+                        <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest leading-relaxed">
+                            Tüm Hakları Saklıdır. İçerikler yayıncılarına aittir.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-white/5 mb-12" />
+
+            <!-- Tags Cloud Section -->
+            <div class="text-center">
+                <span class="footer-title">Etiket Bulutu</span>
+                <div class="tag-cloud">
+                    <?php foreach ($footerTags ?? [] as $tag): ?>
+                    <a href="<?= $url('tag/' . (string)$tag['slug']) ?>" class="footer-tag">#<?= htmlspecialchars((string)$tag['name']) ?></a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
         </div>
     </footer>
 
