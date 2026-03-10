@@ -216,8 +216,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                             </a>
                             <?php endif; ?>
                             <div class="h-px bg-white/5 my-2"></div>
-                            <form action="<?= $url('/logout') ?>" method="POST" id="logout-form" class="hidden"></form>
-                            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="user-menu-item danger">
+                            <a href="#" onclick="logout(); return false;" class="user-menu-item danger">
                                 <i data-lucide="log-out" class="w-4 h-4"></i> Çıkış Yap
                             </a>
                         </div>
@@ -352,6 +351,18 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
             const $toast = $("#feedback-toast");
             $toast.stop(true, true).removeClass('success error').addClass(type).text(message).fadeIn(300);
             setTimeout(() => $toast.fadeOut(300), 4000);
+        };
+
+        window.logout = function() {
+            window.NMRData.post('/auth/logout', {})
+                .then(() => {
+                    showFeedback('Başarıyla çıkış yapıldı.');
+                    setTimeout(() => location.href = '/', 1000);
+                })
+                .catch(err => {
+                    // Fallback if API call fails
+                    location.href = '<?= $url("/logout") ?>';
+                });
         };
 
         $(document).ready(function () {
