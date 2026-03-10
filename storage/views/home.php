@@ -32,13 +32,13 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                     <i data-lucide="flame" class="text-orange-500 w-5 h-5 fill-current"></i>
                     <span class="text-orange-500 text-[10px] font-black uppercase tracking-[0.3em]">Trend #<?= $idx + 1 ?></span>
                 </div>
-                <h1 class="text-5xl sm:text-7xl font-black italic uppercase tracking-tighter text-white mb-6 truncate max-w-full">
+                <h1 class="text-5xl sm:text-7xl font-black uppercase tracking-tighter text-white mb-6 truncate max-w-full">
                     <?= htmlspecialchars((string)($item['title'] ?? '')) ?>
                 </h1>
-                <p class="text-gray-300 max-w-lg text-sm sm:text-base italic mb-10 line-clamp-2">
+                <p class="text-gray-300 max-w-lg text-sm sm:text-base mb-10 line-clamp-2">
                     <?= htmlspecialchars((string)($item['description'] ?? '')) ?>
                 </p>
-                <a href="<?= $url((string)($item['url_path'] ?? '')) ?>" class="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase italic text-xs w-fit shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
+                <a href="<?= $url((string)($item['url_path'] ?? '')) ?>" class="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs w-fit shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
                     <i data-lucide="play" class="w-4 h-4 fill-current"></i> ŞİMDİ OKU
                 </a>
             </div>
@@ -60,7 +60,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
             <div class="p-2 bg-orange-600/20 rounded-xl">
                 <i data-lucide="zap" class="text-orange-600 w-5 h-5"></i>
             </div>
-            <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">Yeni Bölümler</h2>
+            <h2 class="text-2xl font-black uppercase tracking-tighter text-white">Yeni Bölümler</h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <?php foreach (array_slice($recentChapters, 0, 9) as $chapter): 
@@ -76,7 +76,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                     <img src="<?= htmlspecialchars((string)($chapter['cover_image'] ?? '')) ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                 </div>
                 <div class="overflow-hidden">
-                    <h4 class="text-sm font-black text-white/90 uppercase italic truncate"><?= htmlspecialchars((string)($chapter['series_title'] ?? '')) ?></h4>
+                    <h4 class="text-sm font-black text-white/90 uppercase truncate"><?= htmlspecialchars((string)($chapter['series_title'] ?? '')) ?></h4>
                     <p class="text-[10px] text-blue-500 font-black uppercase tracking-widest mt-1">Bölüm <?= htmlspecialchars((string)($chapter['chapter_number'] ?? '')) ?></p>
                 </div>
             </a>
@@ -91,7 +91,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                 <div class="p-2 bg-blue-600/20 rounded-xl">
                     <i data-lucide="compass" class="text-blue-600 w-5 h-5"></i>
                 </div>
-                <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">Son Eklenenler</h2>
+                <h2 class="text-2xl font-black uppercase tracking-tighter text-white">Son Eklenenler</h2>
             </div>
         </div>
 
@@ -111,7 +111,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                     </div>
                     <?php endif; ?>
                 </div>
-                <h3 class="font-black uppercase italic text-sm truncate text-white/90"><?= htmlspecialchars((string)($item['title'] ?? '')) ?></h3>
+                <h3 class="font-black uppercase text-sm truncate text-white/90"><?= htmlspecialchars((string)($item['title'] ?? '')) ?></h3>
                 <div class="flex items-center justify-between mt-1">
                     <p class="text-[10px] text-gray-500 font-bold uppercase"><?= htmlspecialchars((string)($item['type_path'] ?? $item['type'] ?? '')) ?></p>
                     <div class="flex items-center gap-1 text-[10px] text-yellow-500 font-black">
@@ -130,12 +130,12 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
             <div class="p-2 bg-purple-600/20 rounded-xl">
                 <i data-lucide="newspaper" class="text-purple-600 w-5 h-5"></i>
             </div>
-            <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">Popüler Bloglar</h2>
+            <h2 class="text-2xl font-black uppercase tracking-tighter text-white">Popüler Bloglar</h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <?php foreach ($popularBlogs as $blog): ?>
             <a href="<?= $url('blogs/' . (string) ($blog['slug'] ?? '')) ?>" class="glass p-6 rounded-[32px] flex flex-col gap-4 hover:border-purple-500/50 transition-all">
-                <h3 class="text-lg font-black text-white uppercase italic leading-tight"><?= htmlspecialchars((string)($blog['title'] ?? '')) ?></h3>
+                <h3 class="text-lg font-black text-white uppercase leading-tight"><?= htmlspecialchars((string)($blog['title'] ?? '')) ?></h3>
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-black">
                         <?= strtoupper(substr($blog['author_username'] ?? 'U', 0, 1)) ?>

@@ -28,7 +28,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 p-8 md:p-12 max-w-2xl">
                     <span class="px-4 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block">ÖNE ÇIKAN</span>
-                    <h2 onclick="location.href='<?= $url('blogs/' . (string)($featured['slug'] ?? '')) ?>'" class="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white mb-4 leading-none group-hover:text-blue-400 transition-colors cursor-pointer">
+                    <h2 onclick="location.href='<?= $url('blogs/' . (string)($featured['slug'] ?? '')) ?>'" class="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white mb-4 leading-none group-hover:text-blue-400 transition-colors cursor-pointer">
                         <?= htmlspecialchars((string)($featured['title'] ?? '')) ?>
                     </h2>
                     <p class="text-gray-300 text-sm md:text-base line-clamp-2 mb-6">
@@ -56,7 +56,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                         <div class="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[9px] font-black text-white uppercase">İNCELEME</div>
                     </div>
                     <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="text-xl font-black italic uppercase tracking-tighter text-white mb-3 line-clamp-2 leading-tight">
+                        <h3 class="text-xl font-black uppercase tracking-tighter text-white mb-3 line-clamp-2 leading-tight">
                             <?= htmlspecialchars((string)($blog['title'] ?? '')) ?>
                         </h3>
                         <p class="text-gray-500 text-sm line-clamp-3 mb-6 flex-1">
@@ -76,12 +76,12 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
 <?php else: ?>
     <!-- SINGLE BLOG POST VIEW -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap');
         .serif-text { font-family: 'Lora', serif; }
         .article-content p { margin-bottom: 1.5rem; font-size: 1.125rem; color: #b1b1b1; }
-        .article-content h2 { font-family: 'Inter', sans-serif; font-weight: 900; font-style: italic; text-transform: uppercase; font-size: 1.875rem; margin-top: 3rem; margin-bottom: 1.5rem; letter-spacing: -0.025em; color: #ffffff; }
+        .article-content h2 { font-family: 'Inter', sans-serif; font-weight: 900; text-transform: uppercase; font-size: 1.875rem; margin-top: 3rem; margin-bottom: 1.5rem; letter-spacing: -0.025em; color: #ffffff; }
         .progress-bar { height: 3px; background: #3b82f6; position: fixed; top: 0; left: 0; z-index: 100; transition: width 0.1s ease; }
-        blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5rem 0; font-style: italic; font-size: 1.25rem; color: #ffffff; }
+        blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5rem 0; font-size: 1.25rem; color: #ffffff; }
         .spoiler-box { position: relative; cursor: pointer; overflow: hidden; transition: all 0.3s ease; }
         .spoiler-content { filter: blur(8px); user-select: none; transition: all 0.5s ease; opacity: 0.3; }
         .spoiler-box.revealed .spoiler-content { filter: blur(0); user-select: auto; opacity: 1; }
@@ -101,7 +101,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                 </span>
             </div>
 
-            <h1 class="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-white mb-8 leading-tight">
+            <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white mb-8 leading-tight">
                 <?= htmlspecialchars((string) ($data['title'] ?? '')) ?>
             </h1>
 
@@ -139,8 +139,8 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                         <i data-lucide="info" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
-                        <h4 class="font-black italic text-blue-500 uppercase text-xs mb-2 tracking-widest">EDİTÖRÜN KRİTİK NOTU</h4>
-                        <p class="text-sm text-gray-200 leading-relaxed font-medium italic mb-0">Örnek editör notu...</p>
+                        <h4 class="font-black text-blue-500 uppercase text-xs mb-2 tracking-widest">EDİTÖRÜN KRİTİK NOTU</h4>
+                        <p class="text-sm text-gray-200 leading-relaxed font-medium mb-0">Örnek editör notu...</p>
                     </div>
                 </div>
             </div>
@@ -155,7 +155,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                         <p class="text-xs text-gray-500 font-bold uppercase">GÖRMEK İÇİN TIKLAYIN</p>
                     </div>
                 </div>
-                <div class="spoiler-content italic text-gray-300">
+                <div class="spoiler-content text-gray-300">
                     <p class="mb-0">Örnek spoiler içeriği...</p>
                 </div>
             </div>

@@ -26,7 +26,7 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
 <main class="pt-12 pb-20 px-6 max-w-7xl mx-auto">
     <!-- Search Header -->
     <div class="mb-12">
-        <h1 class="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white mb-4">
+        <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white mb-4">
             GELİŞMİŞ ARAMA
         </h1>
         <p class="text-gray-500 text-sm font-medium uppercase tracking-widest">
@@ -67,7 +67,7 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
                 <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4">POPÜLER ETİKETLER</h3>
                 <div class="flex flex-wrap gap-2">
                     <?php foreach ($footerTags as $tag): ?>
-                    <span class="tag-pill-tag <?= in_array($tag['slug'], $activeTags) ? 'active' : '' ?> px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 italic hover:text-white transition-all tag-pill" data-slug="<?= htmlspecialchars((string)$tag['slug']) ?>">
+                    <span class="tag-pill-tag <?= in_array($tag['slug'], $activeTags) ? 'active' : '' ?> px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 hover:text-white transition-all tag-pill" data-slug="<?= htmlspecialchars((string)$tag['slug']) ?>">
                         #<?= htmlspecialchars((string)$tag['name']) ?>
                     </span>
                     <?php endforeach; ?>
@@ -126,7 +126,7 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
                                 <p class="text-[10px] text-blue-400 font-black uppercase mb-1">
                                     <?= htmlspecialchars((string) ($item['type_path'] ?? $item['type'] ?? '')) ?>
                                 </p>
-                                <p class="text-xs text-white/70 line-clamp-2 italic">
+                                <p class="text-xs text-white/70 line-clamp-2">
                                     <?= htmlspecialchars((string) ($item['description'] ?? '')) ?>
                                 </p>
                             </div>
@@ -145,7 +145,7 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
                 <?php else: ?>
                     <div class="col-span-full py-20 text-center">
                         <i data-lucide="search-x" class="w-12 h-12 text-gray-600 mx-auto mb-4"></i>
-                        <p class="text-gray-500 italic">Aradığınız kriterlere uygun sonuç bulunamadı.</p>
+                        <p class="text-gray-500">Aradığınız kriterlere uygun sonuç bulunamadı.</p>
                     </div>
                 <?php endif; ?>
             </div>

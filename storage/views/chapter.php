@@ -18,7 +18,7 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
 ?>
 
 <style>
-    @import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap");
     .novel-text { font-family: "Lora", serif; font-size: 1.25rem; line-height: 2; max-width: 800px; margin: 0 auto; color: #d1d1d1; }
     .novel-text p { margin-bottom: 1.5rem; }
     .manga-vertical img { width: 100%; display: block; margin: 0 auto; }
@@ -75,7 +75,7 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
             </div>
         </section>
     <?php else: ?>
-        <div class="py-20 text-center text-gray-500 italic">Bölüm içeriği yüklenemedi.</div>
+        <div class="py-20 text-center text-gray-500">Bölüm içeriği yüklenemedi.</div>
     <?php endif; ?>
 </main>
 

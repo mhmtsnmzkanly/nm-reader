@@ -42,7 +42,7 @@ $username = (string) ($user['username'] ?? 'User');
             <!-- Info -->
             <div class="flex-1 text-center md:text-left">
                 <div class="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-                    <h2 class="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white">
+                    <h2 class="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white">
                         <?= htmlspecialchars($username) ?>
                     </h2>
                     <div class="flex items-center justify-center md:justify-start gap-2">
@@ -119,7 +119,7 @@ $username = (string) ($user['username'] ?? 'User');
                     </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-gray-500 italic text-sm">Henüz takip edilen bir seri yok.</p>
+                    <p class="text-gray-500 text-sm">Henüz takip edilen bir seri yok.</p>
                 <?php endif; ?>
             </div>
         </div>
@@ -133,7 +133,7 @@ $username = (string) ($user['username'] ?? 'User');
                         <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest">YORUM</span>
                         <span class="text-[9px] text-gray-600 font-bold"><?= date('d M Y', strtotime($comment['created_at'] ?? 'now')) ?></span>
                     </div>
-                    <p class="text-sm text-gray-300 italic mb-4">
+                    <p class="text-sm text-gray-300 mb-4">
                         "<?= htmlspecialchars((string) ($comment['body'] ?? '')) ?>"
                     </p>
                     <?php if (!empty($comment['url_path'])): ?>
@@ -144,7 +144,7 @@ $username = (string) ($user['username'] ?? 'User');
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="text-gray-500 italic text-sm">Henüz bir yorum yok.</p>
+                <p class="text-gray-500 text-sm">Henüz bir yorum yok.</p>
             <?php endif; ?>
         </div>
 
@@ -157,7 +157,7 @@ $username = (string) ($user['username'] ?? 'User');
                         <img src="<?= htmlspecialchars((string)($blog['cover_image'] ?? '')) ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     <div class="p-6">
-                        <h4 class="text-lg font-black italic uppercase tracking-tighter text-white mb-2 leading-tight">
+                        <h4 class="text-lg font-black uppercase tracking-tighter text-white mb-2 leading-tight">
                             <?= htmlspecialchars((string) ($blog['title'] ?? '')) ?>
                         </h4>
                         <p class="text-[10px] text-gray-500 font-bold uppercase"><?= date('d M Y', strtotime($blog['approved_at'] ?? $blog['created_at'] ?? 'now')) ?></p>
@@ -165,7 +165,7 @@ $username = (string) ($user['username'] ?? 'User');
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="text-gray-500 italic text-sm">Henüz bir blog yazısı yok.</p>
+                <p class="text-gray-500 text-sm">Henüz bir blog yazısı yok.</p>
             <?php endif; ?>
         </div>
 
@@ -176,11 +176,11 @@ $username = (string) ($user['username'] ?? 'User');
                 <?php foreach ($history as $row): ?>
                 <div class="glass p-4 rounded-2xl flex items-center justify-between hover:border-blue-500/30 transition-all">
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500 font-black italic text-xs">
+                        <div class="w-10 h-10 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500 font-black text-xs">
                             <?= htmlspecialchars((string) ($row['chapter_number'] ?? '')) ?>
                         </div>
                         <div>
-                            <h4 class="text-sm font-black text-white uppercase italic"><?= htmlspecialchars((string) ($row['content_title'] ?? '')) ?></h4>
+                            <h4 class="text-sm font-black text-white uppercase"><?= htmlspecialchars((string) ($row['content_title'] ?? '')) ?></h4>
                             <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest"><?= date('d M Y H:i', strtotime($row['created_at'] ?? 'now')) ?></p>
                         </div>
                     </div>
@@ -190,7 +190,7 @@ $username = (string) ($user['username'] ?? 'User');
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="text-gray-500 italic text-sm">Okuma geçmişi boş.</p>
+                <p class="text-gray-500 text-sm">Okuma geçmişi boş.</p>
             <?php endif; ?>
         </div>
         <?php endif; ?>

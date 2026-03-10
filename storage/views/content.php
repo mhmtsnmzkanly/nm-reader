@@ -57,7 +57,7 @@ $slug = (string)($content['slug'] ?? '');
                 <?php endif; ?>
 
                 <!-- Title Section -->
-                <h1 class="dynamic-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black italic uppercase tracking-tighter text-white mb-4">
+                <h1 class="dynamic-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-white mb-4">
                     <?= htmlspecialchars((string) ($content['title'] ?? '')) ?>
                 </h1>
 
@@ -96,10 +96,10 @@ $slug = (string)($content['slug'] ?? '');
                         $firstChapterUrl = $url(sprintf('%s/%s/chapter/%s', $type, $slug, rawurlencode((string)($firstChapter['chapter_number'] ?? '1'))));
                     }
                     ?>
-                    <a href="<?= $firstChapterUrl ?>" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase italic text-xs shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
+                    <a href="<?= $firstChapterUrl ?>" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
                         <i data-lucide="play" class="w-4 h-4 fill-current"></i> İLK BÖLÜMÜ OKU
                     </a>
-                    <button id="toggleFollowBtn" class="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-2xl font-black uppercase italic text-xs hover:bg-white/10 transition-all flex items-center gap-3">
+                    <button id="toggleFollowBtn" class="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs hover:bg-white/10 transition-all flex items-center gap-3">
                         <i data-lucide="plus" class="w-4 h-4"></i> LİSTEYE EKLE
                     </button>
                 </div>
@@ -113,10 +113,10 @@ $slug = (string)($content['slug'] ?? '');
     <div class="lg:col-span-2 space-y-16">
         <!-- Synopsis -->
         <div>
-            <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white mb-6 flex items-center gap-3">
+            <h2 class="text-2xl font-black uppercase tracking-tighter text-white mb-6 flex items-center gap-3">
                 <div class="w-2 h-8 bg-blue-600 rounded-full"></div> ÖZET
             </h2>
-            <p class="text-gray-400 leading-relaxed text-lg italic">
+            <p class="text-gray-400 leading-relaxed text-lg">
                 <?= htmlspecialchars((string) ($content['description'] ?? 'Açıklama bulunmuyor.')) ?>
             </p>
         </div>
@@ -124,7 +124,7 @@ $slug = (string)($content['slug'] ?? '');
         <!-- Chapters -->
         <div>
             <div class="flex items-center justify-between mb-8">
-                <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white flex items-center gap-3">
+                <h2 class="text-2xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
                     <div class="w-2 h-8 bg-blue-600 rounded-full"></div> BÖLÜMLER
                 </h2>
                 <span class="text-xs font-black text-gray-500 tracking-widest uppercase"><?= count($chapterItems) ?> BÖLÜM TOPLAM</span>
@@ -140,7 +140,7 @@ $slug = (string)($content['slug'] ?? '');
                 <div class="chapter-row flex items-center justify-between p-6 glass rounded-[24px] cursor-pointer transition-all border border-white/5 group"
                      onclick="handleChapterClick('<?= $chapter['id'] ?>', <?= $isLocked ? 'true' : 'false' ?>, <?= $price ?>, '<?= $fullChapterUrl ?>')">
                     <div class="flex items-center gap-6">
-                        <span class="w-12 h-12 flex items-center justify-center <?= $isLocked ? 'bg-zinc-800 text-gray-500' : 'bg-blue-600/10 text-blue-500' ?> rounded-2xl font-black italic">
+                        <span class="w-12 h-12 flex items-center justify-center <?= $isLocked ? 'bg-zinc-800 text-gray-500' : 'bg-blue-600/10 text-blue-500' ?> rounded-2xl font-black">
                             <?= htmlspecialchars((string) ($chapter['chapter_number'] ?? '')) ?>
                         </span>
                         <div>
@@ -168,7 +168,7 @@ $slug = (string)($content['slug'] ?? '');
 
         <!-- YORUMLAR -->
         <div>
-            <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white mb-8 flex items-center gap-3">
+            <h2 class="text-2xl font-black uppercase tracking-tighter text-white mb-8 flex items-center gap-3">
                 <div class="w-2 h-8 bg-blue-600 rounded-full"></div> YORUMLAR
             </h2>
             
@@ -183,13 +183,13 @@ $slug = (string)($content['slug'] ?? '');
             </div>
             <?php else: ?>
             <div class="mb-10 p-6 glass rounded-[32px] border border-white/5 text-center">
-                <p class="text-gray-500 text-sm italic mb-4">Yorum yapmak için giriş yapmalısın.</p>
+                <p class="text-gray-500 text-sm mb-4">Yorum yapmak için giriş yapmalısın.</p>
                 <button onclick="openModal('loginModal')" class="btn btn-sm btn-primary">GİRİŞ YAP</button>
             </div>
             <?php endif; ?>
 
             <div id="commentsList" class="space-y-6">
-                <p class="text-gray-500 italic text-sm">Yorumlar yükleniyor...</p>
+                <p class="text-gray-500 text-sm">Yorumlar yükleniyor...</p>
             </div>
         </div>
     </div>
@@ -199,7 +199,7 @@ $slug = (string)($content['slug'] ?? '');
         <!-- Wallet Box -->
         <?php if (isset($_SESSION['user_id'])): ?>
         <div class="glass rounded-[40px] p-8 border border-white/5">
-            <h3 class="font-black italic uppercase text-sm mb-4 text-yellow-500 tracking-widest">CÜZDANINIZ</h3>
+            <h3 class="font-black uppercase text-sm mb-4 text-yellow-500 tracking-widest">CÜZDANINIZ</h3>
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <i data-lucide="coins" class="w-8 h-8 text-yellow-500"></i>
@@ -217,7 +217,7 @@ $slug = (string)($content['slug'] ?? '');
 
         <!-- Info Box -->
         <div class="glass rounded-[40px] p-8 border border-white/5">
-            <h3 class="font-black italic uppercase text-sm mb-6 text-blue-500 tracking-widest">DETAYLI BİLGİ</h3>
+            <h3 class="font-black uppercase text-sm mb-6 text-blue-500 tracking-widest">DETAYLI BİLGİ</h3>
             <div class="space-y-6">
                 <div class="flex justify-between items-center border-b border-white/5 pb-4">
                     <span class="text-[10px] font-black text-gray-500 uppercase">YAZAR</span>
@@ -243,7 +243,7 @@ $slug = (string)($content['slug'] ?? '');
         <!-- Genres in Sidebar -->
         <?php if (!empty($genres)): ?>
         <div class="glass rounded-[40px] p-8 border border-white/5">
-            <h3 class="font-black italic uppercase text-sm mb-4 text-gray-500">TÜRLER</h3>
+            <h3 class="font-black uppercase text-sm mb-4 text-gray-500">TÜRLER</h3>
             <div class="flex flex-wrap gap-2">
                 <?php foreach ($genres as $genre): ?>
                 <a href="<?= $url('genre/' . (string) ($genre['slug'] ?? '')) ?>" class="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase text-gray-400 hover:text-white transition-all">
@@ -262,7 +262,7 @@ $slug = (string)($content['slug'] ?? '');
         <div class="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
             <i data-lucide="shopping-cart" class="w-10 h-10 text-yellow-500"></i>
         </div>
-        <h3 class="text-2xl font-black italic uppercase mb-2 text-white">BÖLÜMÜ AL?</h3>
+        <h3 class="text-2xl font-black uppercase mb-2 text-white">BÖLÜMÜ AL?</h3>
         <p class="text-gray-400 text-sm mb-8">Bu bölümü açmak için <span id="modalPrice" class="text-yellow-500 font-bold">--</span> jeton harcanacak.</p>
         <div class="flex gap-4">
             <button onclick="closeModal('purchaseModal')" class="flex-1 py-4 bg-white/5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 text-white">VAZGEÇ</button>
@@ -305,7 +305,7 @@ function loadComments() {
             $list.empty();
             const comments = res.data || [];
             if (comments.length === 0) {
-                $list.append('<p class="text-gray-600 italic text-sm">Henüz yorum yapılmamış. İlk yorumu sen yap!</p>');
+                $list.append('<p class="text-gray-600 text-sm">Henüz yorum yapılmamış. İlk yorumu sen yap!</p>');
                 return;
             }
             comments.forEach(c => {

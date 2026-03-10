@@ -135,7 +135,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
         .btn-outline { background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; }
         .btn-outline:hover { background: rgba(255, 255, 255, 0.05); color: white; }
         .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-        .modal-header h3 { font-weight: 900; text-transform: uppercase; font-style: italic; color: white; font-size: 1.25rem; margin: 0; }
+        .modal-header h3 { font-weight: 900; text-transform: uppercase; color: white; font-size: 1.25rem; margin: 0; }
         .modal-close { background: none; border: none; color: #64748b; font-size: 1.5rem; cursor: pointer; transition: color 0.2s; }
         .modal-close:hover { color: white; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -173,10 +173,10 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <header class="fixed top-0 w-full z-[100] h-20 glass flex items-center px-4 md:px-8 justify-between">
         <!-- Logo -->
         <a href="<?= $url('/') ?>" class="flex items-center gap-3 group">
-            <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center font-black italic text-white shadow-lg shadow-blue-600/20 group-hover:rotate-6 transition-transform">
+            <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white shadow-lg shadow-blue-600/20 group-hover:rotate-6 transition-transform">
                 <?= strtoupper(substr($siteConfig['site_name'] ?? 'M', 0, 1)) ?>
             </div>
-            <span class="font-black tracking-tighter text-xl uppercase italic hidden sm:inline text-white">
+            <span class="font-black tracking-tighter text-xl uppercase hidden sm:inline text-white">
                 <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP'), ENT_QUOTES, 'UTF-8') ?>
             </span>
         </a>
@@ -208,7 +208,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     <div id="user-modal" style="display: none;" class="absolute right-0 mt-4 w-64 bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-4 overflow-hidden">
                         <div class="px-3 py-4 border-b border-white/5 mb-2">
                             <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">CÜZDAN: <?= $_SESSION['user_wallet']['balance'] ?? '0' ?> JETON</p>
-                            <p class="text-sm font-black text-white italic uppercase tracking-tight"><?= htmlspecialchars($_SESSION['username'] ?? 'Kullanıcı') ?></p>
+                            <p class="text-sm font-black text-white uppercase tracking-tight"><?= htmlspecialchars($_SESSION['username'] ?? 'Kullanıcı') ?></p>
                         </div>
                         <div class="space-y-1">
                             <a href="<?= $url('/profile') ?>" class="user-menu-item">
@@ -247,10 +247,10 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <!-- Mobile Navigation Overlay -->
     <div id="mobile-menu" style="display: none;" class="fixed inset-0 z-[90] bg-[#080808] pt-24 px-6">
         <div class="flex flex-col gap-6">
-            <a href="<?= $url('/') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">ANASAYFA</a>
-            <a href="<?= $url('/search') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= str_contains($currentPath, '/search') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KEŞFET</a>
-            <a href="<?= $url('/profile') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= str_contains($currentPath, '/profile') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KÜTÜPHANE</a>
-            <a href="<?= $url('/blogs') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= str_contains($currentPath, '/blogs') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">BLOG</a>
+            <a href="<?= $url('/') ?>" class="text-2xl font-black uppercase tracking-tighter <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">ANASAYFA</a>
+            <a href="<?= $url('/search') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/search') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KEŞFET</a>
+            <a href="<?= $url('/profile') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/profile') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KÜTÜPHANE</a>
+            <a href="<?= $url('/blogs') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/blogs') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">BLOG</a>
         </div>
     </div>
 
@@ -270,7 +270,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                         <i data-lucide="info" class="w-4 h-4 text-blue-500"></i>
                         Hakkında
                     </h3>
-                    <p class="text-gray-500 text-sm leading-relaxed mb-6 italic">
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6">
                         <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?>, en sevdiğiniz mangaları, manhwaları ve webtoonları en yüksek kalitede okumanız için tasarlanmış modern bir platformdur.
                     </p>
                     <div class="flex gap-4">
@@ -288,7 +288,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     <nav class="space-y-3">
                         <?php foreach (array_slice($footerPopular ?? [], 0, 5) as $pop): ?>
                             <a href="<?= $url((string)($pop['url_path'] ?? '')) ?>" class="footer-link flex items-center gap-2">
-                                <span class="text-[10px] bg-blue-600/10 text-blue-500 px-1.5 py-0.5 rounded uppercase font-black italic"><?= htmlspecialchars((string)($pop['type_path'] ?? $pop['type'] ?? '')) ?></span>
+                                <span class="text-[10px] bg-blue-600/10 text-blue-500 px-1.5 py-0.5 rounded uppercase font-black"><?= htmlspecialchars((string)($pop['type_path'] ?? $pop['type'] ?? '')) ?></span>
                                 <span class="truncate"><?= htmlspecialchars((string)$pop['title']) ?></span>
                             </a>
                         <?php endforeach; ?>
@@ -319,7 +319,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                                     <span class="type-dot <?= $dotColor ?>"></span>
                                     <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest"><?= htmlspecialchars((string)($lat['series_type'] ?? '')) ?></span>
                                 </div>
-                                <p class="text-[11px] font-black text-white uppercase italic group-hover:text-blue-500 transition-colors leading-tight">
+                                <p class="text-[11px] font-black text-white uppercase group-hover:text-blue-500 transition-colors leading-tight">
                                     <?= htmlspecialchars((string)($lat['series_title'] ?? '')) ?> - Bölüm <?= htmlspecialchars((string)($lat['chapter_number'] ?? '')) ?>
                                 </p>
                             </a>
@@ -349,7 +349,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
 
             <!-- Bottom Copyright -->
             <div class="text-center pt-8 border-t border-white/5">
-                <p class="text-gray-700 text-[10px] font-black uppercase tracking-widest italic">
+                <p class="text-gray-700 text-[10px] font-black uppercase tracking-widest">
                     © <?= date('Y') ?> <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?> EXPERIENCE • TÜM HAKLARI SAKLIDIR
                 </p>
             </div>

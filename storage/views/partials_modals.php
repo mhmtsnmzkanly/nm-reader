@@ -52,7 +52,7 @@
             <form id="userSettingsForm" enctype="multipart/form-data">
                 <div class="flex justify-center mb-8">
                     <div class="relative group cursor-pointer" title="Profil Fotoğrafını Değiştir">
-                        <div class="w-24 h-24 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-black italic text-white shadow-xl overflow-hidden">
+                        <div class="w-24 h-24 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-black text-white shadow-xl overflow-hidden">
                             <?php if (!empty($_SESSION['avatar'])): ?>
                                 <img src="<?= htmlspecialchars($_SESSION['avatar']) ?>" class="w-full h-full object-cover">
                             <?php else: ?>

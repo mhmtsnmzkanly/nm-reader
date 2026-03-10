@@ -29,16 +29,16 @@ $items = is_array($items ?? null) ? $items : [];
                     <i data-lucide="<?= $list_type === 'genre' ? 'swords' : 'hash' ?>" class="w-5 h-5"></i>
                     <span class="text-[10px] font-black uppercase tracking-[0.4em]"><?= $list_type === 'genre' ? 'Tür Dosyası' : 'Etiket Dosyası' ?></span>
                 </div>
-                <h1 class="text-5xl md:text-7xl font-black italic uppercase tracking-tighter text-white">
+                <h1 class="text-5xl md:text-7xl font-black uppercase tracking-tighter text-white">
                     <?= htmlspecialchars($heading) ?>
                 </h1>
-                <p class="text-gray-500 mt-4 max-w-xl font-medium leading-relaxed italic">
+                <p class="text-gray-500 mt-4 max-w-xl font-medium leading-relaxed">
                     <?= htmlspecialchars($heading) ?> ile ilgili en iyi serileri burada bulabilirsin. Adrenalin, gizem ve heyecan dolu bir yolculuğa hazır ol.
                 </p>
             </div>
             <div class="flex items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/5">
                 <div class="px-6 py-3 text-center border-r border-white/10">
-                    <div class="text-xl font-black text-white italic">
+                    <div class="text-xl font-black text-white">
                         <?= number_format(count($items)) ?>
                     </div>
                     <div class="text-[8px] font-black text-gray-500 uppercase tracking-widest">
@@ -46,7 +46,7 @@ $items = is_array($items ?? null) ? $items : [];
                     </div>
                 </div>
                 <div class="px-6 py-3 text-center">
-                    <div class="text-xl font-black text-blue-500 italic">
+                    <div class="text-xl font-black text-blue-500">
                         4.8
                     </div>
                     <div class="text-[8px] font-black text-gray-500 uppercase tracking-widest">
@@ -83,12 +83,12 @@ $items = is_array($items ?? null) ? $items : [];
                 <div class="manga-image-container mb-4 shadow-2xl">
                     <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" alt="<?= htmlspecialchars((string)$item['title']) ?>" />
                     <div class="card-overlay">
-                        <button class="w-full bg-white text-black py-3 rounded-xl font-black italic text-[10px] uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                        <button class="w-full bg-white text-black py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform">
                             HEMEN OKU
                         </button>
                     </div>
                 </div>
-                <h3 class="font-black uppercase italic text-sm truncate text-white group-hover:text-blue-500 transition-colors">
+                <h3 class="font-black uppercase text-sm truncate text-white group-hover:text-blue-500 transition-colors">
                     <?= htmlspecialchars((string)$item['title']) ?>
                 </h3>
                 <div class="flex items-center justify-between mt-1">
@@ -105,7 +105,7 @@ $items = is_array($items ?? null) ? $items : [];
         <?php else: ?>
             <div class="col-span-full py-20 text-center">
                 <i data-lucide="info" class="w-12 h-12 text-gray-600 mx-auto mb-4"></i>
-                <p class="text-gray-500 italic">Bu kategoride henüz içerik bulunmuyor.</p>
+                <p class="text-gray-500">Bu kategoride henüz içerik bulunmuyor.</p>
             </div>
         <?php endif; ?>
     </div>
