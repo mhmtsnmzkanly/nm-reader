@@ -93,9 +93,20 @@
 
             <!-- Auth Actions -->
             <div class="flex items-center gap-4">
-                <button id="openAuthBtn" class="bg-white text-black px-6 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5">
-                    GİRİŞ YAP
-                </button>
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <!-- User Coins -->
+                    <div class="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-4 py-2 rounded-2xl">
+                        <i data-lucide="coins" class="w-4 h-4 text-yellow-500"></i>
+                        <span id="headerUserBalance" class="text-xs font-black text-yellow-500"><?= $_SESSION['user_wallet']['balance'] ?? '0' ?></span>
+                    </div>
+                    <a href="<?= $url('/profile') ?>" class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center font-bold text-xs shadow-lg shadow-blue-600/20 cursor-pointer text-white">
+                        <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
+                    </a>
+                <?php else: ?>
+                    <button id="openAuthBtn" class="bg-white text-black px-6 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5">
+                        GİRİŞ YAP
+                    </button>
+                <?php endif; ?>
                 <button class="md:hidden p-2 text-gray-400">
                     <i data-lucide="menu"></i>
                 </button>
