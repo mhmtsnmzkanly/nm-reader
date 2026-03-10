@@ -137,25 +137,32 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
         .modal-close { background: none; border: none; color: #64748b; font-size: 1.5rem; cursor: pointer; transition: color 0.2s; }
         .modal-close:hover { color: white; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes modalShow { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .animate-modal { animation: modalShow 0.3s ease-out forwards; }
-
-        /* Mobile Menu Overlay */
-        #mobile-menu, #user-modal { display: none; animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .user-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 12px; transition: all 0.2s; color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
         .user-menu-item:hover { background: rgba(255, 255, 255, 0.05); color: white; }
         .user-menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
-        /* Footer Specific Styles */
-        .footer-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; color: #ffffff; margin-bottom: 1.5rem; display: block; }
-        .footer-item-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; transition: all 0.2s; }
-        .footer-item-link:hover { transform: translateX(4px); }
-        .type-dot { width: 8px; height: 8px; border-radius: 50%; }
+        /* Profile Edit Modal Specifics */
+        .edit-input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 12px 16px; color: white; font-size: 13px; outline: none; transition: all 0.2s; }
+        .edit-input:focus { border-color: #3b82f6; background: rgba(255, 255, 255, 0.08); }
+        .edit-input-locked { background: rgba(255, 255, 255, 0.02); border-color: transparent; color: #64748b; cursor: not-allowed; }
+        .edit-label { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #4b5563; margin-bottom: 6px; display: block; }
+
+        /* Footer New Styles */
+        .footer-column-title { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #ffffff; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+        .footer-link { font-size: 13px; color: #94a3b8; transition: all 0.2s; display: block; margin-bottom: 0.75rem; font-weight: 500; }
+        .footer-link:hover { color: #3b82f6; transform: translateX(5px); }
+        
         .tag-cloud { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 20px 0; }
-        .footer-tag { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 0.5rem 1rem; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-        .footer-tag:hover { background: #3b82f6; color: white; border-color: #3b82f6; transform: translateY(-3px) scale(1.05); box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4); }
+        .footer-tag { padding: 0.5rem 1rem; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); color: #94a3b8; }
+        .footer-tag:hover { transform: translateY(-3px); filter: brightness(1.3); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); background: #3b82f6; color: white; border-color: #3b82f6; }
+        
+        /* Tag Cloud Colors */
+        .tag-blue { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .tag-purple { background: rgba(168, 85, 247, 0.1); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.2); }
+        .tag-red { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .tag-green { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .tag-orange { background: rgba(249, 115, 22, 0.1); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.2); }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -204,11 +211,11 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                             <a href="<?= $url('/profile') ?>" class="user-menu-item">
                                 <i data-lucide="user" class="w-4 h-4 text-blue-500"></i> Profilim
                             </a>
+                            <div onclick="openModal('userSettingsModal')" class="user-menu-item">
+                                <i data-lucide="edit-3" class="w-4 h-4 text-emerald-500"></i> Profilimi Düzenle
+                            </div>
                             <a href="<?= $url('/profile') ?>" class="user-menu-item">
                                 <i data-lucide="book-open" class="w-4 h-4 text-gray-400"></i> Kütüphanem
-                            </a>
-                            <a href="<?= $url('/profile') ?>" class="user-menu-item">
-                                <i data-lucide="settings" class="w-4 h-4 text-gray-400"></i> Ayarlar
                             </a>
                             <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
                             <a href="<?= $url('/admin/dashboard') ?>" class="user-menu-item">
@@ -250,77 +257,77 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     </main>
 
     <!-- FOOTER -->
-    <footer class="pt-20 pb-10 bg-[#0a0a0a] border-t border-white/5 px-6">
+    <footer class="pt-20 pb-12 bg-[#050505] border-t border-white/5 px-6 md:px-12">
         <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-                <!-- Brand Info -->
-                <div class="space-y-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center font-black italic text-white text-xs">
-                            <?= strtoupper(substr($siteConfig['site_name'] ?? 'M', 0, 1)) ?>
-                        </div>
-                        <span class="font-black tracking-tighter text-lg uppercase italic text-white">
-                            <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP'), ENT_QUOTES, 'UTF-8') ?>
-                        </span>
-                    </div>
-                    <p class="text-gray-500 text-sm leading-relaxed italic">
-                        <?= htmlspecialchars((string) ($siteConfig['site_description'] ?? 'Hayal dünyasına açılan kapı. En kaliteli içerikler her an cebinde.'), ENT_QUOTES, 'UTF-8') ?>
+            <!-- Footer Content Columns -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+                <!-- About Section -->
+                <div>
+                    <h3 class="footer-column-title">
+                        <i data-lucide="info" class="w-4 h-4 text-blue-500"></i>
+                        Hakkında
+                    </h3>
+                    <p class="text-gray-500 text-sm leading-relaxed mb-6 italic">
+                        <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?>, en sevdiğiniz mangaları, manhwaları ve webtoonları en yüksek kalitede okumanız için tasarlanmış modern bir platformdur.
                     </p>
                     <div class="flex gap-4">
                         <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="instagram" class="w-5 h-5"></i></a>
                         <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="github" class="w-5 h-5"></i></a>
                     </div>
                 </div>
 
+                <!-- Popular Content -->
+                <div>
+                    <h3 class="footer-column-title">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-orange-500"></i>
+                        Popüler Türler
+                    </h3>
+                    <nav>
+                        <?php foreach (array_slice($footerGenres ?? [], 0, 5) as $genre): ?>
+                            <a href="<?= $url('genre/' . (string)$genre['slug']) ?>" class="footer-link"><?= htmlspecialchars((string)$genre['name']) ?></a>
+                        <?php endforeach; ?>
+                    </nav>
+                </div>
+
                 <!-- Hızlı Menü -->
                 <div>
-                    <span class="footer-title">Hızlı Menü</span>
-                    <div class="flex flex-col space-y-2">
-                        <a href="<?= $url('/') ?>" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Anasayfa</a>
-                        <a href="<?= $url('/search') ?>" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Keşfet</a>
-                        <a href="<?= $url('/profile') ?>" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Kütüphane</a>
-                        <a href="<?= $url('/blogs') ?>" class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors">Blog</a>
-                    </div>
-                </div>
-
-                <!-- Popüler Türler (Dynamic) -->
-                <div>
-                    <span class="footer-title">Popüler Türler</span>
-                    <div class="space-y-3">
-                        <?php foreach (array_slice($footerGenres ?? [], 0, 5) as $genre): ?>
-                        <a href="<?= $url('genre/' . (string)$genre['slug']) ?>" class="footer-item-link group">
-                            <div class="w-2 h-2 rounded-full bg-blue-600 group-hover:scale-125 transition-transform"></div>
-                            <span class="text-[10px] font-black text-gray-400 uppercase italic group-hover:text-blue-500 transition-colors"><?= htmlspecialchars((string)$genre['name']) ?></span>
-                        </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <!-- Uygulama -->
-                <div>
-                    <span class="footer-title">Deneyim</span>
-                    <div class="space-y-4">
-                        <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                            © <?= date('Y') ?> <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?>
-                        </p>
-                        <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest leading-relaxed">
-                            Tüm Hakları Saklıdır. İçerikler yayıncılarına aittir.
-                        </p>
-                    </div>
+                    <h3 class="footer-column-title">
+                        <i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i>
+                        Hızlı Menü
+                    </h3>
+                    <nav>
+                        <a href="<?= $url('/') ?>" class="footer-link">Anasayfa</a>
+                        <a href="<?= $url('/search') ?>" class="footer-link">Keşfet</a>
+                        <a href="<?= $url('/profile') ?>" class="footer-link">Kütüphane</a>
+                        <a href="<?= $url('/blogs') ?>" class="footer-link">Blog</a>
+                    </nav>
                 </div>
             </div>
 
+            <!-- Horizontal Divider -->
             <hr class="border-white/5 mb-12" />
 
-            <!-- Tags Cloud Section -->
-            <div class="text-center">
-                <span class="footer-title">Etiket Bulutu</span>
+            <!-- Genre & Tag Cloud Section -->
+            <div class="text-center mb-12">
+                <p class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600 mb-8">
+                    Kategorileri Keşfet
+                </p>
                 <div class="tag-cloud">
-                    <?php foreach ($footerTags ?? [] as $tag): ?>
-                    <a href="<?= $url('tag/' . (string)$tag['slug']) ?>" class="footer-tag">#<?= htmlspecialchars((string)$tag['name']) ?></a>
+                    <?php 
+                    $tagColors = ['tag-blue', 'tag-purple', 'tag-red', 'tag-green', 'tag-orange'];
+                    foreach ($footerTags ?? [] as $idx => $tag): 
+                        $colorClass = $tagColors[$idx % count($tagColors)];
+                    ?>
+                        <a href="<?= $url('tag/' . (string)$tag['slug']) ?>" class="footer-tag <?= $colorClass ?>">#<?= htmlspecialchars((string)$tag['name']) ?></a>
                     <?php endforeach; ?>
                 </div>
+            </div>
+
+            <!-- Bottom Copyright -->
+            <div class="text-center pt-8 border-t border-white/5">
+                <p class="text-gray-700 text-[10px] font-black uppercase tracking-widest italic">
+                    © <?= date('Y') ?> <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?> EXPERIENCE • TÜM HAKLARI SAKLIDIR
+                </p>
             </div>
         </div>
     </footer>
@@ -418,6 +425,36 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                         $btn.prop('disabled', false).text(originalText);
                         if (typeof turnstile !== 'undefined') turnstile.reset();
                     });
+            });
+
+            // Handle Profile Edit Form
+            $("#userSettingsForm").on("submit", function(e) {
+                e.preventDefault();
+                const $btn = $(this).find('button[type="submit"]');
+                const originalText = $btn.text();
+                $btn.prop('disabled', true).text('...');
+
+                const formData = new FormData(this);
+
+                $.ajax({
+                    url: '/api/v1/user/profile',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-Token': window.__NMR_CONTEXT.auth.csrf_token
+                    },
+                    success: function(res) {
+                        showFeedback('Profil başarıyla güncellendi.');
+                        setTimeout(() => location.reload(), 1000);
+                    },
+                    error: function(xhr) {
+                        const err = xhr.responseJSON || {};
+                        showFeedback(err.message || 'Güncelleme başarısız.', 'error');
+                        $btn.prop('disabled', false).text(originalText);
+                    }
+                });
             });
 
             // Close modal on overlay click

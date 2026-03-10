@@ -41,6 +41,78 @@
   </div>
 </div>
 
+<!-- Modernized Profile Edit Modal -->
+<div id="userSettingsModal" class="modal-overlay">
+    <div class="modal card">
+        <div class="modal-header">
+            <h3>⚙️ <?= $__t('profile_settings') ?></h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="userSettingsForm" enctype="multipart/form-data">
+                <div class="flex justify-center mb-8">
+                    <div class="relative group cursor-pointer" title="Profil Fotoğrafını Değiştir">
+                        <div class="w-24 h-24 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-black italic text-white shadow-xl overflow-hidden">
+                            <?php if (!empty($_SESSION['avatar'])): ?>
+                                <img src="<?= htmlspecialchars($_SESSION['avatar']) ?>" class="w-full h-full object-cover">
+                            <?php else: ?>
+                                <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="absolute inset-0 bg-black/60 rounded-[32px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border-2 border-blue-500/50">
+                            <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                            <input type="file" name="profile_image" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-5">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="edit-label mb-0">Kullanıcı Adı</label>
+                            <i data-lucide="lock" class="w-3 h-3 text-gray-700"></i>
+                        </div>
+                        <input type="text" class="edit-input edit-input-locked" value="<?= htmlspecialchars($_SESSION['username'] ?? '') ?>" readonly />
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="edit-label mb-0">E-posta Adresi</label>
+                            <i data-lucide="lock" class="w-3 h-3 text-gray-700"></i>
+                        </div>
+                        <input type="email" class="edit-input edit-input-locked" value="<?= htmlspecialchars($_SESSION['email'] ?? '') ?>" readonly />
+                    </div>
+                    <div>
+                        <label class="edit-label">Biyografi (Düzenlenebilir)</label>
+                        <textarea name="bio" class="edit-input h-24 resize-none" placeholder="Kendinizden bahsedin..."><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="edit-label">Dil</label>
+                            <select name="lang" class="edit-input py-3">
+                                <option value="tr" <?= ($_SESSION['lang'] ?? 'tr') === 'tr' ? 'selected' : '' ?>>Türkçe</option>
+                                <option value="en" <?= ($_SESSION['lang'] ?? 'tr') === 'en' ? 'selected' : '' ?>>English</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="edit-label">Tema</label>
+                            <select name="theme" class="edit-input py-3">
+                                <option value="default" <?= ($_SESSION['theme'] ?? 'default') === 'default' ? 'selected' : '' ?>>Default</option>
+                                <option value="dark" <?= ($_SESSION['theme'] ?? 'default') === 'dark' ? 'selected' : '' ?>>Dark</option>
+                                <option value="glass" <?= ($_SESSION['theme'] ?? 'default') === 'glass' ? 'selected' : '' ?>>Glass</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex gap-4">
+                    <button type="button" class="flex-1 btn btn-outline" onclick="closeModal()">Kapat</button>
+                    <button type="submit" class="flex-[2] btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div id="notifModal" class="modal-overlay">
   <div class="modal card">
     <div class="modal-header"><h3>🔔 <?= $__t('notifications') ?></h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
@@ -102,45 +174,5 @@
       </div>
     </div></div>
     <div class="modal-footer"><button class="btn btn-sm btn-primary px-5" id="saveAllSettingsBtn"><?= $__t('save_and_apply') ?></button></div>
-  </div>
-</div>
-
-<div id="userSettingsModal" class="modal-overlay">
-  <div class="modal card">
-    <div class="modal-header"><h3>⚙️ <?= $__t('profile_settings') ?></h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-    <div class="modal-body">
-      <form id="userSettingsForm" enctype="multipart/form-data">
-        <div class="form-group mb-3">
-          <label class="form-label"><?= $__t('biography') ?></label>
-          <textarea name="bio" class="form-item" rows="3" maxlength="1000" placeholder="<?= $__t('tell_us_about_yourself') ?>"></textarea>
-        </div>
-        <div class="form-group mb-3">
-          <label class="form-label"><?= $__t('profile_image') ?></label>
-          <input type="file" name="profile_image" class="form-item" accept="image/*">
-        </div>
-        <div class="form-group mb-3">
-          <label class="form-label"><?= $__t('cover_image') ?></label>
-          <input type="file" name="cover_image" class="form-item" accept="image/*">
-        </div>
-        <div class="grid grid-2 gap-2 mb-3">
-          <div class="form-group">
-            <label class="form-label"><?= $__t('theme') ?></label>
-            <select name="theme" class="form-item">
-              <option value="default">Default</option><option value="dark">Dark</option>
-              <option value="royal">Royal</option><option value="bootstrap">Bootstrap</option>
-              <option value="material">Material</option><option value="apple">Apple</option>
-              <option value="glass">Glass</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label"><?= $__t('language') ?></label>
-            <select name="lang" class="form-item">
-              <option value="tr">Türkçe</option><option value="en">English</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary w-100 mt-2"><?= $__t('update_profile') ?></button>
-      </form>
-    </div>
   </div>
 </div>
