@@ -66,7 +66,7 @@ final class SeriesService
         $recentChapters = array_map(function($row) {
             $row['type_path'] = $this->toTypeSegment((string)($row['series_type'] ?? 'novel'));
             $row['chapter_number'] = ChapterNumber::normalize($row['chapter_number'] ?? '');
-            $row['cover_image'] = $row['cover_image'] ?: '/assets/img/covers/one-piece.jpg';
+            $row['cover_image'] = $row['cover_image'] ?: '/assets/img/logo.svg'; // Use logo or a real default placeholder from root
             return $row;
         }, $recentChapters);
 
