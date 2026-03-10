@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="tr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Gelişmiş Arama | Manga.app</title>
+        <!-- Tailwind CSS for Styling -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- jQuery for Interactivity -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <!-- Lucide Icons -->
+        <script src="https://unpkg.com/lucide@latest"></script>
+
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");
+
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: #080808;
+                color: #e3e2e6;
+            }
+
+            .glass {
+                background: rgba(255, 255, 255, 0.03);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .manga-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 1.5rem;
+            }
+
+            .tag-pill {
+                transition: all 0.2s ease;
+                cursor: pointer;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .tag-pill.active {
+                background: #3b82f6;
+                color: white;
+                border-color: #3b82f6;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            }
+
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 4px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+            }
+        </style>
+    </head>
+    <body class="overflow-x-hidden">
+        <!-- HEADER -->
+        <header
+            class="fixed top-0 w-full z-50 h-16 glass flex items-center px-6 justify-between"
+        >
+            <div
+                class="flex items-center gap-3 cursor-pointer"
+                onclick="location.reload()"
+            >
+                <div
+                    class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black italic text-white"
+                >
+                    M
+                </div>
+                <span
+                    class="font-black tracking-tighter text-lg uppercase italic text-white"
+                    >MANGA.APP</span
+                >
+            </div>
+            <nav class="hidden md:flex items-center gap-8">
+                <a
+                    href="#"
+                    class="text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
+                    >ANASAYFA</a
+                >
+                <a
+                    href="#"
+                    class="text-[11px] font-black uppercase tracking-widest text-white border-b-2 border-blue-600 pb-1"
+                    >KEŞFET</a
+                >
+                <a
+                    href="#"
+                    class="text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
+                    >KÜTÜPHANE</a
+                >
+            </nav>
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center"
+                >
+                    <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>
+                </div>
+            </div>
+        </header>
+
+        <main class="pt-24 pb-20 px-6 max-w-7xl mx-auto">
+            <!-- Search Header -->
+            <div class="mb-12">
+                <h1
+                    class="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white mb-4"
+                >
+                    GELİŞMİŞ ARAMA
+                </h1>
+                <p
+                    class="text-gray-500 text-sm font-medium uppercase tracking-widest"
+                >
+                    Binlerce seri arasından hayalindeki hikayeyi bul.
+                </p>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-10">
+                <!-- Sidebar Filters -->
+                <aside class="w-full lg:w-80 shrink-0 space-y-8">
+                    <!-- Search Input -->
+                    <div class="relative">
+                        <input
+                            type="text"
+                            placeholder="Seri adı veya yazar..."
+                            class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-blue-500 transition-all text-white"
+                        />
+                        <i
+                            data-lucide="search"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"
+                        ></i>
+                    </div>
+
+                    <!-- Genres -->
+                    <div>
+                        <h3
+                            class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4"
+                        >
+                            TÜRLER (GENRE)
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span
+                                class="tag-pill active px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase"
+                                >HEPSİ</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400"
+                                >AKSİYON</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400"
+                                >MACERA</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400"
+                                >PSİKOLOJİK</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400"
+                                >SEINEN</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400"
+                                >FANTEZİ</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400"
+                                >ROMANTİZM</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400"
+                                >DRAM</span
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Tags -->
+                    <div>
+                        <h3
+                            class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4"
+                        >
+                            POPÜLER ETİKETLER
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 italic"
+                                >#LevelUp</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 italic"
+                                >#AntiHero</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 italic"
+                                >#Isekai</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 italic"
+                                >#Revenge</span
+                            >
+                            <span
+                                class="tag-pill px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 italic"
+                                >#MagicSchool</span
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Status & Sort -->
+                    <div class="space-y-4 pt-4 border-t border-white/5">
+                        <div>
+                            <label
+                                class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2"
+                                >DURUM</label
+                            >
+                            <select
+                                class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none text-white appearance-none"
+                            >
+                                <option>TÜMÜ</option>
+                                <option>DEVAM EDİYOR</option>
+                                <option>TAMAMLANDI</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label
+                                class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2"
+                                >SIRALAMA</label
+                            >
+                            <select
+                                class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none text-white appearance-none"
+                            >
+                                <option>EN YENİLER</option>
+                                <option>EN ÇOK OKUNANLAR</option>
+                                <option>EN YÜKSEK PUAN</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button
+                        class="w-full py-4 bg-blue-600 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all"
+                    >
+                        FİLTRELERİ UYGULA
+                    </button>
+                </aside>
+
+                <!-- Results Area -->
+                <div class="flex-1">
+                    <div class="flex items-center justify-between mb-8">
+                        <p
+                            class="text-[10px] font-bold text-gray-500 uppercase tracking-widest"
+                        >
+                            TOPLAM <span class="text-white">124</span> SONUÇ
+                            BULUNDU
+                        </p>
+                        <div class="flex gap-2">
+                            <button
+                                class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-blue-500"
+                            >
+                                <i
+                                    data-lucide="layout-grid"
+                                    class="w-4 h-4"
+                                ></i>
+                            </button>
+                            <button
+                                class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500"
+                            >
+                                <i data-lucide="list" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results Grid -->
+                    <div class="manga-grid">
+                        <!-- Manga Card 1 -->
+                        <div class="group cursor-pointer">
+                            <div
+                                class="relative aspect-[3/4.5] rounded-3xl overflow-hidden mb-4 border border-white/5 shadow-2xl group-hover:-translate-y-2 transition-all duration-300"
+                            >
+                                <img
+                                    src="https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=400"
+                                    class="w-full h-full object-cover"
+                                />
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"
+                                >
+                                    <p
+                                        class="text-[10px] text-blue-400 font-black uppercase mb-1"
+                                    >
+                                        Aksiyon, Fantezi
+                                    </p>
+                                    <p
+                                        class="text-xs text-white/70 line-clamp-2 italic"
+                                    >
+                                        Dünyanın en zayıf avcısı Jin-Woo,
+                                        gizemli bir sistemle karşılaşır...
+                                    </p>
+                                </div>
+                                <div
+                                    class="absolute top-3 left-3 px-2 py-1 bg-blue-600 rounded-lg text-[9px] font-black text-white shadow-xl"
+                                >
+                                    9.8
+                                </div>
+                            </div>
+                            <h4
+                                class="text-sm font-black uppercase tracking-tight text-white group-hover:text-blue-500 transition-colors mb-1"
+                            >
+                                Solo Leveling
+                            </h4>
+                            <p
+                                class="text-[10px] text-gray-600 font-bold uppercase tracking-widest"
+                            >
+                                Chugong • 179 Bölüm
+                            </p>
+                        </div>
+
+                        <!-- Manga Card 2 -->
+                        <div class="group cursor-pointer">
+                            <div
+                                class="relative aspect-[3/4.5] rounded-3xl overflow-hidden mb-4 border border-white/5 shadow-2xl group-hover:-translate-y-2 transition-all duration-300"
+                            >
+                                <img
+                                    src="https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=400"
+                                    class="w-full h-full object-cover"
+                                />
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"
+                                >
+                                    <p
+                                        class="text-[10px] text-blue-400 font-black uppercase mb-1"
+                                    >
+                                        Seinen, Dram
+                                    </p>
+                                    <p
+                                        class="text-xs text-white/70 line-clamp-2 italic"
+                                    >
+                                        Karanlık fantezi dünyasında Guts'ın
+                                        intikam yolculuğu...
+                                    </p>
+                                </div>
+                                <div
+                                    class="absolute top-3 left-3 px-2 py-1 bg-blue-600 rounded-lg text-[9px] font-black text-white shadow-xl"
+                                >
+                                    9.9
+                                </div>
+                            </div>
+                            <h4
+                                class="text-sm font-black uppercase tracking-tight text-white group-hover:text-blue-500 transition-colors mb-1"
+                            >
+                                Berserk
+                            </h4>
+                            <p
+                                class="text-[10px] text-gray-600 font-bold uppercase tracking-widest"
+                            >
+                                Kentaro Miura • 364 Bölüm
+                            </p>
+                        </div>
+
+                        <!-- Manga Card 3 -->
+                        <div class="group cursor-pointer">
+                            <div
+                                class="relative aspect-[3/4.5] rounded-3xl overflow-hidden mb-4 border border-white/5 shadow-2xl group-hover:-translate-y-2 transition-all duration-300"
+                            >
+                                <img
+                                    src="https://images.unsplash.com/photo-1601850494422-3cf14624b0b3?q=80&w=400"
+                                    class="w-full h-full object-cover"
+                                />
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4"
+                                >
+                                    <p
+                                        class="text-[10px] text-blue-400 font-black uppercase mb-1"
+                                    >
+                                        Tarih, Seinen
+                                    </p>
+                                    <p
+                                        class="text-xs text-white/70 line-clamp-2 italic"
+                                    >
+                                        Miyamoto Musashi'nin aydınlanma ve kılıç
+                                        yolundaki hikayesi...
+                                    </p>
+                                </div>
+                                <div
+                                    class="absolute top-3 left-3 px-2 py-1 bg-blue-600 rounded-lg text-[9px] font-black text-white shadow-xl"
+                                >
+                                    9.7
+                                </div>
+                            </div>
+                            <h4
+                                class="text-sm font-black uppercase tracking-tight text-white group-hover:text-blue-500 transition-colors mb-1"
+                            >
+                                Vagabond
+                            </h4>
+                            <p
+                                class="text-[10px] text-gray-600 font-bold uppercase tracking-widest"
+                            >
+                                Takehiko Inoue • 327 Bölüm
+                            </p>
+                        </div>
+
+                        <!-- Manga Card 4 (Placeholder) -->
+                        <div class="group cursor-pointer">
+                            <div
+                                class="relative aspect-[3/4.5] rounded-3xl overflow-hidden mb-4 border border-white/5 shadow-2xl group-hover:-translate-y-2 transition-all duration-300"
+                            >
+                                <div
+                                    class="w-full h-full bg-zinc-900 flex items-center justify-center"
+                                >
+                                    <i
+                                        data-lucide="image"
+                                        class="w-10 h-10 text-white/10"
+                                    ></i>
+                                </div>
+                                <div
+                                    class="absolute top-3 left-3 px-2 py-1 bg-blue-600 rounded-lg text-[9px] font-black text-white shadow-xl"
+                                >
+                                    8.5
+                                </div>
+                            </div>
+                            <h4
+                                class="text-sm font-black uppercase tracking-tight text-white group-hover:text-blue-500 transition-colors mb-1"
+                            >
+                                Omniscient Reader
+                            </h4>
+                            <p
+                                class="text-[10px] text-gray-600 font-bold uppercase tracking-widest"
+                            >
+                                Sing Shong • 150+ Bölüm
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="mt-16 flex justify-center items-center gap-2">
+                        <button
+                            class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 hover:text-white"
+                        >
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+                        <button
+                            class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-xs font-black"
+                        >
+                            1
+                        </button>
+                        <button
+                            class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xs font-black text-gray-500 hover:bg-white/10"
+                        >
+                            2
+                        </button>
+                        <button
+                            class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xs font-black text-gray-500 hover:bg-white/10"
+                        >
+                            3
+                        </button>
+                        <span class="text-gray-600 px-2">...</span>
+                        <button
+                            class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xs font-black text-gray-500 hover:bg-white/10"
+                        >
+                            12
+                        </button>
+                        <button
+                            class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-500 hover:text-white"
+                        >
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- SCRIPTS -->
+        <script>
+            $(document).ready(function () {
+                lucide.createIcons();
+
+                // Tag selection toggle
+                $(".tag-pill").click(function () {
+                    if ($(this).text() === "HEPSİ") {
+                        $(".tag-pill")
+                            .removeClass("active bg-blue-600")
+                            .addClass("bg-white/5 text-gray-400");
+                        $(this)
+                            .addClass("active")
+                            .removeClass("bg-white/5 text-gray-400");
+                    } else {
+                        $('.tag-pill:contains("HEPSİ")')
+                            .removeClass("active")
+                            .addClass("bg-white/5 text-gray-400");
+                        $(this).toggleClass("active bg-white/5 text-gray-400");
+
+                        // If no tag is active, activate "HEPSİ"
+                        if ($(".tag-pill.active").length === 0) {
+                            $('.tag-pill:contains("HEPSİ")')
+                                .addClass("active")
+                                .removeClass("bg-white/5 text-gray-400");
+                        }
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

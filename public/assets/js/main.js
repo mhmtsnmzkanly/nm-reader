@@ -1,0 +1,231 @@
+/**
+ * NMR Reader - Global Logic
+ */
+
+// Global Modal Control
+window.openModal = function(id) {
+    $(".modal-overlay").removeClass("active");
+    $("#" + id).addClass("active");
+    $("body").addClass("overflow-hidden");
+};
+
+window.closeModal = function() {
+    $(".modal-overlay").removeClass("active");
+    $("body").removeClass("overflow-hidden");
+};
+
+// Global Feedback Notifications
+window.showFeedback = function(message, type = 'success') {
+    const $toast = $("#feedback-toast");
+    $toast.stop(true, true).removeClass('success error').addClass(type).text(message).fadeIn(300);
+    setTimeout(() => $toast.fadeOut(300), 4000);
+};
+
+// Global Logout
+window.logout = function() {
+    if (window.NMRData) {
+        window.NMRData.post('/auth/logout', {})
+            .then(() => {
+                showFeedback('Başarıyla çıkış yapıldı.');
+                setTimeout(() => location.href = '/', 1000);
+            })
+            .catch(() => {
+                location.href = '/logout';
+            });
+    } else {
+        location.href = '/logout';
+    }
+};
+
+$(document).ready(function () {
+    // Initialize Icons
+    if (window.lucide) lucide.createIcons();
+
+    // Mobile Menu Toggle
+    $("#menu-toggle").on("click", function () {
+        $("#mobile-menu").fadeToggle(200);
+        $("#user-modal").fadeOut(100);
+    });
+
+    // User Dropdown Toggle
+    $("#user-btn").on("click", function (e) {
+        e.stopPropagation();
+        $("#user-modal").fadeToggle(150);
+        $("#mobile-menu").fadeOut(100);
+    });
+
+    // Close on click outside
+    $(document).on("click", function () {
+        $("#user-modal").fadeOut(150);
+    });
+
+    $("#user-modal").on("click", function (e) {
+        e.stopPropagation();
+    });
+
+    $(".modal-overlay").on("click", function (e) {
+        if (e.target === this) closeModal();
+    });
+
+    // --- FORM HANDLERS ---
+
+    $("#loginForm").on("submit", function(e) {
+        e.preventDefault();
+        if (!window.NMRData) return;
+        const $btn = $(this).find('button[type="submit"]');
+        const originalText = $btn.text();
+        $btn.prop('disabled', true).text('...');
+
+        const formData = {
+            email: $(this).find('input[name="email"]').val(),
+            password: $(this).find('input[name="password"]').val(),
+            remember: $(this).find('input[name="remember"]').is(':checked'),
+            'turnstile_token': $(this).find('[name="cf-turnstile-response"]').val()
+        };
+
+        window.NMRData.post('/auth/login', formData)
+            .then(() => {
+                showFeedback('Giriş başarılı! Yönlendiriliyorsunuz...');
+                setTimeout(() => location.reload(), 1000);
+            })
+            .catch(err => {
+                showFeedback(err.message || 'Giriş yapılamadı.', 'error');
+                $btn.prop('disabled', false).text(originalText);
+                if (typeof turnstile !== 'undefined') turnstile.reset();
+            });
+    });
+
+    $("#registerForm").on("submit", function(e) {
+        e.preventDefault();
+        if (!window.NMRData) return;
+        const $btn = $(this).find('button[type="submit"]');
+        const originalText = $btn.text();
+        $btn.prop('disabled', true).text('...');
+
+        const formData = {
+            username: $(this).find('input[name="username"]').val(),
+            email: $(this).find('input[name="email"]').val(),
+            password: $(this).find('input[name="password"]').val(),
+            'turnstile_token': $(this).find('[name="cf-turnstile-response"]').val()
+        };
+
+        window.NMRData.post('/auth/register', formData)
+            .then(() => {
+                showFeedback('Kayıt başarılı! Giriş yapabilirsiniz.');
+                setTimeout(() => openModal('loginModal'), 1500);
+            })
+            .catch(err => {
+                showFeedback(err.message || 'Kayıt olunamadı.', 'error');
+                $btn.prop('disabled', false).text(originalText);
+                if (typeof turnstile !== 'undefined') turnstile.reset();
+            });
+    });
+
+    $("#userSettingsForm").on("submit", function(e) {
+        e.preventDefault();
+        const $btn = $(this).find('button[type="submit"]');
+        const originalText = $btn.text();
+        $btn.prop('disabled', true).text('...');
+
+        const formData = new FormData(this);
+        $.ajax({
+            url: '/api/v1/user/profile',
+            method: 'POST',
+            data: formData, processData: false, contentType: false,
+            headers: { 'X-CSRF-Token': (window.__NMR_CONTEXT?.auth?.csrf_token) },
+            success: function() {
+                showFeedback('Profil başarıyla güncellendi.');
+                setTimeout(() => location.reload(), 1000);
+            },
+            error: function(xhr) {
+                const err = xhr.responseJSON || {};
+                showFeedback(err.message || 'Güncelleme başarısız.', 'error');
+                $btn.prop('disabled', false).text(originalText);
+            }
+        });
+    });
+
+    // --- PAGE SPECIFIC ---
+
+    // 1. Home Slider
+    const slides = $(".slide-item");
+    const dots = $(".dot");
+    if (slides.length > 0) {
+        let currentSlide = 0;
+        const showSlide = (n) => {
+            slides.hide();
+            dots.removeClass("bg-blue-600 w-8").addClass("bg-white/20 w-3");
+            currentSlide = (n + slides.length) % slides.length;
+            $(slides[currentSlide]).fadeIn(1000);
+            $(dots[currentSlide]).removeClass("bg-white/20 w-3").addClass("bg-blue-600 w-8");
+        };
+        const nextSlide = () => showSlide(currentSlide + 1);
+        let slideInterval = setInterval(nextSlide, 5000);
+        dots.on("click", function () {
+            clearInterval(slideInterval);
+            showSlide($(this).data("idx"));
+            slideInterval = setInterval(nextSlide, 5000);
+        });
+        showSlide(0);
+    }
+
+    // 2. Profile Tabs
+    $(".tab-btn").on("click", function () {
+        const target = $(this).data("tab");
+        $(".tab-btn").removeClass("tab-active text-white").addClass("text-gray-500");
+        $(this).addClass("tab-active text-white").removeClass("text-gray-500");
+        $(".tab-content").addClass("hidden");
+        $("#tab-" + target).removeClass("hidden");
+        if (target === 'blogs') $("#tab-blogs").addClass("grid"); else $("#tab-blogs").removeClass("grid");
+    });
+
+    // 3. Search Pills
+    $(".tag-pill-genre").on("click", function () {
+        const slug = $(this).data("slug");
+        if (slug === "") {
+            $(".tag-pill-genre").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
+            $(this).addClass("active").removeClass("bg-white/5 text-gray-400");
+        } else {
+            $(".tag-pill-genre[data-slug='']").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
+            $(this).toggleClass("active bg-white/5 text-gray-400");
+            if ($(".tag-pill-genre.active").length === 0) $(".tag-pill-genre[data-slug='']").addClass("active").removeClass("bg-white/5 text-gray-400");
+        }
+        if (window.updateSearchInputs) window.updateSearchInputs();
+    });
+
+    $(".tag-pill-tag").on("click", function () {
+        $(this).toggleClass("active bg-white/5 text-gray-400");
+        if (window.updateSearchInputs) window.updateSearchInputs();
+    });
+
+    window.updateSearchInputs = function() {
+        const genres = []; $(".tag-pill-genre.active").each(function() { const s = $(this).data("slug"); if (s) genres.push(s); });
+        $("#genresInput").val(genres.join(','));
+        const tags = []; $(".tag-pill-tag.active").each(function() { const s = $(this).data("slug"); if (s) tags.push(s); });
+        $("#tagsInput").val(tags.join(','));
+    };
+
+    // 4. Reader Progress
+    $(window).on("scroll", function () {
+        const $bar = $("#reader-progress-bar");
+        if ($bar.length) {
+            let winHeight = $(window).height();
+            let docHeight = $(document).height();
+            let scrollTop = $(window).scrollTop();
+            let progress = (scrollTop / (docHeight - winHeight)) * 100;
+            $bar.css("width", progress + "%");
+        }
+        const $readProgress = $("#readingProgress");
+        if ($readProgress.length) {
+            let wintop = $(window).scrollTop(), docheight = $(document).height(), winheight = $(window).height();
+            let scrolled = (wintop / (docheight - winheight)) * 100;
+            $readProgress.css("width", scrolled + "%");
+        }
+    });
+
+    // Simple entry animations
+    $(".chapter-row, .blog-card").css("opacity", "0");
+    $(".chapter-row, .blog-card").each(function (i) {
+        $(this).delay(50 * i).animate({ opacity: 1 }, 300);
+    });
+});

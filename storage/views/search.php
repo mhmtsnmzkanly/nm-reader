@@ -17,12 +17,6 @@ $activeStatus = (string) ($active_status ?? 'TÜMÜ');
 $activeSort = (string) ($active_sort ?? 'EN YENİLER');
 ?>
 
-<style>
-    .manga-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; }
-    .tag-pill { transition: all 0.2s ease; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); }
-    .tag-pill.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
-</style>
-
 <main class="pt-12 pb-20 px-6 max-w-7xl mx-auto">
     <!-- Search Header -->
     <div class="mb-12">
@@ -152,48 +146,3 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
         </div>
     </form>
 </main>
-
-<script>
-    $(document).ready(function () {
-        lucide.createIcons();
-
-        function updateInputs() {
-            const genres = [];
-            $(".tag-pill-genre.active").each(function() {
-                const slug = $(this).data("slug");
-                if (slug) genres.push(slug);
-            });
-            $("#genresInput").val(genres.join(','));
-
-            const tags = [];
-            $(".tag-pill-tag.active").each(function() {
-                const slug = $(this).data("slug");
-                if (slug) tags.push(slug);
-            });
-            $("#tagsInput").val(tags.join(','));
-        }
-
-        // Genre selection
-        $(".tag-pill-genre").click(function () {
-            const slug = $(this).data("slug");
-            if (slug === "") {
-                $(".tag-pill-genre").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
-                $(this).addClass("active").removeClass("bg-white/5 text-gray-400");
-            } else {
-                $(".tag-pill-genre[data-slug='']").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
-                $(this).toggleClass("active bg-white/5 text-gray-400");
-
-                if ($(".tag-pill-genre.active").length === 0) {
-                    $(".tag-pill-genre[data-slug='']").addClass("active").removeClass("bg-white/5 text-gray-400");
-                }
-            }
-            updateInputs();
-        });
-
-        // Tag selection
-        $(".tag-pill-tag").click(function () {
-            $(this).toggleClass("active bg-white/5 text-gray-400");
-            updateInputs();
-        });
-    });
-</script>

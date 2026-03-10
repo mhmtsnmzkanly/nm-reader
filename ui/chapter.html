@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="tr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Solo Leveling - Bölüm 124 | Manga.app</title>
+        <!-- Tailwind CSS for Styling -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- jQuery for Interactivity -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <!-- Lucide Icons -->
+        <script src="https://unpkg.com/lucide@latest"></script>
+
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Lora:ital,wght@0,400;0,700;1,400&display=swap");
+
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: #050505;
+                color: #e3e2e6;
+                line-height: 1.6;
+            }
+
+            .novel-text {
+                font-family: "Lora", serif;
+                font-size: 1.25rem;
+                line-height: 2;
+                max-width: 800px;
+                margin: 0 auto;
+                color: #d1d1d1;
+            }
+
+            .glass {
+                background: rgba(15, 15, 15, 0.7);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            /* Manga View Modes */
+            .manga-vertical img {
+                width: 100%;
+                display: block;
+                margin: 0 auto;
+            }
+
+            .manga-horizontal {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                height: calc(100vh - 80px);
+            }
+
+            .manga-horizontal img {
+                height: 100%;
+                scroll-snap-align: center;
+                object-fit: contain;
+            }
+
+            .mode-active {
+                color: #3b82f6 !important;
+                background: rgba(59, 130, 246, 0.1);
+            }
+
+            .hide-scroll::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Controls bar */
+            .reader-controls {
+                position: fixed;
+                bottom: 24px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 100;
+            }
+
+            .reading-progress-ring {
+                transition: stroke-dashoffset 0.1s;
+                transform: rotate(-90deg);
+                transform-origin: 50% 50%;
+            }
+        </style>
+    </head>
+    <body class="overflow-x-hidden">
+        <!-- TOP NAVIGATION -->
+        <header
+            class="fixed top-0 w-full z-50 h-16 glass flex items-center px-6 justify-between"
+        >
+            <div class="flex items-center gap-4">
+                <button
+                    class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 transition-all"
+                >
+                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                </button>
+                <div>
+                    <h1
+                        class="text-sm font-black uppercase tracking-tighter text-white leading-none"
+                    >
+                        Solo Leveling
+                    </h1>
+                    <p
+                        class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1"
+                    >
+                        Bölüm 124: Gölge Ordusu
+                    </p>
+                </div>
+            </div>
+
+            <!-- Mode Switcher -->
+            <div
+                class="flex items-center bg-black/40 p-1 rounded-2xl border border-white/5"
+            >
+                <button
+                    id="btn-novel"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all mode-active"
+                >
+                    <i data-lucide="type" class="w-4 h-4"></i> NOVEL
+                </button>
+                <button
+                    id="btn-manga"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all"
+                >
+                    <i data-lucide="image" class="w-4 h-4"></i> MANGA
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button
+                    class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5"
+                >
+                    <i
+                        data-lucide="settings-2"
+                        class="w-5 h-5 text-gray-400"
+                    ></i>
+                </button>
+                <button
+                    class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20"
+                >
+                    <i data-lucide="bookmark" class="w-5 h-5 text-white"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT AREAS -->
+        <main class="pt-24 pb-32 min-h-screen">
+            <!-- 1. NOVEL MODE VIEW -->
+            <section
+                id="view-novel"
+                class="px-6 animate-in fade-in duration-500"
+            >
+                <article class="novel-text">
+                    <p>
+                        Sung Jin-Woo, karşısındaki devasa kapıya bakarken
+                        kalbinin ritmini duyabiliyordu. Sistem penceresi gözünün
+                        önünde belirdi:
+                    </p>
+                    <p class="text-blue-500 italic font-medium">
+                        [Uyarı: Bu alana giriş yapmak için 'Gölge Hükümdarı'
+                        unvanına sahip olmanız gerekmektedir.]
+                    </p>
+                    <p>
+                        Ellerini kapıya koyduğunda, soğuk metalin ruhuna
+                        işlediğini hissetti. Arkasındaki gölgeler sabırsızca
+                        dalgalanıyordu. Igris, sadık bir şövalye gibi hemen
+                        yanında belirdi. "Efendim," dedi derin, yankılı bir
+                        sesle, "içerideki güç... bildiğimiz hiçbir şeye
+                        benzemiyor."
+                    </p>
+                    <p>
+                        Jin-Woo hafifçe gülümsedi. "Öyleyse," dedi kapıyı
+                        iterek, "onlara gerçek gücün kimin elinde olduğunu
+                        gösterme vaktimiz gelmiş demektir."
+                    </p>
+                    <p>
+                        Kapı açıldığında içeri sızan karanlık, zindanın en derin
+                        köşelerinden bile daha yoğundu. Ancak Jin-Woo için bu
+                        karanlık, bir düşman değil, bir sığınaktı. Adımlarını
+                        içeri attığında Sistem son bir mesaj daha gönderdi...
+                    </p>
+                    <div
+                        class="my-12 py-8 border-y border-white/5 text-center italic text-gray-500"
+                    >
+                        Sistem: [Gizli Görev: Kadim Hatıralar başlatıldı.]
+                    </div>
+                    <p>
+                        Oda aniden aydınlandı. Duvarlarda asılı duran binlerce
+                        kılıç, Jin-Woo'nun varlığına tepki vererek titremeye
+                        başladı. Burası bir mezarlık değil, bir cephanelikti. Ve
+                        her silah, bir zamanlar hüküm sürmüş bir gölgeye aitti.
+                    </p>
+                </article>
+            </section>
+
+            <!-- 2. MANGA MODE VIEW (HIDDEN BY DEFAULT) -->
+            <section id="view-manga" class="hidden">
+                <!-- Vertical/Webtoon View -->
+                <div
+                    id="manga-scroll"
+                    class="manga-vertical flex flex-col items-center"
+                >
+                    <img
+                        src="https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=1200"
+                        alt="Manga Page 1"
+                        class="max-w-4xl border-b border-black"
+                    />
+                    <img
+                        src="https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=1200"
+                        alt="Manga Page 2"
+                        class="max-w-4xl border-b border-black"
+                    />
+                    <img
+                        src="https://images.unsplash.com/photo-1601850494422-3cf14624b0b3?q=80&w=1200"
+                        alt="Manga Page 3"
+                        class="max-w-4xl"
+                    />
+                    <div
+                        class="py-12 text-center text-gray-600 text-[10px] font-black tracking-widest uppercase"
+                    >
+                        Bölüm Sonu - Okuduğunuz İçin Teşekkürler
+                    </div>
+                </div>
+
+                <!-- Horizontal Slider View (Triggered by Settings) -->
+                <div
+                    id="manga-horizontal"
+                    class="hidden manga-horizontal hide-scroll"
+                >
+                    <img
+                        src="https://images.unsplash.com/photo-1618336753974-aae8e04506aa?q=80&w=1200"
+                        alt="P1"
+                    />
+                    <img
+                        src="https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=1200"
+                        alt="P2"
+                    />
+                    <img
+                        src="https://images.unsplash.com/photo-1601850494422-3cf14624b0b3?q=80&w=1200"
+                        alt="P3"
+                    />
+                </div>
+            </section>
+        </main>
+
+        <!-- READER CONTROLS -->
+        <div class="reader-controls flex items-center gap-4">
+            <div
+                class="glass border border-white/10 p-2 rounded-[24px] flex items-center gap-2 shadow-2xl"
+            >
+                <button
+                    class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-all"
+                >
+                    <i
+                        data-lucide="chevron-left"
+                        class="w-5 h-5 text-gray-400"
+                    ></i>
+                </button>
+
+                <div class="px-6 flex flex-col items-center">
+                    <span
+                        class="text-[9px] font-black text-blue-500 tracking-[0.2em] uppercase mb-1"
+                        >İLERLEME</span
+                    >
+                    <div class="flex items-center gap-3">
+                        <span
+                            id="page-num"
+                            class="text-sm font-black text-white"
+                            >12</span
+                        >
+                        <div
+                            class="w-32 h-1 bg-white/5 rounded-full overflow-hidden"
+                        >
+                            <div
+                                id="progress-bar"
+                                class="h-full bg-blue-600"
+                                style="width: 45%"
+                            ></div>
+                        </div>
+                        <span class="text-sm font-black text-gray-600">48</span>
+                    </div>
+                </div>
+
+                <button
+                    class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-all"
+                >
+                    <i
+                        data-lucide="chevron-right"
+                        class="w-5 h-5 text-gray-400"
+                    ></i>
+                </button>
+            </div>
+
+            <!-- Vertical/Horizontal Toggle for Manga -->
+            <button
+                id="toggle-layout"
+                class="hidden w-16 h-16 glass border border-white/10 rounded-[24px] flex items-center justify-center hover:bg-blue-600 group transition-all"
+            >
+                <i
+                    data-lucide="columns"
+                    class="w-6 h-6 text-gray-400 group-hover:text-white"
+                ></i>
+            </button>
+        </div>
+
+        <!-- SCRIPTS -->
+        <script>
+            $(document).ready(function () {
+                lucide.createIcons();
+
+                // Mode Switching Logic
+                $("#btn-novel").click(function () {
+                    $(".mode-active").removeClass("mode-active");
+                    $(this).addClass("mode-active");
+                    $("#view-manga").fadeOut(200, function () {
+                        $("#view-novel").fadeIn(300);
+                        $("#toggle-layout").addClass("hidden");
+                    });
+                });
+
+                $("#btn-manga").click(function () {
+                    $(".mode-active").removeClass("mode-active");
+                    $(this).addClass("mode-active");
+                    $("#view-novel").fadeOut(200, function () {
+                        $("#view-manga").fadeIn(300);
+                        $("#toggle-layout").removeClass("hidden");
+                    });
+                });
+
+                // Manga Layout Toggle (Vertical/Horizontal)
+                let isHorizontal = false;
+                $("#toggle-layout").click(function () {
+                    isHorizontal = !isHorizontal;
+                    if (isHorizontal) {
+                        $("#manga-scroll").addClass("hidden");
+                        $("#manga-horizontal")
+                            .removeClass("hidden")
+                            .addClass("flex");
+                        $(this).find("i").attr("data-lucide", "rows");
+                        $("body").addClass("overflow-hidden");
+                    } else {
+                        $("#manga-horizontal")
+                            .addClass("hidden")
+                            .removeClass("flex");
+                        $("#manga-scroll").removeClass("hidden");
+                        $(this).find("i").attr("data-lucide", "columns");
+                        $("body").removeClass("overflow-hidden");
+                    }
+                    lucide.createIcons();
+                });
+
+                // Progress tracking
+                $(window).scroll(function () {
+                    if (
+                        $("#view-novel").is(":visible") ||
+                        $("#manga-scroll").is(":visible")
+                    ) {
+                        let winHeight = $(window).height();
+                        let docHeight = $(document).height();
+                        let scrollTop = $(window).scrollTop();
+                        let progress =
+                            (scrollTop / (docHeight - winHeight)) * 100;
+                        $("#progress-bar").css("width", progress + "%");
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

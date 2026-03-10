@@ -10,13 +10,6 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
 
 <?php if ($isList): ?>
     <!-- BLOG LIST VIEW -->
-    <style>
-        .blog-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .blog-card:hover { transform: translateY(-12px); border-color: rgba(59, 130, 246, 0.5); background: rgba(59, 130, 246, 0.03); }
-        .blog-card img { transition: transform 0.6s ease; }
-        .blog-card:hover img { transform: scale(1.05); }
-    </style>
-
     <div class="max-w-7xl mx-auto px-6 py-12">
         <!-- Hero Blog Section (Featured) -->
         <?php if (!empty($blogList)): 
@@ -75,20 +68,6 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
 
 <?php else: ?>
     <!-- SINGLE BLOG POST VIEW -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap');
-        .serif-text { font-family: 'Lora', serif; }
-        .article-content p { margin-bottom: 1.5rem; font-size: 1.125rem; color: #b1b1b1; }
-        .article-content h2 { font-family: 'Inter', sans-serif; font-weight: 900; text-transform: uppercase; font-size: 1.875rem; margin-top: 3rem; margin-bottom: 1.5rem; letter-spacing: -0.025em; color: #ffffff; }
-        .progress-bar { height: 3px; background: #3b82f6; position: fixed; top: 0; left: 0; z-index: 100; transition: width 0.1s ease; }
-        blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5rem 0; font-size: 1.25rem; color: #ffffff; }
-        .spoiler-box { position: relative; cursor: pointer; overflow: hidden; transition: all 0.3s ease; }
-        .spoiler-content { filter: blur(8px); user-select: none; transition: all 0.5s ease; opacity: 0.3; }
-        .spoiler-box.revealed .spoiler-content { filter: blur(0); user-select: auto; opacity: 1; }
-        .spoiler-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10; transition: opacity 0.3s ease; }
-        .spoiler-box.revealed .spoiler-overlay { opacity: 0; pointer-events: none; }
-    </style>
-
     <div class="progress-bar" id="readingProgress" style="width: 0%"></div>
 
     <main class="pt-12 pb-24">
@@ -170,29 +149,4 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
             </div>
         </footer>
     </main>
-
-    <script>
-        $(document).ready(function () {
-            // Reading Progress Bar
-            $(window).scroll(function () {
-                let wintop = $(window).scrollTop(),
-                    docheight = $(document).height(),
-                    winheight = $(window).height();
-                let scrolled = (wintop / (docheight - winheight)) * 100;
-                $("#readingProgress").css("width", scrolled + "%");
-            });
-        });
-    </script>
 <?php endif; ?>
-
-<script>
-    $(document).ready(function() {
-        lucide.createIcons();
-        
-        // Blog cards entry animation
-        $('.blog-card').css('opacity', '0');
-        $('.blog-card').each(function(i) {
-            $(this).delay(100 * i).animate({opacity: 1}, 500);
-        });
-    });
-</script>

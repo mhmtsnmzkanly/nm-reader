@@ -10,16 +10,6 @@ $popularBlogs = is_array($homeData['popular_blogs'] ?? null) ? $homeData['popula
 $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_blogs'] : [];
 ?>
 
-<style>
-    /* Slide Transition */
-    .slide-item { display: none; animation: fadeEffect 1s; }
-    @keyframes fadeEffect { from { opacity: 0.4; } to { opacity: 1; } }
-
-    /* Manga Card Hover Effect */
-    .manga-card:hover .card-overlay { opacity: 1; }
-    .manga-card:hover img { transform: scale(1.1); }
-</style>
-
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
     <!-- TREND SLIDER (Explore Data) -->
     <?php if (!empty($explore)): ?>
@@ -144,33 +134,3 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
         </div>
     </section>
 </div>
-
-<script>
-    $(document).ready(function () {
-        // SLIDESHOW LOGIC
-        let currentSlide = 0;
-        const slides = $(".slide-item");
-        const dots = $(".dot");
-
-        if (slides.length > 0) {
-            function showSlide(n) {
-                slides.hide();
-                dots.removeClass("bg-blue-600 w-8").addClass("bg-white/20 w-3");
-                currentSlide = (n + slides.length) % slides.length;
-                $(slides[currentSlide]).fadeIn(1000);
-                $(dots[currentSlide]).removeClass("bg-white/20 w-3").addClass("bg-blue-600 w-8");
-            }
-
-            function nextSlide() { showSlide(currentSlide + 1); }
-            let slideInterval = setInterval(nextSlide, 5000);
-
-            dots.on("click", function () {
-                clearInterval(slideInterval);
-                showSlide($(this).data("idx"));
-                slideInterval = setInterval(nextSlide, 5000);
-            });
-
-            showSlide(0);
-        }
-    });
-</script>

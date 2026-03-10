@@ -9,17 +9,6 @@ $heading = (string) ($page_heading ?? 'Listeleme');
 $items = is_array($items ?? null) ? $items : [];
 ?>
 
-<style>
-    .manga-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    .manga-card:hover { transform: translateY(-10px); }
-    .manga-image-container { position: relative; aspect-ratio: 2/3; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); background: #121212; }
-    .manga-image-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s; }
-    .manga-card:hover img { transform: scale(1.1); }
-    .card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; display: flex; align-items: flex-end; padding: 20px; }
-    .manga-card:hover .card-overlay { opacity: 1; }
-    .filter-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-</style>
-
 <main class="pt-12 pb-20 px-6 max-w-7xl mx-auto">
     <!-- Category Header -->
     <div class="relative mb-16">
@@ -123,15 +112,3 @@ $items = is_array($items ?? null) ? $items : [];
         </button>
     </div>
 </main>
-
-<script>
-    $(document).ready(function () {
-        lucide.createIcons();
-
-        // Filter buttons toggle
-        $(".filter-btn").click(function () {
-            $(".filter-btn").removeClass("active text-white").addClass("text-gray-500");
-            $(this).addClass("active text-white").removeClass("text-gray-500");
-        });
-    });
-</script>

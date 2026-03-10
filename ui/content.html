@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="tr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Solo Leveling | Manga Detay</title>
+        <!-- Tailwind CSS for Styling -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- jQuery for Interactivity -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <!-- Lucide Icons -->
+        <script src="https://unpkg.com/lucide@latest"></script>
+
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap");
+
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: #080808;
+                color: #e3e2e6;
+            }
+
+            .glass {
+                background: rgba(255, 255, 255, 0.03);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+
+            .chapter-row:hover {
+                background: rgba(255, 255, 255, 0.05);
+                transform: translateX(8px);
+            }
+
+            .bg-mesh {
+                background-image:
+                    radial-gradient(
+                        at 0% 0%,
+                        hsla(225, 39%, 30%, 1) 0,
+                        transparent 50%
+                    ),
+                    radial-gradient(
+                        at 50% 0%,
+                        hsla(225, 39%, 20%, 1) 0,
+                        transparent 50%
+                    );
+            }
+
+            .modal-overlay {
+                background: rgba(0, 0, 0, 0.9);
+                backdrop-filter: blur(10px);
+            }
+
+            @keyframes pop {
+                0% {
+                    transform: scale(0.9);
+                    opacity: 0;
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            .animate-pop {
+                animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+        </style>
+    </head>
+    <body class="overflow-x-hidden">
+        <!-- HEADER -->
+        <header
+            class="fixed top-0 w-full z-50 h-20 glass border-b border-white/5"
+        >
+            <div
+                class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between"
+            >
+                <div
+                    class="flex items-center gap-3 cursor-pointer group"
+                    onclick="location.reload()"
+                >
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center font-black italic text-white shadow-lg shadow-blue-600/20 group-hover:rotate-6 transition-transform"
+                    >
+                        M
+                    </div>
+                    <span
+                        class="font-black tracking-tighter text-xl uppercase italic hidden sm:inline text-white"
+                        >MANGA.APP</span
+                    >
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <!-- User Coins -->
+                    <div
+                        class="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-4 py-2 rounded-2xl"
+                    >
+                        <i
+                            data-lucide="coins"
+                            class="w-4 h-4 text-yellow-500"
+                        ></i>
+                        <span
+                            id="userBalance"
+                            class="text-xs font-black text-yellow-500"
+                            >250</span
+                        >
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center font-bold text-xs shadow-lg shadow-blue-600/20 cursor-pointer"
+                    >
+                        JD
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT DETAIL -->
+        <main class="pt-20">
+            <!-- Hero Section -->
+            <section
+                class="relative w-full h-[500px] sm:h-[650px] flex items-end bg-mesh"
+            >
+                <div class="absolute inset-0 z-0">
+                    <img
+                        src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1200"
+                        class="w-full h-full object-cover opacity-20 blur-3xl"
+                        alt="Solo Leveling Background"
+                    />
+                    <div
+                        class="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent"
+                    ></div>
+                </div>
+
+                <div class="relative z-10 max-w-7xl mx-auto px-6 w-full pb-12">
+                    <div class="flex flex-col md:flex-row gap-10 items-end">
+                        <div
+                            class="hidden md:block w-72 aspect-[2/3] rounded-[40px] overflow-hidden shadow-2xl border-4 border-white/5 shrink-0"
+                        >
+                            <img
+                                src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=800"
+                                class="w-full h-full object-cover"
+                                alt="Solo Leveling Poster"
+                            />
+                        </div>
+
+                        <div class="flex-1">
+                            <h1
+                                class="text-5xl sm:text-7xl font-black italic uppercase tracking-tighter text-white mb-6 leading-none"
+                            >
+                                SOLO LEVELING
+                            </h1>
+                            <div class="flex flex-wrap items-center gap-8 mb-8">
+                                <div class="flex items-center gap-2">
+                                    <i
+                                        data-lucide="star"
+                                        class="w-6 h-6 text-yellow-500 fill-current"
+                                    ></i>
+                                    <span class="text-2xl font-black"
+                                        >4.92</span
+                                    >
+                                </div>
+                                <div
+                                    class="flex items-center gap-2 text-gray-400"
+                                >
+                                    <i
+                                        data-lucide="book-open"
+                                        class="w-6 h-6"
+                                    ></i>
+                                    <span class="text-2xl font-black"
+                                        >179 Bölüm</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Body Content -->
+            <section
+                class="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-3 gap-16"
+            >
+                <div class="lg:col-span-2">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2
+                            class="text-2xl font-black italic uppercase tracking-tighter text-white flex items-center gap-3"
+                        >
+                            <div class="w-2 h-8 bg-blue-600 rounded-full"></div>
+                            BÖLÜMLER
+                        </h2>
+                    </div>
+
+                    <div id="chapterList" class="space-y-3">
+                        <!-- Chapter 179 (Paid) -->
+                        <div
+                            class="chapter-row flex items-center justify-between p-6 glass rounded-[24px] cursor-pointer transition-all border border-white/5 group"
+                            data-id="179"
+                            data-price="50"
+                            data-locked="true"
+                        >
+                            <div class="flex items-center gap-6">
+                                <span
+                                    class="w-12 h-12 flex items-center justify-center bg-zinc-800 rounded-2xl text-gray-500 font-black italic chapter-num"
+                                    >179</span
+                                >
+                                <div>
+                                    <h4
+                                        class="font-black uppercase text-sm group-hover:text-blue-500 transition-colors"
+                                    >
+                                        Final: Yeni Bir Başlangıç
+                                    </h4>
+                                    <p
+                                        class="text-[10px] text-gray-500 font-bold uppercase mt-1"
+                                    >
+                                        Sistem Güncellemesi
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="coin-badge flex items-center gap-2 bg-yellow-500 text-black px-3 py-1.5 rounded-xl font-black text-[10px]"
+                                >
+                                    <i data-lucide="lock" class="w-3 h-3"></i>
+                                    50 JETON
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chapter 178 (Paid) -->
+                        <div
+                            class="chapter-row flex items-center justify-between p-6 glass rounded-[24px] cursor-pointer transition-all border border-white/5 group"
+                            data-id="178"
+                            data-price="300"
+                            data-locked="true"
+                        >
+                            <div class="flex items-center gap-6">
+                                <span
+                                    class="w-12 h-12 flex items-center justify-center bg-zinc-800 rounded-2xl text-gray-500 font-black italic chapter-num"
+                                    >178</span
+                                >
+                                <div>
+                                    <h4
+                                        class="font-black uppercase text-sm group-hover:text-blue-500 transition-colors"
+                                    >
+                                        Gölge Ordusunun Dönüşü
+                                    </h4>
+                                    <p
+                                        class="text-[10px] text-gray-500 font-bold uppercase mt-1"
+                                    >
+                                        Büyük Savaş
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="coin-badge flex items-center gap-2 bg-yellow-500 text-black px-3 py-1.5 rounded-xl font-black text-[10px]"
+                                >
+                                    <i data-lucide="lock" class="w-3 h-3"></i>
+                                    300 JETON
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chapter 177 (Free) -->
+                        <div
+                            class="chapter-row flex items-center justify-between p-6 glass rounded-[24px] cursor-pointer transition-all border border-white/5 group"
+                            data-id="177"
+                            data-price="0"
+                            data-locked="false"
+                        >
+                            <div class="flex items-center gap-6">
+                                <span
+                                    class="w-12 h-12 flex items-center justify-center bg-blue-600 rounded-2xl text-white font-black italic"
+                                    >177</span
+                                >
+                                <div>
+                                    <h4
+                                        class="font-black uppercase text-sm text-blue-500"
+                                    >
+                                        Karanlık Hükümdar
+                                    </h4>
+                                    <p
+                                        class="text-[10px] text-gray-500 font-bold uppercase mt-1"
+                                    >
+                                        Ücretsiz Bölüm
+                                    </p>
+                                </div>
+                            </div>
+                            <i
+                                data-lucide="chevron-right"
+                                class="w-5 h-5 text-gray-600 group-hover:text-white"
+                            ></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="glass rounded-[40px] p-8 border border-white/5">
+                        <h3
+                            class="font-black italic uppercase text-sm mb-4 text-yellow-500"
+                        >
+                            CÜZDANINIZ
+                        </h3>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i
+                                    data-lucide="coins"
+                                    class="w-8 h-8 text-yellow-500"
+                                ></i>
+                                <div>
+                                    <p
+                                        id="walletDisplay"
+                                        class="text-3xl font-black"
+                                    >
+                                        250
+                                    </p>
+                                    <p
+                                        class="text-[9px] text-gray-500 font-bold uppercase"
+                                    >
+                                        Mevcut Jeton
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                class="bg-white text-black p-3 rounded-2xl hover:bg-yellow-500 transition-colors"
+                            >
+                                <i data-lucide="plus" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- PURCHASE POPUP -->
+        <div
+            id="purchaseModal"
+            class="fixed inset-0 z-[100] modal-overlay hidden items-center justify-center p-4"
+        >
+            <div
+                class="w-full max-w-sm glass border border-white/10 rounded-[40px] p-8 text-center animate-pop"
+            >
+                <div
+                    class="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6"
+                >
+                    <i
+                        data-lucide="shopping-cart"
+                        class="w-10 h-10 text-yellow-500"
+                    ></i>
+                </div>
+                <h3 class="text-2xl font-black italic uppercase mb-2">
+                    BÖLÜMÜ AL?
+                </h3>
+                <p class="text-gray-400 text-sm mb-8">
+                    Bu bölümü açmak için
+                    <span id="modalPrice" class="text-yellow-500 font-bold"
+                        >--</span
+                    >
+                    jeton harcanacak.
+                </p>
+
+                <div class="flex gap-4">
+                    <button
+                        id="cancelPurchase"
+                        class="flex-1 py-4 bg-white/5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10"
+                    >
+                        VAZGEÇ
+                    </button>
+                    <button
+                        id="confirmPurchase"
+                        class="flex-1 py-4 bg-yellow-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-yellow-500/20"
+                    >
+                        SATIN AL
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION POPUP (Success/Error) -->
+        <div
+            id="notificationModal"
+            class="fixed inset-0 z-[110] modal-overlay hidden items-center justify-center p-4"
+        >
+            <div
+                id="notifContent"
+                class="w-full max-w-sm glass border border-white/10 rounded-[40px] p-8 text-center animate-pop"
+            >
+                <div
+                    id="notifIcon"
+                    class="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6"
+                >
+                    <!-- Icon via JS -->
+                </div>
+                <h3
+                    id="notifTitle"
+                    class="text-2xl font-black italic uppercase mb-2"
+                >
+                    --
+                </h3>
+                <p id="notifMsg" class="text-gray-400 text-sm mb-8">--</p>
+                <button
+                    id="closeNotif"
+                    class="w-full py-4 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-widest"
+                >
+                    TAMAM
+                </button>
+            </div>
+        </div>
+
+        <script>
+            $(document).ready(function () {
+                lucide.createIcons();
+
+                let userBalance = 250;
+                let selectedChapter = null;
+
+                // Bölüm Tıklama
+                $(".chapter-row").on("click", function () {
+                    const isLocked = $(this).data("locked");
+                    const price = parseInt($(this).data("price"));
+                    const id = $(this).data("id");
+
+                    if (isLocked) {
+                        selectedChapter = { el: $(this), price, id };
+                        $("#modalPrice").text(price);
+                        $("#purchaseModal")
+                            .removeClass("hidden")
+                            .addClass("flex");
+                    } else {
+                        // Ücretsiz veya zaten alınmış bölüm - Okuma sayfasına git
+                        showNotification(
+                            "info",
+                            "OKUMA MODU",
+                            "Bölüm " + id + " açılıyor...",
+                        );
+                    }
+                });
+
+                // Satın Alma Onay
+                $("#confirmPurchase").on("click", function () {
+                    $("#purchaseModal").addClass("hidden").removeClass("flex");
+
+                    if (userBalance >= selectedChapter.price) {
+                        // Başarılı
+                        userBalance -= selectedChapter.price;
+                        updateUI(true);
+                        showNotification(
+                            "success",
+                            "BAŞARILI!",
+                            "Bölüm başarıyla kütüphanene eklendi.",
+                        );
+
+                        // UI Güncelle (Bölüm satırı)
+                        const el = selectedChapter.el;
+                        el.data("locked", false);
+                        el.find(".chapter-num")
+                            .removeClass("bg-zinc-800 text-gray-500")
+                            .addClass("bg-blue-600 text-white");
+                        el.find(".coin-badge").replaceWith(
+                            '<i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i>',
+                        );
+                        el.find("h4").addClass("text-blue-500");
+                        lucide.createIcons();
+                    } else {
+                        // Hata
+                        showNotification(
+                            "error",
+                            "YETERSİZ BAKİYE",
+                            "Bu bölümü açmak için yeterli jetonun yok.",
+                        );
+                    }
+                });
+
+                $("#cancelPurchase").on("click", () =>
+                    $("#purchaseModal").addClass("hidden").removeClass("flex"),
+                );
+                $("#closeNotif").on("click", () =>
+                    $("#notificationModal")
+                        .addClass("hidden")
+                        .removeClass("flex"),
+                );
+
+                function updateUI(animate) {
+                    $("#userBalance, #walletDisplay").text(userBalance);
+                    if (animate) {
+                        $("#userBalance").parent().addClass("scale-110");
+                        setTimeout(
+                            () =>
+                                $("#userBalance")
+                                    .parent()
+                                    .removeClass("scale-110"),
+                            200,
+                        );
+                    }
+                }
+
+                function showNotification(type, title, msg) {
+                    const config = {
+                        success: {
+                            icon: "check",
+                            color: "bg-green-500/20 text-green-500",
+                        },
+                        error: {
+                            icon: "alert-triangle",
+                            color: "bg-red-500/20 text-red-500",
+                        },
+                        info: {
+                            icon: "info",
+                            color: "bg-blue-500/20 text-blue-500",
+                        },
+                    };
+
+                    const s = config[type];
+                    $("#notifIcon")
+                        .removeClass()
+                        .addClass(
+                            `w-20 h-20 ${s.color} rounded-3xl flex items-center justify-center mx-auto mb-6`,
+                        );
+                    $("#notifIcon").html(
+                        `<i data-lucide="${s.icon}" class="w-10 h-10"></i>`,
+                    );
+                    $("#notifTitle").text(title);
+                    $("#notifMsg").text(msg);
+
+                    $("#notificationModal")
+                        .removeClass("hidden")
+                        .addClass("flex");
+                    lucide.createIcons();
+                }
+            });
+        </script>
+    </body>
+</html>

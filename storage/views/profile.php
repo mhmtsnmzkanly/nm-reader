@@ -12,13 +12,6 @@ $comments = is_array($profile['recent_comments'] ?? null) ? $profile['recent_com
 $username = (string) ($user['username'] ?? 'User');
 ?>
 
-<style>
-    .profile-card { background: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, rgba(8, 8, 8, 1) 100%); }
-    .tab-active { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
-    .manga-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.5rem; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-</style>
-
 <main class="pb-24">
     <!-- Profile Hero Section -->
     <section class="profile-card pt-12 pb-8 px-6 border-b border-white/5">
@@ -196,25 +189,3 @@ $username = (string) ($user['username'] ?? 'User');
         <?php endif; ?>
     </section>
 </main>
-
-<script>
-    $(document).ready(function () {
-        lucide.createIcons();
-
-        // Tab Switching Logic
-        $(".tab-btn").click(function () {
-            const target = $(this).data("tab");
-
-            $(".tab-btn").removeClass("tab-active text-white").addClass("text-gray-500");
-            $(this).addClass("tab-active text-white").removeClass("text-gray-500");
-
-            $(".tab-content").addClass("hidden");
-            $("#tab-" + target).removeClass("hidden");
-            if (target === 'blogs') {
-                $("#tab-blogs").addClass("grid");
-            } else {
-                $("#tab-blogs").removeClass("grid");
-            }
-        });
-    });
-</script>

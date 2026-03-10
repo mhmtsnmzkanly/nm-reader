@@ -17,15 +17,6 @@ $prevUrl = (!empty($adjacent['prev']) && is_string($adjacent['prev'])) ? $url($c
 $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode($adjacent['next'])) : null;
 ?>
 
-<style>
-    @import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap");
-    .novel-text { font-family: "Lora", serif; font-size: 1.25rem; line-height: 2; max-width: 800px; margin: 0 auto; color: #d1d1d1; }
-    .novel-text p { margin-bottom: 1.5rem; }
-    .manga-vertical img { width: 100%; display: block; margin: 0 auto; }
-    .reader-controls { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 100; }
-    .glass-nav { background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-</style>
-
 <!-- TOP NAVIGATION -->
 <div class="fixed top-0 left-0 w-full z-[60] h-16 glass-nav flex items-center px-6 justify-between">
     <div class="flex items-center gap-4">
@@ -100,18 +91,3 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
         </a>
     </div>
 </div>
-
-<script>
-    $(document).ready(function () {
-        lucide.createIcons();
-
-        // Progress tracking
-        $(window).scroll(function () {
-            let winHeight = $(window).height();
-            let docHeight = $(document).height();
-            let scrollTop = $(window).scrollTop();
-            let progress = (scrollTop / (docHeight - winHeight)) * 100;
-            $("#reader-progress-bar").css("width", progress + "%");
-        });
-    });
-</script>
