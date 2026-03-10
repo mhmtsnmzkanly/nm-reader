@@ -64,7 +64,8 @@ final class SeriesService
         $cacheKeyChapters = 'homepage_recent_chapters_5';
         $recentChapters = $this->cache->remember($cacheKeyChapters, 60, fn () => $this->series->getLatestChapters(1, 5));
         $recentChapters = array_map(function($row) {
-            $row['type_path'] = $this->toTypeSegment((string)($row['series_type'] ?? 'novel'));
+            $seriesType = (string)($row['series_type'] ?? 'novel');
+            $row['type_path'] = $this->toTypeSegment($seriesType);
             $row['slug'] = (string)($row['series_slug'] ?? ''); // Ensure slug key exists
             $row['chapter_number'] = ChapterNumber::normalize($row['chapter_number'] ?? '');
             $row['cover_image'] = $row['cover_image'] ?: '/assets/img/logo.svg'; 

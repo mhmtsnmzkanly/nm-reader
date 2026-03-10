@@ -306,10 +306,13 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                         $typeColors = [
                             'manga' => 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]',
                             'novel' => 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]',
+                            'web-novel' => 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]',
+                            'light-novel' => 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]',
                             'webtoon' => 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
                         ];
                         foreach (array_slice($footerLatestChapters ?? [], 0, 4) as $lat): 
-                            $dotColor = $typeColors[strtolower((string)($lat['series_type'] ?? ''))] ?? 'bg-gray-500';
+                            $rawType = strtolower((string)($lat['series_type'] ?? ''));
+                            $dotColor = $typeColors[$rawType] ?? 'bg-gray-500';
                         ?>
                             <a href="<?= $url((string)($lat['series_type'] ?? 'novel') . '/' . (string)($lat['series_slug'] ?? '') . '/chapter/' . rawurlencode((string)($lat['chapter_number'] ?? ''))) ?>" class="footer-link group flex flex-col gap-1">
                                 <div class="flex items-center gap-2">
