@@ -55,6 +55,22 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <?php if (!empty($siteConfig['integrations']['google_analytics_id'])): ?>
+        <!-- Google Analytics (GA4) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= htmlspecialchars($siteConfig['integrations']['google_analytics_id']) ?>"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '<?= htmlspecialchars($siteConfig['integrations']['google_analytics_id']) ?>');
+        </script>
+    <?php endif; ?>
+
+    <?php if (!empty($siteConfig['integrations']['cloudflare_turnstile_site_key'])): ?>
+        <!-- Cloudflare Turnstile -->
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <?php endif; ?>
+
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");
         body { font-family: "Inter", sans-serif; background-color: #080808; color: #e3e2e6; display: flex; flex-direction: column; min-height: 100vh; }
