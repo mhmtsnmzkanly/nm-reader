@@ -14,6 +14,7 @@
 /** @var array $siteConfig */
 /** @var array $footerGenres */
 /** @var array $footerTags */
+/** @var string $contextJson */
 /** @var Closure $url */
 
 $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
@@ -49,6 +50,10 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <?php if (!empty($jsonLd)): ?>
         <script type="application/ld+json"><?= $jsonLd ?></script>
     <?php endif; ?>
+
+    <script>
+        window.NMR_CONTEXT = <?= $contextJson ?? '{}' ?>;
+    </script>
 
     <!-- Assets -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -121,12 +126,10 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
 
         <!-- Right Actions -->
         <div class="flex items-center gap-3 md:gap-5">
-            <!-- Search Button (Mobile Only) -->
             <a href="<?= $url('/search') ?>" class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-400">
                 <i data-lucide="search" class="w-6 h-6"></i>
             </a>
 
-            <!-- User Profile Button -->
             <div class="relative">
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <button id="user-btn" class="flex items-center gap-2 p-1 pr-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
@@ -171,7 +174,6 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                 <?php endif; ?>
             </div>
 
-            <!-- Mobile Menu Toggle -->
             <button id="menu-toggle" class="lg:hidden w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
                 <i data-lucide="menu" class="w-6 h-6 text-white"></i>
             </button>
@@ -269,6 +271,12 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
         </div>
     </footer>
 
+    <!-- MODALS -->
+    <?php include dirname(__DIR__) . '/views/partials_modals.php'; ?>
+
+    <!-- CORE JS -->
+    <script src="/assets/js/app-bundle.js"></script>
+
     <script>
         $(document).ready(function () {
             lucide.createIcons();
@@ -299,6 +307,8 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
             $("#openAuthBtn").on("click", function () {
                 if (window.NMR && window.NMR.showAuthModal) {
                     window.NMR.showAuthModal();
+                } else if (typeof openModal === 'function') {
+                    openModal('loginModal');
                 } else {
                     console.warn('Auth system not initialized');
                 }
