@@ -38,7 +38,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                 <p class="text-gray-300 max-w-lg text-sm sm:text-base italic mb-10 line-clamp-2">
                     <?= htmlspecialchars((string)($item['description'] ?? '')) ?>
                 </p>
-                <a href="<?= $url((string)($item['url_path'] ?? '/')) ?>" class="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase italic text-xs w-fit shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
+                <a href="<?= $url((string)($item['url_path'] ?? '')) ?>" class="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase italic text-xs w-fit shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
                     <i data-lucide="play" class="w-4 h-4 fill-current"></i> ŞİMDİ OKU
                 </a>
             </div>
@@ -63,8 +63,14 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
             <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">Yeni Bölümler</h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <?php foreach (array_slice($recentChapters, 0, 9) as $chapter): ?>
-            <a href="<?= $url('/' . (string) ($chapter['type_path'] ?? 'novel') . '/' . (string) ($chapter['slug'] ?? '') . '/chapter/' . rawurlencode((string) ($chapter['chapter_number'] ?? ''))) ?>" 
+            <?php foreach (array_slice($recentChapters, 0, 9) as $chapter): 
+                $chapterUrl = sprintf('%s/%s/chapter/%s', 
+                    (string)($chapter['type_path'] ?? 'novel'), 
+                    (string)($chapter['slug'] ?? ''), 
+                    rawurlencode((string)($chapter['chapter_number'] ?? ''))
+                );
+            ?>
+            <a href="<?= $url($chapterUrl) ?>" 
                class="glass p-4 rounded-2xl flex items-center gap-4 hover:border-blue-500/50 transition-all group">
                 <div class="w-12 h-16 bg-zinc-800 rounded-lg overflow-hidden flex-shrink-0">
                     <img src="<?= htmlspecialchars((string)($chapter['cover_image'] ?? '')) ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform" />
@@ -91,7 +97,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 sm:gap-8">
             <?php foreach ($recentlyAdded as $item): ?>
-            <div class="manga-card group cursor-pointer" onclick="location.href='<?= $url((string)($item['url_path'] ?? '/')) ?>'">
+            <div class="manga-card group cursor-pointer" onclick="location.href='<?= $url((string)($item['url_path'] ?? '')) ?>'">
                 <div class="aspect-[2/3] rounded-[32px] sm:rounded-[40px] overflow-hidden border border-white/5 bg-zinc-900 mb-4 relative shadow-xl">
                     <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover transition-transform duration-500" alt="<?= htmlspecialchars((string)($item['title'] ?? '')) ?>" />
                     <div class="card-overlay absolute inset-0 bg-black/60 opacity-0 transition-opacity flex items-center justify-center p-4">
@@ -128,7 +134,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <?php foreach ($popularBlogs as $blog): ?>
-            <a href="<?= $url('/blogs/' . (string) ($blog['slug'] ?? '')) ?>" class="glass p-6 rounded-[32px] flex flex-col gap-4 hover:border-purple-500/50 transition-all">
+            <a href="<?= $url('blogs/' . (string) ($blog['slug'] ?? '')) ?>" class="glass p-6 rounded-[32px] flex flex-col gap-4 hover:border-purple-500/50 transition-all">
                 <h3 class="text-lg font-black text-white uppercase italic leading-tight"><?= htmlspecialchars((string)($blog['title'] ?? '')) ?></h3>
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-black">

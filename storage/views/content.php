@@ -60,7 +60,7 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
 
                 <div class="flex flex-wrap gap-3">
                     <?php foreach ($genres as $genre): ?>
-                    <a href="<?= $url('/genre/' . (string) ($genre['slug'] ?? '')) ?>" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+                    <a href="<?= $url('genre/' . (string) ($genre['slug'] ?? '')) ?>" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
                         <?= htmlspecialchars((string) ($genre['name'] ?? '')) ?>
                     </a>
                     <?php endforeach; ?>
@@ -92,9 +92,15 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
             <?php foreach ($chapterItems as $chapter): 
                 $isLocked = ($chapter['access']['is_locked'] ?? false);
                 $price = (int)($chapter['chapter_unlock_price'] ?? 0);
+                $chapterPath = sprintf('%s/%s/chapter/%s', 
+                    (string)($content['type_path'] ?? 'novel'), 
+                    (string)($content['slug'] ?? ''), 
+                    rawurlencode((string)($chapter['chapter_number'] ?? ''))
+                );
+                $fullChapterUrl = $url($chapterPath);
             ?>
             <div class="chapter-row flex items-center justify-between p-6 glass rounded-[24px] cursor-pointer transition-all border border-white/5 group"
-                 onclick="handleChapterClick('<?= $chapter['id'] ?>', <?= $isLocked ? 'true' : 'false' ?>, <?= $price ?>, '<?= $url('/' . (string) ($content['type_path'] ?? 'novel') . '/' . (string) ($content['slug'] ?? '') . '/chapter/' . rawurlencode((string) ($chapter['chapter_number'] ?? ''))) ?>')">
+                 onclick="handleChapterClick('<?= $chapter['id'] ?>', <?= $isLocked ? 'true' : 'false' ?>, <?= $price ?>, '<?= $fullChapterUrl ?>')">
                 <div class="flex items-center gap-6">
                     <span class="w-12 h-12 flex items-center justify-center <?= $isLocked ? 'bg-zinc-800 text-gray-500' : 'bg-blue-600 text-white' ?> rounded-2xl font-black italic">
                         <?= htmlspecialchars((string) ($chapter['chapter_number'] ?? '')) ?>
@@ -169,7 +175,7 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
             <h3 class="font-black italic uppercase text-sm mb-4 text-gray-500">ETİKETLER</h3>
             <div class="flex flex-wrap gap-2">
                 <?php foreach ($tags as $tag): ?>
-                <a href="<?= $url('/tag/' . (string) ($tag['slug'] ?? '')) ?>" class="text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors">#<?= htmlspecialchars((string) ($tag['name'] ?? '')) ?></a>
+                <a href="<?= $url('tag/' . (string) ($tag['slug'] ?? '')) ?>" class="text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors">#<?= htmlspecialchars((string) ($tag['name'] ?? '')) ?></a>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -202,7 +208,11 @@ function handleChapterClick(id, isLocked, price, redirectUrl) {
     }
     
     <?php if (!isset($_SESSION['user_id'])): ?>
-        window.NMR && window.NMR.showAuthModal ? window.NMR.showAuthModal() : alert('Lütfen giriş yapın.');
+        if (window.NMR && window.NMR.showAuthModal) {
+            window.NMR.showAuthModal();
+        } else {
+            alert('Lütfen giriş yapın.');
+        }
         return;
     <?php endif; ?>
 
