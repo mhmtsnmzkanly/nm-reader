@@ -368,7 +368,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     email: $(this).find('input[name="email"]').val(),
                     password: $(this).find('input[name="password"]').val(),
                     remember: $(this).find('input[name="remember"]').is(':checked'),
-                    'cf-turnstile-response': $(this).find('[name="cf-turnstile-response"]').val()
+                    'turnstile_token': $(this).find('[name="cf-turnstile-response"]').val()
                 };
 
                 window.NMRData.post('/auth/login', formData)
@@ -394,7 +394,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     username: $(this).find('input[name="username"]').val(),
                     email: $(this).find('input[name="email"]').val(),
                     password: $(this).find('input[name="password"]').val(),
-                    'cf-turnstile-response': $(this).find('[name="cf-turnstile-response"]').val()
+                    'turnstile_token': $(this).find('[name="cf-turnstile-response"]').val()
                 };
 
                 window.NMRData.post('/auth/register', formData)
