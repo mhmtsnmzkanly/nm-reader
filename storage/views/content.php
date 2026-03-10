@@ -8,6 +8,9 @@ $content = is_array($ssr_data ?? null) ? $ssr_data : [];
 $chapterItems = is_array($chapters ?? null) ? $chapters : [];
 $genres = is_array($content['series_genres'] ?? null) ? $content['series_genres'] : [];
 $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : [];
+
+$type = (string)($content['type_path'] ?? $content['type'] ?? 'novel');
+$slug = (string)($content['slug'] ?? '');
 ?>
 
 <style>
@@ -18,17 +21,24 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
     .chapter-row:hover { background: rgba(255, 255, 255, 0.05); transform: translateX(8px); }
     @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     .animate-pop { animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    
+    /* Dinamik başlık fontu */
+    .dynamic-title {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        line-height: 1.1;
+    }
 </style>
 
 <!-- Hero Section -->
-<section class="relative w-full h-[500px] sm:h-[650px] flex items-end bg-mesh">
-    <!-- Background Image Blur -->
+<section class="relative w-full min-h-[500px] sm:min-h-[650px] flex items-end bg-mesh py-12">
     <div class="absolute inset-0 z-0">
         <img src="<?= htmlspecialchars((string)($content['cover_image'] ?? '')) ?>" class="w-full h-full object-cover opacity-20 blur-3xl" alt="Background" />
         <div class="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent"></div>
     </div>
 
-    <div class="relative z-10 max-w-7xl mx-auto px-6 w-full pb-12">
+    <div class="relative z-10 max-w-7xl mx-auto px-6 w-full">
         <div class="flex flex-col md:flex-row gap-10 items-end">
             <!-- Poster -->
             <div class="hidden md:block w-72 aspect-[2/3] rounded-[40px] overflow-hidden shadow-2xl border-4 border-white/5 shrink-0 bg-zinc-900">
@@ -36,17 +46,9 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
             </div>
 
             <!-- Info -->
-            <div class="flex-1">
-                <div class="flex flex-wrap gap-2 mb-6">
-                    <?php foreach (array_slice($genres, 0, 3) as $genre): ?>
-                    <span class="px-4 py-1.5 bg-blue-600/20 text-blue-500 border border-blue-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">
-                        <?= htmlspecialchars((string)($genre['name'] ?? '')) ?>
-                    </span>
-                    <?php endforeach; ?>
-                </div>
-                
+            <div class="flex-1 w-full">
                 <?php if (!empty($breadcrumbs)): ?>
-                <nav class="flex gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4">
+                <nav class="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4">
                     <?php foreach ($breadcrumbs as $crumb): ?>
                         <a href="<?= htmlspecialchars((string)($crumb['url'] ?? '#')) ?>" class="hover:text-blue-500"><?= htmlspecialchars((string)$crumb['title']) ?></a>
                         <span class="last:hidden">/</span>
@@ -54,24 +56,35 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
                 </nav>
                 <?php endif; ?>
 
-                <h1 class="text-5xl sm:text-7xl font-black italic uppercase tracking-tighter text-white mb-6 leading-none truncate max-w-full">
+                <!-- Title Section -->
+                <h1 class="dynamic-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black italic uppercase tracking-tighter text-white mb-4">
                     <?= htmlspecialchars((string) ($content['title'] ?? '')) ?>
                 </h1>
 
-                <div class="flex flex-wrap items-center gap-8 mb-8">
+                <!-- Tags under title -->
+                <?php if (!empty($tags)): ?>
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <?php foreach (array_slice($tags, 0, 8) as $tag): ?>
+                    <a href="<?= $url('tag/' . (string) ($tag['slug'] ?? '')) ?>" class="text-[10px] font-black uppercase text-blue-500/80 hover:text-blue-400 transition-colors">
+                        #<?= htmlspecialchars((string) ($tag['name'] ?? '')) ?>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
+                <div class="flex flex-wrap items-center gap-6 mb-8">
                     <div class="flex items-center gap-2">
-                        <i data-lucide="star" class="w-6 h-6 text-yellow-500 fill-current"></i>
-                        <span class="text-2xl font-black"><?= number_format((float)($content['rating_avg'] ?? 0), 2) ?></span>
-                        <span class="text-gray-500 text-xs font-bold uppercase">(<?= number_format((int)($content['rating_count'] ?? 0)) ?> Oy)</span>
+                        <i data-lucide="star" class="w-5 h-5 text-yellow-500 fill-current"></i>
+                        <span class="text-xl font-black"><?= number_format((float)($content['rating_avg'] ?? 0), 2) ?></span>
+                        <span class="text-gray-500 text-[10px] font-bold uppercase">(<?= number_format((int)($content['rating_count'] ?? 0)) ?> Oy)</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <i data-lucide="eye" class="w-6 h-6 text-blue-500"></i>
-                        <span class="text-2xl font-black"><?= number_format((int)($content['view_count'] ?? 0)) ?></span>
-                        <span class="text-gray-500 text-xs font-bold uppercase">İzlenme</span>
+                        <i data-lucide="eye" class="w-5 h-5 text-blue-500"></i>
+                        <span class="text-xl font-black"><?= number_format((int)($content['view_count'] ?? 0)) ?></span>
                     </div>
                     <div class="flex items-center gap-2 text-gray-400">
-                        <i data-lucide="book-open" class="w-6 h-6"></i>
-                        <span class="text-2xl font-black"><?= htmlspecialchars((string) ($content['chapter_count'] ?? '0')) ?> Bölüm</span>
+                        <i data-lucide="book-open" class="w-5 h-5"></i>
+                        <span class="text-xl font-black"><?= htmlspecialchars((string) ($content['chapter_count'] ?? '0')) ?> Bölüm</span>
                     </div>
                 </div>
 
@@ -79,18 +92,14 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
                     <?php 
                     $firstChapterUrl = "#";
                     if (!empty($chapterItems)) {
-                        $firstChapter = end($chapterItems); // Chapters are usually DESC, so last one is first
-                        $firstChapterUrl = $url(sprintf('%s/%s/chapter/%s', 
-                            (string)($content['type_path'] ?? 'novel'), 
-                            (string)($content['slug'] ?? ''), 
-                            rawurlencode((string)($firstChapter['chapter_number'] ?? '1'))
-                        ));
+                        $firstChapter = end($chapterItems);
+                        $firstChapterUrl = $url(sprintf('%s/%s/chapter/%s', $type, $slug, rawurlencode((string)($firstChapter['chapter_number'] ?? '1'))));
                     }
                     ?>
-                    <a href="<?= $firstChapterUrl ?>" class="bg-blue-600 text-white px-10 py-5 rounded-3xl font-black uppercase italic text-xs shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
+                    <a href="<?= $firstChapterUrl ?>" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase italic text-xs shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
                         <i data-lucide="play" class="w-4 h-4 fill-current"></i> İLK BÖLÜMÜ OKU
                     </a>
-                    <button id="toggleFollowBtn" class="bg-white/5 border border-white/10 text-white px-10 py-5 rounded-3xl font-black uppercase italic text-xs hover:bg-white/10 transition-all flex items-center gap-3">
+                    <button id="toggleFollowBtn" class="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-2xl font-black uppercase italic text-xs hover:bg-white/10 transition-all flex items-center gap-3">
                         <i data-lucide="plus" class="w-4 h-4"></i> LİSTEYE EKLE
                     </button>
                 </div>
@@ -101,7 +110,6 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
 
 <!-- Body Content -->
 <section class="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-3 gap-16">
-    <!-- Left: Description & Chapters -->
     <div class="lg:col-span-2 space-y-16">
         <!-- Synopsis -->
         <div>
@@ -126,11 +134,7 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
                 <?php foreach ($chapterItems as $chapter): 
                     $isLocked = ($chapter['access']['is_locked'] ?? false);
                     $price = (int)($chapter['chapter_unlock_price'] ?? 0);
-                    $chapterPath = sprintf('%s/%s/chapter/%s', 
-                        (string)($content['type_path'] ?? 'novel'), 
-                        (string)($content['slug'] ?? ''), 
-                        rawurlencode((string)($chapter['chapter_number'] ?? ''))
-                    );
+                    $chapterPath = sprintf('%s/%s/chapter/%s', $type, $slug, rawurlencode((string)($chapter['chapter_number'] ?? '')));
                     $fullChapterUrl = $url($chapterPath);
                 ?>
                 <div class="chapter-row flex items-center justify-between p-6 glass rounded-[24px] cursor-pointer transition-all border border-white/5 group"
@@ -162,13 +166,29 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
             </div>
         </div>
 
-        <!-- Comments Placeholder -->
+        <!-- YORUMLAR -->
         <div>
             <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white mb-8 flex items-center gap-3">
                 <div class="w-2 h-8 bg-blue-600 rounded-full"></div> YORUMLAR
             </h2>
-            <div id="commentsContainer" class="space-y-8">
-                <!-- Comments will be loaded via JS -->
+            
+            <?php if (isset($_SESSION['user_id'])): ?>
+            <div class="mb-10 glass p-6 rounded-[32px] border border-white/5">
+                <form id="seriesCommentForm" class="space-y-4">
+                    <textarea name="body" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white outline-none focus:border-blue-500 min-h-[100px] resize-none" placeholder="Düşüncelerini paylaş..."></textarea>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-500 transition-all">YORUM YAP</button>
+                    </div>
+                </form>
+            </div>
+            <?php else: ?>
+            <div class="mb-10 p-6 glass rounded-[32px] border border-white/5 text-center">
+                <p class="text-gray-500 text-sm italic mb-4">Yorum yapmak için giriş yapmalısın.</p>
+                <button onclick="openModal('loginModal')" class="btn btn-sm btn-primary">GİRİŞ YAP</button>
+            </div>
+            <?php endif; ?>
+
+            <div id="commentsList" class="space-y-6">
                 <p class="text-gray-500 italic text-sm">Yorumlar yükleniyor...</p>
             </div>
         </div>
@@ -220,33 +240,19 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
             </div>
         </div>
 
-        <!-- Tags -->
-        <?php if ($tags !== []): ?>
+        <!-- Genres in Sidebar -->
+        <?php if (!empty($genres)): ?>
         <div class="glass rounded-[40px] p-8 border border-white/5">
-            <h3 class="font-black italic uppercase text-sm mb-4 text-gray-500">ETİKETLER</h3>
+            <h3 class="font-black italic uppercase text-sm mb-4 text-gray-500">TÜRLER</h3>
             <div class="flex flex-wrap gap-2">
-                <?php foreach ($tags as $tag): ?>
-                <a href="<?= $url('tag/' . (string) ($tag['slug'] ?? '')) ?>" class="text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors">#<?= htmlspecialchars((string) ($tag['name'] ?? '')) ?></a>
+                <?php foreach ($genres as $genre): ?>
+                <a href="<?= $url('genre/' . (string) ($genre['slug'] ?? '')) ?>" class="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase text-gray-400 hover:text-white transition-all">
+                    <?= htmlspecialchars((string) ($genre['name'] ?? '')) ?>
+                </a>
                 <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>
-
-        <!-- Share -->
-        <div class="p-8 bg-blue-600 rounded-[40px] text-center shadow-2xl shadow-blue-600/20">
-            <h4 class="font-black italic uppercase text-sm mb-4 text-white">BU SERİYİ PAYLAŞ</h4>
-            <div class="flex justify-center gap-4">
-                <button class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center hover:bg-white/40 transition-all">
-                    <i data-lucide="facebook" class="w-5 h-5 text-white"></i>
-                </button>
-                <button class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center hover:bg-white/40 transition-all">
-                    <i data-lucide="twitter" class="w-5 h-5 text-white"></i>
-                </button>
-                <button class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center hover:bg-white/40 transition-all">
-                    <i data-lucide="link" class="w-5 h-5 text-white"></i>
-                </button>
-            </div>
-        </div>
     </div>
 </section>
 
@@ -267,6 +273,8 @@ $tags = is_array($content['series_tags'] ?? null) ? $content['series_tags'] : []
 
 <script>
 let selectedChapter = null;
+const currentType = '<?= $type ?>';
+const currentSlug = '<?= $slug ?>';
 
 function handleChapterClick(id, isLocked, price, redirectUrl) {
     if (!isLocked) {
@@ -278,31 +286,58 @@ function handleChapterClick(id, isLocked, price, redirectUrl) {
         if (window.NMR && window.NMR.showAuthModal) {
             window.NMR.showAuthModal();
         } else {
-            alert('Lütfen giriş yapın.');
+            openModal('loginModal');
         }
         return;
     <?php endif; ?>
 
     selectedChapter = { id, price, url: redirectUrl };
     $('#modalPrice').text(price);
-    $('#purchaseModal').removeClass('hidden').addClass('flex');
+    $('#purchaseModal').addClass('active');
 }
 
-function closeModal(id) {
-    $(`#${id}`).addClass('hidden').removeClass('flex');
+function loadComments() {
+    $.ajax({
+        url: `/api/v1/content/${currentType}/${currentSlug}/comments`,
+        method: 'GET',
+        success: function(res) {
+            const $list = $('#commentsList');
+            $list.empty();
+            const comments = res.data || [];
+            if (comments.length === 0) {
+                $list.append('<p class="text-gray-600 italic text-sm">Henüz yorum yapılmamış. İlk yorumu sen yap!</p>');
+                return;
+            }
+            comments.forEach(c => {
+                const initial = c.username ? c.username.charAt(0).toUpperCase() : 'U';
+                $list.append(`
+                    <div class="flex gap-4 group animate-pop">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-500 font-black text-xs shrink-0">${initial}</div>
+                        <div class="flex-1 glass p-4 rounded-2xl border border-white/5 group-hover:border-white/10 transition-all">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-black text-white uppercase tracking-widest">${c.username}</span>
+                                <span class="text-[8px] text-gray-600 font-bold uppercase">${new Date(c.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p class="text-sm text-gray-400 leading-relaxed">${c.body}</p>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+    });
 }
 
 $(document).ready(function() {
     lucide.createIcons();
+    loadComments();
 
     $('#confirmPurchase').on('click', function() {
         if (!selectedChapter) return;
-        
         closeModal('purchaseModal');
-        
         $.ajax({
             url: `/api/v1/chapter/${selectedChapter.id}/unlock`,
             method: 'POST',
+            headers: { 'X-CSRF-Token': window.__NMR_CONTEXT.auth.csrf_token },
             success: function(response) {
                 if (response.status === 'success') {
                     location.href = selectedChapter.url;
@@ -310,12 +345,34 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Bir hata oluştu.';
-                alert(msg);
+                if (window.showFeedback) window.showFeedback(msg, 'error'); else alert(msg);
             }
         });
     });
 
-    // Animations
+    $('#seriesCommentForm').on('submit', function(e) {
+        e.preventDefault();
+        const body = $(this).find('textarea').val();
+        if (!body.trim()) return;
+
+        $.ajax({
+            url: `/api/v1/content/${currentType}/${currentSlug}/comment`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ body: body }),
+            headers: { 'X-CSRF-Token': window.__NMR_CONTEXT.auth.csrf_token },
+            success: function() {
+                $('#seriesCommentForm').find('textarea').val('');
+                loadComments();
+                if (window.showFeedback) window.showFeedback('Yorumun eklendi!');
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON ? xhr.responseJSON.message : 'Hata oluştu.';
+                if (window.showFeedback) window.showFeedback(msg, 'error'); else alert(msg);
+            }
+        });
+    });
+
     $(".chapter-row").css("opacity", "0");
     $(".chapter-row").each(function (i) {
         $(this).delay(50 * i).animate({ opacity: 1 }, 300);
