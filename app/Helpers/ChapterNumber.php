@@ -22,6 +22,9 @@ final class ChapterNumber
      */
     public static function normalize(mixed $value): string
     {
+        if (is_array($value)) {
+            return '';
+        }
         $raw = trim((string) $value);
         if ($raw === '') {
             return '';

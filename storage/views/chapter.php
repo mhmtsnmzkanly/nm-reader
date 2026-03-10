@@ -11,8 +11,8 @@ $pages = is_array($chapterData['pages'] ?? null) ? $chapterData['pages'] : [];
 $isText = ($chapterData['type'] ?? '') === 'text';
 
 $contentPageUrl = $url($chapterType . '/' . $chapterSlug);
-$prevUrl = !empty($adjacent['prev']) ? $url($chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode((string) $adjacent['prev'])) : null;
-$nextUrl = !empty($adjacent['next']) ? $url($chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode((string) $adjacent['next'])) : null;
+$prevUrl = (!empty($adjacent['prev']) && is_string($adjacent['prev'])) ? $url($chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode($adjacent['prev'])) : null;
+$nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($chapterType . '/' . $chapterSlug . '/chapter/' . rawurlencode($adjacent['next'])) : null;
 ?>
 
 <style>
@@ -62,7 +62,8 @@ $nextUrl = !empty($adjacent['next']) ? $url($chapterType . '/' . $chapterSlug . 
         <!-- MANGA MODE VIEW -->
         <section class="manga-vertical flex flex-col items-center">
             <?php foreach ($pages as $page): ?>
-                <img src="<?= htmlspecialchars((string) $page) ?>" alt="Page" class="max-w-4xl border-b border-black loading-lazy" />
+                <?php $src = is_array($page) ? ($page['image_path'] ?? '') : (string)$page; ?>
+                <img src="<?= htmlspecialchars((string) $src) ?>" alt="Page" class="max-w-4xl border-b border-black loading-lazy" />
             <?php endforeach; ?>
             <div class="py-12 text-center text-gray-600 text-[10px] font-black tracking-widest uppercase">
                 Bölüm Sonu - Okuduğunuz İçin Teşekkürler
