@@ -52,7 +52,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <?php endif; ?>
 
     <script>
-        window.NMR_CONTEXT = <?= $contextJson ?? '{}' ?>;
+        window.__NMR_CONTEXT = <?= $contextJson ?? '{}' ?>;
     </script>
 
     <!-- Assets -->
@@ -80,7 +80,42 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");
         body { font-family: "Inter", sans-serif; background-color: #080808; color: #e3e2e6; display: flex; flex-direction: column; min-height: 100vh; }
         .glass { background: rgba(10, 10, 10, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); }
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(8px); 
+            z-index: 200; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 1rem;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal.card {
+            background: #121212;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: modalShow 0.3s ease-out forwards;
+        }
+        @keyframes modalShow { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; color: #3b82f6; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+        .form-item { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 0.75rem 1rem; color: white; outline: none; transition: all 0.2s; }
+        .form-item:focus { border-color: #3b82f6; background: rgba(255, 255, 255, 0.08); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; transition: all 0.2s; cursor: pointer; border: none; }
+        .btn-primary { background: #3b82f6; color: white; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3); }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); color: #94a3b8; }
+        .btn-outline:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        .modal-header h3 { font-weight: 900; text-transform: uppercase; font-style: italic; color: white; font-size: 1.25rem; margin: 0; }
+        .modal-close { background: none; border: none; color: #64748b; font-size: 1.5rem; cursor: pointer; transition: color 0.2s; }
+        .modal-close:hover { color: white; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         @keyframes modalShow { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .animate-modal { animation: modalShow 0.3s ease-out forwards; }
@@ -278,9 +313,26 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <script src="/assets/js/app-bundle.js"></script>
 
     <script>
+        // GLOBAL MODAL LOGIC
+        window.openModal = function(id) {
+            $(".modal-overlay").removeClass("active");
+            $("#" + id).addClass("active");
+            $("body").addClass("overflow-hidden");
+        };
+
+        window.closeModal = function() {
+            $(".modal-overlay").removeClass("active");
+            $("body").removeClass("overflow-hidden");
+        };
+
         $(document).ready(function () {
             lucide.createIcons();
             
+            // Close modal on overlay click
+            $(".modal-overlay").on("click", function (e) {
+                if (e.target === this) closeModal();
+            });
+
             // Mobile Menu Toggle
             $("#menu-toggle").click(function () {
                 $("#mobile-menu").fadeToggle(200);
@@ -305,13 +357,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
 
             // Auth system integration
             $("#openAuthBtn").on("click", function () {
-                if (window.NMR && window.NMR.showAuthModal) {
-                    window.NMR.showAuthModal();
-                } else if (typeof openModal === 'function') {
-                    openModal('loginModal');
-                } else {
-                    console.warn('Auth system not initialized');
-                }
+                openModal('loginModal');
             });
         });
     </script>
