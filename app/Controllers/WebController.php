@@ -1279,6 +1279,10 @@ final class WebController
         };
         $footerGenres = $this->seriesService->series_genres(1, 20);
         $footerTags = $this->seriesService->series_tags(1, 20);
+        
+        // Add popular content and latest chapters for footer
+        $footerPopular = $this->seriesService->byType('manga', 1, 3); // Example: mix or specific
+        $footerLatestChapters = $this->seriesService->latestChapters(1, 4);
 
         $contextJson = (string) json_encode(
             array_merge($context, [
@@ -1296,6 +1300,8 @@ final class WebController
             "url" => $url,
             "footerGenres" => $footerGenres,
             "footerTags" => $footerTags,
+            "footerPopular" => $footerPopular,
+            "footerLatestChapters" => $footerLatestChapters,
             "contextJson" => $contextJson,
             "templateName" => $template,
         ]);
