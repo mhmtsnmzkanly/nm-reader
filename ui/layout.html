@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="tr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Manga App | Modern Layout</title>
+        <!-- Tailwind CSS for Styling -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- jQuery for Interactivity -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <!-- Lucide Icons -->
+        <script src="https://unpkg.com/lucide@latest"></script>
+
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap");
+
+            body {
+                font-family: "Inter", sans-serif;
+                background-color: #080808;
+                color: #e3e2e6;
+            }
+
+            .glass {
+                background: rgba(255, 255, 255, 0.03);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .modal-overlay {
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(8px);
+            }
+
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Custom Animations */
+            @keyframes modalShow {
+                from {
+                    opacity: 0;
+                    transform: scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+
+            .animate-modal {
+                animation: modalShow 0.3s ease-out forwards;
+            }
+        </style>
+    </head>
+    <body class="overflow-x-hidden">
+        <!-- HEADER -->
+        <header
+            class="fixed top-0 w-full z-50 h-20 glass border-b border-white/5"
+        >
+            <div
+                class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between"
+            >
+                <!-- Logo -->
+                <div
+                    class="flex items-center gap-3 cursor-pointer group"
+                    onclick="location.reload()"
+                >
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center font-black italic text-white shadow-lg shadow-blue-600/20 group-hover:rotate-6 transition-transform"
+                    >
+                        M
+                    </div>
+                    <span
+                        class="font-black tracking-tighter text-xl uppercase italic hidden sm:inline text-white"
+                        >MANGA.APP</span
+                    >
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center gap-10">
+                    <a
+                        href="#"
+                        class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-blue-500"
+                    >
+                        <i data-lucide="compass" class="w-5 h-5"></i> KEŞFET
+                    </a>
+                    <a
+                        href="#"
+                        class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-colors"
+                    >
+                        <i data-lucide="newspaper" class="w-5 h-5"></i> BLOG
+                    </a>
+                    <a
+                        href="#"
+                        class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-colors"
+                    >
+                        <i data-lucide="book-open" class="w-5 h-5"></i> KİTAPLIK
+                    </a>
+                </nav>
+
+                <!-- Auth Actions -->
+                <div class="flex items-center gap-4">
+                    <button
+                        id="openAuthBtn"
+                        class="bg-white text-black px-6 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5"
+                    >
+                        GİRİŞ YAP
+                    </button>
+                    <button class="md:hidden p-2 text-gray-400">
+                        <i data-lucide="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA -->
+        <main id="content" class="min-h-screen pt-20">
+            <!-- İç kısım şu an boş, sayfalar buraya yüklenecek -->
+            <div class="max-w-7xl mx-auto px-6 py-20 text-center">
+                <h2
+                    class="text-white/10 text-4xl font-black italic uppercase tracking-[0.2em] select-none"
+                >
+                    İçerik Alanı Hazır
+                </h2>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer
+            class="py-20 border-t border-white/5 px-6 text-center bg-[#050505]"
+        >
+            <div
+                class="font-black italic text-white/20 uppercase tracking-[0.5em] text-sm mb-4"
+            >
+                MANGA.APP EXPERIENCE
+            </div>
+            <p
+                class="text-gray-600 text-[10px] font-bold uppercase tracking-widest"
+            >
+                © 2026 Tüm Hakları Saklıdır.
+            </p>
+            <div class="flex justify-center gap-6 mt-8">
+                <a
+                    href="#"
+                    class="text-gray-500 hover:text-blue-500 transition-colors"
+                    ><i data-lucide="twitter" class="w-5 h-5"></i
+                ></a>
+                <a
+                    href="#"
+                    class="text-gray-500 hover:text-blue-500 transition-colors"
+                    ><i data-lucide="instagram" class="w-5 h-5"></i
+                ></a>
+                <a
+                    href="#"
+                    class="text-gray-500 hover:text-blue-500 transition-colors"
+                    ><i data-lucide="github" class="w-5 h-5"></i
+                ></a>
+            </div>
+        </footer>
+
+        <!-- AUTH MODAL (Login / Register) -->
+        <div
+            id="authModal"
+            class="fixed inset-0 z-[100] modal-overlay hidden flex items-center justify-center p-4"
+        >
+            <div
+                class="relative w-full max-w-md bg-[#0f0f0f] border border-white/10 rounded-[40px] shadow-2xl overflow-hidden animate-modal"
+            >
+                <!-- Close Btn -->
+                <button
+                    id="closeAuthBtn"
+                    class="absolute top-6 right-6 p-2 text-gray-500 hover:text-white transition-colors"
+                >
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+
+                <div class="p-8 sm:p-10">
+                    <!-- Tabs -->
+                    <div class="flex gap-8 mb-10">
+                        <button
+                            data-tab="login"
+                            class="auth-tab text-sm font-black uppercase tracking-widest relative pb-2 text-blue-500"
+                        >
+                            GİRİŞ YAP
+                            <div
+                                class="tab-indicator absolute bottom-0 left-0 w-full h-1 bg-blue-500 rounded-full"
+                            ></div>
+                        </button>
+                        <button
+                            data-tab="register"
+                            class="auth-tab text-sm font-black uppercase tracking-widest relative pb-2 text-gray-500 hover:text-white transition-colors"
+                        >
+                            KAYIT OL
+                            <div
+                                class="tab-indicator absolute bottom-0 left-0 w-full h-1 bg-blue-500 rounded-full hidden"
+                            ></div>
+                        </button>
+                    </div>
+
+                    <!-- Forms -->
+                    <div id="loginForm" class="auth-form space-y-4">
+                        <div class="relative">
+                            <i
+                                data-lucide="mail"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"
+                            ></i>
+                            <input
+                                type="email"
+                                placeholder="E-posta Adresi"
+                                class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:border-blue-500 outline-none transition-all"
+                            />
+                        </div>
+                        <div class="relative">
+                            <i
+                                data-lucide="lock-keyhole"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"
+                            ></i>
+                            <input
+                                type="password"
+                                placeholder="Şifre"
+                                class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:border-blue-500 outline-none transition-all"
+                            />
+                        </div>
+                        <button
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 uppercase tracking-widest text-xs mt-4"
+                        >
+                            OTURUM AÇ
+                        </button>
+                    </div>
+
+                    <div id="registerForm" class="auth-form space-y-4 hidden">
+                        <div class="relative">
+                            <i
+                                data-lucide="user"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"
+                            ></i>
+                            <input
+                                type="text"
+                                placeholder="Kullanıcı Adı"
+                                class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:border-blue-500 outline-none transition-all"
+                            />
+                        </div>
+                        <div class="relative">
+                            <i
+                                data-lucide="mail"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"
+                            ></i>
+                            <input
+                                type="email"
+                                placeholder="E-posta Adresi"
+                                class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:border-blue-500 outline-none transition-all"
+                            />
+                        </div>
+                        <div class="relative">
+                            <i
+                                data-lucide="lock-keyhole"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5"
+                            ></i>
+                            <input
+                                type="password"
+                                placeholder="Şifre"
+                                class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:border-blue-500 outline-none transition-all"
+                            />
+                        </div>
+                        <button
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 uppercase tracking-widest text-xs mt-4"
+                        >
+                            HESAP OLUŞTUR
+                        </button>
+                    </div>
+
+                    <div class="relative my-10 text-center">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-white/5"></div>
+                        </div>
+                        <span
+                            class="relative bg-[#0f0f0f] px-4 text-[10px] font-black text-gray-600 uppercase tracking-widest"
+                            >VEYA</span
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button
+                            class="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-3 rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                            <i data-lucide="chrome" class="w-4 h-4"></i>
+                            <span class="text-[10px] font-black uppercase"
+                                >Google</span
+                            >
+                        </button>
+                        <button
+                            class="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-3 rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                            <i data-lucide="github" class="w-4 h-4"></i>
+                            <span class="text-[10px] font-black uppercase"
+                                >Github</span
+                            >
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCRIPTS -->
+        <script>
+            $(document).ready(function () {
+                // Initialize Icons
+                lucide.createIcons();
+
+                // Modal Controls
+                $("#openAuthBtn").on("click", function () {
+                    $("#authModal").removeClass("hidden").addClass("flex");
+                    $("body").addClass("overflow-hidden");
+                });
+
+                $("#closeAuthBtn").on("click", function () {
+                    $("#authModal").addClass("hidden").removeClass("flex");
+                    $("body").removeClass("overflow-hidden");
+                });
+
+                // Close modal on overlay click
+                $("#authModal").on("click", function (e) {
+                    if (e.target === this) {
+                        $(this).addClass("hidden").removeClass("flex");
+                        $("body").removeClass("overflow-hidden");
+                    }
+                });
+
+                // Tab Switching Logic
+                $(".auth-tab").on("click", function () {
+                    const target = $(this).data("tab");
+
+                    // Update Button Styles
+                    $(".auth-tab")
+                        .removeClass("text-blue-500")
+                        .addClass("text-gray-500");
+                    $(this)
+                        .removeClass("text-gray-500")
+                        .addClass("text-blue-500");
+
+                    // Update Indicators
+                    $(".tab-indicator").addClass("hidden");
+                    $(this).find(".tab-indicator").removeClass("hidden");
+
+                    // Show/Hide Forms
+                    $(".auth-form").addClass("hidden");
+                    $(`#${target}Form`).removeClass("hidden");
+                });
+            });
+        </script>
+    </body>
+</html>
