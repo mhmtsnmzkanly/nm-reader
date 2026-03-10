@@ -13,6 +13,8 @@
 /** @var string $content */
 /** @var array $siteConfig */
 /** @var Closure $url */
+
+$currentPath = $_SERVER['REQUEST_URI'] ?? '/';
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars((string) ($langCode ?? 'en'), ENT_QUOTES, 'UTF-8') ?>">
@@ -52,67 +54,112 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");
         body { font-family: "Inter", sans-serif; background-color: #080808; color: #e3e2e6; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass { background: rgba(10, 10, 10, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .modal-overlay { background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         @keyframes modalShow { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .animate-modal { animation: modalShow 0.3s ease-out forwards; }
+
+        /* Mobile Menu Overlay */
+        #mobile-menu, #user-modal { display: none; animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .user-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 12px; transition: all 0.2s; color: #94a3b8; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .user-menu-item:hover { background: rgba(255, 255, 255, 0.05); color: white; }
+        .user-menu-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
     </style>
 </head>
 <body class="overflow-x-hidden">
     <!-- HEADER -->
-    <header class="fixed top-0 w-full z-50 h-20 glass border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-            <!-- Logo -->
-            <a href="<?= $url('/') ?>" class="flex items-center gap-3 group">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center font-black italic text-white shadow-lg shadow-blue-600/20 group-hover:rotate-6 transition-transform">
-                    <?= strtoupper(substr($siteConfig['site_name'] ?? 'M', 0, 1)) ?>
-                </div>
-                <span class="font-black tracking-tighter text-xl uppercase italic hidden sm:inline text-white">
-                    <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP'), ENT_QUOTES, 'UTF-8') ?>
-                </span>
+    <header class="fixed top-0 w-full z-[100] h-20 glass flex items-center px-4 md:px-8 justify-between">
+        <!-- Logo -->
+        <a href="<?= $url('/') ?>" class="flex items-center gap-3 group">
+            <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center font-black italic text-white shadow-lg shadow-blue-600/20 group-hover:rotate-6 transition-transform">
+                <?= strtoupper(substr($siteConfig['site_name'] ?? 'M', 0, 1)) ?>
+            </div>
+            <span class="font-black tracking-tighter text-xl uppercase italic hidden sm:inline text-white">
+                <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP'), ENT_QUOTES, 'UTF-8') ?>
+            </span>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden lg:flex items-center gap-10">
+            <a href="<?= $url('/') ?>" class="text-[11px] font-black uppercase tracking-widest <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors">ANASAYFA</a>
+            <a href="<?= $url('/search') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/search') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors">KEŞFET</a>
+            <a href="<?= $url('/profile') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/profile') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors">KÜTÜPHANE</a>
+            <a href="<?= $url('/blogs') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/blogs') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors">BLOG</a>
+        </nav>
+
+        <!-- Right Actions -->
+        <div class="flex items-center gap-3 md:gap-5">
+            <!-- Search Button (Mobile Only) -->
+            <a href="<?= $url('/search') ?>" class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-400">
+                <i data-lucide="search" class="w-6 h-6"></i>
             </a>
 
-            <!-- Navigation Links -->
-            <nav class="hidden md:flex items-center gap-10">
-                <a href="<?= $url('/') ?>" class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] <?= $_SERVER['REQUEST_URI'] === '/' || $_SERVER['REQUEST_URI'] === '/tr' || $_SERVER['REQUEST_URI'] === '/en' ? 'text-blue-500' : 'text-gray-500 hover:text-white' ?> transition-colors">
-                    <i data-lucide="compass" class="w-5 h-5"></i> KEŞFET
-                </a>
-                <a href="<?= $url('/blogs') ?>" class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/blogs') ? 'text-blue-500' : 'text-gray-500 hover:text-white' ?> transition-colors">
-                    <i data-lucide="newspaper" class="w-5 h-5"></i> BLOG
-                </a>
-                <a href="<?= $url('/profile') ?>" class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/profile') ? 'text-blue-500' : 'text-gray-500 hover:text-white' ?> transition-colors">
-                    <i data-lucide="book-open" class="w-5 h-5"></i> KİTAPLIK
-                </a>
-                <a href="<?= $url('/search') ?>" class="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/search') ? 'text-blue-500' : 'text-gray-500 hover:text-white' ?> transition-colors">
-                    <i data-lucide="search" class="w-5 h-5"></i> ARA
-                </a>
-            </nav>
-
-            <!-- Auth Actions -->
-            <div class="flex items-center gap-4">
+            <!-- User Profile Button -->
+            <div class="relative">
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <!-- User Coins -->
-                    <div class="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 px-4 py-2 rounded-2xl">
-                        <i data-lucide="coins" class="w-4 h-4 text-yellow-500"></i>
-                        <span id="headerUserBalance" class="text-xs font-black text-yellow-500"><?= $_SESSION['user_wallet']['balance'] ?? '0' ?></span>
+                    <button id="user-btn" class="flex items-center gap-2 p-1 pr-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black text-white shadow-inner">
+                            <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 hidden md:block"></i>
+                    </button>
+
+                    <!-- User Modal / Dropdown -->
+                    <div id="user-modal" class="absolute right-0 mt-4 w-64 bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-4 overflow-hidden">
+                        <div class="px-3 py-4 border-b border-white/5 mb-2">
+                            <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">CÜZDAN: <?= $_SESSION['user_wallet']['balance'] ?? '0' ?> JETON</p>
+                            <p class="text-sm font-black text-white italic uppercase tracking-tight"><?= htmlspecialchars($_SESSION['username'] ?? 'Kullanıcı') ?></p>
+                        </div>
+                        <div class="space-y-1">
+                            <a href="<?= $url('/profile') ?>" class="user-menu-item">
+                                <i data-lucide="user" class="w-4 h-4 text-blue-500"></i> Profilim
+                            </a>
+                            <a href="<?= $url('/profile') ?>" class="user-menu-item">
+                                <i data-lucide="book-open" class="w-4 h-4 text-gray-400"></i> Kütüphanem
+                            </a>
+                            <a href="<?= $url('/profile') ?>" class="user-menu-item">
+                                <i data-lucide="settings" class="w-4 h-4 text-gray-400"></i> Ayarlar
+                            </a>
+                            <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
+                            <a href="<?= $url('/admin/dashboard') ?>" class="user-menu-item">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-red-500"></i> Admin Panel
+                            </a>
+                            <?php endif; ?>
+                            <div class="h-px bg-white/5 my-2"></div>
+                            <form action="<?= $url('/logout') ?>" method="POST" id="logout-form" class="hidden"></form>
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="user-menu-item danger">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Çıkış Yap
+                            </a>
+                        </div>
                     </div>
-                    <a href="<?= $url('/profile') ?>" class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center font-bold text-xs shadow-lg shadow-blue-600/20 cursor-pointer text-white">
-                        <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
-                    </a>
                 <?php else: ?>
                     <button id="openAuthBtn" class="bg-white text-black px-6 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5">
                         GİRİŞ YAP
                     </button>
                 <?php endif; ?>
-                <button class="md:hidden p-2 text-gray-400">
-                    <i data-lucide="menu"></i>
-                </button>
             </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button id="menu-toggle" class="lg:hidden w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
+                <i data-lucide="menu" class="w-6 h-6 text-white"></i>
+            </button>
         </div>
     </header>
+
+    <!-- Mobile Navigation Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-[90] bg-[#080808] pt-24 px-6">
+        <div class="flex flex-col gap-6">
+            <a href="<?= $url('/') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">ANASAYFA</a>
+            <a href="<?= $url('/search') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= str_contains($currentPath, '/search') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KEŞFET</a>
+            <a href="<?= $url('/profile') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= str_contains($currentPath, '/profile') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KÜTÜPHANE</a>
+            <a href="<?= $url('/blogs') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= str_contains($currentPath, '/blogs') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">BLOG</a>
+        </div>
+    </div>
 
     <!-- MAIN CONTENT AREA -->
     <main id="content" class="min-h-screen pt-20">
@@ -138,11 +185,34 @@
         $(document).ready(function () {
             lucide.createIcons();
             
+            // Mobile Menu Toggle
+            $("#menu-toggle").click(function () {
+                $("#mobile-menu").fadeToggle(200);
+                $("#user-modal").fadeOut(100);
+            });
+
+            // User Modal Toggle
+            $("#user-btn").click(function (e) {
+                e.stopPropagation();
+                $("#user-modal").fadeToggle(150);
+                $("#mobile-menu").fadeOut(100);
+            });
+
+            // Close modals on click outside
+            $(document).click(function () {
+                $("#user-modal").fadeOut(150);
+            });
+
+            $("#user-modal").click(function (e) {
+                e.stopPropagation();
+            });
+
+            // Auth system integration
             $("#openAuthBtn").on("click", function () {
                 if (window.NMR && window.NMR.showAuthModal) {
                     window.NMR.showAuthModal();
                 } else {
-                    console.warn('Auth system not initialized in app-bundle.js');
+                    console.warn('Auth system not initialized');
                 }
             });
         });
