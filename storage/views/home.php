@@ -72,9 +72,6 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
             ?>
             <a href="<?= $url($chapterUrl) ?>" 
                class="glass p-4 rounded-2xl flex items-center gap-4 hover:border-blue-500/50 transition-all group">
-                <div class="w-12 h-16 bg-zinc-800 rounded-lg overflow-hidden flex-shrink-0">
-                    <img src="<?= htmlspecialchars((string)($chapter['cover_image'] ?? '')) ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                </div>
                 <div class="overflow-hidden">
                     <h4 class="text-sm font-black text-white/90 uppercase truncate"><?= htmlspecialchars((string)($chapter['series_title'] ?? '')) ?></h4>
                     <p class="text-[10px] text-blue-500 font-black uppercase tracking-widest mt-1">Bölüm <?= htmlspecialchars((string)($chapter['chapter_number'] ?? '')) ?></p>
