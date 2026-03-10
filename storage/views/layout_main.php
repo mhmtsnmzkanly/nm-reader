@@ -202,7 +202,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     </button>
 
                     <!-- User Modal / Dropdown -->
-                    <div id="user-modal" class="absolute right-0 mt-4 w-64 bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-4 overflow-hidden">
+                    <div id="user-modal" style="display: none;" class="absolute right-0 mt-4 w-64 bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-4 overflow-hidden">
                         <div class="px-3 py-4 border-b border-white/5 mb-2">
                             <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">CÜZDAN: <?= $_SESSION['user_wallet']['balance'] ?? '0' ?> JETON</p>
                             <p class="text-sm font-black text-white italic uppercase tracking-tight"><?= htmlspecialchars($_SESSION['username'] ?? 'Kullanıcı') ?></p>
@@ -242,7 +242,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     </header>
 
     <!-- Mobile Navigation Overlay -->
-    <div id="mobile-menu" class="fixed inset-0 z-[90] bg-[#080808] pt-24 px-6">
+    <div id="mobile-menu" style="display: none;" class="fixed inset-0 z-[90] bg-[#080808] pt-24 px-6">
         <div class="flex flex-col gap-6">
             <a href="<?= $url('/') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">ANASAYFA</a>
             <a href="<?= $url('/search') ?>" class="text-2xl font-black italic uppercase tracking-tighter <?= str_contains($currentPath, '/search') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KEŞFET</a>
