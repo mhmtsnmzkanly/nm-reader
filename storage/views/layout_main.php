@@ -94,10 +94,10 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
 
         <!-- Desktop Navigation -->
         <nav class="hidden lg:flex items-center gap-10">
-            <a href="<?= $url('/') ?>" class="text-[11px] font-black uppercase tracking-widest <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors">ANASAYFA</a>
-            <a href="<?= $url('/search') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/search') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors">KEŞFET</a>
-            <a href="<?= $url('/profile') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/profile') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors">KÜTÜPHANE</a>
-            <a href="<?= $url('/blogs') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/blogs') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors">BLOG</a>
+            <a href="<?= $url('/') ?>" class="text-[11px] font-black uppercase tracking-widest <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors"><?= $__t('home') ?></a>
+            <a href="<?= $url('/search') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/search') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors"><?= $__t('browse') ?></a>
+            <a href="<?= $url('/profile') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/profile') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors"><?= $__t('library') ?></a>
+            <a href="<?= $url('/blogs') ?>" class="text-[11px] font-black uppercase tracking-widest <?= str_contains($currentPath, '/blogs') ? 'text-blue-500 border-b-2 border-blue-600 pb-1' : 'text-gray-400 hover:text-white' ?> transition-colors"><?= $__t('blogs') ?></a>
         </nav>
 
         <!-- Right Actions -->
@@ -118,33 +118,33 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     <!-- User Modal / Dropdown -->
                     <div id="user-modal" style="display: none;" class="absolute right-0 mt-4 w-64 bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-4 overflow-hidden">
                         <div class="px-3 py-4 border-b border-white/5 mb-2">
-                            <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">CÜZDAN: <?= $_SESSION['user_wallet']['balance'] ?? '0' ?> JETON</p>
-                            <p class="text-sm font-black text-white uppercase tracking-tight"><?= htmlspecialchars($_SESSION['username'] ?? 'Kullanıcı') ?></p>
+                            <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1"><?= $__t('ui.wallet_balance_msg', [':coins' => $_SESSION['user_wallet']['balance'] ?? '0']) ?></p>
+                            <p class="text-sm font-black text-white uppercase tracking-tight"><?= htmlspecialchars($_SESSION['username'] ?? $__t('user')) ?></p>
                         </div>
                         <div class="space-y-1">
                             <a href="<?= $url('/profile') ?>" class="user-menu-item">
-                                <i data-lucide="user" class="w-4 h-4 text-blue-500"></i> Profilim
+                                <i data-lucide="user" class="w-4 h-4 text-blue-500"></i> <?= $__t('my_profile') ?>
                             </a>
                             <div onclick="openModal('userSettingsModal')" class="user-menu-item">
-                                <i data-lucide="edit-3" class="w-4 h-4 text-emerald-500"></i> Profilimi Düzenle
+                                <i data-lucide="edit-3" class="w-4 h-4 text-emerald-500"></i> <?= $__t('edit_profile') ?>
                             </div>
                             <a href="<?= $url('/profile') ?>" class="user-menu-item">
-                                <i data-lucide="book-open" class="w-4 h-4 text-gray-400"></i> Kütüphanem
+                                <i data-lucide="book-open" class="w-4 h-4 text-gray-400"></i> <?= $__t('library') ?>
                             </a>
                             <?php if (($_SESSION['role'] ?? '') === 'admin'): ?>
                             <a href="<?= $url('/admin/dashboard') ?>" class="user-menu-item">
-                                <i data-lucide="shield-check" class="w-4 h-4 text-red-500"></i> Admin Panel
+                                <i data-lucide="shield-check" class="w-4 h-4 text-red-500"></i> <?= $__t('admin_panel') ?>
                             </a>
                             <?php endif; ?>
                             <div class="h-px bg-white/5 my-2"></div>
                             <a href="#" onclick="logout(); return false;" class="user-menu-item danger">
-                                <i data-lucide="log-out" class="w-4 h-4"></i> Çıkış Yap
+                                <i data-lucide="log-out" class="w-4 h-4"></i> <?= $__t('logout') ?>
                             </a>
                         </div>
                     </div>
                 <?php else: ?>
                     <button id="openAuthBtn" class="bg-white text-black px-6 py-2.5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5">
-                        GİRİŞ YAP
+                        <?= $__t('login') ?>
                     </button>
                 <?php endif; ?>
             </div>
@@ -158,10 +158,10 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <!-- Mobile Navigation Overlay -->
     <div id="mobile-menu" style="display: none;" class="fixed inset-0 z-[90] bg-[#080808] pt-24 px-6">
         <div class="flex flex-col gap-6">
-            <a href="<?= $url('/') ?>" class="text-2xl font-black uppercase tracking-tighter <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">ANASAYFA</a>
-            <a href="<?= $url('/search') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/search') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KEŞFET</a>
-            <a href="<?= $url('/profile') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/profile') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">KÜTÜPHANE</a>
-            <a href="<?= $url('/blogs') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/blogs') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4">BLOG</a>
+            <a href="<?= $url('/') ?>" class="text-2xl font-black uppercase tracking-tighter <?= ($currentPath === '/' || str_ends_with($currentPath, '/tr') || str_ends_with($currentPath, '/en')) ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4"><?= $__t('home') ?></a>
+            <a href="<?= $url('/search') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/search') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4"><?= $__t('browse') ?></a>
+            <a href="<?= $url('/profile') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/profile') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4"><?= $__t('library') ?></a>
+            <a href="<?= $url('/blogs') ?>" class="text-2xl font-black uppercase tracking-tighter <?= str_contains($currentPath, '/blogs') ? 'text-blue-500' : 'text-white' ?> border-b border-white/5 pb-4"><?= $__t('blogs') ?></a>
         </div>
     </div>
 
@@ -179,10 +179,10 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                 <div>
                     <h3 class="footer-column-title">
                         <i data-lucide="info" class="w-4 h-4 text-blue-500"></i>
-                        Hakkında
+                        <?= $__t('ui.about') ?>
                     </h3>
                     <p class="text-gray-500 text-sm leading-relaxed mb-6">
-                        <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?>, en sevdiğiniz mangaları, manhwaları ve webtoonları en yüksek kalitede okumanız için tasarlanmış modern bir platformdur.
+                        <?= $__t('ui.about_desc', [':site_name' => htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP'))]) ?>
                     </p>
                     <div class="flex gap-4">
                         <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
@@ -194,7 +194,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                 <div>
                     <h3 class="footer-column-title">
                         <i data-lucide="trending-up" class="w-4 h-4 text-orange-500"></i>
-                        Popüler İçerikler
+                        <?= $__t('ui.popular_content') ?>
                     </h3>
                     <nav class="space-y-3">
                         <?php foreach (array_slice($footerPopular ?? [], 0, 5) as $pop): ?>
@@ -210,7 +210,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                 <div>
                     <h3 class="footer-column-title">
                         <i data-lucide="zap" class="w-4 h-4 text-yellow-500"></i>
-                        Son Bölümler
+                        <?= $__t('ui.latest_chapters') ?>
                     </h3>
                     <nav class="space-y-4">
                         <?php 
@@ -231,7 +231,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                                     <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest"><?= htmlspecialchars((string)($lat['series_type'] ?? '')) ?></span>
                                 </div>
                                 <p class="text-[11px] font-black text-white uppercase group-hover:text-blue-500 transition-colors leading-tight">
-                                    <?= htmlspecialchars((string)($lat['series_title'] ?? '')) ?> - Bölüm <?= htmlspecialchars((string)($lat['chapter_number'] ?? '')) ?>
+                                    <?= htmlspecialchars((string)($lat['series_title'] ?? '')) ?> - <?= $__t('chapter') ?> <?= htmlspecialchars((string)($lat['chapter_number'] ?? '')) ?>
                                 </p>
                             </a>
                         <?php endforeach; ?>
@@ -245,7 +245,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
             <!-- Genre & Tag Cloud Section -->
             <div class="text-center mb-12">
                 <p class="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600 mb-8">
-                    Kategorileri Keşfet
+                    <?= $__t('ui.explore_categories') ?>
                 </p>
                 <div class="tag-cloud">
                     <?php 
@@ -261,7 +261,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
             <!-- Bottom Copyright -->
             <div class="text-center pt-8 border-t border-white/5">
                 <p class="text-gray-700 text-[10px] font-black uppercase tracking-widest">
-                    © <?= date('Y') ?> <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?> EXPERIENCE • TÜM HAKLARI SAKLIDIR
+                    © <?= date('Y') ?> <?= htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP')) ?> EXPERIENCE • <?= $__t('ui.all_rights_reserved') ?>
                 </p>
             </div>
         </div>

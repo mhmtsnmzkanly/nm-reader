@@ -53,7 +53,7 @@
               </p>
             </li>
             <li class="user-footer">
-              <a href="/logout" class="btn btn-default btn-flat float-end">Sign out</a>
+              <a href="/logout" class="btn btn-default btn-flat float-end"><?= $__t('logout') ?></a>
             </li>
           </ul>
         </li>
@@ -84,37 +84,37 @@
       <nav class="mt-2">
         <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
           <?php if ($can('admin.panel.access')): ?>
-            <li class="nav-item"><a href="<?= $url('/admin#dashboard-section') ?>" class="nav-link"><i class="nav-icon bi bi-speedometer2"></i><p>Dashboard</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin#dashboard-section') ?>" class="nav-link"><i class="nav-icon bi bi-speedometer2"></i><p><?= $__t('admin.dashboard') ?></p></a></li>
           <?php endif; ?>
           <?php if ($can('admin.metrics.view')): ?>
-            <li class="nav-item"><a href="<?= $url('/admin#metrics-section') ?>" class="nav-link"><i class="nav-icon bi bi-graph-up"></i><p>Analytics</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin#metrics-section') ?>" class="nav-link"><i class="nav-icon bi bi-graph-up"></i><p><?= $__t('admin.analytics') ?></p></a></li>
           <?php endif; ?>
           <?php if ($canAny(['admin.content.create', 'admin.content.update', 'admin.chapter.create', 'admin.section.create'])): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/content') ?>" class="nav-link"><i class="nav-icon bi bi-journal-text"></i><p>Content & Chapters</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/content') ?>" class="nav-link"><i class="nav-icon bi bi-journal-text"></i><p><?= $__t('admin.content_chapters') ?></p></a></li>
           <?php endif; ?>
           <?php if ($can('admin.blog.hide')): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/blogs') ?>" class="nav-link"><i class="nav-icon bi bi-file-earmark-check"></i><p>Blog Moderation</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/blogs') ?>" class="nav-link"><i class="nav-icon bi bi-file-earmark-check"></i><p><?= $__t('admin.blog_moderation') ?></p></a></li>
           <?php endif; ?>
           <?php if ($can('admin.comment.delete')): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/comments') ?>" class="nav-link"><i class="nav-icon bi bi-chat-dots"></i><p>Comments</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/comments') ?>" class="nav-link"><i class="nav-icon bi bi-chat-dots"></i><p><?= $__t('admin.comments') ?></p></a></li>
           <?php endif; ?>
           <?php if ($canAny(['admin.users.manage', 'admin.roles.assign'])): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/users') ?>" class="nav-link"><i class="nav-icon bi bi-people"></i><p>Users</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/users') ?>" class="nav-link"><i class="nav-icon bi bi-people"></i><p><?= $__t('admin.users') ?></p></a></li>
           <?php endif; ?>
           <?php if ($canAny(['admin.jobs.run', 'admin.settings.modify'])): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/ops') ?>" class="nav-link"><i class="nav-icon bi bi-gear"></i><p>System Ops</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/ops') ?>" class="nav-link"><i class="nav-icon bi bi-gear"></i><p><?= $__t('admin.system_ops') ?></p></a></li>
           <?php endif; ?>
           <?php if ($canAny(['admin.shop.manage', 'admin.wallet.manage', 'admin.wallet.view'])): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/monetization') ?>" class="nav-link"><i class="nav-icon bi bi-coin"></i><p>Monetization</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/monetization') ?>" class="nav-link"><i class="nav-icon bi bi-coin"></i><p><?= $__t('admin.monetization') ?></p></a></li>
           <?php endif; ?>
           <?php if (($_SESSION['user_id'] ?? null) === ($_ENV['ROOT_USER'] ?? getenv('ROOT_USER'))): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/config') ?>" class="nav-link"><i class="nav-icon bi bi-terminal-fill"></i><p>System Config</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/config') ?>" class="nav-link"><i class="nav-icon bi bi-terminal-fill"></i><p><?= $__t('admin.system_config') ?></p></a></li>
           <?php endif; ?>
           <?php if ($canAny(['admin.logs.view', 'admin.metrics.view'])): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/logs') ?>" class="nav-link"><i class="nav-icon bi bi-shield-lock"></i><p>Logs & Security</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/logs') ?>" class="nav-link"><i class="nav-icon bi bi-shield-lock"></i><p><?= $__t('admin.logs_security') ?></p></a></li>
           <?php endif; ?>
           <?php if ($can('admin.panel.access')): ?>
-            <li class="nav-item"><a href="<?= $url('/admin/uploads') ?>" class="nav-link"><i class="nav-icon bi bi-image"></i><p>Uploads</p></a></li>
+            <li class="nav-item"><a href="<?= $url('/admin/uploads') ?>" class="nav-link"><i class="nav-icon bi bi-image"></i><p><?= $__t('admin.uploads') ?></p></a></li>
           <?php endif; ?>
           <li class="nav-item"><a href="<?= $url('/admin/tutorial') ?>" class="nav-link"><i class="nav-icon bi bi-question-circle"></i><p><?= $__t('admin.tutorial') ?></p></a></li>
         </ul>

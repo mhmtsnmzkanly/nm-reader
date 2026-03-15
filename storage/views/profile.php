@@ -39,25 +39,25 @@ $username = (string) ($user['username'] ?? 'User');
                         <?= htmlspecialchars($username) ?>
                     </h2>
                     <div class="flex items-center justify-center md:justify-start gap-2">
-                        <span class="px-3 py-1 bg-blue-600/20 text-blue-500 rounded-lg text-[10px] font-black tracking-widest uppercase">PUAN: <?= number_format((int) ($stats['score'] ?? 0)) ?></span>
+                        <span class="px-3 py-1 bg-blue-600/20 text-blue-500 rounded-lg text-[10px] font-black tracking-widest uppercase"><?= $__t('score') ?>: <?= number_format((int) ($stats['score'] ?? 0)) ?></span>
                     </div>
                 </div>
                 <p class="text-gray-400 text-sm max-w-xl mb-6">
-                    <?= htmlspecialchars((string) ($user['bio'] ?? 'Henüz bir biyografi eklenmemiş.')) ?>
+                    <?= htmlspecialchars((string) ($user['bio'] ?? $__t('no_bio'))) ?>
                 </p>
 
                 <div class="flex items-center justify-center md:justify-start gap-8">
                     <div class="text-center md:text-left">
                         <span class="block text-xl font-black text-white"><?= number_format((int) ($stats['followers_count'] ?? 0)) ?></span>
-                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Takipçi</span>
+                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest"><?= $__t('followers') ?></span>
                     </div>
                     <div class="text-center md:text-left">
                         <span class="block text-xl font-black text-white"><?= number_format((int) ($stats['following_count'] ?? 0)) ?></span>
-                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Takip</span>
+                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest"><?= $__t('following') ?></span>
                     </div>
                     <div class="text-center md:text-left">
                         <span class="block text-xl font-black text-white"><?= number_format((int) ($stats['approved_blog_count'] ?? 0)) ?></span>
-                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Blog</span>
+                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest"><?= $__t('blogs') ?></span>
                     </div>
                 </div>
             </div>
@@ -66,11 +66,11 @@ $username = (string) ($user['username'] ?? 'User');
             <div class="flex gap-3">
                 <?php if ($isMe): ?>
                 <button class="flex items-center gap-2 px-6 py-3 bg-blue-600 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all text-white">
-                    <i data-lucide="edit-3" class="w-4 h-4"></i> PROFİLİ DÜZENLE
+                    <i data-lucide="edit-3" class="w-4 h-4"></i> <?= $__t('edit_profile') ?>
                 </button>
                 <?php else: ?>
                 <button class="flex items-center gap-2 px-6 py-3 bg-blue-600 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all text-white">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i> TAKİP ET
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> <?= $__t('follow') ?>
                 </button>
                 <?php endif; ?>
             </div>
@@ -80,17 +80,17 @@ $username = (string) ($user['username'] ?? 'User');
     <!-- Tabs Navigation -->
     <nav class="max-w-5xl mx-auto px-6 border-b border-white/5 flex gap-8 mb-8 overflow-x-auto no-scrollbar">
         <button class="tab-btn tab-active py-6 text-[11px] font-black uppercase tracking-[0.2em] whitespace-nowrap" data-tab="library">
-            KÜTÜPHANE
+            <?= $__t('library') ?>
         </button>
         <button class="tab-btn py-6 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap" data-tab="comments">
-            YORUMLAR
+            <?= $__t('comments') ?>
         </button>
         <button class="tab-btn py-6 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap" data-tab="blogs">
-            BLOGLAR
+            <?= $__t('blogs') ?>
         </button>
         <?php if ($isMe): ?>
         <button class="tab-btn py-6 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap" data-tab="history">
-            GEÇMİŞ
+            <?= $__t('reading_history') ?>
         </button>
         <?php endif; ?>
     </nav>
@@ -112,7 +112,7 @@ $username = (string) ($user['username'] ?? 'User');
                     </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <p class="text-gray-500 text-sm">Henüz takip edilen bir seri yok.</p>
+                    <p class="text-gray-500 text-sm"><?= $__t('empty_library') ?></p>
                 <?php endif; ?>
             </div>
         </div>
@@ -123,7 +123,7 @@ $username = (string) ($user['username'] ?? 'User');
                 <?php foreach ($comments as $comment): ?>
                 <div class="glass p-6 rounded-3xl border border-white/5 hover:border-blue-500/30 transition-all">
                     <div class="flex items-center gap-3 mb-4">
-                        <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest">YORUM</span>
+                        <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest"><?= $__t('admin.comment') ?></span>
                         <span class="text-[9px] text-gray-600 font-bold"><?= date('d M Y', strtotime($comment['created_at'] ?? 'now')) ?></span>
                     </div>
                     <p class="text-sm text-gray-300 mb-4">
@@ -131,13 +131,13 @@ $username = (string) ($user['username'] ?? 'User');
                     </p>
                     <?php if (!empty($comment['url_path'])): ?>
                     <a href="<?= $url((string) $comment['url_path']) ?>" class="text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest flex items-center gap-2">
-                        İLGİLİ İÇERİĞE GİT <i data-lucide="external-link" class="w-3 h-3"></i>
+                        <?= $__t('ui.go_to_content') ?> <i data-lucide="external-link" class="w-3 h-3"></i>
                     </a>
                     <?php endif; ?>
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="text-gray-500 text-sm">Henüz bir yorum yok.</p>
+                <p class="text-gray-500 text-sm"><?= $__t('no_comments_yet') ?></p>
             <?php endif; ?>
         </div>
 
@@ -158,7 +158,7 @@ $username = (string) ($user['username'] ?? 'User');
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="text-gray-500 text-sm">Henüz bir blog yazısı yok.</p>
+                <p class="text-gray-500 text-sm"><?= $__t('no_blog_posts') ?></p>
             <?php endif; ?>
         </div>
 
@@ -183,7 +183,7 @@ $username = (string) ($user['username'] ?? 'User');
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p class="text-gray-500 text-sm">Okuma geçmişi boş.</p>
+                <p class="text-gray-500 text-sm"><?= $__t('no_history') ?></p>
             <?php endif; ?>
         </div>
         <?php endif; ?>

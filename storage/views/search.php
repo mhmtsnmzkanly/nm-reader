@@ -21,10 +21,10 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
     <!-- Search Header -->
     <div class="mb-12">
         <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white mb-4">
-            GELİŞMİŞ ARAMA
+            <?= $__t('ui.search_advanced') ?>
         </h1>
         <p class="text-gray-500 text-sm font-medium uppercase tracking-widest">
-            Binlerce seri arasından hayalindeki hikayeyi bul.
+            <?= $__t('ui.search_desc') ?>
         </p>
     </div>
 
@@ -37,7 +37,7 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
         <aside class="w-full lg:w-80 shrink-0 space-y-8">
             <!-- Search Input -->
             <div class="relative">
-                <input type="text" name="q" value="<?= htmlspecialchars($query) ?>" placeholder="Seri adı veya yazar..." class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-blue-500 transition-all text-white" />
+                <input type="text" name="q" value="<?= htmlspecialchars($query) ?>" placeholder="<?= $__t('search_placeholder') ?>" class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-blue-500 transition-all text-white" />
                 <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
                     <i data-lucide="search" class="w-5 h-5"></i>
                 </div>
@@ -45,9 +45,9 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
 
             <!-- Genres -->
             <div>
-                <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4">TÜRLER (GENRE)</h3>
+                <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4"><?= $__t('ui.filter_genres') ?></h3>
                 <div class="flex flex-wrap gap-2">
-                    <span class="tag-pill-genre <?= empty($activeGenres) ? 'active' : '' ?> px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tag-pill" data-slug="">HEPSİ</span>
+                    <span class="tag-pill-genre <?= empty($activeGenres) ? 'active' : '' ?> px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tag-pill" data-slug=""><?= $__t('ui.all') ?></span>
                     <?php foreach ($footerGenres as $genre): ?>
                     <span class="tag-pill-genre <?= in_array($genre['slug'], $activeGenres) ? 'active' : '' ?> px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 hover:text-white transition-all tag-pill" data-slug="<?= htmlspecialchars((string)$genre['slug']) ?>">
                         <?= htmlspecialchars((string)$genre['name']) ?>
@@ -58,7 +58,7 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
 
             <!-- Tags -->
             <div>
-                <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4">POPÜLER ETİKETLER</h3>
+                <h3 class="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500 mb-4"><?= $__t('ui.filter_tags') ?></h3>
                 <div class="flex flex-wrap gap-2">
                     <?php foreach ($footerTags as $tag): ?>
                     <span class="tag-pill-tag <?= in_array($tag['slug'], $activeTags) ? 'active' : '' ?> px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold uppercase text-gray-400 hover:text-white transition-all tag-pill" data-slug="<?= htmlspecialchars((string)$tag['slug']) ?>">
@@ -71,25 +71,25 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
             <!-- Status & Sort -->
             <div class="space-y-4 pt-4 border-t border-white/5">
                 <div>
-                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">DURUM</label>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2"><?= $__t('ui.filter_status') ?></label>
                     <select name="status" class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none text-white appearance-none">
-                        <option value="TÜMÜ" <?= $activeStatus === 'TÜMÜ' ? 'selected' : '' ?>>TÜMÜ</option>
-                        <option value="ONGOING" <?= $activeStatus === 'ONGOING' ? 'selected' : '' ?>>DEVAM EDİYOR</option>
-                        <option value="COMPLETED" <?= $activeStatus === 'COMPLETED' ? 'selected' : '' ?>>TAMAMLANDI</option>
+                        <option value="TÜMÜ" <?= $activeStatus === 'TÜMÜ' ? 'selected' : '' ?>><?= $__t('ui.all') ?></option>
+                        <option value="ONGOING" <?= $activeStatus === 'ONGOING' ? 'selected' : '' ?>><?= $__t('ongoing') ?></option>
+                        <option value="COMPLETED" <?= $activeStatus === 'COMPLETED' ? 'selected' : '' ?>><?= $__t('completed') ?></option>
                     </select>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">SIRALAMA</label>
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2"><?= $__t('ui.filter_sort') ?></label>
                     <select name="sort" class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-xs focus:outline-none text-white appearance-none">
-                        <option value="EN YENİLER" <?= $activeSort === 'EN YENİLER' ? 'selected' : '' ?>>EN YENİLER</option>
-                        <option value="EN ÇOK OKUNAN" <?= $activeSort === 'EN ÇOK OKUNAN' ? 'selected' : '' ?>>EN ÇOK OKUNANLAR</option>
-                        <option value="EN YÜKSEK PUAN" <?= $activeSort === 'EN YÜKSEK PUAN' ? 'selected' : '' ?>>EN YÜKSEK PUAN</option>
+                        <option value="EN YENİLER" <?= $activeSort === 'EN YENİLER' ? 'selected' : '' ?>><?= $__t('ui.sort_newest') ?></option>
+                        <option value="EN ÇOK OKUNAN" <?= $activeSort === 'EN ÇOK OKUNAN' ? 'selected' : '' ?>><?= $__t('ui.sort_most_read') ?></option>
+                        <option value="EN YÜKSEK PUAN" <?= $activeSort === 'EN YÜKSEK PUAN' ? 'selected' : '' ?>><?= $__t('ui.sort_highest_rating') ?></option>
                     </select>
                 </div>
             </div>
 
             <button type="submit" class="w-full py-4 bg-blue-600 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition-all text-white">
-                FİLTRELERİ UYGULA
+                <?= $__t('ui.apply_filters') ?>
             </button>
         </aside>
 
@@ -97,7 +97,7 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
         <div class="flex-1">
             <div class="flex items-center justify-between mb-8">
                 <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                    TOPLAM <span class="text-white"><?= count($items) ?></span> SONUÇ BULUNDU
+                    <?= $__t('ui.results_found') ?>: <span class="text-white"><?= count($items) ?></span>
                 </p>
                 <div class="flex gap-2">
                     <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-blue-500">
@@ -132,14 +132,14 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
                             <?= htmlspecialchars((string) ($item['title'] ?? '')) ?>
                         </h4>
                         <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-                            <?= htmlspecialchars((string) ($item['author'] ?? 'Bilinmiyor')) ?> • <?= htmlspecialchars((string) ($item['chapter_count'] ?? '0')) ?> Bölüm
+                            <?= htmlspecialchars((string) ($item['author'] ?? $__t('unknown'))) ?> • <?= htmlspecialchars((string) ($item['chapter_count'] ?? '0')) ?> <?= $__t('chapter') ?>
                         </p>
                     </div>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <div class="col-span-full py-20 text-center">
                         <i data-lucide="search-x" class="w-12 h-12 text-gray-600 mx-auto mb-4"></i>
-                        <p class="text-gray-500">Aradığınız kriterlere uygun sonuç bulunamadı.</p>
+                        <p class="text-gray-500"><?= $__t('no_content_found') ?></p>
                     </div>
                 <?php endif; ?>
             </div>

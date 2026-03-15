@@ -28,7 +28,7 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
                 <?= htmlspecialchars((string) ($chapterData['series_title'] ?? '')) ?>
             </h1>
             <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
-                Bölüm <?= htmlspecialchars((string) ($chapterData['chapter_number'] ?? '')) ?>: <?= htmlspecialchars((string) ($chapterData['title'] ?? '')) ?>
+                <?= $__t('chapter') ?> <?= htmlspecialchars((string) ($chapterData['chapter_number'] ?? '')) ?>: <?= htmlspecialchars((string) ($chapterData['title'] ?? '')) ?>
             </p>
         </div>
     </div>
@@ -62,11 +62,11 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
                 <img src="<?= htmlspecialchars((string) $src) ?>" alt="Page" class="max-w-4xl border-b border-black loading-lazy" />
             <?php endforeach; ?>
             <div class="py-12 text-center text-gray-600 text-[10px] font-black tracking-widest uppercase">
-                Bölüm Sonu - Okuduğunuz İçin Teşekkürler
+                <?= $__t('ui.end_of_chapter') ?>
             </div>
         </section>
     <?php else: ?>
-        <div class="py-20 text-center text-gray-500">Bölüm içeriği yüklenemedi.</div>
+        <div class="py-20 text-center text-gray-500"><?= $__t('msg_load_failed') ?></div>
     <?php endif; ?>
 </main>
 
@@ -78,7 +78,7 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
         </a>
 
         <div class="px-6 flex flex-col items-center">
-            <span class="text-[9px] font-black text-blue-500 tracking-[0.2em] uppercase mb-1">İLERLEME</span>
+            <span class="text-[9px] font-black text-blue-500 tracking-[0.2em] uppercase mb-1"><?= $__t('ui.progress') ?></span>
             <div class="flex items-center gap-3">
                 <div class="w-32 h-1 bg-white/5 rounded-full overflow-hidden">
                     <div id="reader-progress-bar" class="h-full bg-blue-600" style="width: 0%"></div>

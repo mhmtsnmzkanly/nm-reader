@@ -51,7 +51,7 @@
         <div class="modal-body">
             <form id="userSettingsForm" enctype="multipart/form-data">
                 <div class="flex justify-center mb-8">
-                    <div class="relative group cursor-pointer" title="Profil Fotoğrafını Değiştir">
+                    <div class="relative group cursor-pointer" title="<?= $__t('ui.change_profile_photo') ?>">
                         <div class="w-24 h-24 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-black text-white shadow-xl overflow-hidden">
                             <?php if (!empty($_SESSION['avatar'])): ?>
                                 <img src="<?= htmlspecialchars($_SESSION['avatar']) ?>" class="w-full h-full object-cover">
@@ -69,32 +69,32 @@
                 <div class="space-y-5">
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
-                            <label class="edit-label mb-0">Kullanıcı Adı</label>
+                            <label class="edit-label mb-0"><?= $__t('username') ?></label>
                             <i data-lucide="lock" class="w-3 h-3 text-gray-700"></i>
                         </div>
                         <input type="text" class="edit-input edit-input-locked" value="<?= htmlspecialchars($_SESSION['username'] ?? '') ?>" readonly />
                     </div>
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
-                            <label class="edit-label mb-0">E-posta Adresi</label>
+                            <label class="edit-label mb-0"><?= $__t('email') ?></label>
                             <i data-lucide="lock" class="w-3 h-3 text-gray-700"></i>
                         </div>
                         <input type="email" class="edit-input edit-input-locked" value="<?= htmlspecialchars($_SESSION['email'] ?? '') ?>" readonly />
                     </div>
                     <div>
-                        <label class="edit-label">Biyografi (Düzenlenebilir)</label>
-                        <textarea name="bio" class="edit-input h-24 resize-none" placeholder="Kendinizden bahsedin..."><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></textarea>
+                        <label class="edit-label"><?= $__t('biography') ?></label>
+                        <textarea name="bio" class="edit-input h-24 resize-none" placeholder="<?= $__t('tell_us_about_yourself') ?>"><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="edit-label">Dil</label>
+                            <label class="edit-label"><?= $__t('language') ?></label>
                             <select name="lang" class="edit-input py-3">
                                 <option value="tr" <?= ($_SESSION['lang'] ?? 'tr') === 'tr' ? 'selected' : '' ?>>Türkçe</option>
                                 <option value="en" <?= ($_SESSION['lang'] ?? 'tr') === 'en' ? 'selected' : '' ?>>English</option>
                             </select>
                         </div>
                         <div>
-                            <label class="edit-label">Tema</label>
+                            <label class="edit-label"><?= $__t('theme') ?></label>
                             <select name="theme" class="edit-input py-3">
                                 <option value="default" <?= ($_SESSION['theme'] ?? 'default') === 'default' ? 'selected' : '' ?>>Default</option>
                                 <option value="dark" <?= ($_SESSION['theme'] ?? 'default') === 'dark' ? 'selected' : '' ?>>Dark</option>
@@ -105,8 +105,8 @@
                 </div>
 
                 <div class="mt-8 flex gap-4">
-                    <button type="button" class="flex-1 btn btn-outline" onclick="closeModal()">Kapat</button>
-                    <button type="submit" class="flex-[2] btn btn-primary">Kaydet</button>
+                    <button type="button" class="flex-1 btn btn-outline" onclick="closeModal()"><?= $__t('ui.close') ?></button>
+                    <button type="submit" class="flex-[2] btn btn-primary"><?= $__t('ui.save') ?></button>
                 </div>
             </form>
         </div>

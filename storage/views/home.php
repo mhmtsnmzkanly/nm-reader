@@ -29,7 +29,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                     <?= htmlspecialchars((string)($item['description'] ?? '')) ?>
                 </p>
                 <a href="<?= $url((string)($item['url_path'] ?? '')) ?>" class="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs w-fit shadow-2xl hover:bg-white hover:text-black transition-all flex items-center gap-3">
-                    <i data-lucide="play" class="w-4 h-4 fill-current"></i> ŞİMDİ OKU
+                    <i data-lucide="play" class="w-4 h-4 fill-current"></i> <?= $__t('ui.read_now') ?>
                 </a>
             </div>
         </div>
@@ -50,7 +50,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
             <div class="p-2 bg-orange-600/20 rounded-xl">
                 <i data-lucide="zap" class="text-orange-600 w-5 h-5"></i>
             </div>
-            <h2 class="text-2xl font-black uppercase tracking-tighter text-white">Yeni Bölümler</h2>
+            <h2 class="text-2xl font-black uppercase tracking-tighter text-white"><?= $__t('ui.new_chapters_title') ?></h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <?php foreach (array_slice($recentChapters, 0, 9) as $chapter): 
@@ -64,7 +64,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                class="glass p-4 rounded-2xl flex items-center gap-4 hover:border-blue-500/50 transition-all group">
                 <div class="overflow-hidden">
                     <h4 class="text-sm font-black text-white/90 uppercase truncate"><?= htmlspecialchars((string)($chapter['series_title'] ?? '')) ?></h4>
-                    <p class="text-[10px] text-blue-500 font-black uppercase tracking-widest mt-1">Bölüm <?= htmlspecialchars((string)($chapter['chapter_number'] ?? '')) ?></p>
+                    <p class="text-[10px] text-blue-500 font-black uppercase tracking-widest mt-1"><?= $__t('chapter') ?> <?= htmlspecialchars((string)($chapter['chapter_number'] ?? '')) ?></p>
                 </div>
             </a>
             <?php endforeach; ?>
@@ -78,7 +78,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                 <div class="p-2 bg-blue-600/20 rounded-xl">
                     <i data-lucide="compass" class="text-blue-600 w-5 h-5"></i>
                 </div>
-                <h2 class="text-2xl font-black uppercase tracking-tighter text-white">Son Eklenenler</h2>
+                <h2 class="text-2xl font-black uppercase tracking-tighter text-white"><?= $__t('ui.latest_added') ?></h2>
             </div>
         </div>
 
@@ -89,12 +89,12 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
                     <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover transition-transform duration-500" alt="<?= htmlspecialchars((string)($item['title'] ?? '')) ?>" />
                     <div class="card-overlay absolute inset-0 bg-black/60 opacity-0 transition-opacity flex items-center justify-center p-4">
                         <span class="bg-blue-600 text-white w-full py-3 rounded-2xl text-[10px] font-black text-center uppercase tracking-widest translate-y-4 group-hover:translate-y-0 transition-transform">
-                            OKUMAYA BAŞLA
+                            <?= $__t('ui.start_reading_action') ?>
                         </span>
                     </div>
                     <?php if (!empty($item['chapter_count'])): ?>
                     <div class="absolute top-4 left-4 bg-blue-600/90 text-[8px] font-black px-2 py-1 rounded-lg uppercase backdrop-blur-sm">
-                        <?= $item['chapter_count'] ?> BÖLÜM
+                        <?= $item['chapter_count'] ?> <?= $__t('ui.chapters_list') ?>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -117,7 +117,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
             <div class="p-2 bg-purple-600/20 rounded-xl">
                 <i data-lucide="newspaper" class="text-purple-600 w-5 h-5"></i>
             </div>
-            <h2 class="text-2xl font-black uppercase tracking-tighter text-white">Popüler Bloglar</h2>
+            <h2 class="text-2xl font-black uppercase tracking-tighter text-white"><?= $__t('ui.popular_blogs') ?></h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <?php foreach ($popularBlogs as $blog): ?>

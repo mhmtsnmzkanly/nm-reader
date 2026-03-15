@@ -20,7 +20,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                 <img src="<?= htmlspecialchars((string)($featured['cover_image'] ?: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=1200')) ?>" class="w-full h-full object-cover" alt="Featured Blog">
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 p-8 md:p-12 max-w-2xl">
-                    <span class="px-4 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block">ÖNE ÇIKAN</span>
+                    <span class="px-4 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block"><?= $__t('ui.featured') ?></span>
                     <h2 onclick="location.href='<?= $url('blogs/' . (string)($featured['slug'] ?? '')) ?>'" class="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white mb-4 leading-none group-hover:text-blue-400 transition-colors cursor-pointer">
                         <?= htmlspecialchars((string)($featured['title'] ?? '')) ?>
                     </h2>
@@ -46,7 +46,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                 <article onclick="location.href='<?= $url('blogs/' . (string)($blog['slug'] ?? '')) ?>'" class="blog-card glass rounded-[32px] overflow-hidden border border-white/5 flex flex-col cursor-pointer">
                     <div class="relative h-56 overflow-hidden">
                         <img src="<?= htmlspecialchars((string)($blog['cover_image'] ?: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800')) ?>" class="w-full h-full object-cover" alt="Blog Thumb">
-                        <div class="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[9px] font-black text-white uppercase">İNCELEME</div>
+                        <div class="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[9px] font-black text-white uppercase"><?= $__t('ui.review') ?></div>
                     </div>
                     <div class="p-6 flex-1 flex flex-col">
                         <h3 class="text-xl font-black uppercase tracking-tighter text-white mb-3 line-clamp-2 leading-tight">
@@ -56,7 +56,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                             <?= htmlspecialchars(mb_substr(trim(strip_tags((string) ($blog['body'] ?? ''))), 0, 150)) ?>...
                         </p>
                         <div class="flex items-center justify-between pt-4 border-t border-white/5">
-                            <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest">OKUMAYA DEVAM ET</span>
+                            <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest"><?= $__t('ui.continue_reading_action') ?></span>
                             <span class="text-[9px] text-gray-600 font-bold uppercase"><?= date('d M Y', strtotime($blog['approved_at'] ?? $blog['created_at'] ?? 'now')) ?></span>
                         </div>
                     </div>
@@ -74,9 +74,9 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
         <!-- Article Header -->
         <header class="max-w-4xl mx-auto px-6 text-center mb-16">
             <div class="flex justify-center gap-3 mb-8">
-                <span class="px-4 py-1 bg-blue-600/20 text-blue-500 border border-blue-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">İNCELEME</span>
+                <span class="px-4 py-1 bg-blue-600/20 text-blue-500 border border-blue-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em]"><?= $__t('ui.review') ?></span>
                 <span class="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                    <i data-lucide="clock" class="w-3 h-3"></i> 5 DAKİKA OKUMA
+                    <i data-lucide="clock" class="w-3 h-3"></i> <?= $__t('ui.read_time_msg', [':time' => '5']) ?>
                 </span>
             </div>
 
@@ -91,7 +91,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                 <div class="text-left">
                     <p class="text-sm font-black text-white uppercase tracking-tighter"><?= htmlspecialchars((string) ($data['author_username'] ?? '')) ?></p>
                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                        Editör • <?= date('d F Y', strtotime($data['approved_at'] ?? $data['created_at'] ?? 'now')) ?>
+                        <?= $__t('ui.editor') ?> • <?= date('d F Y', strtotime($data['approved_at'] ?? $data['created_at'] ?? 'now')) ?>
                     </p>
                 </div>
             </div>
