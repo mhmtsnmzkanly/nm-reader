@@ -86,6 +86,10 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
             </div>
         </div>
 
+        <button onclick="openModal('readerSettingsModal')" class="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-all text-gray-400">
+            <i data-lucide="settings-2" class="w-5 h-5"></i>
+        </button>
+
         <a href="<?= $nextUrl ?: '#' ?>" class="<?= !$nextUrl ? 'pointer-events-none opacity-20' : '' ?> w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-all text-white">
             <i data-lucide="chevron-right" class="w-5 h-5"></i>
         </a>
