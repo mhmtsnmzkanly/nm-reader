@@ -88,4 +88,11 @@ blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5re
 
 /* Search Specific */
 .tag-pill { transition: all 0.2s ease; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); }
-.tag-pill.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+/* Language Selector */
+.lang-dropdown { opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.lang-container:hover .lang-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+.lang-item { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 1rem; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s; cursor: pointer; border: none; background: transparent; }
+.lang-item.active { color: white; }
+.lang-item.inactive { color: #94a3b8; }
+.lang-item:hover { background: #3b82f6; color: white; }
+

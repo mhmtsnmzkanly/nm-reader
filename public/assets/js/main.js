@@ -14,6 +14,22 @@ window.closeModal = function() {
     $("body").removeClass("overflow-hidden");
 };
 
+// Global Language Switcher
+window.switchLanguage = function(newLang) {
+    const currentPath = window.location.pathname;
+    const parts = currentPath.split('/').filter(p => p !== '');
+    
+    // Check if the first part is a known language code
+    const knownLangs = ['tr', 'en'];
+    if (parts.length > 0 && knownLangs.includes(parts[0])) {
+        parts[0] = newLang;
+    } else {
+        parts.unshift(newLang);
+    }
+    
+    window.location.href = '/' + parts.join('/') + window.location.search;
+};
+
 // Global Feedback Notifications
 window.showFeedback = function(message, type = 'success') {
     const $toast = $("#feedback-toast");

@@ -106,6 +106,24 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                 <i data-lucide="search" class="w-6 h-6"></i>
             </a>
 
+            <!-- Language Selector -->
+            <div class="lang-container relative hidden sm:block">
+                <button class="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all">
+                    <i data-lucide="languages" class="w-3.5 h-3.5"></i>
+                    <span><?= strtoupper($langCode) ?></span>
+                    <i data-lucide="chevron-down" class="w-3 h-3 text-gray-600"></i>
+                </button>
+
+                <div class="lang-dropdown absolute top-full right-0 mt-2 w-32 bg-[#121212] border border-white/10 rounded-2xl overflow-hidden shadow-2xl py-2">
+                    <button class="lang-item <?= $langCode === 'tr' ? 'active' : 'inactive' ?>" onclick="switchLanguage('tr')">
+                        Türkçe <span>🇹🇷</span>
+                    </button>
+                    <button class="lang-item <?= $langCode === 'en' ? 'active' : 'inactive' ?>" onclick="switchLanguage('en')">
+                        English <span>🇺🇸</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="relative">
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <button id="user-btn" class="flex items-center gap-2 p-1 pr-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
