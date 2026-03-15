@@ -1,0 +1,28 @@
+{
+  "name": "nm-reader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./public/assets/css/input.css -o ./public/assets/css/main.css --minify",
+    "watch:css": "npx tailwindcss -i ./public/assets/css/input.css -o ./public/assets/css/main.css --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mhmtsnmzkanly/nm-reader.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mhmtsnmzkanly/nm-reader/issues"
+  },
+  "homepage": "https://github.com/mhmtsnmzkanly/nm-reader#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1"
+  }
+}
