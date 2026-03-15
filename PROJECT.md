@@ -597,5 +597,5 @@ This document serves as the absolute authority on the project's architecture, co
   - **i18n Implementation**: Replaced all hardcoded strings across home, content, chapter, search, blog, and profile pages with the `$__t()` helper.
   - **Service Update**: Enhanced `I18nService` to support both `:key` and `{key}` placeholder formats and updated the controller helper to handle dynamic parameters.
   - **Modal Modernization**: Redesigned Notifications and Reader Settings modals with a modern "glassmorphism" aesthetic and improved functional logic (tab switching, theme selection).
-  - **UI Refinement**: Added a persistent Language Selector to the header and fixed positioning issues for the User Dropdown.
+  - **UI Refinement**: Added a persistent Language Selector to the header, fixed positioning issues for the User Dropdown, and added a Reader Settings shortcut to the floating reader controls for easier access.
 
