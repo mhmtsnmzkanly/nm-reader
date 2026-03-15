@@ -1,6 +1,7 @@
 /**
  * NMR Reader - Global Logic
  */
+console.log("NMR Main JS Initializing...");
 
 // Global Modal Control
 window.openModal = function(id) {

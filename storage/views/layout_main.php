@@ -291,7 +291,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <div id="feedback-toast"></div>
 
     <!-- CORE JS -->
-    <script src="/assets/js/app-bundle.js"></script>
-    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/app-bundle.js?v=<?= time() ?>"></script>
+    <script src="/assets/js/main.js?v=<?= time() ?>"></script>
 </body>
 </html>
