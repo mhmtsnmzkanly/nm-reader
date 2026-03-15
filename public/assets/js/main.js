@@ -67,15 +67,25 @@ $(document).ready(function () {
     $("#user-btn").on("click", function (e) {
         e.stopPropagation();
         $("#user-modal").fadeToggle(150);
+        $("#lang-modal").fadeOut(100);
+        $("#mobile-menu").fadeOut(100);
+    });
+
+    // Language Dropdown Toggle
+    $("#lang-btn").on("click", function (e) {
+        e.stopPropagation();
+        $("#lang-modal").fadeToggle(150);
+        $("#user-modal").fadeOut(100);
         $("#mobile-menu").fadeOut(100);
     });
 
     // Close on click outside
     $(document).on("click", function () {
         $("#user-modal").fadeOut(150);
+        $("#lang-modal").fadeOut(150);
     });
 
-    $("#user-modal").on("click", function (e) {
+    $("#user-modal, #lang-modal").on("click", function (e) {
         e.stopPropagation();
     });
 

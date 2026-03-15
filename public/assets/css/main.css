@@ -89,36 +89,27 @@ blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5re
 /* Search Specific */
 .tag-pill { transition: all 0.2s ease; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); }
 /* Language Selector */
-.lang-container { position: relative; }
 .lang-dropdown { 
+    display: none;
     position: absolute; 
     top: 100%; 
     right: 0; 
-    margin-top: 0.5rem; 
-    width: 8rem; 
+    margin-top: 0.75rem; 
+    width: 9rem; 
     background-color: #121212; 
     border: 1px solid rgba(255, 255, 255, 0.1); 
-    border-radius: 1rem; 
+    border-radius: 1.5rem; 
     overflow: hidden; 
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); 
     padding: 0.5rem 0; 
-    z-index: 110; 
-    opacity: 0; 
-    visibility: hidden; 
-    transform: translateY(10px); 
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-}
-.lang-container:hover .lang-dropdown { 
-    opacity: 1; 
-    visibility: visible; 
-    transform: translateY(0); 
+    z-index: 150; 
 }
 .lang-item { 
     width: 100%; 
     display: flex; 
     align-items: center; 
     justify-content: space-between; 
-    padding: 0.625rem 1rem; 
+    padding: 0.75rem 1.25rem; 
     font-size: 10px; 
     font-weight: 900; 
     text-transform: uppercase; 
@@ -128,8 +119,9 @@ blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5re
     border: none; 
     background: transparent; 
 }
-.lang-item.active { color: white; }
+.lang-item.active { color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
 .lang-item.inactive { color: #94a3b8; }
-.lang-item:hover { background: #3b82f6; color: white; }
+.lang-item:hover { background: #3b82f6 !important; color: white !important; }
+
 
 

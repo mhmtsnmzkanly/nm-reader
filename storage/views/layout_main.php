@@ -107,14 +107,14 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
             </a>
 
             <!-- Language Selector -->
-            <div class="lang-container relative hidden sm:block">
-                <button class="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all">
+            <div class="relative hidden sm:block">
+                <button id="lang-btn" class="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all">
                     <i data-lucide="languages" class="w-3.5 h-3.5"></i>
                     <span><?= strtoupper($langCode) ?></span>
                     <i data-lucide="chevron-down" class="w-3 h-3 text-gray-600"></i>
                 </button>
 
-                <div class="lang-dropdown shadow-2xl">
+                <div id="lang-modal" class="lang-dropdown shadow-2xl">
                     <button class="lang-item <?= $langCode === 'tr' ? 'active' : 'inactive' ?>" onclick="switchLanguage('tr')">
                         Türkçe <span>🇹🇷</span>
                     </button>
