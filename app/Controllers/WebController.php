@@ -1336,7 +1336,7 @@ final class WebController
             $jsonLd = json_encode($seo["json_ld"], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
-        $__t = fn(string $key) => $lang[$key] ?? $key;
+        $__t = fn(string $key, array $params = []) => $this->i18n->translate($langCode, $key, $params);
         $fullContext['__t'] = $__t;
         $fullContext['siteConfig'] = $this->siteConfig->all();
 
@@ -1433,7 +1433,7 @@ final class WebController
         );
         $adminUsername = (string) ($authContext["username"] ?? "admin");
         $siteConfig = $this->siteConfig->all();
-        $__t = fn(string $key) => $lang[$key] ?? $key;
+        $__t = fn(string $key, array $params = []) => $this->i18n->translate($langCode, $key, $params);
 
         ob_start();
         extract([

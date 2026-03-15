@@ -89,7 +89,9 @@ final class I18nService
         $message = $message ?? $key;
 
         foreach ($params as $k => $v) {
-            $message = str_replace('{' . $k . '}', (string)$v, $message);
+            $value = (string)$v;
+            $message = str_replace('{' . $k . '}', $value, $message);
+            $message = str_replace(':' . $k, $value, $message);
         }
 
         return $message;
