@@ -170,7 +170,7 @@ $slug = (string)($content['slug'] ?? '');
             </div>
             <?php endif; ?>
 
-            <div id="commentsList" class="space-y-6">
+            <div id="commentsList" class="space-y-6" data-context="content" data-type="<?= $type ?>" data-slug="<?= $slug ?>">
                 <p class="text-gray-500 text-sm"><?= $__t('loading') ?></p>
             </div>
         </div>

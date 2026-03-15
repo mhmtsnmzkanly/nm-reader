@@ -98,7 +98,101 @@ $(document).ready(function () {
         if (e.target === this) closeModal();
     });
 
+    // --- COMMENTS LOGIC ---
+
+    const loadComments = function() {
+        const $container = $("#commentsList");
+        if (!$container.length) return;
+
+        const context = $container.data('context');
+        const slug = $container.data('slug');
+        const type = $container.data('type');
+        const chapterId = $container.data('id');
+
+        let apiUrl = '';
+        if (context === 'content') {
+            apiUrl = `/content/${type}/${slug}/comments`;
+        } else if (context === 'chapter') {
+            apiUrl = `/chapter/${chapterId}/comments`;
+        } else if (context === 'blog') {
+            apiUrl = `/blogs/${slug}/comments`;
+        }
+
+        if (!apiUrl || !window.NMRData) return;
+
+        window.NMRData.get(apiUrl)
+            .then(res => {
+                renderComments(res.data || []);
+            })
+            .catch(err => {
+                console.error('Comments failed:', err);
+                $container.html(`<p class="text-red-500 text-sm">Yorumlar yüklenemedi.</p>`);
+            });
+    };
+
+    const renderComments = function(comments) {
+        const $container = $("#commentsList");
+        if (!comments || !comments.length) {
+            $container.html('<p class="text-gray-500 text-sm">Henüz yorum yapılmamış.</p>');
+            return;
+        }
+
+        let html = '';
+        comments.forEach(comment => {
+            html += `
+                <div class="glass p-6 rounded-3xl border border-white/5 hover:border-blue-500/30 transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-black">
+                                ${(comment.username || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white uppercase tracking-tight">${comment.username || 'Anonim'}</p>
+                                <p class="text-[10px] text-gray-500 font-bold uppercase">${comment.created_at}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-300 leading-relaxed">${comment.body}</p>
+                </div>
+            `;
+        });
+        $container.html(html);
+    };
+
+    loadComments();
+
     // --- FORM HANDLERS ---
+
+    $("#seriesCommentForm").on("submit", function(e) {
+        e.preventDefault();
+        if (!window.NMRData) return;
+        
+        const $container = $("#commentsList");
+        const type = $container.data('type');
+        const slug = $container.data('slug');
+        const $btn = $(this).find('button[type="submit"]');
+        const originalText = $btn.text();
+        const body = $(this).find('textarea[name="body"]').val();
+
+        if (!body.trim()) {
+            showFeedback('Lütfen bir yorum yazın.', 'error');
+            return;
+        }
+
+        $btn.prop('disabled', true).text('...');
+
+        window.NMRData.post(`/content/${type}/${slug}/comment`, { body })
+            .then(() => {
+                showFeedback('Yorum paylaşıldı.');
+                $(this).find('textarea[name="body"]').val('');
+                $btn.prop('disabled', false).text(originalText);
+                loadComments();
+            })
+            .catch(err => {
+                showFeedback(err.message || 'Yorum paylaşılamadı.', 'error');
+                $btn.prop('disabled', false).text(originalText);
+            });
+    });
 
     $("#loginForm").on("submit", function(e) {
         e.preventDefault();
