@@ -138,7 +138,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     </button>
 
                     <!-- User Modal / Dropdown -->
-                    <div id="user-modal" style="display: none;" class="absolute right-0 mt-4 w-64 bg-[#121212] border border-white/10 rounded-3xl shadow-2xl p-4 overflow-hidden">
+                    <div id="user-modal" class="user-dropdown">
                         <div class="px-3 py-4 border-b border-white/5 mb-2">
                             <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1"><?= $__t('ui.wallet_balance_msg', [':coins' => $_SESSION['user_wallet']['balance'] ?? '0']) ?></p>
                             <p class="text-sm font-black text-white uppercase tracking-tight"><?= htmlspecialchars($_SESSION['username'] ?? $__t('user')) ?></p>

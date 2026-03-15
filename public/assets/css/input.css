@@ -96,22 +96,23 @@ blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5re
 /* Search Specific */
 .tag-pill { transition: all 0.2s ease; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.1); }
 
-/* Language Selector */
-.lang-dropdown { 
+/* Language & User Selectors */
+.lang-dropdown, .user-dropdown { 
     display: none;
     position: absolute; 
     top: 100%; 
     right: 0; 
     margin-top: 0.75rem; 
-    width: 9rem; 
     background-color: #121212; 
     border: 1px solid rgba(255, 255, 255, 0.1); 
     border-radius: 1.5rem; 
     overflow: hidden; 
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); 
-    padding: 0.5rem 0; 
     z-index: 150; 
 }
+.lang-dropdown { width: 9rem; padding: 0.5rem 0; }
+.user-dropdown { width: 16rem; padding: 1rem; }
+
 .lang-item { 
     width: 100%; 
     display: flex; 
@@ -130,3 +131,4 @@ blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5re
 .lang-item.active { color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
 .lang-item.inactive { color: #94a3b8; }
 .lang-item:hover { background: #3b82f6 !important; color: white !important; }
+

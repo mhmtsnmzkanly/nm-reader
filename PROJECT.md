@@ -585,3 +585,17 @@ This document serves as the absolute authority on the project's architecture, co
   - Removed redundant script tags from all view files and `WebController` render calls.
   - Standardized API communication and CSRF handling within the bundles.
   - Improved reader stability and settings persistence.
+
+### Tailwind v4 Migration & i18n Overhaul (2026-03-15)
+- **Status**: Completed.
+- **Problem**: 
+  - Tailwind Play CDN was causing high LCP and performance overhead.
+  - New theme pages had many hardcoded Turkish strings, breaking multi-language support.
+  - Modals (Reader Settings, Notifications) were visually outdated and inconsistent with the new UI.
+- **Fix**:
+  - **Tailwind v4 CLI**: Migrated from Play CDN to a compiled and minified CSS workflow using Tailwind v4. Integrated custom CSS into Tailwind's `@layer` system for better compatibility.
+  - **i18n Implementation**: Replaced all hardcoded strings across home, content, chapter, search, blog, and profile pages with the `$__t()` helper.
+  - **Service Update**: Enhanced `I18nService` to support both `:key` and `{key}` placeholder formats and updated the controller helper to handle dynamic parameters.
+  - **Modal Modernization**: Redesigned Notifications and Reader Settings modals with a modern "glassmorphism" aesthetic and improved functional logic (tab switching, theme selection).
+  - **UI Refinement**: Added a persistent Language Selector to the header and fixed positioning issues for the User Dropdown.
+
