@@ -102,12 +102,15 @@ $(document).ready(function () {
 
     const loadComments = function() {
         const $container = $("#commentsList");
+        console.log("loadComments trigger, container:", $container.length);
         if (!$container.length) return;
 
         const context = $container.data('context');
         const slug = $container.data('slug');
         const type = $container.data('type');
         const chapterId = $container.data('id');
+        
+        console.log("Comment Context:", { context, slug, type, chapterId });
 
         let apiUrl = '';
         if (context === 'content') {
@@ -118,10 +121,16 @@ $(document).ready(function () {
             apiUrl = `/blogs/${slug}/comments`;
         }
 
-        if (!apiUrl || !window.NMRData) return;
+        console.log("Comment API URL:", apiUrl);
+
+        if (!apiUrl || !window.NMRData) {
+            console.warn("API URL or NMRData missing");
+            return;
+        }
 
         window.NMRData.get(apiUrl)
             .then(res => {
+                console.log("Comments received:", res.data?.length);
                 renderComments(res.data || []);
             })
             .catch(err => {
