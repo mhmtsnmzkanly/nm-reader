@@ -71,7 +71,7 @@ final class I18nService
         return $this->defaultLang;
     }
 
-    public function translate(string $key, string $locale, array $params = []): string
+    public function translate(string $locale, string $key, array $params = []): string
     {
         $dictionary = $this->getDictionary($locale);
         $message = $dictionary[$key] ?? null;

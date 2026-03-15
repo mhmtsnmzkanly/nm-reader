@@ -57,6 +57,11 @@ $(document).ready(function () {
     // Initialize Icons
     if (window.lucide) lucide.createIcons();
 
+    // Auth Button
+    $("#openAuthBtn").on("click", function() {
+        openModal('loginModal');
+    });
+
     // Mobile Menu Toggle
     $("#menu-toggle").on("click", function () {
         $("#mobile-menu").fadeToggle(200);
