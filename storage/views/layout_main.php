@@ -125,7 +125,12 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
 
             <div class="relative">
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <button id="user-btn" class="flex items-center gap-2 p-1 pr-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
+                    <div class="flex items-center gap-3">
+                        <button onclick="openModal('notifModal'); loadNotifications();" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                        </button>
+
+                        <button id="user-btn" class="flex items-center gap-2 p-1 pr-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
                         <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black text-white shadow-inner">
                             <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
                         </div>

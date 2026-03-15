@@ -171,6 +171,84 @@ $(document).ready(function () {
 
     loadComments();
 
+    // --- MODAL LOGIC ---
+
+    // 1. Reader Settings Tabs
+    $("#readerTabSidebar button").on("click", function() {
+        const tab = $(this).data('tab');
+        $("#readerTabSidebar button").removeClass("bg-blue-600 text-white shadow-lg shadow-blue-600/20").addClass("text-gray-500 hover:bg-white/5 hover:text-white");
+        $(this).addClass("bg-blue-600 text-white shadow-lg shadow-blue-600/20").removeClass("text-gray-500 hover:bg-white/5 hover:text-white");
+        $(".settings-tab").addClass("hidden");
+        $("#tab-" + tab).removeClass("hidden");
+    });
+
+    // 2. Reader Settings Range Input
+    $('input[name="reader_font_size"]').on('input', function() {
+        $('#fontSizeVal').text($(this).val() + 'px');
+    });
+
+    // 3. Reader Settings Theme Selection
+    $('.theme-btn').on('click', function() {
+        $('.theme-btn').removeClass('border-blue-600 bg-blue-600/10 text-white').addClass('text-gray-400');
+        $(this).addClass('border-blue-600 bg-blue-600/10 text-white').removeClass('text-gray-400');
+        // Actual theme application logic can go here or in save handler
+    });
+
+    // 4. Save Reader Settings
+    $("#saveAllSettingsBtn").on("click", function() {
+        const settings = {
+            layout: $('select[name="reader_layout"]').val(),
+            image_fit: $('select[name="reader_image_fit"]').val(),
+            font_family: $('select[name="reader_font_family"]').val(),
+            font_size: $('input[name="reader_font_size"]').val(),
+            theme: $('.theme-btn.active').data('theme') || 'default'
+        };
+        localStorage.setItem('nm_reader_settings', JSON.stringify(settings));
+        showFeedback('Ayarlar kaydedildi ve uygulandı.');
+        setTimeout(() => location.reload(), 800);
+    });
+
+    // 5. Notifications Logic
+    window.loadNotifications = function() {
+        const $list = $("#notifModalList");
+        $list.html('<div class="p-8 text-center text-gray-500 text-sm">Yükleniyor...</div>');
+        if (!window.NMRData) return;
+        window.NMRData.get('/user/notifications')
+            .then(res => {
+                renderNotifications(res.data || []);
+            })
+            .catch(() => {
+                $list.html('<div class="p-8 text-center text-gray-500 text-sm">Bildirimler alınamadı.</div>');
+            });
+    };
+
+    const renderNotifications = function(notifs) {
+        const $list = $("#notifModalList");
+        if (!notifs.length) {
+            $list.html('<div class="p-8 text-center text-gray-500 text-sm">Henüz bildiriminiz yok.</div>');
+            return;
+        }
+        let html = '';
+        notifs.forEach(n => {
+            html += `
+                <div class="p-4 border-b border-white/5 hover:bg-white/5 transition-all cursor-pointer ${n.is_read ? 'opacity-50' : ''}">
+                    <p class="text-sm text-white mb-1">${n.message}</p>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase">${n.created_at}</p>
+                </div>
+            `;
+        });
+        $list.html(html);
+    };
+
+    $("#markAllReadBtn").on("click", function() {
+        if (!window.NMRData) return;
+        window.NMRData.post('/user/notifications/read-all')
+            .then(() => {
+                showFeedback('Tüm bildirimler okundu.');
+                loadNotifications();
+            });
+    });
+
     // --- FORM HANDLERS ---
 
     $("#seriesCommentForm").on("submit", function(e) {

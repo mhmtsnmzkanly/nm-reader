@@ -113,66 +113,112 @@
     </div>
 </div>
 
+<!-- Modernized Notifications Modal -->
 <div id="notifModal" class="modal-overlay">
-  <div class="modal card">
-    <div class="modal-header"><h3>🔔 <?= $__t('notifications') ?></h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-    <div class="modal-body p-0" style="max-height: 400px; overflow-y: auto;" id="notifModalList">
-      <div class="p-4 text-center text-muted"><?= $__t('loading') ?></div>
+    <div class="modal card">
+        <div class="modal-header">
+            <h3 class="flex items-center gap-2">🔔 <?= $__t('notifications') ?></h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body p-0 max-h-[450px] overflow-y-auto" id="notifModalList">
+            <div class="p-8 text-center text-gray-500 text-sm">
+                <i data-lucide="bell-off" class="w-8 h-8 mx-auto mb-3 opacity-20"></i>
+                <?= $__t('loading') ?>
+            </div>
+        </div>
+        <div class="p-4 border-t border-white/5">
+            <button class="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" id="markAllReadBtn">
+                <?= $__t('mark_all_read') ?>
+            </button>
+        </div>
     </div>
-    <div class="modal-footer"><button class="btn btn-sm btn-outline w-100" id="markAllReadBtn"><?= $__t('mark_all_read') ?></button></div>
-  </div>
 </div>
 
+<!-- Modernized Reader Settings Modal -->
 <div id="readerSettingsModal" class="modal-overlay">
-  <div class="modal card modal-wide">
-    <div class="modal-header"><h3>⚙️ <?= $__t('reader_settings') ?></h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
-    <div class="modal-body p-0"><div class="flex" style="min-height: 400px;">
-      <div class="modal-sidebar border-r p-2" id="readerTabSidebar" style="width: 160px; background: var(--surface)">
-        <button class="btn btn-sm btn-outline w-100 text-left mb-1 active" data-tab="layout"><?= $__t('layout') ?></button>
-        <button class="btn btn-sm btn-outline w-100 text-left mb-1" data-tab="typography"><?= $__t('typography') ?></button>
-        <button class="btn btn-sm btn-outline w-100 text-left mb-1" data-tab="appearance"><?= $__t('appearance') ?></button>
-      </div>
-      <div class="modal-content-area flex-grow p-4">
-        <div id="tab-layout" class="settings-tab">
-          <div class="form-group mb-3"><label class="text-xs"><?= $__t('page_layout') ?></label>
-            <select class="form-item" name="reader_layout" id="readerLayoutSelect">
-              <option value="vertical"><?= $__t('vertical_scroll') ?></option>
-              <option value="single"><?= $__t('single_page') ?></option>
-              <option value="double"><?= $__t('double_page') ?></option>
-            </select>
-          </div>
-          <div class="form-group"><label class="text-xs"><?= $__t('image_fit') ?></label>
-            <select class="form-item" name="reader_image_fit">
-              <option value="width"><?= $__t('fit_width') ?></option>
-              <option value="height"><?= $__t('fit_height') ?></option>
-              <option value="original"><?= $__t('original_size') ?></option>
-            </select>
-          </div>
+    <div class="modal card max-w-xl">
+        <div class="modal-header">
+            <h3 class="flex items-center gap-2">⚙️ <?= $__t('reader_settings') ?></h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
-        <div id="tab-typography" class="settings-tab hidden">
-          <div class="form-group mb-3"><label class="text-xs"><?= $__t('font_family') ?></label>
-            <select class="form-item" name="reader_font_family">
-              <option value="var(--font-sans)">Sans</option>
-              <option value="serif">Serif</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="text-xs"><?= $__t('font_size') ?> (<span id="fontSizeVal">18</span>px)</label>
-            <input type="range" name="reader_font_size" min="12" max="32" value="18" class="w-100">
-          </div>
+        <div class="modal-body p-0 flex flex-col md:flex-row min-h-[400px]">
+            <!-- Sidebar -->
+            <div class="w-full md:w-48 bg-white/5 border-r border-white/5 p-4 space-y-2" id="readerTabSidebar">
+                <button class="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active bg-blue-600 text-white shadow-lg shadow-blue-600/20" data-tab="layout">
+                    <?= $__t('layout') ?>
+                </button>
+                <button class="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-gray-500 hover:bg-white/5 hover:text-white" data-tab="typography">
+                    <?= $__t('typography') ?>
+                </button>
+                <button class="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-gray-500 hover:bg-white/5 hover:text-white" data-tab="appearance">
+                    <?= $__t('appearance') ?>
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-grow p-8">
+                <!-- Layout Tab -->
+                <div id="tab-layout" class="settings-tab space-y-6">
+                    <div>
+                        <label class="edit-label"><?= $__t('page_layout') ?></label>
+                        <select class="edit-input" name="reader_layout" id="readerLayoutSelect">
+                            <option value="vertical"><?= $__t('vertical_scroll') ?></option>
+                            <option value="single"><?= $__t('single_page') ?></option>
+                            <option value="double"><?= $__t('double_page') ?></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="edit-label"><?= $__t('image_fit') ?></label>
+                        <select class="edit-input" name="reader_image_fit">
+                            <option value="width"><?= $__t('fit_width') ?></option>
+                            <option value="height"><?= $__t('fit_height') ?></option>
+                            <option value="original"><?= $__t('original_size') ?></option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Typography Tab -->
+                <div id="tab-typography" class="settings-tab hidden space-y-6">
+                    <div>
+                        <label class="edit-label"><?= $__t('font_family') ?></label>
+                        <select class="edit-input" name="reader_font_family">
+                            <option value="var(--font-sans)">Inter (Sans)</option>
+                            <option value="Lora, serif">Lora (Serif)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="edit-label flex justify-between">
+                            <?= $__t('font_size') ?>
+                            <span id="fontSizeVal" class="text-blue-500">18px</span>
+                        </label>
+                        <input type="range" name="reader_font_size" min="12" max="32" value="18" class="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-600 mt-4">
+                    </div>
+                </div>
+
+                <!-- Appearance Tab -->
+                <div id="tab-appearance" class="settings-tab hidden space-y-6">
+                    <label class="edit-label">Renk Teması</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <?php 
+                        $readerThemes = [
+                            ['id' => 'default', 'label' => 'Aydınlık', 'icon' => '☀️'],
+                            ['id' => 'dark', 'label' => 'Karanlık', 'icon' => '🌑'],
+                            ['id' => 'sepia', 'label' => 'Sepia', 'icon' => '📖'],
+                            ['id' => 'royal', 'label' => 'Kraliyet', 'icon' => '👑'],
+                        ];
+                        foreach ($readerThemes as $rt): 
+                        ?>
+                        <button class="theme-btn flex items-center justify-between px-4 py-3 rounded-xl border border-white/5 bg-white/5 hover:border-blue-500/50 transition-all text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white" data-theme="<?= $rt['id'] ?>">
+                            <span><?= $rt['icon'] ?> <?= $rt['label'] ?></span>
+                        </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="tab-appearance" class="settings-tab hidden text-center">
-          <div class="flex flex-wrap gap-2 justify-center">
-            <button class="theme-btn btn btn-outline p-2" data-theme="default">☀️ Default</button>
-            <button class="theme-btn btn btn-outline p-2" data-theme="dark">🌑 Dark</button>
-            <button class="theme-btn btn btn-outline p-2" data-theme="royal">👑 Royal</button>
-            <button class="theme-btn btn btn-outline p-2" data-theme="bootstrap">🅱️ Bootstrap</button>
-            <button class="theme-btn btn btn-outline p-2" data-theme="material">Ⓜ️ Material</button>
-            <button class="theme-btn btn btn-outline p-2" data-theme="apple">🍎 Apple</button>
-            <button class="theme-btn btn btn-outline p-2" data-theme="glass">💎 Glass</button>
-          </div>
+        <div class="p-6 border-t border-white/5 flex gap-4">
+            <button class="flex-1 btn btn-outline" onclick="closeModal()">İptal</button>
+            <button class="flex-[2] btn btn-primary shadow-xl shadow-blue-600/20" id="saveAllSettingsBtn"><?= $__t('save_and_apply') ?></button>
         </div>
-      </div>
-    </div></div>
-    <div class="modal-footer"><button class="btn btn-sm btn-primary px-5" id="saveAllSettingsBtn"><?= $__t('save_and_apply') ?></button></div>
-  </div>
+    </div>
 </div>

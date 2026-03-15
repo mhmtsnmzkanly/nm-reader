@@ -34,7 +34,7 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
     </div>
 
     <div class="flex items-center gap-3">
-        <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 text-gray-400">
+        <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 text-gray-400" onclick="openModal('readerSettingsModal')">
             <i data-lucide="settings-2" class="w-5 h-5"></i>
         </button>
         <button class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20 text-white">
