@@ -22,7 +22,7 @@ $items = is_array($items ?? null) ? $items : [];
                     <?= htmlspecialchars($heading) ?>
                 </h1>
                 <p class="text-gray-500 mt-4 max-w-xl font-medium leading-relaxed">
-                    <?= $__t('ui.category_desc_msg', [':category' => htmlspecialchars($heading)]) ?>
+                    <?= $__t('ui.category_desc_msg', ['category' => htmlspecialchars($heading)]) ?>
                 </p>
             </div>
             <div class="flex items-center gap-4 bg-white/5 p-2 rounded-2xl border border-white/5">

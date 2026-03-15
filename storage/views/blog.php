@@ -76,7 +76,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
             <div class="flex justify-center gap-3 mb-8">
                 <span class="px-4 py-1 bg-blue-600/20 text-blue-500 border border-blue-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em]"><?= $__t('ui.review') ?></span>
                 <span class="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                    <i data-lucide="clock" class="w-3 h-3"></i> <?= $__t('ui.read_time_msg', [':time' => '5']) ?>
+                    <i data-lucide="clock" class="w-3 h-3"></i> <?= $__t('ui.read_time_msg', ['time' => '5']) ?>
                 </span>
             </div>
 

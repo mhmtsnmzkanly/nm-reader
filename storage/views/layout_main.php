@@ -140,7 +140,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     <!-- User Modal / Dropdown -->
                     <div id="user-modal" class="user-dropdown">
                         <div class="px-3 py-4 border-b border-white/5 mb-2">
-                            <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1"><?= $__t('ui.wallet_balance_msg', [':coins' => $_SESSION['user_wallet']['balance'] ?? '0']) ?></p>
+                            <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1"><?= $__t('ui.wallet_balance_msg', ['coins' => $_SESSION['user_wallet']['balance'] ?? '0']) ?></p>
                             <p class="text-sm font-black text-white uppercase tracking-tight"><?= htmlspecialchars($_SESSION['username'] ?? $__t('user')) ?></p>
                         </div>
                         <div class="space-y-1">
@@ -204,7 +204,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                         <?= $__t('ui.about') ?>
                     </h3>
                     <p class="text-gray-500 text-sm leading-relaxed mb-6">
-                        <?= $__t('ui.about_desc', [':site_name' => htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP'))]) ?>
+                        <?= $__t('ui.about_desc', ['site_name' => htmlspecialchars((string) ($siteConfig['site_name'] ?? 'MANGA.APP'))]) ?>
                     </p>
                     <div class="flex gap-4">
                         <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
