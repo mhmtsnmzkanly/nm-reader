@@ -60,7 +60,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
     <!-- Assets -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/main.css?v=<?= time() ?>">
 
     <?php if (!empty($siteConfig['integrations']['google_analytics_id'])): ?>
         <!-- Google Analytics (GA4) -->
