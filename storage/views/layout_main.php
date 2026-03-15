@@ -114,7 +114,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '/';
                     <i data-lucide="chevron-down" class="w-3 h-3 text-gray-600"></i>
                 </button>
 
-                <div class="lang-dropdown absolute top-full right-0 mt-2 w-32 bg-[#121212] border border-white/10 rounded-2xl overflow-hidden shadow-2xl py-2">
+                <div class="lang-dropdown shadow-2xl">
                     <button class="lang-item <?= $langCode === 'tr' ? 'active' : 'inactive' ?>" onclick="switchLanguage('tr')">
                         Türkçe <span>🇹🇷</span>
                     </button>
