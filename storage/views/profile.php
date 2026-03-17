@@ -92,6 +92,9 @@ $username = (string) ($user['username'] ?? 'User');
         <button class="tab-btn py-6 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap" data-tab="history">
             <?= $__t('reading_history') ?>
         </button>
+        <button class="tab-btn py-6 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap" data-tab="wallet">
+            <?= $__t('ui.wallet_tab') ?>
+        </button>
         <?php endif; ?>
     </nav>
 
@@ -185,6 +188,75 @@ $username = (string) ($user['username'] ?? 'User');
             <?php else: ?>
                 <p class="text-gray-500 text-sm"><?= $__t('no_history') ?></p>
             <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- Wallet Tab -->
+        <?php if ($isMe): ?>
+        <div id="tab-wallet" class="tab-content hidden space-y-6" data-loaded="0"
+             data-msg-loading="<?= $__t('ui.wallet_loading') ?>"
+             data-msg-load-failed="<?= $__t('ui.wallet_load_failed') ?>"
+             data-msg-login="<?= $__t('ui.wallet_login_required') ?>"
+             data-msg-empty-tx="<?= $__t('ui.wallet_empty_tx') ?>"
+             data-msg-empty-packages="<?= $__t('ui.wallet_empty_packages') ?>"
+             data-msg-empty-features="<?= $__t('ui.wallet_empty_features') ?>">
+            <div class="glass p-6 rounded-3xl border border-white/5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-white"><?= $__t('ui.wallet_balance') ?></h3>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase" id="walletUpdatedAt">--</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-600/10 rounded-2xl p-4">
+                        <p class="text-[10px] text-blue-400 font-bold uppercase"><?= $__t('ui.available_coins') ?></p>
+                        <p class="text-3xl font-black text-white" id="walletBalanceValue">--</p>
+                    </div>
+                    <div class="bg-white/5 rounded-2xl p-4">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase"><?= $__t('ui.wallet_total_purchased') ?></p>
+                        <p class="text-xl font-black text-white" id="walletTotalPurchased">--</p>
+                    </div>
+                    <div class="bg-white/5 rounded-2xl p-4">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase"><?= $__t('ui.wallet_total_spent') ?></p>
+                        <p class="text-xl font-black text-white" id="walletTotalSpent">--</p>
+                    </div>
+                </div>
+                <div class="mt-4 text-[11px] text-gray-400 font-bold uppercase tracking-widest">
+                    <?= $__t('ui.wallet_topup_note') ?>
+                </div>
+                <div id="walletStatus" class="mt-2 text-xs text-gray-500"><?= $__t('ui.wallet_loading') ?></div>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border border-white/5">
+                <h3 class="text-sm font-black uppercase tracking-widest text-white mb-4"><?= $__t('ui.wallet_packages') ?></h3>
+                <div id="walletPackagesGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border border-white/5">
+                <h3 class="text-sm font-black uppercase tracking-widest text-white mb-4"><?= $__t('ui.wallet_features') ?></h3>
+                <div id="walletFeaturesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border border-white/5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-white"><?= $__t('ui.wallet_transactions') ?></h3>
+                    <button class="text-[10px] font-bold text-blue-400 uppercase tracking-widest" id="walletLoadMoreBtn" type="button">
+                        <?= $__t('ui.wallet_load_more') ?>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[11px] text-gray-400">
+                        <thead>
+                            <tr class="text-gray-500 uppercase text-[10px]">
+                                <th class="text-left py-2"><?= $__t('ui.wallet_tx_time') ?></th>
+                                <th class="text-left py-2"><?= $__t('ui.wallet_tx_desc') ?></th>
+                                <th class="text-right py-2"><?= $__t('ui.wallet_tx_amount') ?></th>
+                            </tr>
+                        </thead>
+                        <tbody id="walletTransactionsBody">
+                            <tr><td colspan="3" class="py-4 text-center text-gray-500"><?= $__t('ui.wallet_loading') ?></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
         <?php endif; ?>
     </section>
