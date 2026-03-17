@@ -383,6 +383,169 @@ $(document).ready(function () {
     }
 
     // 2. Profile Tabs
+    const loadWalletTab = async function() {
+        const $tab = $("#tab-wallet");
+        if (!$tab.length) return;
+        if ($tab.data("loading")) return;
+        if ($tab.data("loaded")) return;
+
+        const msgLoading = $tab.data("msg-loading") || "Loading wallet data...";
+        const msgFailed = $tab.data("msg-load-failed") || "Unable to load wallet data.";
+        const msgLogin = $tab.data("msg-login") || "Please sign in.";
+        const msgEmptyTx = $tab.data("msg-empty-tx") || "No transactions yet.";
+        const msgEmptyPackages = $tab.data("msg-empty-packages") || "No active packages.";
+        const msgEmptyFeatures = $tab.data("msg-empty-features") || "No active features.";
+        const msgFeatureActive = $tab.data("msg-feature-active") || "Active";
+        const msgFeatureInactive = $tab.data("msg-feature-inactive") || "Inactive";
+        const msgFeatureUntil = $tab.data("msg-feature-until") || "Until";
+
+        const $status = $("#walletStatus");
+        const $txBody = $("#walletTransactionsBody");
+        const $packages = $("#walletPackagesGrid");
+        const $features = $("#walletFeaturesGrid");
+
+        $tab.data("loading", true);
+        $status.text(msgLoading);
+
+        const formatNumber = (value) => Number(value || 0).toLocaleString();
+        const formatDate = (value) => {
+            if (!value) return "--";
+            const dt = new Date(value.replace(" ", "T"));
+            if (isNaN(dt.getTime())) return value;
+            return dt.toLocaleString();
+        };
+
+        let walletLoaded = false;
+
+        if (window.NMRData) {
+            try {
+                const walletResp = await window.NMRData.get("/user/wallet");
+                const wallet = walletResp.data || {};
+                $("#walletBalanceValue").text(formatNumber(wallet.balance_coin));
+                $("#walletTotalPurchased").text(formatNumber(wallet.total_coin_purchased));
+                $("#walletTotalSpent").text(formatNumber(wallet.total_coin_spent));
+                $("#walletUpdatedAt").text(formatDate(wallet.updated_at));
+                walletLoaded = true;
+            } catch (err) {
+                $status.text(msgLogin);
+            }
+        } else {
+            $status.text(msgFailed);
+        }
+
+        if (window.NMRData) {
+            try {
+                const txResp = await window.NMRData.get("/user/wallet/transactions?page=1&per_page=10");
+                const items = (txResp.data && txResp.data.items) ? txResp.data.items : [];
+                if (!items.length) {
+                    $txBody.html(`<tr><td colspan="3" class="py-4 text-center text-gray-500">${msgEmptyTx}</td></tr>`);
+                } else {
+                    $txBody.html(items.map((t) => `
+                        <tr class="border-b border-white/5">
+                            <td class="py-3">${formatDate(t.created_at)}</td>
+                            <td class="py-3 text-gray-300">${t.description || '-'}</td>
+                            <td class="py-3 text-right ${Number(t.coin_delta) >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(t.coin_delta)}</td>
+                        </tr>
+                    `).join(""));
+                }
+            } catch (err) {
+                if (walletLoaded) {
+                    $txBody.html(`<tr><td colspan="3" class="py-4 text-center text-gray-500">${msgEmptyTx}</td></tr>`);
+                }
+            }
+        }
+
+        if (window.NMRData) {
+            try {
+                const pkgResp = await window.NMRData.get("/shop/packages?page=1&per_page=12");
+                const items = (pkgResp.data && pkgResp.data.items) ? pkgResp.data.items : [];
+                if (!items.length) {
+                    $packages.html(`<div class="text-sm text-gray-500">${msgEmptyPackages}</div>`);
+                } else {
+                    $packages.html(items.map((p) => `
+                        <div class="bg-white/5 rounded-2xl p-4 border border-white/5">
+                            <div class="text-xs text-gray-400 font-bold uppercase">${p.name || ''}</div>
+                            <div class="text-2xl font-black text-white mt-2">${formatNumber(p.total_coin || (Number(p.coin_amount || 0) + Number(p.bonus_coin || 0)))} <span class="text-[10px] text-gray-400">coin</span></div>
+                            <div class="text-[11px] text-gray-500 mt-2">${p.display_price ? `${p.display_price} ${p.currency || ''}` : ''}</div>
+                        </div>
+                    `).join(""));
+                }
+            } catch (err) {
+                $packages.html(`<div class="text-sm text-gray-500">${msgEmptyPackages}</div>`);
+            }
+        }
+
+        if (window.NMRData) {
+            try {
+                const featureResp = await window.NMRData.get("/shop/features");
+                let features = featureResp.data || [];
+                let userFeatures = {};
+                try {
+                    const statusResp = await window.NMRData.get("/user/features");
+                    userFeatures = statusResp.data || {};
+                } catch (err) {
+                    userFeatures = {};
+                }
+
+                if (!features.length) {
+                    $features.html(`<div class="text-sm text-gray-500">${msgEmptyFeatures}</div>`);
+                } else {
+                    $features.html(features.map((f) => {
+                        const status = userFeatures[f.feature_key] || {};
+                        const active = status.active ? true : false;
+                        const label = active ? msgFeatureActive : msgFeatureInactive;
+                        const dateLabel = status.expires_at ? `${msgFeatureUntil} ${formatDate(status.expires_at)}` : "";
+                        return `
+                            <div class="bg-white/5 rounded-2xl p-4 border border-white/5">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-xs text-gray-400 font-bold uppercase">${f.name || f.feature_key}</div>
+                                    <span class="text-[10px] font-bold ${active ? 'text-emerald-400' : 'text-gray-500'} uppercase">${label}</span>
+                                </div>
+                                <div class="text-sm text-gray-300 mt-2">${formatNumber(f.coin_price || 0)} coin / ${formatNumber(f.duration_days || 0)} day</div>
+                                <div class="text-[11px] text-gray-500 mt-1">${dateLabel}</div>
+                            </div>
+                        `;
+                    }).join(""));
+                }
+            } catch (err) {
+                $features.html(`<div class="text-sm text-gray-500">${msgEmptyFeatures}</div>`);
+            }
+        }
+
+        if (walletLoaded) {
+            $status.text("");
+        } else {
+            $status.text($status.text() || msgFailed);
+        }
+
+        $("#walletLoadMoreBtn").on("click", async function() {
+            const $btn = $(this);
+            if ($btn.data("loading")) return;
+            $btn.data("loading", true);
+            const currentCount = $txBody.find("tr").length;
+            const nextPage = Math.floor(currentCount / 10) + 1;
+            try {
+                const txResp = await window.NMRData.get(`/user/wallet/transactions?page=${nextPage}&per_page=10`);
+                const items = (txResp.data && txResp.data.items) ? txResp.data.items : [];
+                if (items.length) {
+                    $txBody.append(items.map((t) => `
+                        <tr class="border-b border-white/5">
+                            <td class="py-3">${formatDate(t.created_at)}</td>
+                            <td class="py-3 text-gray-300">${t.description || '-'}</td>
+                            <td class="py-3 text-right ${Number(t.coin_delta) >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(t.coin_delta)}</td>
+                        </tr>
+                    `).join(""));
+                }
+            } catch (err) {
+                // ignore load more failures
+            }
+            $btn.data("loading", false);
+        });
+
+        $tab.data("loaded", true);
+        $tab.data("loading", false);
+    };
+
     $(".tab-btn").on("click", function () {
         const target = $(this).data("tab");
         $(".tab-btn").removeClass("tab-active text-white").addClass("text-gray-500");
@@ -390,6 +553,7 @@ $(document).ready(function () {
         $(".tab-content").addClass("hidden");
         $("#tab-" + target).removeClass("hidden");
         if (target === 'blogs') $("#tab-blogs").addClass("grid"); else $("#tab-blogs").removeClass("grid");
+        if (target === 'wallet') loadWalletTab();
     });
 
     // 3. Search Pills
