@@ -1352,12 +1352,16 @@ final class WebController
         include $layoutPath;
         $layoutContent = (string) ob_get_clean();
 
+        $cacheControl = $authContext["is_logged_in"]
+            ? "private, max-age=0, must-revalidate"
+            : "public, max-age=0, s-maxage=300, stale-while-revalidate=60, stale-if-error=300";
+
         $response->getBody()->write($layoutContent);
         return $response
             ->withHeader("Content-Type", "text/html; charset=utf-8")
             ->withHeader("Content-Language", $langCode)
             ->withHeader("ETag", '"' . $etag . '"')
-            ->withHeader("Cache-Control", "public, max-age=0, must-revalidate");
+            ->withHeader("Cache-Control", $cacheControl);
     }
 
     private function loadLang(string $basePath, string $code): array
