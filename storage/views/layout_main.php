@@ -224,7 +224,7 @@ str_ends_with($currentPath, "/en")
                     <i data-lucide="chevron-down" class="w-3 h-3 text-gray-600"></i>
                 </button>
 
-                <div id="lang-modal" class="lang-dropdown shadow-2xl">
+                <div id="lang-modal" class="lang-dropdown shadow-2xl" style="z-index: 220;">
                     <button class="lang-item <?= $langCode === "tr"
                         ? "active"
                         : "inactive" ?>" onclick="switchLanguage('tr')">
@@ -255,7 +255,7 @@ str_ends_with($currentPath, "/en")
                     </button>
 
                     <!-- User Modal / Dropdown -->
-                    <div id="user-modal" class="user-dropdown">
+                    <div id="user-modal" class="user-dropdown" style="z-index: 220;">
                         <div class="px-3 py-4 border-b border-white/5 mb-2">
                             <p class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1"><?= $__t(
                                 "ui.wallet_balance_msg",
@@ -321,7 +321,7 @@ str_ends_with($currentPath, "/en")
     </header>
 
     <!-- Mobile Navigation Overlay -->
-    <div id="mobile-menu" style="display: none;" class="fixed inset-0 z-[90] bg-[#080808] pt-24 px-6">
+    <div id="mobile-menu" style="display: none; z-index: 160;" class="fixed inset-0 z-[90] bg-[#080808] pt-24 px-6">
         <div class="flex flex-col gap-6">
             <a href="<?= $url(
                 "/",
