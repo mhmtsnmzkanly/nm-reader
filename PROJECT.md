@@ -102,6 +102,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Documentation Refresh: Auth Turnstile & Frontend Coverage (2026-03-17)
+- **Status**: Completed.
+- **Change**: Clarified that API and frontend auth payloads use `turnstile_token` when Cloudflare Turnstile is enabled.
+- **Change**: Expanded frontend API coverage to include public discovery and reading endpoints alongside the standard response envelope.
+- **Change**: Clarified that API base URLs are derived from `APP_URL` with a local example for development.
+
 ### Public SSR Skeleton Pages Replace Previous Design Layers (2026-03-09)
 - **Status**: Completed.
 - **Problem**:
@@ -598,4 +604,3 @@ This document serves as the absolute authority on the project's architecture, co
   - **Service Update**: Enhanced `I18nService` to support both `:key` and `{key}` placeholder formats and updated the controller helper to handle dynamic parameters.
   - **Modal Modernization**: Redesigned Notifications and Reader Settings modals with a modern "glassmorphism" aesthetic and improved functional logic (tab switching, theme selection).
   - **UI Refinement**: Added a persistent Language Selector to the header, fixed positioning issues for the User Dropdown, and added a Reader Settings shortcut to the floating reader controls for easier access.
-
