@@ -183,7 +183,7 @@ Audit trail for authentication attempts.
 
 #### Supporting Consistency Tables
 To align the documented schema with active backend code, the schema now also includes:
-- `user_preferences`: Stores site and reader settings (theme, layout, font sizes) per user.
+- `user_preferences`: Reader and site defaults per user (lang, theme, layout, font, direction).
 - `user_follows`: Tracks user-to-user follow relationships for social features.
 - `user_chapters_reads`: Detailed log of every chapter read by every user (used for history).
 - `system_jobs`: Internal queue for asynchronous tasks like notifications and analytics.
