@@ -149,9 +149,9 @@ $currentPath = $_SERVER["REQUEST_URI"] ?? "/"; ?>
 </head>
 <body class="overflow-x-hidden">
     <!-- HEADER -->
-    <header class="fixed top-0 w-full z-[100] h-20 glass flex items-center px-4 md:px-8 justify-between">
+    <header class="fixed top-0 w-full z-[100] h-20 glass flex items-center px-4 md:px-8 justify-between flex-nowrap overflow-hidden">
         <!-- Logo -->
-        <a href="<?= $url("/") ?>" class="flex items-center gap-3 group">
+        <a href="<?= $url("/") ?>" class="flex items-center gap-3 group shrink-0">
             <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white shadow-lg shadow-blue-600/20 group-hover:rotate-6 transition-transform">
                 <?= strtoupper(substr($siteConfig["site_name"] ?? "M", 0, 1)) ?>
             </div>
@@ -209,7 +209,7 @@ str_ends_with($currentPath, "/en")
         </nav>
 
         <!-- Right Actions -->
-        <div class="flex items-center gap-2 sm:gap-3 md:gap-5">
+        <div class="flex items-center gap-2 sm:gap-3 md:gap-5 flex-nowrap shrink-0">
             <a href="<?= $url(
                 "/search",
             ) ?>" class="lg:hidden hidden sm:flex w-10 h-10 items-center justify-center text-gray-400">
@@ -307,8 +307,9 @@ str_ends_with($currentPath, "/en")
                         </div>
                     </div>
                 <?php else: ?>
-                    <button id="openAuthBtn" class="bg-white text-black px-3 sm:px-6 py-2 sm:py-2.5 rounded-2xl font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5">
-                        <?= $__t("login") ?>
+                    <button id="openAuthBtn" class="bg-white text-black px-3 sm:px-6 py-2 sm:py-2.5 rounded-2xl font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5 flex items-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4 sm:hidden"></i>
+                        <span class="hidden sm:inline"><?= $__t("login") ?></span>
                     </button>
                 <?php endif; ?>
             </div>
