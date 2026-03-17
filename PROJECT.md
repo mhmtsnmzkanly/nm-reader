@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### SSR Cache Headers For Anonymous Traffic (2026-03-17)
+- **Status**: Completed.
+- **Change**: Added `s-maxage` and stale caching directives for anonymous SSR responses while keeping logged-in responses private.
+
 ### Profile Wallet Tab & Manual Top-Up UX (2026-03-17)
 - **Status**: Completed.
 - **Change**: Added a profile wallet tab that surfaces balance, packages, features, and transaction history using existing API endpoints.
