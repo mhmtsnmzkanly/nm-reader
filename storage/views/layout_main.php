@@ -149,7 +149,7 @@ $currentPath = $_SERVER["REQUEST_URI"] ?? "/"; ?>
 </head>
 <body class="overflow-x-hidden">
     <!-- HEADER -->
-    <header class="fixed top-0 w-full z-[100] h-20 glass flex items-center px-4 md:px-8 justify-between flex-nowrap overflow-hidden">
+    <header class="fixed top-0 w-full z-[100] h-20 glass flex items-center px-4 md:px-8 justify-between flex-nowrap overflow-visible">
         <!-- Logo -->
         <a href="<?= $url("/") ?>" class="flex items-center gap-3 group shrink-0">
             <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white shadow-lg shadow-blue-600/20 group-hover:rotate-6 transition-transform">
