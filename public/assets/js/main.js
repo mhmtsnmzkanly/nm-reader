@@ -55,6 +55,8 @@ window.logout = function() {
 };
 
 $(document).ready(function () {
+    const templateName = $("body").data("template") || "";
+
     // Initialize Icons
     if (window.lucide) lucide.createIcons();
 
@@ -550,59 +552,65 @@ $(document).ready(function () {
         $tab.data("loading", false);
     };
 
-    $(".tab-btn").on("click", function () {
-        const target = $(this).data("tab");
-        $(".tab-btn").removeClass("tab-active text-white").addClass("text-gray-500");
-        $(this).addClass("tab-active text-white").removeClass("text-gray-500");
-        $(".tab-content").addClass("hidden");
-        $("#tab-" + target).removeClass("hidden");
-        if (target === 'blogs') $("#tab-blogs").addClass("grid"); else $("#tab-blogs").removeClass("grid");
-        if (target === 'wallet') loadWalletTab();
-    });
+    if (templateName === "profile.php") {
+        $(".tab-btn").on("click", function () {
+            const target = $(this).data("tab");
+            $(".tab-btn").removeClass("tab-active text-white").addClass("text-gray-500");
+            $(this).addClass("tab-active text-white").removeClass("text-gray-500");
+            $(".tab-content").addClass("hidden");
+            $("#tab-" + target).removeClass("hidden");
+            if (target === 'blogs') $("#tab-blogs").addClass("grid"); else $("#tab-blogs").removeClass("grid");
+            if (target === 'wallet') loadWalletTab();
+        });
+    }
 
     // 3. Search Pills
-    $(".tag-pill-genre").on("click", function () {
-        const slug = $(this).data("slug");
-        if (slug === "") {
-            $(".tag-pill-genre").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
-            $(this).addClass("active").removeClass("bg-white/5 text-gray-400");
-        } else {
-            $(".tag-pill-genre[data-slug='']").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
+    if (templateName === "search.php") {
+        $(".tag-pill-genre").on("click", function () {
+            const slug = $(this).data("slug");
+            if (slug === "") {
+                $(".tag-pill-genre").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
+                $(this).addClass("active").removeClass("bg-white/5 text-gray-400");
+            } else {
+                $(".tag-pill-genre[data-slug='']").removeClass("active bg-blue-600 text-white").addClass("bg-white/5 text-gray-400");
+                $(this).toggleClass("active bg-white/5 text-gray-400");
+                if ($(".tag-pill-genre.active").length === 0) $(".tag-pill-genre[data-slug='']").addClass("active").removeClass("bg-white/5 text-gray-400");
+            }
+            if (window.updateSearchInputs) window.updateSearchInputs();
+        });
+
+        $(".tag-pill-tag").on("click", function () {
             $(this).toggleClass("active bg-white/5 text-gray-400");
-            if ($(".tag-pill-genre.active").length === 0) $(".tag-pill-genre[data-slug='']").addClass("active").removeClass("bg-white/5 text-gray-400");
-        }
-        if (window.updateSearchInputs) window.updateSearchInputs();
-    });
+            if (window.updateSearchInputs) window.updateSearchInputs();
+        });
 
-    $(".tag-pill-tag").on("click", function () {
-        $(this).toggleClass("active bg-white/5 text-gray-400");
-        if (window.updateSearchInputs) window.updateSearchInputs();
-    });
-
-    window.updateSearchInputs = function() {
-        const genres = []; $(".tag-pill-genre.active").each(function() { const s = $(this).data("slug"); if (s) genres.push(s); });
-        $("#genresInput").val(genres.join(','));
-        const tags = []; $(".tag-pill-tag.active").each(function() { const s = $(this).data("slug"); if (s) tags.push(s); });
-        $("#tagsInput").val(tags.join(','));
-    };
+        window.updateSearchInputs = function() {
+            const genres = []; $(".tag-pill-genre.active").each(function() { const s = $(this).data("slug"); if (s) genres.push(s); });
+            $("#genresInput").val(genres.join(','));
+            const tags = []; $(".tag-pill-tag.active").each(function() { const s = $(this).data("slug"); if (s) tags.push(s); });
+            $("#tagsInput").val(tags.join(','));
+        };
+    }
 
     // 4. Reader Progress
-    $(window).on("scroll", function () {
-        const $bar = $("#reader-progress-bar");
-        if ($bar.length) {
-            let winHeight = $(window).height();
-            let docHeight = $(document).height();
-            let scrollTop = $(window).scrollTop();
-            let progress = (scrollTop / (docHeight - winHeight)) * 100;
-            $bar.css("width", progress + "%");
-        }
-        const $readProgress = $("#readingProgress");
-        if ($readProgress.length) {
-            let wintop = $(window).scrollTop(), docheight = $(document).height(), winheight = $(window).height();
-            let scrolled = (wintop / (docheight - winheight)) * 100;
-            $readProgress.css("width", scrolled + "%");
-        }
-    });
+    if (templateName === "chapter.php") {
+        $(window).on("scroll", function () {
+            const $bar = $("#reader-progress-bar");
+            if ($bar.length) {
+                let winHeight = $(window).height();
+                let docHeight = $(document).height();
+                let scrollTop = $(window).scrollTop();
+                let progress = (scrollTop / (docHeight - winHeight)) * 100;
+                $bar.css("width", progress + "%");
+            }
+            const $readProgress = $("#readingProgress");
+            if ($readProgress.length) {
+                let wintop = $(window).scrollTop(), docheight = $(document).height(), winheight = $(window).height();
+                let scrolled = (wintop / (docheight - winheight)) * 100;
+                $readProgress.css("width", scrolled + "%");
+            }
+        });
+    }
 
     // Simple entry animations
     $(".chapter-row, .blog-card").css("opacity", "0");

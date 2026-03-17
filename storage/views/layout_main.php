@@ -147,7 +147,7 @@ $currentPath = $_SERVER["REQUEST_URI"] ?? "/"; ?>
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <?php endif; ?>
 </head>
-<body class="overflow-x-hidden">
+<body class="overflow-x-hidden" data-template="<?= htmlspecialchars((string) ($templateName ?? ''), ENT_QUOTES, 'UTF-8') ?>">
     <!-- HEADER -->
     <header class="fixed top-0 w-full z-[100] h-20 glass flex items-center px-4 md:px-8 justify-between flex-nowrap overflow-visible">
         <!-- Logo -->
