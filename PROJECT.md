@@ -102,6 +102,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Frontend Performance: Footer Cache + JS Scoping (2026-03-17)
+- **Status**: Completed.
+- **Change**: Cached footer popular list to reduce repeated search load.
+- **Change**: Scoped profile/search/reader JS bindings to their relevant templates.
+
 ### SSR Cache Headers For Anonymous Traffic (2026-03-17)
 - **Status**: Completed.
 - **Change**: Added `s-maxage` and stale caching directives for anonymous SSR responses while keeping logged-in responses private.
