@@ -102,6 +102,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Profile Wallet Tab & Manual Top-Up UX (2026-03-17)
+- **Status**: Completed.
+- **Change**: Added a profile wallet tab that surfaces balance, packages, features, and transaction history using existing API endpoints.
+- **Change**: Documented that wallet top-ups are performed manually by admins (no payment integration).
+
 ### Documentation Refresh: Auth Turnstile & Frontend Coverage (2026-03-17)
 - **Status**: Completed.
 - **Change**: Clarified that API and frontend auth payloads use `turnstile_token` when Cloudflare Turnstile is enabled.

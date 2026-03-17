@@ -110,6 +110,7 @@ Returns a chapter detail payload keyed by content type, slug, and chapter number
 #### **GET /shop/packages**
 Lists active coin packages for the storefront.
 - **Response**: `[ShopPackageDto]`
+ - **Note**: Packages are informational unless a payment provider integration is implemented. Manual wallet credits are handled by admins.
 
 #### **GET /shop/features**
 Lists active feature products that can be purchased with coins.

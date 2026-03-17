@@ -149,6 +149,18 @@ Reader settings (theme, layout, font-size).
 #### **RESPONSE**
 Current coin balance.
 
+### **Get Shop Packages**
+#### **PATH**
+`GET /api/v1/shop/packages`
+#### **RESPONSE**
+Active coin packages for display. These are informational unless you implement payment flows.
+
+### **Get Shop Features**
+#### **PATH**
+`GET /api/v1/shop/features`
+#### **RESPONSE**
+Active feature products (e.g., `ad_free`) for display.
+
 ### **Transaction History**
 #### **PATH**
 `GET /api/v1/user/wallet/transactions`
@@ -182,6 +194,9 @@ Active site features (e.g., `ad_free` status).
 ### **Purchase Ad-Free**
 #### **PATH**
 `POST /api/v1/user/features/ad-free/purchase`
+
+### **Manual Top-Up Note**
+Wallet top-ups are performed manually by admins. Frontend should treat package lists as informational unless a payment provider is integrated.
 
 ---
 
