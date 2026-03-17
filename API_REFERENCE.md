@@ -7,7 +7,8 @@ This document provides a comprehensive technical reference for the NMR API (v1).
 ## 1. Protocol & Conventions
 
 ### Base URL
-`http://localhost:8080/api/v1`
+Use the server `APP_URL` and append `/api/v1` for API calls.
+Example (local): `http://localhost:8080/api/v1`
 
 ### Data Formats
 - **Request Body**: `application/json`
@@ -146,14 +147,16 @@ Endpoint for frontend JS error logging.
 #### **POST /auth/register**
 - **Payload**:
   ```json
-  { "username": "...", "email": "...", "password": "..." }
+  { "username": "...", "email": "...", "password": "...", "turnstile_token": "..." }
   ```
+  - `turnstile_token` is required only when Cloudflare Turnstile keys are configured.
 
 #### **POST /auth/login**
 - **Payload**:
   ```json
-  { "email": "...", "password": "..." }
+  { "email": "...", "password": "...", "turnstile_token": "..." }
   ```
+  - `turnstile_token` is required only when Cloudflare Turnstile keys are configured.
 - **Response**:
   ```json
   {
