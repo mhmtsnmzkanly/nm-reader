@@ -4,13 +4,35 @@ This document provides a structured reference for the NMR API (v1) designed for 
 
 ---
 
+## 0. Base URL & Response Envelope
+
+### **Base URL**
+Use the server `APP_URL` and append `/api/v1` for API calls.
+Example (local): `http://localhost:8080/api/v1`
+
+### **Standard Response Envelope**
+```json
+{
+  "status": "success",
+  "data": {},
+  "meta": {
+    "total": 0,
+    "page": 1,
+    "per_page": 20
+  }
+}
+```
+
+---
+
 ## 1. Authentication & Identity
 
 ### **Register**
 #### **PATH**
 `POST /api/v1/auth/register`
 #### **REQUEST**
-- **Body**: `{ "username": "...", "email": "...", "password": "..." }`
+- **Body**: `{ "username": "...", "email": "...", "password": "...", "turnstile_token": "..." }`
+- `turnstile_token` is required only when Cloudflare Turnstile keys are configured.
 #### **RESPONSE**
 Standard user object on success.
 #### **ERROR**
@@ -20,7 +42,8 @@ Standard user object on success.
 #### **PATH**
 `POST /api/v1/auth/login`
 #### **REQUEST**
-- **Body**: `{ "email": "...", "password": "...", "cf-turnstile-response": "..." }`
+- **Body**: `{ "email": "...", "password": "...", "turnstile_token": "..." }`
+- `turnstile_token` is required only when Cloudflare Turnstile keys are configured.
 #### **RESPONSE**
 ```json
 { "status": "success", "data": { "id": "...", "username": "...", "api_token": "...", "roles": [] } }
@@ -48,7 +71,49 @@ List of active devices/sessions for the user.
 
 ---
 
-## 2. User Profile & Preferences
+## 2. Public Discovery & Reading
+
+### **Home Payload**
+#### **PATH**
+`GET /api/v1/home`
+
+### **Search**
+#### **PATH**
+`GET /api/v1/search`
+#### **QUERY PARAMS**
+`q`
+
+### **Search Suggestions**
+#### **PATH**
+`GET /api/v1/search/suggest`
+#### **QUERY PARAMS**
+`q` (min 2 chars)
+
+### **Content Detail**
+#### **PATH**
+`GET /api/v1/content/{type}/{slug}`
+
+### **Content Chapters**
+#### **PATH**
+`GET /api/v1/content/{type}/{slug}/chapters`
+
+### **Read Chapter (Legacy)**
+#### **PATH**
+`GET /api/v1/chapter/{chapterNumber}`
+#### **QUERY PARAMS**
+`slug`, `type`
+
+### **Read Chapter (Typed)**
+#### **PATH**
+`GET /api/v1/content/{type}/{slug}/chapter/{chapterNumber}`
+
+### **Latest Chapters**
+#### **PATH**
+`GET /api/v1/latest-chapters`
+
+---
+
+## 3. User Profile & Preferences
 
 ### **Get Profile**
 #### **PATH**
@@ -76,7 +141,7 @@ Reader settings (theme, layout, font-size).
 
 ---
 
-## 3. Wallet & Monetization
+## 4. Wallet & Monetization
 
 ### **Get Wallet**
 #### **PATH**
@@ -120,7 +185,7 @@ Active site features (e.g., `ad_free` status).
 
 ---
 
-## 4. Social & Library
+## 5. Social & Library
 
 ### **Follow/Unfollow Series**
 #### **PATH**
@@ -152,7 +217,7 @@ Active site features (e.g., `ad_free` status).
 
 ---
 
-## 5. Interactions
+## 6. Interactions
 
 ### **Rate Content**
 #### **PATH**
@@ -178,7 +243,7 @@ Active site features (e.g., `ad_free` status).
 
 ---
 
-## 6. Blog Management
+## 7. Blog Management
 
 ### **My Blogs**
 #### **PATH**
