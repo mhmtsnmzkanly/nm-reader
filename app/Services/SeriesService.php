@@ -600,6 +600,22 @@ final class SeriesService
         }, $rows);
     }
 
+    /**
+     * Cached popular content slice for footer.
+     *
+     * @param int $limit
+     * @return array
+     */
+    public function footerPopular(int $limit = 5): array
+    {
+        $cacheKey = sprintf('footer_popular_%d', $limit);
+        return $this->cache->remember($cacheKey, 300, function () use ($limit): array {
+            $items = $this->series->search('', 1, $limit, ['sort' => 'EN ÇOK OKUNAN']);
+            $mapped = array_map(static fn (array $row) => ContentDto::fromArray($row)->toArray(), $items);
+            return array_map(fn (array $row) => $this->appendTypePathFields($row), $mapped);
+        });
+    }
+
     private function invalidateListingCaches(): void
     {
         $this->cache->deleteByPrefix('homepage_popular_');
@@ -609,5 +625,6 @@ final class SeriesService
         $this->cache->deleteByPrefix('latest_chapters_');
         $this->cache->deleteByPrefix('genres_');
         $this->cache->deleteByPrefix('tags_');
+        $this->cache->deleteByPrefix('footer_popular_');
     }
 }

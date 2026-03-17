@@ -1281,8 +1281,7 @@ final class WebController
         $footerTags = $this->seriesService->series_tags(1, 20);
         
         // Add popular content and latest chapters for footer
-        $popularItems = $this->seriesService->search("", 1, 5, ["sort" => "EN ÇOK OKUNAN"]); 
-        $footerPopular = $popularItems;
+        $footerPopular = $this->seriesService->footerPopular(5);
         $footerLatestChapters = $this->seriesService->latestChapters(1, 4);
 
         $contextJson = (string) json_encode(
