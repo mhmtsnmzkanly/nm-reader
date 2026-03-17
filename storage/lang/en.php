@@ -228,6 +228,8 @@ return [
     'ui.wallet_feature_active' => 'Active',
     'ui.wallet_feature_inactive' => 'Inactive',
     'ui.wallet_feature_until' => 'Until',
+    'ui.wallet_feature_coin' => 'coin',
+    'ui.wallet_feature_day' => 'day',
     'ui.wallet_load_more' => 'Load More',
     'ui.wallet_tx_time' => 'Date',
     'ui.wallet_tx_desc' => 'Description',

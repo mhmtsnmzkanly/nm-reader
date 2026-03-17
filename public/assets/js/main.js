@@ -398,6 +398,8 @@ $(document).ready(function () {
         const msgFeatureActive = $tab.data("msg-feature-active") || "Active";
         const msgFeatureInactive = $tab.data("msg-feature-inactive") || "Inactive";
         const msgFeatureUntil = $tab.data("msg-feature-until") || "Until";
+        const msgFeatureCoin = $tab.data("msg-feature-coin") || "coin";
+        const msgFeatureDay = $tab.data("msg-feature-day") || "day";
 
         const $status = $("#walletStatus");
         const $txBody = $("#walletTransactionsBody");
@@ -433,9 +435,10 @@ $(document).ready(function () {
             $status.text(msgFailed);
         }
 
+        let txPage = 1;
         if (window.NMRData) {
             try {
-                const txResp = await window.NMRData.get("/user/wallet/transactions?page=1&per_page=10");
+                const txResp = await window.NMRData.get(`/user/wallet/transactions?page=${txPage}&per_page=10`);
                 const items = (txResp.data && txResp.data.items) ? txResp.data.items : [];
                 if (!items.length) {
                     $txBody.html(`<tr><td colspan="3" class="py-4 text-center text-gray-500">${msgEmptyTx}</td></tr>`);
@@ -448,6 +451,7 @@ $(document).ready(function () {
                         </tr>
                     `).join(""));
                 }
+                txPage += 1;
             } catch (err) {
                 if (walletLoaded) {
                     $txBody.html(`<tr><td colspan="3" class="py-4 text-center text-gray-500">${msgEmptyTx}</td></tr>`);
@@ -501,7 +505,7 @@ $(document).ready(function () {
                                     <div class="text-xs text-gray-400 font-bold uppercase">${f.name || f.feature_key}</div>
                                     <span class="text-[10px] font-bold ${active ? 'text-emerald-400' : 'text-gray-500'} uppercase">${label}</span>
                                 </div>
-                                <div class="text-sm text-gray-300 mt-2">${formatNumber(f.coin_price || 0)} coin / ${formatNumber(f.duration_days || 0)} day</div>
+                                <div class="text-sm text-gray-300 mt-2">${formatNumber(f.coin_price || 0)} ${msgFeatureCoin} / ${formatNumber(f.duration_days || 0)} ${msgFeatureDay}</div>
                                 <div class="text-[11px] text-gray-500 mt-1">${dateLabel}</div>
                             </div>
                         `;
@@ -519,13 +523,12 @@ $(document).ready(function () {
         }
 
         $("#walletLoadMoreBtn").on("click", async function() {
+            if (!window.NMRData) return;
             const $btn = $(this);
             if ($btn.data("loading")) return;
             $btn.data("loading", true);
-            const currentCount = $txBody.find("tr").length;
-            const nextPage = Math.floor(currentCount / 10) + 1;
             try {
-                const txResp = await window.NMRData.get(`/user/wallet/transactions?page=${nextPage}&per_page=10`);
+                const txResp = await window.NMRData.get(`/user/wallet/transactions?page=${txPage}&per_page=10`);
                 const items = (txResp.data && txResp.data.items) ? txResp.data.items : [];
                 if (items.length) {
                     $txBody.append(items.map((t) => `
@@ -535,6 +538,7 @@ $(document).ready(function () {
                             <td class="py-3 text-right ${Number(t.coin_delta) >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(t.coin_delta)}</td>
                         </tr>
                     `).join(""));
+                    txPage += 1;
                 }
             } catch (err) {
                 // ignore load more failures

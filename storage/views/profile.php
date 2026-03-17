@@ -202,7 +202,9 @@ $username = (string) ($user['username'] ?? 'User');
              data-msg-empty-features="<?= $__t('ui.wallet_empty_features') ?>"
              data-msg-feature-active="<?= $__t('ui.wallet_feature_active') ?>"
              data-msg-feature-inactive="<?= $__t('ui.wallet_feature_inactive') ?>"
-             data-msg-feature-until="<?= $__t('ui.wallet_feature_until') ?>">
+             data-msg-feature-until="<?= $__t('ui.wallet_feature_until') ?>"
+             data-msg-feature-coin="<?= $__t('ui.wallet_feature_coin') ?>"
+             data-msg-feature-day="<?= $__t('ui.wallet_feature_day') ?>">
             <div class="glass p-6 rounded-3xl border border-white/5">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-sm font-black uppercase tracking-widest text-white"><?= $__t('ui.wallet_balance') ?></h3>

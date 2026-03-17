@@ -228,6 +228,8 @@ return [
     'ui.wallet_feature_active' => 'Aktif',
     'ui.wallet_feature_inactive' => 'Pasif',
     'ui.wallet_feature_until' => 'Bitiş',
+    'ui.wallet_feature_coin' => 'jeton',
+    'ui.wallet_feature_day' => 'gün',
     'ui.wallet_load_more' => 'Daha Fazla',
     'ui.wallet_tx_time' => 'Tarih',
     'ui.wallet_tx_desc' => 'Açıklama',
