@@ -17,7 +17,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
         ?>
         <section class="mb-16">
             <div class="relative w-full h-[400px] md:h-[500px] rounded-[40px] overflow-hidden group shadow-2xl">
-                <img src="<?= htmlspecialchars((string)($featured['cover_image'] ?: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=1200')) ?>" class="w-full h-full object-cover" alt="Featured Blog">
+                <img src="<?= htmlspecialchars((string)($featured['cover_image'] ?: 'https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=1200')) ?>" class="w-full h-full object-cover" alt="Featured Blog" loading="lazy" decoding="async">
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 p-8 md:p-12 max-w-2xl">
                     <span class="px-4 py-1.5 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block"><?= $__t('ui.featured') ?></span>
@@ -45,7 +45,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
                 <?php foreach (array_slice($blogList, 1) as $blog): ?>
                 <article onclick="location.href='<?= $url('blogs/' . (string)($blog['slug'] ?? '')) ?>'" class="blog-card glass rounded-[32px] overflow-hidden border border-white/5 flex flex-col cursor-pointer">
                     <div class="relative h-56 overflow-hidden">
-                        <img src="<?= htmlspecialchars((string)($blog['cover_image'] ?: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800')) ?>" class="w-full h-full object-cover" alt="Blog Thumb">
+                        <img src="<?= htmlspecialchars((string)($blog['cover_image'] ?: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800')) ?>" class="w-full h-full object-cover" alt="Blog Thumb" loading="lazy" decoding="async">
                         <div class="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[9px] font-black text-white uppercase"><?= $__t('ui.review') ?></div>
                     </div>
                     <div class="p-6 flex-1 flex flex-col">
@@ -100,7 +100,7 @@ $blogList = $isList && is_array($data['blog_list']) ? $data['blog_list'] : [];
         <!-- Featured Image -->
         <div class="max-w-6xl mx-auto px-6 mb-16">
             <div class="aspect-[21/9] rounded-[48px] overflow-hidden border border-white/5 shadow-2xl bg-zinc-900">
-                <img src="<?= htmlspecialchars((string)($data['cover_image'] ?: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1200')) ?>" class="w-full h-full object-cover" alt="Featured Image" />
+                <img src="<?= htmlspecialchars((string)($data['cover_image'] ?: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1200')) ?>" class="w-full h-full object-cover" alt="Featured Image" loading="lazy" decoding="async" />
             </div>
         </div>
 

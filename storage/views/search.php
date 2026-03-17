@@ -115,7 +115,7 @@ $activeSort = (string) ($active_sort ?? 'EN YENİLER');
                     <?php foreach ($items as $item): ?>
                     <div class="group cursor-pointer" onclick="location.href='<?= $url((string) ($item['url_path'] ?? '')) ?>'">
                         <div class="relative aspect-[3/4.5] rounded-3xl overflow-hidden mb-4 border border-white/5 shadow-2xl group-hover:-translate-y-2 transition-all duration-300 bg-zinc-900">
-                            <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover" />
+                            <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover" loading="lazy" decoding="async" />
                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
                                 <p class="text-[10px] text-blue-400 font-black uppercase mb-1">
                                     <?= htmlspecialchars((string) ($item['type_path'] ?? $item['type'] ?? '')) ?>

@@ -59,7 +59,7 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
                     $src = is_array($page) ? ($page['image_path'] ?? '') : (string)$page; 
                     if (empty($src)) continue;
                 ?>
-                <img src="<?= htmlspecialchars((string) $src) ?>" alt="Page" class="max-w-4xl border-b border-black loading-lazy" />
+                <img src="<?= htmlspecialchars((string) $src) ?>" alt="Page" class="max-w-4xl border-b border-black loading-lazy" loading="lazy" decoding="async" />
             <?php endforeach; ?>
             <div class="py-12 text-center text-gray-600 text-[10px] font-black tracking-widest uppercase">
                 <?= $__t('ui.end_of_chapter') ?>

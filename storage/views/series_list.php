@@ -70,7 +70,7 @@ $items = is_array($items ?? null) ? $items : [];
             <?php foreach ($items as $item): ?>
             <div class="manga-card group cursor-pointer" onclick="location.href='<?= $url((string) ($item['url_path'] ?? '')) ?>'">
                 <div class="manga-image-container mb-4 shadow-2xl">
-                    <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" alt="<?= htmlspecialchars((string)$item['title']) ?>" />
+                    <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" alt="<?= htmlspecialchars((string)$item['title']) ?>" loading="lazy" decoding="async" />
                     <div class="card-overlay">
                         <button class="w-full bg-white text-black py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform">
                             <?= $__t('ui.read_now') ?>

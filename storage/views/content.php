@@ -16,7 +16,7 @@ $slug = (string)($content['slug'] ?? '');
 <!-- Hero Section -->
 <section class="relative w-full min-h-[500px] sm:min-h-[650px] flex items-end bg-mesh py-12">
     <div class="absolute inset-0 z-0">
-        <img src="<?= htmlspecialchars((string)($content['cover_image'] ?? '')) ?>" class="w-full h-full object-cover opacity-20 blur-3xl" alt="Background" />
+        <img src="<?= htmlspecialchars((string)($content['cover_image'] ?? '')) ?>" class="w-full h-full object-cover opacity-20 blur-3xl" alt="Background" loading="lazy" decoding="async" />
         <div class="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent"></div>
     </div>
 
@@ -24,7 +24,7 @@ $slug = (string)($content['slug'] ?? '');
         <div class="flex flex-col md:flex-row gap-10 items-end">
             <!-- Poster -->
             <div class="hidden md:block w-72 aspect-[2/3] rounded-[40px] overflow-hidden shadow-2xl border-4 border-white/5 shrink-0 bg-zinc-900">
-                <img src="<?= htmlspecialchars((string)($content['cover_image'] ?? '')) ?>" class="w-full h-full object-cover" alt="Poster" />
+                <img src="<?= htmlspecialchars((string)($content['cover_image'] ?? '')) ?>" class="w-full h-full object-cover" alt="Poster" loading="lazy" decoding="async" />
             </div>
 
             <!-- Info -->

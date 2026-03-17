@@ -54,7 +54,7 @@
                     <div class="relative group cursor-pointer" title="<?= $__t('ui.change_profile_photo') ?>">
                         <div class="w-24 h-24 rounded-[32px] bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-black text-white shadow-xl overflow-hidden">
                             <?php if (!empty($_SESSION['avatar'])): ?>
-                                <img src="<?= htmlspecialchars($_SESSION['avatar']) ?>" class="w-full h-full object-cover">
+                                <img src="<?= htmlspecialchars($_SESSION['avatar']) ?>" class="w-full h-full object-cover" loading="lazy" decoding="async">
                             <?php else: ?>
                                 <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
                             <?php endif; ?>

@@ -16,7 +16,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
     <section id="trendSlider" class="relative w-full h-[400px] sm:h-[550px] rounded-[40px] sm:rounded-[60px] overflow-hidden mb-16 shadow-2xl bg-zinc-900">
         <?php foreach (array_slice($explore, 0, 5) as $idx => $item): ?>
         <div class="slide-item relative h-full w-full">
-            <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover" alt="<?= htmlspecialchars((string)($item['title'] ?? '')) ?>" />
+            <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover" alt="<?= htmlspecialchars((string)($item['title'] ?? '')) ?>" loading="lazy" decoding="async" />
             <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-8 sm:p-16">
                 <div class="flex items-center gap-2 mb-4">
                     <i data-lucide="flame" class="text-orange-500 w-5 h-5 fill-current"></i>
@@ -86,7 +86,7 @@ $latestBlogs = is_array($homeData['latest_blogs'] ?? null) ? $homeData['latest_b
             <?php foreach ($recentlyAdded as $item): ?>
             <div class="manga-card group cursor-pointer" onclick="location.href='<?= $url((string)($item['url_path'] ?? '')) ?>'">
                 <div class="aspect-[2/3] rounded-[32px] sm:rounded-[40px] overflow-hidden border border-white/5 bg-zinc-900 mb-4 relative shadow-xl">
-                    <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover transition-transform duration-500" alt="<?= htmlspecialchars((string)($item['title'] ?? '')) ?>" />
+                    <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover transition-transform duration-500" alt="<?= htmlspecialchars((string)($item['title'] ?? '')) ?>" loading="lazy" decoding="async" />
                     <div class="card-overlay absolute inset-0 bg-black/60 opacity-0 transition-opacity flex items-center justify-center p-4">
                         <span class="bg-blue-600 text-white w-full py-3 rounded-2xl text-[10px] font-black text-center uppercase tracking-widest translate-y-4 group-hover:translate-y-0 transition-transform">
                             <?= $__t('ui.start_reading_action') ?>

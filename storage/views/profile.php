@@ -20,7 +20,7 @@ $username = (string) ($user['username'] ?? 'User');
             <div class="relative group">
                 <div class="w-32 h-32 md:w-40 md:h-40 rounded-[40px] overflow-hidden border-4 border-blue-600/20 shadow-2xl bg-blue-600 flex items-center justify-center text-4xl font-black text-white">
                     <?php if (!empty($user['avatar'])): ?>
-                        <img src="<?= htmlspecialchars((string)$user['avatar']) ?>" alt="Avatar" class="w-full h-full object-cover" />
+                        <img src="<?= htmlspecialchars((string)$user['avatar']) ?>" alt="Avatar" class="w-full h-full object-cover" loading="lazy" decoding="async" />
                     <?php else: ?>
                         <?= strtoupper(substr($username, 0, 2)) ?>
                     <?php endif; ?>
@@ -107,7 +107,7 @@ $username = (string) ($user['username'] ?? 'User');
                     <?php foreach ($library as $item): ?>
                     <div class="group cursor-pointer" onclick="location.href='<?= $url((string) ($item['url_path'] ?? '/')) ?>'">
                         <div class="relative aspect-[3/4] rounded-2xl overflow-hidden mb-3 border border-white/5 shadow-lg group-hover:scale-105 transition-all bg-zinc-900">
-                            <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover" />
+                            <img src="<?= htmlspecialchars((string)($item['cover_image'] ?? '')) ?>" class="w-full h-full object-cover" loading="lazy" decoding="async" />
                         </div>
                         <h4 class="text-xs font-black uppercase tracking-tight text-white group-hover:text-blue-500 transition-colors">
                             <?= htmlspecialchars((string) ($item['title'] ?? '')) ?>
@@ -150,7 +150,7 @@ $username = (string) ($user['username'] ?? 'User');
                 <?php foreach ($blogs as $blog): ?>
                 <div onclick="location.href='<?= $url('blogs/' . (string) ($blog['slug'] ?? '')) ?>'" class="glass rounded-3xl overflow-hidden border border-white/5 group cursor-pointer hover:border-blue-500/30 transition-all">
                     <div class="h-40 overflow-hidden bg-zinc-900">
-                        <img src="<?= htmlspecialchars((string)($blog['cover_image'] ?? '')) ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <img src="<?= htmlspecialchars((string)($blog['cover_image'] ?? '')) ?>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" decoding="async" />
                     </div>
                     <div class="p-6">
                         <h4 class="text-lg font-black uppercase tracking-tighter text-white mb-2 leading-tight">
