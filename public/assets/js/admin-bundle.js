@@ -158,7 +158,7 @@ window.AdminApp = (function($) {
         if (b.dataset.action === 'edit') this.openEdit(c);
         if (b.dataset.action === 'chapter' || b.dataset.action === 'add-chapter') {
           const s = $('#chapters-content-id'); if (s.length) { if (!s.find(`option[value="${c.id}"]`).length) s.append(new Option(c.title, c.id)); s.val(c.id).trigger('change'); }
-          $('#create-chapter-content-id').val(c.id); $('#create-chapter-content-type').val(c.type); $('#create-chapter-content-slug').val(c.slug); $('#create-chapter-content').val(c.title);
+          this.syncChapterMeta(c);
           if (b.dataset.action === 'add-chapter') window.openModal('modal-create-chapter');
         }
       });
@@ -180,7 +180,10 @@ window.AdminApp = (function($) {
       try {
         const res = await api('/admin/content'); this._DATA = res.data?.items || res.data || [];
         setH('#contents-list-body', this._DATA.map(c => `<tr><td>${c.id}</td><td><span class="badge bg-light text-dark">${c.type}</span></td><td>${c.title}</td><td><code>${c.slug}</code></td><td>${c.status}</td><td class="text-end"><div class="btn-group btn-group-sm"><button class="btn btn-outline-info" data-action="edit" data-id="${c.id}"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-primary" data-action="chapter" data-id="${c.id}"><i class="bi bi-list-ul"></i></button><button class="btn btn-outline-success" data-action="add-chapter" data-id="${c.id}"><i class="bi bi-plus-lg"></i></button></div></td></tr>`).join('') || '<tr><td colspan="6">No data</td></tr>');
-        const s = $('#chapters-content-id'); if (s.length) { const cur = s.val(); s.html('<option value="">-- Select Series --</option>' + this._DATA.map(c => `<option value="${c.id}" ${c.id == cur ? 'selected' : ''}>${c.title}</option>`).join('')); }
+        const s = $('#chapters-content-id'); if (s.length) { const cur = s.val(); s.html('<option value="">-- Select Series --</option>' + this._DATA.map(c => `<option value="${c.id}" ${c.id == cur ? 'selected' : ''}>${c.title}</option>`).join(''));
+          if (!cur && this._DATA.length) { s.val(this._DATA[0].id); }
+          s.trigger('change');
+        }
       } catch (e) {}
     },
     loadTax: async function() {
@@ -203,6 +206,16 @@ window.AdminApp = (function($) {
       const f = $('#form-edit-content'); if (!f.length) return;
       f.find('[name="id"]').val(c.id); f.find('[name="title"]').val(c.title); f.find('[name="alternative_titles"]').val(c.alternative_titles || ''); f.find('[name="slug"]').val(c.slug); f.find('[name="status"]').val(c.status); f.find('[name="description"]').val(c.description || ''); f.find('[name="author"]').val(c.author || ''); f.find('[name="artist"]').val(c.artist || ''); f.find('[name="country"]').val(c.country || ''); f.find('[name="release_year"]').val(c.release_year || ''); f.find('[name="cover_image"]').val(c.cover_image || '');
       this._SEL_G = new Set(String(c.genre_ids || '').split(',').filter(Boolean)); this._SEL_T = new Set(String(c.tag_ids || '').split(',').filter(Boolean)); this.renderTax('edit'); window.openModal('modal-edit-content');
+    },
+    syncChapterMeta: function(c) {
+      if (!c) {
+        $('#create-chapter-content-id').val(''); $('#create-chapter-content-type').val(''); $('#create-chapter-content-slug').val(''); $('#create-chapter-content').val('');
+        return;
+      }
+      $('#create-chapter-content-id').val(c.id);
+      $('#create-chapter-content-type').val(c.type);
+      $('#create-chapter-content-slug').val(c.slug);
+      $('#create-chapter-content').val(c.title);
     },
     promptCreateTaxonomy: async function(kind) {
       const label = kind === 'genre' ? 'genre' : 'tag';
@@ -238,7 +251,7 @@ window.AdminApp = (function($) {
   const Chapters = {
     init: function() {
       console.log("[AdminApp] Chapters Active");
-      $('#chapters-content-id').on('change', () => this.load());
+      $('#chapters-content-id').on('change', () => { this.syncMeta(); this.load(); });
       $('#btn-refresh-chapters').on('click', () => this.load());
       $('#btn-add-chapter').on('click', () => window.openModal('modal-create-chapter'));
       $('#create-chapter-type, #edit-chapter-type').on('change', (e) => this.toggle($(e.target).val(), e.target.id.includes('edit') ? 'edit' : 'create'));
@@ -254,6 +267,11 @@ window.AdminApp = (function($) {
         if (act === 'edit') this.openEdit(id);
         if (act === 'delete' && confirm('Delete?')) { try { await api(`/admin/chapters/${id}`, { method: 'DELETE' }); this.load(); } catch (e) { alert(e.message); } }
       });
+    },
+    syncMeta: function() {
+      const cid = $('#chapters-content-id').val();
+      const content = (Content._DATA || []).find(x => x.id == cid);
+      Content.syncChapterMeta(content || null);
     },
     load: async function() {
       const cid = $('#chapters-content-id').val(); if (!cid) return;

@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Admin Chapters: Fix Content Selection (2026-03-18)
+- **Status**: Completed.
+- **Change**: New chapter modal now syncs selected content and defaults to the first series when available.
+
 ### Admin Content: Hide Deleted Records (2026-03-18)
 - **Status**: Completed.
 - **Change**: Admin content listing now excludes soft-deleted series.
