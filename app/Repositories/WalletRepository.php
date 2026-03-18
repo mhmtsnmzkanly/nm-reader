@@ -298,6 +298,26 @@ final class WalletRepository
         return $value === false ? 0 : max(0, (int) $value);
     }
 
+    public function getChapterPricing(string $chapterId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT price_coin, is_active
+             FROM chapter_access_products
+             WHERE chapter_id = :chapter_id
+             LIMIT 1'
+        );
+        $stmt->execute(['chapter_id' => $chapterId]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return ['price_coin' => 0, 'is_active' => false];
+        }
+
+        return [
+            'price_coin' => max(0, (int) ($row['price_coin'] ?? 0)),
+            'is_active' => (bool) ($row['is_active'] ?? false),
+        ];
+    }
+
     public function hasSeriesPricing(string $contentId): bool
     {
         $stmt = $this->pdo->prepare('SELECT 1 FROM series_access_products WHERE content_id = :content_id AND is_active = 1 AND price_coin > 0 LIMIT 1');

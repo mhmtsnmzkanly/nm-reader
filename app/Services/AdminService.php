@@ -8,6 +8,7 @@ use App\Helpers\ChapterNumber;
 use App\Helpers\Validator;
 use App\Repositories\ChapterRepository;
 use App\Repositories\SeriesRepository;
+use App\Repositories\WalletRepository;
 use PDO;
 
 /**
@@ -38,6 +39,7 @@ final class AdminService
         private readonly PDO $pdo,
         private readonly SeriesRepository $series,
         private readonly ChapterRepository $chapters,
+        private readonly WalletRepository $wallets,
         private readonly EntityIdService $entityIds,
         private readonly SlugService $slugService,
         private readonly CacheService $cache,
@@ -465,6 +467,8 @@ final class AdminService
                 $pages
             ), static fn (string $path): bool => $path !== ''));
         }
+
+        $chapter['pricing'] = $this->wallets->getChapterPricing($chapterId);
 
         return $chapter;
     }

@@ -102,6 +102,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Admin Chapters: Pricing Controls + Purchase Modal (2026-03-18)
+- **Status**: Completed.
+- **Change**: Added chapter pricing controls (coin + active) to admin create/edit flow and wired pricing updates via admin API.
+- **Change**: Replaced chapter purchase confirm with the existing purchase modal and updated unlock UI/wallet display after purchase.
+
 ### Frontend: Chapter Purchase Flow (2026-03-18)
 - **Status**: Completed.
 - **Change**: Added chapter unlock flow on content pages with login check and purchase prompt.

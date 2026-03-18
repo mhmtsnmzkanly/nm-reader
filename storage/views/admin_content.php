@@ -250,6 +250,17 @@
             <label class="form-label small">Title (optional)</label>
             <input class="form-control" name="title" id="create-chapter-title">
           </div>
+          <div class="col-md-4">
+            <label class="form-label small">Price (coin)</label>
+            <input class="form-control" type="number" min="0" step="1" name="price_coin" id="create-chapter-price" value="0">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">Pricing Active</label>
+            <select class="form-select" name="price_active" id="create-chapter-price-active">
+              <option value="0" selected>Inactive</option>
+              <option value="1">Active</option>
+            </select>
+          </div>
           <div class="col-12" id="create-chapter-body-wrap">
             <label class="form-label small">Body (text chapter)</label>
             <textarea class="form-control" id="create-chapter-body" rows="8"></textarea>
@@ -296,6 +307,17 @@
           <div class="col-12">
             <label class="form-label small">Title (optional)</label>
             <input class="form-control" name="title" id="edit-chapter-title">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Price (coin)</label>
+            <input class="form-control" type="number" min="0" step="1" name="price_coin" id="edit-chapter-price" value="0">
+          </div>
+          <div class="col-6">
+            <label class="form-label small">Pricing Active</label>
+            <select class="form-select" name="price_active" id="edit-chapter-price-active">
+              <option value="0">Inactive</option>
+              <option value="1">Active</option>
+            </select>
           </div>
           <div class="col-12" id="edit-chapter-body-wrap">
             <label class="form-label small">Body (text chapter)</label>
