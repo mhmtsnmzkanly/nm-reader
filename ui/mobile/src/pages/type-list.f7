@@ -52,8 +52,11 @@ export default (props, { $onMounted, $update, $f7route }) => {
   const normalizeCover = (value) => {
     if (!value) return '/assets/img/covers/one-piece.jpg';
     if (value.startsWith('http://') || value.startsWith('https://')) return value;
-    if (value.startsWith('/')) return value;
-    return `/${value.replace(/^\\/+/, '')}`;
+    let normalized = value;
+    while (normalized.startsWith('/')) {
+      normalized = normalized.slice(1);
+    }
+    return `/${normalized}`;
   };
 
   const normalizeSeries = (item) => ({
