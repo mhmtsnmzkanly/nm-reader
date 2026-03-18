@@ -17,6 +17,20 @@
           ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
           : $h`
             <div class="nmr-panel text-slate-200 leading-7">${state.description}</div>
+            <div class="nmr-card px-5 py-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="text-xs uppercase tracking-[2px] text-amber-100/90">Actions</div>
+                <div class="text-sm text-slate-400">${state.following ? 'Following' : 'Not following'}</div>
+              </div>
+              <div class="flex gap-3">
+                ${state.following
+                  ? $h`<button class="nmr-button nmr-button-ghost" data-action="unfollow" type="button">Unfollow</button>`
+                  : $h`<button class="nmr-button nmr-button-primary" data-action="follow" type="button">Follow</button>`
+                }
+                <button class="nmr-button nmr-button-ghost" data-action="rate" type="button">Rate</button>
+              </div>
+            </div>
+
             <div class="nmr-section-title">${i18n.chapters || 'Chapters'}</div>
             <div class="space-y-4">
               ${state.chapters.map((chapter) => $h`
@@ -37,6 +51,24 @@
                 </a>
               `)}
             </div>
+
+            <div class="nmr-section-title">Comments</div>
+            <div class="space-y-3">
+              ${state.comments.map((comment) => $h`
+                <div class="nmr-card px-4 py-3 space-y-2">
+                  <div class="text-sm text-slate-100">${comment.author}</div>
+                  <div class="text-sm text-slate-300">${comment.body}</div>
+                  <div class="flex items-center gap-3 text-xs text-slate-400">
+                    <span>${comment.created_at}</span>
+                    <button class="text-amber-200" data-action="comment-vote" data-id="${comment.id}">+${comment.votes}</button>
+                  </div>
+                </div>
+              `)}
+              <form class="nmr-card px-4 py-3 space-y-2" id="series-comment-form">
+                <textarea class="nmr-input" name="body" rows="3" placeholder="Write a comment..."></textarea>
+                <button class="nmr-button nmr-button-primary" type="submit">Post</button>
+              </form>
+            </div>
           `
       }
     </div>
@@ -46,7 +78,7 @@
 import api from '../js/api.js';
 import { getI18n } from '../js/i18n.js';
 
-export default (props, { $onMounted, $update, $f7route }) => {
+export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
   const i18n = getI18n();
   const state = {
     loading: true,
@@ -55,6 +87,8 @@ export default (props, { $onMounted, $update, $f7route }) => {
     description: '',
     chapters: [],
     cover: '/assets/img/covers/one-piece.jpg',
+    comments: [],
+    following: false,
     type: $f7route.params.type,
     slug: $f7route.params.slug,
   };
@@ -78,6 +112,22 @@ export default (props, { $onMounted, $update, $f7route }) => {
     is_locked: item.is_locked ?? !(item.access?.granted ?? true),
   });
 
+  const loadComments = async () => {
+    try {
+      const payload = await api.interactions.listSeriesComments(state.type, state.slug, 1, 20);
+      const data = payload?.data || payload || [];
+      state.comments = (Array.isArray(data) ? data : []).map((row) => ({
+        id: row.id || row.comment_id || 0,
+        author: row.username || row.author_username || 'User',
+        body: row.body || row.comment || '',
+        created_at: row.created_at || '',
+        votes: row.votes || row.score || 0,
+      }));
+    } catch (err) {
+      state.comments = [];
+    }
+  };
+
   $onMounted(async () => {
     try {
       const [contentPayload, chaptersPayload] = await Promise.all([
@@ -91,7 +141,9 @@ export default (props, { $onMounted, $update, $f7route }) => {
       state.title = contentData.title || 'Series';
       state.description = contentData.description || '';
       state.cover = normalizeCover(contentData.cover_image || contentData.cover || contentData.thumbnail || contentData.image);
+      state.following = !!contentData.is_following || !!contentData.following || false;
       state.chapters = chaptersData.map(normalizeChapter).filter((row) => row.chapter_number !== '');
+      await loadComments();
     } catch (err) {
       state.error = err.message || i18n.failed_load_content || 'Failed to load content.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
@@ -99,6 +151,72 @@ export default (props, { $onMounted, $update, $f7route }) => {
       state.loading = false;
       $update();
     }
+  });
+
+  $onMounted(() => {
+    $el.on('click', '[data-action="follow"]', async (event) => {
+      event.preventDefault();
+      try {
+        await api.interactions.follow(state.type, state.slug);
+        state.following = true;
+        $update();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Follow failed' } }));
+      }
+    });
+
+    $el.on('click', '[data-action="unfollow"]', async (event) => {
+      event.preventDefault();
+      try {
+        await api.interactions.unfollow(state.type, state.slug);
+        state.following = false;
+        $update();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Unfollow failed' } }));
+      }
+    });
+
+    $el.on('click', '[data-action="rate"]', (event) => {
+      event.preventDefault();
+      $f7.dialog.prompt('Rate 1-5', 'Rate', async (value) => {
+        const score = Number(value);
+        if (!score || score < 1 || score > 5) return;
+        try {
+          await api.interactions.rate(state.type, state.slug, score);
+          $f7.toast.create({ text: 'Thanks for rating!', closeTimeout: 2000 }).open();
+        } catch (err) {
+          document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Rating failed' } }));
+        }
+      });
+    });
+
+    $el.on('submit', '#series-comment-form', async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const body = form.querySelector('textarea[name="body"]')?.value || '';
+      if (!body.trim()) return;
+      try {
+        await api.interactions.createSeriesComment(state.type, state.slug, body.trim());
+        form.reset();
+        await loadComments();
+        $update();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Comment failed' } }));
+      }
+    });
+
+    $el.on('click', '[data-action="comment-vote"]', async (event) => {
+      event.preventDefault();
+      const id = event.target.getAttribute('data-id');
+      if (!id) return;
+      try {
+        await api.interactions.voteComment(id, 1);
+        await loadComments();
+        $update();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Vote failed' } }));
+      }
+    });
   });
 
   return $render;

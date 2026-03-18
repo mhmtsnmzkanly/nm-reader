@@ -250,6 +250,26 @@ const NMR_API = {
     async getPreferences() { return await NMR_API.request('/user/preferences'); },
     async updatePreferences(payload) { return await NMR_API.request('/user/preferences', { method: 'PUT', body: payload }); },
   },
+  interactions: {
+    async follow(type, slug) { return await NMR_API.request(`/content/${type}/${slug}/follow`, { method: 'POST' }); },
+    async unfollow(type, slug) { return await NMR_API.request(`/content/${type}/${slug}/follow`, { method: 'DELETE' }); },
+    async rate(type, slug, rating) { return await NMR_API.request(`/content/${type}/${slug}/rate`, { method: 'POST', body: { rating } }); },
+    async listSeriesComments(type, slug, page = 1, perPage = 20) {
+      return await NMR_API.request(`/content/${type}/${slug}/comments?page=${page}&per_page=${perPage}`);
+    },
+    async createSeriesComment(type, slug, body) {
+      return await NMR_API.request(`/content/${type}/${slug}/comment`, { method: 'POST', body: { body } });
+    },
+    async listChapterComments(chapterId, page = 1, perPage = 20) {
+      return await NMR_API.request(`/chapter/${chapterId}/comments?page=${page}&per_page=${perPage}`);
+    },
+    async createChapterComment(chapterId, body) {
+      return await NMR_API.request(`/chapter/${chapterId}/comment`, { method: 'POST', body: { body } });
+    },
+    async voteComment(commentId, value = 1) {
+      return await NMR_API.request(`/comments/${commentId}/vote`, { method: 'POST', body: { value } });
+    },
+  },
 };
 
 export default NMR_API;
