@@ -249,6 +249,8 @@ const NMR_API = {
     async getFollows(page = 1, perPage = 20) { return await NMR_API.request(`/user/follows?page=${page}&per_page=${perPage}`); },
     async getPreferences() { return await NMR_API.request('/user/preferences'); },
     async updatePreferences(payload) { return await NMR_API.request('/user/preferences', { method: 'PUT', body: payload }); },
+    async getNotifications() { return await NMR_API.request('/user/notifications'); },
+    async markNotificationsRead() { return await NMR_API.request('/user/notifications/read', { method: 'POST' }); },
   },
   interactions: {
     async follow(type, slug) { return await NMR_API.request(`/content/${type}/${slug}/follow`, { method: 'POST' }); },
@@ -285,6 +287,10 @@ const NMR_API = {
     async voteComment(slug, commentId, value = 1) {
       return await NMR_API.request(`/blogs/${slug}/comments/${commentId}/vote`, { method: 'POST', body: { value } });
     },
+  },
+  sessions: {
+    async list() { return await NMR_API.request('/auth/sessions'); },
+    async revoke(sessionKey) { return await NMR_API.request(`/auth/sessions/${sessionKey}`, { method: 'DELETE' }); },
   },
 };
 

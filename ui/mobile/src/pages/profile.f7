@@ -26,6 +26,15 @@
               <a class="nmr-card nmr-card-hover block px-4 py-3" href="/history/">
                 <div class="font-semibold text-slate-100">Reading History</div>
               </a>
+              <a class="nmr-card nmr-card-hover block px-4 py-3" href="/notifications/">
+                <div class="font-semibold text-slate-100">Notifications</div>
+              </a>
+              <a class="nmr-card nmr-card-hover block px-4 py-3" href="/preferences/">
+                <div class="font-semibold text-slate-100">Preferences</div>
+              </a>
+              <a class="nmr-card nmr-card-hover block px-4 py-3" href="/sessions/">
+                <div class="font-semibold text-slate-100">Sessions</div>
+              </a>
             </div>
           `
       }
