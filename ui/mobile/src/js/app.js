@@ -48,7 +48,10 @@ var app = new Framework7({
 initI18n();
 
 document.addEventListener('i18n:updated', () => {
-  app.views.main.router.refreshPage();
+  const view = app.views?.main || app.views?.get?.('.view-main');
+  if (view && view.router) {
+    view.router.refreshPage();
+  }
 });
 
 document.addEventListener('api:error', (event) => {

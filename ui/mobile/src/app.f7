@@ -160,7 +160,7 @@ import api from './js/api.js';
 import store from './js/store.js';
 import { loadI18n, getI18n } from './js/i18n.js';
 
-export default (props, { $onMounted, $el, $f7 }) => {
+export default (props, { $onMounted, $onBeforeUnmount, $f7 }) => {
   let pendingPurchase = null;
   const applySession = (data) => {
     const session = {
@@ -178,19 +178,20 @@ export default (props, { $onMounted, $el, $f7 }) => {
     store.dispatch('setAuth', session);
   };
 
-  $onMounted(() => {
-    document.addEventListener('purchase:open', (event) => {
-      const detail = event.detail || {};
-      pendingPurchase = detail;
-      const i18n = getI18n();
-      const message = (i18n.unlock_confirm_body || 'Unlock this chapter for {price} coins?')
-        .replace('{price}', detail.price || 0);
-      const messageEl = document.getElementById('purchase-message');
-      if (messageEl) messageEl.textContent = message;
-      $f7.popup.open('.purchase-popup');
-    });
+  const onPurchaseOpen = (event) => {
+    const detail = event.detail || {};
+    pendingPurchase = detail;
+    const i18n = getI18n();
+    const message = (i18n.unlock_confirm_body || 'Unlock this chapter for {price} coins?')
+      .replace('{price}', detail.price || 0);
+    const messageEl = document.getElementById('purchase-message');
+    if (messageEl) messageEl.textContent = message;
+    $f7.popup.open('.purchase-popup');
+  };
 
-    $el.on('click', '[data-action="purchase-confirm"]', async (event) => {
+  const onDocumentClick = async (event) => {
+    const purchaseBtn = event.target.closest('[data-action="purchase-confirm"]');
+    if (purchaseBtn) {
       event.preventDefault();
       if (!pendingPurchase?.chapterId) return;
       try {
@@ -204,20 +205,38 @@ export default (props, { $onMounted, $el, $f7 }) => {
       } catch (err) {
         $f7.dialog.alert(err.message || 'Unlock failed');
       }
-    });
+      return;
+    }
 
-    $el.on('click', '[data-action="set-lang"]', async (event) => {
+    const langBtn = event.target.closest('[data-action="set-lang"]');
+    if (langBtn) {
       event.preventDefault();
-      const lang = event.currentTarget.getAttribute('data-lang');
+      const lang = langBtn.getAttribute('data-lang');
       if (!lang) return;
       await loadI18n(lang);
       $f7.sheet.close('.language-sheet');
-    });
+      return;
+    }
 
-    $el.on('submit', '#login-form', async (event) => {
+    const logoutBtn = event.target.closest('[data-action="logout"]');
+    if (logoutBtn) {
       event.preventDefault();
-      const form = event.target;
-      const formData = new FormData(form);
+      try {
+        await api.auth.logout();
+      } catch (err) {
+        // ignore logout errors
+      }
+      const i18n = getI18n();
+      store.dispatch('clearAuth');
+      $f7.dialog.alert(i18n.logout_success || 'Logged out');
+    }
+  };
+
+  const onDocumentSubmit = async (event) => {
+    if (!(event.target instanceof HTMLFormElement)) return;
+    if (event.target.id === 'login-form') {
+      event.preventDefault();
+      const formData = new FormData(event.target);
       const i18n = getI18n();
       try {
         const result = await api.auth.login(
@@ -231,12 +250,12 @@ export default (props, { $onMounted, $el, $f7 }) => {
       } catch (err) {
         $f7.dialog.alert(err.message || i18n.login_failed || 'Login failed');
       }
-    });
+      return;
+    }
 
-    $el.on('submit', '#register-form', async (event) => {
+    if (event.target.id === 'register-form') {
       event.preventDefault();
-      const form = event.target;
-      const formData = new FormData(form);
+      const formData = new FormData(event.target);
       const i18n = getI18n();
       try {
         await api.auth.register(
@@ -255,19 +274,19 @@ export default (props, { $onMounted, $el, $f7 }) => {
       } catch (err) {
         $f7.dialog.alert(err.message || i18n.register_failed || 'Register failed');
       }
-    });
+    }
+  };
 
-    $el.on('click', '[data-action="logout"]', async (event) => {
-      event.preventDefault();
-      try {
-        await api.auth.logout();
-      } catch (err) {
-        // ignore logout errors
-      }
-      const i18n = Template7.global?.i18n || {};
-      store.dispatch('clearAuth');
-      $f7.dialog.alert(i18n.logout_success || 'Logged out');
-    });
+  $onMounted(() => {
+    document.addEventListener('purchase:open', onPurchaseOpen);
+    document.addEventListener('click', onDocumentClick);
+    document.addEventListener('submit', onDocumentSubmit);
+  });
+
+  $onBeforeUnmount(() => {
+    document.removeEventListener('purchase:open', onPurchaseOpen);
+    document.removeEventListener('click', onDocumentClick);
+    document.removeEventListener('submit', onDocumentSubmit);
   });
 
   return $render;
