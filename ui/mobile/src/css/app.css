@@ -40,8 +40,25 @@
 
   .nmr-navbar,
   .nmr-navbar .navbar-bg {
-    @apply border-b border-white/5 backdrop-blur-xl;
-    background: rgba(9, 10, 14, 0.75);
+    @apply border-b border-white/10 backdrop-blur-2xl;
+    background: linear-gradient(180deg, rgba(10, 11, 16, 0.92) 0%, rgba(10, 11, 16, 0.6) 100%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  .navbar-inner::after {
+    content: '';
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(242, 199, 110, 0.4), rgba(139, 92, 246, 0.2), transparent 70%);
+    pointer-events: none;
+  }
+
+  .navbar .title,
+  .navbar .title-large-text {
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
   }
 
   .nmr-title {
