@@ -79,6 +79,19 @@ This document serves as the absolute authority on the project's architecture, co
 4. **Frontend**: Update `app-bundle.js` (public) or `admin-bundle.js` (admin) and implement UI logic.
 5. **Commit**: Perform Git commit for the task.
 
+### Developer Notes / Quick Pointers
+- **Public UI JS (site)**: `public/assets/js/main.js` (client-side behavior).
+- **Admin UI JS**: `public/assets/js/admin-bundle.js`.
+- **SSR Views**: `storage/views/*.php` (page layout/markup).
+- **API Routes**: `app/Config.php` (single source of truth).
+- **Controllers**: `app/Controllers/*` (HTTP handlers).
+- **Services (business logic)**: `app/Services/*`.
+- **Repositories (DB)**: `app/Repositories/*`.
+- **Schema**: `app/database/schema.sql`.
+- **Migrations**: `app/database/migrations/*.sql`.
+- **Tailwind build (web UI)**: `ui/web` (input: `ui/web/assets/css/input.css`, output: `public/assets/css/main.css`).
+- **Mobile app spec**: `F7.md` (Framework7 v9 Core plan/spec).
+
 ---
 
 ## 5. Maintenance & CLI Tasks
