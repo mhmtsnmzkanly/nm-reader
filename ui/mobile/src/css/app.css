@@ -19,6 +19,27 @@
       #08090d;
   }
 
+  .view,
+  .page,
+  .page-content {
+    background: transparent;
+    color: #f5f1ea;
+  }
+
+  .block,
+  .list,
+  .list ul,
+  .item-content,
+  .item-inner,
+  .item-title,
+  .item-subtitle,
+  .item-after,
+  .list .item-title,
+  .list .item-subtitle,
+  .list .item-after {
+    color: #e7e0d6;
+  }
+
   body::before {
     content: '';
     position: fixed;
