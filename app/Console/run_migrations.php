@@ -4,7 +4,6 @@
 declare(strict_types=1);
 
 use Dotenv\Dotenv;
-use PDO;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
@@ -19,7 +18,7 @@ $settings = \App\Config::getSettings();
 date_default_timezone_set((string) ($settings['app']['timezone'] ?? 'UTC'));
 $container = require __DIR__ . '/../dependencies.php';
 
-/** @var PDO $pdo */
+/** @var \PDO $pdo */
 $pdo = $container->get(PDO::class);
 
 $migrationDir = __DIR__ . '/../database/migrations';
@@ -77,18 +76,13 @@ foreach ($files as $file) {
     $chunks = array_filter(array_map('trim', explode(';', $flatSql)));
 
     $applied = 0;
-    $pdo->beginTransaction();
     try {
         foreach ($chunks as $chunk) {
             $pdo->exec($chunk);
             $applied++;
         }
-        $pdo->commit();
         $results[] = ['file' => $file, 'status' => 'ok', 'statements' => $applied];
     } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
         $results[] = ['file' => $file, 'status' => 'failed', 'error' => $e->getMessage()];
     }
 }
