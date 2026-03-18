@@ -21,6 +21,7 @@
             <div class="block">
               <div>This chapter is locked.</div>
               <div>{{state.price_coin}} coins required.</div>
+              <a class="button button-fill" data-action="unlock" href="#">Unlock</a>
             </div>
           {{else}}
             {{#if state.is_image}}
@@ -44,8 +45,9 @@
 </template>
 <script>
 import api from '../js/api.js';
+import store from '../js/store.js';
 
-export default (props, { $onMounted, $update, $f7route }) => {
+export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
   const state = {
     loading: true,
     error: '',
@@ -58,28 +60,55 @@ export default (props, { $onMounted, $update, $f7route }) => {
     type: $f7route.params.type,
     slug: $f7route.params.slug,
     chapterNumber: $f7route.params.chapterNumber,
+    chapterId: null,
+  };
+
+  const loadChapter = async () => {
+    const payload = await api.content.getChapterFull(state.type, state.slug, state.chapterNumber);
+    const chapter = payload?.data || payload || {};
+    state.chapterId = chapter.id || null;
+    state.title = chapter.title || `Chapter ${state.chapterNumber}`;
+    state.is_locked = chapter.is_locked ?? !(chapter.access?.granted ?? true);
+    state.price_coin = chapter.price_coin || chapter.access?.chapter_unlock_price || 0;
+    state.is_image = chapter.type === 'image';
+    if (state.is_image) {
+      state.pages = Array.isArray(chapter.pages) ? chapter.pages : [];
+      state.paragraphs = [];
+    } else {
+      const body = String(chapter.body || '');
+      state.paragraphs = body.split('\n').filter((line) => line.trim() !== '');
+      state.pages = [];
+    }
   };
 
   $onMounted(async () => {
     try {
-      const payload = await api.content.getChapterFull(state.type, state.slug, state.chapterNumber);
-      const chapter = payload?.data || payload || {};
-      state.title = chapter.title || `Chapter ${state.chapterNumber}`;
-      state.is_locked = chapter.is_locked ?? !(chapter.access?.granted ?? true);
-      state.price_coin = chapter.price_coin || chapter.access?.chapter_unlock_price || 0;
-      state.is_image = chapter.type === 'image';
-      if (state.is_image) {
-        state.pages = Array.isArray(chapter.pages) ? chapter.pages : [];
-      } else {
-        const body = String(chapter.body || '');
-        state.paragraphs = body.split('\n').filter((line) => line.trim() !== '');
-      }
+      await loadChapter();
     } catch (err) {
       state.error = err.message || 'Failed to load chapter.';
     } finally {
       state.loading = false;
       $update();
     }
+
+    $el.on('click', '[data-action="unlock"]', async (event) => {
+      event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
+      if (!state.chapterId) {
+        $f7.dialog.alert('Chapter not available.');
+        return;
+      }
+      try {
+        await api.wallet.unlockChapter(state.chapterId);
+        await loadChapter();
+        $update();
+      } catch (err) {
+        $f7.dialog.alert(err.message || 'Unlock failed');
+      }
+    });
   });
 
   return $render;

@@ -1,4 +1,5 @@
 const DEFAULT_API_BASE_URL = '/api/v1';
+const STORAGE_KEY = 'nmr_mobile_session_v1';
 const API_BASE_URL =
   (typeof window !== 'undefined' && (window.NMR_MOBILE_API_BASE || window.NMR_API_BASE))
     ? (window.NMR_MOBILE_API_BASE || window.NMR_API_BASE)
@@ -25,6 +26,30 @@ const NMR_API = {
     this.setToken(apiToken);
     this.setCsrfToken(csrfToken);
     this.setRefreshToken(refreshToken);
+  },
+
+  loadSession() {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  },
+
+  saveSession(session) {
+    if (typeof localStorage === 'undefined') return;
+    if (!session) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  },
+
+  clearSession() {
+    this.setSession({ apiToken: null, csrfToken: null, refreshToken: null });
+    this.saveSession(null);
   },
 
   async request(endpoint, options = {}) {
@@ -96,7 +121,7 @@ const NMR_API = {
     },
     async logout() {
       const res = await NMR_API.request('/auth/logout', { method: 'POST' });
-      NMR_API.setSession({ apiToken: null, csrfToken: null, refreshToken: null });
+      NMR_API.clearSession();
       return res;
     },
   },

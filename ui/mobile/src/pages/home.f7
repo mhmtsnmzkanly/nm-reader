@@ -8,6 +8,11 @@
           <div class="title-large-text">NMR Mobile</div>
         </div>
         <div class="right">
+          {{#if state.isLoggedIn}}
+            <a class="link" data-action="logout" href="#">Logout</a>
+          {{else}}
+            <a class="link popup-open" data-popup=".login-popup" href="#">Login</a>
+          {{/if}}
           <a class="link" href="/wallet/">Wallet</a>
         </div>
       </div>
@@ -77,12 +82,14 @@
 </template>
 <script>
 import api from '../js/api.js';
+import store from '../js/store.js';
 
-export default (props, { $onMounted, $update }) => {
+export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
   const state = {
     loading: true,
     latest: [],
     recent: [],
+    isLoggedIn: store.state.auth.isLoggedIn,
   };
 
   const normalizeLatest = (item) => ({
@@ -98,7 +105,13 @@ export default (props, { $onMounted, $update }) => {
     type: item.type || '',
   });
 
+  const syncAuth = () => {
+    state.isLoggedIn = store.state.auth.isLoggedIn;
+    $update();
+  };
+
   $onMounted(async () => {
+    document.addEventListener('auth:updated', syncAuth);
     try {
       const payload = await api.content.getHome();
       const data = payload?.data || payload || {};
@@ -113,6 +126,10 @@ export default (props, { $onMounted, $update }) => {
       state.loading = false;
       $update();
     }
+  });
+
+  $onBeforeUnmount(() => {
+    document.removeEventListener('auth:updated', syncAuth);
   });
 
   return $render;

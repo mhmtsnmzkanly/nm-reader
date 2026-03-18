@@ -1,14 +1,114 @@
-
 <template>
   <div id="app">
+    <div class="view view-main view-init safe-areas" data-url="/"></div>
 
-  <!-- Your main view, should have "view-main" class -->
-  <div class="view view-main view-init safe-areas" data-url="/"></div>
-
+    <div class="popup login-popup">
+      <div class="view">
+        <div class="page">
+          <div class="navbar">
+            <div class="navbar-bg"></div>
+            <div class="navbar-inner">
+              <div class="title">Login</div>
+              <div class="right"><a class="link popup-close" href="#">Close</a></div>
+            </div>
+          </div>
+          <div class="page-content">
+            <form id="login-form" class="list">
+              <ul>
+                <li>
+                  <div class="item-content item-input">
+                    <div class="item-inner">
+                      <div class="item-title item-label">Email</div>
+                      <div class="item-input-wrap">
+                        <input type="email" name="email" placeholder="you@example.com" required />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div class="item-content item-input">
+                    <div class="item-inner">
+                      <div class="item-title item-label">Password</div>
+                      <div class="item-input-wrap">
+                        <input type="password" name="password" placeholder="Password" required />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <label class="item-checkbox item-content">
+                    <input type="checkbox" name="remember" />
+                    <i class="icon icon-checkbox"></i>
+                    <div class="item-inner">
+                      <div class="item-title">Remember me</div>
+                    </div>
+                  </label>
+                </li>
+              </ul>
+              <div class="block">
+                <button class="button button-fill" type="submit">Login</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script>
-  export default () => {
-    return $render;
-  }
+import api from './js/api.js';
+import store from './js/store.js';
+
+export default (props, { $onMounted, $el, $f7 }) => {
+  const applySession = (data) => {
+    const session = {
+      apiToken: data.api_token || null,
+      csrfToken: data.csrf_token || null,
+      refreshToken: data.refresh_token || null,
+      user: {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+      },
+    };
+    api.setSession(session);
+    api.saveSession(session);
+    store.dispatch('setAuth', session);
+  };
+
+  $onMounted(() => {
+    $el.on('submit', '#login-form', async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      try {
+        const result = await api.auth.login(
+          formData.get('email'),
+          formData.get('password'),
+          !!formData.get('remember'),
+        );
+        applySession(result);
+        document.dispatchEvent(new CustomEvent('auth:updated'));
+        $f7.popup.close('.login-popup');
+        $f7.dialog.alert('Login successful');
+      } catch (err) {
+        $f7.dialog.alert(err.message || 'Login failed');
+      }
+    });
+
+    $el.on('click', '[data-action="logout"]', async (event) => {
+      event.preventDefault();
+      try {
+        await api.auth.logout();
+      } catch (err) {
+        // ignore logout errors
+      }
+      store.dispatch('clearAuth');
+      document.dispatchEvent(new CustomEvent('auth:updated'));
+      $f7.dialog.alert('Logged out');
+    });
+  });
+
+  return $render;
+};
 </script>
