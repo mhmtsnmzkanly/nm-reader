@@ -251,6 +251,9 @@ Wallet top-ups are performed manually by admins. Frontend should treat package l
 `page`, `per_page`, `cursor` (optional keyset cursor: `{created_at}|{id}`)
 #### **META**
 `next_cursor` when cursor pagination is used.
+When `cursor` is provided, `page` is ignored.
+#### **EXAMPLE**
+`GET /api/v1/user/notifications?per_page=20&cursor=2026-03-18%2012:34:56|456`
 
 ### **Mark Notifications Read**
 #### **PATH**
