@@ -50,6 +50,11 @@ final class AuthMiddleware implements MiddlewareInterface
         $userId = $_SESSION['user_id'] ?? null;
         if ($userId === null) {
             if ($this->optional) {
+                $existingUserId = $request->getAttribute('user_id');
+                if ($existingUserId !== null) {
+                    return $handler->handle($request);
+                }
+
                 // Allow guest with minimal guest-level attributes.
                 $request = $request
                     ->withAttribute('user_id', null)

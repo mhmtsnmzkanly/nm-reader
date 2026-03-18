@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Auth Middleware: Preserve Bearer Identity (2026-03-18)
+- **Status**: Completed.
+- **Change**: Prevented optional auth middleware from overwriting identity already set by bearer-token authentication.
+
 ### Performance Maintenance: Hot-Path Indexes (2026-03-18)
 - **Status**: Completed.
 - **Change**: Added targeted indexes for comments, notifications, audit logs, and login logs to reduce hot-path query cost.
