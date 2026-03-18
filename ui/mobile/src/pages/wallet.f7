@@ -36,7 +36,7 @@
 <script>
 import api from '../js/api.js';
 import store from '../js/store.js';
-import { Template7 } from 'framework7';
+import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update, $f7, $onBeforeUnmount }) => {
   const state = {
@@ -53,7 +53,7 @@ export default (props, { $onMounted, $update, $f7, $onBeforeUnmount }) => {
       store.dispatch('setWallet', { balance: state.balance });
       state.error = '';
     } catch (err) {
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_wallet || 'Failed to load wallet.';
       if (!store.state.auth.isLoggedIn) {
         state.error = i18n.login_required || 'Login required.';
@@ -78,7 +78,7 @@ export default (props, { $onMounted, $update, $f7, $onBeforeUnmount }) => {
   $onMounted(async () => {
     document.addEventListener('auth:updated', onAuthUpdated);
     if (!store.state.auth.isLoggedIn) {
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       state.loading = false;
       state.error = i18n.login_required || 'Login required.';
       $f7.popup.open('.login-popup');

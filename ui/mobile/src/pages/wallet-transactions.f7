@@ -45,7 +45,7 @@
 <script>
 import api from '../js/api.js';
 import store from '../js/store.js';
-import { Template7 } from 'framework7';
+import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update, $f7, $el }) => {
   const state = {
@@ -79,7 +79,7 @@ export default (props, { $onMounted, $update, $f7, $el }) => {
 
   $onMounted(async () => {
     if (!store.state.auth.isLoggedIn) {
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       state.loading = false;
       state.error = i18n.login_required || 'Login required.';
       $f7.popup.open('.login-popup');
@@ -91,7 +91,7 @@ export default (props, { $onMounted, $update, $f7, $el }) => {
       state.items = data.map(normalize);
       state.hasMore = data.length === state.perPage;
     } catch (err) {
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_transactions || 'Failed to load transactions.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
@@ -110,7 +110,7 @@ export default (props, { $onMounted, $update, $f7, $el }) => {
         state.page = nextPage;
         state.hasMore = data.length === state.perPage;
       } catch (err) {
-        const i18n = Template7.global?.i18n || {};
+        const i18n = getI18n();
         state.error = err.message || i18n.failed_load_transactions || 'Failed to load transactions.';
         document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
       } finally {

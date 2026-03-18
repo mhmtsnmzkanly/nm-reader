@@ -37,7 +37,7 @@
 </template>
 <script>
 import api from '../js/api.js';
-import { Template7 } from 'framework7';
+import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update }) => {
   const state = {
@@ -57,7 +57,7 @@ export default (props, { $onMounted, $update }) => {
       const data = payload?.data || payload || [];
       state.items = data.map(normalize);
     } catch (err) {
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_features || 'Failed to load features.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {

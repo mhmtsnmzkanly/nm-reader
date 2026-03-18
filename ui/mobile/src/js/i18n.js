@@ -1,4 +1,3 @@
-import { Template7 } from 'framework7';
 import api from './api.js';
 
 const STORAGE_KEY = 'nmr_mobile_lang_v1';
@@ -68,10 +67,18 @@ function resolveLang() {
   return 'en';
 }
 
+function getTemplate7() {
+  if (typeof window === 'undefined') return null;
+  return window.Template7 || window.Framework7?.Template7 || null;
+}
+
 function applyGlobals() {
-  Template7.global = Template7.global || {};
-  Template7.global.i18n = i18n.dictionary;
-  Template7.global.lang = i18n.lang;
+  const template7 = getTemplate7();
+  if (template7) {
+    template7.global = template7.global || {};
+    template7.global.i18n = i18n.dictionary;
+    template7.global.lang = i18n.lang;
+  }
   if (typeof document !== 'undefined') {
     document.documentElement.lang = i18n.lang;
   }
@@ -101,4 +108,8 @@ async function initI18n() {
   await loadI18n(lang);
 }
 
-export { initI18n, loadI18n };
+function getI18n() {
+  return i18n.dictionary || fallback;
+}
+
+export { initI18n, loadI18n, getI18n };

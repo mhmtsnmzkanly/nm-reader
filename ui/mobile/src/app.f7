@@ -158,8 +158,7 @@
 <script>
 import api from './js/api.js';
 import store from './js/store.js';
-import { Template7 } from 'framework7';
-import { loadI18n } from './js/i18n.js';
+import { loadI18n, getI18n } from './js/i18n.js';
 
 export default (props, { $onMounted, $el, $f7 }) => {
   let pendingPurchase = null;
@@ -183,7 +182,7 @@ export default (props, { $onMounted, $el, $f7 }) => {
     document.addEventListener('purchase:open', (event) => {
       const detail = event.detail || {};
       pendingPurchase = detail;
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       const message = (i18n.unlock_confirm_body || 'Unlock this chapter for {price} coins?')
         .replace('{price}', detail.price || 0);
       const messageEl = document.getElementById('purchase-message');
@@ -219,7 +218,7 @@ export default (props, { $onMounted, $el, $f7 }) => {
       event.preventDefault();
       const form = event.target;
       const formData = new FormData(form);
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       try {
         const result = await api.auth.login(
           formData.get('email'),
@@ -238,7 +237,7 @@ export default (props, { $onMounted, $el, $f7 }) => {
       event.preventDefault();
       const form = event.target;
       const formData = new FormData(form);
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       try {
         await api.auth.register(
           formData.get('username'),

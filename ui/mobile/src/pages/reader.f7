@@ -52,7 +52,7 @@
 <script>
 import api from '../js/api.js';
 import store from '../js/store.js';
-import { Template7 } from 'framework7';
+import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $f7 }) => {
   const state = {
@@ -101,7 +101,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     try {
       await loadChapter();
     } catch (err) {
-      const i18n = Template7.global?.i18n || {};
+      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_chapter || 'Failed to load chapter.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
@@ -124,7 +124,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
         return;
       }
       if (!state.chapterId) {
-        const i18n = Template7.global?.i18n || {};
+        const i18n = getI18n();
         $f7.dialog.alert(i18n.chapter_not_available || 'Chapter not available.');
         return;
       }
