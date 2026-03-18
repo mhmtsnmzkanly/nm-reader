@@ -31,7 +31,13 @@
                 {{/each}}
               </div>
             {{else}}
-              <div class="block reader-text">
+              <div class="block reader-controls">
+                <div class="segmented">
+                  <button class="button button-small" data-action="font-dec" type="button">A-</button>
+                  <button class="button button-small" data-action="font-inc" type="button">A+</button>
+                </div>
+              </div>
+              <div class="block reader-text" style="font-size: {{state.font_size}}px;">
                 {{#each state.paragraphs}}
                   <p>{{this}}</p>
                 {{/each}}
@@ -57,11 +63,14 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     is_image: false,
     pages: [],
     paragraphs: [],
+    font_size: 16,
     type: $f7route.params.type,
     slug: $f7route.params.slug,
     chapterNumber: $f7route.params.chapterNumber,
     chapterId: null,
   };
+
+  const fontKey = 'nmr_reader_font_size';
 
   const loadChapter = async () => {
     const payload = await api.content.getChapterFull(state.type, state.slug, state.chapterNumber);
@@ -82,6 +91,12 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
   };
 
   $onMounted(async () => {
+    if (typeof localStorage !== 'undefined') {
+      const storedSize = Number(localStorage.getItem(fontKey) || '16');
+      if (!Number.isNaN(storedSize) && storedSize > 10 && storedSize < 40) {
+        state.font_size = storedSize;
+      }
+    }
     try {
       await loadChapter();
     } catch (err) {
@@ -111,6 +126,24 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
         return;
       }
       document.dispatchEvent(new CustomEvent('purchase:open', { detail: { chapterId: state.chapterId, price: state.price_coin } }));
+    });
+
+    $el.on('click', '[data-action="font-inc"]', (event) => {
+      event.preventDefault();
+      state.font_size = Math.min(32, state.font_size + 1);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(fontKey, String(state.font_size));
+      }
+      $update();
+    });
+
+    $el.on('click', '[data-action="font-dec"]', (event) => {
+      event.preventDefault();
+      state.font_size = Math.max(12, state.font_size - 1);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(fontKey, String(state.font_size));
+      }
+      $update();
     });
   });
 

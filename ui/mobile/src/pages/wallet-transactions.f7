@@ -32,6 +32,11 @@
               {{/each}}
             </ul>
           </div>
+          {{#if state.hasMore}}
+            <div class="block">
+              <button class="button button-outline" data-action="load-more" {{#if state.loadingMore}}disabled{{/if}}>Load more</button>
+            </div>
+          {{/if}}
         {{/if}}
       {{/if}}
     </div>
@@ -42,18 +47,35 @@ import api from '../js/api.js';
 import store from '../js/store.js';
 import { Template7 } from 'framework7';
 
-export default (props, { $onMounted, $update, $f7 }) => {
+export default (props, { $onMounted, $update, $f7, $el }) => {
   const state = {
     loading: true,
     error: '',
     items: [],
+    page: 1,
+    perPage: 20,
+    hasMore: false,
+    loadingMore: false,
+  };
+
+  const formatDate = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString();
   };
 
   const normalize = (item) => ({
     description: item.description || item.reference_type || 'Transaction',
     amount: item.amount ? `${item.amount}` : `${item.coin_amount || 0}`,
-    created_at: item.created_at || item.createdAt || '',
+    created_at: formatDate(item.created_at || item.createdAt || ''),
   });
+
+  const fetchPage = async (page) => {
+    const payload = await api.wallet.getTransactions(page, state.perPage);
+    const data = payload?.data || payload || [];
+    return Array.isArray(data) ? data : [];
+  };
 
   $onMounted(async () => {
     if (!store.state.auth.isLoggedIn) {
@@ -65,9 +87,9 @@ export default (props, { $onMounted, $update, $f7 }) => {
       return;
     }
     try {
-      const payload = await api.wallet.getTransactions(1, 20);
-      const data = payload?.data || payload || [];
+      const data = await fetchPage(state.page);
       state.items = data.map(normalize);
+      state.hasMore = data.length === state.perPage;
     } catch (err) {
       state.error = err.message || 'Failed to load transactions.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
@@ -75,6 +97,25 @@ export default (props, { $onMounted, $update, $f7 }) => {
       state.loading = false;
       $update();
     }
+
+    $el.on('click', '[data-action="load-more"]', async (event) => {
+      event.preventDefault();
+      if (state.loadingMore || !state.hasMore) return;
+      state.loadingMore = true;
+      try {
+        const nextPage = state.page + 1;
+        const data = await fetchPage(nextPage);
+        state.items = state.items.concat(data.map(normalize));
+        state.page = nextPage;
+        state.hasMore = data.length === state.perPage;
+      } catch (err) {
+        state.error = err.message || 'Failed to load transactions.';
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
+      } finally {
+        state.loadingMore = false;
+        $update();
+      }
+    });
   });
 
   return $render;

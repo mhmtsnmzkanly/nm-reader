@@ -130,6 +130,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Added language switcher sheet for mobile i18n.
 - **Change**: Improved pricing badges in mobile content lists.
 - **Change**: Added global page error toasts for mobile views.
+- **Change**: Added transaction pagination, shop info notes, and reader font size controls.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.

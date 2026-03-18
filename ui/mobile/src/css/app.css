@@ -10,6 +10,10 @@
   line-height: 1.7;
 }
 
+.reader-controls {
+  margin-bottom: 8px;
+}
+
 .login-actions {
   margin-top: 12px;
   text-align: center;

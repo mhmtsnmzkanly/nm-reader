@@ -29,6 +29,7 @@
               {{/each}}
             </ul>
           </div>
+          <div class="block">Payments coming soon. Features are informational.</div>
         {{/if}}
       {{/if}}
     </div>
