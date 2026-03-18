@@ -23,6 +23,9 @@
                     <div class="item-inner">
                       <div class="item-title">{{description}}</div>
                       <div class="item-after">{{amount}}</div>
+                      {{#if created_at}}
+                        <div class="item-subtitle">{{created_at}}</div>
+                      {{/if}}
                     </div>
                   </div>
                 </li>
@@ -49,6 +52,7 @@ export default (props, { $onMounted, $update, $f7 }) => {
   const normalize = (item) => ({
     description: item.description || item.reference_type || 'Transaction',
     amount: item.amount ? `${item.amount}` : `${item.coin_amount || 0}`,
+    created_at: item.created_at || item.createdAt || '',
   });
 
   $onMounted(async () => {

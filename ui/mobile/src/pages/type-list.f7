@@ -24,6 +24,9 @@
                   <a class="item-link item-content" href="/content/{{type}}/{{slug}}/">
                     <div class="item-inner">
                       <div class="item-title">{{title}}</div>
+                      {{#if series_unlock_price}}
+                        <div class="item-after">{{series_unlock_price}} coins</div>
+                      {{/if}}
                     </div>
                   </a>
                 </li>
@@ -51,6 +54,7 @@ export default (props, { $onMounted, $update, $f7route }) => {
     title: item.title || 'Series',
     slug: item.slug || '',
     type: item.type || state.type,
+    series_unlock_price: item.series_unlock_price || item.series_unlock_price_coin || item.access?.series_unlock_price || 0,
   });
 
   $onMounted(async () => {
