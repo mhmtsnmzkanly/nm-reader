@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Admin Content: Validate Status Updates (2026-03-18)
+- **Status**: Completed.
+- **Change**: Content status updates now validate allowed values on admin edits.
+
 ### Admin Chapters: Prevent Duplicate Numbers (2026-03-18)
 - **Status**: Completed.
 - **Change**: Admin chapter updates now validate chapter number uniqueness within a series.

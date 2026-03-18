@@ -183,6 +183,9 @@ final class AdminService
             $params['description'] = $description === '' ? null : $description;
         }
         if ($status !== null) {
+            if (!in_array($status, self::ALLOWED_STATUSES, true)) {
+                throw new \InvalidArgumentException('Invalid status');
+            }
             $updates[] = 'status = :status';
             $params['status'] = $status;
         }
