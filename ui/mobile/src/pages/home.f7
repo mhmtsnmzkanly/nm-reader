@@ -53,7 +53,7 @@
                 <div class="text-xs text-slate-400">${item.type}</div>
               </div>
             </a>
-          `)}
+          `).join('')}
         </div>
       </div>
 
@@ -85,8 +85,8 @@
                     </div>
                   </div>
                 </a>
-              `)}
-            </div>`
+              `).join('')}
+            </div>` 
             : $h`<div class="nmr-panel">${i18n.no_chapters || 'No chapters yet.'}</div>`
         }
       </div>
@@ -107,7 +107,7 @@
                     </div>
                   </div>
                 </a>
-              `)}
+              `).join('')}
             </div>`
             : $h`<div class="nmr-panel">${i18n.no_recent || 'No recent series.'}</div>`
         }
