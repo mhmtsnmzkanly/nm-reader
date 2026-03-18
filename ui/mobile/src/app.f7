@@ -45,6 +45,9 @@
                   </label>
                 </li>
               </ul>
+              <div class="block turnstile-wrap">
+                <div class="turnstile-widget" data-turnstile="login"></div>
+              </div>
               <div class="block">
                 <button class="button button-fill" type="submit">${i18n.login || 'Login'}</button>
                 <div class="login-actions">
@@ -101,6 +104,9 @@
                   </div>
                 </li>
               </ul>
+              <div class="block turnstile-wrap">
+                <div class="turnstile-widget" data-turnstile="register"></div>
+              </div>
               <div class="block">
                 <button class="button button-fill" type="submit">${i18n.register || 'Create account'}</button>
               </div>
@@ -154,6 +160,41 @@ import { loadI18n, getI18n } from './js/i18n.js';
 export default (props, { $onMounted, $onBeforeUnmount, $f7 }) => {
   const i18n = getI18n();
   let pendingPurchase = null;
+  const turnstileKey = typeof window !== 'undefined' ? window.NMR_TURNSTILE_SITE_KEY : '';
+  const turnstileWidgets = { login: null, register: null };
+  const getTurnstileToken = (form) => {
+    if (!form) return '';
+    const input = form.querySelector('input[name="turnstile_token"], input[name="cf-turnstile-response"]');
+    return input ? input.value : '';
+  };
+  const resetTurnstile = (context) => {
+    if (typeof window === 'undefined' || !window.turnstile) return;
+    const widgetId = turnstileWidgets[context];
+    if (widgetId !== null) {
+      window.turnstile.reset(widgetId);
+    }
+  };
+  const renderTurnstile = () => {
+    if (typeof window === 'undefined') return;
+    const widgets = document.querySelectorAll('.turnstile-widget');
+    if (!turnstileKey || !window.turnstile || widgets.length === 0) {
+      document.querySelectorAll('.turnstile-wrap').forEach((el) => {
+        el.style.display = 'none';
+      });
+      return;
+    }
+    widgets.forEach((el) => {
+      const context = el.getAttribute('data-turnstile');
+      if (!context || turnstileWidgets[context] !== null) return;
+      const widgetId = window.turnstile.render(el, {
+        sitekey: turnstileKey,
+        theme: 'light',
+        responseField: true,
+        responseFieldName: 'turnstile_token',
+      });
+      turnstileWidgets[context] = widgetId;
+    });
+  };
   const applySession = (data) => {
     const session = {
       apiToken: data.api_token || null,
@@ -230,17 +271,21 @@ export default (props, { $onMounted, $onBeforeUnmount, $f7 }) => {
       event.preventDefault();
       const formData = new FormData(event.target);
       const i18n = getI18n();
+      const turnstileToken = getTurnstileToken(event.target);
       try {
         const result = await api.auth.login(
           formData.get('email'),
           formData.get('password'),
           !!formData.get('remember'),
+          turnstileToken,
         );
         applySession(result);
         $f7.popup.close('.login-popup');
         $f7.dialog.alert(i18n.login_success || 'Login successful');
       } catch (err) {
         $f7.dialog.alert(err.message || i18n.login_failed || 'Login failed');
+      } finally {
+        resetTurnstile('login');
       }
       return;
     }
@@ -249,33 +294,41 @@ export default (props, { $onMounted, $onBeforeUnmount, $f7 }) => {
       event.preventDefault();
       const formData = new FormData(event.target);
       const i18n = getI18n();
+      const turnstileToken = getTurnstileToken(event.target);
       try {
         await api.auth.register(
           formData.get('username'),
           formData.get('email'),
           formData.get('password'),
+          turnstileToken,
         );
         const loginResult = await api.auth.login(
           formData.get('email'),
           formData.get('password'),
           !!formData.get('remember'),
+          turnstileToken,
         );
         applySession(loginResult);
         $f7.popup.close('.register-popup');
         $f7.dialog.alert(i18n.register_success || 'Account created. You are now logged in.');
       } catch (err) {
         $f7.dialog.alert(err.message || i18n.register_failed || 'Register failed');
+      } finally {
+        resetTurnstile('register');
       }
     }
   };
 
   $onMounted(() => {
+    renderTurnstile();
+    window.addEventListener('turnstile:ready', renderTurnstile);
     document.addEventListener('purchase:open', onPurchaseOpen);
     document.addEventListener('click', onDocumentClick);
     document.addEventListener('submit', onDocumentSubmit);
   });
 
   $onBeforeUnmount(() => {
+    window.removeEventListener('turnstile:ready', renderTurnstile);
     document.removeEventListener('purchase:open', onPurchaseOpen);
     document.removeEventListener('click', onDocumentClick);
     document.removeEventListener('submit', onDocumentSubmit);

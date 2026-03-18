@@ -73,6 +73,24 @@ final class WebController
         }
 
         $html = (string) file_get_contents($file);
+        $integrations = $this->siteConfig->integrations();
+        $gaId = trim((string) ($integrations['google_analytics_id'] ?? ''));
+        $turnstileKey = trim((string) ($integrations['cloudflare_turnstile_site_key'] ?? ''));
+
+        $injected = '';
+        if ($gaId !== '') {
+            $gaIdJson = json_encode($gaId, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            $injected .= "\n<script async src=\"https://www.googletagmanager.com/gtag/js?id={$gaId}\"></script>";
+            $injected .= "\n<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',{$gaIdJson});window.NMR_GA_ID={$gaIdJson};</script>";
+        }
+        if ($turnstileKey !== '') {
+            $turnstileKeyJson = json_encode($turnstileKey, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            $injected .= "\n<script>window.NMR_TURNSTILE_SITE_KEY={$turnstileKeyJson};</script>";
+            $injected .= "\n<script src=\"https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit\" async defer onload=\"window.dispatchEvent(new Event('turnstile:ready'))\"></script>";
+        }
+        if ($injected !== '') {
+            $html = str_replace('</head>', $injected . "\n</head>", $html);
+        }
         $response->getBody()->write($html);
         return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
     }

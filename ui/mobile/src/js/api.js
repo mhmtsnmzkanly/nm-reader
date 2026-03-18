@@ -178,18 +178,21 @@ const NMR_API = {
   },
 
   auth: {
-    async login(email, password, remember = false) {
+    async login(email, password, remember = false, turnstileToken = '') {
       const res = await NMR_API.request('/auth/login', {
         method: 'POST',
-        body: { email, password, remember },
+        body: { email, password, remember, turnstile_token: turnstileToken },
       });
       if (res.data?.api_token) NMR_API.setToken(res.data.api_token);
       if (res.data?.csrf_token) NMR_API.setCsrfToken(res.data.csrf_token);
       if (res.data?.refresh_token) NMR_API.setRefreshToken(res.data.refresh_token);
       return res.data;
     },
-    async register(username, email, password) {
-      return await NMR_API.request('/auth/register', { method: 'POST', body: { username, email, password } });
+    async register(username, email, password, turnstileToken = '') {
+      return await NMR_API.request('/auth/register', {
+        method: 'POST',
+        body: { username, email, password, turnstile_token: turnstileToken },
+      });
     },
     async refresh(refreshToken = null) {
       const token = refreshToken || NMR_API._refreshToken;
