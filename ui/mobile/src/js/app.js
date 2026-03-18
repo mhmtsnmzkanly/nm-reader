@@ -49,7 +49,7 @@ initI18n();
 
 document.addEventListener('i18n:updated', () => {
   const view = app.views?.main || app.views?.get?.('.view-main');
-  if (view && view.router) {
+  if (view && view.router && view.router.currentRoute) {
     view.router.refreshPage();
   }
 });
