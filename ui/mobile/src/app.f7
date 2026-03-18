@@ -47,6 +47,62 @@
               </ul>
               <div class="block">
                 <button class="button button-fill" type="submit">Login</button>
+                <div class="login-actions">
+                  <a class="link popup-open" data-popup=".register-popup" href="#">Create account</a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="popup register-popup">
+      <div class="view">
+        <div class="page">
+          <div class="navbar">
+            <div class="navbar-bg"></div>
+            <div class="navbar-inner">
+              <div class="title">Register</div>
+              <div class="right"><a class="link popup-close" href="#">Close</a></div>
+            </div>
+          </div>
+          <div class="page-content">
+            <form id="register-form" class="list">
+              <ul>
+                <li>
+                  <div class="item-content item-input">
+                    <div class="item-inner">
+                      <div class="item-title item-label">Username</div>
+                      <div class="item-input-wrap">
+                        <input type="text" name="username" placeholder="username" required />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div class="item-content item-input">
+                    <div class="item-inner">
+                      <div class="item-title item-label">Email</div>
+                      <div class="item-input-wrap">
+                        <input type="email" name="email" placeholder="you@example.com" required />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div class="item-content item-input">
+                    <div class="item-inner">
+                      <div class="item-title item-label">Password</div>
+                      <div class="item-input-wrap">
+                        <input type="password" name="password" placeholder="Password" required />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+              <div class="block">
+                <button class="button button-fill" type="submit">Create account</button>
               </div>
             </form>
           </div>
@@ -88,11 +144,27 @@ export default (props, { $onMounted, $el, $f7 }) => {
           !!formData.get('remember'),
         );
         applySession(result);
-        document.dispatchEvent(new CustomEvent('auth:updated'));
         $f7.popup.close('.login-popup');
         $f7.dialog.alert('Login successful');
       } catch (err) {
         $f7.dialog.alert(err.message || 'Login failed');
+      }
+    });
+
+    $el.on('submit', '#register-form', async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      try {
+        await api.auth.register(
+          formData.get('username'),
+          formData.get('email'),
+          formData.get('password'),
+        );
+        $f7.popup.close('.register-popup');
+        $f7.dialog.alert('Account created. You can login now.');
+      } catch (err) {
+        $f7.dialog.alert(err.message || 'Register failed');
       }
     });
 
@@ -104,7 +176,6 @@ export default (props, { $onMounted, $el, $f7 }) => {
         // ignore logout errors
       }
       store.dispatch('clearAuth');
-      document.dispatchEvent(new CustomEvent('auth:updated'));
       $f7.dialog.alert('Logged out');
     });
   });

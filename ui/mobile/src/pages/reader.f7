@@ -101,16 +101,22 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
         $f7.dialog.alert('Chapter not available.');
         return;
       }
-      try {
-        await api.wallet.unlockChapter(state.chapterId);
-        const walletPayload = await api.wallet.getSummary();
-        const walletData = walletPayload?.data || walletPayload || {};
-        store.dispatch('setWallet', { balance: walletData.balance || 0 });
-        await loadChapter();
-        $update();
-      } catch (err) {
-        $f7.dialog.alert(err.message || 'Unlock failed');
-      }
+      $f7.dialog.confirm(
+        `Unlock this chapter for ${state.price_coin} coins?`,
+        'Confirm Purchase',
+        async () => {
+          try {
+            await api.wallet.unlockChapter(state.chapterId);
+            const walletPayload = await api.wallet.getSummary();
+            const walletData = walletPayload?.data || walletPayload || {};
+            store.dispatch('setWallet', { balance: walletData.balance || 0 });
+            await loadChapter();
+            $update();
+          } catch (err) {
+            $f7.dialog.alert(err.message || 'Unlock failed');
+          }
+        },
+      );
     });
   });
 

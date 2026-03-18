@@ -9,6 +9,7 @@ const NMR_API = {
   _token: null,
   _csrfToken: null,
   _refreshToken: null,
+  _refreshing: null,
 
   setToken(token) {
     this._token = token || null;
@@ -26,6 +27,9 @@ const NMR_API = {
     this.setToken(apiToken);
     this.setCsrfToken(csrfToken);
     this.setRefreshToken(refreshToken);
+    if (typeof document !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('auth:updated'));
+    }
   },
 
   loadSession() {
@@ -91,6 +95,11 @@ const NMR_API = {
     const payload = text ? JSON.parse(text) : null;
 
     if (!response.ok || payload?.status === 'error') {
+      if (response.status === 401 && !options._retried && this._refreshToken) {
+        await this._refreshSession();
+        return this.request(endpoint, { ...options, _retried: true });
+      }
+
       const message = payload?.error?.message || payload?.message || `HTTP Error ${response.status}`;
       const err = new Error(message);
       err.code = response.status;
@@ -99,6 +108,27 @@ const NMR_API = {
     }
 
     return payload;
+  },
+
+  async _refreshSession() {
+    if (this._refreshing) return this._refreshing;
+    this._refreshing = (async () => {
+      const token = this._refreshToken;
+      if (!token) throw new Error('Missing refresh token');
+      const res = await this.request('/auth/refresh', {
+        method: 'POST',
+        body: { refresh_token: token },
+        _retried: true,
+      });
+      if (res?.data?.csrf_token) this.setCsrfToken(res.data.csrf_token);
+      if (res?.data?.refresh_token) this.setRefreshToken(res.data.refresh_token);
+      return res;
+    })();
+    try {
+      return await this._refreshing;
+    } finally {
+      this._refreshing = null;
+    }
   },
 
   auth: {
