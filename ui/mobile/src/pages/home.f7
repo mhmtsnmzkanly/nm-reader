@@ -19,6 +19,20 @@
     </div>
 
     <div class="page-content px-5 pb-6 space-y-6">
+      <div class="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
+        <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.35),transparent_55%)]"></div>
+        <div class="absolute inset-0 opacity-60" style="background-image:url('/assets/img/covers/one-piece.jpg');background-size:cover;background-position:center;"></div>
+        <div class="relative z-10 p-6 space-y-3">
+          <div class="text-xs uppercase tracking-[1.4px] text-amber-200/80">Premium</div>
+          <div class="text-2xl font-semibold text-slate-100">Story Library</div>
+          <div class="text-sm text-slate-300">Curated new chapters and cinematic reading.</div>
+          <div class="flex gap-3 pt-2">
+            <a class="nmr-button nmr-button-primary" href="/types/manga/">Explore</a>
+            <a class="nmr-button nmr-button-ghost" href="/wallet/">Wallet</a>
+          </div>
+        </div>
+      </div>
       <div class="flex gap-3">
         <a class="nmr-button nmr-button-ghost" href="/types/manga/">Manga</a>
         <a class="nmr-button nmr-button-ghost" href="/types/novel/">Novel</a>
