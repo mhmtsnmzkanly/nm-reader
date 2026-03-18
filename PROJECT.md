@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Admin Content: Hide Deleted Records (2026-03-18)
+- **Status**: Completed.
+- **Change**: Admin content listing now excludes soft-deleted series.
+
 ### Admin Content: Correct Create Audit Action (2026-03-18)
 - **Status**: Completed.
 - **Change**: Content creation now logs `create` instead of `update` in moderation actions.

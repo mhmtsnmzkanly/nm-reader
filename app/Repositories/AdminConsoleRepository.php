@@ -153,6 +153,7 @@ final class AdminConsoleRepository
                 (SELECT GROUP_CONCAT(tag_id) FROM series_tag_map WHERE content_id = c.id) as tag_ids
              FROM series c
              LEFT JOIN series_metadata cm ON cm.content_id = c.id
+             WHERE c.deleted_at IS NULL
              ORDER BY c.created_at DESC
              LIMIT :limit OFFSET :offset'
         );
