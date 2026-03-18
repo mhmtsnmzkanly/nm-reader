@@ -24,9 +24,13 @@
                   <a class="item-link item-content" href="/content/{{type}}/{{slug}}/">
                     <div class="item-inner">
                       <div class="item-title">{{title}}</div>
-                      {{#if series_unlock_price}}
-                        <div class="item-after">{{series_unlock_price}} coins</div>
-                      {{/if}}
+                      <div class="item-after">
+                        {{#if series_unlock_price}}
+                          {{series_unlock_price}} coins
+                        {{else}}
+                          Free
+                        {{/if}}
+                      </div>
                     </div>
                   </a>
                 </li>

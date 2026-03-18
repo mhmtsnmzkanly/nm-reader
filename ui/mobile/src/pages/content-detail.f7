@@ -29,14 +29,16 @@
                     <div class="item-inner">
                       <div class="item-title-row">
                         <div class="item-title">{{title}}</div>
-                        <div class="item-after">#{{chapter_number}}</div>
+                        <div class="item-after">
+                          {{#if is_locked}}
+                            {{price_coin}} coins
+                          {{else}}
+                            Free
+                          {{/if}}
+                        </div>
                       </div>
                       <div class="item-subtitle">
-                        {{#if is_locked}}
-                          Locked · {{price_coin}} coins
-                        {{else}}
-                          Free
-                        {{/if}}
+                        #{{chapter_number}}
                       </div>
                     </div>
                   </a>
