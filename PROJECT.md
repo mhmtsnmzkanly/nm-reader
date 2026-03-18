@@ -134,6 +134,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Expanded mobile i18n coverage across lists, wallet, shop, and reader messages.
 - **Change**: Polished mobile list badges and empty/error states.
 - **Change**: Adjusted mobile CSP/font loading, icon paths, and event handlers to stabilize runtime.
+- **Change**: CSP now allows data: fonts for mobile icon fonts.
 - **Change**: Rebuilt mobile web assets after UI/i18n updates.
 
 ### UI Workspace Layout (2026-03-18)
