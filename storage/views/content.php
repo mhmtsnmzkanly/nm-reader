@@ -120,7 +120,11 @@ $slug = (string)($content['slug'] ?? '');
                     $fullChapterUrl = $url($chapterPath);
                 ?>
                 <div class="chapter-row flex items-center justify-between p-6 glass rounded-[24px] cursor-pointer transition-all border border-white/5 group"
-                     onclick="handleChapterClick('<?= $chapter['id'] ?>', <?= $isLocked ? 'true' : 'false' ?>, <?= $price ?>, '<?= $fullChapterUrl ?>')">
+                     data-chapter-id="<?= htmlspecialchars((string) $chapter['id']) ?>"
+                     data-locked="<?= $isLocked ? '1' : '0' ?>"
+                     data-price="<?= $price ?>"
+                     data-url="<?= htmlspecialchars((string) $fullChapterUrl) ?>"
+                     onclick="handleChapterClick(this)">
                     <div class="flex items-center gap-6">
                         <span class="w-12 h-12 flex items-center justify-center <?= $isLocked ? 'bg-zinc-800 text-gray-500' : 'bg-blue-600/10 text-blue-500' ?> rounded-2xl font-black">
                             <?= htmlspecialchars((string) ($chapter['chapter_number'] ?? '')) ?>

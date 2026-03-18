@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Frontend: Chapter Purchase Flow (2026-03-18)
+- **Status**: Completed.
+- **Change**: Added chapter unlock flow on content pages with login check and purchase prompt.
+
 ### Admin Chapters: Fix Content Selection (2026-03-18)
 - **Status**: Completed.
 - **Change**: New chapter modal now syncs selected content and defaults to the first series when available.

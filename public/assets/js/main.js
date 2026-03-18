@@ -15,6 +15,45 @@ window.closeModal = function() {
     $("body").removeClass("overflow-hidden");
 };
 
+// Chapter purchase / navigation
+window.handleChapterClick = async function(el) {
+    const node = el instanceof Element ? el : null;
+    if (!node) return;
+
+    const chapterId = node.getAttribute('data-chapter-id');
+    const isLocked = node.getAttribute('data-locked') === '1';
+    const price = parseInt(node.getAttribute('data-price') || '0', 10);
+    const url = node.getAttribute('data-url') || '';
+
+    if (!isLocked) {
+        if (url) window.location.href = url;
+        return;
+    }
+
+    const isLoggedIn = !!(window.__NMR_CONTEXT && window.__NMR_CONTEXT.auth && window.__NMR_CONTEXT.auth.is_logged_in);
+    if (!isLoggedIn) {
+        showFeedback('Bölümü açmak için giriş yapmalısınız.', 'error');
+        openModal('loginModal');
+        return;
+    }
+
+    if (!chapterId || !window.NMRData) {
+        showFeedback('Bölüm bilgisi eksik.', 'error');
+        return;
+    }
+
+    const ok = confirm(`${price} coin ile bölümü açmak istiyor musunuz?`);
+    if (!ok) return;
+
+    try {
+        await window.NMRData.post(`/chapter/${chapterId}/unlock`, {});
+        showFeedback('Bölüm açıldı.');
+        if (url) window.location.href = url;
+    } catch (e) {
+        showFeedback(e.message || 'Bölüm açılamadı.', 'error');
+    }
+};
+
 // Global Language Switcher
 window.switchLanguage = function(newLang) {
     const currentPath = window.location.pathname;
