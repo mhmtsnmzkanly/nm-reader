@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Helpers\OutputSanitizer;
+use App\Helpers\CursorPagination;
 use App\Helpers\Validator;
 use App\Repositories\UserRepository;
 use App\Services\UploadService;
@@ -373,7 +374,7 @@ final class UserService
     public function notifications(string $userId, int $page, int $perPage, ?string $cursor = null): array
     {
         try {
-            $cursorData = $this->parseCursor($cursor);
+            $cursorData = CursorPagination::decode($cursor);
             if ($cursorData !== null) {
                 [$cursorCreatedAt, $cursorId] = $cursorData;
                 $rows = $this->users->listNotifications($userId, $page, $perPage, $cursorCreatedAt, $cursorId);
@@ -401,29 +402,6 @@ final class UserService
         $this->users->markNotificationsRead($userId);
     }
 
-    private function parseCursor(?string $cursor): ?array
-    {
-        if ($cursor === null || $cursor === '') {
-            return null;
-        }
-
-        $parts = explode('|', $cursor, 2);
-        if (count($parts) !== 2) {
-            return null;
-        }
-
-        $createdAt = trim($parts[0]);
-        $id = (int) trim($parts[1]);
-        if ($createdAt === '' || $id <= 0) {
-            return null;
-        }
-
-        if (strtotime($createdAt) === false) {
-            return null;
-        }
-
-        return [$createdAt, $id];
-    }
 
     /**
      * Lists users followed by the specified user.

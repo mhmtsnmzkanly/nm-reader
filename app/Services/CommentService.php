@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Helpers\OutputSanitizer;
+use App\Helpers\CursorPagination;
 use App\Helpers\Validator;
 use App\Repositories\ChapterRepository;
 use App\Repositories\CommentRepository;
@@ -205,7 +206,7 @@ final class CommentService
      */
     public function listByChapter(string $chapterId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursor = null): array
     {
-        $cursorData = $this->parseCursor($cursor);
+        $cursorData = CursorPagination::decode($cursor);
         if ($cursorData !== null) {
             [$cursorCreatedAt, $cursorId] = $cursorData;
             $rows = $this->comments->getByChapterId($chapterId, $page, $perPage, $viewerUserId, $cursorCreatedAt, $cursorId);
@@ -225,7 +226,7 @@ final class CommentService
             throw new \DomainException('Series not found');
         }
 
-        $cursorData = $this->parseCursor($cursor);
+        $cursorData = CursorPagination::decode($cursor);
         if ($cursorData !== null) {
             [$cursorCreatedAt, $cursorId] = $cursorData;
             $rows = $this->comments->getByContentId($contentId, $page, $perPage, $viewerUserId, $cursorCreatedAt, $cursorId);
@@ -252,7 +253,7 @@ final class CommentService
             throw new \DomainException('Blog not found');
         }
 
-        $cursorData = $this->parseCursor($cursor);
+        $cursorData = CursorPagination::decode($cursor);
         if ($cursorData !== null) {
             [$cursorCreatedAt, $cursorId] = $cursorData;
             $rows = $this->comments->getByBlogId((int) $blog['id'], $page, $perPage, $viewerUserId, $cursorCreatedAt, $cursorId);
@@ -262,29 +263,6 @@ final class CommentService
         return OutputSanitizer::sanitizeRows($rows, ['body', 'username']);
     }
 
-    private function parseCursor(?string $cursor): ?array
-    {
-        if ($cursor === null || $cursor === '') {
-            return null;
-        }
-
-        $parts = explode('|', $cursor, 2);
-        if (count($parts) !== 2) {
-            return null;
-        }
-
-        $createdAt = trim($parts[0]);
-        $id = (int) trim($parts[1]);
-        if ($createdAt === '' || $id <= 0) {
-            return null;
-        }
-
-        if (strtotime($createdAt) === false) {
-            return null;
-        }
-
-        return [$createdAt, $id];
-    }
 
     /**
      * Records or toggles a user's vote on a comment.

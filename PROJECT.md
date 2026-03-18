@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Cursor Pagination: Helper + Test (2026-03-18)
+- **Status**: Completed.
+- **Change**: Centralized cursor encode/decode logic and added a lightweight integration test.
+
 ### Auth Refresh: Return CSRF Token (2026-03-18)
 - **Status**: Completed.
 - **Change**: Refresh endpoint now returns the active CSRF token for protected API calls.

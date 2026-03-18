@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\ResponseHelper;
+use App\Helpers\CursorPagination;
 use App\Services\UserService;
 use App\Services\WalletService;
 use Psr\Http\Message\ResponseInterface;
@@ -220,10 +221,7 @@ final class UserController
         }
         $createdAt = $last['created_at'] ?? null;
         $id = $last['id'] ?? null;
-        if (!is_string($createdAt) || $createdAt === '' || !is_numeric($id)) {
-            return null;
-        }
-        return $createdAt . '|' . (int) $id;
+        return CursorPagination::encode($createdAt, $id);
     }
 
     /**

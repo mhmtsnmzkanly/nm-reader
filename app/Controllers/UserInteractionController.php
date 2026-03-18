@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\DTO\UserActivityDto;
 use App\Helpers\ResponseHelper;
+use App\Helpers\CursorPagination;
 use App\Services\CommentService;
 use App\Services\RatingService;
 use App\Services\UserActivityService;
@@ -177,9 +178,6 @@ final class UserInteractionController
         }
         $createdAt = $last['created_at'] ?? null;
         $id = $last['id'] ?? null;
-        if (!is_string($createdAt) || $createdAt === '' || !is_numeric($id)) {
-            return null;
-        }
-        return $createdAt . '|' . (int) $id;
+        return CursorPagination::encode($createdAt, $id);
     }
 }
