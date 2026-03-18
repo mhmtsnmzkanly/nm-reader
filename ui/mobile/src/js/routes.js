@@ -6,6 +6,11 @@ import WalletPage from '../pages/wallet.f7';
 import WalletTransactionsPage from '../pages/wallet-transactions.f7';
 import ShopPackagesPage from '../pages/shop-packages.f7';
 import ShopFeaturesPage from '../pages/shop-features.f7';
+import SearchPage from '../pages/search.f7';
+import GenresPage from '../pages/genres.f7';
+import GenreDetailPage from '../pages/genre-detail.f7';
+import TagsPage from '../pages/tags.f7';
+import TagDetailPage from '../pages/tag-detail.f7';
 
 var routes = [
   { path: '/', component: HomePage },
@@ -16,6 +21,11 @@ var routes = [
   { path: '/wallet/transactions/', component: WalletTransactionsPage },
   { path: '/shop/packages/', component: ShopPackagesPage },
   { path: '/shop/features/', component: ShopFeaturesPage },
+  { path: '/search/', component: SearchPage },
+  { path: '/genres/', component: GenresPage },
+  { path: '/genre/:slug/', component: GenreDetailPage },
+  { path: '/tags/', component: TagsPage },
+  { path: '/tag/:slug/', component: TagDetailPage },
 ];
 
 export default routes;

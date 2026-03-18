@@ -37,6 +37,7 @@
         <a class="nmr-button nmr-button-ghost" href="/types/manga/">Manga</a>
         <a class="nmr-button nmr-button-ghost" href="/types/novel/">Novel</a>
         <a class="nmr-button nmr-button-ghost" href="/types/manhwa/">Manhwa</a>
+        <a class="nmr-button nmr-button-ghost" href="/search/">Search</a>
       </div>
 
       <div class="space-y-4">

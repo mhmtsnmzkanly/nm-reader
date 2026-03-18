@@ -212,6 +212,20 @@ const NMR_API = {
     async getChapters(type, slug) { return await NMR_API.request(`/content/${type}/${slug}/chapters`); },
     async getChapterFull(type, slug, chapterNumber) { return await NMR_API.request(`/content/${type}/${slug}/chapter/${chapterNumber}`); },
     async getLatestChapters(page = 1, perPage = 20) { return await NMR_API.request(`/latest-chapters?page=${page}&per_page=${perPage}`); },
+    async search(query, page = 1, perPage = 20) {
+      return await NMR_API.request(`/search?q=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`);
+    },
+    async suggest(query) {
+      return await NMR_API.request(`/search/suggest?q=${encodeURIComponent(query)}`);
+    },
+    async getGenres() { return await NMR_API.request('/genres'); },
+    async getTags() { return await NMR_API.request('/tags'); },
+    async getByGenre(slug, page = 1, perPage = 20) {
+      return await NMR_API.request(`/genre/${slug}?page=${page}&per_page=${perPage}`);
+    },
+    async getByTag(slug, page = 1, perPage = 20) {
+      return await NMR_API.request(`/tag/${slug}?page=${page}&per_page=${perPage}`);
+    },
   },
 
   wallet: {

@@ -1,0 +1,102 @@
+<template>
+  <div class="page nmr-page" data-name="search">
+    <div class="navbar nmr-navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner">
+        <div class="left"><a class="link back text-slate-200">Back</a></div>
+        <div class="title nmr-title">Search</div>
+      </div>
+    </div>
+
+    <div class="page-content px-5 pb-6 space-y-5">
+      <div class="nmr-panel space-y-3">
+        <div class="text-xs uppercase tracking-[2px] text-amber-100/90">Find</div>
+        <input class="nmr-input" type="search" name="q" placeholder="Search series, author..." />
+      </div>
+
+      ${state.loading
+        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
+        : state.error
+          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
+          : state.items.length
+            ? $h`<div class="space-y-4">
+              ${state.items.map((item) => $h`
+                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${item.type}/${item.slug}/">
+                  <div class="flex items-center gap-4">
+                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
+                    <div class="flex-1">
+                      <div class="font-semibold text-slate-100">${item.title}</div>
+                      <div class="text-xs text-slate-400 mt-1">${item.type}</div>
+                    </div>
+                  </div>
+                </a>
+              `)}
+            </div>`
+            : $h`<div class="nmr-panel text-slate-300">No results.</div>`
+      }
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+import { getI18n } from '../js/i18n.js';
+
+export default (props, { $onMounted, $update, $el }) => {
+  const i18n = getI18n();
+  const state = {
+    loading: false,
+    error: '',
+    items: [],
+    query: '',
+  };
+
+  const normalizeCover = (value) => {
+    if (!value) return '/assets/img/covers/one-piece.jpg';
+    if (value.startsWith('http://') || value.startsWith('https://')) return value;
+    let normalized = value;
+    while (normalized.startsWith('/')) normalized = normalized.slice(1);
+    return `/${normalized}`;
+  };
+
+  const normalizeItem = (item) => ({
+    title: item.title || 'Series',
+    slug: item.slug || '',
+    type: item.type || item.type_path || 'novel',
+    cover: normalizeCover(item.cover_image || item.cover || item.thumbnail || item.image),
+  });
+
+  const runSearch = async (q) => {
+    state.loading = true;
+    state.error = '';
+    $update();
+    try {
+      const payload = await api.content.search(q, 1, 20);
+      const data = payload?.data || payload || [];
+      state.items = (Array.isArray(data) ? data : []).map(normalizeItem).filter((row) => row.slug);
+    } catch (err) {
+      state.error = err.message || 'Search failed.';
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  };
+
+  $onMounted(() => {
+    const input = $el.find('input[name="q"]')[0];
+    if (!input) return;
+    input.addEventListener('input', (event) => {
+      const value = event.target.value || '';
+      state.query = value;
+      if (value.length < 2) {
+        state.items = [];
+        state.error = '';
+        $update();
+        return;
+      }
+      runSearch(value);
+    });
+  });
+
+  return $render;
+};
+</script>
