@@ -83,7 +83,7 @@ Standard user object on success.
 #### **REQUEST**
 - **Body**: `{ "refresh_token": "..." }`
 #### **RESPONSE**
-Rotated refresh token and session metadata (`refresh_token`, `session_key`, roles, permissions).
+Rotated refresh token and session metadata (`refresh_token`, `session_key`, `csrf_token`, roles, permissions).
 
 ### **Active Sessions**
 #### **PATH**

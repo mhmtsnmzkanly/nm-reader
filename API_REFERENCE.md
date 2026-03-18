@@ -195,6 +195,7 @@ Refreshes the authenticated session using a refresh token.
     "id": "char(8)",
     "username": "string",
     "email": "string",
+    "csrf_token": "char(48)",
     "refresh_token": "string",
     "session_key": "string",
     "roles": ["string"],

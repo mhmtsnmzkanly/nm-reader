@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Auth Refresh: Return CSRF Token (2026-03-18)
+- **Status**: Completed.
+- **Change**: Refresh endpoint now returns the active CSRF token for protected API calls.
+
 ### Pagination: Cursor Support for Comments & Notifications (2026-03-18)
 - **Status**: Completed.
 - **Change**: Added cursor-based pagination for comment and notification feeds to avoid deep offset costs.

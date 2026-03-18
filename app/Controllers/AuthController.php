@@ -149,6 +149,10 @@ final class AuthController
             $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
             $ua = (string) ($request->getHeaderLine('User-Agent') ?: 'unknown');
             $user = $this->authService->refresh($refreshToken, $ip, $ua);
+            if (!isset($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
+            }
+            $user['csrf_token'] = (string) $_SESSION['csrf_token'];
             return ResponseHelper::success($user);
         } catch (\InvalidArgumentException $exception) {
             return ResponseHelper::error(400, $exception->getMessage());
