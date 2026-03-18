@@ -440,15 +440,28 @@ final class SeriesRepository
         
         $params = [];
         $where = ['c.deleted_at IS NULL'];
+        $selectRelevance = '';
+        $useFullText = false;
 
         if ($query !== '') {
-            $searchParam = '%' . $query . '%';
-            $where[] = '(c.title LIKE :q1 OR c.slug LIKE :q2 OR c.description LIKE :q3 OR cm.author LIKE :q4 OR cm.artist LIKE :q5)';
-            $params['q1'] = $searchParam;
-            $params['q2'] = $searchParam;
-            $params['q3'] = $searchParam;
-            $params['q4'] = $searchParam;
-            $params['q5'] = $searchParam;
+            if ($this->canUseFullText($query)) {
+                $useFullText = true;
+                $booleanQuery = $this->toBooleanSearchQuery($query);
+                $where[] = '(MATCH(c.title, c.slug, c.description) AGAINST (:q IN BOOLEAN MODE)
+                    OR MATCH(cm.author, cm.artist, cm.alternative_titles) AGAINST (:q IN BOOLEAN MODE))';
+                $params['q'] = $booleanQuery;
+                $selectRelevance = ',
+                    (MATCH(c.title, c.slug, c.description) AGAINST (:q IN BOOLEAN MODE)
+                        + MATCH(cm.author, cm.artist, cm.alternative_titles) AGAINST (:q IN BOOLEAN MODE)) AS relevance';
+            } else {
+                $searchParam = '%' . $query . '%';
+                $where[] = '(c.title LIKE :q1 OR c.slug LIKE :q2 OR c.description LIKE :q3 OR cm.author LIKE :q4 OR cm.artist LIKE :q5)';
+                $params['q1'] = $searchParam;
+                $params['q2'] = $searchParam;
+                $params['q3'] = $searchParam;
+                $params['q4'] = $searchParam;
+                $params['q5'] = $searchParam;
+            }
         }
 
         if (!empty($filters['genres'])) {
@@ -486,6 +499,8 @@ final class SeriesRepository
                 'EN YÜKSEK PUAN' => 'c.rating_avg DESC',
                 default => 'c.rating_count DESC',
             };
+        } elseif ($useFullText) {
+            $orderBy = 'relevance DESC, c.rating_count DESC, c.created_at DESC';
         }
 
         $sql = 'SELECT
@@ -500,7 +515,7 @@ final class SeriesRepository
                     c.comment_count,
                     c.cover_image,
                     cm.author,
-                    cm.artist
+                    cm.artist' . $selectRelevance . '
                 FROM series c
                 LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE ' . implode(' AND ', $where) . '
@@ -529,8 +544,28 @@ final class SeriesRepository
             return $query;
         }
 
-        $parts = array_map(static fn (string $token): string => '+' . $token . '*', $tokens);
+        $parts = array_map(static function (string $token): string {
+            $clean = preg_replace('/[^\pL\pN]+/u', '', $token);
+            if ($clean === null || $clean === '') {
+                return '';
+            }
+            return '+' . $clean . '*';
+        }, $tokens);
+        $parts = array_values(array_filter($parts, static fn (string $t): bool => $t !== ''));
+        if ($parts === []) {
+            return $query;
+        }
         return implode(' ', $parts);
+    }
+
+    private function canUseFullText(string $query): bool
+    {
+        $trimmed = trim($query);
+        if ($trimmed === '') {
+            return false;
+        }
+        $length = function_exists('mb_strlen') ? mb_strlen($trimmed) : strlen($trimmed);
+        return $length >= 3;
     }
 
     /**
