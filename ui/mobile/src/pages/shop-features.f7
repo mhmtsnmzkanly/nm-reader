@@ -4,34 +4,33 @@
       <div class="navbar-bg"></div>
       <div class="navbar-inner">
         <div class="left"><a class="link back">Back</a></div>
-        <div class="title">{{@global.i18n.features}}</div>
+        <div class="title">${i18n.features || 'Features'}</div>
       </div>
     </div>
 
     <div class="page-content">
-      {{#if state.loading}}
-        <div class="block">{{@global.i18n.loading}}</div>
-      {{else}}
-        {{#if state.error}}
-          <div class="block error-state">{{state.error}}</div>
-        {{else}}
-          <div class="list">
-            <ul>
-              {{#each state.items}}
-                <li>
-                  <div class="item-content">
-                    <div class="item-inner">
-                      <div class="item-title">{{name}}</div>
-                      <div class="item-after">{{price}}</div>
+      ${state.loading
+        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
+        : state.error
+          ? $h`<div class="block error-state">${state.error}</div>`
+          : $h`
+            <div class="list">
+              <ul>
+                ${state.items.map((item) => $h`
+                  <li>
+                    <div class="item-content">
+                      <div class="item-inner">
+                        <div class="item-title">${item.name}</div>
+                        <div class="item-after">${item.price}</div>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              {{/each}}
-            </ul>
-          </div>
-          <div class="block empty-state">{{@global.i18n.features_info}}</div>
-        {{/if}}
-      {{/if}}
+                  </li>
+                `)}
+              </ul>
+            </div>
+            <div class="block empty-state">${i18n.features_info || 'Payments coming soon. Features are informational.'}</div>
+          `
+      }
     </div>
   </div>
 </template>
@@ -40,6 +39,7 @@ import api from '../js/api.js';
 import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update }) => {
+  const i18n = getI18n();
   const state = {
     loading: true,
     error: '',
@@ -57,7 +57,6 @@ export default (props, { $onMounted, $update }) => {
       const data = payload?.data || payload || [];
       state.items = data.map(normalize);
     } catch (err) {
-      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_features || 'Failed to load features.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {

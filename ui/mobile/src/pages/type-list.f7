@@ -6,39 +6,35 @@
         <div class="left">
           <a class="link back">Back</a>
         </div>
-        <div class="title">{{state.typeTitle}}</div>
+        <div class="title">${state.typeTitle}</div>
       </div>
     </div>
 
     <div class="page-content">
-      {{#if state.loading}}
-        <div class="block">{{@global.i18n.loading}}</div>
-      {{else}}
-        {{#if state.error}}
-          <div class="block error-state">{{state.error}}</div>
-        {{else}}
-          <div class="list media-list">
+      ${state.loading
+        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
+        : state.error
+          ? $h`<div class="block error-state">${state.error}</div>`
+          : $h`<div class="list media-list">
             <ul>
-              {{#each state.items}}
+              ${state.items.map((item) => $h`
                 <li>
-                  <a class="item-link item-content" href="/content/{{type}}/{{slug}}/">
+                  <a class="item-link item-content" href="/content/${item.type}/${item.slug}/">
                     <div class="item-inner">
-                      <div class="item-title">{{title}}</div>
+                      <div class="item-title">${item.title}</div>
                       <div class="item-after">
-                        {{#if series_unlock_price}}
-                          <span class="badge badge--price">{{series_unlock_price}} {{@global.i18n.coins}}</span>
-                        {{else}}
-                          <span class="badge badge--free">{{@global.i18n.free}}</span>
-                        {{/if}}
+                        ${item.series_unlock_price
+                          ? $h`<span class="badge badge--price">${item.series_unlock_price} ${i18n.coins || 'coins'}</span>`
+                          : $h`<span class="badge badge--free">${i18n.free || 'Free'}</span>`
+                        }
                       </div>
                     </div>
                   </a>
                 </li>
-              {{/each}}
+              `)}
             </ul>
-          </div>
-        {{/if}}
-      {{/if}}
+          </div>`
+      }
     </div>
   </div>
 </template>
@@ -47,6 +43,7 @@ import api from '../js/api.js';
 import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update, $f7route }) => {
+  const i18n = getI18n();
   const state = {
     loading: true,
     error: '',
@@ -68,7 +65,6 @@ export default (props, { $onMounted, $update, $f7route }) => {
       const data = payload?.data || payload || [];
       state.items = data.map(normalizeSeries).filter((row) => row.slug);
     } catch (err) {
-      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_list || 'Failed to load list.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {

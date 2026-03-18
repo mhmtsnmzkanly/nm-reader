@@ -4,41 +4,39 @@
       <div class="navbar-bg"></div>
       <div class="navbar-inner">
         <div class="left"><a class="link back">Back</a></div>
-        <div class="title">{{@global.i18n.transactions}}</div>
+        <div class="title">${i18n.transactions || 'Transactions'}</div>
       </div>
     </div>
 
     <div class="page-content">
-      {{#if state.loading}}
-        <div class="block">{{@global.i18n.loading}}</div>
-      {{else}}
-        {{#if state.error}}
-          <div class="block error-state">{{state.error}}</div>
-        {{else}}
-          <div class="list">
-            <ul>
-              {{#each state.items}}
-                <li>
-                  <div class="item-content">
-                    <div class="item-inner">
-                      <div class="item-title">{{description}}</div>
-                      <div class="item-after">{{amount}}</div>
-                      {{#if created_at}}
-                        <div class="item-subtitle">{{created_at}}</div>
-                      {{/if}}
+      ${state.loading
+        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
+        : state.error
+          ? $h`<div class="block error-state">${state.error}</div>`
+          : $h`
+            <div class="list">
+              <ul>
+                ${state.items.map((item) => $h`
+                  <li>
+                    <div class="item-content">
+                      <div class="item-inner">
+                        <div class="item-title">${item.description}</div>
+                        <div class="item-after">${item.amount}</div>
+                        ${item.created_at ? $h`<div class="item-subtitle">${item.created_at}</div>` : ''}
+                      </div>
                     </div>
-                  </div>
-                </li>
-              {{/each}}
-            </ul>
-          </div>
-          {{#if state.hasMore}}
-            <div class="block">
-              <button class="button button-outline" data-action="load-more" {{#if state.loadingMore}}disabled{{/if}}>{{@global.i18n.load_more}}</button>
+                  </li>
+                `)}
+              </ul>
             </div>
-          {{/if}}
-        {{/if}}
-      {{/if}}
+            ${state.hasMore
+              ? $h`<div class="block">
+                <button class="button button-outline" data-action="load-more" ${state.loadingMore ? 'disabled' : ''}>${i18n.load_more || 'Load more'}</button>
+              </div>`
+              : ''
+            }
+          `
+      }
     </div>
   </div>
 </template>
@@ -48,6 +46,7 @@ import store from '../js/store.js';
 import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update, $f7, $el }) => {
+  const i18n = getI18n();
   const state = {
     loading: true,
     error: '',
@@ -79,7 +78,6 @@ export default (props, { $onMounted, $update, $f7, $el }) => {
 
   $onMounted(async () => {
     if (!store.state.auth.isLoggedIn) {
-      const i18n = getI18n();
       state.loading = false;
       state.error = i18n.login_required || 'Login required.';
       $f7.popup.open('.login-popup');
@@ -91,7 +89,6 @@ export default (props, { $onMounted, $update, $f7, $el }) => {
       state.items = data.map(normalize);
       state.hasMore = data.length === state.perPage;
     } catch (err) {
-      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_transactions || 'Failed to load transactions.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
@@ -110,7 +107,6 @@ export default (props, { $onMounted, $update, $f7, $el }) => {
         state.page = nextPage;
         state.hasMore = data.length === state.perPage;
       } catch (err) {
-        const i18n = getI18n();
         state.error = err.message || i18n.failed_load_transactions || 'Failed to load transactions.';
         document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
       } finally {

@@ -6,46 +6,37 @@
         <div class="left">
           <a class="link back">Back</a>
         </div>
-        <div class="title">{{state.title}}</div>
+        <div class="title">${state.title}</div>
       </div>
     </div>
 
     <div class="page-content">
-      {{#if state.loading}}
-        <div class="block">{{@global.i18n.loading}}</div>
-      {{else}}
-        {{#if state.error}}
-          <div class="block error-state">{{state.error}}</div>
-        {{else}}
-          {{#if state.is_locked}}
-            <div class="block empty-state">
-              <div>{{@global.i18n.reader_locked}}</div>
-              <div>{{state.price_coin}} {{@global.i18n.coins}}</div>
-              <a class="button button-fill" data-action="unlock" href="#">{{@global.i18n.unlock}}</a>
-            </div>
-          {{else}}
-            {{#if state.is_image}}
-              <div class="block">
-                {{#each state.pages}}
-                  <img class="reader-image" src="{{this}}" alt="" loading="lazy" />
-                {{/each}}
-              </div>
-            {{else}}
-              <div class="block reader-controls">
-                <div class="segmented">
-                  <button class="button button-small" data-action="font-dec" type="button">A-</button>
-                  <button class="button button-small" data-action="font-inc" type="button">A+</button>
+      ${state.loading
+        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
+        : state.error
+          ? $h`<div class="block error-state">${state.error}</div>`
+          : state.is_locked
+            ? $h`<div class="block empty-state">
+              <div>${i18n.reader_locked || 'This chapter is locked.'}</div>
+              <div>${state.price_coin} ${i18n.coins || 'coins'}</div>
+              <a class="button button-fill" data-action="unlock" href="#">${i18n.unlock || 'Unlock'}</a>
+            </div>`
+            : state.is_image
+              ? $h`<div class="block">
+                ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" alt="" loading="lazy" />`)}
+              </div>`
+              : $h`
+                <div class="block reader-controls">
+                  <div class="segmented">
+                    <button class="button button-small" data-action="font-dec" type="button">A-</button>
+                    <button class="button button-small" data-action="font-inc" type="button">A+</button>
+                  </div>
                 </div>
-              </div>
-              <div class="block reader-text" style="font-size: {{state.font_size}}px;">
-                {{#each state.paragraphs}}
-                  <p>{{this}}</p>
-                {{/each}}
-              </div>
-            {{/if}}
-          {{/if}}
-        {{/if}}
-      {{/if}}
+                <div class="block reader-text" style="font-size: ${state.font_size}px;">
+                  ${state.paragraphs.map((para) => $h`<p>${para}</p>`)}
+                </div>
+              `
+      }
     </div>
   </div>
 </template>
@@ -55,6 +46,7 @@ import store from '../js/store.js';
 import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $f7 }) => {
+  const i18n = getI18n();
   const state = {
     loading: true,
     error: '',
@@ -72,6 +64,11 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
   };
 
   const fontKey = 'nmr_reader_font_size';
+  const onPurchaseSuccess = async (event) => {
+    if (event.detail?.chapterId !== state.chapterId) return;
+    await loadChapter();
+    $update();
+  };
 
   const loadChapter = async () => {
     const payload = await api.content.getChapterFull(state.type, state.slug, state.chapterNumber);
@@ -101,19 +98,12 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     try {
       await loadChapter();
     } catch (err) {
-      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_chapter || 'Failed to load chapter.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
       state.loading = false;
       $update();
     }
-
-    const onPurchaseSuccess = async (event) => {
-      if (event.detail?.chapterId !== state.chapterId) return;
-      await loadChapter();
-      $update();
-    };
 
     document.addEventListener('purchase:success', onPurchaseSuccess);
 
@@ -124,7 +114,6 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
         return;
       }
       if (!state.chapterId) {
-        const i18n = getI18n();
         $f7.dialog.alert(i18n.chapter_not_available || 'Chapter not available.');
         return;
       }

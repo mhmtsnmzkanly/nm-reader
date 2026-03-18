@@ -6,48 +6,46 @@
         <div class="left">
           <a class="link back">Back</a>
         </div>
-        <div class="title">{{state.title}}</div>
+        <div class="title">${state.title}</div>
       </div>
     </div>
 
     <div class="page-content">
-      {{#if state.loading}}
-        <div class="block">{{@global.i18n.loading}}</div>
-      {{else}}
-        {{#if state.error}}
-          <div class="block error-state">{{state.error}}</div>
-        {{else}}
-          <div class="block block-strong">
-            <p>{{state.description}}</p>
-          </div>
-          <div class="block-title">{{@global.i18n.chapters}}</div>
-          <div class="list media-list">
-            <ul>
-              {{#each state.chapters}}
-                <li>
-                  <a class="item-link item-content" href="/reader/{{type}}/{{slug}}/{{chapter_number}}/">
-                    <div class="item-inner">
-                      <div class="item-title-row">
-                        <div class="item-title">{{title}}</div>
-                        <div class="item-after">
-                          {{#if is_locked}}
-                            <span class="badge badge--price">{{price_coin}} {{@global.i18n.coins}}</span>
-                          {{else}}
-                            <span class="badge badge--free">{{@global.i18n.free}}</span>
-                          {{/if}}
+      ${state.loading
+        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
+        : state.error
+          ? $h`<div class="block error-state">${state.error}</div>`
+          : $h`
+            <div class="block block-strong">
+              <p>${state.description}</p>
+            </div>
+            <div class="block-title">${i18n.chapters || 'Chapters'}</div>
+            <div class="list media-list">
+              <ul>
+                ${state.chapters.map((chapter) => $h`
+                  <li>
+                    <a class="item-link item-content" href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/">
+                      <div class="item-inner">
+                        <div class="item-title-row">
+                          <div class="item-title">${chapter.title}</div>
+                          <div class="item-after">
+                            ${chapter.is_locked
+                              ? $h`<span class="badge badge--price">${chapter.price_coin} ${i18n.coins || 'coins'}</span>`
+                              : $h`<span class="badge badge--free">${i18n.free || 'Free'}</span>`
+                            }
+                          </div>
+                        </div>
+                        <div class="item-subtitle">
+                          #${chapter.chapter_number}
                         </div>
                       </div>
-                      <div class="item-subtitle">
-                        #{{chapter_number}}
-                      </div>
-                    </div>
-                  </a>
-                </li>
-              {{/each}}
-            </ul>
-          </div>
-        {{/if}}
-      {{/if}}
+                    </a>
+                  </li>
+                `)}
+              </ul>
+            </div>
+          `
+      }
     </div>
   </div>
 </template>
@@ -56,6 +54,7 @@ import api from '../js/api.js';
 import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update, $f7route }) => {
+  const i18n = getI18n();
   const state = {
     loading: true,
     error: '',
@@ -89,7 +88,6 @@ export default (props, { $onMounted, $update, $f7route }) => {
       state.description = contentData.description || '';
       state.chapters = chaptersData.map(normalizeChapter).filter((row) => row.chapter_number !== '');
     } catch (err) {
-      const i18n = getI18n();
       state.error = err.message || i18n.failed_load_content || 'Failed to load content.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {

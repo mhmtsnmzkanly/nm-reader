@@ -8,7 +8,7 @@
           <div class="navbar">
             <div class="navbar-bg"></div>
             <div class="navbar-inner">
-              <div class="title">{{@global.i18n.login_title}}</div>
+              <div class="title">${i18n.login_title || 'Login'}</div>
               <div class="right"><a class="link popup-close" href="#">Close</a></div>
             </div>
           </div>
@@ -18,7 +18,7 @@
                 <li>
                   <div class="item-content item-input">
                     <div class="item-inner">
-                      <div class="item-title item-label">{{@global.i18n.email}}</div>
+                      <div class="item-title item-label">${i18n.email || 'Email'}</div>
                       <div class="item-input-wrap">
                         <input type="email" name="email" placeholder="you@example.com" required />
                       </div>
@@ -28,7 +28,7 @@
                 <li>
                   <div class="item-content item-input">
                     <div class="item-inner">
-                      <div class="item-title item-label">{{@global.i18n.password}}</div>
+                      <div class="item-title item-label">${i18n.password || 'Password'}</div>
                       <div class="item-input-wrap">
                         <input type="password" name="password" placeholder="Password" required />
                       </div>
@@ -40,24 +40,15 @@
                     <input type="checkbox" name="remember" />
                     <i class="icon icon-checkbox"></i>
                     <div class="item-inner">
-                      <div class="item-title">{{@global.i18n.remember_me}}</div>
-                    </div>
-                  </label>
-                </li>
-                <li>
-                  <label class="item-checkbox item-content">
-                    <input type="checkbox" name="remember" />
-                    <i class="icon icon-checkbox"></i>
-                    <div class="item-inner">
-                      <div class="item-title">{{@global.i18n.remember_me}}</div>
+                      <div class="item-title">${i18n.remember_me || 'Remember me'}</div>
                     </div>
                   </label>
                 </li>
               </ul>
               <div class="block">
-                <button class="button button-fill" type="submit">{{@global.i18n.login}}</button>
+                <button class="button button-fill" type="submit">${i18n.login || 'Login'}</button>
                 <div class="login-actions">
-                  <a class="link popup-open" data-popup=".register-popup" href="#">{{@global.i18n.register}}</a>
+                  <a class="link popup-open" data-popup=".register-popup" href="#">${i18n.register || 'Create account'}</a>
                 </div>
               </div>
             </form>
@@ -72,7 +63,7 @@
           <div class="navbar">
             <div class="navbar-bg"></div>
             <div class="navbar-inner">
-              <div class="title">{{@global.i18n.register_title}}</div>
+              <div class="title">${i18n.register_title || 'Register'}</div>
               <div class="right"><a class="link popup-close" href="#">Close</a></div>
             </div>
           </div>
@@ -82,7 +73,7 @@
                 <li>
                   <div class="item-content item-input">
                     <div class="item-inner">
-                      <div class="item-title item-label">{{@global.i18n.username}}</div>
+                      <div class="item-title item-label">${i18n.username || 'Username'}</div>
                       <div class="item-input-wrap">
                         <input type="text" name="username" placeholder="username" required />
                       </div>
@@ -92,7 +83,7 @@
                 <li>
                   <div class="item-content item-input">
                     <div class="item-inner">
-                      <div class="item-title item-label">{{@global.i18n.email}}</div>
+                      <div class="item-title item-label">${i18n.email || 'Email'}</div>
                       <div class="item-input-wrap">
                         <input type="email" name="email" placeholder="you@example.com" required />
                       </div>
@@ -102,7 +93,7 @@
                 <li>
                   <div class="item-content item-input">
                     <div class="item-inner">
-                      <div class="item-title item-label">{{@global.i18n.password}}</div>
+                      <div class="item-title item-label">${i18n.password || 'Password'}</div>
                       <div class="item-input-wrap">
                         <input type="password" name="password" placeholder="Password" required />
                       </div>
@@ -111,7 +102,7 @@
                 </li>
               </ul>
               <div class="block">
-                <button class="button button-fill" type="submit">{{@global.i18n.register}}</button>
+                <button class="button button-fill" type="submit">${i18n.register || 'Create account'}</button>
               </div>
             </form>
           </div>
@@ -125,16 +116,16 @@
           <div class="navbar">
             <div class="navbar-bg"></div>
             <div class="navbar-inner">
-              <div class="title">{{@global.i18n.purchase_title}}</div>
-              <div class="right"><a class="link popup-close" href="#">{{@global.i18n.purchase_cancel}}</a></div>
+              <div class="title">${i18n.purchase_title || 'Unlock Chapter'}</div>
+              <div class="right"><a class="link popup-close" href="#">${i18n.purchase_cancel || 'Cancel'}</a></div>
             </div>
           </div>
           <div class="page-content">
             <div class="block">
               <p class="purchase-message" id="purchase-message"></p>
               <div class="purchase-actions">
-                <a class="button button-fill" data-action="purchase-confirm" href="#">{{@global.i18n.purchase_confirm}}</a>
-                <a class="button button-outline popup-close" href="#">{{@global.i18n.purchase_cancel}}</a>
+                <a class="button button-fill" data-action="purchase-confirm" href="#">${i18n.purchase_confirm || 'Unlock Now'}</a>
+                <a class="button button-outline popup-close" href="#">${i18n.purchase_cancel || 'Cancel'}</a>
               </div>
             </div>
           </div>
@@ -144,7 +135,7 @@
 
     <div class="sheet-modal language-sheet">
       <div class="sheet-modal-inner">
-        <div class="block-title">{{@global.i18n.language}}</div>
+        <div class="block-title">${i18n.language || 'Language'}</div>
         <div class="list">
           <ul>
             <li><a class="item-link item-content" data-action="set-lang" data-lang="en" href="#"><div class="item-inner"><div class="item-title">English</div></div></a></li>
@@ -161,6 +152,7 @@ import store from './js/store.js';
 import { loadI18n, getI18n } from './js/i18n.js';
 
 export default (props, { $onMounted, $onBeforeUnmount, $f7 }) => {
+  const i18n = getI18n();
   let pendingPurchase = null;
   const applySession = (data) => {
     const session = {

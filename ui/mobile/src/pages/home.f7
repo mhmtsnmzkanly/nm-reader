@@ -8,13 +8,12 @@
           <div class="title-large-text">NMR Mobile</div>
         </div>
         <div class="right">
-          {{#if state.isLoggedIn}}
-            <a class="link" data-action="logout" href="#">Logout</a>
-          {{else}}
-            <a class="link popup-open" data-popup=".login-popup" href="#">{{@global.i18n.login}}</a>
-          {{/if}}
-          <a class="link sheet-open" data-sheet=".language-sheet" href="#">{{@global.i18n.language}}</a>
-          <a class="link" href="/wallet/">{{@global.i18n.wallet}}</a>
+          ${state.isLoggedIn
+            ? $h`<a class="link" data-action="logout" href="#">${i18n.logout || 'Logout'}</a>`
+            : $h`<a class="link popup-open" data-popup=".login-popup" href="#">${i18n.login || 'Login'}</a>`
+          }
+          <a class="link sheet-open" data-sheet=".language-sheet" href="#">${i18n.language || 'Language'}</a>
+          <a class="link" href="/wallet/">${i18n.wallet || 'Wallet'}</a>
         </div>
       </div>
     </div>
@@ -28,69 +27,63 @@
         </div>
       </div>
 
-      <div class="block-title">{{@global.i18n.latest_chapters}}</div>
-      {{#if state.loading}}
-        <div class="block">{{@global.i18n.loading}}</div>
-      {{else}}
-        {{#if state.latest.length}}
-          <div class="list media-list">
+      <div class="block-title">${i18n.latest_chapters || 'Latest Chapters'}</div>
+      ${state.loading
+        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
+        : state.latest.length
+          ? $h`<div class="list media-list">
             <ul>
-              {{#each state.latest}}
+              ${state.latest.map((item) => $h`
                 <li>
-                  <a class="item-link item-content" href="/reader/{{type}}/{{slug}}/{{chapter_number}}/">
+                  <a class="item-link item-content" href="/reader/${item.type}/${item.slug}/${item.chapter_number}/">
                     <div class="item-inner">
                       <div class="item-title-row">
-                        <div class="item-title">{{title}}</div>
-                        <div class="item-after">#{{chapter_number}}</div>
+                        <div class="item-title">${item.title}</div>
+                        <div class="item-after">#${item.chapter_number}</div>
                       </div>
                       <div class="item-subtitle">
-                        {{type}}
-                        {{#if is_locked}}
-                          · <span class="badge badge--price">{{price_coin}} {{@global.i18n.coins}}</span>
-                        {{else}}
-                          · <span class="badge badge--free">{{@global.i18n.free}}</span>
-                        {{/if}}
+                        ${item.type}
+                        ${item.is_locked
+                          ? $h` · <span class="badge badge--price">${item.price_coin} ${i18n.coins || 'coins'}</span>`
+                          : $h` · <span class="badge badge--free">${i18n.free || 'Free'}</span>`
+                        }
                       </div>
                     </div>
                   </a>
                 </li>
-              {{/each}}
+              `)}
             </ul>
-          </div>
-        {{else}}
-          <div class="block empty-state">{{@global.i18n.no_chapters}}</div>
-        {{/if}}
-      {{/if}}
+          </div>`
+          : $h`<div class="block empty-state">${i18n.no_chapters || 'No chapters yet.'}</div>`
+      }
 
-      <div class="block-title">{{@global.i18n.recently_added}}</div>
-      {{#if state.loading}}
-        <div class="block">{{@global.i18n.loading}}</div>
-      {{else}}
-        {{#if state.recent.length}}
-          <div class="list">
+      <div class="block-title">${i18n.recently_added || 'Recently Added'}</div>
+      ${state.loading
+        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
+        : state.recent.length
+          ? $h`<div class="list">
             <ul>
-              {{#each state.recent}}
+              ${state.recent.map((item) => $h`
                 <li>
-                  <a class="item-link item-content" href="/content/{{type}}/{{slug}}/">
+                  <a class="item-link item-content" href="/content/${item.type}/${item.slug}/">
                     <div class="item-inner">
-                      <div class="item-title">{{title}}</div>
-                      <div class="item-after">{{type}}</div>
+                      <div class="item-title">${item.title}</div>
+                      <div class="item-after">${item.type}</div>
                     </div>
                   </a>
                 </li>
-              {{/each}}
+              `)}
             </ul>
-          </div>
-        {{else}}
-          <div class="block empty-state">{{@global.i18n.no_recent}}</div>
-        {{/if}}
-      {{/if}}
+          </div>`
+          : $h`<div class="block empty-state">${i18n.no_recent || 'No recent series.'}</div>`
+      }
     </div>
   </div>
 </template>
 <script>
 import api from '../js/api.js';
 import store from '../js/store.js';
+import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
   const state = {
@@ -99,6 +92,7 @@ export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
     recent: [],
     isLoggedIn: store.state.auth.isLoggedIn,
   };
+  const i18n = getI18n();
 
   const normalizeLatest = (item) => ({
     title: item.title || item.series_title || 'Chapter',
