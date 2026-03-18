@@ -49,12 +49,19 @@ export default (props, { $onMounted, $update, $f7route }) => {
     typeTitle: ($f7route.params.type || '').toUpperCase(),
   };
 
+  const normalizeCover = (value) => {
+    if (!value) return '/assets/img/covers/one-piece.jpg';
+    if (value.startsWith('http://') || value.startsWith('https://')) return value;
+    if (value.startsWith('/')) return value;
+    return `/${value.replace(/^\\/+/, '')}`;
+  };
+
   const normalizeSeries = (item) => ({
     title: item.title || 'Series',
     slug: item.slug || '',
     type: item.type || state.type,
     series_unlock_price: item.series_unlock_price || item.series_unlock_price_coin || item.access?.series_unlock_price || 0,
-    cover: item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail || '/assets/img/covers/one-piece.jpg',
+    cover: normalizeCover(item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail),
   });
 
   $onMounted(async () => {

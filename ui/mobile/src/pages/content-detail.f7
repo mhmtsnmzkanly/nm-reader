@@ -59,6 +59,13 @@ export default (props, { $onMounted, $update, $f7route }) => {
     slug: $f7route.params.slug,
   };
 
+  const normalizeCover = (value) => {
+    if (!value) return '/assets/img/covers/one-piece.jpg';
+    if (value.startsWith('http://') || value.startsWith('https://')) return value;
+    if (value.startsWith('/')) return value;
+    return `/${value.replace(/^\\/+/, '')}`;
+  };
+
   const normalizeChapter = (item) => ({
     title: item.title || `Chapter ${item.chapter_number || item.chapterNumber || ''}`,
     slug: state.slug,
@@ -80,7 +87,7 @@ export default (props, { $onMounted, $update, $f7route }) => {
 
       state.title = contentData.title || 'Series';
       state.description = contentData.description || '';
-      state.cover = contentData.cover_image || contentData.cover || contentData.thumbnail || contentData.image || state.cover;
+      state.cover = normalizeCover(contentData.cover_image || contentData.cover || contentData.thumbnail || contentData.image);
       state.chapters = chaptersData.map(normalizeChapter).filter((row) => row.chapter_number !== '');
     } catch (err) {
       state.error = err.message || i18n.failed_load_content || 'Failed to load content.';
