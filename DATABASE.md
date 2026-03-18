@@ -46,7 +46,8 @@ This document provides a comprehensive technical overview of the Database Schema
 Central identity storage.
 - `id` (char 8): Random unique identifier.
 - `roles` (varchar 255): CSV of role IDs (e.g., "1,2"). Default: "4" (User).
-- `api_token`: Persistent token for mobile/API access.
+- `api_token`: Persistent token for bearer-based identity hydration.
+- `api_token_expires_at`: Expiry timestamp for `api_token` (nullable).
 
 #### `series`
 Master table for Novels and Manga.
