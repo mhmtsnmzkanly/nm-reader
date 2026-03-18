@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,7 +8,7 @@
   :root {
     --f7-theme-color: #8b5cf6;
     --f7-theme-color-rgb: 139, 92, 246;
-    --f7-font-family: 'Manrope', 'SF Pro Text', sans-serif;
+    --f7-font-family: 'Space Grotesk', 'SF Pro Text', sans-serif;
   }
 
   html,
@@ -45,12 +45,12 @@
   }
 
   .nmr-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
     @apply tracking-wide;
   }
 
   .nmr-section-title {
-    @apply uppercase text-xs tracking-[2px] text-amber-200/90;
+    @apply uppercase text-xs tracking-[2px] text-amber-100/90;
   }
 
   .nmr-card {
@@ -106,6 +106,12 @@
   .turnstile-wrap {
     @apply mt-2;
   }
+
+  .text-slate-100 { color: #f5f1ea; }
+  .text-slate-200 { color: #e7e0d6; }
+  .text-slate-300 { color: #c9c0b4; }
+  .text-slate-400 { color: #a89f93; }
+  .text-slate-500 { color: #8b8276; }
 }
 
 @layer utilities {
