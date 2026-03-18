@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Migration Runner: SQL Script Executor (2026-03-18)
+- **Status**: Completed.
+- **Change**: Added a CLI tool to run migration SQL files in `app/database/migrations/`.
+
 ### Frontend: Cursor Pagination + Notifications Fix (2026-03-18)
 - **Status**: Completed.
 - **Change**: Added cursor pagination support in `main.js` and mobile API example; fixed notifications read endpoint to `/user/notifications/read`.
