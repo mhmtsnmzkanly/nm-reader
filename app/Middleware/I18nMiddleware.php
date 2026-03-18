@@ -47,8 +47,8 @@ final class I18nMiddleware implements MiddlewareInterface
             if (isset($data['status']) && $data['status'] === 'error' && isset($data['error']['key'])) {
                 $error = $data['error'];
                 $localizedMessage = $this->i18n->translate(
-                    $error['key'],
                     $locale,
+                    $error['key'],
                     $error['params'] ?? []
                 );
 
@@ -56,8 +56,15 @@ final class I18nMiddleware implements MiddlewareInterface
                 if ($localizedMessage !== $error['key']) {
                     $data['error']['message'] = $localizedMessage;
                     $newBody = json_encode($data, JSON_UNESCAPED_UNICODE);
-                    $response->getBody()->rewind();
-                    $response->getBody()->write($newBody);
+                    $stream = fopen('php://temp', 'r+');
+                    if ($stream !== false) {
+                        $body = new \Slim\Psr7\Stream($stream);
+                        $body->write($newBody);
+                        $response = $response->withBody($body);
+                    } else {
+                        $response->getBody()->rewind();
+                        $response->getBody()->write($newBody);
+                    }
                 }
             }
         }
