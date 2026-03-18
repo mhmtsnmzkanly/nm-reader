@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Search Ranking: Full-Text Relevance Fix (2026-03-18)
+- **Status**: Completed.
+- **Change**: Stabilized full-text relevance ordering when metadata is missing by coalescing NULL scores to zero.
+
 ### Auth Middleware: Preserve Bearer Identity (2026-03-18)
 - **Status**: Completed.
 - **Change**: Prevented optional auth middleware from overwriting identity already set by bearer-token authentication.

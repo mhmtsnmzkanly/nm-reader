@@ -451,8 +451,8 @@ final class SeriesRepository
                     OR MATCH(cm.author, cm.artist, cm.alternative_titles) AGAINST (:q IN BOOLEAN MODE))';
                 $params['q'] = $booleanQuery;
                 $selectRelevance = ',
-                    (MATCH(c.title, c.slug, c.description) AGAINST (:q IN BOOLEAN MODE)
-                        + MATCH(cm.author, cm.artist, cm.alternative_titles) AGAINST (:q IN BOOLEAN MODE)) AS relevance';
+                    (COALESCE(MATCH(c.title, c.slug, c.description) AGAINST (:q IN BOOLEAN MODE), 0)
+                        + COALESCE(MATCH(cm.author, cm.artist, cm.alternative_titles) AGAINST (:q IN BOOLEAN MODE), 0)) AS relevance';
             } else {
                 $searchParam = '%' . $query . '%';
                 $where[] = '(c.title LIKE :q1 OR c.slug LIKE :q2 OR c.description LIKE :q3 OR cm.author LIKE :q4 OR cm.artist LIKE :q5)';
