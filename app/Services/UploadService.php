@@ -7,6 +7,7 @@ namespace App\Services;
 use App\DTO\UploadDto;
 use App\Services\EntityIdService;
 use App\Repositories\UploadRepository;
+use finfo;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -57,7 +58,14 @@ final class UploadService
             throw new InvalidArgumentException($msg);
         }
 
-        $mimeType = $file->getClientMediaType() ?? 'application/octet-stream';
+        $stream = $file->getStream();
+        $tmpPath = $stream->getMetadata('uri');
+        if (!is_string($tmpPath) || !is_file($tmpPath)) {
+            throw new RuntimeException('Upload stream is not readable.');
+        }
+
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($tmpPath) ?: 'application/octet-stream';
         if (!array_key_exists($mimeType, self::ALLOWED_MIME_TYPES)) {
             throw new InvalidArgumentException('Unsupported image type: ' . $mimeType);
         }
@@ -88,22 +96,47 @@ final class UploadService
         $targetPath = $targetDir . '/' . $fileName;
 
         try {
-            $file->moveTo($targetPath);
+            $raw = file_get_contents($tmpPath);
+            if ($raw === false) {
+                throw new RuntimeException('Failed to read uploaded file data.');
+            }
+
+            $image = @imagecreatefromstring($raw);
+            if ($image === false) {
+                throw new InvalidArgumentException('Invalid image data.');
+            }
+
+            if (in_array($mimeType, ['image/png', 'image/webp', 'image/gif'], true)) {
+                imagealphablending($image, false);
+                imagesavealpha($image, true);
+            }
+
+            $saved = match ($mimeType) {
+                'image/jpeg' => imagejpeg($image, $targetPath, 85),
+                'image/png' => imagepng($image, $targetPath, 6),
+                'image/webp' => imagewebp($image, $targetPath, 80),
+                'image/gif' => imagegif($image, $targetPath),
+                default => false,
+            };
+            imagedestroy($image);
+
+            if (!$saved) {
+                throw new RuntimeException('Failed to write processed image.');
+            }
+
             $publicPath = '/uploads/' . $fileName;
-            
             $this->repository->logImageUpload(
                 $dto->userId,
                 $imageId,
                 $file->getClientFilename() ?? 'unknown',
                 $mimeType,
-                (int)$file->getSize(),
+                (int) ($file->getSize() ?? 0),
                 $publicPath
             );
 
-            // Return relative path from public root - flattened
             return $publicPath;
         } catch (Throwable $e) {
-            throw new RuntimeException('Failed to move uploaded file: ' . $e->getMessage(), 0, $e);
+            throw new RuntimeException('Failed to process uploaded file: ' . $e->getMessage(), 0, $e);
         }
     }
 

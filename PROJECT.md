@@ -102,6 +102,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Uploads: Server-Side Validation + File Cleanup (2026-03-18)
+- **Status**: Completed.
+- **Change**: Added server-side MIME validation and re-encoding to strip metadata on upload.
+- **Change**: Admin upload deletion now removes files from disk as well as DB records.
+
 ### Frontend: Cursor Pagination + Notifications Fix (2026-03-18)
 - **Status**: Completed.
 - **Change**: Added cursor pagination support in `main.js` and mobile API example; fixed notifications read endpoint to `/user/notifications/read`.

@@ -623,16 +623,19 @@ final class AdminConsoleRepository
     /**
      * Deletes a specific upload record and returns the image_id.
      */
-    public function deleteUpload(int $id): ?string
+    public function deleteUpload(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT image_id FROM system_uploads WHERE id = :id');
+        $stmt = $this->pdo->prepare('SELECT image_id, file_path FROM system_uploads WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
         if (!$row) return null;
 
         $stmt = $this->pdo->prepare('DELETE FROM system_uploads WHERE id = :id');
         $stmt->execute(['id' => $id]);
-        return (string)$row['image_id'];
+        return [
+            'image_id' => (string) $row['image_id'],
+            'file_path' => (string) ($row['file_path'] ?? '')
+        ];
     }
 
     /**

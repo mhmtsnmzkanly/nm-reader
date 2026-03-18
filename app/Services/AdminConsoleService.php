@@ -165,8 +165,17 @@ final class AdminConsoleService
      */
     public function deleteUpload(int $id, string $moderatorId): void
     {
-        $imageId = $this->repo->deleteUpload($id);
-        if ($imageId) {
+        $info = $this->repo->deleteUpload($id);
+        if ($info) {
+            $filePath = (string) ($info['file_path'] ?? '');
+            if ($filePath !== '' && str_starts_with($filePath, '/')) {
+                $basePath = dirname(__DIR__, 2);
+                $diskPath = $basePath . '/public' . $filePath;
+                if (is_file($diskPath)) {
+                    @unlink($diskPath);
+                }
+            }
+            $imageId = (string) ($info['image_id'] ?? '');
             $this->createModerationAction($moderatorId, 'system', (string)$id, 'delete', "Deleted system upload record: $imageId");
         }
     }
