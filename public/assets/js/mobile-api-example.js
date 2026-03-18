@@ -136,9 +136,9 @@ const NMR_API = {
     social: {
         async getBlogs(page = 1) { return await NMR_API.request(`/blogs?page=${page}`); },
         async getBlog(slug) { return await NMR_API.request(`/blogs/${slug}`); },
-        async getBlogComments(slug) { return await NMR_API.request(`/blogs/${slug}/comments`); },
-        async getChapterComments(chapterId) { return await NMR_API.request(`/chapter/${chapterId}/comments`); },
-        async getSeriesComments(type, slug) { return await NMR_API.request(`/content/${type}/${slug}/comments`); },
+        async getBlogComments(slug, cursor = null) { return await NMR_API.request(cursor ? `/blogs/${slug}/comments?cursor=${encodeURIComponent(cursor)}` : `/blogs/${slug}/comments`); },
+        async getChapterComments(chapterId, cursor = null) { return await NMR_API.request(cursor ? `/chapter/${chapterId}/comments?cursor=${encodeURIComponent(cursor)}` : `/chapter/${chapterId}/comments`); },
+        async getSeriesComments(type, slug, cursor = null) { return await NMR_API.request(cursor ? `/content/${type}/${slug}/comments?cursor=${encodeURIComponent(cursor)}` : `/content/${type}/${slug}/comments`); },
         
         // Protected Social Actions
         async postBlog(title, body, coverImage = null) {
@@ -186,7 +186,7 @@ const NMR_API = {
         async updatePreferences(prefs) { return await NMR_API.request('/user/preferences', { method: 'PUT', body: prefs }); },
         
         // Notifications
-        async getNotifications(page = 1) { return await NMR_API.request(`/user/notifications?page=${page}`); },
+        async getNotifications(cursor = null) { return await NMR_API.request(cursor ? `/user/notifications?cursor=${encodeURIComponent(cursor)}` : `/user/notifications`); },
         async markNotificationsRead() { return await NMR_API.request('/user/notifications/read', { method: 'POST' }); },
 
         // Social Relations

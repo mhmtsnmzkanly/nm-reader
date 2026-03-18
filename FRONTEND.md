@@ -255,6 +255,9 @@ When `cursor` is provided, `page` is ignored.
 #### **EXAMPLE**
 `GET /api/v1/user/notifications?per_page=20&cursor=2026-03-18%2012:34:56|456`
 
+#### **Frontend Note**
+If using the default `public/assets/js/main.js`, it now expects cursor-based pagination and uses `/user/notifications/read` to mark all read.
+
 ### **Mark Notifications Read**
 #### **PATH**
 `POST /api/v1/user/notifications/read`

@@ -103,7 +103,7 @@ $(document).ready(function () {
 
     // --- COMMENTS LOGIC ---
 
-    const loadComments = function() {
+    const loadComments = function(cursor = null, append = false) {
         const $container = $("#commentsList");
         console.log("loadComments trigger, container:", $container.length);
         if (!$container.length) return;
@@ -131,10 +131,24 @@ $(document).ready(function () {
             return;
         }
 
+        if (cursor) {
+            apiUrl += `?cursor=${encodeURIComponent(cursor)}`;
+        }
+
         window.NMRData.get(apiUrl)
             .then(res => {
                 console.log("Comments received:", res.data?.length);
-                renderComments(res.data || []);
+                renderComments(res.data || [], append);
+                const nextCursor = res.meta?.next_cursor;
+                const $loadMore = $("#commentsLoadMore");
+                if (nextCursor) {
+                    if (!$loadMore.length) {
+                        $container.after('<button id="commentsLoadMore" class="mt-4 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 border border-white/10 rounded-full hover:border-blue-500/40">Daha fazla</button>');
+                    }
+                    $("#commentsLoadMore").data('cursor', nextCursor).show();
+                } else if ($loadMore.length) {
+                    $loadMore.hide();
+                }
             })
             .catch(err => {
                 console.error('Comments failed:', err);
@@ -142,7 +156,7 @@ $(document).ready(function () {
             });
     };
 
-    const renderComments = function(comments) {
+    const renderComments = function(comments, append = false) {
         const $container = $("#commentsList");
         if (!comments || !comments.length) {
             $container.html('<p class="text-gray-500 text-sm">Henüz yorum yapılmamış.</p>');
@@ -168,10 +182,20 @@ $(document).ready(function () {
                 </div>
             `;
         });
-        $container.html(html);
+        if (append) {
+            $container.append(html);
+        } else {
+            $container.html(html);
+        }
     };
 
     loadComments();
+
+    $(document).on('click', '#commentsLoadMore', function() {
+        const cursor = $(this).data('cursor');
+        if (!cursor) return;
+        loadComments(cursor, true);
+    });
 
     // --- MODAL LOGIC ---
 
@@ -211,20 +235,38 @@ $(document).ready(function () {
     });
 
     // 5. Notifications Logic
-    window.loadNotifications = function() {
+    window.loadNotifications = function(cursor = null, append = false) {
         const $list = $("#notifModalList");
-        $list.html('<div class="p-8 text-center text-gray-500 text-sm">Yükleniyor...</div>');
+        if (!append) {
+            $list.html('<div class="p-8 text-center text-gray-500 text-sm">Yükleniyor...</div>');
+        }
         if (!window.NMRData) return;
-        window.NMRData.get('/user/notifications')
+        let apiUrl = '/user/notifications';
+        if (cursor) {
+            apiUrl += `?cursor=${encodeURIComponent(cursor)}`;
+        }
+        window.NMRData.get(apiUrl)
             .then(res => {
-                renderNotifications(res.data || []);
+                renderNotifications(res.data || [], append);
+                const nextCursor = res.meta?.next_cursor;
+                const $loadMore = $("#notifLoadMore");
+                if (nextCursor) {
+                    if (!$loadMore.length) {
+                        $list.after('<button id="notifLoadMore" class="mt-4 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/80 border border-white/10 rounded-full hover:border-blue-500/40">Daha fazla</button>');
+                    }
+                    $("#notifLoadMore").data('cursor', nextCursor).show();
+                } else if ($loadMore.length) {
+                    $loadMore.hide();
+                }
             })
             .catch(() => {
-                $list.html('<div class="p-8 text-center text-gray-500 text-sm">Bildirimler alınamadı.</div>');
+                if (!append) {
+                    $list.html('<div class="p-8 text-center text-gray-500 text-sm">Bildirimler alınamadı.</div>');
+                }
             });
     };
 
-    const renderNotifications = function(notifs) {
+    const renderNotifications = function(notifs, append = false) {
         const $list = $("#notifModalList");
         if (!notifs.length) {
             $list.html('<div class="p-8 text-center text-gray-500 text-sm">Henüz bildiriminiz yok.</div>');
@@ -239,12 +281,22 @@ $(document).ready(function () {
                 </div>
             `;
         });
-        $list.html(html);
+        if (append) {
+            $list.append(html);
+        } else {
+            $list.html(html);
+        }
     };
+
+    $(document).on('click', '#notifLoadMore', function() {
+        const cursor = $(this).data('cursor');
+        if (!cursor) return;
+        window.loadNotifications(cursor, true);
+    });
 
     $("#markAllReadBtn").on("click", function() {
         if (!window.NMRData) return;
-        window.NMRData.post('/user/notifications/read-all')
+        window.NMRData.post('/user/notifications/read')
             .then(() => {
                 showFeedback('Tüm bildirimler okundu.');
                 loadNotifications();

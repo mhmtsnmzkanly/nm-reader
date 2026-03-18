@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Frontend: Cursor Pagination + Notifications Fix (2026-03-18)
+- **Status**: Completed.
+- **Change**: Added cursor pagination support in `main.js` and mobile API example; fixed notifications read endpoint to `/user/notifications/read`.
+
 ### Cursor Pagination: Helper + Test (2026-03-18)
 - **Status**: Completed.
 - **Change**: Centralized cursor encode/decode logic and added a lightweight integration test.
