@@ -56,6 +56,7 @@ export default (props, { $onMounted, $update }) => {
       state.items = data.map(normalize);
     } catch (err) {
       state.error = err.message || 'Failed to load features.';
+      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
       state.loading = false;
       $update();

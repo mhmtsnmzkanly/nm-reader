@@ -59,4 +59,12 @@ document.addEventListener('api:error', (event) => {
   }).open();
 });
 
+document.addEventListener('page:error', (event) => {
+  const message = event.detail?.message || 'Something went wrong';
+  app.toast.create({
+    text: message,
+    closeTimeout: 3000,
+  }).open();
+});
+
 export { app };

@@ -129,6 +129,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Added purchase popup flow for chapter unlocks in mobile UI.
 - **Change**: Added language switcher sheet for mobile i18n.
 - **Change**: Improved pricing badges in mobile content lists.
+- **Change**: Added global page error toasts for mobile views.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.

@@ -70,6 +70,7 @@ export default (props, { $onMounted, $update, $f7 }) => {
       state.items = data.map(normalize);
     } catch (err) {
       state.error = err.message || 'Failed to load transactions.';
+      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
       state.loading = false;
       $update();

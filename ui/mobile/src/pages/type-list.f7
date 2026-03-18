@@ -68,6 +68,7 @@ export default (props, { $onMounted, $update, $f7route }) => {
       state.items = data.map(normalizeSeries).filter((row) => row.slug);
     } catch (err) {
       state.error = err.message || 'Failed to load content.';
+      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
       state.loading = false;
       $update();

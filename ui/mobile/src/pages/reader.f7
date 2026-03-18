@@ -86,6 +86,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
       await loadChapter();
     } catch (err) {
       state.error = err.message || 'Failed to load chapter.';
+      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
       state.loading = false;
       $update();
