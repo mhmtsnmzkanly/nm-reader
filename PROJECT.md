@@ -133,6 +133,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Added transaction pagination, shop info notes, and reader font size controls.
 - **Change**: Expanded mobile i18n coverage across lists, wallet, shop, and reader messages.
 - **Change**: Polished mobile list badges and empty/error states.
+- **Change**: Rebuilt mobile web assets after UI/i18n updates.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.
