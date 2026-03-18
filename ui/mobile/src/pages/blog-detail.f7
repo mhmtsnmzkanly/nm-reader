@@ -1,0 +1,151 @@
+<template>
+  <div class="page nmr-page" data-name="blog-detail">
+    <div class="navbar nmr-navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner">
+        <div class="left"><a class="link back text-slate-200">Back</a></div>
+        <div class="title nmr-title">${state.title}</div>
+      </div>
+    </div>
+
+    <div class="page-content px-5 pb-6 space-y-5">
+      ${state.loading
+        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
+        : state.error
+          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
+          : $h`
+            <div class="nmr-panel space-y-2">
+              <div class="text-xs uppercase tracking-[2px] text-amber-100/90">Blog</div>
+              <div class="text-lg font-semibold text-slate-100">${state.title}</div>
+              <div class="text-sm text-slate-400">${state.author}</div>
+            </div>
+            <div class="nmr-panel text-slate-200 leading-7">${state.body}</div>
+            <div class="flex gap-3">
+              <button class="nmr-button nmr-button-ghost" data-action="vote">Like</button>
+            </div>
+            <div class="nmr-section-title">Comments</div>
+            <div class="space-y-3">
+              ${state.comments.map((comment) => $h`
+                <div class="nmr-card px-4 py-3 space-y-2">
+                  <div class="text-sm text-slate-100">${comment.author}</div>
+                  <div class="text-sm text-slate-300">${comment.body}</div>
+                  <div class="flex items-center gap-3 text-xs text-slate-400">
+                    <span>${comment.created_at}</span>
+                    <button class="text-amber-200" data-action="comment-vote" data-id="${comment.id}">+${comment.votes}</button>
+                  </div>
+                </div>
+              `)}
+              <form class="nmr-card px-4 py-3 space-y-2" id="blog-comment-form">
+                <textarea class="nmr-input" name="body" rows="3" placeholder="Write a comment..."></textarea>
+                <button class="nmr-button nmr-button-primary" type="submit">Post</button>
+              </form>
+            </div>
+          `
+      }
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+import store from '../js/store.js';
+import { getI18n } from '../js/i18n.js';
+
+export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
+  const i18n = getI18n();
+  const state = {
+    loading: true,
+    error: '',
+    title: 'Blog',
+    author: '',
+    body: '',
+    comments: [],
+    slug: $f7route.params.slug,
+  };
+
+  const loadComments = async () => {
+    try {
+      const payload = await api.blog.listComments(state.slug, 1, 20);
+      const data = payload?.data || payload || [];
+      state.comments = (Array.isArray(data) ? data : []).map((row) => ({
+        id: row.id || row.comment_id || 0,
+        author: row.username || row.author_username || 'User',
+        body: row.body || row.comment || '',
+        created_at: row.created_at || '',
+        votes: row.votes || row.score || 0,
+      }));
+    } catch (err) {
+      state.comments = [];
+    }
+  };
+
+  $onMounted(async () => {
+    try {
+      const payload = await api.blog.show(state.slug);
+      const data = payload?.data || payload || {};
+      state.title = data.title || 'Blog';
+      state.author = data.author_username || data.author || '';
+      state.body = data.body || data.content || '';
+      await loadComments();
+    } catch (err) {
+      state.error = err.message || 'Failed to load blog.';
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  });
+
+  $onMounted(() => {
+    $el.on('click', '[data-action="vote"]', async (event) => {
+      event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
+      try {
+        await api.blog.vote(state.slug, 1);
+        $f7.toast.create({ text: 'Thanks!', closeTimeout: 2000 }).open();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Vote failed' } }));
+      }
+    });
+
+    $el.on('submit', '#blog-comment-form', async (event) => {
+      event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
+      const form = event.target;
+      const body = form.querySelector('textarea[name="body"]')?.value || '';
+      if (!body.trim()) return;
+      try {
+        await api.blog.createComment(state.slug, body.trim());
+        form.reset();
+        await loadComments();
+        $update();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Comment failed' } }));
+      }
+    });
+
+    $el.on('click', '[data-action="comment-vote"]', async (event) => {
+      event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
+      const id = event.target.getAttribute('data-id');
+      if (!id) return;
+      try {
+        await api.blog.voteComment(state.slug, id, 1);
+        await loadComments();
+        $update();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Vote failed' } }));
+      }
+    });
+  });
+
+  return $render;
+};
+</script>

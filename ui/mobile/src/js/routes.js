@@ -14,6 +14,8 @@ import TagDetailPage from '../pages/tag-detail.f7';
 import ProfilePage from '../pages/profile.f7';
 import LibraryPage from '../pages/library.f7';
 import HistoryPage from '../pages/history.f7';
+import BlogsPage from '../pages/blogs.f7';
+import BlogDetailPage from '../pages/blog-detail.f7';
 
 var routes = [
   { path: '/', component: HomePage },
@@ -32,6 +34,8 @@ var routes = [
   { path: '/profile/', component: ProfilePage },
   { path: '/library/', component: LibraryPage },
   { path: '/history/', component: HistoryPage },
+  { path: '/blogs/', component: BlogsPage },
+  { path: '/blogs/:slug/', component: BlogDetailPage },
 ];
 
 export default routes;

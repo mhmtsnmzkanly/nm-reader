@@ -270,6 +270,22 @@ const NMR_API = {
       return await NMR_API.request(`/comments/${commentId}/vote`, { method: 'POST', body: { value } });
     },
   },
+  blog: {
+    async list(page = 1, perPage = 20) { return await NMR_API.request(`/blogs?page=${page}&per_page=${perPage}`); },
+    async show(slug) { return await NMR_API.request(`/blogs/${slug}`); },
+    async listComments(slug, page = 1, perPage = 20) {
+      return await NMR_API.request(`/blogs/${slug}/comments?page=${page}&per_page=${perPage}`);
+    },
+    async createComment(slug, body) {
+      return await NMR_API.request(`/blogs/${slug}/comments`, { method: 'POST', body: { body } });
+    },
+    async vote(slug, value = 1) {
+      return await NMR_API.request(`/blogs/${slug}/vote`, { method: 'POST', body: { value } });
+    },
+    async voteComment(slug, commentId, value = 1) {
+      return await NMR_API.request(`/blogs/${slug}/comments/${commentId}/vote`, { method: 'POST', body: { value } });
+    },
+  },
 };
 
 export default NMR_API;
