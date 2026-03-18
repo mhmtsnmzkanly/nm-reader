@@ -536,6 +536,11 @@ final class AdminService
             throw new \InvalidArgumentException('Invalid chapter type');
         }
 
+        $contentId = (string) $identity['content_id'];
+        if ($this->chapters->existsChapterNumberForContent($contentId, $chapterNumber, $chapterId)) {
+            throw new \InvalidArgumentException(sprintf('Chapter %s already exists for this content', $chapterNumber));
+        }
+
         // Fetch current to calculate diff
         $stmt = $this->pdo->prepare('SELECT chapter_number, title, type, `data` FROM chapters WHERE id = :id');
         $stmt->execute(['id' => $chapterId]);

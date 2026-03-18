@@ -285,6 +285,25 @@ final class ChapterRepository
         ]);
     }
 
+    public function existsChapterNumberForContent(string $contentId, string $chapterNumber, string $excludeChapterId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT 1
+             FROM chapters
+             WHERE content_id = :content_id
+               AND chapter_number = :chapter_number
+               AND deleted_at IS NULL
+               AND id <> :exclude_id
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'content_id' => $contentId,
+            'chapter_number' => $chapterNumber,
+            'exclude_id' => $excludeChapterId,
+        ]);
+        return $stmt->fetchColumn() !== false;
+    }
+
     /**
      * Marks a chapter as read and updates global reading progress for the user.
      */

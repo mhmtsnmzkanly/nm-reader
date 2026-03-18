@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Admin Chapters: Prevent Duplicate Numbers (2026-03-18)
+- **Status**: Completed.
+- **Change**: Admin chapter updates now validate chapter number uniqueness within a series.
+
 ### Frontend: Surface API Error Messages (2026-03-18)
 - **Status**: Completed.
 - **Change**: Updated frontend API wrapper to read `error.message` from server responses.
