@@ -83,6 +83,14 @@ foreach ($files as $file) {
         }
         $results[] = ['file' => $file, 'status' => 'ok', 'statements' => $applied];
     } catch (Throwable $e) {
+        $errorCode = null;
+        if ($e instanceof PDOException && is_array($e->errorInfo ?? null)) {
+            $errorCode = $e->errorInfo[1] ?? null;
+        }
+        if ($errorCode === 1061 || str_contains($e->getMessage(), 'Duplicate key name')) {
+            $results[] = ['file' => $file, 'status' => 'skipped', 'error' => $e->getMessage()];
+            continue;
+        }
         $results[] = ['file' => $file, 'status' => 'failed', 'error' => $e->getMessage()];
     }
 }
