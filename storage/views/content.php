@@ -243,7 +243,7 @@ $slug = (string)($content['slug'] ?? '');
 </section>
 
 <!-- Purchase Modal -->
-<div id="purchaseModal" class="fixed inset-0 z-[100] modal-overlay hidden items-center justify-center p-4">
+<div id="purchaseModal" class="fixed inset-0 z-[100] modal-overlay items-center justify-center p-4">
     <div class="w-full max-w-sm glass border border-white/10 rounded-[40px] p-8 text-center animate-pop">
         <div class="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
             <i data-lucide="shopping-cart" class="w-10 h-10 text-yellow-500"></i>
@@ -251,7 +251,7 @@ $slug = (string)($content['slug'] ?? '');
         <h3 class="text-2xl font-black uppercase mb-2 text-white"><?= $__t('ui.purchase_chapter') ?></h3>
         <p class="text-gray-400 text-sm mb-8"><?= $__t('ui.purchase_confirm_msg', ['coins' => '<span id="modalPrice" class="text-yellow-500 font-bold">--</span>']) ?></p>
         <div class="flex gap-4">
-            <button onclick="closeModal('purchaseModal')" class="flex-1 py-4 bg-white/5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 text-white"><?= $__t('ui.cancel') ?></button>
+            <button onclick="closeModal()" class="flex-1 py-4 bg-white/5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 text-white"><?= $__t('ui.cancel') ?></button>
             <button id="confirmPurchase" class="flex-1 py-4 bg-yellow-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-yellow-500/20"><?= $__t('ui.purchase') ?></button>
         </div>
     </div>

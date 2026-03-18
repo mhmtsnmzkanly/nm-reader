@@ -16,6 +16,16 @@ window.closeModal = function() {
 };
 
 // Chapter purchase / navigation
+window.__NMR_PURCHASE_CONTEXT = null;
+
+window.openPurchaseModal = function(ctx) {
+    if (!ctx) return;
+    window.__NMR_PURCHASE_CONTEXT = ctx;
+    const priceEl = document.getElementById('modalPrice');
+    if (priceEl) priceEl.textContent = String(ctx.price ?? 0);
+    openModal('purchaseModal');
+};
+
 window.handleChapterClick = async function(el) {
     const node = el instanceof Element ? el : null;
     if (!node) return;
@@ -42,16 +52,7 @@ window.handleChapterClick = async function(el) {
         return;
     }
 
-    const ok = confirm(`${price} coin ile bölümü açmak istiyor musunuz?`);
-    if (!ok) return;
-
-    try {
-        await window.NMRData.post(`/chapter/${chapterId}/unlock`, {});
-        showFeedback('Bölüm açıldı.');
-        if (url) window.location.href = url;
-    } catch (e) {
-        showFeedback(e.message || 'Bölüm açılamadı.', 'error');
-    }
+    openPurchaseModal({ chapterId, price, url, node });
 };
 
 // Global Language Switcher
@@ -102,6 +103,55 @@ $(document).ready(function () {
     // Auth Button
     $("#openAuthBtn").on("click", function() {
         openModal('loginModal');
+    });
+
+    $("#confirmPurchase").on("click", async function() {
+        const ctx = window.__NMR_PURCHASE_CONTEXT;
+        if (!ctx || !ctx.chapterId || !window.NMRData) {
+            showFeedback('Satın alma bilgisi eksik.', 'error');
+            return;
+        }
+
+        const $btn = $(this);
+        $btn.prop('disabled', true).addClass('opacity-70');
+        try {
+            const res = await window.NMRData.post(`/chapter/${ctx.chapterId}/unlock`, {});
+            const wallet = res?.data?.wallet;
+            if (wallet && typeof wallet.balance_coin !== 'undefined') {
+                const el = document.getElementById('sidebarWalletDisplay');
+                if (el) el.textContent = String(wallet.balance_coin);
+            }
+
+            if (ctx.node) {
+                ctx.node.setAttribute('data-locked', '0');
+                const badge = ctx.node.querySelector('.coin-badge');
+                if (badge) badge.remove();
+                const right = ctx.node.querySelector('div.flex.items-center.gap-4');
+                if (right && !right.querySelector('[data-lucide="chevron-right"]')) {
+                    right.insertAdjacentHTML('beforeend', '<i data-lucide="chevron-right" class="w-5 h-5 text-gray-600 group-hover:text-white"></i>');
+                    if (window.lucide) lucide.createIcons();
+                }
+                const numBadge = ctx.node.querySelector('span.w-12');
+                if (numBadge) {
+                    numBadge.classList.remove('bg-zinc-800', 'text-gray-500');
+                    numBadge.classList.add('bg-blue-600/10', 'text-blue-500');
+                }
+                const title = ctx.node.querySelector('h4');
+                if (title) {
+                    title.classList.remove('group-hover:text-blue-500');
+                    title.classList.add('text-blue-500');
+                }
+            }
+
+            showFeedback('Bölüm açıldı.');
+            closeModal();
+            if (ctx.url) window.location.href = ctx.url;
+        } catch (e) {
+            showFeedback(e.message || 'Bölüm açılamadı.', 'error');
+        } finally {
+            window.__NMR_PURCHASE_CONTEXT = null;
+            $btn.prop('disabled', false).removeClass('opacity-70');
+        }
     });
 
     // Mobile Menu Toggle
