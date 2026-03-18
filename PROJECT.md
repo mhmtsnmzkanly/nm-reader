@@ -106,6 +106,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Status**: Completed.
 - **Change**: Added server-side MIME validation and re-encoding to strip metadata on upload.
 - **Change**: Admin upload deletion now removes files from disk as well as DB records.
+- **Change**: GIF uploads now preserve animation by skipping re-encode while still validating magic bytes.
 
 ### Frontend: Cursor Pagination + Notifications Fix (2026-03-18)
 - **Status**: Completed.

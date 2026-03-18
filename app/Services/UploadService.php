@@ -96,6 +96,27 @@ final class UploadService
         $targetPath = $targetDir . '/' . $fileName;
 
         try {
+            $imageInfo = @getimagesize($tmpPath);
+            if ($imageInfo === false) {
+                throw new InvalidArgumentException('Invalid image data.');
+            }
+
+            if ($mimeType === 'image/gif') {
+                $file->moveTo($targetPath);
+                $publicPath = '/uploads/' . $fileName;
+
+                $this->repository->logImageUpload(
+                    $dto->userId,
+                    $imageId,
+                    $file->getClientFilename() ?? 'unknown',
+                    $mimeType,
+                    (int) ($file->getSize() ?? 0),
+                    $publicPath
+                );
+
+                return $publicPath;
+            }
+
             $raw = file_get_contents($tmpPath);
             if ($raw === false) {
                 throw new RuntimeException('Failed to read uploaded file data.');
