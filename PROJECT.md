@@ -115,6 +115,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Remove Tailwind CSS (2026-03-18)
+- **Status**: Completed.
+- **Change**: Removed Tailwind CSS from `ui/mobile` to reduce build complexity and bundle size.
+- **Change**: Converted all Tailwind utility classes used in the mobile app to standard CSS classes in `src/css/app.css`.
+- **Change**: Removed `tailwind.config.js` and updated `package.json` and `postcss.config.js`.
+
 ### Mobile: Framework7 CLI Scaffold (2026-03-18)
 - **Status**: In progress.
 - **Change**: Added `/mobile` web entry that serves the Framework7 app shell from `public/mobile/index.html`.
