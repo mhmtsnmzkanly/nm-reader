@@ -119,6 +119,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Status**: In progress.
 - **Change**: Added `/mobile` web entry that serves the Framework7 app shell from `public/mobile/index.html`.
 - **Change**: Rebuilt `ui/mobile` via Framework7 CLI (Core + Vite) and configured Vite output to `public/mobile` with `/mobile/` base path.
+- **Change**: Wired P0 navigation and data screens (home, type list, content detail, reader, wallet) to the mobile API client.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.

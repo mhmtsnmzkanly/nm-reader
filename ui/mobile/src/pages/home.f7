@@ -1,6 +1,5 @@
 <template>
   <div class="page" data-name="home">
-    <!-- Top Navbar -->
     <div class="navbar navbar-large">
       <div class="navbar-bg"></div>
       <div class="navbar-inner sliding">
@@ -8,28 +7,114 @@
         <div class="title-large">
           <div class="title-large-text">NMR Mobile</div>
         </div>
-      </div>
-    </div>
-    <!-- Toolbar-->
-    <div class="toolbar toolbar-bottom">
-      <div class="toolbar-inner">
-        <div class="toolbar-pane">
-          <a href="#" class="link">Left Link</a>
-          <a href="#" class="link">Right Link</a>
+        <div class="right">
+          <a class="link" href="/wallet/">Wallet</a>
         </div>
       </div>
     </div>
-    <!-- Scrollable page content-->
+
     <div class="page-content">
       <div class="block">
-        <p>Here is your blank Framework7 app. Let's see what we have here.</p>
+        <div class="segmented">
+          <a class="button button-small" href="/types/manga/">Manga</a>
+          <a class="button button-small" href="/types/novel/">Novel</a>
+          <a class="button button-small" href="/types/manhwa/">Manhwa</a>
+        </div>
       </div>
 
+      <div class="block-title">Latest Chapters</div>
+      {{#if state.loading}}
+        <div class="block">Loading...</div>
+      {{else}}
+        {{#if state.latest.length}}
+          <div class="list media-list">
+            <ul>
+              {{#each state.latest}}
+                <li>
+                  <a class="item-link item-content" href="/reader/{{type}}/{{slug}}/{{chapter_number}}/">
+                    <div class="item-inner">
+                      <div class="item-title-row">
+                        <div class="item-title">{{title}}</div>
+                        <div class="item-after">#{{chapter_number}}</div>
+                      </div>
+                      <div class="item-subtitle">{{type}}</div>
+                    </div>
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        {{else}}
+          <div class="block">No chapters yet.</div>
+        {{/if}}
+      {{/if}}
+
+      <div class="block-title">Recently Added</div>
+      {{#if state.loading}}
+        <div class="block">Loading...</div>
+      {{else}}
+        {{#if state.recent.length}}
+          <div class="list">
+            <ul>
+              {{#each state.recent}}
+                <li>
+                  <a class="item-link item-content" href="/content/{{type}}/{{slug}}/">
+                    <div class="item-inner">
+                      <div class="item-title">{{title}}</div>
+                      <div class="item-after">{{type}}</div>
+                    </div>
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        {{else}}
+          <div class="block">No recent series.</div>
+        {{/if}}
+      {{/if}}
     </div>
   </div>
 </template>
 <script>
-export default () => {
+import api from '../js/api.js';
+
+export default (props, { $onMounted, $update }) => {
+  const state = {
+    loading: true,
+    latest: [],
+    recent: [],
+  };
+
+  const normalizeLatest = (item) => ({
+    title: item.title || item.series_title || 'Chapter',
+    slug: item.slug || item.series_slug || '',
+    type: item.type || item.series_type || '',
+    chapter_number: item.chapter_number || item.chapterNumber || item.number || '',
+  });
+
+  const normalizeSeries = (item) => ({
+    title: item.title || 'Series',
+    slug: item.slug || '',
+    type: item.type || '',
+  });
+
+  $onMounted(async () => {
+    try {
+      const payload = await api.content.getHome();
+      const data = payload?.data || payload || {};
+      const latest = data.recent_chapters || data.latest_chapters || [];
+      const recent = data.recently_added || [];
+      state.latest = latest.map(normalizeLatest).filter((row) => row.slug && row.type);
+      state.recent = recent.map(normalizeSeries).filter((row) => row.slug && row.type);
+    } catch (err) {
+      state.latest = [];
+      state.recent = [];
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  });
+
   return $render;
-}
+};
 </script>

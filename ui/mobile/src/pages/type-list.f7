@@ -1,0 +1,71 @@
+<template>
+  <div class="page" data-name="type-list">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner">
+        <div class="left">
+          <a class="link back">Back</a>
+        </div>
+        <div class="title">{{state.typeTitle}}</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      {{#if state.loading}}
+        <div class="block">Loading...</div>
+      {{else}}
+        {{#if state.error}}
+          <div class="block">{{state.error}}</div>
+        {{else}}
+          <div class="list media-list">
+            <ul>
+              {{#each state.items}}
+                <li>
+                  <a class="item-link item-content" href="/content/{{type}}/{{slug}}/">
+                    <div class="item-inner">
+                      <div class="item-title">{{title}}</div>
+                    </div>
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+
+export default (props, { $onMounted, $update, $f7route }) => {
+  const state = {
+    loading: true,
+    error: '',
+    items: [],
+    type: $f7route.params.type,
+    typeTitle: ($f7route.params.type || '').toUpperCase(),
+  };
+
+  const normalizeSeries = (item) => ({
+    title: item.title || 'Series',
+    slug: item.slug || '',
+    type: item.type || state.type,
+  });
+
+  $onMounted(async () => {
+    try {
+      const payload = await api.content.getByType(state.type, 1, 20);
+      const data = payload?.data || payload || [];
+      state.items = data.map(normalizeSeries).filter((row) => row.slug);
+    } catch (err) {
+      state.error = err.message || 'Failed to load content.';
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  });
+
+  return $render;
+};
+</script>

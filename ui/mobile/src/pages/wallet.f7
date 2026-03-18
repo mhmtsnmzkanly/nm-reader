@@ -1,0 +1,54 @@
+<template>
+  <div class="page" data-name="wallet">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner">
+        <div class="left">
+          <a class="link back">Back</a>
+        </div>
+        <div class="title">Wallet</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      {{#if state.loading}}
+        <div class="block">Loading...</div>
+      {{else}}
+        {{#if state.error}}
+          <div class="block">{{state.error}}</div>
+        {{else}}
+          <div class="block block-strong">
+            <div>Balance</div>
+            <h2>{{state.balance}} coins</h2>
+          </div>
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+
+export default (props, { $onMounted, $update }) => {
+  const state = {
+    loading: true,
+    error: '',
+    balance: 0,
+  };
+
+  $onMounted(async () => {
+    try {
+      const payload = await api.wallet.getSummary();
+      const data = payload?.data || payload || {};
+      state.balance = data.balance || 0;
+    } catch (err) {
+      state.error = err.message || 'Login required.';
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  });
+
+  return $render;
+};
+</script>

@@ -1,0 +1,98 @@
+<template>
+  <div class="page" data-name="content-detail">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner">
+        <div class="left">
+          <a class="link back">Back</a>
+        </div>
+        <div class="title">{{state.title}}</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      {{#if state.loading}}
+        <div class="block">Loading...</div>
+      {{else}}
+        {{#if state.error}}
+          <div class="block">{{state.error}}</div>
+        {{else}}
+          <div class="block block-strong">
+            <p>{{state.description}}</p>
+          </div>
+          <div class="block-title">Chapters</div>
+          <div class="list media-list">
+            <ul>
+              {{#each state.chapters}}
+                <li>
+                  <a class="item-link item-content" href="/reader/{{type}}/{{slug}}/{{chapter_number}}/">
+                    <div class="item-inner">
+                      <div class="item-title-row">
+                        <div class="item-title">{{title}}</div>
+                        <div class="item-after">#{{chapter_number}}</div>
+                      </div>
+                      <div class="item-subtitle">
+                        {{#if is_locked}}
+                          Locked · {{price_coin}} coins
+                        {{else}}
+                          Free
+                        {{/if}}
+                      </div>
+                    </div>
+                  </a>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+
+export default (props, { $onMounted, $update, $f7route }) => {
+  const state = {
+    loading: true,
+    error: '',
+    title: 'Series',
+    description: '',
+    chapters: [],
+    type: $f7route.params.type,
+    slug: $f7route.params.slug,
+  };
+
+  const normalizeChapter = (item) => ({
+    title: item.title || `Chapter ${item.chapter_number || item.chapterNumber || ''}`,
+    slug: state.slug,
+    type: state.type,
+    chapter_number: item.chapter_number || item.chapterNumber || item.number || '',
+    price_coin: item.price_coin || item.access?.chapter_unlock_price || 0,
+    is_locked: item.is_locked ?? !(item.access?.granted ?? true),
+  });
+
+  $onMounted(async () => {
+    try {
+      const [contentPayload, chaptersPayload] = await Promise.all([
+        api.content.getDetails(state.type, state.slug),
+        api.content.getChapters(state.type, state.slug),
+      ]);
+
+      const contentData = contentPayload?.data || contentPayload || {};
+      const chaptersData = chaptersPayload?.data || chaptersPayload || [];
+
+      state.title = contentData.title || 'Series';
+      state.description = contentData.description || '';
+      state.chapters = chaptersData.map(normalizeChapter).filter((row) => row.chapter_number !== '');
+    } catch (err) {
+      state.error = err.message || 'Failed to load content.';
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  });
+
+  return $render;
+};
+</script>

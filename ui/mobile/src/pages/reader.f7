@@ -1,0 +1,87 @@
+<template>
+  <div class="page" data-name="reader">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner">
+        <div class="left">
+          <a class="link back">Back</a>
+        </div>
+        <div class="title">{{state.title}}</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      {{#if state.loading}}
+        <div class="block">Loading...</div>
+      {{else}}
+        {{#if state.error}}
+          <div class="block">{{state.error}}</div>
+        {{else}}
+          {{#if state.is_locked}}
+            <div class="block">
+              <div>This chapter is locked.</div>
+              <div>{{state.price_coin}} coins required.</div>
+            </div>
+          {{else}}
+            {{#if state.is_image}}
+              <div class="block">
+                {{#each state.pages}}
+                  <img class="reader-image" src="{{this}}" alt="" loading="lazy" />
+                {{/each}}
+              </div>
+            {{else}}
+              <div class="block reader-text">
+                {{#each state.paragraphs}}
+                  <p>{{this}}</p>
+                {{/each}}
+              </div>
+            {{/if}}
+          {{/if}}
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+
+export default (props, { $onMounted, $update, $f7route }) => {
+  const state = {
+    loading: true,
+    error: '',
+    title: 'Chapter',
+    is_locked: false,
+    price_coin: 0,
+    is_image: false,
+    pages: [],
+    paragraphs: [],
+    type: $f7route.params.type,
+    slug: $f7route.params.slug,
+    chapterNumber: $f7route.params.chapterNumber,
+  };
+
+  $onMounted(async () => {
+    try {
+      const payload = await api.content.getChapterFull(state.type, state.slug, state.chapterNumber);
+      const chapter = payload?.data || payload || {};
+      state.title = chapter.title || `Chapter ${state.chapterNumber}`;
+      state.is_locked = chapter.is_locked ?? !(chapter.access?.granted ?? true);
+      state.price_coin = chapter.price_coin || chapter.access?.chapter_unlock_price || 0;
+      state.is_image = chapter.type === 'image';
+      if (state.is_image) {
+        state.pages = Array.isArray(chapter.pages) ? chapter.pages : [];
+      } else {
+        const body = String(chapter.body || '');
+        state.paragraphs = body.split('\n').filter((line) => line.trim() !== '');
+      }
+    } catch (err) {
+      state.error = err.message || 'Failed to load chapter.';
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  });
+
+  return $render;
+};
+</script>
