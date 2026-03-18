@@ -122,6 +122,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Wired P0 navigation and data screens (home, type list, content detail, reader, wallet) to the mobile API client.
 - **Change**: Added login popup + token persistence and wired chapter unlock flow in the reader.
 - **Change**: Wallet page now prompts login when required and refreshes balance after unlock.
+- **Change**: Added wallet transactions view and shop packages/features pages for mobile.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.

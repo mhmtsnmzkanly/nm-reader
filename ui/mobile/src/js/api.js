@@ -167,7 +167,13 @@ const NMR_API = {
 
   wallet: {
     async getSummary() { return await NMR_API.request('/user/wallet'); },
+    async getTransactions(page = 1, perPage = 20) { return await NMR_API.request(`/user/wallet/transactions?page=${page}&per_page=${perPage}`); },
     async unlockChapter(chapterId) { return await NMR_API.request(`/chapter/${chapterId}/unlock`, { method: 'POST' }); },
+  },
+
+  shop: {
+    async getPackages() { return await NMR_API.request('/shop/packages'); },
+    async getFeatures() { return await NMR_API.request('/shop/features'); },
   },
 };
 

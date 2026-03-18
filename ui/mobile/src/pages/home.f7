@@ -42,7 +42,12 @@
                         <div class="item-title">{{title}}</div>
                         <div class="item-after">#{{chapter_number}}</div>
                       </div>
-                      <div class="item-subtitle">{{type}}</div>
+                      <div class="item-subtitle">
+                        {{type}}
+                        {{#if is_locked}}
+                          · {{price_coin}} coins
+                        {{/if}}
+                      </div>
                     </div>
                   </a>
                 </li>
@@ -97,6 +102,8 @@ export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
     slug: item.slug || item.series_slug || '',
     type: item.type || item.series_type || '',
     chapter_number: item.chapter_number || item.chapterNumber || item.number || '',
+    price_coin: item.price_coin || item.access?.chapter_unlock_price || 0,
+    is_locked: item.is_locked ?? !(item.access?.granted ?? true),
   });
 
   const normalizeSeries = (item) => ({

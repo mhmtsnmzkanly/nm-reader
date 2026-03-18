@@ -21,6 +21,13 @@
             <div>Balance</div>
             <h2>{{state.balance}} coins</h2>
           </div>
+          <div class="list">
+            <ul>
+              <li><a class="item-link item-content" href="/wallet/transactions/"><div class="item-inner"><div class="item-title">Transactions</div></div></a></li>
+              <li><a class="item-link item-content" href="/shop/packages/"><div class="item-inner"><div class="item-title">Coin Packages</div></div></a></li>
+              <li><a class="item-link item-content" href="/shop/features/"><div class="item-inner"><div class="item-title">Features</div></div></a></li>
+            </ul>
+          </div>
         {{/if}}
       {{/if}}
     </div>

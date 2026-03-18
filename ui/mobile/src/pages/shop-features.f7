@@ -1,0 +1,67 @@
+<template>
+  <div class="page" data-name="shop-features">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner">
+        <div class="left"><a class="link back">Back</a></div>
+        <div class="title">Features</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      {{#if state.loading}}
+        <div class="block">Loading...</div>
+      {{else}}
+        {{#if state.error}}
+          <div class="block">{{state.error}}</div>
+        {{else}}
+          <div class="list">
+            <ul>
+              {{#each state.items}}
+                <li>
+                  <div class="item-content">
+                    <div class="item-inner">
+                      <div class="item-title">{{name}}</div>
+                      <div class="item-after">{{price}}</div>
+                    </div>
+                  </div>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+
+export default (props, { $onMounted, $update }) => {
+  const state = {
+    loading: true,
+    error: '',
+    items: [],
+  };
+
+  const normalize = (item) => ({
+    name: item.name || item.title || item.slug || 'Feature',
+    price: item.coin_price ? `${item.coin_price} coins` : `${item.price_coin || 0} coins`,
+  });
+
+  $onMounted(async () => {
+    try {
+      const payload = await api.shop.getFeatures();
+      const data = payload?.data || payload || [];
+      state.items = data.map(normalize);
+    } catch (err) {
+      state.error = err.message || 'Failed to load features.';
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  });
+
+  return $render;
+};
+</script>

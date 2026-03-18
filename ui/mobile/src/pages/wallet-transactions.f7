@@ -1,0 +1,75 @@
+<template>
+  <div class="page" data-name="wallet-transactions">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner">
+        <div class="left"><a class="link back">Back</a></div>
+        <div class="title">Transactions</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      {{#if state.loading}}
+        <div class="block">Loading...</div>
+      {{else}}
+        {{#if state.error}}
+          <div class="block">{{state.error}}</div>
+        {{else}}
+          <div class="list">
+            <ul>
+              {{#each state.items}}
+                <li>
+                  <div class="item-content">
+                    <div class="item-inner">
+                      <div class="item-title">{{description}}</div>
+                      <div class="item-after">{{amount}}</div>
+                    </div>
+                  </div>
+                </li>
+              {{/each}}
+            </ul>
+          </div>
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+import store from '../js/store.js';
+
+export default (props, { $onMounted, $update, $f7 }) => {
+  const state = {
+    loading: true,
+    error: '',
+    items: [],
+  };
+
+  const normalize = (item) => ({
+    description: item.description || item.reference_type || 'Transaction',
+    amount: item.amount ? `${item.amount}` : `${item.coin_amount || 0}`,
+  });
+
+  $onMounted(async () => {
+    if (!store.state.auth.isLoggedIn) {
+      state.loading = false;
+      state.error = 'Login required.';
+      $f7.popup.open('.login-popup');
+      $update();
+      return;
+    }
+    try {
+      const payload = await api.wallet.getTransactions(1, 20);
+      const data = payload?.data || payload || [];
+      state.items = data.map(normalize);
+    } catch (err) {
+      state.error = err.message || 'Failed to load transactions.';
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  });
+
+  return $render;
+};
+</script>
