@@ -55,14 +55,15 @@ final class SeriesService
      */
     public function home(int $page, int $perPage): array
     {
+        $limit = max(1, min(50, $perPage));
         // 1. Explore Section (mixed/popular logic)
-        $cacheKeyExplore = sprintf('homepage_explore_%d_%d', $page, $perPage);
-        $exploreItems = $this->cache->remember($cacheKeyExplore, 120, fn () => $this->series->getHomepagePopular($page, 5));
+        $cacheKeyExplore = sprintf('homepage_explore_%d_%d', $page, $limit);
+        $exploreItems = $this->cache->remember($cacheKeyExplore, 120, fn () => $this->series->getHomepagePopular($page, $limit));
         $explore = $this->mapAndAppendPaths($exploreItems);
 
         // 2. Recently Updated (individual latest chapters)
-        $cacheKeyChapters = 'homepage_recent_chapters_5';
-        $recentChapters = $this->cache->remember($cacheKeyChapters, 60, fn () => $this->series->getLatestChapters(1, 5));
+        $cacheKeyChapters = sprintf('homepage_recent_chapters_%d', $limit);
+        $recentChapters = $this->cache->remember($cacheKeyChapters, 60, fn () => $this->series->getLatestChapters(1, $limit));
         $recentChapters = array_map(function($row) {
             $seriesType = (string)($row['series_type'] ?? 'novel');
             $row['type_path'] = $this->toTypeSegment($seriesType);
@@ -73,8 +74,8 @@ final class SeriesService
         }, $recentChapters);
 
         // 3. Recently Added (new content entries)
-        $cacheKeyAdded = 'homepage_recently_added_5';
-        $addedItems = $this->cache->remember($cacheKeyAdded, 120, fn () => $this->series->getRecentlyAdded(5));
+        $cacheKeyAdded = sprintf('homepage_recently_added_%d', $limit);
+        $addedItems = $this->cache->remember($cacheKeyAdded, 120, fn () => $this->series->getRecentlyAdded($limit));
         $recentlyAdded = $this->mapAndAppendPaths($addedItems);
 
         $popularBlogs = $this->cache->remember('home_popular_blogs_3', 120, fn () => $this->blogs->homePopular(3));

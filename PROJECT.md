@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Home Feed: Respect per_page (2026-03-18)
+- **Status**: Completed.
+- **Change**: Home payload now honors `per_page` for explore, recent chapters, and recently added sections.
+
 ### Analytics: Persist Search Logs (2026-03-18)
 - **Status**: Completed.
 - **Change**: Added `analytics_search_logs` table and migration so search analytics are written reliably.
