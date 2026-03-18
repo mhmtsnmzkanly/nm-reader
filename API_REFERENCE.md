@@ -28,10 +28,11 @@ Example (local): `http://localhost:8080/api/v1`
 
 ### Authentication
 Two methods are supported:
-1. **Cookie-based (Web)**: Uses standard PHP sessions.
-2. **Bearer Token (Mobile/CSR)**:
-   - Header: `Authorization: Bearer <api_token>`
-   - Token is obtained via `POST /auth/login`.
+1. **Cookie-based (Web)**: Uses standard PHP sessions. This is required for all protected routes and admin APIs.
+2. **Bearer Token (Optional Identity)**:
+  Header: `Authorization: Bearer <api_token>`
+  Token is obtained via `POST /auth/login` and remains valid until `api_token_expires_at`.
+  Bearer tokens hydrate identity for public/optional routes but do not bypass session-based auth guards.
 
 ---
 
@@ -151,26 +152,49 @@ Endpoint for frontend JS error logging.
   { "username": "...", "email": "...", "password": "...", "turnstile_token": "..." }
   ```
   - `turnstile_token` is required only when Cloudflare Turnstile keys are configured.
+ - **Response**: `201 Created` with `{ "id": "...", "username": "...", "email": "..." }`.
 
 #### **POST /auth/login**
 - **Payload**:
   ```json
-  { "email": "...", "password": "...", "turnstile_token": "..." }
+  { "email": "...", "password": "...", "remember": true, "turnstile_token": "..." }
   ```
   - `turnstile_token` is required only when Cloudflare Turnstile keys are configured.
+  - `remember` (bool) issues a long-lived refresh token when true.
 - **Response**:
   ```json
   {
     "id": "char(8)",
     "username": "string",
+    "email": "string",
+    "csrf_token": "char(48)",
+    "refresh_token": "string|null",
     "api_token": "char(64)",
     "roles": ["string"],
     "permissions": ["string"]
   }
   ```
+  - `refresh_token` is only present when `remember` is true.
+  - When `remember` is true, the server also sets `nm_remember` cookie.
 
 #### **POST /auth/refresh**
-Refreshes the authenticated session/token pair.
+Refreshes the authenticated session using a refresh token.
+- **Payload**:
+  ```json
+  { "refresh_token": "..." }
+  ```
+- **Response**:
+  ```json
+  {
+    "id": "char(8)",
+    "username": "string",
+    "email": "string",
+    "refresh_token": "string",
+    "session_key": "string",
+    "roles": ["string"],
+    "permissions": ["string"]
+  }
+  ```
 
 #### **GET|POST /auth/logout**
 Ends the current authenticated session.
@@ -179,7 +203,7 @@ Ends the current authenticated session.
 
 ## 4. Protected Endpoints (Requires Auth)
 
-Note: this route group is protected by both auth and CSRF middleware.
+Note: this route group is protected by both auth and CSRF middleware. For non-GET requests, send `X-CSRF-Token` using the `csrf_token` value returned by `/auth/login`.
 
 #### **POST /content/{type}/{slug}/follow**
 Follow a series.
@@ -345,7 +369,7 @@ Content and chapter payloads may now include:
 
 ## 6. Administrative Endpoints (Requires Admin/Mod Permissions)
 
-Note: All routes in this group are prefixed with `/api/v1/admin` and require appropriate permission nodes.
+Note: All routes in this group are prefixed with `/api/v1/admin`, require appropriate permission nodes, and enforce `X-CSRF-Token` for non-GET requests.
 
 ### 6.1 Content & Taxonomy
 - **GET `/contents`**: Lists all series with administrative metadata.
