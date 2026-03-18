@@ -24,7 +24,7 @@ final class SiteConfigService
         'default_language' => ['type' => 'string', 'default' => 'en', 'allowed' => ['tr', 'en']],
         'default_theme' => ['type' => 'string', 'default' => 'dark', 'allowed' => ['default', 'dark', 'royal', 'bootstrap', 'material', 'apple', 'glass']],
         'default_profile_image' => ['type' => 'string', 'default' => '/assets/img/default-profile.png', 'max' => 255],
-        'default_content_cover_image' => ['type' => 'string', 'default' => '/assets/img/covers/one-piece.jpg', 'max' => 255],
+        'default_content_cover_image' => ['type' => 'string', 'default' => '/assets/img/covers/placeholder.svg', 'max' => 255],
         'integrations' => ['type' => 'json', 'default' => [
             'google_analytics_id' => '',
             'google_recaptcha_site_key' => '',

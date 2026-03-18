@@ -124,7 +124,7 @@ SITE_ADDRESS=http://localhost:8080
 DEFAULT_LANGUAGE=tr
 DEFAULT_THEME=dark
 DEFAULT_PROFILE_IMAGE=/assets/img/default-profile.png
-DEFAULT_CONTENT_COVER_IMAGE=/assets/img/covers/one-piece.jpg
+DEFAULT_CONTENT_COVER_IMAGE=/assets/img/covers/placeholder.svg
 
 # Session & Tokens
 SESSION_LIFETIME=7200

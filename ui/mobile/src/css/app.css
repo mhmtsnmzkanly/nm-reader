@@ -9,6 +9,24 @@
     --f7-theme-color: #8b5cf6;
     --f7-theme-color-rgb: 139, 92, 246;
     --f7-font-family: 'Space Grotesk', 'SF Pro Text', sans-serif;
+    --f7-page-bg-color: transparent;
+    --f7-page-bg-color-rgb: 8, 9, 13;
+    --f7-bars-bg-color: rgba(10, 11, 16, 0.92);
+    --f7-bars-bg-color-rgb: 10, 11, 16;
+    --f7-list-bg-color: rgba(15, 23, 42, 0.45);
+    --f7-list-bg-color-rgb: 15, 23, 42;
+    --f7-block-bg-color: transparent;
+    --f7-block-strong-bg-color: rgba(255, 255, 255, 0.04);
+    --f7-popup-bg-color: #0b0f19;
+    --f7-sheet-bg-color: #0b0f19;
+    --f7-dialog-bg-color: #0b0f19;
+    --f7-input-bg-color: rgba(255, 255, 255, 0.05);
+    --f7-input-text-color: #f8fafc;
+    --f7-input-placeholder-color: #94a3b8;
+    --f7-list-item-text-color: #e7e0d6;
+    --f7-list-item-title-text-color: #f1e8da;
+    --f7-list-item-subtitle-text-color: #b7aa9a;
+    --f7-text-color: #f1e8da;
   }
 
   html,

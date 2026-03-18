@@ -101,7 +101,7 @@ final class Config
             "default_language" => (string) self::env("DEFAULT_LANGUAGE", "tr"),
             "default_theme" => (string) self::env("DEFAULT_THEME", "dark"),
             "default_profile_image" => (string) self::env("DEFAULT_PROFILE_IMAGE", "/assets/img/default-profile.png"),
-            "default_content_cover_image" => (string) self::env("DEFAULT_CONTENT_COVER_IMAGE", "/assets/img/covers/one-piece.jpg"),
+            "default_content_cover_image" => (string) self::env("DEFAULT_CONTENT_COVER_IMAGE", "/assets/img/covers/placeholder.svg"),
             "integrations" => [
                 "google_analytics_id" => (string) self::env("GOOGLE_ANALYTICS_ID", ""),
                 "google_recaptcha_site_key" => (string) self::env("GOOGLE_RECAPTCHA_SITE_KEY", ""),

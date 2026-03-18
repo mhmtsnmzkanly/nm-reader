@@ -50,7 +50,7 @@ export default (props, { $onMounted, $update, $f7route }) => {
   };
 
   const normalizeCover = (value) => {
-    if (!value) return '/assets/img/covers/one-piece.jpg';
+    if (!value) return '/assets/img/covers/placeholder.svg';
     if (value.startsWith('http://') || value.startsWith('https://')) return value;
     let normalized = value;
     while (normalized.startsWith('/')) {

@@ -22,7 +22,7 @@
       <div class="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
         <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent"></div>
         <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.35),transparent_55%)]"></div>
-        <div class="absolute inset-0 opacity-60" style="background-image:url('/assets/img/covers/one-piece.jpg');background-size:cover;background-position:center;"></div>
+        <div class="absolute inset-0 opacity-60" style="background-image:url('/assets/img/covers/placeholder.svg');background-size:cover;background-position:center;"></div>
         <div class="relative z-10 p-7 space-y-4">
           <div class="text-xs uppercase tracking-[1.4px] text-amber-200/80">Premium</div>
           <div class="text-3xl font-semibold text-slate-100 leading-tight">Story Library</div>
@@ -44,49 +44,15 @@
 
       <div class="space-y-4">
         <div class="nmr-section-title">Featured</div>
-        <div class="flex gap-4 overflow-x-auto pb-2">
-          ${(Array.isArray(state.recent) ? state.recent : []).slice(0, 6).map((item) => $h`
-            <a class="min-w-[180px] rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-[0_18px_40px_rgba(0,0,0,0.45)]" href="/content/${item.type}/${item.slug}/">
-              <div class="h-28 w-full" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
-              <div class="p-4 space-y-1">
-                <div class="text-sm font-semibold text-slate-100">${item.title}</div>
-                <div class="text-xs text-slate-400">${item.type}</div>
-              </div>
-            </a>
-          `).join('')}
-        </div>
+        <div class="flex gap-4 overflow-x-auto pb-2" innerHTML="${state.featuredHtml}"></div>
       </div>
 
       <div class="space-y-5">
         <div class="nmr-section-title">${i18n.latest_chapters || 'Latest Chapters'}</div>
         ${state.loading
           ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
-          : state.latest.length
-            ? $h`<div class="space-y-4">
-              ${state.latest.map((item) => $h`
-                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${item.type}/${item.slug}/${item.chapter_number}/">
-                  <div class="flex items-start gap-4">
-                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
-                    <div class="flex-1">
-                      <div class="flex items-start justify-between gap-3">
-                    <div>
-                      <div class="font-semibold text-slate-100">${item.title}</div>
-                      <div class="text-xs text-slate-400 mt-1">${item.type}</div>
-                    </div>
-                    <div class="text-xs text-slate-300">#${item.chapter_number}</div>
-                      </div>
-                  </div>
-                  <div class="mt-3">
-                    ${item.is_locked
-                      ? $h`<span class="nmr-chip nmr-chip--price">${item.price_coin} ${i18n.coins || 'coins'}</span>`
-                      : $h`<span class="nmr-chip nmr-chip--free">${i18n.free || 'Free'}</span>`
-                    }
-                  </div>
-                    </div>
-                  </div>
-                </a>
-              `).join('')}
-            </div>` 
+          : Array.isArray(state.latest) && state.latest.length
+            ? $h`<div class="space-y-4" innerHTML="${state.latestHtml}"></div>` 
             : $h`<div class="nmr-panel">${i18n.no_chapters || 'No chapters yet.'}</div>`
         }
       </div>
@@ -95,20 +61,8 @@
         <div class="nmr-section-title">${i18n.recently_added || 'Recently Added'}</div>
         ${state.loading
           ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
-          : state.recent.length
-            ? $h`<div class="space-y-4">
-              ${state.recent.map((item) => $h`
-                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${item.type}/${item.slug}/">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
-                    <div class="flex-1 flex items-center justify-between">
-                      <div class="font-semibold text-slate-100">${item.title}</div>
-                      <div class="text-xs text-slate-400">${item.type}</div>
-                    </div>
-                  </div>
-                </a>
-              `).join('')}
-            </div>`
+          : Array.isArray(state.recent) && state.recent.length
+            ? $h`<div class="space-y-4" innerHTML="${state.recentHtml}"></div>` 
             : $h`<div class="nmr-panel">${i18n.no_recent || 'No recent series.'}</div>`
         }
       </div>
@@ -126,11 +80,14 @@ export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
     latest: [],
     recent: [],
     isLoggedIn: store.state.auth.isLoggedIn,
+    featuredHtml: '',
+    latestHtml: '',
+    recentHtml: '',
   };
   const i18n = getI18n();
 
   const normalizeCover = (value) => {
-    if (!value) return '/assets/img/covers/one-piece.jpg';
+    if (!value) return '/assets/img/covers/placeholder.svg';
     if (value.startsWith('http://') || value.startsWith('https://')) return value;
     let normalized = value;
     while (normalized.startsWith('/')) {
@@ -156,6 +113,69 @@ export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
     cover: normalizeCover(item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail),
   });
 
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (match) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[match]));
+
+  const safeUrl = (value) => encodeURI(String(value ?? '')).replace(/'/g, '%27');
+
+  const buildFeaturedHtml = (items) => items.map((item) => `
+    <a class="min-w-[180px] rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-[0_18px_40px_rgba(0,0,0,0.45)]" href="/content/${encodeURIComponent(item.type)}/${encodeURIComponent(item.slug)}/">
+      <div class="h-28 w-full" style="background-image:url('${safeUrl(item.cover)}');background-size:cover;background-position:center;"></div>
+      <div class="p-4 space-y-1">
+        <div class="text-sm font-semibold text-slate-100">${escapeHtml(item.title)}</div>
+        <div class="text-xs text-slate-400">${escapeHtml(item.type)}</div>
+      </div>
+    </a>
+  `).join('');
+
+  const buildLatestHtml = (items) => items.map((item) => `
+    <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${encodeURIComponent(item.type)}/${encodeURIComponent(item.slug)}/${encodeURIComponent(item.chapter_number)}/">
+      <div class="flex items-start gap-4">
+        <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${safeUrl(item.cover)}');background-size:cover;background-position:center;"></div>
+        <div class="flex-1">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-semibold text-slate-100">${escapeHtml(item.title)}</div>
+              <div class="text-xs text-slate-400 mt-1">${escapeHtml(item.type)}</div>
+            </div>
+            <div class="text-xs text-slate-300">#${escapeHtml(item.chapter_number)}</div>
+          </div>
+          <div class="mt-3">
+            ${item.is_locked
+              ? `<span class="nmr-chip nmr-chip--price">${escapeHtml(item.price_coin)} ${escapeHtml(i18n.coins || 'coins')}</span>`
+              : `<span class="nmr-chip nmr-chip--free">${escapeHtml(i18n.free || 'Free')}</span>`
+            }
+          </div>
+        </div>
+      </div>
+    </a>
+  `).join('');
+
+  const buildRecentHtml = (items) => items.map((item) => `
+    <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${encodeURIComponent(item.type)}/${encodeURIComponent(item.slug)}/">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${safeUrl(item.cover)}');background-size:cover;background-position:center;"></div>
+        <div class="flex-1 flex items-center justify-between">
+          <div class="font-semibold text-slate-100">${escapeHtml(item.title)}</div>
+          <div class="text-xs text-slate-400">${escapeHtml(item.type)}</div>
+        </div>
+      </div>
+    </a>
+  `).join('');
+
+  const rebuildHtml = () => {
+    const recent = Array.isArray(state.recent) ? state.recent : [];
+    const latest = Array.isArray(state.latest) ? state.latest : [];
+    state.featuredHtml = buildFeaturedHtml(recent.slice(0, 6));
+    state.latestHtml = buildLatestHtml(latest);
+    state.recentHtml = buildRecentHtml(recent);
+  };
+
   const syncAuth = () => {
     state.isLoggedIn = store.state.auth.isLoggedIn;
     $update();
@@ -170,9 +190,11 @@ export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
       const recent = data.recently_added || [];
       state.latest = latest.map(normalizeLatest).filter((row) => row.slug && row.type);
       state.recent = recent.map(normalizeSeries).filter((row) => row.slug && row.type);
+      rebuildHtml();
     } catch (err) {
       state.latest = [];
       state.recent = [];
+      rebuildHtml();
     } finally {
       state.loading = false;
       $update();
