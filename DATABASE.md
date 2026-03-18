@@ -213,4 +213,3 @@ To keep the database healthy and analytics up to date:
 - **Aggregate Stats**: `php app/Console/analytics_aggregate.php`
 - **Cleanup Logs**: `php app/Console/retention_cleanup.php`
 - **Backup**: `php app/Console/system_backup.php`
-- **Run Migrations**: `php app/Console/run_migrations.php` (defaults to recent migrations; use `--all` or `--only=...`)
