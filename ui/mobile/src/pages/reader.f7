@@ -103,6 +103,9 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       }
       try {
         await api.wallet.unlockChapter(state.chapterId);
+        const walletPayload = await api.wallet.getSummary();
+        const walletData = walletPayload?.data || walletPayload || {};
+        store.dispatch('setWallet', { balance: walletData.balance || 0 });
         await loadChapter();
         $update();
       } catch (err) {

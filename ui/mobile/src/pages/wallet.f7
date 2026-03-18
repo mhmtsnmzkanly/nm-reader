@@ -28,25 +28,54 @@
 </template>
 <script>
 import api from '../js/api.js';
+import store from '../js/store.js';
 
-export default (props, { $onMounted, $update }) => {
+export default (props, { $onMounted, $update, $f7, $onBeforeUnmount }) => {
   const state = {
     loading: true,
     error: '',
-    balance: 0,
+    balance: store.state.wallet.balance || 0,
   };
 
-  $onMounted(async () => {
+  const loadWallet = async () => {
     try {
       const payload = await api.wallet.getSummary();
       const data = payload?.data || payload || {};
       state.balance = data.balance || 0;
+      store.dispatch('setWallet', { balance: state.balance });
+      state.error = '';
     } catch (err) {
       state.error = err.message || 'Login required.';
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+      }
     } finally {
       state.loading = false;
       $update();
     }
+  };
+
+  const onAuthUpdated = () => {
+    if (store.state.auth.isLoggedIn) {
+      state.loading = true;
+      loadWallet();
+    }
+  };
+
+  $onMounted(async () => {
+    document.addEventListener('auth:updated', onAuthUpdated);
+    if (!store.state.auth.isLoggedIn) {
+      state.loading = false;
+      state.error = 'Login required.';
+      $f7.popup.open('.login-popup');
+      $update();
+      return;
+    }
+    await loadWallet();
+  });
+
+  $onBeforeUnmount(() => {
+    document.removeEventListener('auth:updated', onAuthUpdated);
   });
 
   return $render;
