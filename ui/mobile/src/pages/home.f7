@@ -1,82 +1,76 @@
 <template>
-  <div class="page" data-name="home">
-    <div class="navbar navbar-large">
+  <div class="page nmr-page" data-name="home">
+    <div class="navbar navbar-large nmr-navbar">
       <div class="navbar-bg"></div>
       <div class="navbar-inner sliding">
-        <div class="title">NMR Mobile</div>
+        <div class="title nmr-title">NMR Mobile</div>
         <div class="title-large">
-          <div class="title-large-text">NMR Mobile</div>
+          <div class="title-large-text nmr-title">NMR Mobile</div>
         </div>
-        <div class="right">
+        <div class="right flex items-center gap-3">
           ${state.isLoggedIn
-            ? $h`<a class="link" data-action="logout" href="#">${i18n.logout || 'Logout'}</a>`
-            : $h`<a class="link popup-open" data-popup=".login-popup" href="#">${i18n.login || 'Login'}</a>`
+            ? $h`<a class="text-sm text-slate-200" data-action="logout" href="#">${i18n.logout || 'Logout'}</a>`
+            : $h`<a class="text-sm text-slate-200 popup-open" data-popup=".login-popup" href="#">${i18n.login || 'Login'}</a>`
           }
-          <a class="link sheet-open" data-sheet=".language-sheet" href="#">${i18n.language || 'Language'}</a>
-          <a class="link" href="/wallet/">${i18n.wallet || 'Wallet'}</a>
+          <a class="text-sm text-slate-200 sheet-open" data-sheet=".language-sheet" href="#">${i18n.language || 'Language'}</a>
+          <a class="text-sm text-slate-200" href="/wallet/">${i18n.wallet || 'Wallet'}</a>
         </div>
       </div>
     </div>
 
-    <div class="page-content">
-      <div class="block">
-        <div class="segmented">
-          <a class="button button-small" href="/types/manga/">Manga</a>
-          <a class="button button-small" href="/types/novel/">Novel</a>
-          <a class="button button-small" href="/types/manhwa/">Manhwa</a>
-        </div>
+    <div class="page-content px-5 pb-6 space-y-6">
+      <div class="flex gap-3">
+        <a class="nmr-button nmr-button-ghost" href="/types/manga/">Manga</a>
+        <a class="nmr-button nmr-button-ghost" href="/types/novel/">Novel</a>
+        <a class="nmr-button nmr-button-ghost" href="/types/manhwa/">Manhwa</a>
       </div>
 
-      <div class="block-title">${i18n.latest_chapters || 'Latest Chapters'}</div>
-      ${state.loading
-        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
-        : state.latest.length
-          ? $h`<div class="list media-list">
-            <ul>
+      <div class="space-y-4">
+        <div class="nmr-section-title">${i18n.latest_chapters || 'Latest Chapters'}</div>
+        ${state.loading
+          ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
+          : state.latest.length
+            ? $h`<div class="space-y-3">
               ${state.latest.map((item) => $h`
-                <li>
-                  <a class="item-link item-content" href="/reader/${item.type}/${item.slug}/${item.chapter_number}/">
-                    <div class="item-inner">
-                      <div class="item-title-row">
-                        <div class="item-title">${item.title}</div>
-                        <div class="item-after">#${item.chapter_number}</div>
-                      </div>
-                      <div class="item-subtitle">
-                        ${item.type}
-                        ${item.is_locked
-                          ? $h` · <span class="badge badge--price">${item.price_coin} ${i18n.coins || 'coins'}</span>`
-                          : $h` · <span class="badge badge--free">${i18n.free || 'Free'}</span>`
-                        }
-                      </div>
+                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${item.type}/${item.slug}/${item.chapter_number}/">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <div class="font-semibold text-slate-100">${item.title}</div>
+                      <div class="text-xs text-slate-400 mt-1">${item.type}</div>
                     </div>
-                  </a>
-                </li>
+                    <div class="text-xs text-slate-300">#${item.chapter_number}</div>
+                  </div>
+                  <div class="mt-3">
+                    ${item.is_locked
+                      ? $h`<span class="nmr-chip nmr-chip--price">${item.price_coin} ${i18n.coins || 'coins'}</span>`
+                      : $h`<span class="nmr-chip nmr-chip--free">${i18n.free || 'Free'}</span>`
+                    }
+                  </div>
+                </a>
               `)}
-            </ul>
-          </div>`
-          : $h`<div class="block empty-state">${i18n.no_chapters || 'No chapters yet.'}</div>`
-      }
+            </div>`
+            : $h`<div class="nmr-panel">${i18n.no_chapters || 'No chapters yet.'}</div>`
+        }
+      </div>
 
-      <div class="block-title">${i18n.recently_added || 'Recently Added'}</div>
-      ${state.loading
-        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
-        : state.recent.length
-          ? $h`<div class="list">
-            <ul>
+      <div class="space-y-4">
+        <div class="nmr-section-title">${i18n.recently_added || 'Recently Added'}</div>
+        ${state.loading
+          ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
+          : state.recent.length
+            ? $h`<div class="space-y-3">
               ${state.recent.map((item) => $h`
-                <li>
-                  <a class="item-link item-content" href="/content/${item.type}/${item.slug}/">
-                    <div class="item-inner">
-                      <div class="item-title">${item.title}</div>
-                      <div class="item-after">${item.type}</div>
-                    </div>
-                  </a>
-                </li>
+                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${item.type}/${item.slug}/">
+                  <div class="flex items-center justify-between">
+                    <div class="font-semibold text-slate-100">${item.title}</div>
+                    <div class="text-xs text-slate-400">${item.type}</div>
+                  </div>
+                </a>
               `)}
-            </ul>
-          </div>`
-          : $h`<div class="block empty-state">${i18n.no_recent || 'No recent series.'}</div>`
-      }
+            </div>`
+            : $h`<div class="nmr-panel">${i18n.no_recent || 'No recent series.'}</div>`
+        }
+      </div>
     </div>
   </div>
 </template>

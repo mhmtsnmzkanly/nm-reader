@@ -1,39 +1,37 @@
 <template>
-  <div class="page" data-name="reader">
-    <div class="navbar">
+  <div class="page nmr-page" data-name="reader">
+    <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
       <div class="navbar-inner">
         <div class="left">
-          <a class="link back">Back</a>
+          <a class="link back text-slate-200">Back</a>
         </div>
-        <div class="title">${state.title}</div>
+        <div class="title nmr-title">${state.title}</div>
       </div>
     </div>
 
-    <div class="page-content">
+    <div class="page-content px-5 pb-6 space-y-5">
       ${state.loading
-        ? $h`<div class="block">${i18n.loading || 'Loading...'}</div>`
+        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
         : state.error
-          ? $h`<div class="block error-state">${state.error}</div>`
+          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
           : state.is_locked
-            ? $h`<div class="block empty-state">
-              <div>${i18n.reader_locked || 'This chapter is locked.'}</div>
-              <div>${state.price_coin} ${i18n.coins || 'coins'}</div>
-              <a class="button button-fill" data-action="unlock" href="#">${i18n.unlock || 'Unlock'}</a>
+            ? $h`<div class="nmr-panel space-y-3 text-center">
+              <div class="text-slate-100">${i18n.reader_locked || 'This chapter is locked.'}</div>
+              <div class="text-amber-200">${state.price_coin} ${i18n.coins || 'coins'}</div>
+              <a class="nmr-button nmr-button-primary inline-block" data-action="unlock" href="#">${i18n.unlock || 'Unlock'}</a>
             </div>`
             : state.is_image
-              ? $h`<div class="block">
+              ? $h`<div class="space-y-4">
                 ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" alt="" loading="lazy" />`)}
               </div>`
               : $h`
-                <div class="block reader-controls">
-                  <div class="segmented">
-                    <button class="button button-small" data-action="font-dec" type="button">A-</button>
-                    <button class="button button-small" data-action="font-inc" type="button">A+</button>
-                  </div>
+                <div class="flex gap-3">
+                  <button class="nmr-button nmr-button-ghost" data-action="font-dec" type="button">A-</button>
+                  <button class="nmr-button nmr-button-ghost" data-action="font-inc" type="button">A+</button>
                 </div>
-                <div class="block reader-text" style="font-size: ${state.font_size}px;">
-                  ${state.paragraphs.map((para) => $h`<p>${para}</p>`)}
+                <div class="nmr-panel" style="font-size: ${state.font_size}px;">
+                  ${state.paragraphs.map((para) => $h`<p class="mb-4 leading-7 text-slate-100">${para}</p>`)}
                 </div>
               `
       }

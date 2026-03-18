@@ -4,53 +4,34 @@
 
     <div class="popup login-popup">
       <div class="view">
-        <div class="page">
-          <div class="navbar">
+        <div class="page nmr-page">
+          <div class="navbar nmr-navbar">
             <div class="navbar-bg"></div>
             <div class="navbar-inner">
-              <div class="title">${i18n.login_title || 'Login'}</div>
+              <div class="title nmr-title">${i18n.login_title || 'Login'}</div>
               <div class="right"><a class="link popup-close" href="#">Close</a></div>
             </div>
           </div>
-          <div class="page-content">
-            <form id="login-form" class="list">
-              <ul>
-                <li>
-                  <div class="item-content item-input">
-                    <div class="item-inner">
-                      <div class="item-title item-label">${i18n.email || 'Email'}</div>
-                      <div class="item-input-wrap">
-                        <input type="email" name="email" placeholder="you@example.com" required />
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <div class="item-content item-input">
-                    <div class="item-inner">
-                      <div class="item-title item-label">${i18n.password || 'Password'}</div>
-                      <div class="item-input-wrap">
-                        <input type="password" name="password" placeholder="Password" required />
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <label class="item-checkbox item-content">
-                    <input type="checkbox" name="remember" />
-                    <i class="icon icon-checkbox"></i>
-                    <div class="item-inner">
-                      <div class="item-title">${i18n.remember_me || 'Remember me'}</div>
-                    </div>
-                  </label>
-                </li>
-              </ul>
-              <div class="block turnstile-wrap">
+          <div class="page-content px-5 pt-6">
+            <form id="login-form" class="space-y-5">
+              <div>
+                <label class="block text-sm text-slate-300 mb-2">${i18n.email || 'Email'}</label>
+                <input class="nmr-input" type="email" name="email" placeholder="you@example.com" required />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-300 mb-2">${i18n.password || 'Password'}</label>
+                <input class="nmr-input" type="password" name="password" placeholder="Password" required />
+              </div>
+              <label class="flex items-center gap-2 text-sm text-slate-300">
+                <input type="checkbox" name="remember" />
+                <span>${i18n.remember_me || 'Remember me'}</span>
+              </label>
+              <div class="turnstile-wrap">
                 <div class="turnstile-widget" data-turnstile="login"></div>
               </div>
-              <div class="block">
-                <button class="button button-fill" type="submit">${i18n.login || 'Login'}</button>
-                <div class="login-actions">
+              <div class="space-y-3">
+                <button class="nmr-button nmr-button-primary w-full" type="submit">${i18n.login || 'Login'}</button>
+                <div class="text-center text-sm text-slate-400">
                   <a class="link popup-open" data-popup=".register-popup" href="#">${i18n.register || 'Create account'}</a>
                 </div>
               </div>
@@ -62,53 +43,33 @@
 
     <div class="popup register-popup">
       <div class="view">
-        <div class="page">
-          <div class="navbar">
+        <div class="page nmr-page">
+          <div class="navbar nmr-navbar">
             <div class="navbar-bg"></div>
             <div class="navbar-inner">
-              <div class="title">${i18n.register_title || 'Register'}</div>
+              <div class="title nmr-title">${i18n.register_title || 'Register'}</div>
               <div class="right"><a class="link popup-close" href="#">Close</a></div>
             </div>
           </div>
-          <div class="page-content">
-            <form id="register-form" class="list">
-              <ul>
-                <li>
-                  <div class="item-content item-input">
-                    <div class="item-inner">
-                      <div class="item-title item-label">${i18n.username || 'Username'}</div>
-                      <div class="item-input-wrap">
-                        <input type="text" name="username" placeholder="username" required />
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <div class="item-content item-input">
-                    <div class="item-inner">
-                      <div class="item-title item-label">${i18n.email || 'Email'}</div>
-                      <div class="item-input-wrap">
-                        <input type="email" name="email" placeholder="you@example.com" required />
-                      </div>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <div class="item-content item-input">
-                    <div class="item-inner">
-                      <div class="item-title item-label">${i18n.password || 'Password'}</div>
-                      <div class="item-input-wrap">
-                        <input type="password" name="password" placeholder="Password" required />
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              </ul>
-              <div class="block turnstile-wrap">
+          <div class="page-content px-5 pt-6">
+            <form id="register-form" class="space-y-5">
+              <div>
+                <label class="block text-sm text-slate-300 mb-2">${i18n.username || 'Username'}</label>
+                <input class="nmr-input" type="text" name="username" placeholder="username" required />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-300 mb-2">${i18n.email || 'Email'}</label>
+                <input class="nmr-input" type="email" name="email" placeholder="you@example.com" required />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-300 mb-2">${i18n.password || 'Password'}</label>
+                <input class="nmr-input" type="password" name="password" placeholder="Password" required />
+              </div>
+              <div class="turnstile-wrap">
                 <div class="turnstile-widget" data-turnstile="register"></div>
               </div>
-              <div class="block">
-                <button class="button button-fill" type="submit">${i18n.register || 'Create account'}</button>
+              <div>
+                <button class="nmr-button nmr-button-primary w-full" type="submit">${i18n.register || 'Create account'}</button>
               </div>
             </form>
           </div>
@@ -118,20 +79,20 @@
 
     <div class="popup purchase-popup">
       <div class="view">
-        <div class="page">
-          <div class="navbar">
+        <div class="page nmr-page">
+          <div class="navbar nmr-navbar">
             <div class="navbar-bg"></div>
             <div class="navbar-inner">
-              <div class="title">${i18n.purchase_title || 'Unlock Chapter'}</div>
+              <div class="title nmr-title">${i18n.purchase_title || 'Unlock Chapter'}</div>
               <div class="right"><a class="link popup-close" href="#">${i18n.purchase_cancel || 'Cancel'}</a></div>
             </div>
           </div>
-          <div class="page-content">
-            <div class="block">
-              <p class="purchase-message" id="purchase-message"></p>
-              <div class="purchase-actions">
-                <a class="button button-fill" data-action="purchase-confirm" href="#">${i18n.purchase_confirm || 'Unlock Now'}</a>
-                <a class="button button-outline popup-close" href="#">${i18n.purchase_cancel || 'Cancel'}</a>
+          <div class="page-content px-5 pt-6">
+            <div class="nmr-panel space-y-4">
+              <p class="text-slate-200" id="purchase-message"></p>
+              <div class="grid gap-3">
+                <a class="nmr-button nmr-button-primary text-center" data-action="purchase-confirm" href="#">${i18n.purchase_confirm || 'Unlock Now'}</a>
+                <a class="nmr-button nmr-button-ghost text-center popup-close" href="#">${i18n.purchase_cancel || 'Cancel'}</a>
               </div>
             </div>
           </div>
@@ -140,13 +101,15 @@
     </div>
 
     <div class="sheet-modal language-sheet">
-      <div class="sheet-modal-inner">
-        <div class="block-title">${i18n.language || 'Language'}</div>
-        <div class="list">
-          <ul>
-            <li><a class="item-link item-content" data-action="set-lang" data-lang="en" href="#"><div class="item-inner"><div class="item-title">English</div></div></a></li>
-            <li><a class="item-link item-content" data-action="set-lang" data-lang="tr" href="#"><div class="item-inner"><div class="item-title">Turkish</div></div></a></li>
-          </ul>
+      <div class="sheet-modal-inner p-5 space-y-4">
+        <div class="nmr-section-title">${i18n.language || 'Language'}</div>
+        <div class="space-y-3">
+          <a class="nmr-card nmr-card-hover block px-4 py-3" data-action="set-lang" data-lang="en" href="#">
+            <div class="font-medium text-slate-100">English</div>
+          </a>
+          <a class="nmr-card nmr-card-hover block px-4 py-3" data-action="set-lang" data-lang="tr" href="#">
+            <div class="font-medium text-slate-100">Turkish</div>
+          </a>
         </div>
       </div>
     </div>
