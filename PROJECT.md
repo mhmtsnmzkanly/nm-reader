@@ -115,11 +115,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
-### Mobile: Framework7 Scaffold (2026-03-18)
+### Mobile: Framework7 CLI Scaffold (2026-03-18)
 - **Status**: In progress.
 - **Change**: Added `/mobile` web entry that serves the Framework7 app shell from `public/mobile/index.html`.
-- **Change**: Implemented initial P0 screens (home, type list, content detail, reader, wallet) plus login and unlock modals in `public/mobile/app.js` with styling in `public/mobile/app.css`.
-- **Change**: Moved mobile sources to `ui/mobile` and added a simple build script that copies output to `public/mobile`.
+- **Change**: Rebuilt `ui/mobile` via Framework7 CLI (Core + Vite) and configured Vite output to `public/mobile` with `/mobile/` base path.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.

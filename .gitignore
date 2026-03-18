@@ -2,6 +2,7 @@
 /vendor/
 /node_modules/
 /ui/web/node_modules/
+/ui/mobile/node_modules/
 
 # Configuration
 .env
