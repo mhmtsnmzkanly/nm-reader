@@ -39,6 +39,21 @@
         <a class="nmr-button nmr-button-ghost" href="/types/manhwa/">Manhwa</a>
       </div>
 
+      <div class="space-y-4">
+        <div class="nmr-section-title">Featured</div>
+        <div class="flex gap-4 overflow-x-auto pb-2">
+          ${state.recent.slice(0, 6).map((item) => $h`
+            <a class="min-w-[180px] rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-[0_18px_40px_rgba(0,0,0,0.45)]" href="/content/${item.type}/${item.slug}/">
+              <div class="h-28 w-full" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
+              <div class="p-4 space-y-1">
+                <div class="text-sm font-semibold text-slate-100 line-clamp-2">${item.title}</div>
+                <div class="text-xs text-slate-400">${item.type}</div>
+              </div>
+            </a>
+          `)}
+        </div>
+      </div>
+
       <div class="space-y-5">
         <div class="nmr-section-title">${i18n.latest_chapters || 'Latest Chapters'}</div>
         ${state.loading
