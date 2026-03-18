@@ -124,6 +124,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Wallet page now prompts login when required and refreshes balance after unlock.
 - **Change**: Added wallet transactions view and shop packages/features pages for mobile.
 - **Change**: Added mobile i18n loader (Template7 globals) and global API error toasts.
+- **Change**: Register flow now auto-logs in and refresh token updates session storage.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.

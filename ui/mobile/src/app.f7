@@ -44,6 +44,15 @@
                     </div>
                   </label>
                 </li>
+                <li>
+                  <label class="item-checkbox item-content">
+                    <input type="checkbox" name="remember" />
+                    <i class="icon icon-checkbox"></i>
+                    <div class="item-inner">
+                      <div class="item-title">{{@global.i18n.remember_me}}</div>
+                    </div>
+                  </label>
+                </li>
               </ul>
               <div class="block">
                 <button class="button button-fill" type="submit">{{@global.i18n.login}}</button>
@@ -114,6 +123,7 @@
 <script>
 import api from './js/api.js';
 import store from './js/store.js';
+import { Template7 } from 'framework7';
 
 export default (props, { $onMounted, $el, $f7 }) => {
   const applySession = (data) => {
@@ -137,6 +147,7 @@ export default (props, { $onMounted, $el, $f7 }) => {
       event.preventDefault();
       const form = event.target;
       const formData = new FormData(form);
+      const i18n = Template7.global?.i18n || {};
       try {
         const result = await api.auth.login(
           formData.get('email'),
@@ -145,9 +156,9 @@ export default (props, { $onMounted, $el, $f7 }) => {
         );
         applySession(result);
         $f7.popup.close('.login-popup');
-        $f7.dialog.alert('Login successful');
+        $f7.dialog.alert(i18n.login_success || 'Login successful');
       } catch (err) {
-        $f7.dialog.alert(err.message || 'Login failed');
+        $f7.dialog.alert(err.message || i18n.login_failed || 'Login failed');
       }
     });
 
@@ -155,16 +166,23 @@ export default (props, { $onMounted, $el, $f7 }) => {
       event.preventDefault();
       const form = event.target;
       const formData = new FormData(form);
+      const i18n = Template7.global?.i18n || {};
       try {
         await api.auth.register(
           formData.get('username'),
           formData.get('email'),
           formData.get('password'),
         );
+        const loginResult = await api.auth.login(
+          formData.get('email'),
+          formData.get('password'),
+          !!formData.get('remember'),
+        );
+        applySession(loginResult);
         $f7.popup.close('.register-popup');
-        $f7.dialog.alert('Account created. You can login now.');
+        $f7.dialog.alert(i18n.register_success || 'Account created. You are now logged in.');
       } catch (err) {
-        $f7.dialog.alert(err.message || 'Register failed');
+        $f7.dialog.alert(err.message || i18n.register_failed || 'Register failed');
       }
     });
 
@@ -175,8 +193,9 @@ export default (props, { $onMounted, $el, $f7 }) => {
       } catch (err) {
         // ignore logout errors
       }
+      const i18n = Template7.global?.i18n || {};
       store.dispatch('clearAuth');
-      $f7.dialog.alert('Logged out');
+      $f7.dialog.alert(i18n.logout_success || 'Logged out');
     });
   });
 
