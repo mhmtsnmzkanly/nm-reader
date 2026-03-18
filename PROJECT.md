@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### UI Workspace Layout (2026-03-18)
+- **Status**: Completed.
+- **Change**: Moved web UI tooling into `ui/web` and created `ui/mobile` placeholder for the Framework7 app. Tailwind build now outputs to `public/assets/css/main.css`.
+
 ### Chapter Pricing: Store Price on Chapters (2026-03-18)
 - **Status**: Completed.
 - **Change**: Moved per-chapter pricing to `chapters.price_amount` with `price_last_update` and added migration to backfill/drop `chapter_access_products`.

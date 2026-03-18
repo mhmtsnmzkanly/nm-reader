@@ -1,6 +1,7 @@
 # Dependency Directories
 /vendor/
 /node_modules/
+/ui/web/node_modules/
 
 # Configuration
 .env
