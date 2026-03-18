@@ -28,9 +28,9 @@
         </div>
       </div>
 
-      <div class="block-title">Latest Chapters</div>
+      <div class="block-title">{{@global.i18n.latest_chapters}}</div>
       {{#if state.loading}}
-        <div class="block">Loading...</div>
+        <div class="block">{{@global.i18n.loading}}</div>
       {{else}}
         {{#if state.latest.length}}
           <div class="list media-list">
@@ -56,13 +56,13 @@
             </ul>
           </div>
         {{else}}
-          <div class="block">No chapters yet.</div>
+          <div class="block">{{@global.i18n.no_chapters}}</div>
         {{/if}}
       {{/if}}
 
-      <div class="block-title">Recently Added</div>
+      <div class="block-title">{{@global.i18n.recently_added}}</div>
       {{#if state.loading}}
-        <div class="block">Loading...</div>
+        <div class="block">{{@global.i18n.loading}}</div>
       {{else}}
         {{#if state.recent.length}}
           <div class="list">
@@ -80,7 +80,7 @@
             </ul>
           </div>
         {{else}}
-          <div class="block">No recent series.</div>
+          <div class="block">{{@global.i18n.no_recent}}</div>
         {{/if}}
       {{/if}}
     </div>

@@ -131,6 +131,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Improved pricing badges in mobile content lists.
 - **Change**: Added global page error toasts for mobile views.
 - **Change**: Added transaction pagination, shop info notes, and reader font size controls.
+- **Change**: Expanded mobile i18n coverage across lists, wallet, shop, and reader messages.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.

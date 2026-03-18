@@ -12,16 +12,16 @@
 
     <div class="page-content">
       {{#if state.loading}}
-        <div class="block">Loading...</div>
+        <div class="block">{{@global.i18n.loading}}</div>
       {{else}}
         {{#if state.error}}
           <div class="block">{{state.error}}</div>
         {{else}}
           {{#if state.is_locked}}
             <div class="block">
-              <div>This chapter is locked.</div>
-              <div>{{state.price_coin}} coins required.</div>
-              <a class="button button-fill" data-action="unlock" href="#">Unlock</a>
+              <div>{{@global.i18n.reader_locked}}</div>
+              <div>{{state.price_coin}} {{@global.i18n.coins}}</div>
+              <a class="button button-fill" data-action="unlock" href="#">{{@global.i18n.unlock}}</a>
             </div>
           {{else}}
             {{#if state.is_image}}
@@ -52,6 +52,7 @@
 <script>
 import api from '../js/api.js';
 import store from '../js/store.js';
+import { Template7 } from 'framework7';
 
 export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $f7 }) => {
   const state = {
@@ -100,7 +101,8 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     try {
       await loadChapter();
     } catch (err) {
-      state.error = err.message || 'Failed to load chapter.';
+      const i18n = Template7.global?.i18n || {};
+      state.error = err.message || i18n.failed_load_chapter || 'Failed to load chapter.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
       state.loading = false;
@@ -122,7 +124,8 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
         return;
       }
       if (!state.chapterId) {
-        $f7.dialog.alert('Chapter not available.');
+        const i18n = Template7.global?.i18n || {};
+        $f7.dialog.alert(i18n.chapter_not_available || 'Chapter not available.');
         return;
       }
       document.dispatchEvent(new CustomEvent('purchase:open', { detail: { chapterId: state.chapterId, price: state.price_coin } }));

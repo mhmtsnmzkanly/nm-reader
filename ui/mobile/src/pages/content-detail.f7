@@ -12,7 +12,7 @@
 
     <div class="page-content">
       {{#if state.loading}}
-        <div class="block">Loading...</div>
+        <div class="block">{{@global.i18n.loading}}</div>
       {{else}}
         {{#if state.error}}
           <div class="block">{{state.error}}</div>
@@ -20,7 +20,7 @@
           <div class="block block-strong">
             <p>{{state.description}}</p>
           </div>
-          <div class="block-title">Chapters</div>
+          <div class="block-title">{{@global.i18n.chapters}}</div>
           <div class="list media-list">
             <ul>
               {{#each state.chapters}}
@@ -31,9 +31,9 @@
                         <div class="item-title">{{title}}</div>
                         <div class="item-after">
                           {{#if is_locked}}
-                            {{price_coin}} coins
+                            {{price_coin}} {{@global.i18n.coins}}
                           {{else}}
-                            Free
+                            {{@global.i18n.free}}
                           {{/if}}
                         </div>
                       </div>
@@ -53,6 +53,7 @@
 </template>
 <script>
 import api from '../js/api.js';
+import { Template7 } from 'framework7';
 
 export default (props, { $onMounted, $update, $f7route }) => {
   const state = {
@@ -88,7 +89,8 @@ export default (props, { $onMounted, $update, $f7route }) => {
       state.description = contentData.description || '';
       state.chapters = chaptersData.map(normalizeChapter).filter((row) => row.chapter_number !== '');
     } catch (err) {
-      state.error = err.message || 'Failed to load content.';
+      const i18n = Template7.global?.i18n || {};
+      state.error = err.message || i18n.failed_load_content || 'Failed to load content.';
       document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
       state.loading = false;
