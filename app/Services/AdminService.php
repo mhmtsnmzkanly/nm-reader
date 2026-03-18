@@ -123,7 +123,7 @@ final class AdminService
         $this->upsertContentMetadata($id, $author, $artist, $alternativeTitles, $country, $releaseYear);
 
         if ($moderatorId !== null) {
-            $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'update', "New series created: $title");
+            $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'create', "New series created: $title");
         }
 
         $this->invalidateListingCaches();

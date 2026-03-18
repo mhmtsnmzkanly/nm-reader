@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Admin Content: Correct Create Audit Action (2026-03-18)
+- **Status**: Completed.
+- **Change**: Content creation now logs `create` instead of `update` in moderation actions.
+
 ### Admin Content: Validate Status Updates (2026-03-18)
 - **Status**: Completed.
 - **Change**: Content status updates now validate allowed values on admin edits.
