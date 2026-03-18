@@ -54,6 +54,7 @@ Master table for Novels and Manga.
 - `id` (char 6): Random identifier.
 - `type`: ENUM (`manga`, `novel`, etc.).
 - `chapter_count`, `rating_avg`: Denormalized fields for high-performance listing.
+- **Full-text index**: `title`, `slug`, `description` for search.
 
 #### `chapters`
 The actual reading content.
@@ -65,6 +66,7 @@ The actual reading content.
 
 #### `series_metadata`
 Detailed info linked to a series (Author, Artist, release year).
+- **Full-text index**: `author`, `artist`, `alternative_titles` for search.
 
 #### `series_genres` & `series_tags`
 Configurable categorization.
@@ -76,6 +78,7 @@ Configurable categorization.
 Unified comment system for chapters, blogs, and series.
 - Supports threaded replies via `parent_id`.
 - Denormalized `upvote_count` and `downvote_count`.
+- **Indexes**: `(content_id, created_at)`, `(chapter_id, created_at)`, `(blog_id, created_at)`, `(user_id, created_at)`, `(parent_id)`.
 
 #### `ratings`
 Stores user scores (1-5) for series.
@@ -95,6 +98,7 @@ Centralized notification system for user-to-user and system-to-user alerts.
 - `actor_user_id`: The user who triggered the notification (optional).
 - `is_read`: Boolean flag for read/unread status.
 - `data` (JSON): Context-specific metadata (e.g., links, IDs).
+- **Indexes**: `(user_id, created_at)`, `(user_id, is_read, created_at)`.
 
 ---
 
@@ -173,6 +177,7 @@ Audit trail for every moderator action (delete, ban, update).
 
 #### `system_audit_logs`
 HTTP-level access logs including duration (ms) and IP hashes.
+- **Indexes**: `(created_at)`, `(status_code, created_at)`.
 
 #### `user_sessions` & `user_refresh_tokens`
 Secure session management with expiration and revocation support.
@@ -181,6 +186,7 @@ Secure session management with expiration and revocation support.
 Audit trail for authentication attempts.
 - Tracks email, IP hash, user agent, success status, and failure reasons.
 - Used for security monitoring and rate limiting.
+- **Indexes**: `(attempted_at)`, `(user_id, attempted_at)`, `(email, attempted_at)`.
 
 #### Supporting Consistency Tables
 To align the documented schema with active backend code, the schema now also includes:

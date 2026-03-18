@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Performance Maintenance: Hot-Path Indexes (2026-03-18)
+- **Status**: Completed.
+- **Change**: Added targeted indexes for comments, notifications, audit logs, and login logs to reduce hot-path query cost.
+
 ### Auth & Frontend Docs: CSRF + Refresh Tokens (2026-03-18)
 - **Status**: Completed.
 - **Change**: Documented `X-CSRF-Token` requirements for protected endpoints and clarified session-first auth behavior.

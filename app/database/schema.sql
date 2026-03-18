@@ -51,7 +51,8 @@ CREATE TABLE `series` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`),
-  KEY `idx_series_deleted` (`deleted_at`)
+  KEY `idx_series_deleted` (`deleted_at`),
+  FULLTEXT KEY `ft_series_search` (`title`,`slug`,`description`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `series_metadata`;
@@ -65,6 +66,7 @@ CREATE TABLE `series_metadata` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`content_id`),
+  FULLTEXT KEY `ft_series_meta_search` (`author`,`artist`,`alternative_titles`),
   CONSTRAINT `fk_metadata_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -338,6 +340,11 @@ CREATE TABLE `social_comments` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
+  KEY `idx_comments_content_created` (`content_id`,`created_at`),
+  KEY `idx_comments_chapter_created` (`chapter_id`,`created_at`),
+  KEY `idx_comments_blog_created` (`blog_id`,`created_at`),
+  KEY `idx_comments_user_created` (`user_id`,`created_at`),
+  KEY `idx_comments_parent` (`parent_id`),
   CONSTRAINT `fk_comments_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_comments_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -375,6 +382,8 @@ CREATE TABLE `user_notifications` (
   `read_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
+  KEY `idx_notifications_user_created` (`user_id`,`created_at`),
+  KEY `idx_notifications_user_read` (`user_id`,`is_read`,`created_at`),
   CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_notifications_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -416,7 +425,10 @@ CREATE TABLE `user_login_logs` (
   `success` tinyint(1) NOT NULL,
   `failure_reason` varchar(50) DEFAULT NULL,
   `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_login_attempted` (`attempted_at`),
+  KEY `idx_login_user_attempted` (`user_id`,`attempted_at`),
+  KEY `idx_login_email_attempted` (`email`,`attempted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_series_follows`;
@@ -610,7 +622,9 @@ CREATE TABLE `system_audit_logs` (
   `user_agent` varchar(255) DEFAULT NULL,
   `duration_ms` int(11) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_audit_created` (`created_at`),
+  KEY `idx_audit_status_created` (`status_code`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `system_uploads`;
