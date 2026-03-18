@@ -141,12 +141,25 @@
         </div>
       </div>
     </div>
+
+    <div class="sheet-modal language-sheet">
+      <div class="sheet-modal-inner">
+        <div class="block-title">{{@global.i18n.language}}</div>
+        <div class="list">
+          <ul>
+            <li><a class="item-link item-content" data-action="set-lang" data-lang="en" href="#"><div class="item-inner"><div class="item-title">English</div></div></a></li>
+            <li><a class="item-link item-content" data-action="set-lang" data-lang="tr" href="#"><div class="item-inner"><div class="item-title">Turkish</div></div></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script>
 import api from './js/api.js';
 import store from './js/store.js';
 import { Template7 } from 'framework7';
+import { loadI18n } from './js/i18n.js';
 
 export default (props, { $onMounted, $el, $f7 }) => {
   let pendingPurchase = null;
@@ -192,6 +205,14 @@ export default (props, { $onMounted, $el, $f7 }) => {
       } catch (err) {
         $f7.dialog.alert(err.message || 'Unlock failed');
       }
+    });
+
+    $el.on('click', '[data-action="set-lang"]', async (event) => {
+      event.preventDefault();
+      const lang = event.currentTarget.getAttribute('data-lang');
+      if (!lang) return;
+      await loadI18n(lang);
+      $f7.sheet.close('.language-sheet');
     });
 
     $el.on('submit', '#login-form', async (event) => {

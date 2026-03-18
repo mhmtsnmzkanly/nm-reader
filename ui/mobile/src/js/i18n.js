@@ -26,6 +26,7 @@ const fallback = {
   purchase_title: 'Unlock Chapter',
   purchase_confirm: 'Unlock Now',
   purchase_cancel: 'Cancel',
+  language: 'Language',
 };
 
 const i18n = {
@@ -67,6 +68,9 @@ async function loadI18n(lang) {
     localStorage.setItem(STORAGE_KEY, lang);
   }
   applyGlobals();
+  if (typeof document !== 'undefined') {
+    document.dispatchEvent(new CustomEvent('i18n:updated', { detail: { lang } }));
+  }
   return i18n.dictionary;
 }
 

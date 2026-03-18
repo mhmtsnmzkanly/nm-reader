@@ -47,6 +47,10 @@ var app = new Framework7({
 
 initI18n();
 
+document.addEventListener('i18n:updated', () => {
+  app.views.main.router.refreshPage();
+});
+
 document.addEventListener('api:error', (event) => {
   const message = event.detail?.message || 'Request failed';
   app.toast.create({

@@ -13,6 +13,7 @@
           {{else}}
             <a class="link popup-open" data-popup=".login-popup" href="#">{{@global.i18n.login}}</a>
           {{/if}}
+          <a class="link sheet-open" data-sheet=".language-sheet" href="#">{{@global.i18n.language}}</a>
           <a class="link" href="/wallet/">{{@global.i18n.wallet}}</a>
         </div>
       </div>
