@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Uploads: Zip Chapter Import (2026-03-18)
+- **Status**: Completed.
+- **Change**: Admin bulk upload now accepts `.zip` archives and extracts image files safely with limits.
+
 ### Uploads: Server-Side Validation + File Cleanup (2026-03-18)
 - **Status**: Completed.
 - **Change**: Added server-side MIME validation and re-encoding to strip metadata on upload.

@@ -8,6 +8,8 @@ use App\DTO\UploadDto;
 use App\Services\EntityIdService;
 use App\Repositories\UploadRepository;
 use finfo;
+use Psr\Http\Message\UploadedFileInterface;
+use ZipArchive;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -28,6 +30,9 @@ final class UploadService
         'image/webp' => 'webp',
         'image/gif'  => 'gif',
     ];
+    private const ZIP_MAX_FILES = 500;
+    private const ZIP_MAX_TOTAL_BYTES = 209715200; // 200 MB
+    private const ZIP_MAX_FILE_BYTES = 20971520; // 20 MB
 
     public function __construct(
         private readonly UploadRepository $repository,
@@ -58,107 +63,13 @@ final class UploadService
             throw new InvalidArgumentException($msg);
         }
 
-        $stream = $file->getStream();
-        $tmpPath = $stream->getMetadata('uri');
-        if (!is_string($tmpPath) || !is_file($tmpPath)) {
-            throw new RuntimeException('Upload stream is not readable.');
-        }
-
-        $finfo = new finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $finfo->file($tmpPath) ?: 'application/octet-stream';
-        if (!array_key_exists($mimeType, self::ALLOWED_MIME_TYPES)) {
-            throw new InvalidArgumentException('Unsupported image type: ' . $mimeType);
-        }
-
-        $ext = self::ALLOWED_MIME_TYPES[$mimeType];
-        $imageId = $this->entityIds->generateImageId();
-
-        // Map subdirs to prefixes as per user requirement
-        $prefix = match ($dto->targetSubdir) {
-            'users/profile' => 'user.profile',
-            'users/cover'   => 'user.cover',
-            'chapters'      => 'chapter',
-            'series_cover'  => 'cover',
-            'blogs', 'system' => 'content.cover',
-            default => str_replace('/', '.', trim($dto->targetSubdir ?? 'misc', '/'))
-        };
-
-        $fileName = $prefix . '.' . $imageId . '.' . $ext;
-        $targetDir = rtrim($this->baseUploadDir, '/');
-
-        // Ensure base upload directory exists
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true)) {
-                throw new RuntimeException('Failed to create upload directory.');
-            }
-        }
-
-        $targetPath = $targetDir . '/' . $fileName;
-
-        try {
-            $imageInfo = @getimagesize($tmpPath);
-            if ($imageInfo === false) {
-                throw new InvalidArgumentException('Invalid image data.');
-            }
-
-            if ($mimeType === 'image/gif') {
-                $file->moveTo($targetPath);
-                $publicPath = '/uploads/' . $fileName;
-
-                $this->repository->logImageUpload(
-                    $dto->userId,
-                    $imageId,
-                    $file->getClientFilename() ?? 'unknown',
-                    $mimeType,
-                    (int) ($file->getSize() ?? 0),
-                    $publicPath
-                );
-
-                return $publicPath;
-            }
-
-            $raw = file_get_contents($tmpPath);
-            if ($raw === false) {
-                throw new RuntimeException('Failed to read uploaded file data.');
-            }
-
-            $image = @imagecreatefromstring($raw);
-            if ($image === false) {
-                throw new InvalidArgumentException('Invalid image data.');
-            }
-
-            if (in_array($mimeType, ['image/png', 'image/webp', 'image/gif'], true)) {
-                imagealphablending($image, false);
-                imagesavealpha($image, true);
-            }
-
-            $saved = match ($mimeType) {
-                'image/jpeg' => imagejpeg($image, $targetPath, 85),
-                'image/png' => imagepng($image, $targetPath, 6),
-                'image/webp' => imagewebp($image, $targetPath, 80),
-                'image/gif' => imagegif($image, $targetPath),
-                default => false,
-            };
-            imagedestroy($image);
-
-            if (!$saved) {
-                throw new RuntimeException('Failed to write processed image.');
-            }
-
-            $publicPath = '/uploads/' . $fileName;
-            $this->repository->logImageUpload(
-                $dto->userId,
-                $imageId,
-                $file->getClientFilename() ?? 'unknown',
-                $mimeType,
-                (int) ($file->getSize() ?? 0),
-                $publicPath
-            );
-
-            return $publicPath;
-        } catch (Throwable $e) {
-            throw new RuntimeException('Failed to process uploaded file: ' . $e->getMessage(), 0, $e);
-        }
+        return $this->processImagePath(
+            $dto->userId,
+            $file->getStream()->getMetadata('uri'),
+            $file->getClientFilename() ?? 'unknown',
+            (int) ($file->getSize() ?? 0),
+            $dto->targetSubdir
+        );
     }
 
     /**
@@ -192,5 +103,185 @@ final class UploadService
         }
 
         return $paths;
+    }
+
+    public function handleZipImageUpload(string $userId, UploadedFileInterface $file, string $subdir = 'chapters'): array
+    {
+        if ($file->getError() !== UPLOAD_ERR_OK) {
+            throw new InvalidArgumentException('Zip upload failed with error code: ' . $file->getError());
+        }
+
+        $tmpPath = $file->getStream()->getMetadata('uri');
+        if (!is_string($tmpPath) || !is_file($tmpPath)) {
+            throw new RuntimeException('Zip upload stream is not readable.');
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($tmpPath) !== true) {
+            throw new InvalidArgumentException('Invalid zip archive.');
+        }
+
+        $entries = [];
+        $totalBytes = 0;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            if (!$stat || !isset($stat['name'])) {
+                continue;
+            }
+            $name = (string) $stat['name'];
+            if (str_ends_with($name, '/')) {
+                continue;
+            }
+
+            $base = basename($name);
+            if ($base === '' || str_contains($base, '..')) {
+                continue;
+            }
+
+            $size = (int) ($stat['size'] ?? 0);
+            if ($size <= 0 || $size > self::ZIP_MAX_FILE_BYTES) {
+                continue;
+            }
+
+            $ext = strtolower(pathinfo($base, PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)) {
+                continue;
+            }
+
+            $totalBytes += $size;
+            $entries[] = ['index' => $i, 'name' => $name, 'base' => $base, 'size' => $size];
+        }
+
+        if (count($entries) > self::ZIP_MAX_FILES || $totalBytes > self::ZIP_MAX_TOTAL_BYTES) {
+            $zip->close();
+            throw new InvalidArgumentException('Zip contains too many files or is too large.');
+        }
+
+        usort($entries, static fn ($a, $b) => strnatcasecmp($a['base'], $b['base']));
+
+        $paths = [];
+        foreach ($entries as $entry) {
+            $stream = $zip->getStream($entry['name']);
+            if ($stream === false) {
+                continue;
+            }
+
+            $tmpFile = tempnam(sys_get_temp_dir(), 'nmzip_');
+            if ($tmpFile === false) {
+                fclose($stream);
+                continue;
+            }
+
+            $out = fopen($tmpFile, 'wb');
+            if ($out === false) {
+                fclose($stream);
+                @unlink($tmpFile);
+                continue;
+            }
+
+            stream_copy_to_stream($stream, $out);
+            fclose($stream);
+            fclose($out);
+
+            try {
+                $paths[] = $this->processImagePath($userId, $tmpFile, $entry['base'], $entry['size'], $subdir);
+            } catch (Throwable) {
+                // Skip individual failures to allow partial success.
+            } finally {
+                @unlink($tmpFile);
+            }
+        }
+
+        $zip->close();
+
+        if (empty($paths)) {
+            throw new InvalidArgumentException('All zip images failed validation.');
+        }
+
+        return $paths;
+    }
+
+    private function processImagePath(string $userId, mixed $path, string $originalName, int $size, ?string $targetSubdir): string
+    {
+        if (!is_string($path) || !is_file($path)) {
+            throw new RuntimeException('Upload stream is not readable.');
+        }
+
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->file($path) ?: 'application/octet-stream';
+        if (!array_key_exists($mimeType, self::ALLOWED_MIME_TYPES)) {
+            throw new InvalidArgumentException('Unsupported image type: ' . $mimeType);
+        }
+
+        $imageInfo = @getimagesize($path);
+        if ($imageInfo === false) {
+            throw new InvalidArgumentException('Invalid image data.');
+        }
+
+        $ext = self::ALLOWED_MIME_TYPES[$mimeType];
+        $imageId = $this->entityIds->generateImageId();
+
+        $prefix = match ($targetSubdir) {
+            'users/profile' => 'user.profile',
+            'users/cover'   => 'user.cover',
+            'chapters'      => 'chapter',
+            'series_cover'  => 'cover',
+            'blogs', 'system' => 'content.cover',
+            default => str_replace('/', '.', trim($targetSubdir ?? 'misc', '/'))
+        };
+
+        $fileName = $prefix . '.' . $imageId . '.' . $ext;
+        $targetDir = rtrim($this->baseUploadDir, '/');
+        if (!is_dir($targetDir)) {
+            if (!mkdir($targetDir, 0755, true)) {
+                throw new RuntimeException('Failed to create upload directory.');
+            }
+        }
+        $targetPath = $targetDir . '/' . $fileName;
+
+        if ($mimeType === 'image/gif') {
+            if (!copy($path, $targetPath)) {
+                throw new RuntimeException('Failed to store gif file.');
+            }
+        } else {
+            $raw = file_get_contents($path);
+            if ($raw === false) {
+                throw new RuntimeException('Failed to read uploaded file data.');
+            }
+
+            $image = @imagecreatefromstring($raw);
+            if ($image === false) {
+                throw new InvalidArgumentException('Invalid image data.');
+            }
+
+            if (in_array($mimeType, ['image/png', 'image/webp'], true)) {
+                imagealphablending($image, false);
+                imagesavealpha($image, true);
+            }
+
+            $saved = match ($mimeType) {
+                'image/jpeg' => imagejpeg($image, $targetPath, 85),
+                'image/png' => imagepng($image, $targetPath, 6),
+                'image/webp' => imagewebp($image, $targetPath, 80),
+                default => false,
+            };
+            imagedestroy($image);
+
+            if (!$saved) {
+                throw new RuntimeException('Failed to write processed image.');
+            }
+        }
+
+        $publicPath = '/uploads/' . $fileName;
+        $this->repository->logImageUpload(
+            $userId,
+            $imageId,
+            $originalName,
+            $mimeType,
+            $size,
+            $publicPath
+        );
+
+        return $publicPath;
     }
 }

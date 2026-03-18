@@ -406,6 +406,8 @@ Note: All routes in this group are prefixed with `/api/v1/admin`, require approp
 - **GET `/tags`**: Returns non-paginated list of all tags for modals.
 - **POST `/series_tags`**: Creates a new tag.
 - **POST `/upload-images`**: Bulk upload endpoint for chapter images or covers.
+  - Accepts multiple image files or a single `.zip` archive containing images.
+  - Query param `type` controls prefixing (`chapters`, `series_cover`, `blogs`, `system`, etc.).
 
 ### 6.2 User & RBAC
 - **GET `/users`**: Paginated list of all registered users.

@@ -289,6 +289,7 @@ final class AdminPanelController
     {
         $files = $request->getUploadedFiles();
         $toProcess = [];
+        $zipFile = null;
         $collector = function($item) use (&$collector, &$toProcess) {
             if ($item instanceof \Psr\Http\Message\UploadedFileInterface) $toProcess[] = $item;
             elseif (is_array($item)) foreach ($item as $sub) $collector($sub);
@@ -298,6 +299,20 @@ final class AdminPanelController
         usort($toProcess, fn($a, $b) => strnatcasecmp($a->getClientFilename() ?? '', $b->getClientFilename() ?? ''));
         $userId = (string) $request->getAttribute('user_id');
         $type = (string) ($request->getQueryParams()['type'] ?? 'chapters');
+
+        foreach ($toProcess as $candidate) {
+            $name = strtolower((string) ($candidate->getClientFilename() ?? ''));
+            $mime = strtolower((string) ($candidate->getClientMediaType() ?? ''));
+            if (str_ends_with($name, '.zip') || $mime === 'application/zip' || $mime === 'application/x-zip-compressed') {
+                $zipFile = $candidate;
+                break;
+            }
+        }
+
+        if ($zipFile !== null) {
+            return ResponseHelper::success(['paths' => $this->uploadService->handleZipImageUpload($userId, $zipFile, $type)]);
+        }
+
         return ResponseHelper::success(['paths' => $this->uploadService->handleBulkImageUpload($userId, $toProcess, $type)]);
     }
 
