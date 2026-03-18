@@ -27,6 +27,12 @@ Example (local): `http://localhost:8080/api/v1`
 
 ## 1. Authentication & Identity
 
+### **Session + CSRF Requirements**
+Protected endpoints (`POST`, `PUT`, `DELETE`, `PATCH`) under `/api/v1` require:
+`X-CSRF-Token` header from the `csrf_token` returned by `/api/v1/auth/login`.
+`/api/v1/auth/logout` is CSRF-exempt to avoid session-expiration edge cases.
+Bearer tokens hydrate identity for public/optional routes but do not replace the session requirement for protected endpoints.
+
 ### **Register**
 #### **PATH**
 `POST /api/v1/auth/register`
@@ -42,14 +48,28 @@ Standard user object on success.
 #### **PATH**
 `POST /api/v1/auth/login`
 #### **REQUEST**
-- **Body**: `{ "email": "...", "password": "...", "turnstile_token": "..." }`
+- **Body**: `{ "email": "...", "password": "...", "remember": true, "turnstile_token": "..." }`
 - `turnstile_token` is required only when Cloudflare Turnstile keys are configured.
+- `remember` issues a refresh token and `nm_remember` cookie when true.
 #### **RESPONSE**
 ```json
-{ "status": "success", "data": { "id": "...", "username": "...", "api_token": "...", "roles": [] } }
+{
+  "status": "success",
+  "data": {
+    "id": "...",
+    "username": "...",
+    "email": "...",
+    "csrf_token": "...",
+    "refresh_token": "...",
+    "api_token": "...",
+    "roles": [],
+    "permissions": []
+  }
+}
 ```
 #### **ERROR**
 - **401 Unauthorized**: Invalid credentials.
+`refresh_token` is only included when `remember` is true.
 
 ### **Logout**
 #### **PATH**
@@ -60,8 +80,10 @@ Standard user object on success.
 ### **Refresh Token**
 #### **PATH**
 `POST /api/v1/auth/refresh`
+#### **REQUEST**
+- **Body**: `{ "refresh_token": "..." }`
 #### **RESPONSE**
-New API token and session metadata.
+Rotated refresh token and session metadata (`refresh_token`, `session_key`, roles, permissions).
 
 ### **Active Sessions**
 #### **PATH**
