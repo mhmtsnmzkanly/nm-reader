@@ -439,9 +439,14 @@ final class UserRepository
     /**
      * Lists notifications for a user.
      */
-    public function listNotifications(string $userId, int $page, int $perPage): array
+    public function listNotifications(string $userId, int $page, int $perPage, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $whereParts = ['n.user_id = :user_id'];
+        if ($cursorCreatedAt !== null && $cursorId !== null) {
+            $whereParts[] = '(n.created_at < :cursor_created OR (n.created_at = :cursor_created AND n.id < :cursor_id))';
+        }
+        $where = implode(' AND ', $whereParts);
         $sql = 'SELECT
                     n.id,
                     n.type,
@@ -454,13 +459,19 @@ final class UserRepository
                     u.username AS actor_username
                 FROM user_notifications n
                 LEFT JOIN users u ON u.id = n.actor_user_id
-                WHERE n.user_id = :user_id
-                ORDER BY n.created_at DESC
-                LIMIT :limit OFFSET :offset';
+                WHERE ' . $where . '
+                ORDER BY n.created_at DESC, n.id DESC
+                LIMIT :limit' . ($cursorCreatedAt !== null && $cursorId !== null ? '' : ' OFFSET :offset');
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        if ($cursorCreatedAt !== null && $cursorId !== null) {
+            $stmt->bindValue(':cursor_created', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_id', $cursorId, PDO::PARAM_INT);
+        }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        if ($cursorCreatedAt === null || $cursorId === null) {
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
         $stmt->execute();
 
         return $stmt->fetchAll();

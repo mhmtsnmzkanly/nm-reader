@@ -203,23 +203,35 @@ final class CommentService
      * @param string|null $viewerUserId ID of user viewing the comments (for vote tracking).
      * @return array
      */
-    public function listByChapter(string $chapterId, int $page, int $perPage, ?string $viewerUserId = null): array
+    public function listByChapter(string $chapterId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursor = null): array
     {
-        $rows = $this->comments->getByChapterId($chapterId, $page, $perPage, $viewerUserId);
+        $cursorData = $this->parseCursor($cursor);
+        if ($cursorData !== null) {
+            [$cursorCreatedAt, $cursorId] = $cursorData;
+            $rows = $this->comments->getByChapterId($chapterId, $page, $perPage, $viewerUserId, $cursorCreatedAt, $cursorId);
+        } else {
+            $rows = $this->comments->getByChapterId($chapterId, $page, $perPage, $viewerUserId);
+        }
         return OutputSanitizer::sanitizeRows($rows, ['body', 'username']);
     }
 
     /**
      * Lists all comments for a specific series.
      */
-    public function listBySeriesSlug(string $slug, int $page, int $perPage, ?string $viewerUserId = null): array
+    public function listBySeriesSlug(string $slug, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursor = null): array
     {
         $contentId = $this->series->findContentIdBySlug($slug);
         if ($contentId === null) {
             throw new \DomainException('Series not found');
         }
 
-        $rows = $this->comments->getByContentId($contentId, $page, $perPage, $viewerUserId);
+        $cursorData = $this->parseCursor($cursor);
+        if ($cursorData !== null) {
+            [$cursorCreatedAt, $cursorId] = $cursorData;
+            $rows = $this->comments->getByContentId($contentId, $page, $perPage, $viewerUserId, $cursorCreatedAt, $cursorId);
+        } else {
+            $rows = $this->comments->getByContentId($contentId, $page, $perPage, $viewerUserId);
+        }
         return OutputSanitizer::sanitizeRows($rows, ['body', 'username']);
     }
 
@@ -233,15 +245,45 @@ final class CommentService
      * @return array
      * @throws \DomainException If blog not found.
      */
-    public function listByBlogSlug(string $slug, int $page, int $perPage, ?string $viewerUserId = null): array
+    public function listByBlogSlug(string $slug, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursor = null): array
     {
         $blog = $this->blogs->findApprovedBySlug($slug);
         if ($blog === null) {
             throw new \DomainException('Blog not found');
         }
 
-        $rows = $this->comments->getByBlogId((int) $blog['id'], $page, $perPage, $viewerUserId);
+        $cursorData = $this->parseCursor($cursor);
+        if ($cursorData !== null) {
+            [$cursorCreatedAt, $cursorId] = $cursorData;
+            $rows = $this->comments->getByBlogId((int) $blog['id'], $page, $perPage, $viewerUserId, $cursorCreatedAt, $cursorId);
+        } else {
+            $rows = $this->comments->getByBlogId((int) $blog['id'], $page, $perPage, $viewerUserId);
+        }
         return OutputSanitizer::sanitizeRows($rows, ['body', 'username']);
+    }
+
+    private function parseCursor(?string $cursor): ?array
+    {
+        if ($cursor === null || $cursor === '') {
+            return null;
+        }
+
+        $parts = explode('|', $cursor, 2);
+        if (count($parts) !== 2) {
+            return null;
+        }
+
+        $createdAt = trim($parts[0]);
+        $id = (int) trim($parts[1]);
+        if ($createdAt === '' || $id <= 0) {
+            return null;
+        }
+
+        if (strtotime($createdAt) === false) {
+            return null;
+        }
+
+        return [$createdAt, $id];
     }
 
     /**

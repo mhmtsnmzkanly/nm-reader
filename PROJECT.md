@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Pagination: Cursor Support for Comments & Notifications (2026-03-18)
+- **Status**: Completed.
+- **Change**: Added cursor-based pagination for comment and notification feeds to avoid deep offset costs.
+
 ### Home Feed: Respect per_page (2026-03-18)
 - **Status**: Completed.
 - **Change**: Home payload now honors `per_page` for explore, recent chapters, and recently added sections.

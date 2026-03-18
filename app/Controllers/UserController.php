@@ -173,11 +173,14 @@ final class UserController
         $query = $request->getQueryParams();
         $page = max(1, (int) ($query['page'] ?? 1));
         $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
+        $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
 
-        return ResponseHelper::success(
-            $this->users->notifications($userId, $page, $perPage),
-            ['page' => $page, 'per_page' => $perPage]
-        );
+        $items = $this->users->notifications($userId, $page, $perPage, $cursor);
+        $meta = ['page' => $page, 'per_page' => $perPage];
+        if ($cursor !== null && $cursor !== '') {
+            $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+        }
+        return ResponseHelper::success($items, $meta);
     }
 
     /**
@@ -204,6 +207,23 @@ final class UserController
             $this->users->followedUsers($userId, $page, $perPage),
             ['page' => $page, 'per_page' => $perPage]
         );
+    }
+
+    private function nextCursor(array $items, int $perPage): ?string
+    {
+        if (count($items) < $perPage) {
+            return null;
+        }
+        $last = $items[array_key_last($items)] ?? null;
+        if (!is_array($last)) {
+            return null;
+        }
+        $createdAt = $last['created_at'] ?? null;
+        $id = $last['id'] ?? null;
+        if (!is_string($createdAt) || $createdAt === '' || !is_numeric($id)) {
+            return null;
+        }
+        return $createdAt . '|' . (int) $id;
     }
 
     /**

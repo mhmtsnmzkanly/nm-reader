@@ -74,12 +74,18 @@ final class CommentRepository
     /**
      * Lists comments for a blog post, including user vote status.
      */
-    public function getByBlogId(int $blogId, int $page, int $perPage, ?string $viewerUserId = null): array
+    public function getByBlogId(int $blogId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $where = $this->commentsHasBlogId()
-            ? 'c.blog_id = :blog_id'
-            : 'c.content_id = :blog_id_legacy';
+        $whereParts = [
+            $this->commentsHasBlogId()
+                ? 'c.blog_id = :blog_id'
+                : 'c.content_id = :blog_id_legacy'
+        ];
+        if ($cursorCreatedAt !== null && $cursorId !== null) {
+            $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
+        }
+        $where = implode(' AND ', $whereParts);
         $sql = 'SELECT 
                     c.id,
                     c.parent_id,
@@ -96,8 +102,8 @@ final class CommentRepository
                     ON cv.comment_id = c.id
                    AND cv.user_id = :viewer_user_id
                 WHERE ' . $where . '
-                ORDER BY c.created_at DESC
-                LIMIT :limit OFFSET :offset';
+                ORDER BY c.created_at DESC, c.id DESC
+                LIMIT :limit' . ($cursorCreatedAt !== null && $cursorId !== null ? '' : ' OFFSET :offset');
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':viewer_user_id', $viewerUserId, $viewerUserId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
@@ -106,8 +112,14 @@ final class CommentRepository
         } else {
             $stmt->bindValue(':blog_id_legacy', (string) $blogId, PDO::PARAM_STR);
         }
+        if ($cursorCreatedAt !== null && $cursorId !== null) {
+            $stmt->bindValue(':cursor_created', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_id', $cursorId, PDO::PARAM_INT);
+        }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        if ($cursorCreatedAt === null || $cursorId === null) {
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -116,9 +128,14 @@ final class CommentRepository
     /**
      * Lists comments for a chapter, including user vote status.
      */
-    public function getByChapterId(string $chapterId, int $page, int $perPage, ?string $viewerUserId = null): array
+    public function getByChapterId(string $chapterId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $whereParts = ['c.chapter_id = :chapter_id'];
+        if ($cursorCreatedAt !== null && $cursorId !== null) {
+            $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
+        }
+        $where = implode(' AND ', $whereParts);
         $sql = 'SELECT 
                     c.id,
                     c.parent_id,
@@ -134,15 +151,21 @@ final class CommentRepository
                 LEFT JOIN comment_votes cv
                     ON cv.comment_id = c.id
                    AND cv.user_id = :viewer_user_id
-                WHERE c.chapter_id = :chapter_id
-                ORDER BY c.created_at DESC
-                LIMIT :limit OFFSET :offset';
+                WHERE ' . $where . '
+                ORDER BY c.created_at DESC, c.id DESC
+                LIMIT :limit' . ($cursorCreatedAt !== null && $cursorId !== null ? '' : ' OFFSET :offset');
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':viewer_user_id', $viewerUserId, $viewerUserId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':chapter_id', $chapterId, PDO::PARAM_STR);
+        if ($cursorCreatedAt !== null && $cursorId !== null) {
+            $stmt->bindValue(':cursor_created', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_id', $cursorId, PDO::PARAM_INT);
+        }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        if ($cursorCreatedAt === null || $cursorId === null) {
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -151,9 +174,14 @@ final class CommentRepository
     /**
      * Lists comments for a series (legacy or general content comments).
      */
-    public function getByContentId(string $contentId, int $page, int $perPage, ?string $viewerUserId = null): array
+    public function getByContentId(string $contentId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $whereParts = ['c.content_id = :content_id'];
+        if ($cursorCreatedAt !== null && $cursorId !== null) {
+            $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
+        }
+        $where = implode(' AND ', $whereParts);
         $sql = 'SELECT 
                     c.id,
                     c.parent_id,
@@ -169,15 +197,21 @@ final class CommentRepository
                 LEFT JOIN comment_votes cv
                     ON cv.comment_id = c.id
                    AND cv.user_id = :viewer_user_id
-                WHERE c.content_id = :content_id
-                ORDER BY c.created_at DESC
-                LIMIT :limit OFFSET :offset';
+                WHERE ' . $where . '
+                ORDER BY c.created_at DESC, c.id DESC
+                LIMIT :limit' . ($cursorCreatedAt !== null && $cursorId !== null ? '' : ' OFFSET :offset');
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':viewer_user_id', $viewerUserId, $viewerUserId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':content_id', $contentId, PDO::PARAM_STR);
+        if ($cursorCreatedAt !== null && $cursorId !== null) {
+            $stmt->bindValue(':cursor_created', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_id', $cursorId, PDO::PARAM_INT);
+        }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        if ($cursorCreatedAt === null || $cursorId === null) {
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        }
         $stmt->execute();
 
         return $stmt->fetchAll();

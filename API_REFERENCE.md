@@ -125,12 +125,18 @@ Returns a single blog post.
 
 #### **GET /blogs/{slug}/comments**
 Lists blog comments.
+- **Query Params**: `page`, `per_page`, `cursor` (optional keyset cursor: `{created_at}|{id}`).
+- **Meta**: `next_cursor` when cursor pagination is used.
 
 #### **GET /chapter/{chapterId}/comments**
 Lists chapter comments.
+- **Query Params**: `page`, `per_page`, `cursor` (optional keyset cursor: `{created_at}|{id}`).
+- **Meta**: `next_cursor` when cursor pagination is used.
 
 #### **GET /content/{type}/{slug}/comments**
 Lists series comments.
+- **Query Params**: `page`, `per_page`, `cursor` (optional keyset cursor: `{created_at}|{id}`).
+- **Meta**: `next_cursor` when cursor pagination is used.
 
 #### **GET /profile/{person}**
 Returns a public profile view for a username or user ID.
@@ -247,7 +253,8 @@ Pulsing for reading duration.
 
 #### **GET /user/notifications**
 Retrieve paginated notifications for the current user.
-- **Query Params**: `page` (int), `per_page` (int).
+- **Query Params**: `page` (int), `per_page` (int), `cursor` (optional keyset cursor: `{created_at}|{id}`).
+- **Meta**: `next_cursor` when using cursor-based pagination.
 
 #### **POST /user/notifications/read**
 Mark all unread notifications as read for the current user.

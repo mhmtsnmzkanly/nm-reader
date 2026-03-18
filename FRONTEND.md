@@ -247,6 +247,10 @@ Wallet top-ups are performed manually by admins. Frontend should treat package l
 ### **Notifications**
 #### **PATH**
 `GET /api/v1/user/notifications`
+#### **QUERY PARAMS**
+`page`, `per_page`, `cursor` (optional keyset cursor: `{created_at}|{id}`)
+#### **META**
+`next_cursor` when cursor pagination is used.
 
 ### **Mark Notifications Read**
 #### **PATH**

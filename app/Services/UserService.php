@@ -370,10 +370,16 @@ final class UserService
      * @param int $perPage
      * @return array
      */
-    public function notifications(string $userId, int $page, int $perPage): array
+    public function notifications(string $userId, int $page, int $perPage, ?string $cursor = null): array
     {
         try {
-            $rows = $this->users->listNotifications($userId, $page, $perPage);
+            $cursorData = $this->parseCursor($cursor);
+            if ($cursorData !== null) {
+                [$cursorCreatedAt, $cursorId] = $cursorData;
+                $rows = $this->users->listNotifications($userId, $page, $perPage, $cursorCreatedAt, $cursorId);
+            } else {
+                $rows = $this->users->listNotifications($userId, $page, $perPage);
+            }
             if (!is_array($rows)) {
                 return [];
             }
@@ -393,6 +399,30 @@ final class UserService
     public function markNotificationsRead(string $userId): void
     {
         $this->users->markNotificationsRead($userId);
+    }
+
+    private function parseCursor(?string $cursor): ?array
+    {
+        if ($cursor === null || $cursor === '') {
+            return null;
+        }
+
+        $parts = explode('|', $cursor, 2);
+        if (count($parts) !== 2) {
+            return null;
+        }
+
+        $createdAt = trim($parts[0]);
+        $id = (int) trim($parts[1]);
+        if ($createdAt === '' || $id <= 0) {
+            return null;
+        }
+
+        if (strtotime($createdAt) === false) {
+            return null;
+        }
+
+        return [$createdAt, $id];
     }
 
     /**

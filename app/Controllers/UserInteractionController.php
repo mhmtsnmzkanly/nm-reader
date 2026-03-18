@@ -63,22 +63,43 @@ final class UserInteractionController
     public function listChapterComments(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
+        $query = $request->getQueryParams();
+        $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
         $viewerId = $_SESSION['user_id'] ?? null;
-        return ResponseHelper::success($this->comments->listByChapter((string)$args['chapterId'], $page, $perPage, $viewerId), ['page' => $page, 'per_page' => $perPage]);
+        $items = $this->comments->listByChapter((string)$args['chapterId'], $page, $perPage, $viewerId, $cursor);
+        $meta = ['page' => $page, 'per_page' => $perPage];
+        if ($cursor !== null && $cursor !== '') {
+            $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+        }
+        return ResponseHelper::success($items, $meta);
     }
 
     public function listSeriesComments(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
+        $query = $request->getQueryParams();
+        $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
         $viewerId = $_SESSION['user_id'] ?? null;
-        return ResponseHelper::success($this->comments->listBySeriesSlug((string)$args['slug'], $page, $perPage, $viewerId), ['page' => $page, 'per_page' => $perPage]);
+        $items = $this->comments->listBySeriesSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
+        $meta = ['page' => $page, 'per_page' => $perPage];
+        if ($cursor !== null && $cursor !== '') {
+            $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+        }
+        return ResponseHelper::success($items, $meta);
     }
 
     public function listBlogComments(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
+        $query = $request->getQueryParams();
+        $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
         $viewerId = $_SESSION['user_id'] ?? null;
-        return ResponseHelper::success($this->comments->listByBlogSlug((string)$args['slug'], $page, $perPage, $viewerId), ['page' => $page, 'per_page' => $perPage]);
+        $items = $this->comments->listByBlogSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
+        $meta = ['page' => $page, 'per_page' => $perPage];
+        if ($cursor !== null && $cursor !== '') {
+            $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+        }
+        return ResponseHelper::success($items, $meta);
     }
 
     public function voteComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -143,5 +164,22 @@ final class UserInteractionController
     {
         $query = $request->getQueryParams();
         return [max(1, (int) ($query['page'] ?? 1)), max(1, min(50, (int) ($query['per_page'] ?? 20)))];
+    }
+
+    private function nextCursor(array $items, int $perPage): ?string
+    {
+        if (count($items) < $perPage) {
+            return null;
+        }
+        $last = $items[array_key_last($items)] ?? null;
+        if (!is_array($last)) {
+            return null;
+        }
+        $createdAt = $last['created_at'] ?? null;
+        $id = $last['id'] ?? null;
+        if (!is_string($createdAt) || $createdAt === '' || !is_numeric($id)) {
+            return null;
+        }
+        return $createdAt . '|' . (int) $id;
     }
 }
