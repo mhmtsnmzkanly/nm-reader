@@ -18,12 +18,15 @@
           : $h`<div class="space-y-3">
             ${state.items.map((item) => $h`
               <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${item.type}/${item.slug}/">
-                <div class="flex items-center justify-between">
-                  <div class="font-semibold text-slate-100">${item.title}</div>
-                  ${item.series_unlock_price
-                    ? $h`<span class="nmr-chip nmr-chip--price">${item.series_unlock_price} ${i18n.coins || 'coins'}</span>`
-                    : $h`<span class="nmr-chip nmr-chip--free">${i18n.free || 'Free'}</span>`
-                  }
+                <div class="flex items-center gap-4">
+                  <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
+                  <div class="flex-1 flex items-center justify-between">
+                    <div class="font-semibold text-slate-100">${item.title}</div>
+                    ${item.series_unlock_price
+                      ? $h`<span class="nmr-chip nmr-chip--price">${item.series_unlock_price} ${i18n.coins || 'coins'}</span>`
+                      : $h`<span class="nmr-chip nmr-chip--free">${i18n.free || 'Free'}</span>`
+                    }
+                  </div>
                 </div>
               </a>
             `)}
@@ -51,6 +54,7 @@ export default (props, { $onMounted, $update, $f7route }) => {
     slug: item.slug || '',
     type: item.type || state.type,
     series_unlock_price: item.series_unlock_price || item.series_unlock_price_coin || item.access?.series_unlock_price || 0,
+    cover: item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail || '/assets/img/covers/one-piece.jpg',
   });
 
   $onMounted(async () => {

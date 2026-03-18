@@ -21,15 +21,18 @@
             <div class="space-y-3">
               ${state.chapters.map((chapter) => $h`
                 <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/">
-                  <div class="flex items-start justify-between gap-3">
-                    <div>
-                      <div class="font-semibold text-slate-100">${chapter.title}</div>
-                      <div class="text-xs text-slate-400 mt-1">#${chapter.chapter_number}</div>
+                  <div class="flex items-center gap-4">
+                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${state.cover}');background-size:cover;background-position:center;"></div>
+                    <div class="flex-1 flex items-start justify-between gap-3">
+                      <div>
+                        <div class="font-semibold text-slate-100">${chapter.title}</div>
+                        <div class="text-xs text-slate-400 mt-1">#${chapter.chapter_number}</div>
+                      </div>
+                      ${chapter.is_locked
+                        ? $h`<span class="nmr-chip nmr-chip--price">${chapter.price_coin} ${i18n.coins || 'coins'}</span>`
+                        : $h`<span class="nmr-chip nmr-chip--free">${i18n.free || 'Free'}</span>`
+                      }
                     </div>
-                    ${chapter.is_locked
-                      ? $h`<span class="nmr-chip nmr-chip--price">${chapter.price_coin} ${i18n.coins || 'coins'}</span>`
-                      : $h`<span class="nmr-chip nmr-chip--free">${i18n.free || 'Free'}</span>`
-                    }
                   </div>
                 </a>
               `)}
@@ -51,6 +54,7 @@ export default (props, { $onMounted, $update, $f7route }) => {
     title: 'Series',
     description: '',
     chapters: [],
+    cover: '/assets/img/covers/one-piece.jpg',
     type: $f7route.params.type,
     slug: $f7route.params.slug,
   };
@@ -76,6 +80,7 @@ export default (props, { $onMounted, $update, $f7route }) => {
 
       state.title = contentData.title || 'Series';
       state.description = contentData.description || '';
+      state.cover = contentData.cover_image || contentData.cover || contentData.thumbnail || contentData.image || state.cover;
       state.chapters = chaptersData.map(normalizeChapter).filter((row) => row.chapter_number !== '');
     } catch (err) {
       state.error = err.message || i18n.failed_load_content || 'Failed to load content.';

@@ -47,18 +47,24 @@
             ? $h`<div class="space-y-3">
               ${state.latest.map((item) => $h`
                 <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${item.type}/${item.slug}/${item.chapter_number}/">
-                  <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-start gap-4">
+                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
+                    <div class="flex-1">
+                      <div class="flex items-start justify-between gap-3">
                     <div>
                       <div class="font-semibold text-slate-100">${item.title}</div>
                       <div class="text-xs text-slate-400 mt-1">${item.type}</div>
                     </div>
                     <div class="text-xs text-slate-300">#${item.chapter_number}</div>
+                      </div>
                   </div>
                   <div class="mt-3">
                     ${item.is_locked
                       ? $h`<span class="nmr-chip nmr-chip--price">${item.price_coin} ${i18n.coins || 'coins'}</span>`
                       : $h`<span class="nmr-chip nmr-chip--free">${i18n.free || 'Free'}</span>`
                     }
+                  </div>
+                    </div>
                   </div>
                 </a>
               `)}
@@ -75,9 +81,12 @@
             ? $h`<div class="space-y-3">
               ${state.recent.map((item) => $h`
                 <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${item.type}/${item.slug}/">
-                  <div class="flex items-center justify-between">
-                    <div class="font-semibold text-slate-100">${item.title}</div>
-                    <div class="text-xs text-slate-400">${item.type}</div>
+                  <div class="flex items-center gap-4">
+                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
+                    <div class="flex-1 flex items-center justify-between">
+                      <div class="font-semibold text-slate-100">${item.title}</div>
+                      <div class="text-xs text-slate-400">${item.type}</div>
+                    </div>
                   </div>
                 </a>
               `)}
@@ -109,12 +118,14 @@ export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
     chapter_number: item.chapter_number || item.chapterNumber || item.number || '',
     price_coin: item.price_coin || item.access?.chapter_unlock_price || 0,
     is_locked: item.is_locked ?? !(item.access?.granted ?? true),
+    cover: item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail || '/assets/img/covers/one-piece.jpg',
   });
 
   const normalizeSeries = (item) => ({
     title: item.title || 'Series',
     slug: item.slug || '',
     type: item.type || '',
+    cover: item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail || '/assets/img/covers/one-piece.jpg',
   });
 
   const syncAuth = () => {
