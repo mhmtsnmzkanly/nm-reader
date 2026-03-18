@@ -1,226 +1,180 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
 
-:root {
-  --f7-theme-color: #8b5cf6;
-  --f7-theme-color-rgb: 139, 92, 246;
-  --f7-font-family: 'Manrope', 'SF Pro Text', sans-serif;
-  --nmr-title-font: 'Playfair Display', 'Times New Roman', serif;
-  --nmr-bg: #0a0b10;
-  --nmr-bg-soft: #0f1118;
-  --nmr-surface: rgba(255, 255, 255, 0.06);
-  --nmr-surface-strong: rgba(255, 255, 255, 0.1);
-  --nmr-border: rgba(255, 255, 255, 0.12);
-  --nmr-accent: #8b5cf6;
-  --nmr-accent-2: #22d3ee;
-  --nmr-gold: #f2c76e;
-  --nmr-text: #e5e7eb;
-  --nmr-muted: rgba(229, 231, 235, 0.62);
-  --nmr-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --f7-theme-color: #8b5cf6;
+    --f7-theme-color-rgb: 139, 92, 246;
+    --f7-font-family: 'Manrope', 'SF Pro Text', sans-serif;
+  }
+
+  html,
+  body {
+    @apply text-slate-200;
+    background: radial-gradient(1200px 600px at 15% -20%, rgba(139, 92, 246, 0.25), transparent 60%),
+      radial-gradient(900px 500px at 85% -10%, rgba(34, 211, 238, 0.18), transparent 60%),
+      #0a0b10;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(10, 11, 16, 0.95));
+    pointer-events: none;
+    z-index: -1;
+  }
 }
 
-html,
-body {
-  background: radial-gradient(1200px 600px at 15% -20%, rgba(139, 92, 246, 0.25), transparent 60%),
-    radial-gradient(900px 500px at 85% -10%, rgba(34, 211, 238, 0.18), transparent 60%),
-    var(--nmr-bg);
-  color: var(--nmr-text);
-}
+@layer components {
+  #app {
+    @apply min-h-screen;
+  }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(10, 11, 16, 0.95));
-  pointer-events: none;
-  z-index: -1;
-}
+  .page {
+    @apply bg-transparent animate-page-fade;
+  }
 
-#app {
-  min-height: 100vh;
-}
+  .navbar,
+  .navbar .navbar-bg {
+    @apply border-b border-white/5 backdrop-blur-xl;
+    background: rgba(10, 11, 16, 0.6);
+  }
 
-.page {
-  background: transparent;
-  animation: page-fade 420ms ease-out;
-}
+  .title,
+  .title-large-text {
+    @apply tracking-wide;
+    font-family: 'Playfair Display', serif;
+  }
 
-.navbar,
-.navbar .navbar-bg {
-  background: rgba(10, 11, 16, 0.6);
-  backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
+  .title-large-text {
+    @apply text-3xl;
+  }
 
-.title,
-.title-large-text {
-  font-family: var(--nmr-title-font);
-  letter-spacing: 0.4px;
-}
+  .page-content {
+    @apply pt-1.5;
+  }
 
-.title-large-text {
-  font-size: 30px;
-}
+  .block-title {
+    @apply text-nmr-gold uppercase tracking-[1.2px] text-xs;
+  }
 
-.page-content {
-  padding-top: 6px;
-}
+  .block,
+  .list,
+  .list ul,
+  .list .item-content {
+    @apply bg-transparent;
+  }
 
-.block-title {
-  color: var(--nmr-gold);
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  font-size: 12px;
-}
-
-.block,
-.list,
-.list ul,
-.list .item-content {
-  background: transparent;
-}
-
-.list li {
-  margin: 10px 16px;
-  border-radius: 16px;
-  background: var(--nmr-surface);
-  border: 1px solid var(--nmr-border);
-  box-shadow: var(--nmr-shadow);
-  overflow: hidden;
-  transform: translateY(8px);
-  opacity: 0;
-  animation: card-rise 420ms ease-out forwards;
-}
-
-.list li:nth-child(1) { animation-delay: 40ms; }
-.list li:nth-child(2) { animation-delay: 80ms; }
-.list li:nth-child(3) { animation-delay: 120ms; }
-.list li:nth-child(4) { animation-delay: 160ms; }
-.list li:nth-child(5) { animation-delay: 200ms; }
-
-.item-content {
-  padding: 14px 16px;
-}
-
-.item-title,
-.item-subtitle,
-.item-after {
-  color: var(--nmr-text);
-}
-
-.item-subtitle {
-  color: var(--nmr-muted);
-}
-
-.segmented .button {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--nmr-text);
-}
-
-.button-fill {
-  background: linear-gradient(135deg, var(--nmr-accent), #6d28d9);
-  color: #fff;
-  box-shadow: 0 16px 40px rgba(139, 92, 246, 0.4);
-}
-
-.button-outline {
-  border-color: rgba(255, 255, 255, 0.28);
-  color: var(--nmr-text);
-}
-
-.reader-image {
-  width: 100%;
-  display: block;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.4);
-}
-
-.reader-text {
-  background: rgba(12, 14, 20, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 16px;
-  border-radius: 14px;
-}
-
-.reader-text p {
-  margin: 0 0 1rem 0;
-  line-height: 1.8;
-  color: #f1f5f9;
-}
-
-.reader-controls {
-  margin-bottom: 12px;
-}
-
-.login-actions {
-  margin-top: 12px;
-  text-align: center;
-  color: var(--nmr-muted);
-}
-
-.purchase-actions {
-  display: grid;
-  gap: 12px;
-}
-
-.popup .page-content,
-.sheet-modal-inner {
-  background: rgba(11, 12, 18, 0.96);
-  backdrop-filter: blur(20px);
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  line-height: 1.4;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--nmr-text);
-}
-
-.badge--price {
-  background: rgba(242, 199, 110, 0.18);
-  color: var(--nmr-gold);
-}
-
-.badge--free {
-  background: rgba(34, 211, 238, 0.16);
-  color: var(--nmr-accent-2);
-}
-
-.empty-state,
-.error-state {
-  padding: 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.error-state {
-  background: rgba(239, 68, 68, 0.14);
-  color: #fecaca;
-}
-
-.turnstile-wrap {
-  margin: 8px 16px 0;
-}
-
-@keyframes page-fade {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes card-rise {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .page,
   .list li {
-    animation: none;
+    @apply mx-4 my-2.5 rounded-2xl border border-white/10 shadow-nmr overflow-hidden opacity-0 translate-y-2 animate-card-rise;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .list li:nth-child(1) { animation-delay: 40ms; }
+  .list li:nth-child(2) { animation-delay: 80ms; }
+  .list li:nth-child(3) { animation-delay: 120ms; }
+  .list li:nth-child(4) { animation-delay: 160ms; }
+  .list li:nth-child(5) { animation-delay: 200ms; }
+
+  .item-content {
+    @apply px-4 py-3.5;
+  }
+
+  .item-title,
+  .item-subtitle,
+  .item-after {
+    @apply text-slate-200;
+  }
+
+  .item-subtitle {
+    @apply text-slate-400;
+  }
+
+  .segmented .button {
+    @apply border border-white/10 text-slate-200;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .button-fill {
+    @apply text-white shadow-[0_16px_40px_rgba(139,92,246,0.4)];
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  }
+
+  .button-outline {
+    @apply border-white/30 text-slate-200;
+  }
+
+  .reader-image {
+    @apply w-full block rounded-xl mb-4 shadow-[0_18px_45px_rgba(0,0,0,0.4)];
+  }
+
+  .reader-text {
+    @apply border border-white/10 rounded-2xl p-4;
+    background: rgba(12, 14, 20, 0.7);
+  }
+
+  .reader-text p {
+    @apply mb-4 leading-7 text-slate-100;
+  }
+
+  .reader-controls {
+    @apply mb-3;
+  }
+
+  .login-actions {
+    @apply mt-3 text-center text-slate-400;
+  }
+
+  .purchase-actions {
+    @apply grid gap-3;
+  }
+
+  .popup .page-content,
+  .sheet-modal-inner {
+    @apply backdrop-blur-xl;
+    background: rgba(11, 12, 18, 0.96);
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-slate-200;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .badge--price {
+    @apply text-nmr-gold;
+    background: rgba(242, 199, 110, 0.18);
+  }
+
+  .badge--free {
+    @apply text-nmr-accent2;
+    background: rgba(34, 211, 238, 0.16);
+  }
+
+  .empty-state,
+  .error-state {
+    @apply p-4 rounded-2xl border border-white/10;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .error-state {
+    @apply text-red-200;
+    background: rgba(239, 68, 68, 0.14);
+  }
+
+  .turnstile-wrap {
+    @apply mx-4 mt-2;
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: reduce) {
+    .page,
+    .list li {
+      animation: none;
+    }
   }
 }
