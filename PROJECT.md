@@ -115,6 +115,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Framework7 Scaffold (2026-03-18)
+- **Status**: In progress.
+- **Change**: Added `/mobile` web entry that serves the Framework7 app shell from `public/mobile/index.html`.
+- **Change**: Implemented initial P0 screens (home, type list, content detail, reader, wallet) plus login and unlock modals in `public/mobile/app.js` with styling in `public/mobile/app.css`.
+
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.
 - **Change**: Moved web UI tooling into `ui/web` and created `ui/mobile` placeholder for the Framework7 app. Tailwind build now outputs to `public/assets/css/main.css`.

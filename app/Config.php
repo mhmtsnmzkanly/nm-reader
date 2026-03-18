@@ -186,6 +186,7 @@ final class Config
         };
         $app->get("/robots.txt", [WebController::class, "robotsTxt"]);
         $app->get("/sitemap.xml", [WebController::class, "sitemapXml"]);
+        $app->get("/mobile[/{path:.*}]", [WebController::class, "mobile"]);
         $app->get("/logout", [AuthController::class, "logout"]);
         $app->get("/", fn($req, $res) => $res->withHeader("Location", "/tr")->withStatus(302));
         $app->group("/{lang:tr|en}", function ($g) use ($addWebRoutes): void {

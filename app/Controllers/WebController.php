@@ -62,6 +62,22 @@ final class WebController
     }
 
     /**
+     * Serves the Framework7 mobile app shell.
+     */
+    public function mobile(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $basePath = (string) ($this->settings['app']['base_path'] ?? dirname(__DIR__, 2));
+        $file = $basePath . '/public/mobile/index.html';
+        if (!is_file($file)) {
+            return $response->withStatus(404);
+        }
+
+        $html = (string) file_get_contents($file);
+        $response->getBody()->write($html);
+        return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    /**
      * Renders the platform homepage.
      */
     public function home(
