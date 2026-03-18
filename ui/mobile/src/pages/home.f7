@@ -11,9 +11,9 @@
           {{#if state.isLoggedIn}}
             <a class="link" data-action="logout" href="#">Logout</a>
           {{else}}
-            <a class="link popup-open" data-popup=".login-popup" href="#">Login</a>
+            <a class="link popup-open" data-popup=".login-popup" href="#">{{@global.i18n.login}}</a>
           {{/if}}
-          <a class="link" href="/wallet/">Wallet</a>
+          <a class="link" href="/wallet/">{{@global.i18n.wallet}}</a>
         </div>
       </div>
     </div>

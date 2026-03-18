@@ -101,6 +101,9 @@ const NMR_API = {
       }
 
       const message = payload?.error?.message || payload?.message || `HTTP Error ${response.status}`;
+      if (!options.silent && typeof document !== 'undefined') {
+        document.dispatchEvent(new CustomEvent('api:error', { detail: { message } }));
+      }
       const err = new Error(message);
       err.code = response.status;
       err.data = payload?.data || null;
@@ -174,6 +177,10 @@ const NMR_API = {
   shop: {
     async getPackages() { return await NMR_API.request('/shop/packages'); },
     async getFeatures() { return await NMR_API.request('/shop/features'); },
+  },
+
+  system: {
+    async getI18n(lang) { return await NMR_API.request(`/i18n/${lang}`, { silent: true }); },
   },
 };
 

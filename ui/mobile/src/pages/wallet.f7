@@ -6,7 +6,7 @@
         <div class="left">
           <a class="link back">Back</a>
         </div>
-        <div class="title">Wallet</div>
+        <div class="title">{{@global.i18n.wallet}}</div>
       </div>
     </div>
 
@@ -23,9 +23,9 @@
           </div>
           <div class="list">
             <ul>
-              <li><a class="item-link item-content" href="/wallet/transactions/"><div class="item-inner"><div class="item-title">Transactions</div></div></a></li>
-              <li><a class="item-link item-content" href="/shop/packages/"><div class="item-inner"><div class="item-title">Coin Packages</div></div></a></li>
-              <li><a class="item-link item-content" href="/shop/features/"><div class="item-inner"><div class="item-title">Features</div></div></a></li>
+              <li><a class="item-link item-content" href="/wallet/transactions/"><div class="item-inner"><div class="item-title">{{@global.i18n.transactions}}</div></div></a></li>
+              <li><a class="item-link item-content" href="/shop/packages/"><div class="item-inner"><div class="item-title">{{@global.i18n.coin_packages}}</div></div></a></li>
+              <li><a class="item-link item-content" href="/shop/features/"><div class="item-inner"><div class="item-title">{{@global.i18n.features}}</div></div></a></li>
             </ul>
           </div>
         {{/if}}
@@ -36,6 +36,7 @@
 <script>
 import api from '../js/api.js';
 import store from '../js/store.js';
+import { Template7 } from 'framework7';
 
 export default (props, { $onMounted, $update, $f7, $onBeforeUnmount }) => {
   const state = {
@@ -52,7 +53,8 @@ export default (props, { $onMounted, $update, $f7, $onBeforeUnmount }) => {
       store.dispatch('setWallet', { balance: state.balance });
       state.error = '';
     } catch (err) {
-      state.error = err.message || 'Login required.';
+      const i18n = Template7.global?.i18n || {};
+      state.error = err.message || i18n.login_required || 'Login required.';
       if (!store.state.auth.isLoggedIn) {
         $f7.popup.open('.login-popup');
       }
@@ -72,8 +74,9 @@ export default (props, { $onMounted, $update, $f7, $onBeforeUnmount }) => {
   $onMounted(async () => {
     document.addEventListener('auth:updated', onAuthUpdated);
     if (!store.state.auth.isLoggedIn) {
+      const i18n = Template7.global?.i18n || {};
       state.loading = false;
-      state.error = 'Login required.';
+      state.error = i18n.login_required || 'Login required.';
       $f7.popup.open('.login-popup');
       $update();
       return;

@@ -46,6 +46,7 @@
 <script>
 import api from '../js/api.js';
 import store from '../js/store.js';
+import { Template7 } from 'framework7';
 
 export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
   const state = {
@@ -101,9 +102,12 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
         $f7.dialog.alert('Chapter not available.');
         return;
       }
+      const i18n = Template7.global?.i18n || {};
+      const confirmTitle = i18n.unlock_confirm_title || 'Confirm Purchase';
+      const confirmBody = (i18n.unlock_confirm_body || 'Unlock this chapter for {price} coins?').replace('{price}', state.price_coin);
       $f7.dialog.confirm(
-        `Unlock this chapter for ${state.price_coin} coins?`,
-        'Confirm Purchase',
+        confirmBody,
+        confirmTitle,
         async () => {
           try {
             await api.wallet.unlockChapter(state.chapterId);

@@ -14,6 +14,7 @@ import routes from './routes.js';
 import store from './store.js';
 // Import API
 import api from './api.js';
+import { initI18n } from './i18n.js';
 
 // Import main app component
 import App from '../app.f7';
@@ -42,6 +43,16 @@ var app = new Framework7({
   store: store,
   // App routes
   routes: routes,
+});
+
+initI18n();
+
+document.addEventListener('api:error', (event) => {
+  const message = event.detail?.message || 'Request failed';
+  app.toast.create({
+    text: message,
+    closeTimeout: 3000,
+  }).open();
 });
 
 export { app };
