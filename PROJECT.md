@@ -102,6 +102,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Auth & Frontend Docs: CSRF + Refresh Tokens (2026-03-18)
+- **Status**: Completed.
+- **Change**: Documented `X-CSRF-Token` requirements for protected endpoints and clarified session-first auth behavior.
+- **Change**: Updated auth payload/response samples to include `remember`, `csrf_token`, and refresh-token rotation details.
+- **Change**: Aligned database notes with `api_token_expires_at` semantics.
+
 ### Frontend Performance: Footer Cache + JS Scoping (2026-03-17)
 - **Status**: Completed.
 - **Change**: Cached footer popular list to reduce repeated search load.
