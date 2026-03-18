@@ -56,6 +56,34 @@ const NMR_API = {
     this.saveSession(null);
   },
 
+  _safeJsonParse(text) {
+    if (!text) return null;
+    try {
+      return JSON.parse(text);
+    } catch (err) {
+      const trimmed = text.trim();
+      const objStart = trimmed.indexOf('{');
+      const objEnd = trimmed.lastIndexOf('}');
+      if (objStart !== -1 && objEnd > objStart) {
+        try {
+          return JSON.parse(trimmed.slice(objStart, objEnd + 1));
+        } catch (innerErr) {
+          // fall through
+        }
+      }
+      const arrStart = trimmed.indexOf('[');
+      const arrEnd = trimmed.lastIndexOf(']');
+      if (arrStart !== -1 && arrEnd > arrStart) {
+        try {
+          return JSON.parse(trimmed.slice(arrStart, arrEnd + 1));
+        } catch (innerErr) {
+          // fall through
+        }
+      }
+      return null;
+    }
+  },
+
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
 
@@ -92,7 +120,13 @@ const NMR_API = {
 
     const response = await fetch(url, config);
     const text = await response.text();
-    const payload = text ? JSON.parse(text) : null;
+    let payload = null;
+    if (text) {
+      payload = this._safeJsonParse(text);
+      if (!payload) {
+        payload = { message: text };
+      }
+    }
 
     if (!response.ok || payload?.status === 'error') {
       if (response.status === 401 && !options._retried && this._refreshToken) {
