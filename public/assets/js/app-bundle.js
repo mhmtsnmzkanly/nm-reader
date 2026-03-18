@@ -31,7 +31,10 @@
       : { status: response.ok ? "success" : "error", data: null };
 
     if (!response.ok || payload.status === "error") {
-      throw new Error(payload.message || ("Request failed: " + response.status));
+      const errMsg = (payload && payload.error && payload.error.message)
+        ? payload.error.message
+        : (payload && payload.message ? payload.message : ("Request failed: " + response.status));
+      throw new Error(errMsg);
     }
 
     return payload;

@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Frontend: Surface API Error Messages (2026-03-18)
+- **Status**: Completed.
+- **Change**: Updated frontend API wrapper to read `error.message` from server responses.
+
 ### Uploads: Zip Chapter Import (2026-03-18)
 - **Status**: Completed.
 - **Change**: Admin bulk upload now accepts `.zip` archives and extracts image files safely with limits.
