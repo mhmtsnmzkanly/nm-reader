@@ -50,7 +50,7 @@
   }
 
   .nmr-section-title {
-    @apply uppercase text-xs tracking-[1.4px] text-amber-200/90;
+    @apply uppercase text-xs tracking-[2px] text-amber-200/90;
   }
 
   .nmr-card {
@@ -92,7 +92,7 @@
   }
 
   .nmr-panel {
-    @apply rounded-2xl border border-white/10 bg-white/5 p-4;
+    @apply rounded-2xl border border-white/10 bg-white/5 p-5;
   }
 
   .nmr-muted {

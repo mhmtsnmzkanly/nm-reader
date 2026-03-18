@@ -23,11 +23,11 @@
         <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent"></div>
         <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.35),transparent_55%)]"></div>
         <div class="absolute inset-0 opacity-60" style="background-image:url('/assets/img/covers/one-piece.jpg');background-size:cover;background-position:center;"></div>
-        <div class="relative z-10 p-6 space-y-3">
+        <div class="relative z-10 p-7 space-y-4">
           <div class="text-xs uppercase tracking-[1.4px] text-amber-200/80">Premium</div>
-          <div class="text-2xl font-semibold text-slate-100">Story Library</div>
-          <div class="text-sm text-slate-300">Curated new chapters and cinematic reading.</div>
-          <div class="flex gap-3 pt-2">
+          <div class="text-3xl font-semibold text-slate-100 leading-tight">Story Library</div>
+          <div class="text-sm text-slate-300 leading-6">Curated new chapters and cinematic reading.</div>
+          <div class="flex gap-3 pt-1">
             <a class="nmr-button nmr-button-primary" href="/types/manga/">Explore</a>
             <a class="nmr-button nmr-button-ghost" href="/wallet/">Wallet</a>
           </div>
@@ -39,12 +39,12 @@
         <a class="nmr-button nmr-button-ghost" href="/types/manhwa/">Manhwa</a>
       </div>
 
-      <div class="space-y-4">
+      <div class="space-y-5">
         <div class="nmr-section-title">${i18n.latest_chapters || 'Latest Chapters'}</div>
         ${state.loading
           ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
           : state.latest.length
-            ? $h`<div class="space-y-3">
+            ? $h`<div class="space-y-4">
               ${state.latest.map((item) => $h`
                 <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${item.type}/${item.slug}/${item.chapter_number}/">
                   <div class="flex items-start gap-4">
@@ -73,12 +73,12 @@
         }
       </div>
 
-      <div class="space-y-4">
+      <div class="space-y-5">
         <div class="nmr-section-title">${i18n.recently_added || 'Recently Added'}</div>
         ${state.loading
           ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
           : state.recent.length
-            ? $h`<div class="space-y-3">
+            ? $h`<div class="space-y-4">
               ${state.recent.map((item) => $h`
                 <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${item.type}/${item.slug}/">
                   <div class="flex items-center gap-4">
