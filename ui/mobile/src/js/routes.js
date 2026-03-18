@@ -11,6 +11,9 @@ import GenresPage from '../pages/genres.f7';
 import GenreDetailPage from '../pages/genre-detail.f7';
 import TagsPage from '../pages/tags.f7';
 import TagDetailPage from '../pages/tag-detail.f7';
+import ProfilePage from '../pages/profile.f7';
+import LibraryPage from '../pages/library.f7';
+import HistoryPage from '../pages/history.f7';
 
 var routes = [
   { path: '/', component: HomePage },
@@ -26,6 +29,9 @@ var routes = [
   { path: '/genre/:slug/', component: GenreDetailPage },
   { path: '/tags/', component: TagsPage },
   { path: '/tag/:slug/', component: TagDetailPage },
+  { path: '/profile/', component: ProfilePage },
+  { path: '/library/', component: LibraryPage },
+  { path: '/history/', component: HistoryPage },
 ];
 
 export default routes;

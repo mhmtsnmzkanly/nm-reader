@@ -242,6 +242,14 @@ const NMR_API = {
   system: {
     async getI18n(lang) { return await NMR_API.request(`/i18n/${lang}`, { silent: true }); },
   },
+  user: {
+    async getProfile() { return await NMR_API.request('/user/profile'); },
+    async updateProfile(payload) { return await NMR_API.request('/user/profile', { method: 'POST', body: payload }); },
+    async getHistory(page = 1, perPage = 20) { return await NMR_API.request(`/user/history?page=${page}&per_page=${perPage}`); },
+    async getFollows(page = 1, perPage = 20) { return await NMR_API.request(`/user/follows?page=${page}&per_page=${perPage}`); },
+    async getPreferences() { return await NMR_API.request('/user/preferences'); },
+    async updatePreferences(payload) { return await NMR_API.request('/user/preferences', { method: 'PUT', body: payload }); },
+  },
 };
 
 export default NMR_API;
