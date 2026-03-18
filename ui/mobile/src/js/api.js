@@ -126,12 +126,14 @@ const NMR_API = {
       if (res?.data?.csrf_token) this.setCsrfToken(res.data.csrf_token);
       if (res?.data?.refresh_token) this.setRefreshToken(res.data.refresh_token);
       const current = this.loadSession() || {};
-      this.saveSession({
+      const session = {
         ...current,
         apiToken: current.apiToken || this._token,
         csrfToken: this._csrfToken,
         refreshToken: this._refreshToken,
-      });
+      };
+      this.setSession(session);
+      this.saveSession(session);
       return res;
     })();
     try {
