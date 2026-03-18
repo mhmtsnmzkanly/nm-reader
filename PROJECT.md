@@ -102,9 +102,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Chapter Pricing: Store Price on Chapters (2026-03-18)
+- **Status**: Completed.
+- **Change**: Moved per-chapter pricing to `chapters.price_amount` with `price_last_update` and added migration to backfill/drop `chapter_access_products`.
+
 ### Admin Chapters: Pricing Controls + Purchase Modal (2026-03-18)
 - **Status**: Completed.
-- **Change**: Added chapter pricing controls (coin + active) to admin create/edit flow and wired pricing updates via admin API.
+- **Change**: Added chapter pricing controls (coin) to admin create/edit flow and wired pricing updates via admin API.
 - **Change**: Replaced chapter purchase confirm with the existing purchase modal and updated unlock UI/wallet display after purchase.
 
 ### Frontend: Chapter Purchase Flow (2026-03-18)

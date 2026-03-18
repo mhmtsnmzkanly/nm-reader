@@ -259,8 +259,7 @@ window.AdminApp = (function($) {
         e.preventDefault(); const isE = e.target.id.includes('edit'); const fd = new FormData(e.target); const cid = $('#chapters-content-id').val();
         const p = Object.fromEntries(fd);
         const priceCoin = Number(fd.get('price_coin') || 0);
-        const priceActive = String(fd.get('price_active')) === '1';
-        delete p.price_coin; delete p.price_active;
+        delete p.price_coin;
         if ((p.type || '').toLowerCase() === 'image') p.pages = $(isE ? '#edit-chapter-pages' : '#create-chapter-pages').val().split('\n').map(l => l.trim()).filter(Boolean);
         else p.body = $(isE ? '#edit-chapter-body' : '#create-chapter-body').val();
         try {
@@ -269,7 +268,7 @@ window.AdminApp = (function($) {
           if (chapterId) {
             await api(`/admin/chapters/${chapterId}/pricing`, {
               method: 'PUT',
-              body: JSON.stringify({ price_coin: priceCoin, is_active: priceActive })
+              body: JSON.stringify({ price_coin: priceCoin })
             });
           }
           window.closeModal(); e.target.reset(); this.toggle('text', isE ? 'edit' : 'create'); this.load();
@@ -298,7 +297,6 @@ window.AdminApp = (function($) {
         f.find('[name="id"]').val(ch.id); f.find('[name="chapter_number"]').val(ch.chapter_number); f.find('[name="title"]').val(ch.title || ''); f.find('[name="type"]').val(ch.type);
         if (ch.type === 'image') { $('#edit-chapter-pages').val((ch.pages || []).join('\n')); $('#edit-chapter-body').val(''); } else { $('#edit-chapter-body').val(ch.body || ch.data || ''); $('#edit-chapter-pages').val(''); }
         $('#edit-chapter-price').val(ch.pricing?.price_coin ?? 0);
-        $('#edit-chapter-price-active').val(ch.pricing?.is_active ? '1' : '0');
         this.toggle(ch.type, 'edit'); window.openModal('modal-edit-chapter');
       } catch (e) { alert(e.message); }
     },

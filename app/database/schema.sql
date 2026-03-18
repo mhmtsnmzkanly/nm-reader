@@ -234,6 +234,8 @@ CREATE TABLE `chapters` (
   `title` varchar(200) DEFAULT NULL,
   `data` longtext NOT NULL,
   `type` enum('text','image') NOT NULL DEFAULT 'image',
+  `price_amount` int(10) unsigned NOT NULL DEFAULT 0,
+  `price_last_update` datetime DEFAULT NULL,
   `created_by` char(8) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
@@ -550,16 +552,6 @@ CREATE TABLE `series_access_products` (
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`content_id`),
   CONSTRAINT `fk_series_access_products_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-DROP TABLE IF EXISTS `chapter_access_products`;
-CREATE TABLE `chapter_access_products` (
-  `chapter_id` char(6) NOT NULL,
-  `price_coin` int(10) unsigned NOT NULL DEFAULT 0,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`chapter_id`),
-  CONSTRAINT `fk_chapter_access_products_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_series_unlocks`;

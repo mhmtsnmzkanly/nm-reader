@@ -291,6 +291,9 @@ final class WalletService
 
         $priceCoin = max(0, (int) ($payload['price_coin'] ?? 0));
         $isActive = (bool) ($payload['is_active'] ?? true);
+        if (!$isActive) {
+            $priceCoin = 0;
+        }
         $this->wallets->upsertChapterPricing($chapterId, $priceCoin, $isActive);
 
         $content = $this->findSeriesById((string) $chapter['content_id']);
@@ -304,7 +307,7 @@ final class WalletService
             'chapter_id' => $chapterId,
             'content_id' => (string) $chapter['content_id'],
             'price_coin' => $priceCoin,
-            'is_active' => $isActive,
+            'is_active' => $priceCoin > 0,
         ];
     }
 

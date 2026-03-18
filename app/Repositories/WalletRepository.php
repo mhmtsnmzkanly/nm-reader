@@ -260,15 +260,15 @@ final class WalletRepository
 
     public function upsertChapterPricing(string $chapterId, int $priceCoin, bool $isActive): void
     {
+        $priceAmount = $isActive ? max(0, $priceCoin) : 0;
         $stmt = $this->pdo->prepare(
-            'INSERT INTO chapter_access_products (chapter_id, price_coin, is_active, updated_at)
-             VALUES (:chapter_id, :price_coin, :is_active, NOW())
-             ON DUPLICATE KEY UPDATE price_coin = VALUES(price_coin), is_active = VALUES(is_active), updated_at = NOW()'
+            'UPDATE chapters
+             SET price_amount = :price_amount, price_last_update = NOW()
+             WHERE id = :chapter_id'
         );
         $stmt->execute([
             'chapter_id' => $chapterId,
-            'price_coin' => $priceCoin,
-            'is_active' => $isActive ? 1 : 0,
+            'price_amount' => $priceAmount,
         ]);
     }
 
@@ -288,9 +288,9 @@ final class WalletRepository
     public function getChapterPrice(string $chapterId): int
     {
         $stmt = $this->pdo->prepare(
-            'SELECT price_coin
-             FROM chapter_access_products
-             WHERE chapter_id = :chapter_id AND is_active = 1
+            'SELECT price_amount
+             FROM chapters
+             WHERE id = :chapter_id AND deleted_at IS NULL
              LIMIT 1'
         );
         $stmt->execute(['chapter_id' => $chapterId]);
@@ -301,20 +301,20 @@ final class WalletRepository
     public function getChapterPricing(string $chapterId): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT price_coin, is_active
-             FROM chapter_access_products
-             WHERE chapter_id = :chapter_id
+            'SELECT price_amount, price_last_update
+             FROM chapters
+             WHERE id = :chapter_id AND deleted_at IS NULL
              LIMIT 1'
         );
         $stmt->execute(['chapter_id' => $chapterId]);
         $row = $stmt->fetch();
         if (!$row) {
-            return ['price_coin' => 0, 'is_active' => false];
+            return ['price_coin' => 0, 'price_last_update' => null];
         }
 
         return [
-            'price_coin' => max(0, (int) ($row['price_coin'] ?? 0)),
-            'is_active' => (bool) ($row['is_active'] ?? false),
+            'price_coin' => max(0, (int) ($row['price_amount'] ?? 0)),
+            'price_last_update' => $row['price_last_update'] ?? null,
         ];
     }
 
@@ -329,12 +329,10 @@ final class WalletRepository
     {
         $stmt = $this->pdo->prepare(
             'SELECT 1
-             FROM chapter_access_products cap
-             INNER JOIN chapters ch ON ch.id = cap.chapter_id
+             FROM chapters ch
              WHERE ch.content_id = :content_id
                AND ch.deleted_at IS NULL
-               AND cap.is_active = 1
-               AND cap.price_coin > 0
+               AND ch.price_amount > 0
              LIMIT 1'
         );
         $stmt->execute(['content_id' => $contentId]);

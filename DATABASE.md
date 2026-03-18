@@ -61,6 +61,8 @@ The actual reading content.
 - `id` (char 6): Random identifier.
 - `data` (longtext): Contains either the Markdown body (Novel) or pipe-separated URLs (Manga).
 - `created_by` (char 8): Linked to `users.id` (Uploader).
+- `price_amount` (int): Per-chapter price in coins (`0` means free).
+- `price_last_update` (datetime): Last pricing change timestamp.
 
 ### 3.2 Taxonomy & Metadata
 
@@ -156,10 +158,6 @@ User ownership and expiration tracking for feature products.
 #### `series_access_products`
 Series-level pricing table.
 - When active and `price_coin > 0`, the series can be unlocked as a whole.
-
-#### `chapter_access_products`
-Chapter-level pricing table.
-- Used for per-chapter unlocks independent of full-series purchase.
 
 #### `user_series_unlocks`
 Ownership record for full-series unlocks.
