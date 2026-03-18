@@ -102,6 +102,10 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Analytics: Persist Search Logs (2026-03-18)
+- **Status**: Completed.
+- **Change**: Added `analytics_search_logs` table and migration so search analytics are written reliably.
+
 ### Search Ranking: Full-Text Relevance Fix (2026-03-18)
 - **Status**: Completed.
 - **Change**: Stabilized full-text relevance ordering when metadata is missing by coalescing NULL scores to zero.
