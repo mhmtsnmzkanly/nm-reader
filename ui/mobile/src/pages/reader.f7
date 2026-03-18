@@ -15,10 +15,10 @@
         <div class="block">{{@global.i18n.loading}}</div>
       {{else}}
         {{#if state.error}}
-          <div class="block">{{state.error}}</div>
+          <div class="block error-state">{{state.error}}</div>
         {{else}}
           {{#if state.is_locked}}
-            <div class="block">
+            <div class="block empty-state">
               <div>{{@global.i18n.reader_locked}}</div>
               <div>{{state.price_coin}} {{@global.i18n.coins}}</div>
               <a class="button button-fill" data-action="unlock" href="#">{{@global.i18n.unlock}}</a>

@@ -46,7 +46,9 @@
                       <div class="item-subtitle">
                         {{type}}
                         {{#if is_locked}}
-                          · {{price_coin}} coins
+                          · <span class="badge badge--price">{{price_coin}} {{@global.i18n.coins}}</span>
+                        {{else}}
+                          · <span class="badge badge--free">{{@global.i18n.free}}</span>
                         {{/if}}
                       </div>
                     </div>
@@ -56,7 +58,7 @@
             </ul>
           </div>
         {{else}}
-          <div class="block">{{@global.i18n.no_chapters}}</div>
+          <div class="block empty-state">{{@global.i18n.no_chapters}}</div>
         {{/if}}
       {{/if}}
 
@@ -80,7 +82,7 @@
             </ul>
           </div>
         {{else}}
-          <div class="block">{{@global.i18n.no_recent}}</div>
+          <div class="block empty-state">{{@global.i18n.no_recent}}</div>
         {{/if}}
       {{/if}}
     </div>

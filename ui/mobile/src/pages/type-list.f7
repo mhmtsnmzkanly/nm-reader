@@ -15,7 +15,7 @@
         <div class="block">{{@global.i18n.loading}}</div>
       {{else}}
         {{#if state.error}}
-          <div class="block">{{state.error}}</div>
+          <div class="block error-state">{{state.error}}</div>
         {{else}}
           <div class="list media-list">
             <ul>
@@ -26,9 +26,9 @@
                       <div class="item-title">{{title}}</div>
                       <div class="item-after">
                         {{#if series_unlock_price}}
-                          {{series_unlock_price}} {{@global.i18n.coins}}
+                          <span class="badge badge--price">{{series_unlock_price}} {{@global.i18n.coins}}</span>
                         {{else}}
-                          {{@global.i18n.free}}
+                          <span class="badge badge--free">{{@global.i18n.free}}</span>
                         {{/if}}
                       </div>
                     </div>

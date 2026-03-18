@@ -13,7 +13,7 @@
         <div class="block">{{@global.i18n.loading}}</div>
       {{else}}
         {{#if state.error}}
-          <div class="block">{{state.error}}</div>
+          <div class="block error-state">{{state.error}}</div>
         {{else}}
           <div class="list">
             <ul>

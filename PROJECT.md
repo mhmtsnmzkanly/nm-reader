@@ -132,6 +132,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Added global page error toasts for mobile views.
 - **Change**: Added transaction pagination, shop info notes, and reader font size controls.
 - **Change**: Expanded mobile i18n coverage across lists, wallet, shop, and reader messages.
+- **Change**: Polished mobile list badges and empty/error states.
 
 ### UI Workspace Layout (2026-03-18)
 - **Status**: Completed.

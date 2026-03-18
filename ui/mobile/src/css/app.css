@@ -23,3 +23,35 @@
   display: grid;
   gap: 12px;
 }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.4;
+  background: rgba(15, 17, 21, 0.08);
+}
+
+.badge--price {
+  background: rgba(255, 153, 0, 0.12);
+  color: #c36d00;
+}
+
+.badge--free {
+  background: rgba(12, 131, 53, 0.12);
+  color: #0b7a34;
+}
+
+.empty-state,
+.error-state {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(15, 17, 21, 0.05);
+}
+
+.error-state {
+  background: rgba(173, 16, 16, 0.08);
+  color: #a11010;
+}
