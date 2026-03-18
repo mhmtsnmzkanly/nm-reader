@@ -23,6 +23,9 @@ const fallback = {
   unlock_confirm_title: 'Confirm Purchase',
   unlock_confirm_body: 'Unlock this chapter for {price} coins?',
   login_required: 'Login required.',
+  purchase_title: 'Unlock Chapter',
+  purchase_confirm: 'Unlock Now',
+  purchase_cancel: 'Cancel',
 };
 
 const i18n = {

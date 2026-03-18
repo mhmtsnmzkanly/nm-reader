@@ -46,9 +46,8 @@
 <script>
 import api from '../js/api.js';
 import store from '../js/store.js';
-import { Template7 } from 'framework7';
 
-export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
+export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $f7 }) => {
   const state = {
     loading: true,
     error: '',
@@ -92,6 +91,14 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       $update();
     }
 
+    const onPurchaseSuccess = async (event) => {
+      if (event.detail?.chapterId !== state.chapterId) return;
+      await loadChapter();
+      $update();
+    };
+
+    document.addEventListener('purchase:success', onPurchaseSuccess);
+
     $el.on('click', '[data-action="unlock"]', async (event) => {
       event.preventDefault();
       if (!store.state.auth.isLoggedIn) {
@@ -102,26 +109,12 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
         $f7.dialog.alert('Chapter not available.');
         return;
       }
-      const i18n = Template7.global?.i18n || {};
-      const confirmTitle = i18n.unlock_confirm_title || 'Confirm Purchase';
-      const confirmBody = (i18n.unlock_confirm_body || 'Unlock this chapter for {price} coins?').replace('{price}', state.price_coin);
-      $f7.dialog.confirm(
-        confirmBody,
-        confirmTitle,
-        async () => {
-          try {
-            await api.wallet.unlockChapter(state.chapterId);
-            const walletPayload = await api.wallet.getSummary();
-            const walletData = walletPayload?.data || walletPayload || {};
-            store.dispatch('setWallet', { balance: walletData.balance || 0 });
-            await loadChapter();
-            $update();
-          } catch (err) {
-            $f7.dialog.alert(err.message || 'Unlock failed');
-          }
-        },
-      );
+      document.dispatchEvent(new CustomEvent('purchase:open', { detail: { chapterId: state.chapterId, price: state.price_coin } }));
     });
+  });
+
+  $onBeforeUnmount(() => {
+    document.removeEventListener('purchase:success', onPurchaseSuccess);
   });
 
   return $render;

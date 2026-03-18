@@ -118,6 +118,29 @@
         </div>
       </div>
     </div>
+
+    <div class="popup purchase-popup">
+      <div class="view">
+        <div class="page">
+          <div class="navbar">
+            <div class="navbar-bg"></div>
+            <div class="navbar-inner">
+              <div class="title">{{@global.i18n.purchase_title}}</div>
+              <div class="right"><a class="link popup-close" href="#">{{@global.i18n.purchase_cancel}}</a></div>
+            </div>
+          </div>
+          <div class="page-content">
+            <div class="block">
+              <p class="purchase-message" id="purchase-message"></p>
+              <div class="purchase-actions">
+                <a class="button button-fill" data-action="purchase-confirm" href="#">{{@global.i18n.purchase_confirm}}</a>
+                <a class="button button-outline popup-close" href="#">{{@global.i18n.purchase_cancel}}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script>
@@ -126,6 +149,7 @@ import store from './js/store.js';
 import { Template7 } from 'framework7';
 
 export default (props, { $onMounted, $el, $f7 }) => {
+  let pendingPurchase = null;
   const applySession = (data) => {
     const session = {
       apiToken: data.api_token || null,
@@ -143,6 +167,33 @@ export default (props, { $onMounted, $el, $f7 }) => {
   };
 
   $onMounted(() => {
+    document.addEventListener('purchase:open', (event) => {
+      const detail = event.detail || {};
+      pendingPurchase = detail;
+      const i18n = Template7.global?.i18n || {};
+      const message = (i18n.unlock_confirm_body || 'Unlock this chapter for {price} coins?')
+        .replace('{price}', detail.price || 0);
+      const messageEl = document.getElementById('purchase-message');
+      if (messageEl) messageEl.textContent = message;
+      $f7.popup.open('.purchase-popup');
+    });
+
+    $el.on('click', '[data-action="purchase-confirm"]', async (event) => {
+      event.preventDefault();
+      if (!pendingPurchase?.chapterId) return;
+      try {
+        await api.wallet.unlockChapter(pendingPurchase.chapterId);
+        const walletPayload = await api.wallet.getSummary();
+        const walletData = walletPayload?.data || walletPayload || {};
+        store.dispatch('setWallet', { balance: walletData.balance || 0 });
+        document.dispatchEvent(new CustomEvent('purchase:success', { detail: { chapterId: pendingPurchase.chapterId } }));
+        pendingPurchase = null;
+        $f7.popup.close('.purchase-popup');
+      } catch (err) {
+        $f7.dialog.alert(err.message || 'Unlock failed');
+      }
+    });
+
     $el.on('submit', '#login-form', async (event) => {
       event.preventDefault();
       const form = event.target;
