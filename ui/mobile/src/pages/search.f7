@@ -29,7 +29,26 @@
       <div class="searchbar-backdrop"></div>
 
       ${state.loading
-        ? $h`<div class="flex items-center justify-center pt-12"><div class="preloader color-purple"></div></div>`
+        ? $h`
+          <div class="list media-list no-hairlines no-chevron skeleton-text skeleton-effect-blink">
+            <ul>
+              ${[1, 2, 3, 4, 5].map(() => $h`
+                <li>
+                  <div class="item-content">
+                    <div class="item-media">
+                      <div class="skeleton-block" style="width: 60px; height: 80px; border-radius: 8px"></div>
+                    </div>
+                    <div class="item-inner">
+                      <div class="item-title-row"><div class="item-title">Loading series title</div></div>
+                      <div class="item-subtitle">Manga</div>
+                      <div class="item-text">This is a long description text for skeleton placeholder</div>
+                    </div>
+                  </div>
+                </li>
+              `)}
+            </ul>
+          </div>
+        `
         : state.items.length
           ? $h`
             <div class="list media-list no-hairlines no-chevron animate-fade-in">

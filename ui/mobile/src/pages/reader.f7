@@ -23,7 +23,7 @@
 
     <div class="page-content" @scroll="${handleScroll}">
       ${state.loading
-        ? $h`<div class="flex items-center justify-center h-full"><div class="preloader color-purple"></div></div>`
+        ? $h`<div class="block display-flex justify-content-center align-items-center" style="height: 100%"><div class="preloader"></div></div>`
         : state.error
           ? $h`<div class="block nmr-panel color-red text-center m-5">${state.error}</div>`
           : state.is_locked

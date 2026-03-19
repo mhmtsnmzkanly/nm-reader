@@ -41,10 +41,6 @@ var app = new Framework7({
   component: App,
   store: store,
   routes: routes,
-  view: {
-    browserHistory: true,
-    browserHistorySeparator: '#!',
-  },
 });
 
 initI18n();
