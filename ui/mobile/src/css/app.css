@@ -170,73 +170,92 @@ body::before {
 
 .nmr-title {
   font-family: 'Cormorant Garamond', serif;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .nmr-section-title {
   text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 2px;
-  color: rgba(254, 243, 199, 0.9);
+  font-size: 0.7rem;
+  letter-spacing: 2.5px;
+  color: rgba(254, 243, 199, 0.6);
+  margin-bottom: 1.25rem;
 }
 
 .nmr-card {
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-}
-
-.nmr-card-hover {
-  transition: transform duration-300;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nmr-card-hover:active {
-  transform: scale(0.99);
+  transform: scale(0.96) translateY(2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .nmr-chip {
   display: inline-flex;
   align-items: center;
-  border-radius: 9999px;
-  padding: 0.125rem 0.625rem;
-  font-size: 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.08);
   color: #f5f1ea;
+  backdrop-filter: blur(5px);
 }
 
 .nmr-chip--price {
-  background: rgba(253, 230, 138, 0.15);
+  background: rgba(253, 230, 138, 0.12);
   color: #fde68a;
+  border: 1px solid rgba(253, 230, 138, 0.2);
 }
 
 .nmr-chip--free {
-  background: rgba(103, 232, 249, 0.15);
+  background: rgba(103, 232, 249, 0.12);
   color: #a5f3fc;
+  border: 1px solid rgba(103, 232, 249, 0.2);
 }
 
 .nmr-button {
-  border-radius: 0.75rem;
-  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  padding: 0.75rem 1.5rem;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  display: inline-block;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   text-decoration: none;
+  transition: all 300ms ease;
 }
 
 .nmr-button-primary {
   color: white;
-  box-shadow: 0 16px 40px rgba(139, 92, 246, 0.35);
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nmr-button-primary:active {
+  transform: scale(0.95);
+  box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
 }
 
 .nmr-button-ghost {
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #f5f1ea;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
 }
 
 .nmr-panel {
