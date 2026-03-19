@@ -1,123 +1,123 @@
 <template>
   <div class="page nmr-page" data-name="content-detail">
-    <div class="navbar navbar-transparent nmr-navbar">
+    <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
-      <div class="navbar-inner">
+      <div class="navbar-inner sliding">
         <div class="left">
-          <a class="link back text-slate-200">
-            <i class="f7-icons text-xl">chevron_left</i>
+          <a class="link back">
+            <i class="f7-icons">chevron_left</i>
+            <span>Back</span>
           </a>
         </div>
         <div class="title nmr-title">${state.title}</div>
+        <div class="right">
+          <a class="link icon-only" data-action="share">
+            <i class="f7-icons">square_arrow_up</i>
+          </a>
+        </div>
       </div>
     </div>
 
-    <div class="page-content pt-0">
-      ${state.loading
-        ? $h`
-          <div class="p-5 pt-24 space-y-8">
-            <div class="flex flex-col items-center space-y-4">
-              <div class="w-48 h-64 rounded-2xl skeleton-block"></div>
-              <div class="h-8 w-2/3 skeleton-text"></div>
-            </div>
-            <div class="space-y-3">
-              <div class="h-4 w-full skeleton-text"></div>
-              <div class="h-4 w-5/6 skeleton-text"></div>
-            </div>
+    <div class="page-content">
+      <!-- Hero Header with Background Blur (Native Style) -->
+      <div class="block no-margin p-0 relative overflow-hidden" style="height: 300px">
+        <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('${state.cover}'); filter: blur(20px); transform: scale(1.1); opacity: 0.4"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#050508] to-transparent"></div>
+        <div class="relative z-10 flex flex-col items-center justify-center h-full p-5 text-center pt-12">
+          <img src="${state.cover}" class="detail-cover-shadow" style="width: 120px; height: 170px; border-radius: 12px; object-fit: cover" />
+          <div class="mt-4">
+            <div class="text-[10px] uppercase tracking-[3px] text-purple-400 font-black mb-1">${state.type}</div>
+            <h1 class="text-2xl nmr-title text-white no-margin">${state.title}</h1>
           </div>
-        `
-        : $h`
-          <!-- Hero Background -->
-          <div class="detail-header-bg" style="background-image:url('${state.cover}')"></div>
+        </div>
+      </div>
 
-          <div class="px-5 pt-24 pb-8 space-y-8 animate-fade-in">
-            <!-- Cover & Title Card -->
-            <div class="flex flex-col items-center text-center space-y-6">
-              <div class="w-44 h-60 rounded-[2rem] detail-cover-shadow overflow-hidden bg-slate-800">
-                <img src="${state.cover}" class="w-full h-full object-cover" />
-              </div>
-              <div class="space-y-2">
-                <div class="text-[10px] uppercase tracking-[4px] text-purple-400 font-black">${state.type}</div>
-                <h1 class="text-3xl nmr-title text-slate-100">${state.title}</h1>
-                <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
-                   <span class="flex items-center gap-1"><i class="f7-icons text-[12px]">star_fill</i> 4.8</span>
-                   <span class="w-1 h-1 rounded-full bg-slate-600"></span>
-                   <span>${state.chapters.length} Chapters</span>
-                </div>
-              </div>
-            </div>
+      <!-- Action Buttons (F7 Block) -->
+      <div class="block">
+        <div class="row">
+          <div class="col">
+            <button class="button button-fill button-large color-purple" data-action="${state.following ? 'unfollow' : 'follow'}">
+              <i class="f7-icons size-18 mr-2">${state.following ? 'heart_fill' : 'heart'}</i>
+              ${state.following ? 'Following' : 'Follow'}
+            </button>
+          </div>
+          <div class="col-25">
+            <button class="button button-fill button-large color-gray" data-action="rate" style="background: rgba(255,255,255,0.1)">
+              <i class="f7-icons size-18">star_fill</i>
+            </button>
+          </div>
+        </div>
+      </div>
 
-            <!-- Action Bar -->
-            <div class="flex gap-3">
-              <button class="nmr-button nmr-button-primary flex-1" data-action="${state.following ? 'unfollow' : 'follow'}">
-                <i class="f7-icons mr-2 text-lg">${state.following ? 'heart_fill' : 'heart'}</i>
-                ${state.following ? 'Following' : 'Follow'}
-              </button>
-              <button class="nmr-button nmr-button-ghost px-4" data-action="rate">
-                <i class="f7-icons text-lg">star</i>
-              </button>
-              <button class="nmr-button nmr-button-ghost px-4" data-action="share">
-                <i class="f7-icons text-lg">square_arrow_up</i>
-              </button>
-            </div>
+      <!-- Synopsis (F7 Expandable Block Style) -->
+      <div class="block-title nmr-section-title">Synopsis</div>
+      <div class="block block-strong inset nmr-panel no-margin-top">
+        <p class="text-sm text-slate-300 leading-relaxed">${state.description}</p>
+      </div>
 
-            <!-- Tabs/Description -->
-            <div class="nmr-panel bg-white/5 border-white/5 backdrop-blur-md">
-               <div class="text-xs uppercase tracking-[2px] text-amber-100/60 mb-3">Synopsis</div>
-               <div class="text-sm text-slate-300 leading-relaxed">${state.description}</div>
-            </div>
-
-            <!-- Chapters List -->
-            <div class="space-y-5">
-              <div class="flex items-center justify-between">
-                <div class="nmr-section-title mb-0">Chapters</div>
-                <button class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sort Desc</button>
-              </div>
-              
-              <div class="space-y-3">
-                ${state.chapters.map((chapter, index) => $h`
-                  <a class="nmr-card nmr-card-hover block p-4 bg-white/[0.02] animate-fade-in" style="animation-delay: ${index * 50}ms" href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/">
-                    <div class="flex items-center justify-between">
-                      <div class="flex flex-col">
-                        <span class="text-xs font-bold text-slate-100">${chapter.title}</span>
-                        <span class="text-[10px] text-slate-500 mt-1 uppercase">Chapter ${chapter.chapter_number}</span>
-                      </div>
+      <!-- Chapters List (F7 Inset List) -->
+      <div class="block-title nmr-section-title">Chapters (${state.chapters.length})</div>
+      <div class="list inset media-list no-hairlines-between nmr-panel p-0">
+        <ul>
+          ${state.chapters.map((chapter) => $h`
+            <li>
+              <a href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/" class="item-link item-content">
+                <div class="item-inner">
+                  <div class="item-title-row">
+                    <div class="item-title text-sm font-bold text-slate-100">${chapter.title}</div>
+                    <div class="item-after">
                       ${chapter.is_locked
-                        ? $h`<span class="nmr-chip nmr-chip--price">${chapter.price_coin} <i class="f7-icons text-[10px] ml-1">money_dollar</i></span>`
-                        : $h`<span class="nmr-chip nmr-chip--free text-[9px]">FREE</span>`
+                        ? $h`<i class="f7-icons size-14 text-orange-400">lock_fill</i>`
+                        : $h`<i class="f7-icons size-14 text-green-400">checkmark_circle_fill</i>`
                       }
                     </div>
-                  </a>
-                `)}
-              </div>
-            </div>
-
-            <!-- Comments Preview -->
-            <div class="space-y-5 pb-12">
-              <div class="nmr-section-title">Discussion</div>
-              ${state.comments.length > 0 
-                ? state.comments.slice(0, 3).map((comment) => $h`
-                  <div class="nmr-card p-4 space-y-3 bg-white/[0.01]">
-                    <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold">${comment.author[0]}</div>
-                      <div class="flex flex-col">
-                        <span class="text-xs font-bold text-slate-200">${comment.author}</span>
-                        <span class="text-[9px] text-slate-500">${comment.created_at}</span>
-                      </div>
-                    </div>
-                    <div class="text-xs text-slate-400 leading-relaxed">${comment.body}</div>
                   </div>
-                `)
-                : $h`<div class="text-center py-4 text-xs text-slate-500">No comments yet. Be the first!</div>`
-              }
-              <form class="nmr-card p-4 space-y-3" id="series-comment-form">
-                <textarea class="nmr-input text-xs" name="body" rows="2" placeholder="Share your thoughts..."></textarea>
-                <button class="nmr-button nmr-button-primary w-full py-2 text-xs" type="submit">Post Comment</button>
-              </form>
+                  <div class="item-subtitle text-[10px] text-slate-500 uppercase">Chapter ${chapter.chapter_number}</div>
+                </div>
+              </a>
+            </li>
+          `)}
+        </ul>
+      </div>
+
+      <!-- Comments (F7 List) -->
+      <div class="block-title nmr-section-title">Discussion</div>
+      <div class="list media-list no-hairlines animate-fade-in mb-12">
+        <ul>
+          ${state.comments.map((comment) => $h`
+            <li class="item-content">
+              <div class="item-media">
+                <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                  ${comment.author[0]}
+                </div>
+              </div>
+              <div class="item-inner">
+                <div class="item-title-row">
+                  <div class="item-title text-xs font-bold text-slate-200">${comment.author}</div>
+                  <div class="item-after text-[9px] text-slate-500">${comment.created_at}</div>
+                </div>
+                <div class="item-text text-xs text-slate-400 leading-relaxed">${comment.body}</div>
+              </div>
+            </li>
+          `)}
+        </ul>
+        <div class="block">
+          <form id="series-comment-form">
+            <div class="list no-hairlines-md">
+              <ul>
+                <li class="item-content item-input nmr-panel p-2">
+                  <div class="item-inner">
+                    <div class="item-input-wrap">
+                      <textarea name="body" placeholder="Write a comment..." class="text-sm"></textarea>
+                    </div>
+                  </div>
+                </li>
+              </ul>
             </div>
-          </div>
-        `
-      }
+            <button class="button button-fill color-purple mt-2" type="submit">Post Comment</button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
