@@ -2,32 +2,58 @@
   <div class="page nmr-page" data-name="library">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
-      <div class="navbar-inner">
-        <div class="left"><a class="link back text-slate-200">Back</a></div>
-        <div class="title nmr-title">Library</div>
+      <div class="navbar-inner sliding">
+        <div class="title nmr-title">My Library</div>
+        <div class="right">
+          <a class="link icon-only">
+            <i class="f7-icons">sort_down</i>
+          </a>
+        </div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-5">
+    <div class="page-content">
       ${state.loading
-        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
+        ? $h`
+          <div class="row p-4">
+            ${[1, 2, 3, 4].map(() => $h`
+              <div class="col-50 mb-4">
+                <div class="skeleton-block rounded-xl" style="height: 220px"></div>
+                <div class="skeleton-text mt-2 h-4 w-3/4"></div>
+              </div>
+            `)}
+          </div>
+        `
         : state.error
-          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
+          ? $h`<div class="block nmr-panel color-red m-5">${state.error}</div>`
           : state.items.length
-            ? $h`<div class="space-y-4">
-              ${state.items.map((item) => $h`
-                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${item.type}/${item.slug}/">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
-                    <div class="flex-1">
-                      <div class="font-semibold text-slate-100">${item.title}</div>
-                      <div class="text-xs text-slate-400 mt-1">${item.type}</div>
-                    </div>
+            ? $h`
+              <div class="row p-4 no-gap">
+                ${state.items.map((item) => $h`
+                  <div class="col-50 p-2 animate-fade-in">
+                    <a href="/content/${item.type}/${item.slug}/" class="block group">
+                      <div class="nmr-card no-margin relative shadow-lg group-active:scale-95 transition-transform">
+                        <img src="${item.cover}" style="width: 100%; height: 220px; object-fit: cover; display: block;" />
+                        <div class="absolute top-2 right-2">
+                           <span class="badge color-purple text-[9px] px-1">${item.type}</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                        <div class="absolute bottom-3 left-3 right-3">
+                           <div class="text-xs font-bold text-white line-clamp-2">${item.title}</div>
+                        </div>
+                      </div>
+                    </a>
                   </div>
-                </a>
-              `)}
-            </div>`
-            : $h`<div class="nmr-panel text-slate-300">Library is empty.</div>`
+                `)}
+              </div>`
+            : $h`
+              <div class="block text-center pt-12 space-y-4">
+                <i class="f7-icons size-64 text-slate-600">book</i>
+                <h3 class="text-white nmr-title">Library Empty</h3>
+                <p class="text-slate-400 text-sm">Start following your favorite series to see them here.</p>
+                <a href="/" class="button button-fill color-purple">Explore Stories</a>
+              </div>
+            `
       }
     </div>
   </div>
