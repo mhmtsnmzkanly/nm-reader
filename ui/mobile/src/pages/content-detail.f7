@@ -1,75 +1,122 @@
 <template>
   <div class="page nmr-page" data-name="content-detail">
-    <div class="navbar nmr-navbar">
+    <div class="navbar navbar-transparent nmr-navbar">
       <div class="navbar-bg"></div>
       <div class="navbar-inner">
         <div class="left">
-          <a class="link back text-slate-200">Back</a>
+          <a class="link back text-slate-200">
+            <i class="f7-icons text-xl">chevron_left</i>
+          </a>
         </div>
         <div class="title nmr-title">${state.title}</div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-6">
+    <div class="page-content pt-0">
       ${state.loading
-        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
-        : state.error
-          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
-          : $h`
-            <div class="nmr-panel text-slate-200 leading-7">${state.description}</div>
-            <div class="nmr-card px-5 py-4 space-y-3">
-              <div class="flex items-center justify-between">
-                <div class="text-xs uppercase tracking-[2px] text-amber-100/90">Actions</div>
-                <div class="text-sm text-slate-400">${state.following ? 'Following' : 'Not following'}</div>
+        ? $h`
+          <div class="p-5 pt-24 space-y-8">
+            <div class="flex flex-col items-center space-y-4">
+              <div class="w-48 h-64 rounded-2xl skeleton-block"></div>
+              <div class="h-8 w-2/3 skeleton-text"></div>
+            </div>
+            <div class="space-y-3">
+              <div class="h-4 w-full skeleton-text"></div>
+              <div class="h-4 w-5/6 skeleton-text"></div>
+            </div>
+          </div>
+        `
+        : $h`
+          <!-- Hero Background -->
+          <div class="detail-header-bg" style="background-image:url('${state.cover}')"></div>
+
+          <div class="px-5 pt-24 pb-8 space-y-8 animate-fade-in">
+            <!-- Cover & Title Card -->
+            <div class="flex flex-col items-center text-center space-y-6">
+              <div class="w-44 h-60 rounded-[2rem] detail-cover-shadow overflow-hidden bg-slate-800">
+                <img src="${state.cover}" class="w-full h-full object-cover" />
               </div>
-              <div class="flex gap-3">
-                ${state.following
-                  ? $h`<button class="nmr-button nmr-button-ghost" data-action="unfollow" type="button">Unfollow</button>`
-                  : $h`<button class="nmr-button nmr-button-primary" data-action="follow" type="button">Follow</button>`
-                }
-                <button class="nmr-button nmr-button-ghost" data-action="rate" type="button">Rate</button>
+              <div class="space-y-2">
+                <div class="text-[10px] uppercase tracking-[4px] text-purple-400 font-black">${state.type}</div>
+                <h1 class="text-3xl nmr-title text-slate-100">${state.title}</h1>
+                <div class="flex items-center justify-center gap-4 text-xs text-slate-400">
+                   <span class="flex items-center gap-1"><i class="f7-icons text-[12px]">star_fill</i> 4.8</span>
+                   <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                   <span>${state.chapters.length} Chapters</span>
+                </div>
               </div>
             </div>
 
-            <div class="nmr-section-title">${i18n.chapters || 'Chapters'}</div>
-            <div class="space-y-4">
-              ${state.chapters.map((chapter) => $h`
-                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${state.cover}');background-size:cover;background-position:center;"></div>
-                    <div class="flex-1 flex items-start justify-between gap-3">
-                      <div>
-                        <div class="font-semibold text-slate-100">${chapter.title}</div>
-                        <div class="text-xs text-slate-400 mt-1">#${chapter.chapter_number}</div>
+            <!-- Action Bar -->
+            <div class="flex gap-3">
+              <button class="nmr-button nmr-button-primary flex-1" data-action="${state.following ? 'unfollow' : 'follow'}">
+                <i class="f7-icons mr-2 text-lg">${state.following ? 'heart_fill' : 'heart'}</i>
+                ${state.following ? 'Following' : 'Follow'}
+              </button>
+              <button class="nmr-button nmr-button-ghost px-4" data-action="rate">
+                <i class="f7-icons text-lg">star</i>
+              </button>
+              <button class="nmr-button nmr-button-ghost px-4" data-action="share">
+                <i class="f7-icons text-lg">square_arrow_up</i>
+              </button>
+            </div>
+
+            <!-- Tabs/Description -->
+            <div class="nmr-panel bg-white/5 border-white/5 backdrop-blur-md">
+               <div class="text-xs uppercase tracking-[2px] text-amber-100/60 mb-3">Synopsis</div>
+               <div class="text-sm text-slate-300 leading-relaxed">${state.description}</div>
+            </div>
+
+            <!-- Chapters List -->
+            <div class="space-y-5">
+              <div class="flex items-center justify-between">
+                <div class="nmr-section-title mb-0">Chapters</div>
+                <button class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sort Desc</button>
+              </div>
+              
+              <div class="space-y-3">
+                ${state.chapters.map((chapter, index) => $h`
+                  <a class="nmr-card nmr-card-hover block p-4 bg-white/[0.02] animate-fade-in" style="animation-delay: ${index * 50}ms" href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/">
+                    <div class="flex items-center justify-between">
+                      <div class="flex flex-col">
+                        <span class="text-xs font-bold text-slate-100">${chapter.title}</span>
+                        <span class="text-[10px] text-slate-500 mt-1 uppercase">Chapter ${chapter.chapter_number}</span>
                       </div>
                       ${chapter.is_locked
-                        ? $h`<span class="nmr-chip nmr-chip--price">${chapter.price_coin} ${i18n.coins || 'coins'}</span>`
-                        : $h`<span class="nmr-chip nmr-chip--free">${i18n.free || 'Free'}</span>`
+                        ? $h`<span class="nmr-chip nmr-chip--price">${chapter.price_coin} <i class="f7-icons text-[10px] ml-1">money_dollar</i></span>`
+                        : $h`<span class="nmr-chip nmr-chip--free text-[9px]">FREE</span>`
                       }
                     </div>
-                  </div>
-                </a>
-              `)}
+                  </a>
+                `)}
+              </div>
             </div>
 
-            <div class="nmr-section-title">Comments</div>
-            <div class="space-y-3">
-              ${state.comments.map((comment) => $h`
-                <div class="nmr-card px-4 py-3 space-y-2">
-                  <div class="text-sm text-slate-100">${comment.author}</div>
-                  <div class="text-sm text-slate-300">${comment.body}</div>
-                  <div class="flex items-center gap-3 text-xs text-slate-400">
-                    <span>${comment.created_at}</span>
-                    <button class="text-amber-200" data-action="comment-vote" data-id="${comment.id}">+${comment.votes}</button>
+            <!-- Comments Preview -->
+            <div class="space-y-5 pb-12">
+              <div class="nmr-section-title">Discussion</div>
+              ${state.comments.length > 0 
+                ? state.comments.slice(0, 3).map((comment) => $h`
+                  <div class="nmr-card p-4 space-y-3 bg-white/[0.01]">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold">${comment.author[0]}</div>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-bold text-slate-200">${comment.author}</span>
+                        <span class="text-[9px] text-slate-500">${comment.created_at}</span>
+                      </div>
+                    </div>
+                    <div class="text-xs text-slate-400 leading-relaxed">${comment.body}</div>
                   </div>
-                </div>
-              `)}
-              <form class="nmr-card px-4 py-3 space-y-2" id="series-comment-form">
-                <textarea class="nmr-input" name="body" rows="3" placeholder="Write a comment..."></textarea>
-                <button class="nmr-button nmr-button-primary" type="submit">Post</button>
+                `)
+                : $h`<div class="text-center py-4 text-xs text-slate-500">No comments yet. Be the first!</div>`
+              }
+              <form class="nmr-card p-4 space-y-3" id="series-comment-form">
+                <textarea class="nmr-input text-xs" name="body" rows="2" placeholder="Share your thoughts..."></textarea>
+                <button class="nmr-button nmr-button-primary w-full py-2 text-xs" type="submit">Post Comment</button>
               </form>
             </div>
-          `
+          </div>
+        `
       }
     </div>
   </div>

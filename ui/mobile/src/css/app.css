@@ -430,10 +430,46 @@ body::before {
 .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
 .z-10 { z-index: 10; }
 
-.reader-image {
+/* Content Detail & Reader Enhancements */
+.detail-header-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  display: block;
-  margin-bottom: 0.5rem;
+  height: 45vh;
+  background-size: cover;
+  background-position: center;
+  filter: blur(40px) brightness(0.4);
+  opacity: 0.6;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+  z-index: -1;
+}
+
+.detail-cover-shadow {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.reader-progress-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--f7-theme-color);
+  box-shadow: 0 0 10px var(--f7-theme-color);
+  z-index: 5000;
+  transition: width 200ms ease;
+}
+
+.immersive-mode .navbar, .immersive-mode .toolbar {
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: all 400ms ease;
+}
+
+.immersive-mode .toolbar-bottom {
+  transform: translateY(100%);
 }
 
 /* Reader Themes */
