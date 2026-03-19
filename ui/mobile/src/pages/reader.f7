@@ -1,68 +1,105 @@
 <template>
-  <div class="page nmr-page" data-name="reader">
-    <div class="navbar nmr-navbar">
+  <div class="page nmr-page no-toolbar" data-name="reader">
+    <!-- Immersive Navbar (Hides on Scroll) -->
+    <div class="navbar nmr-navbar navbar-hidden-on-scroll">
       <div class="navbar-bg"></div>
       <div class="navbar-inner">
         <div class="left">
-          <a class="link back text-slate-200">Back</a>
+          <a class="link back">
+            <i class="f7-icons">chevron_left</i>
+          </a>
         </div>
         <div class="title nmr-title">${state.title}</div>
+        <div class="right">
+          <a class="link icon-only" @click="${() => state.showSettings = !state.state.showSettings}">
+            <i class="f7-icons">slider_horizontal_3</i>
+          </a>
+        </div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-6">
-      ${state.loading
-        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
-        : state.error
-          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
-          : state.is_locked
-            ? $h`<div class="nmr-panel space-y-3 text-center">
-              <div class="text-slate-100">${i18n.reader_locked || 'This chapter is locked.'}</div>
-              <div class="text-amber-200">${state.price_coin} ${i18n.coins || 'coins'}</div>
-              <a class="nmr-button nmr-button-primary inline-block" data-action="unlock" href="#">${i18n.unlock || 'Unlock'}</a>
-            </div>`
-            : $h`
-              ${state.is_image
-                ? $h`<div class="space-y-5">
-                  ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" alt="" loading="lazy" />`)}
-                </div>`
-                : $h`
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="flex gap-2">
-                      <button class="nmr-button nmr-button-ghost px-3" data-action="font-dec" type="button">A-</button>
-                      <button class="nmr-button nmr-button-ghost px-3" data-action="font-inc" type="button">A+</button>
-                    </div>
-                    <div class="flex gap-2">
-                      <button class="w-8 h-8 rounded-full border border-white/20 bg-slate-900" data-action="set-theme" data-theme="dark" type="button"></button>
-                      <button class="w-8 h-8 rounded-full border border-white/20 bg-slate-100" data-action="set-theme" data-theme="light" type="button"></button>
-                      <button class="w-8 h-8 rounded-full border border-white/20 bg-[#f4ecd8]" data-action="set-theme" data-theme="sepia" type="button"></button>
-                    </div>
-                  </div>
-                  <div class="nmr-panel reader-theme-${state.theme}" style="font-size: ${state.font_size}px;">
-                    ${state.paragraphs.map((para) => $h`<p class="mb-5 leading-8">${para}</p>`)}
-                  </div>
-                `
-              }
+    <!-- Reader Progress Bar (Custom) -->
+    <div class="reader-progress-bar" id="reader-progress"></div>
 
-              <div class="nmr-section-title">${i18n.comments || 'Comments'}</div>
-              <div class="space-y-3 pb-8">
-                ${state.comments.map((comment) => $h`
-                  <div class="nmr-card px-4 py-3 space-y-2">
-                    <div class="text-sm text-slate-100">${comment.author}</div>
-                    <div class="text-sm text-slate-300">${comment.body}</div>
-                    <div class="flex items-center gap-3 text-xs text-slate-400">
-                      <span>${comment.created_at}</span>
-                      <button class="text-amber-200" data-action="comment-vote" data-id="${comment.id}">+${comment.votes}</button>
+    <div class="page-content" @scroll="${handleScroll}">
+      ${state.loading
+        ? $h`<div class="flex items-center justify-center h-full"><div class="preloader color-purple"></div></div>`
+        : state.error
+          ? $h`<div class="block nmr-panel color-red text-center m-5">${state.error}</div>`
+          : state.is_locked
+            ? $h`
+              <div class="block text-center pt-12 space-y-4">
+                <i class="f7-icons size-64 text-orange-400">lock_fill</i>
+                <h2 class="nmr-title text-2xl text-white">Unlock Chapter</h2>
+                <p class="text-slate-400">This chapter costs ${state.price_coin} coins.</p>
+                <button class="button button-fill button-large color-purple" data-action="unlock">Unlock Now</button>
+              </div>`
+            : $h`
+              <div class="reader-container animate-fade-in pb-12">
+                ${state.is_image
+                  ? $h`<div class="manga-images">
+                    ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" loading="lazy" />`)}
+                  </div>`
+                  : $h`
+                    <div class="novel-content reader-theme-${state.theme} p-6" style="font-size: ${state.font_size}px;">
+                      ${state.paragraphs.map((para) => $h`<p class="mb-6 leading-relaxed text-slate-100">${para}</p>`)}
                     </div>
-                  </div>
-                `)}
-                <form class="nmr-card px-4 py-3 space-y-2" id="chapter-comment-form">
-                  <textarea class="nmr-input" name="body" rows="3" placeholder="${i18n.comment_placeholder || 'Write a comment...'}"></textarea>
-                  <button class="nmr-button nmr-button-primary" type="submit">${i18n.post || 'Post'}</button>
-                </form>
+                  `
+                }
+
+                <!-- Discussion Section at Bottom -->
+                <div class="block-title nmr-section-title mt-12">Comments</div>
+                <div class="list media-list no-hairlines inset nmr-panel mb-12">
+                  <ul>
+                    ${state.comments.map((c) => $h`
+                      <li class="item-content">
+                        <div class="item-inner">
+                          <div class="item-title-row">
+                            <div class="item-title text-xs font-bold text-slate-200">${c.author}</div>
+                          </div>
+                          <div class="item-text text-xs text-slate-400">${c.body}</div>
+                        </div>
+                      </li>
+                    `)}
+                  </ul>
+                </div>
               </div>
             `
       }
+    </div>
+
+    <!-- Reader Settings (Sheet Modal) -->
+    <div class="sheet-modal reader-settings-sheet" style="height: auto">
+      <div class="sheet-modal-inner p-5 space-y-6">
+        <div class="nmr-section-title">Reader Settings</div>
+        <div class="list no-hairlines">
+          <ul>
+            <li class="item-content">
+              <div class="item-inner">
+                <div class="item-title">Font Size</div>
+                <div class="item-after">
+                  <div class="stepper segmented stepper-init" data-value="${state.font_size}">
+                    <div class="stepper-button-minus" @click="${() => updateFont(-1)}"></div>
+                    <div class="stepper-button-plus" @click="${() => updateFont(1)}"></div>
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li class="item-content">
+              <div class="item-inner">
+                <div class="item-title">Reading Theme</div>
+                <div class="item-after">
+                   <div class="segmented segmented-round segmented-strong">
+                      <button class="button ${state.theme === 'dark' ? 'button-active' : ''}" @click="${() => setTheme('dark')}">Dark</button>
+                      <button class="button ${state.theme === 'sepia' ? 'button-active' : ''}" @click="${() => setTheme('sepia')}">Sepia</button>
+                      <button class="button ${state.theme === 'light' ? 'button-active' : ''}" @click="${() => setTheme('light')}">Light</button>
+                   </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -93,6 +130,30 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
 
   const fontKey = 'nmr_reader_font_size';
   const themeKey = 'nmr_reader_theme';
+
+  const updateFont = (delta) => {
+    state.font_size = Math.max(12, Math.min(32, state.font_size + delta));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(fontKey, String(state.font_size));
+    }
+    $update();
+  };
+
+  const setTheme = (t) => {
+    state.theme = t;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(themeKey, t);
+    }
+    $update();
+  };
+
+  const handleScroll = (e) => {
+    const el = e.target;
+    const progress = (el.scrollTop / (el.scrollHeight - el.offsetHeight)) * 100;
+    const progressEl = document.getElementById('reader-progress');
+    if (progressEl) progressEl.style.width = `${progress}%`;
+  };
+
   const onPurchaseSuccess = async (event) => {
     if (event.detail?.chapterId !== state.chapterId) return;
     await loadChapter();
