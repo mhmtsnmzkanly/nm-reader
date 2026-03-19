@@ -104,6 +104,7 @@
   </div>
 </template>
 <script>
+import $ from 'dom7';
 import api from '../js/api.js';
 import store from '../js/store.js';
 import { getI18n } from '../js/i18n.js';
@@ -219,7 +220,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
 
     document.addEventListener('purchase:success', onPurchaseSuccess);
 
-    $el.on('click', '[data-action="unlock"]', async (event) => {
+    $($el).on('click', '[data-action="unlock"]', async (event) => {
       event.preventDefault();
       if (!store.state.auth.isLoggedIn) {
         $f7.popup.open('.login-popup');
@@ -232,44 +233,30 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
       document.dispatchEvent(new CustomEvent('purchase:open', { detail: { chapterId: state.chapterId, price: state.price_coin } }));
     });
 
-    $el.on('click', '[data-action="font-inc"]', (event) => {
+    $($el).on('click', '[data-action="font-inc"]', (event) => {
       event.preventDefault();
-      state.font_size = Math.min(32, state.font_size + 1);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(fontKey, String(state.font_size));
-      }
-      $update();
+      updateFont(1);
     });
 
-    $el.on('click', '[data-action="font-dec"]', (event) => {
+    $($el).on('click', '[data-action="font-dec"]', (event) => {
       event.preventDefault();
-      state.font_size = Math.max(12, state.font_size - 1);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(fontKey, String(state.font_size));
-      }
-      $update();
+      updateFont(-1);
     });
 
-    $el.on('click', '[data-action="set-theme"]', (event) => {
+    $($el).on('click', '[data-action="set-theme"]', (event) => {
       event.preventDefault();
-      const theme = event.target.getAttribute('data-theme');
-      if (theme) {
-        state.theme = theme;
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem(themeKey, theme);
-        }
-        $update();
-      }
+      const theme = $(event.target).data('theme');
+      if (theme) setTheme(theme);
     });
 
-    $el.on('submit', '#chapter-comment-form', async (event) => {
+    $($el).on('submit', '#chapter-comment-form', async (event) => {
       event.preventDefault();
       if (!store.state.auth.isLoggedIn) {
         $f7.popup.open('.login-popup');
         return;
       }
       const form = event.target;
-      const body = form.querySelector('textarea[name="body"]')?.value || '';
+      const body = $(form).find('textarea[name="body"]').val() || '';
       if (!body.trim()) return;
       try {
         await api.interactions.createChapterComment(state.chapterId, body.trim());
@@ -281,13 +268,13 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
       }
     });
 
-    $el.on('click', '[data-action="comment-vote"]', async (event) => {
+    $($el).on('click', '[data-action="comment-vote"]', async (event) => {
       event.preventDefault();
       if (!store.state.auth.isLoggedIn) {
         $f7.popup.open('.login-popup');
         return;
       }
-      const id = event.target.getAttribute('data-id');
+      const id = $(event.target).data('id');
       if (!id) return;
       try {
         await api.interactions.voteComment(id, 1);

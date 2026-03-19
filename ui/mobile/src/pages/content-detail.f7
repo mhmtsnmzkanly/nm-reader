@@ -93,6 +93,7 @@
   </div>
 </template>
 <script>
+import $ from 'dom7';
 import api from '../js/api.js';
 import { getI18n } from '../js/i18n.js';
 
@@ -172,7 +173,7 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
   });
 
   $onMounted(() => {
-    $el.on('click', '[data-action="follow"]', async (event) => {
+    $($el).on('click', '[data-action="follow"]', async (event) => {
       event.preventDefault();
       try {
         await api.interactions.follow(state.type, state.slug);
@@ -183,7 +184,7 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       }
     });
 
-    $el.on('click', '[data-action="unfollow"]', async (event) => {
+    $($el).on('click', '[data-action="unfollow"]', async (event) => {
       event.preventDefault();
       try {
         await api.interactions.unfollow(state.type, state.slug);
@@ -194,7 +195,7 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       }
     });
 
-    $el.on('click', '[data-action="rate"]', (event) => {
+    $($el).on('click', '[data-action="rate"]', (event) => {
       event.preventDefault();
       $f7.dialog.prompt('Rate 1-5', 'Rate', async (value) => {
         const score = Number(value);
@@ -208,7 +209,7 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       });
     });
 
-    $el.on('submit', '#series-comment-form', async (event) => {
+    $($el).on('submit', '#series-comment-form', async (event) => {
       event.preventDefault();
       const form = event.target;
       const body = form.querySelector('textarea[name="body"]')?.value || '';
@@ -223,7 +224,7 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       }
     });
 
-    $el.on('click', '[data-action="comment-vote"]', async (event) => {
+    $($el).on('click', '[data-action="comment-vote"]', async (event) => {
       event.preventDefault();
       const id = event.target.getAttribute('data-id');
       if (!id) return;
