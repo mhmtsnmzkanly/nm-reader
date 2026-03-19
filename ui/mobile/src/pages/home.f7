@@ -3,124 +3,108 @@
     <div class="navbar navbar-large nmr-navbar">
       <div class="navbar-bg"></div>
       <div class="navbar-inner sliding">
-        <div class="title nmr-title">NMR Mobile</div>
-        <div class="title-large">
-          <div class="title-large-text nmr-title">NMR Mobile</div>
+        <div class="title nmr-title">NMR Reader</div>
+        <div class="right">
+          <a class="link icon-only" href="/search/">
+            <i class="f7-icons">search</i>
+          </a>
+          <a class="link icon-only sheet-open" data-sheet=".language-sheet" href="#">
+            <i class="f7-icons">globe</i>
+          </a>
         </div>
-        <div class="right flex items-center gap-3">
-          ${state.isLoggedIn
-            ? $h`<a class="text-sm text-slate-200" data-action="logout" href="#">${i18n.logout || 'Logout'}</a>`
-            : $h`<a class="text-sm text-slate-200 popup-open" data-popup=".login-popup" href="#">${i18n.login || 'Login'}</a>`
-          }
-          <a class="text-sm text-slate-200 sheet-open" data-sheet=".language-sheet" href="#">${i18n.language || 'Language'}</a>
-          <a class="text-sm text-slate-200" href="/wallet/">${i18n.wallet || 'Wallet'}</a>
+        <div class="title-large">
+          <div class="title-large-text nmr-title">NMR Reader</div>
         </div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-8">
-      <!-- Hero Section -->
-      <div class="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#0a0a0f] shadow-[0_30px_60px_rgba(0,0,0,0.6)]">
-        <div class="absolute -top-24 -right-24 w-64 h-64 bg-purple-600/20 blur-[80px] rounded-full"></div>
-        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-cyan-600/10 blur-[80px] rounded-full"></div>
-        
-        <div class="relative z-10 p-8 space-y-5">
-          <div class="flex items-center gap-2">
-            <span class="w-8 h-[1px] bg-amber-200/50"></span>
-            <div class="text-[10px] uppercase tracking-[3px] text-amber-200/80 font-bold">Featured Stories</div>
-          </div>
-          <div class="space-y-2">
-            <div class="text-4xl nmr-title text-slate-100 leading-[1.1]">Infinite<br/><i class="font-medium opacity-80">Reading.</i></div>
-            <p class="text-sm text-slate-400 leading-relaxed max-w-[220px]">Immerse yourself in curated worlds and cinematic storytelling.</p>
-          </div>
-          <div class="flex gap-3 pt-2">
-            <a class="nmr-button nmr-button-primary" href="/types/manga/">Explore Now</a>
-            <a class="nmr-button nmr-button-ghost px-5" href="/search/">
-              <i class="f7-icons text-lg">search</i>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Nav -->
-      <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-        <a class="nmr-button nmr-button-ghost whitespace-nowrap" href="/types/manga/">Manga</a>
-        <a class="nmr-button nmr-button-ghost whitespace-nowrap" href="/types/novel/">Novel</a>
-        <a class="nmr-button nmr-button-ghost whitespace-nowrap" href="/types/manhwa/">Manhwa</a>
-        <a class="nmr-button nmr-button-ghost whitespace-nowrap" href="/blogs/">Community</a>
-      </div>
-
-      <!-- Featured Horizontal -->
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="nmr-section-title mb-0">Featured</div>
-          <a href="/types/manga/" class="text-xs text-purple-400 font-semibold">View All</a>
-        </div>
-        <div class="flex gap-5 overflow-x-auto no-scrollbar pb-4 -mx-5 px-5">
-          ${state.recent.slice(0, 6).map((item) => $h`
-            <a class="min-w-[160px] max-w-[160px] group block" href="/content/${item.type}/${item.slug}/">
-              <div class="nmr-card aspect-[3/4] mb-3 relative">
-                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-active:scale-110" style="background-image:url('${item.cover}');"></div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                <div class="absolute bottom-3 left-3">
-                   <span class="nmr-chip text-[9px] px-2 py-1">${item.type}</span>
+    <div class="page-content">
+      <!-- Featured Swiper (F7 Swiper Component) -->
+      <div class="block-title nmr-section-title">Featured Stories</div>
+      <div class="swiper-container swiper-init" data-slides-per-view="auto" data-space-between="20" data-centered-slides="true">
+        <div class="swiper-wrapper">
+          ${state.recent.slice(0, 5).map((item) => $h`
+            <div class="swiper-slide" style="width: 280px">
+              <a href="/content/${item.type}/${item.slug}/" class="nmr-card block no-margin">
+                <div class="card-content">
+                  <div class="card-content-inner p-0 relative">
+                    <img src="${item.cover}" style="width: 100%; height: 380px; object-fit: cover; display: block;" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 right-4">
+                      <div class="text-[10px] uppercase tracking-[2px] text-amber-200 font-bold mb-1">${item.type}</div>
+                      <div class="text-xl font-bold text-white nmr-title">${item.title}</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="space-y-1 px-1">
-                <div class="text-sm font-bold text-slate-100 line-clamp-1 truncate">${item.title}</div>
-                <div class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Updated Recently</div>
-              </div>
-            </a>
+              </a>
+            </div>
           `)}
         </div>
       </div>
 
-      <!-- Latest Chapters -->
-      <div class="space-y-5">
-        <div class="nmr-section-title">Latest Updates</div>
-        ${state.loading
-          ? $h`
-            <div class="space-y-4">
-              ${[1, 2, 3].map((i) => $h`
-                <div class="nmr-skeleton-card p-3 flex items-center gap-4">
-                  <div class="w-16 h-20 rounded-xl skeleton-block"></div>
-                  <div class="flex-1 space-y-2">
-                    <div class="h-4 w-3/4 skeleton-text"></div>
-                    <div class="h-3 w-1/2 skeleton-text"></div>
+      <!-- Content Type Tabs (Segmented Control) -->
+      <div class="block">
+        <div class="segmented segmented-strong segmented-round">
+          <a href="/types/manga/" class="button">Manga</a>
+          <a href="/types/novel/" class="button">Novel</a>
+          <a href="/types/manhwa/" class="button">Manhwa</a>
+        </div>
+      </div>
+
+      <!-- Latest Updates (F7 Media List Component) -->
+      <div class="list media-list no-chevron no-hairlines animate-fade-in">
+        <div class="block-title nmr-section-title">Latest Updates</div>
+        <ul>
+          ${state.loading
+            ? [1, 2, 3, 4].map(() => $h`
+              <li class="skeleton-text skeleton-effect-blink">
+                <div class="item-content">
+                  <div class="item-media">
+                    <div class="skeleton-block" style="width: 64px; height: 80px; border-radius: 8px"></div>
+                  </div>
+                  <div class="item-inner">
+                    <div class="item-title-row">
+                      <div class="item-title">Loading...</div>
+                    </div>
+                    <div class="item-subtitle">Subtitle</div>
+                    <div class="item-text">Text line one and line two</div>
                   </div>
                 </div>
-              `)}
-            </div>
-          `
-          : state.latest.length > 0
-            ? $h`<div class="space-y-4">
-                ${state.latest.map((item, index) => $h`
-                  <a class="nmr-card nmr-card-hover block p-3 animate-fade-in delay-${(index % 5) + 1}" href="/reader/${item.type}/${item.slug}/${item.chapter_number}/">
-                    <div class="flex items-center gap-4">
-                      <div class="w-16 h-20 rounded-xl bg-slate-800 shrink-0 shadow-lg overflow-hidden">
-                        <img src="${item.cover}" class="w-full h-full object-cover" loading="lazy" />
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between gap-2 mb-2">
-                          <div class="font-bold text-slate-100 truncate text-sm">${item.title}</div>
-                          <div class="text-[10px] font-black text-purple-400 bg-purple-400/10 px-1.5 py-0.5 rounded">CH.${item.chapter_number}</div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                          <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-tight">${item.type}</span>
-                          ${item.is_locked
-                            ? $h`<span class="nmr-chip nmr-chip--price">${item.price_coin} <i class="f7-icons text-[10px] ml-1">money_dollar</i></span>`
-                            : $h`<span class="nmr-chip nmr-chip--free">FREE</span>`
-                          }
-                        </div>
+              </li>
+            `)
+            : state.latest.map((item) => $h`
+              <li>
+                <a href="/reader/${item.type}/${item.slug}/${item.chapter_number}/" class="item-link item-content nmr-card-hover">
+                  <div class="item-media">
+                    <img src="${item.cover}" width="64" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3)" />
+                  </div>
+                  <div class="item-inner">
+                    <div class="item-title-row">
+                      <div class="item-title font-bold text-slate-100">${item.title}</div>
+                      <div class="item-after">
+                        ${item.is_locked 
+                          ? $h`<span class="badge color-orange">${item.price_coin}</span>` 
+                          : $h`<span class="badge color-green">FREE</span>`}
                       </div>
                     </div>
-                  </a>
-                `)}
-              </div>` 
-            : $h`<div class="nmr-panel">${i18n.no_chapters || 'No chapters yet.'}</div>`
-        }
+                    <div class="item-subtitle text-xs text-slate-400 mt-1 uppercase tracking-tight">Chapter ${item.chapter_number}</div>
+                    <div class="item-text text-slate-500">${item.type} • Updated Today</div>
+                  </div>
+                </a>
+              </li>
+            `)}
+        </ul>
+      </div>
+
+      <!-- Quick Action Floating Button (F7 FAB) -->
+      <div class="fab fab-right-bottom color-purple">
+        <a href="/search/">
+          <i class="f7-icons">search</i>
+        </a>
       </div>
     </div>
+  </div>
+</template>
   </div>
 </template>
 <script>
