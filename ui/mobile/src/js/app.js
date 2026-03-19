@@ -35,14 +35,16 @@ if (session) {
 }
 
 var app = new Framework7({
-  name: 'NMR Mobile', // App name
-  theme: 'auto', // Automatic theme detection
-  el: '#app', // App root element
-  component: App, // App main component
-  // App store
+  name: 'NMR Mobile',
+  theme: 'auto',
+  el: '#app',
+  component: App,
   store: store,
-  // App routes
   routes: routes,
+  view: {
+    browserHistory: true,
+    browserHistorySeparator: '#!',
+  },
 });
 
 initI18n();

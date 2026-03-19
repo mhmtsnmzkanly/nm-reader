@@ -5,9 +5,6 @@
       <div class="navbar-inner sliding">
         <div class="title">NMR Reader</div>
         <div class="right">
-          <a class="link icon-only" href="/search/">
-            <i class="f7-icons">search</i>
-          </a>
           <a class="link icon-only sheet-open" data-sheet=".language-sheet" href="#">
             <i class="f7-icons">globe</i>
           </a>
@@ -21,7 +18,7 @@
     <div class="page-content">
       <!-- Featured Swiper -->
       <div class="block-title">Featured Stories</div>
-      <div class="swiper-container swiper-init" data-slides-per-view="auto" data-space-between="10" data-centered-slides="false">
+      <div class="swiper-container swiper-init" data-slides-per-view="auto" data-space-between="10">
         <div class="swiper-wrapper">
           ${state.recent.slice(0, 5).map((item) => $h`
             <div class="swiper-slide" style="width: 240px">
@@ -86,8 +83,6 @@
         </a>
       </div>
     </div>
-  </div>
-</template>
   </div>
 </template>
 <script>

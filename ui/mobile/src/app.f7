@@ -1,45 +1,45 @@
 <template>
   <div id="app">
-    <!-- Views Container -->
+    <!-- Views Tabs -->
     <div class="views tabs safe-areas">
-      <!-- Tab Bar (Bottom) -->
+      <!-- Tab Bar -->
       <div class="toolbar toolbar-tabbar-labels toolbar-bottom">
         <div class="toolbar-inner">
-          <a href="#view-home" class="tab-link tab-link-active" data-route-tab-id="view-home">
+          <a href="#view-home" class="tab-link tab-link-active">
             <i class="f7-icons">house_fill</i>
             <span class="tabbar-label">Home</span>
           </a>
-          <a href="#view-library" class="tab-link" data-route-tab-id="view-library">
+          <a href="#view-library" class="tab-link">
             <i class="f7-icons">book_fill</i>
             <span class="tabbar-label">Library</span>
           </a>
-          <a href="#view-search" class="tab-link" data-route-tab-id="view-search">
+          <a href="#view-search" class="tab-link">
             <i class="f7-icons">search</i>
             <span class="tabbar-label">Search</span>
           </a>
-          <a href="#view-profile" class="tab-link" data-route-tab-id="view-profile">
+          <a href="#view-profile" class="tab-link">
             <i class="f7-icons">person_fill</i>
             <span class="tabbar-label">Profile</span>
           </a>
         </div>
       </div>
 
-      <!-- Views remain same but with no custom classes -->
+      <!-- Single View per Tab -->
       <div id="view-home" class="view view-main view-init tab tab-active" data-url="/"></div>
       <div id="view-library" class="view view-init tab" data-name="library" data-url="/library/"></div>
       <div id="view-search" class="view view-init tab" data-name="search" data-url="/search/"></div>
       <div id="view-profile" class="view view-init tab" data-name="profile" data-url="/profile/"></div>
     </div>
 
-    <!-- Popups without custom classes -->
+    <!-- Login Popup -->
     <div class="popup login-popup">
       <div class="view">
         <div class="page">
           <div class="navbar">
             <div class="navbar-bg"></div>
             <div class="navbar-inner">
-              <div class="title">${i18n.login_title || 'Login'}</div>
-              <div class="right"><a class="link popup-close" href="#">Close</a></div>
+              <div class="title">Login</div>
+              <div class="right"><a class="link popup-close">Close</a></div>
             </div>
           </div>
           <div class="page-content">
@@ -49,7 +49,7 @@
                   <ul>
                     <li class="item-content item-input">
                       <div class="item-inner">
-                        <div class="item-title item-label">${i18n.email || 'Email'}</div>
+                        <div class="item-title item-label">Email</div>
                         <div class="item-input-wrap">
                           <input type="email" name="email" placeholder="you@example.com" required />
                         </div>
@@ -57,7 +57,7 @@
                     </li>
                     <li class="item-content item-input">
                       <div class="item-inner">
-                        <div class="item-title item-label">${i18n.password || 'Password'}</div>
+                        <div class="item-title item-label">Password</div>
                         <div class="item-input-wrap">
                           <input type="password" name="password" placeholder="Password" required />
                         </div>
@@ -66,10 +66,7 @@
                   </ul>
                 </div>
                 <div class="block">
-                  <button class="button button-fill color-blue" type="submit">${i18n.login || 'Login'}</button>
-                  <div class="margin-top text-align-center">
-                    <a class="link popup-open" data-popup=".register-popup" href="#">${i18n.register || 'Create account'}</a>
-                  </div>
+                  <button class="button button-fill color-blue" type="submit">Login</button>
                 </div>
               </form>
             </div>
@@ -78,75 +75,15 @@
       </div>
     </div>
 
-    <div class="popup register-popup">
-      <div class="view">
-        <div class="page nmr-page">
-          <div class="navbar nmr-navbar">
-            <div class="navbar-bg"></div>
-            <div class="navbar-inner">
-              <div class="title nmr-title">${i18n.register_title || 'Register'}</div>
-              <div class="right"><a class="link popup-close" href="#">Close</a></div>
-            </div>
-          </div>
-          <div class="page-content px-5 pt-6">
-            <form id="register-form" class="space-y-5">
-              <div>
-                <label class="block text-sm text-slate-300 mb-2">${i18n.username || 'Username'}</label>
-                <input class="nmr-input" type="text" name="username" placeholder="username" required />
-              </div>
-              <div>
-                <label class="block text-sm text-slate-300 mb-2">${i18n.email || 'Email'}</label>
-                <input class="nmr-input" type="email" name="email" placeholder="you@example.com" required />
-              </div>
-              <div>
-                <label class="block text-sm text-slate-300 mb-2">${i18n.password || 'Password'}</label>
-                <input class="nmr-input" type="password" name="password" placeholder="Password" required />
-              </div>
-              <div class="turnstile-wrap">
-                <div class="turnstile-widget" data-turnstile="register"></div>
-              </div>
-              <div>
-                <button class="nmr-button nmr-button-primary w-full" type="submit">${i18n.register || 'Create account'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="popup purchase-popup">
-      <div class="view">
-        <div class="page nmr-page">
-          <div class="navbar nmr-navbar">
-            <div class="navbar-bg"></div>
-            <div class="navbar-inner">
-              <div class="title nmr-title">${i18n.purchase_title || 'Unlock Chapter'}</div>
-              <div class="right"><a class="link popup-close" href="#">${i18n.purchase_cancel || 'Cancel'}</a></div>
-            </div>
-          </div>
-          <div class="page-content px-5 pt-6">
-            <div class="nmr-panel space-y-4">
-              <p class="text-slate-200" id="purchase-message"></p>
-              <div class="grid gap-3">
-                <a class="nmr-button nmr-button-primary text-center" data-action="purchase-confirm" href="#">${i18n.purchase_confirm || 'Unlock Now'}</a>
-                <a class="nmr-button nmr-button-ghost text-center popup-close" href="#">${i18n.purchase_cancel || 'Cancel'}</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="sheet-modal language-sheet">
-      <div class="sheet-modal-inner p-5 space-y-4">
-        <div class="nmr-section-title">${i18n.language || 'Language'}</div>
-        <div class="space-y-3">
-          <a class="nmr-card nmr-card-hover block px-4 py-3" data-action="set-lang" data-lang="en" href="#">
-            <div class="font-medium text-slate-100">English</div>
-          </a>
-          <a class="nmr-card nmr-card-hover block px-4 py-3" data-action="set-lang" data-lang="tr" href="#">
-            <div class="font-medium text-slate-100">Turkish</div>
-          </a>
+    <!-- Language Sheet -->
+    <div class="sheet-modal language-sheet" style="height: auto">
+      <div class="sheet-modal-inner">
+        <div class="block-title">Select Language</div>
+        <div class="list links-list">
+          <ul>
+            <li><a href="#" data-action="set-lang" data-lang="en">English</a></li>
+            <li><a href="#" data-action="set-lang" data-lang="tr">Turkish</a></li>
+          </ul>
         </div>
       </div>
     </div>
@@ -158,94 +95,23 @@ import store from './js/store.js';
 import { loadI18n, getI18n } from './js/i18n.js';
 
 export default (props, { $onMounted, $onBeforeUnmount, $f7 }) => {
-  const i18n = getI18n();
-  let pendingPurchase = null;
-  const turnstileKey = typeof window !== 'undefined' ? window.NMR_TURNSTILE_SITE_KEY : '';
-  const turnstileWidgets = { login: null, register: null };
-  const getTurnstileToken = (form) => {
-    if (!form) return '';
-    const input = form.querySelector('input[name="turnstile_token"], input[name="cf-turnstile-response"]');
-    return input ? input.value : '';
-  };
-  const resetTurnstile = (context) => {
-    if (typeof window === 'undefined' || !window.turnstile) return;
-    const widgetId = turnstileWidgets[context];
-    if (widgetId !== null) {
-      window.turnstile.reset(widgetId);
-    }
-  };
-  const renderTurnstile = () => {
-    if (typeof window === 'undefined') return;
-    const widgets = document.querySelectorAll('.turnstile-widget');
-    if (!turnstileKey || !window.turnstile || widgets.length === 0) {
-      document.querySelectorAll('.turnstile-wrap').forEach((el) => {
-        el.style.display = 'none';
-      });
-      return;
-    }
-    widgets.forEach((el) => {
-      const context = el.getAttribute('data-turnstile');
-      if (!context || turnstileWidgets[context] !== null) return;
-      const widgetId = window.turnstile.render(el, {
-        sitekey: turnstileKey,
-        theme: 'light',
-        responseField: true,
-        responseFieldName: 'turnstile_token',
-      });
-      turnstileWidgets[context] = widgetId;
-    });
-  };
   const applySession = (data) => {
     const session = {
       apiToken: data.api_token || null,
       csrfToken: data.csrf_token || null,
       refreshToken: data.refresh_token || null,
-      user: {
-        id: data.id,
-        username: data.username,
-        email: data.email,
-      },
+      user: { id: data.id, username: data.username, email: data.email },
     };
     api.setSession(session);
     api.saveSession(session);
     store.dispatch('setAuth', session);
   };
 
-  const onPurchaseOpen = (event) => {
-    const detail = event.detail || {};
-    pendingPurchase = detail;
-    const i18n = getI18n();
-    const message = (i18n.unlock_confirm_body || 'Unlock this chapter for {price} coins?')
-      .replace('{price}', detail.price || 0);
-    const messageEl = document.getElementById('purchase-message');
-    if (messageEl) messageEl.textContent = message;
-    $f7.popup.open('.purchase-popup');
-  };
-
   const onDocumentClick = async (event) => {
-    const purchaseBtn = event.target.closest('[data-action="purchase-confirm"]');
-    if (purchaseBtn) {
-      event.preventDefault();
-      if (!pendingPurchase?.chapterId) return;
-      try {
-        await api.wallet.unlockChapter(pendingPurchase.chapterId);
-        const walletPayload = await api.wallet.getSummary();
-        const walletData = walletPayload?.data || walletPayload || {};
-        store.dispatch('setWallet', { balance: walletData.balance || 0 });
-        document.dispatchEvent(new CustomEvent('purchase:success', { detail: { chapterId: pendingPurchase.chapterId } }));
-        pendingPurchase = null;
-        $f7.popup.close('.purchase-popup');
-      } catch (err) {
-        $f7.dialog.alert(err.message || 'Unlock failed');
-      }
-      return;
-    }
-
     const langBtn = event.target.closest('[data-action="set-lang"]');
     if (langBtn) {
       event.preventDefault();
       const lang = langBtn.getAttribute('data-lang');
-      if (!lang) return;
       await loadI18n(lang);
       $f7.sheet.close('.language-sheet');
       return;
@@ -254,82 +120,32 @@ export default (props, { $onMounted, $onBeforeUnmount, $f7 }) => {
     const logoutBtn = event.target.closest('[data-action="logout"]');
     if (logoutBtn) {
       event.preventDefault();
-      try {
-        await api.auth.logout();
-      } catch (err) {
-        // ignore logout errors
-      }
-      const i18n = getI18n();
+      try { await api.auth.logout(); } catch (err) {}
       store.dispatch('clearAuth');
-      $f7.dialog.alert(i18n.logout_success || 'Logged out');
+      $f7.dialog.alert('Logged out');
     }
   };
 
   const onDocumentSubmit = async (event) => {
-    if (!(event.target instanceof HTMLFormElement)) return;
     if (event.target.id === 'login-form') {
       event.preventDefault();
       const formData = new FormData(event.target);
-      const i18n = getI18n();
-      const turnstileToken = getTurnstileToken(event.target);
       try {
-        const result = await api.auth.login(
-          formData.get('email'),
-          formData.get('password'),
-          !!formData.get('remember'),
-          turnstileToken,
-        );
+        const result = await api.auth.login(formData.get('email'), formData.get('password'));
         applySession(result);
         $f7.popup.close('.login-popup');
-        $f7.dialog.alert(i18n.login_success || 'Login successful');
       } catch (err) {
-        $f7.dialog.alert(err.message || i18n.login_failed || 'Login failed');
-      } finally {
-        resetTurnstile('login');
-      }
-      return;
-    }
-
-    if (event.target.id === 'register-form') {
-      event.preventDefault();
-      const formData = new FormData(event.target);
-      const i18n = getI18n();
-      const turnstileToken = getTurnstileToken(event.target);
-      try {
-        await api.auth.register(
-          formData.get('username'),
-          formData.get('email'),
-          formData.get('password'),
-          turnstileToken,
-        );
-        const loginResult = await api.auth.login(
-          formData.get('email'),
-          formData.get('password'),
-          !!formData.get('remember'),
-          turnstileToken,
-        );
-        applySession(loginResult);
-        $f7.popup.close('.register-popup');
-        $f7.dialog.alert(i18n.register_success || 'Account created. You are now logged in.');
-      } catch (err) {
-        $f7.dialog.alert(err.message || i18n.register_failed || 'Register failed');
-      } finally {
-        resetTurnstile('register');
+        $f7.dialog.alert(err.message || 'Login failed');
       }
     }
   };
 
   $onMounted(() => {
-    renderTurnstile();
-    window.addEventListener('turnstile:ready', renderTurnstile);
-    document.addEventListener('purchase:open', onPurchaseOpen);
     document.addEventListener('click', onDocumentClick);
     document.addEventListener('submit', onDocumentSubmit);
   });
 
   $onBeforeUnmount(() => {
-    window.removeEventListener('turnstile:ready', renderTurnstile);
-    document.removeEventListener('purchase:open', onPurchaseOpen);
     document.removeEventListener('click', onDocumentClick);
     document.removeEventListener('submit', onDocumentSubmit);
   });
