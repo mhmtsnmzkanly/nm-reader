@@ -115,6 +115,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Chapter Comments (2026-03-19)
+- **Status**: Completed.
+- **Change**: Implemented chapter comments section in `ui/mobile/src/pages/reader.f7`.
+- **Change**: Added support for listing, posting, and voting on chapter comments in the mobile UI.
+- **Change**: Integrated `api.interactions.listChapterComments` and `api.interactions.createChapterComment` into the reader flow.
+
 ### Mobile: Remove Tailwind CSS (2026-03-18)
 - **Status**: Completed.
 - **Change**: Removed Tailwind CSS from `ui/mobile` to reduce build complexity and bundle size.

@@ -21,19 +21,40 @@
               <div class="text-amber-200">${state.price_coin} ${i18n.coins || 'coins'}</div>
               <a class="nmr-button nmr-button-primary inline-block" data-action="unlock" href="#">${i18n.unlock || 'Unlock'}</a>
             </div>`
-            : state.is_image
-              ? $h`<div class="space-y-5">
-                ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" alt="" loading="lazy" />`)}
-              </div>`
-              : $h`
-                <div class="flex gap-3">
-                  <button class="nmr-button nmr-button-ghost" data-action="font-dec" type="button">A-</button>
-                  <button class="nmr-button nmr-button-ghost" data-action="font-inc" type="button">A+</button>
-                </div>
-                <div class="nmr-panel" style="font-size: ${state.font_size}px;">
-                  ${state.paragraphs.map((para) => $h`<p class="mb-5 leading-8 text-slate-100">${para}</p>`)}
-                </div>
-              `
+            : $h`
+              ${state.is_image
+                ? $h`<div class="space-y-5">
+                  ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" alt="" loading="lazy" />`)}
+                </div>`
+                : $h`
+                  <div class="flex gap-3">
+                    <button class="nmr-button nmr-button-ghost" data-action="font-dec" type="button">A-</button>
+                    <button class="nmr-button nmr-button-ghost" data-action="font-inc" type="button">A+</button>
+                  </div>
+                  <div class="nmr-panel" style="font-size: ${state.font_size}px;">
+                    ${state.paragraphs.map((para) => $h`<p class="mb-5 leading-8 text-slate-100">${para}</p>`)}
+                  </div>
+                `
+              }
+
+              <div class="nmr-section-title">${i18n.comments || 'Comments'}</div>
+              <div class="space-y-3 pb-8">
+                ${state.comments.map((comment) => $h`
+                  <div class="nmr-card px-4 py-3 space-y-2">
+                    <div class="text-sm text-slate-100">${comment.author}</div>
+                    <div class="text-sm text-slate-300">${comment.body}</div>
+                    <div class="flex items-center gap-3 text-xs text-slate-400">
+                      <span>${comment.created_at}</span>
+                      <button class="text-amber-200" data-action="comment-vote" data-id="${comment.id}">+${comment.votes}</button>
+                    </div>
+                  </div>
+                `)}
+                <form class="nmr-card px-4 py-3 space-y-2" id="chapter-comment-form">
+                  <textarea class="nmr-input" name="body" rows="3" placeholder="${i18n.comment_placeholder || 'Write a comment...'}"></textarea>
+                  <button class="nmr-button nmr-button-primary" type="submit">${i18n.post || 'Post'}</button>
+                </form>
+              </div>
+            `
       }
     </div>
   </div>
@@ -59,6 +80,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     slug: $f7route.params.slug,
     chapterNumber: $f7route.params.chapterNumber,
     chapterId: null,
+    comments: [],
   };
 
   const fontKey = 'nmr_reader_font_size';
@@ -66,6 +88,23 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     if (event.detail?.chapterId !== state.chapterId) return;
     await loadChapter();
     $update();
+  };
+
+  const loadComments = async () => {
+    if (!state.chapterId) return;
+    try {
+      const payload = await api.interactions.listChapterComments(state.chapterId, 1, 20);
+      const data = payload?.data || payload || [];
+      state.comments = (Array.isArray(data) ? data : []).map((row) => ({
+        id: row.id || row.comment_id || 0,
+        author: row.username || row.author_username || 'User',
+        body: row.body || row.comment || '',
+        created_at: row.created_at || '',
+        votes: row.votes || row.score || 0,
+      }));
+    } catch (err) {
+      state.comments = [];
+    }
   };
 
   const loadChapter = async () => {
@@ -84,6 +123,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
       state.paragraphs = body.split('\n').filter((line) => line.trim() !== '');
       state.pages = [];
     }
+    await loadComments();
   };
 
   $onMounted(async () => {
@@ -134,6 +174,42 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
         localStorage.setItem(fontKey, String(state.font_size));
       }
       $update();
+    });
+
+    $el.on('submit', '#chapter-comment-form', async (event) => {
+      event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
+      const form = event.target;
+      const body = form.querySelector('textarea[name="body"]')?.value || '';
+      if (!body.trim()) return;
+      try {
+        await api.interactions.createChapterComment(state.chapterId, body.trim());
+        form.reset();
+        await loadComments();
+        $update();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Comment failed' } }));
+      }
+    });
+
+    $el.on('click', '[data-action="comment-vote"]', async (event) => {
+      event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
+      const id = event.target.getAttribute('data-id');
+      if (!id) return;
+      try {
+        await api.interactions.voteComment(id, 1);
+        await loadComments();
+        $update();
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Vote failed' } }));
+      }
     });
   });
 
