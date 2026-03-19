@@ -18,4 +18,9 @@
   z-index: 5000;
 }
 
+/* Functional Reader Themes */
+.reader-theme-dark { background: #000 !important; color: #ccc !important; }
+.reader-theme-sepia { background: #f4ecd8 !important; color: #5b4636 !important; }
+.reader-theme-light { background: #fff !important; color: #333 !important; }
+
 /* No custom colors, gradients or glassmorphism beyond this point */

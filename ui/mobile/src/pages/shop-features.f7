@@ -1,28 +1,39 @@
 <template>
-  <div class="page nmr-page" data-name="shop-features">
-    <div class="navbar nmr-navbar">
+  <div class="page" data-name="shop-features">
+    <div class="navbar">
       <div class="navbar-bg"></div>
-      <div class="navbar-inner">
-        <div class="left"><a class="link back text-slate-200">Back</a></div>
-        <div class="title nmr-title">${i18n.features || 'Features'}</div>
+      <div class="navbar-inner sliding">
+        <div class="left">
+          <a class="link back">
+            <i class="icon icon-back"></i>
+            <span class="if-not-md">Back</span>
+          </a>
+        </div>
+        <div class="title">${i18n.features || 'Features'}</div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-5">
+    <div class="page-content">
       ${state.loading
-        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
+        ? $h`<div class="block text-center pt-12"><div class="preloader"></div></div>`
         : state.error
-          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
+          ? $h`<div class="block block-strong inset color-red"><p>${state.error}</p></div>`
           : $h`
-            <div class="space-y-4">
-              ${state.items.map((item) => $h`
-                <div class="nmr-card px-4 py-3 flex items-center justify-between">
-                  <div class="font-semibold text-slate-100">${item.name}</div>
-                  <div class="text-sm text-amber-200">${item.price}</div>
-                </div>
-              `)}
+            <div class="list inset">
+              <ul>
+                ${state.items.map((item) => $h`
+                  <li class="item-content">
+                    <div class="item-inner">
+                      <div class="item-title">${item.name}</div>
+                      <div class="item-after text-color-orange font-bold">${item.price}</div>
+                    </div>
+                  </li>
+                `)}
+              </ul>
             </div>
-            <div class="nmr-panel text-slate-300">${i18n.features_info || 'Payments coming soon. Features are informational.'}</div>
+            <div class="block block-footer">
+              <p>${i18n.features_info || 'Payments coming soon. Features are informational.'}</p>
+            </div>
           `
       }
     </div>
@@ -48,11 +59,10 @@ export default (props, { $onMounted, $update }) => {
   $onMounted(async () => {
     try {
       const payload = await api.shop.getFeatures();
-      const data = payload?.data || payload || [];
+      const data = payload?.data || payload || {};
       state.items = data.map(normalize);
     } catch (err) {
       state.error = err.message || i18n.failed_load_features || 'Failed to load features.';
-      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
     } finally {
       state.loading = false;
       $update();
