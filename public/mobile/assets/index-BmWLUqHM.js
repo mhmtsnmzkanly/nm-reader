@@ -220,106 +220,91 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       <div class="area-chart-tooltip-label">${d}</div>
       <div class="area-chart-tooltip-total">${f}</div>
       ${p}
-    `}setTooltip(){let e=this,{app:t,el:n,svgEl:r,hiddenDatasets:i,currentIndex:a,params:{tooltip:o,datasets:s}}=e;if(o){if(!(s.filter((e,t)=>!i.includes(t)).length>0)){e.f7Tooltip&&e.f7Tooltip.hide&&e.f7Tooltip.hide();return}if(a!==null&&!e.f7Tooltip){e.f7Tooltip=t.tooltip.create({trigger:`manual`,containerEl:n,targetEl:r.querySelector(`line[data-index="${a}"]`),text:e.formatTooltip(),cssClass:`area-chart-tooltip`}),e.f7Tooltip&&e.f7Tooltip.show&&e.f7Tooltip.show();return}!e.f7Tooltip||!e.f7Tooltip.hide||!e.f7Tooltip.show||(a===null?e.f7Tooltip.hide():(e.f7Tooltip.setText(e.formatTooltip()),e.f7Tooltip.setTargetEl(r.querySelector(`line[data-index="${a}"]`)),e.f7Tooltip.show()))}}setCurrentIndex(e){e!==this.currentIndex&&(this.currentIndex=e,this.$el.trigger(`areachart:select`,{index:e}),this.emit(`local::select areaChartSelect`,this,e),this.$svgEl.find(`line`).removeClass(`area-chart-current-line`),this.$svgEl.find(`line[data-index="${e}"]`).addClass(`area-chart-current-line`),this.setTooltip())}onLegendClick(e){let t=parseInt(I(e.target).closest(`.area-chart-legend-item`).attr(`data-index`),10);this.toggleDataset(t)}onMouseEnter(){this.calcLinesOffsets()}onMouseMove(e){let t=this;t.linesOffsets||t.calcLinesOffsets();let n=e.pageX;n===void 0&&(n=0);let r=t.linesOffsets.map(e=>Math.abs(n-e)),i=Math.min(...r),a=r.indexOf(i);t.setCurrentIndex(a)}onMouseLeave(){this.setCurrentIndex(null)}attachEvents(){let{svgEl:e,$el:t}=this;e&&(e.addEventListener(`mouseenter`,this.onMouseEnter),e.addEventListener(`mousemove`,this.onMouseMove),e.addEventListener(`mouseleave`,this.onMouseLeave),t.on(`click`,`.area-chart-legend-item`,this.onLegendClick))}detachEvents(){let{svgEl:e,$el:t}=this;e&&(e.removeEventListener(`mouseenter`,this.onMouseEnter),e.removeEventListener(`mousemove`,this.onMouseMove),e.removeEventListener(`mouseleave`,this.onMouseLeave),t.off(`click`,`.area-chart-legend-item`,this.onLegendClick))}render(){let e=this,{lineChart:t,toggleDatasets:n,width:r,height:i,axis:a,axisLabels:o,legend:s,datasets:c}=e.params,l=e.getChartData(),u=e.getVerticalLines(),d=e.getVisibleLabels(),f=n?`button`:`span`;return X(`div`,null,X(`svg`,{xmlns:`http://www.w3.org/2000/svg`,width:r,height:i,viewBox:`0 0 ${r} ${i}`,preserveAspectRatio:`none`},l.map(e=>t?X(`path`,{stroke:e.color,"fill-rule":`evenodd`,d:e.points}):X(`polygon`,{fill:e.color,"fill-rule":`evenodd`,points:e.points})),u.map((e,t)=>X(`line`,{"data-index":t,fill:`#000`,x1:e,y1:0,x2:e,y2:i}))),a&&X(`div`,{class:`area-chart-axis`},o.map(t=>X(`span`,null,d.includes(t)&&X(`span`,null,e.formatAxisLabel(t))))),s&&X(`div`,{class:`area-chart-legend`},c.map((t,r)=>X(f,{"data-index":r,class:`area-chart-legend-item ${n?`area-chart-legend-button`:``}`,_type:n?`button`:void 0},X(`span`,{style:`background-color: ${t.color}`}),e.formatLegendLabel(t.label)))))}update(e={},t=!1){let n=this,{params:r}=n;if(Object.keys(e).forEach(t=>{e[t]!==void 0&&(r[t]=e[t])}),n.$svgEl.length===0)return n;n.detachEvents(),n.$svgEl.remove(),t||(n.$axisEl.remove(),n.$legendEl.remove());let i=I(n.render()),a=i.find(`svg`);if(J(n,{svgEl:a&&a[0],$svgEl:a}),!t){let e=i.find(`.area-chart-axis`),t=i.find(`.area-chart-legend`);J(n,{$axisEl:e,$legendEl:t}),n.$el.append(e),n.$el.append(t)}return n.$el.prepend(a),n.attachEvents(),n}init(){let e=this,t=I(e.render()),n=t.find(`svg`),r=t.find(`.area-chart-axis`),i=t.find(`.area-chart-legend`);return J(e,{svgEl:n&&n[0],$svgEl:n,$axisEl:r,$legendEl:i}),e.$el.append(n),e.$el.append(r),e.$el.append(i),e.attachEvents(),e}destroy(){let e=this;!e.$el||e.destroyed||(e.$el.trigger(`piechart:beforedestroy`),e.emit(`local::beforeDestroy areaChartBeforeDestroy`,e),e.detachEvents(),e.$svgEl.remove(),e.$axisEl.remove(),e.$legendEl.remove(),e.f7Tooltip&&e.f7Tooltip.destroy&&e.f7Tooltip.destroy(),delete e.$el[0].f7AreaChart,In(e),e.destroyed=!0)}},Ad={name:`areaChart`,params:{areaChart:{el:null,lineChart:!1,datasets:[],axis:!1,axisLabels:[],tooltip:!1,legend:!1,toggleDatasets:!1,width:640,height:320,maxAxisLabels:8,formatAxisLabel:null,formatLegendLabel:null,formatTooltip:null,formatTooltipAxisLabel:null,formatTooltipTotal:null,formatTooltipDataset:null}},create(){let e=this;e.areaChart=fr({defaultSelector:`.area-chart`,constructor:kd,app:e,domProp:`f7AreaChart`}),e.areaChart.update=function(t,n){if(I(t).length===0)return;let r=e.areaChart.get(t);if(r)return r.update(n),r}}},jd={};$r.use([ai]),gr.use([_r,vr,yr,br,Sr,ii,ei,Na,Ma,Fa,La,Ba,Ha,Wa,Qa,$a,to,lo,ro,fo,mo,go,vo,bo,So,wo,Eo,Oo,Ao,Mo,Po,Fo,Lo,zo,Bo,Ho,Ko,Jo,Yo,ts,rs,is,as,ss,ls,ds,gs,_s,ys,Ss,ws,Es,Os,As,Ms,Fs,Ls,Ju,Xu,Qu,ed,nd,id,ad,xd,Cd,Ed,Od,Ad,{name:`breadrumbs`,create(){tr(this,{breadrumbs:jd})}},{name:`typography`}]);var Md=gr,Nd=`/api/v1`,Pd=`nmr_mobile_session_v1`,Fd=typeof window<`u`&&(window.NMR_MOBILE_API_BASE||window.NMR_API_BASE)?window.NMR_MOBILE_API_BASE||window.NMR_API_BASE:Nd,$={_token:null,_csrfToken:null,_refreshToken:null,_refreshing:null,setToken(e){this._token=e||null},setCsrfToken(e){this._csrfToken=e||null},setRefreshToken(e){this._refreshToken=e||null},setSession({apiToken:e=null,csrfToken:t=null,refreshToken:n=null}={}){this.setToken(e),this.setCsrfToken(t),this.setRefreshToken(n),typeof document<`u`&&document.dispatchEvent(new CustomEvent(`auth:updated`))},loadSession(){if(typeof localStorage>`u`)return null;try{let e=localStorage.getItem(Pd);return e?JSON.parse(e):null}catch{return null}},saveSession(e){if(!(typeof localStorage>`u`)){if(!e){localStorage.removeItem(Pd);return}localStorage.setItem(Pd,JSON.stringify(e))}},clearSession(){this.setSession({apiToken:null,csrfToken:null,refreshToken:null}),this.saveSession(null)},_safeJsonParse(e){if(!e)return null;try{return JSON.parse(e)}catch{let t=e.trim(),n=t.indexOf(`{`),r=t.lastIndexOf(`}`);if(n!==-1&&r>n)try{return JSON.parse(t.slice(n,r+1))}catch{}let i=t.indexOf(`[`),a=t.lastIndexOf(`]`);if(i!==-1&&a>i)try{return JSON.parse(t.slice(i,a+1))}catch{}return null}},async request(e,t={}){let n=`${Fd}${e}`,{headers:r,body:i,method:a,...o}=t,s={Accept:`application/json`,...r||{}};i&&!(i instanceof FormData)&&!s[`Content-Type`]&&(s[`Content-Type`]=`application/json`);let c=(a||`GET`).toUpperCase();c!==`GET`&&c!==`HEAD`&&this._csrfToken&&(s[`X-CSRF-Token`]=this._csrfToken),this._token&&(s.Authorization=`Bearer ${this._token}`);let l={method:c,headers:s,credentials:`include`,...o};i&&(l.body=i instanceof FormData?i:JSON.stringify(i));let u=await fetch(n,l),d=await u.text(),f=null;if(d&&(f=this._safeJsonParse(d),f||={message:d}),!u.ok||f?.status===`error`){if(u.status===401&&!t._retried&&this._refreshToken)return await this._refreshSession(),this.request(e,{...t,_retried:!0});let n=f?.error?.message||f?.message||`HTTP Error ${u.status}`;!t.silent&&typeof document<`u`&&document.dispatchEvent(new CustomEvent(`api:error`,{detail:{message:n}}));let r=Error(n);throw r.code=u.status,r.data=f?.data||null,r}return f},async _refreshSession(){if(this._refreshing)return this._refreshing;this._refreshing=(async()=>{let e=this._refreshToken;if(!e)throw Error(`Missing refresh token`);let t=await this.request(`/auth/refresh`,{method:`POST`,body:{refresh_token:e},_retried:!0});t?.data?.csrf_token&&this.setCsrfToken(t.data.csrf_token),t?.data?.refresh_token&&this.setRefreshToken(t.data.refresh_token);let n=this.loadSession()||{},r={...n,apiToken:n.apiToken||this._token,csrfToken:this._csrfToken,refreshToken:this._refreshToken};return this.setSession(r),this.saveSession(r),t})();try{return await this._refreshing}finally{this._refreshing=null}},auth:{async login(e,t,n=!1,r=``){let i=await $.request(`/auth/login`,{method:`POST`,body:{email:e,password:t,remember:n,turnstile_token:r}});return i.data?.api_token&&$.setToken(i.data.api_token),i.data?.csrf_token&&$.setCsrfToken(i.data.csrf_token),i.data?.refresh_token&&$.setRefreshToken(i.data.refresh_token),i.data},async register(e,t,n,r=``){return await $.request(`/auth/register`,{method:`POST`,body:{username:e,email:t,password:n,turnstile_token:r}})},async refresh(e=null){let t=e||$._refreshToken;return await $.request(`/auth/refresh`,{method:`POST`,body:{refresh_token:t}})},async logout(){let e=await $.request(`/auth/logout`,{method:`POST`});return $.clearSession(),e}},content:{async getHome(){return await $.request(`/home`)},async getByType(e,t=1,n=20){return await $.request(`/content/type/${e}?page=${t}&per_page=${n}`)},async getDetails(e,t){return await $.request(`/content/${e}/${t}`)},async getChapters(e,t){return await $.request(`/content/${e}/${t}/chapters`)},async getChapterFull(e,t,n){return await $.request(`/content/${e}/${t}/chapter/${n}`)},async getLatestChapters(e=1,t=20){return await $.request(`/latest-chapters?page=${e}&per_page=${t}`)},async search(e,t=1,n=20){return await $.request(`/search?q=${encodeURIComponent(e)}&page=${t}&per_page=${n}`)},async suggest(e){return await $.request(`/search/suggest?q=${encodeURIComponent(e)}`)},async getGenres(){return await $.request(`/genres`)},async getTags(){return await $.request(`/tags`)},async getByGenre(e,t=1,n=20){return await $.request(`/genre/${e}?page=${t}&per_page=${n}`)},async getByTag(e,t=1,n=20){return await $.request(`/tag/${e}?page=${t}&per_page=${n}`)}},wallet:{async getSummary(){return await $.request(`/user/wallet`)},async getTransactions(e=1,t=20){return await $.request(`/user/wallet/transactions?page=${e}&per_page=${t}`)},async unlockChapter(e){return await $.request(`/chapter/${e}/unlock`,{method:`POST`})}},shop:{async getPackages(){return await $.request(`/shop/packages`)},async getFeatures(){return await $.request(`/shop/features`)}},system:{async getI18n(e){return await $.request(`/i18n/${e}`,{silent:!0})}},user:{async getProfile(){return await $.request(`/user/profile`)},async updateProfile(e){return await $.request(`/user/profile`,{method:`POST`,body:e})},async getHistory(e=1,t=20){return await $.request(`/user/history?page=${e}&per_page=${t}`)},async getFollows(e=1,t=20){return await $.request(`/user/follows?page=${e}&per_page=${t}`)},async getPreferences(){return await $.request(`/user/preferences`)},async updatePreferences(e){return await $.request(`/user/preferences`,{method:`PUT`,body:e})},async getNotifications(){return await $.request(`/user/notifications`)},async markNotificationsRead(){return await $.request(`/user/notifications/read`,{method:`POST`})}},interactions:{async follow(e,t){return await $.request(`/content/${e}/${t}/follow`,{method:`POST`})},async unfollow(e,t){return await $.request(`/content/${e}/${t}/follow`,{method:`DELETE`})},async rate(e,t,n){return await $.request(`/content/${e}/${t}/rate`,{method:`POST`,body:{rating:n}})},async listSeriesComments(e,t,n=1,r=20){return await $.request(`/content/${e}/${t}/comments?page=${n}&per_page=${r}`)},async createSeriesComment(e,t,n){return await $.request(`/content/${e}/${t}/comment`,{method:`POST`,body:{body:n}})},async listChapterComments(e,t=1,n=20){return await $.request(`/chapter/${e}/comments?page=${t}&per_page=${n}`)},async createChapterComment(e,t){return await $.request(`/chapter/${e}/comment`,{method:`POST`,body:{body:t}})},async voteComment(e,t=1){return await $.request(`/comments/${e}/vote`,{method:`POST`,body:{value:t}})}},blog:{async list(e=1,t=20){return await $.request(`/blogs?page=${e}&per_page=${t}`)},async show(e){return await $.request(`/blogs/${e}`)},async listComments(e,t=1,n=20){return await $.request(`/blogs/${e}/comments?page=${t}&per_page=${n}`)},async createComment(e,t){return await $.request(`/blogs/${e}/comments`,{method:`POST`,body:{body:t}})},async vote(e,t=1){return await $.request(`/blogs/${e}/vote`,{method:`POST`,body:{value:t}})},async voteComment(e,t,n=1){return await $.request(`/blogs/${e}/comments/${t}/vote`,{method:`POST`,body:{value:n}})}},sessions:{async list(){return await $.request(`/auth/sessions`)},async revoke(e){return await $.request(`/auth/sessions/${e}`,{method:`DELETE`})}}};$r.use([ai]),gr.use([_r,vr,yr,br,Sr,ii,ei,Na,Ma,Fa,La,Ba,Ha,Wa,Qa,$a,to,lo,ro]);var Id=Ia({state:{auth:{isLoggedIn:!1,user:null,apiToken:null,csrfToken:null,refreshToken:null},wallet:{balance:0,lastUpdated:null}},getters:{auth({state:e}){return e.auth},wallet({state:e}){return e.wallet}},actions:{setAuth({state:e},t){let n=t?.user||null,r=t?.apiToken||null,i=t?.csrfToken||null,a=t?.refreshToken||null;e.auth={isLoggedIn:!!r,user:n,apiToken:r,csrfToken:i,refreshToken:a}},clearAuth({state:e}){e.auth={isLoggedIn:!1,user:null,apiToken:null,csrfToken:null,refreshToken:null}},setWallet({state:e},t){e.wallet={balance:Number(t?.balance||0),lastUpdated:t?.lastUpdated||new Date().toISOString()}}}}),Ld=`nmr_mobile_lang_v1`,Rd={login_title:`Login`,register_title:`Register`,login:`Login`,register:`Create account`,email:`Email`,password:`Password`,username:`Username`,remember_me:`Remember me`,login_success:`Login successful`,login_failed:`Login failed`,register_success:`Account created. You are now logged in.`,register_failed:`Register failed`,logout:`Logout`,logout_success:`Logged out`,wallet:`Wallet`,transactions:`Transactions`,balance:`Balance`,coin_packages:`Coin Packages`,features:`Features`,unlock_confirm_title:`Confirm Purchase`,unlock_confirm_body:`Unlock this chapter for {price} coins?`,login_required:`Login required.`,purchase_title:`Unlock Chapter`,purchase_confirm:`Unlock Now`,purchase_cancel:`Cancel`,language:`Language`,loading:`Loading...`,latest_chapters:`Latest Chapters`,recently_added:`Recently Added`,no_chapters:`No chapters yet.`,no_recent:`No recent series.`,chapters:`Chapters`,free:`Free`,locked:`Locked`,coins:`coins`,load_more:`Load more`,payments_soon:`Payments coming soon. Packages are informational.`,features_info:`Payments coming soon. Features are informational.`,unlock:`Unlock`,reader_locked:`This chapter is locked.`,chapter_not_available:`Chapter not available.`,failed_load_content:`Failed to load content.`,failed_load_list:`Failed to load list.`,failed_load_chapter:`Failed to load chapter.`,failed_load_wallet:`Failed to load wallet.`,failed_load_transactions:`Failed to load transactions.`,failed_load_packages:`Failed to load packages.`,failed_load_features:`Failed to load features.`},zd={lang:`en`,dictionary:{...Rd}};function Bd(){if(typeof localStorage<`u`){let e=localStorage.getItem(Ld);if(e)return e}return typeof navigator<`u`&&(navigator.language||`en`).split(`-`)[0]||`en`}function Vd(){return typeof window>`u`?null:window.Template7||window.Framework7?.Template7||null}function Hd(){let e=Vd();e&&(e.global=e.global||{},e.global.i18n=zd.dictionary,e.global.lang=zd.lang),typeof document<`u`&&(document.documentElement.lang=zd.lang)}async function Ud(e){zd.lang=e;try{let t=await $.system.getI18n(e),n=t?.data||t||{};zd.dictionary={...Rd,...n}}catch{zd.dictionary={...Rd}}return typeof localStorage<`u`&&localStorage.setItem(Ld,e),Hd(),typeof document<`u`&&document.dispatchEvent(new CustomEvent(`i18n:updated`,{detail:{lang:e}})),zd.dictionary}async function Wd(){await Ud(Bd())}function Gd(){return zd.dictionary||Rd}function Kd(e,{$onMounted:t,$update:n,$onBeforeUnmount:r}){let i={loading:!0,latest:[],recent:[],isLoggedIn:Id.state.auth.isLoggedIn},a=Gd(),o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||e.series_title||`Chapter`,slug:e.slug||e.series_slug||``,type:e.type||e.series_type||``,chapter_number:e.chapter_number||e.chapterNumber||e.number||``,price_coin:e.price_coin||e.access?.chapter_unlock_price||0,is_locked:e.is_locked??!(e.access?.granted??!0),cover:o(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)}),c=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||``,cover:o(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)}),l=()=>{i.isLoggedIn=Id.state.auth.isLoggedIn,n()};return t(async()=>{document.addEventListener(`auth:updated`,l);try{let e=await $.content.getHome(),t=e?.data||e||{},n=t.recent_chapters||t.latest_chapters||[],r=t.recently_added||[];i.latest=n.map(s).filter(e=>e.slug&&e.type),i.recent=r.map(c).filter(e=>e.slug&&e.type)}catch{i.latest=[],i.recent=[]}finally{i.loading=!1,n()}}),r(()=>{document.removeEventListener(`auth:updated`,l)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
-  <div class="page nmr-page" data-name="home">
-    <div class="navbar navbar-large nmr-navbar">
+    `}setTooltip(){let e=this,{app:t,el:n,svgEl:r,hiddenDatasets:i,currentIndex:a,params:{tooltip:o,datasets:s}}=e;if(o){if(!(s.filter((e,t)=>!i.includes(t)).length>0)){e.f7Tooltip&&e.f7Tooltip.hide&&e.f7Tooltip.hide();return}if(a!==null&&!e.f7Tooltip){e.f7Tooltip=t.tooltip.create({trigger:`manual`,containerEl:n,targetEl:r.querySelector(`line[data-index="${a}"]`),text:e.formatTooltip(),cssClass:`area-chart-tooltip`}),e.f7Tooltip&&e.f7Tooltip.show&&e.f7Tooltip.show();return}!e.f7Tooltip||!e.f7Tooltip.hide||!e.f7Tooltip.show||(a===null?e.f7Tooltip.hide():(e.f7Tooltip.setText(e.formatTooltip()),e.f7Tooltip.setTargetEl(r.querySelector(`line[data-index="${a}"]`)),e.f7Tooltip.show()))}}setCurrentIndex(e){e!==this.currentIndex&&(this.currentIndex=e,this.$el.trigger(`areachart:select`,{index:e}),this.emit(`local::select areaChartSelect`,this,e),this.$svgEl.find(`line`).removeClass(`area-chart-current-line`),this.$svgEl.find(`line[data-index="${e}"]`).addClass(`area-chart-current-line`),this.setTooltip())}onLegendClick(e){let t=parseInt(I(e.target).closest(`.area-chart-legend-item`).attr(`data-index`),10);this.toggleDataset(t)}onMouseEnter(){this.calcLinesOffsets()}onMouseMove(e){let t=this;t.linesOffsets||t.calcLinesOffsets();let n=e.pageX;n===void 0&&(n=0);let r=t.linesOffsets.map(e=>Math.abs(n-e)),i=Math.min(...r),a=r.indexOf(i);t.setCurrentIndex(a)}onMouseLeave(){this.setCurrentIndex(null)}attachEvents(){let{svgEl:e,$el:t}=this;e&&(e.addEventListener(`mouseenter`,this.onMouseEnter),e.addEventListener(`mousemove`,this.onMouseMove),e.addEventListener(`mouseleave`,this.onMouseLeave),t.on(`click`,`.area-chart-legend-item`,this.onLegendClick))}detachEvents(){let{svgEl:e,$el:t}=this;e&&(e.removeEventListener(`mouseenter`,this.onMouseEnter),e.removeEventListener(`mousemove`,this.onMouseMove),e.removeEventListener(`mouseleave`,this.onMouseLeave),t.off(`click`,`.area-chart-legend-item`,this.onLegendClick))}render(){let e=this,{lineChart:t,toggleDatasets:n,width:r,height:i,axis:a,axisLabels:o,legend:s,datasets:c}=e.params,l=e.getChartData(),u=e.getVerticalLines(),d=e.getVisibleLabels(),f=n?`button`:`span`;return X(`div`,null,X(`svg`,{xmlns:`http://www.w3.org/2000/svg`,width:r,height:i,viewBox:`0 0 ${r} ${i}`,preserveAspectRatio:`none`},l.map(e=>t?X(`path`,{stroke:e.color,"fill-rule":`evenodd`,d:e.points}):X(`polygon`,{fill:e.color,"fill-rule":`evenodd`,points:e.points})),u.map((e,t)=>X(`line`,{"data-index":t,fill:`#000`,x1:e,y1:0,x2:e,y2:i}))),a&&X(`div`,{class:`area-chart-axis`},o.map(t=>X(`span`,null,d.includes(t)&&X(`span`,null,e.formatAxisLabel(t))))),s&&X(`div`,{class:`area-chart-legend`},c.map((t,r)=>X(f,{"data-index":r,class:`area-chart-legend-item ${n?`area-chart-legend-button`:``}`,_type:n?`button`:void 0},X(`span`,{style:`background-color: ${t.color}`}),e.formatLegendLabel(t.label)))))}update(e={},t=!1){let n=this,{params:r}=n;if(Object.keys(e).forEach(t=>{e[t]!==void 0&&(r[t]=e[t])}),n.$svgEl.length===0)return n;n.detachEvents(),n.$svgEl.remove(),t||(n.$axisEl.remove(),n.$legendEl.remove());let i=I(n.render()),a=i.find(`svg`);if(J(n,{svgEl:a&&a[0],$svgEl:a}),!t){let e=i.find(`.area-chart-axis`),t=i.find(`.area-chart-legend`);J(n,{$axisEl:e,$legendEl:t}),n.$el.append(e),n.$el.append(t)}return n.$el.prepend(a),n.attachEvents(),n}init(){let e=this,t=I(e.render()),n=t.find(`svg`),r=t.find(`.area-chart-axis`),i=t.find(`.area-chart-legend`);return J(e,{svgEl:n&&n[0],$svgEl:n,$axisEl:r,$legendEl:i}),e.$el.append(n),e.$el.append(r),e.$el.append(i),e.attachEvents(),e}destroy(){let e=this;!e.$el||e.destroyed||(e.$el.trigger(`piechart:beforedestroy`),e.emit(`local::beforeDestroy areaChartBeforeDestroy`,e),e.detachEvents(),e.$svgEl.remove(),e.$axisEl.remove(),e.$legendEl.remove(),e.f7Tooltip&&e.f7Tooltip.destroy&&e.f7Tooltip.destroy(),delete e.$el[0].f7AreaChart,In(e),e.destroyed=!0)}},Ad={name:`areaChart`,params:{areaChart:{el:null,lineChart:!1,datasets:[],axis:!1,axisLabels:[],tooltip:!1,legend:!1,toggleDatasets:!1,width:640,height:320,maxAxisLabels:8,formatAxisLabel:null,formatLegendLabel:null,formatTooltip:null,formatTooltipAxisLabel:null,formatTooltipTotal:null,formatTooltipDataset:null}},create(){let e=this;e.areaChart=fr({defaultSelector:`.area-chart`,constructor:kd,app:e,domProp:`f7AreaChart`}),e.areaChart.update=function(t,n){if(I(t).length===0)return;let r=e.areaChart.get(t);if(r)return r.update(n),r}}},jd={};$r.use([ai]),gr.use([_r,vr,yr,br,Sr,ii,ei,Na,Ma,Fa,La,Ba,Ha,Wa,Qa,$a,to,lo,ro,fo,mo,go,vo,bo,So,wo,Eo,Oo,Ao,Mo,Po,Fo,Lo,zo,Bo,Ho,Ko,Jo,Yo,ts,rs,is,as,ss,ls,ds,gs,_s,ys,Ss,ws,Es,Os,As,Ms,Fs,Ls,Ju,Xu,Qu,ed,nd,id,ad,xd,Cd,Ed,Od,Ad,{name:`breadrumbs`,create(){tr(this,{breadrumbs:jd})}},{name:`typography`}]);var Md=gr,Nd=`/api/v1`,Pd=`nmr_mobile_session_v1`,Fd=typeof window<`u`&&(window.NMR_MOBILE_API_BASE||window.NMR_API_BASE)?window.NMR_MOBILE_API_BASE||window.NMR_API_BASE:Nd,$={_token:null,_csrfToken:null,_refreshToken:null,_refreshing:null,setToken(e){this._token=e||null},setCsrfToken(e){this._csrfToken=e||null},setRefreshToken(e){this._refreshToken=e||null},setSession({apiToken:e=null,csrfToken:t=null,refreshToken:n=null}={}){this.setToken(e),this.setCsrfToken(t),this.setRefreshToken(n),typeof document<`u`&&document.dispatchEvent(new CustomEvent(`auth:updated`))},loadSession(){if(typeof localStorage>`u`)return null;try{let e=localStorage.getItem(Pd);return e?JSON.parse(e):null}catch{return null}},saveSession(e){if(!(typeof localStorage>`u`)){if(!e){localStorage.removeItem(Pd);return}localStorage.setItem(Pd,JSON.stringify(e))}},clearSession(){this.setSession({apiToken:null,csrfToken:null,refreshToken:null}),this.saveSession(null)},_safeJsonParse(e){if(!e)return null;try{return JSON.parse(e)}catch{let t=e.trim(),n=t.indexOf(`{`),r=t.lastIndexOf(`}`);if(n!==-1&&r>n)try{return JSON.parse(t.slice(n,r+1))}catch{}let i=t.indexOf(`[`),a=t.lastIndexOf(`]`);if(i!==-1&&a>i)try{return JSON.parse(t.slice(i,a+1))}catch{}return null}},async request(e,t={}){let n=`${Fd}${e}`,{headers:r,body:i,method:a,...o}=t,s={Accept:`application/json`,...r||{}};i&&!(i instanceof FormData)&&!s[`Content-Type`]&&(s[`Content-Type`]=`application/json`);let c=(a||`GET`).toUpperCase();c!==`GET`&&c!==`HEAD`&&this._csrfToken&&(s[`X-CSRF-Token`]=this._csrfToken),this._token&&(s.Authorization=`Bearer ${this._token}`);let l={method:c,headers:s,credentials:`include`,...o};i&&(l.body=i instanceof FormData?i:JSON.stringify(i));let u=await fetch(n,l),d=await u.text(),f=null;if(d&&(f=this._safeJsonParse(d),f||={message:d}),!u.ok||f?.status===`error`){if(u.status===401&&!t._retried&&this._refreshToken)return await this._refreshSession(),this.request(e,{...t,_retried:!0});let n=f?.error?.message||f?.message||`HTTP Error ${u.status}`;!t.silent&&typeof document<`u`&&document.dispatchEvent(new CustomEvent(`api:error`,{detail:{message:n}}));let r=Error(n);throw r.code=u.status,r.data=f?.data||null,r}return f},async _refreshSession(){if(this._refreshing)return this._refreshing;this._refreshing=(async()=>{let e=this._refreshToken;if(!e)throw Error(`Missing refresh token`);let t=await this.request(`/auth/refresh`,{method:`POST`,body:{refresh_token:e},_retried:!0});t?.data?.csrf_token&&this.setCsrfToken(t.data.csrf_token),t?.data?.refresh_token&&this.setRefreshToken(t.data.refresh_token);let n=this.loadSession()||{},r={...n,apiToken:n.apiToken||this._token,csrfToken:this._csrfToken,refreshToken:this._refreshToken};return this.setSession(r),this.saveSession(r),t})();try{return await this._refreshing}finally{this._refreshing=null}},auth:{async login(e,t,n=!1,r=``){let i=await $.request(`/auth/login`,{method:`POST`,body:{email:e,password:t,remember:n,turnstile_token:r}});return i.data?.api_token&&$.setToken(i.data.api_token),i.data?.csrf_token&&$.setCsrfToken(i.data.csrf_token),i.data?.refresh_token&&$.setRefreshToken(i.data.refresh_token),i.data},async register(e,t,n,r=``){return await $.request(`/auth/register`,{method:`POST`,body:{username:e,email:t,password:n,turnstile_token:r}})},async refresh(e=null){let t=e||$._refreshToken;return await $.request(`/auth/refresh`,{method:`POST`,body:{refresh_token:t}})},async logout(){let e=await $.request(`/auth/logout`,{method:`POST`});return $.clearSession(),e}},content:{async getHome(){return await $.request(`/home`)},async getByType(e,t=1,n=20){return await $.request(`/content/type/${e}?page=${t}&per_page=${n}`)},async getDetails(e,t){return await $.request(`/content/${e}/${t}`)},async getChapters(e,t){return await $.request(`/content/${e}/${t}/chapters`)},async getChapterFull(e,t,n){return await $.request(`/content/${e}/${t}/chapter/${n}`)},async getLatestChapters(e=1,t=20){return await $.request(`/latest-chapters?page=${e}&per_page=${t}`)},async search(e,t=1,n=20){return await $.request(`/search?q=${encodeURIComponent(e)}&page=${t}&per_page=${n}`)},async suggest(e){return await $.request(`/search/suggest?q=${encodeURIComponent(e)}`)},async getGenres(){return await $.request(`/genres`)},async getTags(){return await $.request(`/tags`)},async getByGenre(e,t=1,n=20){return await $.request(`/genre/${e}?page=${t}&per_page=${n}`)},async getByTag(e,t=1,n=20){return await $.request(`/tag/${e}?page=${t}&per_page=${n}`)}},wallet:{async getSummary(){return await $.request(`/user/wallet`)},async getTransactions(e=1,t=20){return await $.request(`/user/wallet/transactions?page=${e}&per_page=${t}`)},async unlockChapter(e){return await $.request(`/chapter/${e}/unlock`,{method:`POST`})}},shop:{async getPackages(){return await $.request(`/shop/packages`)},async getFeatures(){return await $.request(`/shop/features`)}},system:{async getI18n(e){return await $.request(`/i18n/${e}`,{silent:!0})}},user:{async getProfile(){return await $.request(`/user/profile`)},async updateProfile(e){return await $.request(`/user/profile`,{method:`POST`,body:e})},async getHistory(e=1,t=20){return await $.request(`/user/history?page=${e}&per_page=${t}`)},async getFollows(e=1,t=20){return await $.request(`/user/follows?page=${e}&per_page=${t}`)},async getPreferences(){return await $.request(`/user/preferences`)},async updatePreferences(e){return await $.request(`/user/preferences`,{method:`PUT`,body:e})},async getNotifications(){return await $.request(`/user/notifications`)},async markNotificationsRead(){return await $.request(`/user/notifications/read`,{method:`POST`})}},interactions:{async follow(e,t){return await $.request(`/content/${e}/${t}/follow`,{method:`POST`})},async unfollow(e,t){return await $.request(`/content/${e}/${t}/follow`,{method:`DELETE`})},async rate(e,t,n){return await $.request(`/content/${e}/${t}/rate`,{method:`POST`,body:{rating:n}})},async listSeriesComments(e,t,n=1,r=20){return await $.request(`/content/${e}/${t}/comments?page=${n}&per_page=${r}`)},async createSeriesComment(e,t,n){return await $.request(`/content/${e}/${t}/comment`,{method:`POST`,body:{body:n}})},async listChapterComments(e,t=1,n=20){return await $.request(`/chapter/${e}/comments?page=${t}&per_page=${n}`)},async createChapterComment(e,t){return await $.request(`/chapter/${e}/comment`,{method:`POST`,body:{body:t}})},async voteComment(e,t=1){return await $.request(`/comments/${e}/vote`,{method:`POST`,body:{value:t}})}},blog:{async list(e=1,t=20){return await $.request(`/blogs?page=${e}&per_page=${t}`)},async show(e){return await $.request(`/blogs/${e}`)},async listComments(e,t=1,n=20){return await $.request(`/blogs/${e}/comments?page=${t}&per_page=${n}`)},async createComment(e,t){return await $.request(`/blogs/${e}/comments`,{method:`POST`,body:{body:t}})},async vote(e,t=1){return await $.request(`/blogs/${e}/vote`,{method:`POST`,body:{value:t}})},async voteComment(e,t,n=1){return await $.request(`/blogs/${e}/comments/${t}/vote`,{method:`POST`,body:{value:n}})}},sessions:{async list(){return await $.request(`/auth/sessions`)},async revoke(e){return await $.request(`/auth/sessions/${e}`,{method:`DELETE`})}}};$r.use([ai]),gr.use([_r,vr,yr,br,Sr,ii,ei,Na,Ma,Fa,La,Ba,Ha,Wa,Qa,$a,to,lo,ro]);var Id=Ia({state:{auth:{isLoggedIn:!1,user:null,apiToken:null,csrfToken:null,refreshToken:null},wallet:{balance:0,lastUpdated:null}},getters:{auth({state:e}){return e.auth},wallet({state:e}){return e.wallet}},actions:{setAuth({state:e},t){let n=t?.user||null,r=t?.apiToken||null,i=t?.csrfToken||null,a=t?.refreshToken||null;e.auth={isLoggedIn:!!r,user:n,apiToken:r,csrfToken:i,refreshToken:a}},clearAuth({state:e}){e.auth={isLoggedIn:!1,user:null,apiToken:null,csrfToken:null,refreshToken:null}},setWallet({state:e},t){e.wallet={balance:Number(t?.balance||0),lastUpdated:t?.lastUpdated||new Date().toISOString()}}}}),Ld=`nmr_mobile_lang_v1`,Rd={login_title:`Login`,register_title:`Register`,login:`Login`,register:`Create account`,email:`Email`,password:`Password`,username:`Username`,remember_me:`Remember me`,login_success:`Login successful`,login_failed:`Login failed`,register_success:`Account created. You are now logged in.`,register_failed:`Register failed`,logout:`Logout`,logout_success:`Logged out`,wallet:`Wallet`,transactions:`Transactions`,balance:`Balance`,coin_packages:`Coin Packages`,features:`Features`,unlock_confirm_title:`Confirm Purchase`,unlock_confirm_body:`Unlock this chapter for {price} coins?`,login_required:`Login required.`,purchase_title:`Unlock Chapter`,purchase_confirm:`Unlock Now`,purchase_cancel:`Cancel`,language:`Language`,loading:`Loading...`,latest_chapters:`Latest Chapters`,recently_added:`Recently Added`,no_chapters:`No chapters yet.`,no_recent:`No recent series.`,chapters:`Chapters`,free:`Free`,locked:`Locked`,coins:`coins`,load_more:`Load more`,payments_soon:`Payments coming soon. Packages are informational.`,features_info:`Payments coming soon. Features are informational.`,unlock:`Unlock`,reader_locked:`This chapter is locked.`,chapter_not_available:`Chapter not available.`,failed_load_content:`Failed to load content.`,failed_load_list:`Failed to load list.`,failed_load_chapter:`Failed to load chapter.`,failed_load_wallet:`Failed to load wallet.`,failed_load_transactions:`Failed to load transactions.`,failed_load_packages:`Failed to load packages.`,failed_load_features:`Failed to load features.`},zd={lang:`en`,dictionary:{...Rd}};function Bd(){if(typeof localStorage<`u`){let e=localStorage.getItem(Ld);if(e)return e}return typeof navigator<`u`&&(navigator.language||`en`).split(`-`)[0]||`en`}function Vd(){return typeof window>`u`?null:window.Template7||window.Framework7?.Template7||null}function Hd(){let e=Vd();e&&(e.global=e.global||{},e.global.i18n=zd.dictionary,e.global.lang=zd.lang),typeof document<`u`&&(document.documentElement.lang=zd.lang)}async function Ud(e){zd.lang=e;try{let t=await $.system.getI18n(e),n=t?.data||t||{};zd.dictionary={...Rd,...n}}catch{zd.dictionary={...Rd}}return typeof localStorage<`u`&&localStorage.setItem(Ld,e),Hd(),typeof document<`u`&&document.dispatchEvent(new CustomEvent(`i18n:updated`,{detail:{lang:e}})),zd.dictionary}async function Wd(){await Ud(Bd())}function Gd(){return zd.dictionary||Rd}function Kd(e,{$onMounted:t,$update:n,$onBeforeUnmount:r}){let i={loading:!0,latest:[],recent:[],isLoggedIn:Id.state.auth.isLoggedIn};Gd();let a=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},o=e=>({title:e.title||e.series_title||`Chapter`,slug:e.slug||e.series_slug||``,type:e.type||e.series_type||``,chapter_number:e.chapter_number||e.chapterNumber||e.number||``,price_coin:e.price_coin||e.access?.chapter_unlock_price||0,is_locked:e.is_locked??!(e.access?.granted??!0),cover:a(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)}),s=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||``,cover:a(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)}),c=()=>{i.isLoggedIn=Id.state.auth.isLoggedIn,n()};return t(async()=>{document.addEventListener(`auth:updated`,c);try{let e=await $.content.getHome(),t=e?.data||e||{},n=t.recent_chapters||t.latest_chapters||[],r=t.recently_added||[];i.latest=n.map(o).filter(e=>e.slug&&e.type),i.recent=r.map(s).filter(e=>e.slug&&e.type)}catch{i.latest=[],i.recent=[]}finally{i.loading=!1,n()}}),r(()=>{document.removeEventListener(`auth:updated`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+  <div class="page" data-name="home">
+    <div class="navbar navbar-large">
       <div class="navbar-bg"></div>
       <div class="navbar-inner sliding">
-        <div class="title nmr-title">NMR Mobile</div>
-        <div class="title-large">
-          <div class="title-large-text nmr-title">NMR Mobile</div>
+        <div class="title">NMR Reader</div>
+        <div class="right">
+          <a class="link icon-only sheet-open" data-sheet=".language-sheet" href="#">
+            <i class="f7-icons">globe</i>
+          </a>
         </div>
-        <div class="right flex items-center gap-3">
-          ${i.isLoggedIn?t`<a class="text-sm text-slate-200" data-action="logout" href="#">${a.logout||`Logout`}</a>`:t`<a class="text-sm text-slate-200 popup-open" data-popup=".login-popup" href="#">${a.login||`Login`}</a>`}
-          <a class="text-sm text-slate-200 sheet-open" data-sheet=".language-sheet" href="#">${a.language||`Language`}</a>
-          <a class="text-sm text-slate-200" href="/wallet/">${a.wallet||`Wallet`}</a>
+        <div class="title-large">
+          <div class="title-large-text">NMR Reader</div>
         </div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-6">
-      <div class="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
-        <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.35),transparent_55%)]"></div>
-        <div class="absolute inset-0 opacity-60" style="background-image:url('/assets/img/covers/placeholder.svg');background-size:cover;background-position:center;"></div>
-        <div class="relative z-10 p-7 space-y-4">
-          <div class="text-xs uppercase tracking-[1.4px] text-amber-200/80">Premium</div>
-          <div class="text-3xl font-semibold text-slate-100 leading-tight">Story Library</div>
-          <div class="text-sm text-slate-300 leading-6">Curated new chapters and cinematic reading.</div>
-          <div class="flex gap-3 pt-1">
-            <a class="nmr-button nmr-button-primary" href="/types/manga/">Explore</a>
-            <a class="nmr-button nmr-button-ghost" href="/wallet/">Wallet</a>
-          </div>
-        </div>
-      </div>
-      <div class="flex gap-3">
-        <a class="nmr-button nmr-button-ghost" href="/types/manga/">Manga</a>
-        <a class="nmr-button nmr-button-ghost" href="/types/novel/">Novel</a>
-        <a class="nmr-button nmr-button-ghost" href="/types/manhwa/">Manhwa</a>
-        <a class="nmr-button nmr-button-ghost" href="/search/">Search</a>
-        <a class="nmr-button nmr-button-ghost" href="/profile/">Profile</a>
-        <a class="nmr-button nmr-button-ghost" href="/blogs/">Blogs</a>
-      </div>
-
-      <div class="space-y-4">
-        <div class="nmr-section-title">Featured</div>
-        <div class="flex gap-4 overflow-x-auto pb-2">
-          ${i.recent.slice(0,6).map(e=>t`
-            <a class="min-w-[180px] rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-[0_18px_40px_rgba(0,0,0,0.45)]" href="/content/${e.type}/${e.slug}/">
-              <div class="h-28 w-full" style="background-image:url('${e.cover}');background-size:cover;background-position:center;"></div>
-              <div class="p-4 space-y-1">
-                <div class="text-sm font-semibold text-slate-100">${e.title}</div>
-                <div class="text-xs text-slate-400">${e.type}</div>
-              </div>
-            </a>
+    <div class="page-content">
+      <!-- Featured Swiper -->
+      <div class="block-title">Featured Stories</div>
+      <div class="swiper-container swiper-init" data-slides-per-view="auto" data-space-between="10">
+        <div class="swiper-wrapper">
+          ${i.recent.slice(0,5).map(e=>t`
+            <div class="swiper-slide" style="width: 240px">
+              <a href="/content/${e.type}/${e.slug}/" class="card card-outline no-margin">
+                <div class="card-content">
+                  <img src="${e.cover}" style="width: 100%; height: 320px; object-fit: cover; display: block;" />
+                  <div class="card-footer font-bold">${e.title}</div>
+                </div>
+              </a>
+            </div>
           `)}
         </div>
       </div>
 
-      <div class="space-y-5">
-        <div class="nmr-section-title">${a.latest_chapters||`Latest Chapters`}</div>
-        ${i.loading?t`<div class="nmr-panel">${a.loading||`Loading...`}</div>`:i.latest.length>0?t`<div class="space-y-4">
-                ${i.latest.map(e=>t`
-                  <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${e.type}/${e.slug}/${e.chapter_number}/">
-                    <div class="flex items-start gap-4">
-                      <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${e.cover}');background-size:cover;background-position:center;"></div>
-                      <div class="flex-1">
-                        <div class="flex items-start justify-between gap-3">
-                          <div>
-                            <div class="font-semibold text-slate-100">${e.title}</div>
-                            <div class="text-xs text-slate-400 mt-1">${e.type}</div>
-                          </div>
-                          <div class="text-xs text-slate-300">#${e.chapter_number}</div>
-                        </div>
-                        <div class="mt-3">
-                          ${e.is_locked?t`<span class="nmr-chip nmr-chip--price">${e.price_coin} ${a.coins||`coins`}</span>`:t`<span class="nmr-chip nmr-chip--free">${a.free||`Free`}</span>`}
-                        </div>
-                      </div>
-                    </div>
-                  </a>
-                `)}
-              </div>`:t`<div class="nmr-panel">${a.no_chapters||`No chapters yet.`}</div>`}
+      <!-- Content Type Tabs -->
+      <div class="block">
+        <div class="segmented segmented-strong">
+          <a href="/types/manga/" class="button">Manga</a>
+          <a href="/types/novel/" class="button">Novel</a>
+          <a href="/types/manhwa/" class="button">Manhwa</a>
+        </div>
       </div>
 
-      <div class="space-y-5">
-        <div class="nmr-section-title">${a.recently_added||`Recently Added`}</div>
-        ${i.loading?t`<div class="nmr-panel">${a.loading||`Loading...`}</div>`:i.recent.length>0?t`<div class="space-y-4">
-                ${i.recent.map(e=>t`
-                  <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${e.type}/${e.slug}/">
-                    <div class="flex items-center gap-4">
-                      <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${e.cover}');background-size:cover;background-position:center;"></div>
-                      <div class="flex-1 flex items-center justify-between">
-                        <div class="font-semibold text-slate-100">${e.title}</div>
-                        <div class="text-xs text-slate-400">${e.type}</div>
+      <!-- Latest Updates -->
+      <div class="list media-list no-chevron">
+        <div class="block-title">Latest Updates</div>
+        <ul>
+          ${i.loading?[1,2,3].map(()=>t`
+              <li class="skeleton-text skeleton-effect-blink">
+                <div class="item-content">
+                  <div class="item-media"><div class="skeleton-block" style="width: 48px; height: 64px"></div></div>
+                  <div class="item-inner"><div class="item-title">Loading title</div><div class="item-text">Loading info</div></div>
+                </div>
+              </li>
+            `):i.latest.map(e=>t`
+              <li>
+                <a href="/reader/${e.type}/${e.slug}/${e.chapter_number}/" class="item-link item-content">
+                  <div class="item-media">
+                    <img src="${e.cover}" width="48" style="border-radius: 4px" />
+                  </div>
+                  <div class="item-inner">
+                    <div class="item-title-row">
+                      <div class="item-title">${e.title}</div>
+                      <div class="item-after">
+                        ${e.is_locked?t`<span class="badge color-orange">COIN</span>`:t`<span class="badge color-green">FREE</span>`}
                       </div>
                     </div>
-                  </a>
-                `)}
-              </div>`:t`<div class="nmr-panel">${a.no_recent||`No recent series.`}</div>`}
+                    <div class="item-subtitle">Chapter ${e.chapter_number}</div>
+                    <div class="item-text">${e.type}</div>
+                  </div>
+                </a>
+              </li>
+            `)}
+        </ul>
+      </div>
+
+      <div class="fab fab-right-bottom color-blue">
+        <a href="/search/">
+          <i class="f7-icons">search</i>
+        </a>
       </div>
     </div>
   </div>
-`}}Kd.id=`4707df6803`;function qd(e,{$onMounted:t,$update:n,$f7route:r}){let i=Gd(),a={loading:!0,error:``,items:[],type:r.params.type,typeTitle:(r.params.type||``).toUpperCase()},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||a.type,series_unlock_price:e.series_unlock_price||e.series_unlock_price_coin||e.access?.series_unlock_price||0,cover:o(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)});return t(async()=>{try{let e=await $.content.getByType(a.type,1,20);a.items=(e?.data||e||[]).map(s).filter(e=>e.slug)}catch(e){a.error=e.message||i.failed_load_list||`Failed to load list.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:a.error}}))}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}Kd.id=`79d12cb219`;function qd(e,{$onMounted:t,$update:n,$f7route:r}){let i=Gd(),a={loading:!0,error:``,items:[],type:r.params.type,typeTitle:(r.params.type||``).toUpperCase()},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||a.type,series_unlock_price:e.series_unlock_price||e.series_unlock_price_coin||e.access?.series_unlock_price||0,cover:o(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)});return t(async()=>{try{let e=await $.content.getByType(a.type,1,20);a.items=(e?.data||e||[]).map(s).filter(e=>e.slug)}catch(e){a.error=e.message||i.failed_load_list||`Failed to load list.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:a.error}}))}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="type-list">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -347,129 +332,183 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           </div>`}
     </div>
   </div>
-`}}qd.id=`333859a939`;function Jd(e,{$onMounted:t,$update:n,$f7route:r,$el:i,$f7:a}){let o=Gd(),s={loading:!0,error:``,title:`Series`,description:``,chapters:[],cover:`/assets/img/covers/placeholder.svg`,comments:[],following:!1,type:r.params.type,slug:r.params.slug},c=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},l=e=>({title:e.title||`Chapter ${e.chapter_number||e.chapterNumber||``}`,slug:s.slug,type:s.type,chapter_number:e.chapter_number||e.chapterNumber||e.number||``,price_coin:e.price_coin||e.access?.chapter_unlock_price||0,is_locked:e.is_locked??!(e.access?.granted??!0)}),u=async()=>{try{let e=await $.interactions.listSeriesComments(s.type,s.slug,1,20),t=e?.data||e||[];s.comments=(Array.isArray(t)?t:[]).map(e=>({id:e.id||e.comment_id||0,author:e.username||e.author_username||`User`,body:e.body||e.comment||``,created_at:e.created_at||``,votes:e.votes||e.score||0}))}catch{s.comments=[]}};return t(async()=>{try{let[e,t]=await Promise.all([$.content.getDetails(s.type,s.slug),$.content.getChapters(s.type,s.slug)]),n=e?.data||e||{},r=t?.data||t||[];s.title=n.title||`Series`,s.description=n.description||``,s.cover=c(n.cover_image||n.cover||n.thumbnail||n.image),s.following=!!n.is_following||!!n.following||!1,s.chapters=r.map(l).filter(e=>e.chapter_number!==``),await u()}catch(e){s.error=e.message||o.failed_load_content||`Failed to load content.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:s.error}}))}finally{s.loading=!1,n()}}),t(()=>{i.on(`click`,`[data-action="follow"]`,async e=>{e.preventDefault();try{await $.interactions.follow(s.type,s.slug),s.following=!0,n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Follow failed`}}))}}),i.on(`click`,`[data-action="unfollow"]`,async e=>{e.preventDefault();try{await $.interactions.unfollow(s.type,s.slug),s.following=!1,n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Unfollow failed`}}))}}),i.on(`click`,`[data-action="rate"]`,e=>{e.preventDefault(),a.dialog.prompt(`Rate 1-5`,`Rate`,async e=>{let t=Number(e);if(!(!t||t<1||t>5))try{await $.interactions.rate(s.type,s.slug,t),a.toast.create({text:`Thanks for rating!`,closeTimeout:2e3}).open()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Rating failed`}}))}})}),i.on(`submit`,`#series-comment-form`,async e=>{e.preventDefault();let t=e.target,r=t.querySelector(`textarea[name="body"]`)?.value||``;if(r.trim())try{await $.interactions.createSeriesComment(s.type,s.slug,r.trim()),t.reset(),await u(),n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Comment failed`}}))}}),i.on(`click`,`[data-action="comment-vote"]`,async e=>{e.preventDefault();let t=e.target.getAttribute(`data-id`);if(t)try{await $.interactions.voteComment(t,1),await u(),n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Vote failed`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
-  <div class="page nmr-page" data-name="content-detail">
-    <div class="navbar nmr-navbar">
+`}}qd.id=`ad72b9d245`;function Jd(e,{$onMounted:t,$update:n,$f7route:r,$el:i,$f7:a}){let o=Gd(),s={loading:!0,error:``,title:`Series`,description:``,chapters:[],cover:`/assets/img/covers/placeholder.svg`,comments:[],following:!1,type:r.params.type,slug:r.params.slug},c=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},l=e=>({title:e.title||`Chapter ${e.chapter_number||e.chapterNumber||``}`,slug:s.slug,type:s.type,chapter_number:e.chapter_number||e.chapterNumber||e.number||``,price_coin:e.price_coin||e.access?.chapter_unlock_price||0,is_locked:e.is_locked??!(e.access?.granted??!0)}),u=async()=>{try{let e=await $.interactions.listSeriesComments(s.type,s.slug,1,20),t=e?.data||e||[];s.comments=(Array.isArray(t)?t:[]).map(e=>({id:e.id||e.comment_id||0,author:e.username||e.author_username||`User`,body:e.body||e.comment||``,created_at:e.created_at||``,votes:e.votes||e.score||0}))}catch{s.comments=[]}};return t(async()=>{try{let[e,t]=await Promise.all([$.content.getDetails(s.type,s.slug),$.content.getChapters(s.type,s.slug)]),n=e?.data||e||{},r=t?.data||t||[];s.title=n.title||`Series`,s.description=n.description||``,s.cover=c(n.cover_image||n.cover||n.thumbnail||n.image),s.following=!!n.is_following||!!n.following||!1,s.chapters=r.map(l).filter(e=>e.chapter_number!==``),await u()}catch(e){s.error=e.message||o.failed_load_content||`Failed to load content.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:s.error}}))}finally{s.loading=!1,n()}}),t(()=>{i.on(`click`,`[data-action="follow"]`,async e=>{e.preventDefault();try{await $.interactions.follow(s.type,s.slug),s.following=!0,n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Follow failed`}}))}}),i.on(`click`,`[data-action="unfollow"]`,async e=>{e.preventDefault();try{await $.interactions.unfollow(s.type,s.slug),s.following=!1,n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Unfollow failed`}}))}}),i.on(`click`,`[data-action="rate"]`,e=>{e.preventDefault(),a.dialog.prompt(`Rate 1-5`,`Rate`,async e=>{let t=Number(e);if(!(!t||t<1||t>5))try{await $.interactions.rate(s.type,s.slug,t),a.toast.create({text:`Thanks for rating!`,closeTimeout:2e3}).open()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Rating failed`}}))}})}),i.on(`submit`,`#series-comment-form`,async e=>{e.preventDefault();let t=e.target,r=t.querySelector(`textarea[name="body"]`)?.value||``;if(r.trim())try{await $.interactions.createSeriesComment(s.type,s.slug,r.trim()),t.reset(),await u(),n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Comment failed`}}))}}),i.on(`click`,`[data-action="comment-vote"]`,async e=>{e.preventDefault();let t=e.target.getAttribute(`data-id`);if(t)try{await $.interactions.voteComment(t,1),await u(),n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Vote failed`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+  <div class="page" data-name="content-detail">
+    <div class="navbar">
       <div class="navbar-bg"></div>
-      <div class="navbar-inner">
+      <div class="navbar-inner sliding">
         <div class="left">
-          <a class="link back text-slate-200">Back</a>
+          <a class="link back">
+            <i class="icon icon-back"></i>
+            <span class="if-not-md">Back</span>
+          </a>
         </div>
-        <div class="title nmr-title">${s.title}</div>
+        <div class="title">${s.title}</div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-6">
-      ${s.loading?t`<div class="nmr-panel">${o.loading||`Loading...`}</div>`:s.error?t`<div class="nmr-panel text-red-200">${s.error}</div>`:t`
-            <div class="nmr-panel text-slate-200 leading-7">${s.description}</div>
-            <div class="nmr-card px-5 py-4 space-y-3">
-              <div class="flex items-center justify-between">
-                <div class="text-xs uppercase tracking-[2px] text-amber-100/90">Actions</div>
-                <div class="text-sm text-slate-400">${s.following?`Following`:`Not following`}</div>
-              </div>
-              <div class="flex gap-3">
-                ${s.following?t`<button class="nmr-button nmr-button-ghost" data-action="unfollow" type="button">Unfollow</button>`:t`<button class="nmr-button nmr-button-primary" data-action="follow" type="button">Follow</button>`}
-                <button class="nmr-button nmr-button-ghost" data-action="rate" type="button">Rate</button>
+    <div class="page-content">
+      <div class="card card-outline">
+        <div class="card-content card-content-padding">
+          <div class="row">
+            <div class="col-33">
+              <img src="${s.cover}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1)" />
+            </div>
+            <div class="col-66">
+              <div class="text-color-gray uppercase font-bold" style="font-size: 10px; letter-spacing: 1px">${s.type}</div>
+              <h1 style="margin: 4px 0; font-size: 20px">${s.title}</h1>
+              <div class="chip color-blue">
+                <div class="chip-label">${s.chapters.length} Chapters</div>
               </div>
             </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button class="button button-small button-fill ${s.following?`color-gray`:`color-blue`}" data-action="${s.following?`unfollow`:`follow`}">
+            ${s.following?`Following`:`Follow`}
+          </button>
+          <button class="button button-small color-blue" data-action="rate">Rate</button>
+        </div>
+      </div>
 
-            <div class="nmr-section-title">${o.chapters||`Chapters`}</div>
-            <div class="space-y-4">
-              ${s.chapters.map(e=>t`
-                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${e.type}/${e.slug}/${e.chapter_number}/">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${s.cover}');background-size:cover;background-position:center;"></div>
-                    <div class="flex-1 flex items-start justify-between gap-3">
-                      <div>
-                        <div class="font-semibold text-slate-100">${e.title}</div>
-                        <div class="text-xs text-slate-400 mt-1">#${e.chapter_number}</div>
-                      </div>
-                      ${e.is_locked?t`<span class="nmr-chip nmr-chip--price">${e.price_coin} ${o.coins||`coins`}</span>`:t`<span class="nmr-chip nmr-chip--free">${o.free||`Free`}</span>`}
-                    </div>
-                  </div>
-                </a>
-              `)}
-            </div>
+      <div class="block-title">Synopsis</div>
+      <div class="block block-strong-ios block-inset-ios">
+        <p>${s.description}</p>
+      </div>
 
-            <div class="nmr-section-title">Comments</div>
-            <div class="space-y-3">
-              ${s.comments.map(e=>t`
-                <div class="nmr-card px-4 py-3 space-y-2">
-                  <div class="text-sm text-slate-100">${e.author}</div>
-                  <div class="text-sm text-slate-300">${e.body}</div>
-                  <div class="flex items-center gap-3 text-xs text-slate-400">
-                    <span>${e.created_at}</span>
-                    <button class="text-amber-200" data-action="comment-vote" data-id="${e.id}">+${e.votes}</button>
+      <div class="block-title">Chapters</div>
+      <div class="list links-list block-strong-ios block-inset-ios">
+        <ul>
+          ${s.chapters.map(e=>t`
+            <li>
+              <a href="/reader/${e.type}/${e.slug}/${e.chapter_number}/">
+                <span>Chapter ${e.chapter_number}: ${e.title}</span>
+                ${e.is_locked?t`<i class="f7-icons size-14 text-color-orange">lock_fill</i>`:``}
+              </a>
+            </li>
+          `)}
+        </ul>
+      </div>
+
+      <div class="block-title">Comments</div>
+      <div class="list media-list">
+        <ul>
+          ${s.comments.map(e=>t`
+            <li class="item-content">
+              <div class="item-inner">
+                <div class="item-title-row">
+                  <div class="item-title font-bold">${e.author}</div>
+                  <div class="item-after text-color-gray" style="font-size: 10px">${e.created_at}</div>
+                </div>
+                <div class="item-text">${e.body}</div>
+              </div>
+            </li>
+          `)}
+        </ul>
+      </div>
+      
+      <div class="block">
+        <form id="series-comment-form">
+          <div class="list no-hairlines-md">
+            <ul>
+              <li class="item-content item-input">
+                <div class="item-inner">
+                  <div class="item-input-wrap">
+                    <textarea name="body" placeholder="Write a comment..." class="resizable"></textarea>
                   </div>
                 </div>
-              `)}
-              <form class="nmr-card px-4 py-3 space-y-2" id="series-comment-form">
-                <textarea class="nmr-input" name="body" rows="3" placeholder="Write a comment..."></textarea>
-                <button class="nmr-button nmr-button-primary" type="submit">Post</button>
-              </form>
-            </div>
-          `}
+              </li>
+            </ul>
+          </div>
+          <button class="button button-fill color-blue" type="submit">Post Comment</button>
+        </form>
+      </div>
     </div>
   </div>
-`}}Jd.id=`fb69e267be`;function Yd(e,{$onMounted:t,$onBeforeUnmount:n,$update:r,$f7route:i,$el:a,$f7:o}){let s=Gd(),c={loading:!0,error:``,title:`Chapter`,is_locked:!1,price_coin:0,is_image:!1,pages:[],paragraphs:[],font_size:16,theme:`dark`,type:i.params.type,slug:i.params.slug,chapterNumber:i.params.chapterNumber,chapterId:null,comments:[]},l=`nmr_reader_font_size`,u=`nmr_reader_theme`,d=async e=>{e.detail?.chapterId===c.chapterId&&(await p(),r())},f=async()=>{if(c.chapterId)try{let e=await $.interactions.listChapterComments(c.chapterId,1,20),t=e?.data||e||[];c.comments=(Array.isArray(t)?t:[]).map(e=>({id:e.id||e.comment_id||0,author:e.username||e.author_username||`User`,body:e.body||e.comment||``,created_at:e.created_at||``,votes:e.votes||e.score||0}))}catch{c.comments=[]}},p=async()=>{let e=await $.content.getChapterFull(c.type,c.slug,c.chapterNumber),t=e?.data||e||{};c.chapterId=t.id||null,c.title=t.title||`Chapter ${c.chapterNumber}`,c.is_locked=t.is_locked??!(t.access?.granted??!0),c.price_coin=t.price_coin||t.access?.chapter_unlock_price||0,c.is_image=t.type===`image`,c.is_image?(c.pages=Array.isArray(t.pages)?t.pages:[],c.paragraphs=[]):(c.paragraphs=String(t.body||``).split(`
-`).filter(e=>e.trim()!==``),c.pages=[]),await f()};return t(async()=>{if(typeof localStorage<`u`){let e=Number(localStorage.getItem(l)||`16`);!Number.isNaN(e)&&e>10&&e<40&&(c.font_size=e);let t=localStorage.getItem(u);t&&(c.theme=t)}try{await p()}catch(e){c.error=e.message||s.failed_load_chapter||`Failed to load chapter.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:c.error}}))}finally{c.loading=!1,r()}document.addEventListener(`purchase:success`,d),a.on(`click`,`[data-action="unlock"]`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){o.popup.open(`.login-popup`);return}if(!c.chapterId){o.dialog.alert(s.chapter_not_available||`Chapter not available.`);return}document.dispatchEvent(new CustomEvent(`purchase:open`,{detail:{chapterId:c.chapterId,price:c.price_coin}}))}),a.on(`click`,`[data-action="font-inc"]`,e=>{e.preventDefault(),c.font_size=Math.min(32,c.font_size+1),typeof localStorage<`u`&&localStorage.setItem(l,String(c.font_size)),r()}),a.on(`click`,`[data-action="font-dec"]`,e=>{e.preventDefault(),c.font_size=Math.max(12,c.font_size-1),typeof localStorage<`u`&&localStorage.setItem(l,String(c.font_size)),r()}),a.on(`click`,`[data-action="set-theme"]`,e=>{e.preventDefault();let t=e.target.getAttribute(`data-theme`);t&&(c.theme=t,typeof localStorage<`u`&&localStorage.setItem(u,t),r())}),a.on(`submit`,`#chapter-comment-form`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){o.popup.open(`.login-popup`);return}let t=e.target,n=t.querySelector(`textarea[name="body"]`)?.value||``;if(n.trim())try{await $.interactions.createChapterComment(c.chapterId,n.trim()),t.reset(),await f(),r()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Comment failed`}}))}}),a.on(`click`,`[data-action="comment-vote"]`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){o.popup.open(`.login-popup`);return}let t=e.target.getAttribute(`data-id`);if(t)try{await $.interactions.voteComment(t,1),await f(),r()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Vote failed`}}))}})}),n(()=>{document.removeEventListener(`purchase:success`,d)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
-  <div class="page nmr-page" data-name="reader">
-    <div class="navbar nmr-navbar">
+`}}Jd.id=`156efabe90`;function Yd(e,{$onMounted:t,$onBeforeUnmount:n,$update:r,$f7route:i,$el:a,$f7:o}){let s=Gd(),c={loading:!0,error:``,title:`Chapter`,is_locked:!1,price_coin:0,is_image:!1,pages:[],paragraphs:[],font_size:16,theme:`dark`,type:i.params.type,slug:i.params.slug,chapterNumber:i.params.chapterNumber,chapterId:null,comments:[]},l=`nmr_reader_font_size`,u=`nmr_reader_theme`,d=e=>{c.font_size=Math.max(12,Math.min(32,c.font_size+e)),typeof localStorage<`u`&&localStorage.setItem(l,String(c.font_size)),r()},f=e=>{let t=e.target,n=t.scrollTop/(t.scrollHeight-t.offsetHeight)*100,r=document.getElementById(`reader-progress`);r&&(r.style.width=`${n}%`)},p=async e=>{e.detail?.chapterId===c.chapterId&&(await h(),r())},m=async()=>{if(c.chapterId)try{let e=await $.interactions.listChapterComments(c.chapterId,1,20),t=e?.data||e||[];c.comments=(Array.isArray(t)?t:[]).map(e=>({id:e.id||e.comment_id||0,author:e.username||e.author_username||`User`,body:e.body||e.comment||``,created_at:e.created_at||``,votes:e.votes||e.score||0}))}catch{c.comments=[]}},h=async()=>{let e=await $.content.getChapterFull(c.type,c.slug,c.chapterNumber),t=e?.data||e||{};c.chapterId=t.id||null,c.title=t.title||`Chapter ${c.chapterNumber}`,c.is_locked=t.is_locked??!(t.access?.granted??!0),c.price_coin=t.price_coin||t.access?.chapter_unlock_price||0,c.is_image=t.type===`image`,c.is_image?(c.pages=Array.isArray(t.pages)?t.pages:[],c.paragraphs=[]):(c.paragraphs=String(t.body||``).split(`
+`).filter(e=>e.trim()!==``),c.pages=[]),await m()};return t(async()=>{if(typeof localStorage<`u`){let e=Number(localStorage.getItem(l)||`16`);!Number.isNaN(e)&&e>10&&e<40&&(c.font_size=e);let t=localStorage.getItem(u);t&&(c.theme=t)}try{await h()}catch(e){c.error=e.message||s.failed_load_chapter||`Failed to load chapter.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:c.error}}))}finally{c.loading=!1,r()}document.addEventListener(`purchase:success`,p),a.on(`click`,`[data-action="unlock"]`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){o.popup.open(`.login-popup`);return}if(!c.chapterId){o.dialog.alert(s.chapter_not_available||`Chapter not available.`);return}document.dispatchEvent(new CustomEvent(`purchase:open`,{detail:{chapterId:c.chapterId,price:c.price_coin}}))}),a.on(`click`,`[data-action="font-inc"]`,e=>{e.preventDefault(),c.font_size=Math.min(32,c.font_size+1),typeof localStorage<`u`&&localStorage.setItem(l,String(c.font_size)),r()}),a.on(`click`,`[data-action="font-dec"]`,e=>{e.preventDefault(),c.font_size=Math.max(12,c.font_size-1),typeof localStorage<`u`&&localStorage.setItem(l,String(c.font_size)),r()}),a.on(`click`,`[data-action="set-theme"]`,e=>{e.preventDefault();let t=e.target.getAttribute(`data-theme`);t&&(c.theme=t,typeof localStorage<`u`&&localStorage.setItem(u,t),r())}),a.on(`submit`,`#chapter-comment-form`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){o.popup.open(`.login-popup`);return}let t=e.target,n=t.querySelector(`textarea[name="body"]`)?.value||``;if(n.trim())try{await $.interactions.createChapterComment(c.chapterId,n.trim()),t.reset(),await m(),r()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Comment failed`}}))}}),a.on(`click`,`[data-action="comment-vote"]`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){o.popup.open(`.login-popup`);return}let t=e.target.getAttribute(`data-id`);if(t)try{await $.interactions.voteComment(t,1),await m(),r()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Vote failed`}}))}})}),n(()=>{document.removeEventListener(`purchase:success`,p)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+  <div class="page nmr-page no-toolbar" data-name="reader">
+    <!-- Immersive Navbar (Hides on Scroll) -->
+    <div class="navbar nmr-navbar navbar-hidden-on-scroll">
       <div class="navbar-bg"></div>
       <div class="navbar-inner">
         <div class="left">
-          <a class="link back text-slate-200">Back</a>
+          <a class="link back">
+            <i class="f7-icons">chevron_left</i>
+          </a>
         </div>
         <div class="title nmr-title">${c.title}</div>
+        <div class="right">
+          <a class="link icon-only" @click="${()=>c.showSettings=!c.state.showSettings}">
+            <i class="f7-icons">slider_horizontal_3</i>
+          </a>
+        </div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-6">
-      ${c.loading?t`<div class="nmr-panel">${s.loading||`Loading...`}</div>`:c.error?t`<div class="nmr-panel text-red-200">${c.error}</div>`:c.is_locked?t`<div class="nmr-panel space-y-3 text-center">
-              <div class="text-slate-100">${s.reader_locked||`This chapter is locked.`}</div>
-              <div class="text-amber-200">${c.price_coin} ${s.coins||`coins`}</div>
-              <a class="nmr-button nmr-button-primary inline-block" data-action="unlock" href="#">${s.unlock||`Unlock`}</a>
-            </div>`:t`
-              ${c.is_image?t`<div class="space-y-5">
-                  ${c.pages.map(e=>t`<img class="reader-image" src="${e}" alt="" loading="lazy" />`)}
-                </div>`:t`
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="flex gap-2">
-                      <button class="nmr-button nmr-button-ghost px-3" data-action="font-dec" type="button">A-</button>
-                      <button class="nmr-button nmr-button-ghost px-3" data-action="font-inc" type="button">A+</button>
-                    </div>
-                    <div class="flex gap-2">
-                      <button class="w-8 h-8 rounded-full border border-white/20 bg-slate-900" data-action="set-theme" data-theme="dark" type="button"></button>
-                      <button class="w-8 h-8 rounded-full border border-white/20 bg-slate-100" data-action="set-theme" data-theme="light" type="button"></button>
-                      <button class="w-8 h-8 rounded-full border border-white/20 bg-[#f4ecd8]" data-action="set-theme" data-theme="sepia" type="button"></button>
-                    </div>
-                  </div>
-                  <div class="nmr-panel reader-theme-${c.theme}" style="font-size: ${c.font_size}px;">
-                    ${c.paragraphs.map(e=>t`<p class="mb-5 leading-8">${e}</p>`)}
-                  </div>
-                `}
+    <!-- Reader Progress Bar (Custom) -->
+    <div class="reader-progress-bar" id="reader-progress"></div>
 
-              <div class="nmr-section-title">${s.comments||`Comments`}</div>
-              <div class="space-y-3 pb-8">
-                ${c.comments.map(e=>t`
-                  <div class="nmr-card px-4 py-3 space-y-2">
-                    <div class="text-sm text-slate-100">${e.author}</div>
-                    <div class="text-sm text-slate-300">${e.body}</div>
-                    <div class="flex items-center gap-3 text-xs text-slate-400">
-                      <span>${e.created_at}</span>
-                      <button class="text-amber-200" data-action="comment-vote" data-id="${e.id}">+${e.votes}</button>
+    <div class="page-content" @scroll="${f}">
+      ${c.loading?t`<div class="block display-flex justify-content-center align-items-center" style="height: 100%"><div class="preloader"></div></div>`:c.error?t`<div class="block nmr-panel color-red text-center m-5">${c.error}</div>`:c.is_locked?t`
+              <div class="block text-center pt-12 space-y-4">
+                <i class="f7-icons size-64 text-orange-400">lock_fill</i>
+                <h2 class="nmr-title text-2xl text-white">Unlock Chapter</h2>
+                <p class="text-slate-400">This chapter costs ${c.price_coin} coins.</p>
+                <button class="button button-fill button-large color-purple" data-action="unlock">Unlock Now</button>
+              </div>`:t`
+              <div class="reader-container animate-fade-in pb-12">
+                ${c.is_image?t`<div class="manga-images">
+                    ${c.pages.map(e=>t`<img class="reader-image" src="${e}" loading="lazy" />`)}
+                  </div>`:t`
+                    <div class="novel-content p-6" style="font-size: ${c.font_size}px;">
+                      ${c.paragraphs.map(e=>t`<p class="mb-6 leading-relaxed">${e}</p>`)}
                     </div>
-                  </div>
-                `)}
-                <form class="nmr-card px-4 py-3 space-y-2" id="chapter-comment-form">
-                  <textarea class="nmr-input" name="body" rows="3" placeholder="${s.comment_placeholder||`Write a comment...`}"></textarea>
-                  <button class="nmr-button nmr-button-primary" type="submit">${s.post||`Post`}</button>
-                </form>
+                  `}
+
+                <!-- Discussion Section at Bottom -->
+                <div class="block-title mt-12">Comments</div>
+                <div class="list media-list inset mb-12">
+                  <ul>
+                    ${c.comments.map(e=>t`
+                      <li class="item-content">
+                        <div class="item-inner">
+                          <div class="item-title-row">
+                            <div class="item-title text-xs font-bold">${e.author}</div>
+                          </div>
+                          <div class="item-text text-xs">${e.body}</div>
+                        </div>
+                      </li>
+                    `)}
+                  </ul>
+                </div>
               </div>
             `}
     </div>
+
+    <!-- Reader Settings (Sheet Modal) -->
+    <div class="sheet-modal reader-settings-sheet" style="height: auto">
+      <div class="sheet-modal-inner p-5 space-y-6">
+        <div class="block-title">Reader Settings</div>
+        <div class="list no-hairlines">
+          <ul>
+            <li class="item-content">
+              <div class="item-inner">
+                <div class="item-title">Font Size</div>
+                <div class="item-after">
+                  <div class="stepper stepper-init" data-value="${c.font_size}">
+                    <div class="stepper-button-minus" @click="${()=>d(-1)}"></div>
+                    <div class="stepper-button-plus" @click="${()=>d(1)}"></div>
+                  </div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
-`}}Yd.id=`feb073922f`;function Xd(e,{$onMounted:t,$update:n,$f7:r,$onBeforeUnmount:i}){let a=Gd(),o={loading:!0,error:``,balance:Id.state.wallet.balance||0},s=async()=>{try{let e=await $.wallet.getSummary();o.balance=(e?.data||e||{}).balance||0,Id.dispatch(`setWallet`,{balance:o.balance}),o.error=``}catch(e){o.error=e.message||a.failed_load_wallet||`Failed to load wallet.`,Id.state.auth.isLoggedIn||(o.error=a.login_required||`Login required.`),document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:o.error}})),Id.state.auth.isLoggedIn||r.popup.open(`.login-popup`)}finally{o.loading=!1,n()}},c=()=>{Id.state.auth.isLoggedIn&&(o.loading=!0,s())};return t(async()=>{if(document.addEventListener(`auth:updated`,c),!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}await s()}),i(()=>{document.removeEventListener(`auth:updated`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}Yd.id=`c056579a19`;function Xd(e,{$onMounted:t,$update:n,$f7:r,$onBeforeUnmount:i}){let a=Gd(),o={loading:!0,error:``,balance:Id.state.wallet.balance||0},s=async()=>{try{let e=await $.wallet.getSummary();o.balance=(e?.data||e||{}).balance||0,Id.dispatch(`setWallet`,{balance:o.balance}),o.error=``}catch(e){o.error=e.message||a.failed_load_wallet||`Failed to load wallet.`,Id.state.auth.isLoggedIn||(o.error=a.login_required||`Login required.`),document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:o.error}})),Id.state.auth.isLoggedIn||r.popup.open(`.login-popup`)}finally{o.loading=!1,n()}},c=()=>{Id.state.auth.isLoggedIn&&(o.loading=!0,s())};return t(async()=>{if(document.addEventListener(`auth:updated`,c),!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}await s()}),i(()=>{document.removeEventListener(`auth:updated`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="wallet">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -501,7 +540,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           `}
     </div>
   </div>
-`}}Xd.id=`da3745f667`;function Zd(e,{$onMounted:t,$update:n,$f7:r,$el:i}){let a=Gd(),o={loading:!0,error:``,items:[],page:1,perPage:20,hasMore:!1,loadingMore:!1},s=e=>{if(!e)return``;let t=new Date(e);return Number.isNaN(t.getTime())?e:t.toLocaleString()},c=e=>({description:e.description||e.reference_type||`Transaction`,amount:e.amount?`${e.amount}`:`${e.coin_amount||0}`,created_at:s(e.created_at||e.createdAt||``)}),l=async e=>{let t=await $.wallet.getTransactions(e,o.perPage),n=t?.data||t||[];return Array.isArray(n)?n:[]};return t(async()=>{if(!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await l(o.page);o.items=e.map(c),o.hasMore=e.length===o.perPage}catch(e){o.error=e.message||a.failed_load_transactions||`Failed to load transactions.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:o.error}}))}finally{o.loading=!1,n()}i.on(`click`,`[data-action="load-more"]`,async e=>{if(e.preventDefault(),!(o.loadingMore||!o.hasMore)){o.loadingMore=!0;try{let e=o.page+1,t=await l(e);o.items=o.items.concat(t.map(c)),o.page=e,o.hasMore=t.length===o.perPage}catch(e){o.error=e.message||a.failed_load_transactions||`Failed to load transactions.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:o.error}}))}finally{o.loadingMore=!1,n()}}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}Xd.id=`4ddcb733ae`;function Zd(e,{$onMounted:t,$update:n,$f7:r,$el:i}){let a=Gd(),o={loading:!0,error:``,items:[],page:1,perPage:20,hasMore:!1,loadingMore:!1},s=e=>{if(!e)return``;let t=new Date(e);return Number.isNaN(t.getTime())?e:t.toLocaleString()},c=e=>({description:e.description||e.reference_type||`Transaction`,amount:e.amount?`${e.amount}`:`${e.coin_amount||0}`,created_at:s(e.created_at||e.createdAt||``)}),l=async e=>{let t=await $.wallet.getTransactions(e,o.perPage),n=t?.data||t||[];return Array.isArray(n)?n:[]};return t(async()=>{if(!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await l(o.page);o.items=e.map(c),o.hasMore=e.length===o.perPage}catch(e){o.error=e.message||a.failed_load_transactions||`Failed to load transactions.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:o.error}}))}finally{o.loading=!1,n()}i.on(`click`,`[data-action="load-more"]`,async e=>{if(e.preventDefault(),!(o.loadingMore||!o.hasMore)){o.loadingMore=!0;try{let e=o.page+1,t=await l(e);o.items=o.items.concat(t.map(c)),o.page=e,o.hasMore=t.length===o.perPage}catch(e){o.error=e.message||a.failed_load_transactions||`Failed to load transactions.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:o.error}}))}finally{o.loadingMore=!1,n()}}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="wallet-transactions">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -532,7 +571,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           `}
     </div>
   </div>
-`}}Zd.id=`8687cd0302`;function Qd(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]},a=e=>({name:e.name||e.title||`Package`,display_price:e.display_price||e.price_display||`${e.coin_amount||0} coins`});return t(async()=>{try{let e=await $.shop.getPackages();i.items=(e?.data||e||[]).map(a)}catch(e){i.error=e.message||r.failed_load_packages||`Failed to load packages.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:i.error}}))}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}Zd.id=`da3121fc18`;function Qd(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]},a=e=>({name:e.name||e.title||`Package`,display_price:e.display_price||e.price_display||`${e.coin_amount||0} coins`});return t(async()=>{try{let e=await $.shop.getPackages();i.items=(e?.data||e||[]).map(a)}catch(e){i.error=e.message||r.failed_load_packages||`Failed to load packages.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:i.error}}))}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="shop-packages">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -556,7 +595,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           `}
     </div>
   </div>
-`}}Qd.id=`fdac896487`;function $d(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]},a=e=>({name:e.name||e.title||e.slug||`Feature`,price:e.coin_price?`${e.coin_price} coins`:`${e.price_coin||0} coins`});return t(async()=>{try{let e=await $.shop.getFeatures();i.items=(e?.data||e||[]).map(a)}catch(e){i.error=e.message||r.failed_load_features||`Failed to load features.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:i.error}}))}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}Qd.id=`c9a95d3b73`;function $d(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]},a=e=>({name:e.name||e.title||e.slug||`Feature`,price:e.coin_price?`${e.coin_price} coins`:`${e.price_coin||0} coins`});return t(async()=>{try{let e=await $.shop.getFeatures();i.items=(e?.data||e||[]).map(a)}catch(e){i.error=e.message||r.failed_load_features||`Failed to load features.`,document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:i.error}}))}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="shop-features">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -580,38 +619,84 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           `}
     </div>
   </div>
-`}}$d.id=`2ea1e5e7d9`;function ef(e,{$onMounted:t,$update:n,$el:r}){let i=Gd(),a={loading:!1,error:``,items:[],query:``},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||e.type_path||`novel`,cover:o(e.cover_image||e.cover||e.thumbnail||e.image)}),c=async e=>{a.loading=!0,a.error=``,n();try{let t=await $.content.search(e,1,20),n=t?.data||t||[];a.items=(Array.isArray(n)?n:[]).map(s).filter(e=>e.slug)}catch(e){a.error=e.message||`Search failed.`}finally{a.loading=!1,n()}};return t(()=>{let e=r.find(`input[name="q"]`)[0];e&&e.addEventListener(`input`,e=>{let t=e.target.value||``;if(a.query=t,t.length<2){a.items=[],a.error=``,n();return}c(t)})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}$d.id=`b6fb86047e`;function ef(e,{$onMounted:t,$update:n,$el:r}){Gd();let i={loading:!1,error:``,items:[],query:``},a=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},o=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||e.type_path||`novel`,cover:a(e.cover_image||e.cover||e.thumbnail||e.image)}),s=async e=>{i.loading=!0,i.error=``,n();try{let t=await $.content.search(e,1,20),n=t?.data||t||[];i.items=(Array.isArray(n)?n:[]).map(o).filter(e=>e.slug)}catch(e){i.error=e.message||`Search failed.`}finally{i.loading=!1,n()}};return t(()=>{let e=r.find(`input[name="q"]`)[0];e&&e.addEventListener(`input`,e=>{let t=e.target.value||``;if(i.query=t,t.length<2){i.items=[],i.error=``,n();return}s(t)})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="search">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
-      <div class="navbar-inner">
-        <div class="left"><a class="link back text-slate-200">Back</a></div>
-        <div class="title nmr-title">Search</div>
+      <div class="navbar-inner sliding">
+        <div class="left">
+          <a class="link back">
+            <i class="f7-icons">chevron_left</i>
+          </a>
+        </div>
+        <div class="title nmr-title">Explore</div>
+        <div class="subnavbar">
+          <!-- F7 Searchbar Component -->
+          <form class="searchbar nmr-searchbar">
+            <div class="searchbar-inner">
+              <div class="searchbar-input-wrap">
+                <input type="search" name="q" placeholder="Search title, author, genre..." />
+                <i class="searchbar-icon"></i>
+                <span class="input-clear-button"></span>
+              </div>
+              <span class="searchbar-disable-button">Cancel</span>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-5">
-      <div class="nmr-panel space-y-3">
-        <div class="text-xs uppercase tracking-[2px] text-amber-100/90">Find</div>
-        <input class="nmr-input" type="search" name="q" placeholder="Search series, author..." />
-      </div>
+    <div class="page-content">
+      <div class="searchbar-backdrop"></div>
 
-      ${a.loading?t`<div class="nmr-panel">${i.loading||`Loading...`}</div>`:a.error?t`<div class="nmr-panel text-red-200">${a.error}</div>`:a.items.length?t`<div class="space-y-4">
-              ${a.items.map(e=>t`
-                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${e.type}/${e.slug}/">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${e.cover}');background-size:cover;background-position:center;"></div>
-                    <div class="flex-1">
-                      <div class="font-semibold text-slate-100">${e.title}</div>
-                      <div class="text-xs text-slate-400 mt-1">${e.type}</div>
+      ${i.loading?t`
+          <div class="list media-list no-hairlines no-chevron skeleton-text skeleton-effect-blink">
+            <ul>
+              ${[1,2,3,4,5].map(()=>t`
+                <li>
+                  <div class="item-content">
+                    <div class="item-media">
+                      <div class="skeleton-block" style="width: 60px; height: 80px; border-radius: 8px"></div>
+                    </div>
+                    <div class="item-inner">
+                      <div class="item-title-row"><div class="item-title">Loading series title</div></div>
+                      <div class="item-subtitle">Manga</div>
+                      <div class="item-text">This is a long description text for skeleton placeholder</div>
                     </div>
                   </div>
-                </a>
+                </li>
               `)}
-            </div>`:t`<div class="nmr-panel text-slate-300">No results.</div>`}
+            </ul>
+          </div>
+        `:i.items.length?t`
+            <div class="list media-list no-hairlines no-chevron animate-fade-in">
+              <ul>
+                ${i.items.map(e=>t`
+                  <li>
+                    <a href="/content/${e.type}/${e.slug}/" class="item-link item-content nmr-card-hover">
+                      <div class="item-media">
+                        <img src="${e.cover}" width="60" style="border-radius: 10px" />
+                      </div>
+                      <div class="item-inner">
+                        <div class="item-title-row">
+                          <div class="item-title font-bold text-white">${e.title}</div>
+                        </div>
+                        <div class="item-subtitle text-xs text-slate-500 uppercase tracking-widest mt-1">${e.type}</div>
+                        <div class="item-text text-xs text-slate-400 mt-2 line-clamp-2">Dive into this amazing story and explore new worlds.</div>
+                      </div>
+                    </a>
+                  </li>
+                `)}
+              </ul>
+            </div>`:i.query.length>1?t`<div class="block text-center pt-12 text-slate-500">No results found for "${i.query}"</div>`:t`
+              <div class="block text-center pt-12 space-y-4">
+                <i class="f7-icons size-64 text-slate-700">search</i>
+                <div class="text-slate-500">Search for your favorite manga or novels</div>
+              </div>
+            `}
     </div>
   </div>
-`}}ef.id=`6a0200b9a1`;function tf(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]};return t(async()=>{try{let e=await $.content.getGenres(),t=e?.data||e||[];i.items=Array.isArray(t)?t:[]}catch(e){i.error=e.message||`Failed to load genres.`}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}ef.id=`6d27e0f86e`;function tf(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]};return t(async()=>{try{let e=await $.content.getGenres(),t=e?.data||e||[];i.items=Array.isArray(t)?t:[]}catch(e){i.error=e.message||`Failed to load genres.`}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="genres">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -632,7 +717,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           </div>`}
     </div>
   </div>
-`}}tf.id=`33f23d671d`;function nf(e,{$onMounted:t,$update:n,$f7route:r}){let i=Gd(),a={loading:!0,error:``,items:[],title:`Genre`,slug:r.params.slug},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||e.type_path||`novel`,cover:o(e.cover_image||e.cover||e.thumbnail||e.image)});return t(async()=>{try{let e=await $.content.getByGenre(a.slug,1,20),t=e?.data||e||[];a.items=(Array.isArray(t)?t:[]).map(s).filter(e=>e.slug),a.title=a.slug?a.slug.toUpperCase():`Genre`}catch(e){a.error=e.message||`Failed to load genre.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}tf.id=`859e4a87c7`;function nf(e,{$onMounted:t,$update:n,$f7route:r}){let i=Gd(),a={loading:!0,error:``,items:[],title:`Genre`,slug:r.params.slug},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||e.type_path||`novel`,cover:o(e.cover_image||e.cover||e.thumbnail||e.image)});return t(async()=>{try{let e=await $.content.getByGenre(a.slug,1,20),t=e?.data||e||[];a.items=(Array.isArray(t)?t:[]).map(s).filter(e=>e.slug),a.title=a.slug?a.slug.toUpperCase():`Genre`}catch(e){a.error=e.message||`Failed to load genre.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="genre-detail">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -658,7 +743,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           </div>`}
     </div>
   </div>
-`}}nf.id=`36bac959ea`;function rf(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]};return t(async()=>{try{let e=await $.content.getTags(),t=e?.data||e||[];i.items=Array.isArray(t)?t:[]}catch(e){i.error=e.message||`Failed to load tags.`}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}nf.id=`2943361946`;function rf(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]};return t(async()=>{try{let e=await $.content.getTags(),t=e?.data||e||[];i.items=Array.isArray(t)?t:[]}catch(e){i.error=e.message||`Failed to load tags.`}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="tags">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -679,7 +764,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           </div>`}
     </div>
   </div>
-`}}rf.id=`2194536c5a`;function af(e,{$onMounted:t,$update:n,$f7route:r}){let i=Gd(),a={loading:!0,error:``,items:[],title:`Tag`,slug:r.params.slug},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||e.type_path||`novel`,cover:o(e.cover_image||e.cover||e.thumbnail||e.image)});return t(async()=>{try{let e=await $.content.getByTag(a.slug,1,20),t=e?.data||e||[];a.items=(Array.isArray(t)?t:[]).map(s).filter(e=>e.slug),a.title=a.slug?a.slug.toUpperCase():`Tag`}catch(e){a.error=e.message||`Failed to load tag.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}rf.id=`a629290200`;function af(e,{$onMounted:t,$update:n,$f7route:r}){let i=Gd(),a={loading:!0,error:``,items:[],title:`Tag`,slug:r.params.slug},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||`Series`,slug:e.slug||``,type:e.type||e.type_path||`novel`,cover:o(e.cover_image||e.cover||e.thumbnail||e.image)});return t(async()=>{try{let e=await $.content.getByTag(a.slug,1,20),t=e?.data||e||[];a.items=(Array.isArray(t)?t:[]).map(s).filter(e=>e.slug),a.title=a.slug?a.slug.toUpperCase():`Tag`}catch(e){a.error=e.message||`Failed to load tag.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="tag-detail">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -705,70 +790,123 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           </div>`}
     </div>
   </div>
-`}}af.id=`698d819e3a`;function of(e,{$onMounted:t,$update:n,$f7:r}){let i=Gd(),a={loading:!0,error:``,user:{username:``,email:``}};return t(async()=>{if(!Id.state.auth.isLoggedIn){a.loading=!1,a.error=i.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await $.user.getProfile(),t=e?.data||e||{};a.user={username:t.username||t.user?.username||``,email:t.email||t.user?.email||``}}catch(e){a.error=e.message||`Failed to load profile.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
-  <div class="page nmr-page" data-name="profile">
-    <div class="navbar nmr-navbar">
+`}}af.id=`f4d535172d`;function of(e,{$onMounted:t,$update:n,$f7:r}){let i=Gd(),a={loading:!0,error:``,user:{username:``,email:``}};return t(async()=>{if(!Id.state.auth.isLoggedIn){a.loading=!1,a.error=i.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await $.user.getProfile(),t=e?.data||e||{};a.user={username:t.username||t.user?.username||``,email:t.email||t.user?.email||``}}catch(e){a.error=e.message||`Failed to load profile.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+  <div class="page" data-name="profile">
+    <div class="navbar">
       <div class="navbar-bg"></div>
-      <div class="navbar-inner">
-        <div class="left"><a class="link back text-slate-200">Back</a></div>
-        <div class="title nmr-title">Profile</div>
+      <div class="navbar-inner sliding">
+        <div class="title">Profile</div>
       </div>
     </div>
 
-    <div class="page-content px-5 pb-6 space-y-5">
-      ${a.loading?t`<div class="nmr-panel">${i.loading||`Loading...`}</div>`:a.error?t`<div class="nmr-panel text-red-200">${a.error}</div>`:t`
-            <div class="nmr-card px-5 py-4 space-y-2">
-              <div class="text-xs uppercase tracking-[2px] text-amber-100/90">Account</div>
-              <div class="text-lg font-semibold text-slate-100">${a.user.username||`User`}</div>
-              <div class="text-sm text-slate-400">${a.user.email||``}</div>
+    <div class="page-content">
+      ${a.loading?t`<div class="block text-center pt-12"><div class="preloader"></div></div>`:t`
+          <div class="card card-outline">
+            <div class="card-content card-content-padding flex-direction-column align-items-center display-flex">
+              <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--f7-theme-color); color: #fff; font-size: 32px; font-weight: bold;" class="display-flex align-items-center justify-content-center mb-4">
+                ${(a.user.username||`U`)[0].toUpperCase()}
+              </div>
+              <div class="text-align-center">
+                <div class="block-title no-margin" style="font-size: 20px; font-weight: bold; color: var(--f7-text-color);">${a.user.username||`Guest`}</div>
+                <div class="text-color-gray">${a.user.email||``}</div>
+              </div>
             </div>
-            <div class="space-y-3">
-              <a class="nmr-card nmr-card-hover block px-4 py-3" href="/library/">
-                <div class="font-semibold text-slate-100">Library</div>
-              </a>
-              <a class="nmr-card nmr-card-hover block px-4 py-3" href="/history/">
-                <div class="font-semibold text-slate-100">Reading History</div>
-              </a>
-              <a class="nmr-card nmr-card-hover block px-4 py-3" href="/notifications/">
-                <div class="font-semibold text-slate-100">Notifications</div>
-              </a>
-              <a class="nmr-card nmr-card-hover block px-4 py-3" href="/preferences/">
-                <div class="font-semibold text-slate-100">Preferences</div>
-              </a>
-              <a class="nmr-card nmr-card-hover block px-4 py-3" href="/sessions/">
-                <div class="font-semibold text-slate-100">Sessions</div>
-              </a>
+          </div>
+
+          <div class="list inset">
+            <ul>
+              <li>
+                <a href="/library/" class="item-link item-content">
+                  <div class="item-media"><i class="f7-icons color-blue">book</i></div>
+                  <div class="item-inner">
+                    <div class="item-title">My Library</div>
+                  </div>
+                </a>
+              </li>
+              <li>
+                <a href="/history/" class="item-link item-content">
+                  <div class="item-media"><i class="f7-icons color-orange">time</i></div>
+                  <div class="item-inner">
+                    <div class="item-title">Reading History</div>
+                  </div>
+                </a>
+              </li>
+              <li>
+                <a href="/notifications/" class="item-link item-content">
+                  <div class="item-media"><i class="f7-icons color-red">bell</i></div>
+                  <div class="item-inner">
+                    <div class="item-title">Notifications</div>
+                  </div>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="list inset">
+            <ul>
+              <li>
+                <a href="/preferences/" class="item-link item-content">
+                  <div class="item-media"><i class="f7-icons color-gray">gear</i></div>
+                  <div class="item-inner">
+                    <div class="item-title">App Settings</div>
+                  </div>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="block">
+            <button class="button button-fill color-red" data-action="logout">Logout</button>
+          </div>
+        `}
+    </div>
+  </div>
+`}}of.id=`5e9f2bc61e`;function sf(e,{$onMounted:t,$update:n,$f7:r}){let i=Gd(),a={loading:!0,error:``,items:[]},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||e.series_title||`Series`,slug:e.slug||e.series_slug||``,type:e.type||e.type_path||e.series_type||`novel`,cover:o(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)});return t(async()=>{if(!Id.state.auth.isLoggedIn){a.loading=!1,a.error=i.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await $.user.getFollows(1,50),t=e?.data||e||[];a.items=(Array.isArray(t)?t:[]).map(s).filter(e=>e.slug)}catch(e){a.error=e.message||`Failed to load library.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+  <div class="page" data-name="library">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner sliding">
+        <div class="title">My Library</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      ${a.loading?t`
+          <div class="row no-gap">
+            ${[1,2,3,4,5,6].map(()=>t`
+              <div class="col-50 skeleton-text skeleton-effect-blink">
+                <div class="card card-outline">
+                  <div class="skeleton-block" style="height: 180px; width: 100%"></div>
+                  <div class="card-content card-content-padding">
+                    <div class="skeleton-text">Loading title text here</div>
+                    <div class="skeleton-text" style="width: 50%">Category</div>
+                  </div>
+                </div>
+              </div>
+            `)}
+          </div>
+        `:a.items.length?t`
+            <div class="row no-gap">
+              ${a.items.map(e=>t`
+                <div class="col-50">
+                  <a href="/content/${e.type}/${e.slug}/" class="card card-outline demo-card-header-pic">
+                    <div style="background-image:url(${e.cover}); height: 180px; background-size: cover; background-position: center;" class="card-header align-items-flex-end text-color-white font-bold"></div>
+                    <div class="card-content card-content-padding">
+                      <p class="no-margin font-bold text-xs line-clamp-1">${e.title}</p>
+                      <p class="no-margin text-color-gray" style="font-size: 10px">${e.type}</p>
+                    </div>
+                  </a>
+                </div>
+              `)}
+            </div>`:t`
+            <div class="block text-center pt-12">
+              <p class="text-color-gray">Your library is empty.</p>
+              <a href="/" class="button button-fill color-blue mt-4">Explore Stories</a>
             </div>
           `}
     </div>
   </div>
-`}}of.id=`3e2a1cc37b`;function sf(e,{$onMounted:t,$update:n,$f7:r}){let i=Gd(),a={loading:!0,error:``,items:[]},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.title||e.series_title||`Series`,slug:e.slug||e.series_slug||``,type:e.type||e.type_path||e.series_type||`novel`,cover:o(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)});return t(async()=>{if(!Id.state.auth.isLoggedIn){a.loading=!1,a.error=i.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await $.user.getFollows(1,50),t=e?.data||e||[];a.items=(Array.isArray(t)?t:[]).map(s).filter(e=>e.slug)}catch(e){a.error=e.message||`Failed to load library.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
-  <div class="page nmr-page" data-name="library">
-    <div class="navbar nmr-navbar">
-      <div class="navbar-bg"></div>
-      <div class="navbar-inner">
-        <div class="left"><a class="link back text-slate-200">Back</a></div>
-        <div class="title nmr-title">Library</div>
-      </div>
-    </div>
-
-    <div class="page-content px-5 pb-6 space-y-5">
-      ${a.loading?t`<div class="nmr-panel">${i.loading||`Loading...`}</div>`:a.error?t`<div class="nmr-panel text-red-200">${a.error}</div>`:a.items.length?t`<div class="space-y-4">
-              ${a.items.map(e=>t`
-                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/content/${e.type}/${e.slug}/">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${e.cover}');background-size:cover;background-position:center;"></div>
-                    <div class="flex-1">
-                      <div class="font-semibold text-slate-100">${e.title}</div>
-                      <div class="text-xs text-slate-400 mt-1">${e.type}</div>
-                    </div>
-                  </div>
-                </a>
-              `)}
-            </div>`:t`<div class="nmr-panel text-slate-300">Library is empty.</div>`}
-    </div>
-  </div>
-`}}sf.id=`ba4f43f84c`;function cf(e,{$onMounted:t,$update:n,$f7:r}){let i=Gd(),a={loading:!0,error:``,items:[]},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.series_title||e.title||`Chapter`,slug:e.series_slug||e.slug||``,type:e.series_type||e.type||e.type_path||`novel`,chapter_number:e.chapter_number||e.chapterNumber||e.number||``,cover:o(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)});return t(async()=>{if(!Id.state.auth.isLoggedIn){a.loading=!1,a.error=i.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await $.user.getHistory(1,50),t=e?.data||e||[];a.items=(Array.isArray(t)?t:[]).map(s).filter(e=>e.slug)}catch(e){a.error=e.message||`Failed to load history.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}sf.id=`62311cff62`;function cf(e,{$onMounted:t,$update:n,$f7:r}){let i=Gd(),a={loading:!0,error:``,items:[]},o=e=>{if(!e)return`/assets/img/covers/placeholder.svg`;if(e.startsWith(`http://`)||e.startsWith(`https://`))return e;let t=e;for(;t.startsWith(`/`);)t=t.slice(1);return`/${t}`},s=e=>({title:e.series_title||e.title||`Chapter`,slug:e.series_slug||e.slug||``,type:e.series_type||e.type||e.type_path||`novel`,chapter_number:e.chapter_number||e.chapterNumber||e.number||``,cover:o(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover||e.series_cover_image||e.series_thumbnail)});return t(async()=>{if(!Id.state.auth.isLoggedIn){a.loading=!1,a.error=i.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await $.user.getHistory(1,50),t=e?.data||e||[];a.items=(Array.isArray(t)?t:[]).map(s).filter(e=>e.slug)}catch(e){a.error=e.message||`Failed to load history.`}finally{a.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="history">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -794,7 +932,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
             </div>`:t`<div class="nmr-panel text-slate-300">No history yet.</div>`}
     </div>
   </div>
-`}}cf.id=`b93e833414`;function lf(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]},a=e=>({slug:e.slug||``,title:e.title||`Blog`,author:e.author_username||e.author||`Author`});return t(async()=>{try{let e=await $.blog.list(1,20),t=e?.data||e||[];i.items=(Array.isArray(t)?t:[]).map(a).filter(e=>e.slug)}catch(e){i.error=e.message||`Failed to load blogs.`}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}cf.id=`ba26deca8e`;function lf(e,{$onMounted:t,$update:n}){let r=Gd(),i={loading:!0,error:``,items:[]},a=e=>({slug:e.slug||``,title:e.title||`Blog`,author:e.author_username||e.author||`Author`});return t(async()=>{try{let e=await $.blog.list(1,20),t=e?.data||e||[];i.items=(Array.isArray(t)?t:[]).map(a).filter(e=>e.slug)}catch(e){i.error=e.message||`Failed to load blogs.`}finally{i.loading=!1,n()}}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="blogs">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -817,7 +955,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           </div>`}
     </div>
   </div>
-`}}lf.id=`abf4eb6956`;function uf(e,{$onMounted:t,$update:n,$f7route:r,$el:i,$f7:a}){let o=Gd(),s={loading:!0,error:``,title:`Blog`,author:``,body:``,comments:[],slug:r.params.slug},c=async()=>{try{let e=await $.blog.listComments(s.slug,1,20),t=e?.data||e||[];s.comments=(Array.isArray(t)?t:[]).map(e=>({id:e.id||e.comment_id||0,author:e.username||e.author_username||`User`,body:e.body||e.comment||``,created_at:e.created_at||``,votes:e.votes||e.score||0}))}catch{s.comments=[]}};return t(async()=>{try{let e=await $.blog.show(s.slug),t=e?.data||e||{};s.title=t.title||`Blog`,s.author=t.author_username||t.author||``,s.body=t.body||t.content||``,await c()}catch(e){s.error=e.message||`Failed to load blog.`}finally{s.loading=!1,n()}}),t(()=>{i.on(`click`,`[data-action="vote"]`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){a.popup.open(`.login-popup`);return}try{await $.blog.vote(s.slug,1),a.toast.create({text:`Thanks!`,closeTimeout:2e3}).open()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Vote failed`}}))}}),i.on(`submit`,`#blog-comment-form`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){a.popup.open(`.login-popup`);return}let t=e.target,r=t.querySelector(`textarea[name="body"]`)?.value||``;if(r.trim())try{await $.blog.createComment(s.slug,r.trim()),t.reset(),await c(),n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Comment failed`}}))}}),i.on(`click`,`[data-action="comment-vote"]`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){a.popup.open(`.login-popup`);return}let t=e.target.getAttribute(`data-id`);if(t)try{await $.blog.voteComment(s.slug,t,1),await c(),n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Vote failed`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}lf.id=`4d043a304a`;function uf(e,{$onMounted:t,$update:n,$f7route:r,$el:i,$f7:a}){let o=Gd(),s={loading:!0,error:``,title:`Blog`,author:``,body:``,comments:[],slug:r.params.slug},c=async()=>{try{let e=await $.blog.listComments(s.slug,1,20),t=e?.data||e||[];s.comments=(Array.isArray(t)?t:[]).map(e=>({id:e.id||e.comment_id||0,author:e.username||e.author_username||`User`,body:e.body||e.comment||``,created_at:e.created_at||``,votes:e.votes||e.score||0}))}catch{s.comments=[]}};return t(async()=>{try{let e=await $.blog.show(s.slug),t=e?.data||e||{};s.title=t.title||`Blog`,s.author=t.author_username||t.author||``,s.body=t.body||t.content||``,await c()}catch(e){s.error=e.message||`Failed to load blog.`}finally{s.loading=!1,n()}}),t(()=>{i.on(`click`,`[data-action="vote"]`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){a.popup.open(`.login-popup`);return}try{await $.blog.vote(s.slug,1),a.toast.create({text:`Thanks!`,closeTimeout:2e3}).open()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Vote failed`}}))}}),i.on(`submit`,`#blog-comment-form`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){a.popup.open(`.login-popup`);return}let t=e.target,r=t.querySelector(`textarea[name="body"]`)?.value||``;if(r.trim())try{await $.blog.createComment(s.slug,r.trim()),t.reset(),await c(),n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Comment failed`}}))}}),i.on(`click`,`[data-action="comment-vote"]`,async e=>{if(e.preventDefault(),!Id.state.auth.isLoggedIn){a.popup.open(`.login-popup`);return}let t=e.target.getAttribute(`data-id`);if(t)try{await $.blog.voteComment(s.slug,t,1),await c(),n()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Vote failed`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="blog-detail">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -858,7 +996,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           `}
     </div>
   </div>
-`}}uf.id=`c164cd8bc5`;function df(e,{$onMounted:t,$update:n,$f7:r,$el:i}){let a=Gd(),o={loading:!0,error:``,items:[]},s=e=>({title:e.title||e.subject||`Notification`,body:e.body||e.message||``,created_at:e.created_at||``}),c=async()=>{try{let e=await $.user.getNotifications(),t=e?.data||e||[];o.items=(Array.isArray(t)?t:[]).map(s)}catch(e){o.error=e.message||`Failed to load notifications.`}finally{o.loading=!1,n()}};return t(async()=>{if(!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}await c()}),t(()=>{i.on(`click`,`[data-action="mark-read"]`,async e=>{e.preventDefault();try{await $.user.markNotificationsRead(),await c()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Failed to mark read`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}uf.id=`10561ce0ff`;function df(e,{$onMounted:t,$update:n,$f7:r,$el:i}){let a=Gd(),o={loading:!0,error:``,items:[]},s=e=>({title:e.title||e.subject||`Notification`,body:e.body||e.message||``,created_at:e.created_at||``}),c=async()=>{try{let e=await $.user.getNotifications(),t=e?.data||e||[];o.items=(Array.isArray(t)?t:[]).map(s)}catch(e){o.error=e.message||`Failed to load notifications.`}finally{o.loading=!1,n()}};return t(async()=>{if(!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}await c()}),t(()=>{i.on(`click`,`[data-action="mark-read"]`,async e=>{e.preventDefault();try{await $.user.markNotificationsRead(),await c()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Failed to mark read`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="notifications">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -883,7 +1021,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
             </div>`:t`<div class="nmr-panel text-slate-300">No notifications.</div>`}
     </div>
   </div>
-`}}df.id=`89732a4274`;function ff(e,{$onMounted:t,$update:n,$f7:r,$el:i}){let a=Gd(),o={loading:!0,error:``,prefs:{lang:`en`,theme:`dark`}};return t(async()=>{if(!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await $.user.getPreferences(),t=e?.data||e||{};o.prefs={lang:t.lang||`en`,theme:t.theme||`dark`}}catch(e){o.error=e.message||`Failed to load preferences.`}finally{o.loading=!1,n()}}),t(()=>{i.on(`submit`,`#prefs-form`,async e=>{e.preventDefault();let t=e.target,n={lang:t.querySelector(`select[name="lang"]`)?.value||`en`,theme:t.querySelector(`select[name="theme"]`)?.value||`dark`};try{await $.user.updatePreferences(n),r.toast.create({text:`Preferences saved`,closeTimeout:2e3}).open()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Save failed`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}df.id=`f44950ce1c`;function ff(e,{$onMounted:t,$update:n,$f7:r,$el:i}){let a=Gd(),o={loading:!0,error:``,prefs:{lang:`en`,theme:`dark`}};return t(async()=>{if(!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}try{let e=await $.user.getPreferences(),t=e?.data||e||{};o.prefs={lang:t.lang||`en`,theme:t.theme||`dark`}}catch(e){o.error=e.message||`Failed to load preferences.`}finally{o.loading=!1,n()}}),t(()=>{i.on(`submit`,`#prefs-form`,async e=>{e.preventDefault();let t=e.target,n={lang:t.querySelector(`select[name="lang"]`)?.value||`en`,theme:t.querySelector(`select[name="theme"]`)?.value||`dark`};try{await $.user.updatePreferences(n),r.toast.create({text:`Preferences saved`,closeTimeout:2e3}).open()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Save failed`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="preferences">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -915,7 +1053,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           `}
     </div>
   </div>
-`}}ff.id=`92c0c7da80`;function pf(e,{$onMounted:t,$update:n,$f7:r,$el:i}){let a=Gd(),o={loading:!0,error:``,items:[]},s=e=>({session_key:e.session_key||e.sessionKey||``,user_agent:e.user_agent||e.userAgent||`Session`,last_active:e.last_active||e.updated_at||e.created_at||``}),c=async()=>{try{let e=await $.sessions.list(),t=e?.data||e||[];o.items=(Array.isArray(t)?t:[]).map(s)}catch(e){o.error=e.message||`Failed to load sessions.`}finally{o.loading=!1,n()}};return t(async()=>{if(!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}await c()}),t(()=>{i.on(`click`,`[data-action="revoke"]`,async e=>{e.preventDefault();let t=e.target.getAttribute(`data-key`);if(t)try{await $.sessions.revoke(t),await c()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Revoke failed`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}ff.id=`4653040cf7`;function pf(e,{$onMounted:t,$update:n,$f7:r,$el:i}){let a=Gd(),o={loading:!0,error:``,items:[]},s=e=>({session_key:e.session_key||e.sessionKey||``,user_agent:e.user_agent||e.userAgent||`Session`,last_active:e.last_active||e.updated_at||e.created_at||``}),c=async()=>{try{let e=await $.sessions.list(),t=e?.data||e||[];o.items=(Array.isArray(t)?t:[]).map(s)}catch(e){o.error=e.message||`Failed to load sessions.`}finally{o.loading=!1,n()}};return t(async()=>{if(!Id.state.auth.isLoggedIn){o.loading=!1,o.error=a.login_required||`Login required.`,r.popup.open(`.login-popup`),n();return}await c()}),t(()=>{i.on(`click`,`[data-action="revoke"]`,async e=>{e.preventDefault();let t=e.target.getAttribute(`data-key`);if(t)try{await $.sessions.revoke(t),await c()}catch(e){document.dispatchEvent(new CustomEvent(`page:error`,{detail:{message:e.message||`Revoke failed`}}))}})}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page nmr-page" data-name="sessions">
     <div class="navbar nmr-navbar">
       <div class="navbar-bg"></div>
@@ -937,137 +1075,161 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
             </div>`:t`<div class="nmr-panel text-slate-300">No sessions.</div>`}
     </div>
   </div>
-`}}pf.id=`69b1a31dc7`;var mf=[{path:`/`,component:Kd},{path:`/types/:type/`,component:qd},{path:`/content/:type/:slug/`,component:Jd},{path:`/reader/:type/:slug/:chapterNumber/`,component:Yd},{path:`/wallet/`,component:Xd},{path:`/wallet/transactions/`,component:Zd},{path:`/shop/packages/`,component:Qd},{path:`/shop/features/`,component:$d},{path:`/search/`,component:ef},{path:`/genres/`,component:tf},{path:`/genre/:slug/`,component:nf},{path:`/tags/`,component:rf},{path:`/tag/:slug/`,component:af},{path:`/profile/`,component:of},{path:`/library/`,component:sf},{path:`/history/`,component:cf},{path:`/blogs/`,component:lf},{path:`/blogs/:slug/`,component:uf},{path:`/notifications/`,component:df},{path:`/preferences/`,component:ff},{path:`/sessions/`,component:pf}];function hf(e,{$onMounted:t,$onBeforeUnmount:n,$f7:r}){let i=Gd(),a=null,o=typeof window<`u`?window.NMR_TURNSTILE_SITE_KEY:``,s={login:null,register:null},c=e=>{if(!e)return``;let t=e.querySelector(`input[name="turnstile_token"], input[name="cf-turnstile-response"]`);return t?t.value:``},l=e=>{if(typeof window>`u`||!window.turnstile)return;let t=s[e];t!==null&&window.turnstile.reset(t)},u=()=>{if(typeof window>`u`)return;let e=document.querySelectorAll(`.turnstile-widget`);if(!o||!window.turnstile||e.length===0){document.querySelectorAll(`.turnstile-wrap`).forEach(e=>{e.style.display=`none`});return}e.forEach(e=>{let t=e.getAttribute(`data-turnstile`);!t||s[t]!==null||(s[t]=window.turnstile.render(e,{sitekey:o,theme:`light`,responseField:!0,responseFieldName:`turnstile_token`}))})},d=e=>{let t={apiToken:e.api_token||null,csrfToken:e.csrf_token||null,refreshToken:e.refresh_token||null,user:{id:e.id,username:e.username,email:e.email}};$.setSession(t),$.saveSession(t),Id.dispatch(`setAuth`,t)},f=e=>{let t=e.detail||{};a=t;let n=(Gd().unlock_confirm_body||`Unlock this chapter for {price} coins?`).replace(`{price}`,t.price||0),i=document.getElementById(`purchase-message`);i&&(i.textContent=n),r.popup.open(`.purchase-popup`)},p=async e=>{if(e.target.closest(`[data-action="purchase-confirm"]`)){if(e.preventDefault(),!a?.chapterId)return;try{await $.wallet.unlockChapter(a.chapterId);let e=await $.wallet.getSummary(),t=e?.data||e||{};Id.dispatch(`setWallet`,{balance:t.balance||0}),document.dispatchEvent(new CustomEvent(`purchase:success`,{detail:{chapterId:a.chapterId}})),a=null,r.popup.close(`.purchase-popup`)}catch(e){r.dialog.alert(e.message||`Unlock failed`)}return}let t=e.target.closest(`[data-action="set-lang"]`);if(t){e.preventDefault();let n=t.getAttribute(`data-lang`);if(!n)return;await Ud(n),r.sheet.close(`.language-sheet`);return}if(e.target.closest(`[data-action="logout"]`)){e.preventDefault();try{await $.auth.logout()}catch{}let t=Gd();Id.dispatch(`clearAuth`),r.dialog.alert(t.logout_success||`Logged out`)}},m=async e=>{if(e.target instanceof HTMLFormElement){if(e.target.id===`login-form`){e.preventDefault();let t=new FormData(e.target),n=Gd(),i=c(e.target);try{d(await $.auth.login(t.get(`email`),t.get(`password`),!!t.get(`remember`),i)),r.popup.close(`.login-popup`),r.dialog.alert(n.login_success||`Login successful`)}catch(e){r.dialog.alert(e.message||n.login_failed||`Login failed`)}finally{l(`login`)}return}if(e.target.id===`register-form`){e.preventDefault();let t=new FormData(e.target),n=Gd(),i=c(e.target);try{await $.auth.register(t.get(`username`),t.get(`email`),t.get(`password`),i),d(await $.auth.login(t.get(`email`),t.get(`password`),!!t.get(`remember`),i)),r.popup.close(`.register-popup`),r.dialog.alert(n.register_success||`Account created. You are now logged in.`)}catch(e){r.dialog.alert(e.message||n.register_failed||`Register failed`)}finally{l(`register`)}}}};return t(()=>{u(),window.addEventListener(`turnstile:ready`,u),document.addEventListener(`purchase:open`,f),document.addEventListener(`click`,p),document.addEventListener(`submit`,m)}),n(()=>{window.removeEventListener(`turnstile:ready`,u),document.removeEventListener(`purchase:open`,f),document.removeEventListener(`click`,p),document.removeEventListener(`submit`,m)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}pf.id=`9cfffa0d03`;var mf=[{path:`/`,component:Kd},{path:`/types/:type/`,component:qd},{path:`/content/:type/:slug/`,component:Jd},{path:`/reader/:type/:slug/:chapterNumber/`,component:Yd},{path:`/wallet/`,component:Xd},{path:`/wallet/transactions/`,component:Zd},{path:`/shop/packages/`,component:Qd},{path:`/shop/features/`,component:$d},{path:`/search/`,component:ef},{path:`/genres/`,component:tf},{path:`/genre/:slug/`,component:nf},{path:`/tags/`,component:rf},{path:`/tag/:slug/`,component:af},{path:`/profile/`,component:of},{path:`/library/`,component:sf},{path:`/history/`,component:cf},{path:`/blogs/`,component:lf},{path:`/blogs/:slug/`,component:uf},{path:`/notifications/`,component:df},{path:`/preferences/`,component:ff},{path:`/sessions/`,component:pf}];function hf(e,{$onMounted:t,$onBeforeUnmount:n,$f7:r}){let i=null,a=e=>{let t={apiToken:e.api_token||null,csrfToken:e.csrf_token||null,refreshToken:e.refresh_token||null,user:{id:e.id,username:e.username,email:e.email}};$.setSession(t),$.saveSession(t),Id.dispatch(`setAuth`,t)},o=e=>{i=e.detail||{};let t=document.getElementById(`purchase-message`);t&&(t.textContent=`Unlock this chapter for ${i.price||0} coins?`),r.popup.open(`.purchase-popup`)},s=async e=>{if(e.target.closest(`[data-action="purchase-confirm"]`)){if(e.preventDefault(),!i?.chapterId)return;try{await $.wallet.unlockChapter(i.chapterId);let e=await $.wallet.getSummary(),t=e?.data||e||{};Id.dispatch(`setWallet`,{balance:t.balance||0}),document.dispatchEvent(new CustomEvent(`purchase:success`,{detail:{chapterId:i.chapterId}})),i=null,r.popup.close(`.purchase-popup`)}catch(e){r.dialog.alert(e.message||`Unlock failed`)}return}let t=e.target.closest(`[data-action="set-lang"]`);if(t){e.preventDefault(),await Ud(t.getAttribute(`data-lang`)),r.sheet.close(`.language-sheet`);return}if(e.target.closest(`[data-action="logout"]`)){e.preventDefault();try{await $.auth.logout()}catch{}Id.dispatch(`clearAuth`),r.dialog.alert(`Logged out`)}},c=async e=>{if(e.target.id===`login-form`){e.preventDefault();let t=new FormData(e.target);try{a(await $.auth.login(t.get(`email`),t.get(`password`))),r.popup.close(`.login-popup`)}catch(e){r.dialog.alert(e.message||`Login failed`)}}if(e.target.id===`register-form`){e.preventDefault();let t=new FormData(e.target);try{await $.auth.register(t.get(`username`),t.get(`email`),t.get(`password`)),a(await $.auth.login(t.get(`email`),t.get(`password`))),r.popup.close(`.register-popup`)}catch(e){r.dialog.alert(e.message||`Register failed`)}}};return t(()=>{document.addEventListener(`purchase:open`,o),document.addEventListener(`click`,s),document.addEventListener(`submit`,c)}),n(()=>{document.removeEventListener(`purchase:open`,o),document.removeEventListener(`click`,s),document.removeEventListener(`submit`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div id="app">
-    <!-- Views Container -->
+    <!-- Views Tabs -->
     <div class="views tabs safe-areas">
-      <!-- Tab Bar (Bottom) -->
-      <div class="toolbar toolbar-tabbar-labels toolbar-bottom nmr-tabbar">
+      <!-- Tab Bar -->
+      <div class="toolbar toolbar-tabbar-labels toolbar-bottom">
         <div class="toolbar-inner">
-          <a href="#view-home" class="tab-link tab-link-active" data-route-tab-id="view-home">
+          <a href="#view-home" class="tab-link tab-link-active">
             <i class="f7-icons">house_fill</i>
             <span class="tabbar-label">Home</span>
           </a>
-          <a href="#view-library" class="tab-link" data-route-tab-id="view-library">
+          <a href="#view-library" class="tab-link">
             <i class="f7-icons">book_fill</i>
             <span class="tabbar-label">Library</span>
           </a>
-          <a href="#view-search" class="tab-link" data-route-tab-id="view-search">
+          <a href="#view-search" class="tab-link">
             <i class="f7-icons">search</i>
             <span class="tabbar-label">Search</span>
           </a>
-          <a href="#view-profile" class="tab-link" data-route-tab-id="view-profile">
+          <a href="#view-profile" class="tab-link">
             <i class="f7-icons">person_fill</i>
             <span class="tabbar-label">Profile</span>
           </a>
         </div>
       </div>
 
-      <!-- Main Home View -->
+      <!-- Views -->
       <div id="view-home" class="view view-main view-init tab tab-active" data-url="/"></div>
-
-      <!-- Library View -->
       <div id="view-library" class="view view-init tab" data-name="library" data-url="/library/"></div>
-
-      <!-- Search View -->
       <div id="view-search" class="view view-init tab" data-name="search" data-url="/search/"></div>
-
-      <!-- Profile View -->
       <div id="view-profile" class="view view-init tab" data-name="profile" data-url="/profile/"></div>
     </div>
 
-    <!-- Popups remain unchanged -->
+    <!-- Login Popup -->
     <div class="popup login-popup">
       <div class="view">
-        <div class="page nmr-page">
-          <div class="navbar nmr-navbar">
+        <div class="page">
+          <div class="navbar">
             <div class="navbar-bg"></div>
-            <div class="navbar-inner">
-              <div class="title nmr-title">${i.login_title||`Login`}</div>
-              <div class="right"><a class="link popup-close" href="#">Close</a></div>
+            <div class="navbar-inner sliding">
+              <div class="title">Login</div>
+              <div class="right"><a class="link popup-close">Close</a></div>
             </div>
           </div>
-          <div class="page-content px-5 pt-6">
-            <form id="login-form" class="space-y-5">
-              <div>
-                <label class="block text-sm text-slate-300 mb-2">${i.email||`Email`}</label>
-                <input class="nmr-input" type="email" name="email" placeholder="you@example.com" required />
-              </div>
-              <div>
-                <label class="block text-sm text-slate-300 mb-2">${i.password||`Password`}</label>
-                <input class="nmr-input" type="password" name="password" placeholder="Password" required />
-              </div>
-              <label class="flex items-center gap-2 text-sm text-slate-300">
-                <input type="checkbox" name="remember" />
-                <span>${i.remember_me||`Remember me`}</span>
-              </label>
-              <div class="turnstile-wrap">
-                <div class="turnstile-widget" data-turnstile="login"></div>
-              </div>
-              <div class="space-y-3">
-                <button class="nmr-button nmr-button-primary w-full" type="submit">${i.login||`Login`}</button>
-                <div class="text-center text-sm text-slate-400">
-                  <a class="link popup-open" data-popup=".register-popup" href="#">${i.register||`Create account`}</a>
+          <div class="page-content">
+            <div class="block">
+              <form id="login-form">
+                <div class="list no-hairlines-md">
+                  <ul>
+                    <li class="item-content item-input">
+                      <div class="item-inner">
+                        <div class="item-title item-label">Email</div>
+                        <div class="item-input-wrap">
+                          <input type="email" name="email" placeholder="you@example.com" required />
+                        </div>
+                      </div>
+                    </li>
+                    <li class="item-content item-input">
+                      <div class="item-inner">
+                        <div class="item-title item-label">Password</div>
+                        <div class="item-input-wrap">
+                          <input type="password" name="password" placeholder="Password" required />
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
                 </div>
-              </div>
-            </form>
+                <div class="block">
+                  <button class="button button-fill color-blue" type="submit">Login</button>
+                  <div class="margin-top text-align-center">
+                    <a class="link popup-open" data-popup=".register-popup" href="#">Create account</a>
+                  </div>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Register Popup -->
     <div class="popup register-popup">
       <div class="view">
-        <div class="page nmr-page">
-          <div class="navbar nmr-navbar">
+        <div class="page">
+          <div class="navbar">
             <div class="navbar-bg"></div>
-            <div class="navbar-inner">
-              <div class="title nmr-title">${i.register_title||`Register`}</div>
-              <div class="right"><a class="link popup-close" href="#">Close</a></div>
+            <div class="navbar-inner sliding">
+              <div class="title">Register</div>
+              <div class="right"><a class="link popup-close">Close</a></div>
             </div>
           </div>
-          <div class="page-content px-5 pt-6">
-            <form id="register-form" class="space-y-5">
-              <div>
-                <label class="block text-sm text-slate-300 mb-2">${i.username||`Username`}</label>
-                <input class="nmr-input" type="text" name="username" placeholder="username" required />
-              </div>
-              <div>
-                <label class="block text-sm text-slate-300 mb-2">${i.email||`Email`}</label>
-                <input class="nmr-input" type="email" name="email" placeholder="you@example.com" required />
-              </div>
-              <div>
-                <label class="block text-sm text-slate-300 mb-2">${i.password||`Password`}</label>
-                <input class="nmr-input" type="password" name="password" placeholder="Password" required />
-              </div>
-              <div class="turnstile-wrap">
-                <div class="turnstile-widget" data-turnstile="register"></div>
-              </div>
-              <div>
-                <button class="nmr-button nmr-button-primary w-full" type="submit">${i.register||`Create account`}</button>
-              </div>
-            </form>
+          <div class="page-content">
+            <div class="block">
+              <form id="register-form">
+                <div class="list no-hairlines-md">
+                  <ul>
+                    <li class="item-content item-input">
+                      <div class="item-inner">
+                        <div class="item-title item-label">Username</div>
+                        <div class="item-input-wrap">
+                          <input type="text" name="username" placeholder="Username" required />
+                        </div>
+                      </div>
+                    </li>
+                    <li class="item-content item-input">
+                      <div class="item-inner">
+                        <div class="item-title item-label">Email</div>
+                        <div class="item-input-wrap">
+                          <input type="email" name="email" placeholder="you@example.com" required />
+                        </div>
+                      </div>
+                    </li>
+                    <li class="item-content item-input">
+                      <div class="item-inner">
+                        <div class="item-title item-label">Password</div>
+                        <div class="item-input-wrap">
+                          <input type="password" name="password" placeholder="Password" required />
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+                <div class="block">
+                  <button class="button button-fill color-blue" type="submit">Create account</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Purchase Popup -->
     <div class="popup purchase-popup">
       <div class="view">
-        <div class="page nmr-page">
-          <div class="navbar nmr-navbar">
+        <div class="page">
+          <div class="navbar">
             <div class="navbar-bg"></div>
-            <div class="navbar-inner">
-              <div class="title nmr-title">${i.purchase_title||`Unlock Chapter`}</div>
-              <div class="right"><a class="link popup-close" href="#">${i.purchase_cancel||`Cancel`}</a></div>
+            <div class="navbar-inner sliding">
+              <div class="title">Unlock Chapter</div>
+              <div class="right"><a class="link popup-close">Cancel</a></div>
             </div>
           </div>
-          <div class="page-content px-5 pt-6">
-            <div class="nmr-panel space-y-4">
-              <p class="text-slate-200" id="purchase-message"></p>
-              <div class="grid gap-3">
-                <a class="nmr-button nmr-button-primary text-center" data-action="purchase-confirm" href="#">${i.purchase_confirm||`Unlock Now`}</a>
-                <a class="nmr-button nmr-button-ghost text-center popup-close" href="#">${i.purchase_cancel||`Cancel`}</a>
+          <div class="page-content">
+            <div class="block block-strong-ios block-inset-ios text-align-center">
+              <p id="purchase-message">Unlock this chapter for coins?</p>
+              <div class="row">
+                <div class="col">
+                  <button class="button button-fill color-blue" data-action="purchase-confirm">Unlock Now</button>
+                </div>
+              </div>
+              <div class="row margin-top">
+                <div class="col">
+                  <button class="button popup-close">Cancel</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1075,18 +1237,17 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       </div>
     </div>
 
-    <div class="sheet-modal language-sheet">
-      <div class="sheet-modal-inner p-5 space-y-4">
-        <div class="nmr-section-title">${i.language||`Language`}</div>
-        <div class="space-y-3">
-          <a class="nmr-card nmr-card-hover block px-4 py-3" data-action="set-lang" data-lang="en" href="#">
-            <div class="font-medium text-slate-100">English</div>
-          </a>
-          <a class="nmr-card nmr-card-hover block px-4 py-3" data-action="set-lang" data-lang="tr" href="#">
-            <div class="font-medium text-slate-100">Turkish</div>
-          </a>
+    <!-- Language Sheet -->
+    <div class="sheet-modal language-sheet" style="height: auto">
+      <div class="sheet-modal-inner">
+        <div class="block-title">Select Language</div>
+        <div class="list links-list">
+          <ul>
+            <li><a href="#" data-action="set-lang" data-lang="en">English</a></li>
+            <li><a href="#" data-action="set-lang" data-lang="tr">Turkish</a></li>
+          </ul>
         </div>
       </div>
     </div>
   </div>
-`}}hf.id=`a468eb53c1`;var gf=$.loadSession();gf&&($.setSession({apiToken:gf.apiToken,csrfToken:gf.csrfToken,refreshToken:gf.refreshToken}),Id.dispatch(`setAuth`,{user:gf.user||null,apiToken:gf.apiToken,csrfToken:gf.csrfToken,refreshToken:gf.refreshToken}));var _f=new Md({name:`NMR Mobile`,theme:`auto`,el:`#app`,component:hf,store:Id,routes:mf});Wd(),document.addEventListener(`i18n:updated`,()=>{let e=_f.views?.main||_f.views?.get?.(`.view-main`);e&&e.router&&e.router.currentRoute&&e.router.refreshPage()}),document.addEventListener(`api:error`,e=>{let t=e.detail?.message||`Request failed`;_f.toast.create({text:t,closeTimeout:3e3}).open()}),document.addEventListener(`page:error`,e=>{let t=e.detail?.message||`Something went wrong`;_f.toast.create({text:t,closeTimeout:3e3}).open()});
+`}}hf.id=`92820113c0`;var gf=$.loadSession();gf&&($.setSession({apiToken:gf.apiToken,csrfToken:gf.csrfToken,refreshToken:gf.refreshToken}),Id.dispatch(`setAuth`,{user:gf.user||null,apiToken:gf.apiToken,csrfToken:gf.csrfToken,refreshToken:gf.refreshToken}));var _f=new Md({name:`NMR Mobile`,theme:`auto`,el:`#app`,component:hf,store:Id,routes:mf});Wd(),document.addEventListener(`i18n:updated`,()=>{let e=_f.views?.main||_f.views?.get?.(`.view-main`);e&&e.router&&e.router.currentRoute&&e.router.refreshPage()}),document.addEventListener(`api:error`,e=>{let t=e.detail?.message||`Request failed`;_f.toast.create({text:t,closeTimeout:3e3}).open()}),document.addEventListener(`page:error`,e=>{let t=e.detail?.message||`Something went wrong`;_f.toast.create({text:t,closeTimeout:3e3}).open()});
