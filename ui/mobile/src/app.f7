@@ -1,7 +1,43 @@
 <template>
   <div id="app">
-    <div class="view view-main view-init safe-areas" data-url="/"></div>
+    <!-- Views Container -->
+    <div class="views tabs safe-areas">
+      <!-- Tab Bar (Bottom) -->
+      <div class="toolbar toolbar-tabbar-labels toolbar-bottom nmr-tabbar">
+        <div class="toolbar-inner">
+          <a href="#view-home" class="tab-link tab-link-active" data-route-tab-id="view-home">
+            <i class="f7-icons">house_fill</i>
+            <span class="tabbar-label">Home</span>
+          </a>
+          <a href="#view-library" class="tab-link" data-route-tab-id="view-library">
+            <i class="f7-icons">book_fill</i>
+            <span class="tabbar-label">Library</span>
+          </a>
+          <a href="#view-search" class="tab-link" data-route-tab-id="view-search">
+            <i class="f7-icons">search</i>
+            <span class="tabbar-label">Search</span>
+          </a>
+          <a href="#view-profile" class="tab-link" data-route-tab-id="view-profile">
+            <i class="f7-icons">person_fill</i>
+            <span class="tabbar-label">Profile</span>
+          </a>
+        </div>
+      </div>
 
+      <!-- Main Home View -->
+      <div id="view-home" class="view view-main view-init tab tab-active" data-url="/"></div>
+
+      <!-- Library View -->
+      <div id="view-library" class="view view-init tab" data-name="library" data-url="/library/"></div>
+
+      <!-- Search View -->
+      <div id="view-search" class="view view-init tab" data-name="search" data-url="/search/"></div>
+
+      <!-- Profile View -->
+      <div id="view-profile" class="view view-init tab" data-name="profile" data-url="/profile/"></div>
+    </div>
+
+    <!-- Popups remain unchanged -->
     <div class="popup login-popup">
       <div class="view">
         <div class="page nmr-page">

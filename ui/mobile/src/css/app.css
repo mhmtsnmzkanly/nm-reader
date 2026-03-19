@@ -31,18 +31,66 @@ body {
   padding: 0;
   min-height: 100vh;
   color: #f5f1ea;
-  background: radial-gradient(1200px 600px at 18% -10%, rgba(139, 92, 246, 0.24), transparent 55%),
-    radial-gradient(900px 500px at 85% -15%, rgba(34, 211, 238, 0.16), transparent 60%),
-    #08090d;
+  background: #050508;
+  overflow: hidden;
 }
 
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
-  background: linear-gradient(140deg, rgba(15, 23, 42, 0.55), rgba(7, 8, 12, 0.95));
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background: 
+    radial-gradient(circle at 10% 10%, rgba(139, 92, 246, 0.15), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(34, 211, 238, 0.12), transparent 40%),
+    radial-gradient(circle at 50% 90%, rgba(139, 92, 246, 0.1), transparent 50%);
+  filter: blur(80px);
   pointer-events: none;
   z-index: -1;
+}
+
+/* Glassmorphism Tab Bar */
+.toolbar-tabbar-labels {
+  background: rgba(10, 11, 16, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  height: calc(65px + var(--f7-safe-area-bottom));
+}
+
+.toolbar-tabbar-labels .toolbar-inner {
+  padding-bottom: var(--f7-safe-area-bottom);
+}
+
+.tab-link {
+  color: #94a3b8 !important;
+  transition: all 300ms ease;
+}
+
+.tab-link-active {
+  color: #8b5cf6 !important;
+  text-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+}
+
+.tab-link i {
+  font-size: 24px !important;
+  margin-bottom: 4px;
+}
+
+/* Premium Card Enhancements */
+.nmr-card {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.nmr-card-hover:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 #app {
