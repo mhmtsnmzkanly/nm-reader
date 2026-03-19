@@ -115,6 +115,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Reader Themes (2026-03-19)
+- **Status**: Completed.
+- **Change**: Added theme selection (Dark, Light, Sepia) to the mobile reader page.
+- **Change**: Implemented theme persistence in `localStorage`.
+- **Change**: Added custom CSS for reader themes in `ui/mobile/src/css/app.css`.
+
 ### Mobile: Chapter Comments (2026-03-19)
 - **Status**: Completed.
 - **Change**: Implemented chapter comments section in `ui/mobile/src/pages/reader.f7`.

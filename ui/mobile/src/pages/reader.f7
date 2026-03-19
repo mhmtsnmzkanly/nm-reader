@@ -27,12 +27,19 @@
                   ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" alt="" loading="lazy" />`)}
                 </div>`
                 : $h`
-                  <div class="flex gap-3">
-                    <button class="nmr-button nmr-button-ghost" data-action="font-dec" type="button">A-</button>
-                    <button class="nmr-button nmr-button-ghost" data-action="font-inc" type="button">A+</button>
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="flex gap-2">
+                      <button class="nmr-button nmr-button-ghost px-3" data-action="font-dec" type="button">A-</button>
+                      <button class="nmr-button nmr-button-ghost px-3" data-action="font-inc" type="button">A+</button>
+                    </div>
+                    <div class="flex gap-2">
+                      <button class="w-8 h-8 rounded-full border border-white/20 bg-slate-900" data-action="set-theme" data-theme="dark" type="button"></button>
+                      <button class="w-8 h-8 rounded-full border border-white/20 bg-slate-100" data-action="set-theme" data-theme="light" type="button"></button>
+                      <button class="w-8 h-8 rounded-full border border-white/20 bg-[#f4ecd8]" data-action="set-theme" data-theme="sepia" type="button"></button>
+                    </div>
                   </div>
-                  <div class="nmr-panel" style="font-size: ${state.font_size}px;">
-                    ${state.paragraphs.map((para) => $h`<p class="mb-5 leading-8 text-slate-100">${para}</p>`)}
+                  <div class="nmr-panel reader-theme-${state.theme}" style="font-size: ${state.font_size}px;">
+                    ${state.paragraphs.map((para) => $h`<p class="mb-5 leading-8">${para}</p>`)}
                   </div>
                 `
               }
@@ -76,6 +83,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     pages: [],
     paragraphs: [],
     font_size: 16,
+    theme: 'dark',
     type: $f7route.params.type,
     slug: $f7route.params.slug,
     chapterNumber: $f7route.params.chapterNumber,
@@ -84,6 +92,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
   };
 
   const fontKey = 'nmr_reader_font_size';
+  const themeKey = 'nmr_reader_theme';
   const onPurchaseSuccess = async (event) => {
     if (event.detail?.chapterId !== state.chapterId) return;
     await loadChapter();
@@ -132,6 +141,10 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
       if (!Number.isNaN(storedSize) && storedSize > 10 && storedSize < 40) {
         state.font_size = storedSize;
       }
+      const storedTheme = localStorage.getItem(themeKey);
+      if (storedTheme) {
+        state.theme = storedTheme;
+      }
     }
     try {
       await loadChapter();
@@ -174,6 +187,18 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
         localStorage.setItem(fontKey, String(state.font_size));
       }
       $update();
+    });
+
+    $el.on('click', '[data-action="set-theme"]', (event) => {
+      event.preventDefault();
+      const theme = event.target.getAttribute('data-theme');
+      if (theme) {
+        state.theme = theme;
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(themeKey, theme);
+        }
+        $update();
+      }
     });
 
     $el.on('submit', '#chapter-comment-form', async (event) => {

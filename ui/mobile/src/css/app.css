@@ -339,6 +339,26 @@ body::before {
   margin-bottom: 0.5rem;
 }
 
+/* Reader Themes */
+.reader-theme-dark {
+  background: rgba(15, 23, 42, 0.4);
+  color: #e2e8f0;
+}
+.reader-theme-light {
+  background: #f8fafc;
+  color: #0f172a;
+}
+.reader-theme-sepia {
+  background: #f4ecd8;
+  color: #5b4636;
+}
+.reader-theme-light p, .reader-theme-sepia p {
+  color: inherit;
+}
+.reader-theme-dark p {
+  color: #e2e8f0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nmr-page {
     animation: none;
