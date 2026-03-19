@@ -35,33 +35,39 @@
                 <button class="button button-fill button-large color-purple" data-action="unlock">Unlock Now</button>
               </div>`
             : $h`
-              <div class="reader-container animate-fade-in pb-12">
-                ${state.is_image
-                  ? $h`<div class="manga-images">
-                    ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" loading="lazy" />`)}
-                  </div>`
-                  : $h`
-                    <div class="novel-content reader-theme-${state.theme} p-6" style="font-size: ${state.font_size}px;">
-                      ${state.paragraphs.map((para) => $h`<p class="mb-6 leading-relaxed">${para}</p>`)}
-                    </div>
-                  `
-                }
-
-                <!-- Discussion Section at Bottom -->
-                <div class="block-title mt-12">Comments</div>
-                <div class="list media-list inset mb-12">
-                  <ul>
-                    ${state.comments.map((c) => $h`
-                      <li class="item-content">
-                        <div class="item-inner">
-                          <div class="item-title-row">
-                            <div class="item-title text-xs font-bold">${c.author}</div>
-                          </div>
-                          <div class="item-text text-xs">${c.body}</div>
+              <div class="reader-content-wrapper ${!state.is_image ? `reader-theme-${state.theme}` : ''}">
+                <div class="reader-container animate-fade-in pb-12">
+                  ${state.is_image
+                    ? $h`<div class="manga-images-list">
+                      ${state.pages.map((page) => $h`
+                        <div class="manga-image-item">
+                          <img class="reader-image" src="${page}" loading="lazy" />
                         </div>
-                      </li>
-                    `)}
-                  </ul>
+                      `)}
+                    </div>`
+                    : $h`
+                      <div class="novel-content p-6" style="font-size: ${state.font_size}px;">
+                        ${state.paragraphs.map((para) => $h`<p class="mb-6 leading-relaxed">${para}</p>`)}
+                      </div>
+                    `
+                  }
+
+                  <!-- Discussion Section at Bottom -->
+                  <div class="block-title mt-12">Comments</div>
+                  <div class="list media-list inset mb-12">
+                    <ul>
+                      ${state.comments.map((c) => $h`
+                        <li class="item-content">
+                          <div class="item-inner">
+                            <div class="item-title-row">
+                              <div class="item-title text-xs font-bold">${c.author}</div>
+                            </div>
+                            <div class="item-text text-xs">${c.body}</div>
+                          </div>
+                        </li>
+                      `)}
+                    </ul>
+                  </div>
                 </div>
               </div>
             `
@@ -185,12 +191,16 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     state.title = chapter.title || `Chapter ${state.chapterNumber}`;
     state.is_locked = chapter.is_locked ?? !(chapter.access?.granted ?? true);
     state.price_coin = chapter.price_coin || chapter.access?.chapter_unlock_price || 0;
-    state.is_image = chapter.type === 'image';
+    
+    // Improved Text/Image detection
+    const chapterPages = chapter.pages || chapter.images || [];
+    state.is_image = (chapter.type === 'image' || chapter.type === 'manga' || chapterPages.length > 0);
+    
     if (state.is_image) {
-      state.pages = Array.isArray(chapter.pages) ? chapter.pages : [];
+      state.pages = Array.isArray(chapterPages) ? chapterPages : [];
       state.paragraphs = [];
     } else {
-      const body = String(chapter.body || '');
+      const body = String(chapter.body || chapter.content || '');
       state.paragraphs = body.split('\n').filter((line) => line.trim() !== '');
       state.pages = [];
     }

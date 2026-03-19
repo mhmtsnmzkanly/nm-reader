@@ -7,6 +7,24 @@
 .reader-image {
   width: 100%;
   display: block;
+  height: auto;
+}
+
+.manga-images-list {
+  display: flex;
+  flex-direction: column;
+  background: #000; /* Always black background for manga */
+}
+
+.manga-image-item {
+  width: 100%;
+  line-height: 0;
+  font-size: 0;
+}
+
+.reader-content-wrapper {
+  min-height: 100%;
+  transition: background-color 300ms ease;
 }
 
 .reader-progress-bar {
