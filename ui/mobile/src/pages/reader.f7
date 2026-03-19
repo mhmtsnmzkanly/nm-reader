@@ -41,23 +41,23 @@
                     ${state.pages.map((page) => $h`<img class="reader-image" src="${page}" loading="lazy" />`)}
                   </div>`
                   : $h`
-                    <div class="novel-content reader-theme-${state.theme} p-6" style="font-size: ${state.font_size}px;">
-                      ${state.paragraphs.map((para) => $h`<p class="mb-6 leading-relaxed text-slate-100">${para}</p>`)}
+                    <div class="novel-content p-6" style="font-size: ${state.font_size}px;">
+                      ${state.paragraphs.map((para) => $h`<p class="mb-6 leading-relaxed">${para}</p>`)}
                     </div>
                   `
                 }
 
                 <!-- Discussion Section at Bottom -->
-                <div class="block-title nmr-section-title mt-12">Comments</div>
-                <div class="list media-list no-hairlines inset nmr-panel mb-12">
+                <div class="block-title mt-12">Comments</div>
+                <div class="list media-list inset mb-12">
                   <ul>
                     ${state.comments.map((c) => $h`
                       <li class="item-content">
                         <div class="item-inner">
                           <div class="item-title-row">
-                            <div class="item-title text-xs font-bold text-slate-200">${c.author}</div>
+                            <div class="item-title text-xs font-bold">${c.author}</div>
                           </div>
-                          <div class="item-text text-xs text-slate-400">${c.body}</div>
+                          <div class="item-text text-xs">${c.body}</div>
                         </div>
                       </li>
                     `)}
@@ -71,29 +71,17 @@
     <!-- Reader Settings (Sheet Modal) -->
     <div class="sheet-modal reader-settings-sheet" style="height: auto">
       <div class="sheet-modal-inner p-5 space-y-6">
-        <div class="nmr-section-title">Reader Settings</div>
+        <div class="block-title">Reader Settings</div>
         <div class="list no-hairlines">
           <ul>
             <li class="item-content">
               <div class="item-inner">
                 <div class="item-title">Font Size</div>
                 <div class="item-after">
-                  <div class="stepper segmented stepper-init" data-value="${state.font_size}">
+                  <div class="stepper stepper-init" data-value="${state.font_size}">
                     <div class="stepper-button-minus" @click="${() => updateFont(-1)}"></div>
                     <div class="stepper-button-plus" @click="${() => updateFont(1)}"></div>
                   </div>
-                </div>
-              </div>
-            </li>
-            <li class="item-content">
-              <div class="item-inner">
-                <div class="item-title">Reading Theme</div>
-                <div class="item-after">
-                   <div class="segmented segmented-round segmented-strong">
-                      <button class="button ${state.theme === 'dark' ? 'button-active' : ''}" @click="${() => setTheme('dark')}">Dark</button>
-                      <button class="button ${state.theme === 'sepia' ? 'button-active' : ''}" @click="${() => setTheme('sepia')}">Sepia</button>
-                      <button class="button ${state.theme === 'light' ? 'button-active' : ''}" @click="${() => setTheme('light')}">Light</button>
-                   </div>
                 </div>
               </div>
             </li>
