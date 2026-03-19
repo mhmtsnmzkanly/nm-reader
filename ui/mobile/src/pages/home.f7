@@ -1,9 +1,9 @@
 <template>
-  <div class="page nmr-page" data-name="home">
-    <div class="navbar navbar-large nmr-navbar">
+  <div class="page" data-name="home">
+    <div class="navbar navbar-large">
       <div class="navbar-bg"></div>
       <div class="navbar-inner sliding">
-        <div class="title nmr-title">NMR Reader</div>
+        <div class="title">NMR Reader</div>
         <div class="right">
           <a class="link icon-only" href="/search/">
             <i class="f7-icons">search</i>
@@ -13,28 +13,22 @@
           </a>
         </div>
         <div class="title-large">
-          <div class="title-large-text nmr-title">NMR Reader</div>
+          <div class="title-large-text">NMR Reader</div>
         </div>
       </div>
     </div>
 
     <div class="page-content">
-      <!-- Featured Swiper (F7 Swiper Component) -->
-      <div class="block-title nmr-section-title">Featured Stories</div>
-      <div class="swiper-container swiper-init" data-slides-per-view="auto" data-space-between="20" data-centered-slides="true">
+      <!-- Featured Swiper -->
+      <div class="block-title">Featured Stories</div>
+      <div class="swiper-container swiper-init" data-slides-per-view="auto" data-space-between="10" data-centered-slides="false">
         <div class="swiper-wrapper">
           ${state.recent.slice(0, 5).map((item) => $h`
-            <div class="swiper-slide" style="width: 280px">
-              <a href="/content/${item.type}/${item.slug}/" class="nmr-card block no-margin">
+            <div class="swiper-slide" style="width: 240px">
+              <a href="/content/${item.type}/${item.slug}/" class="card card-outline no-margin">
                 <div class="card-content">
-                  <div class="card-content-inner p-0 relative">
-                    <img src="${item.cover}" style="width: 100%; height: 380px; object-fit: cover; display: block;" />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                    <div class="absolute bottom-4 left-4 right-4">
-                      <div class="text-[10px] uppercase tracking-[2px] text-amber-200 font-bold mb-1">${item.type}</div>
-                      <div class="text-xl font-bold text-white nmr-title">${item.title}</div>
-                    </div>
-                  </div>
+                  <img src="${item.cover}" style="width: 100%; height: 320px; object-fit: cover; display: block;" />
+                  <div class="card-footer font-bold">${item.title}</div>
                 </div>
               </a>
             </div>
@@ -42,53 +36,43 @@
         </div>
       </div>
 
-      <!-- Content Type Tabs (Segmented Control) -->
+      <!-- Content Type Tabs -->
       <div class="block">
-        <div class="segmented segmented-strong segmented-round">
+        <div class="segmented segmented-strong">
           <a href="/types/manga/" class="button">Manga</a>
           <a href="/types/novel/" class="button">Novel</a>
           <a href="/types/manhwa/" class="button">Manhwa</a>
         </div>
       </div>
 
-      <!-- Latest Updates (F7 Media List Component) -->
-      <div class="list media-list no-chevron no-hairlines animate-fade-in">
-        <div class="block-title nmr-section-title">Latest Updates</div>
+      <!-- Latest Updates -->
+      <div class="list media-list no-chevron">
+        <div class="block-title">Latest Updates</div>
         <ul>
           ${state.loading
-            ? [1, 2, 3, 4].map(() => $h`
+            ? [1, 2, 3].map(() => $h`
               <li class="skeleton-text skeleton-effect-blink">
                 <div class="item-content">
-                  <div class="item-media">
-                    <div class="skeleton-block" style="width: 64px; height: 80px; border-radius: 8px"></div>
-                  </div>
-                  <div class="item-inner">
-                    <div class="item-title-row">
-                      <div class="item-title">Loading...</div>
-                    </div>
-                    <div class="item-subtitle">Subtitle</div>
-                    <div class="item-text">Text line one and line two</div>
-                  </div>
+                  <div class="item-media"><div class="skeleton-block" style="width: 48px; height: 64px"></div></div>
+                  <div class="item-inner"><div class="item-title">Loading title</div><div class="item-text">Loading info</div></div>
                 </div>
               </li>
             `)
             : state.latest.map((item) => $h`
               <li>
-                <a href="/reader/${item.type}/${item.slug}/${item.chapter_number}/" class="item-link item-content nmr-card-hover">
+                <a href="/reader/${item.type}/${item.slug}/${item.chapter_number}/" class="item-link item-content">
                   <div class="item-media">
-                    <img src="${item.cover}" width="64" style="border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3)" />
+                    <img src="${item.cover}" width="48" style="border-radius: 4px" />
                   </div>
                   <div class="item-inner">
                     <div class="item-title-row">
-                      <div class="item-title font-bold text-slate-100">${item.title}</div>
+                      <div class="item-title">${item.title}</div>
                       <div class="item-after">
-                        ${item.is_locked 
-                          ? $h`<span class="badge color-orange">${item.price_coin}</span>` 
-                          : $h`<span class="badge color-green">FREE</span>`}
+                        ${item.is_locked ? $h`<span class="badge color-orange">COIN</span>` : $h`<span class="badge color-green">FREE</span>`}
                       </div>
                     </div>
-                    <div class="item-subtitle text-xs text-slate-400 mt-1 uppercase tracking-tight">Chapter ${item.chapter_number}</div>
-                    <div class="item-text text-slate-500">${item.type} • Updated Today</div>
+                    <div class="item-subtitle">Chapter ${item.chapter_number}</div>
+                    <div class="item-text">${item.type}</div>
                   </div>
                 </a>
               </li>
@@ -96,8 +80,7 @@
         </ul>
       </div>
 
-      <!-- Quick Action Floating Button (F7 FAB) -->
-      <div class="fab fab-right-bottom color-purple">
+      <div class="fab fab-right-bottom color-blue">
         <a href="/search/">
           <i class="f7-icons">search</i>
         </a>

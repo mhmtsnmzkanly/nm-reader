@@ -1,46 +1,33 @@
 <template>
-  <div class="page nmr-page" data-name="profile">
-    <div class="navbar nmr-navbar">
+  <div class="page" data-name="profile">
+    <div class="navbar">
       <div class="navbar-bg"></div>
       <div class="navbar-inner sliding">
-        <div class="title nmr-title">Profile</div>
+        <div class="title">Profile</div>
       </div>
     </div>
 
     <div class="page-content">
       ${state.loading
-        ? $h`<div class="flex items-center justify-center h-full"><div class="preloader color-purple"></div></div>`
+        ? $h`<div class="block text-center pt-12"><div class="preloader"></div></div>`
         : $h`
-          <!-- User Profile Header Card -->
-          <div class="block">
-            <div class="nmr-card p-6 flex flex-col items-center text-center space-y-4 shadow-2xl bg-gradient-to-br from-purple-900/20 to-indigo-900/20">
-              <div class="w-20 h-20 rounded-full bg-purple-600 flex items-center justify-center text-2xl font-bold text-white shadow-xl border-4 border-white/10">
+          <div class="card card-outline">
+            <div class="card-content card-content-padding flex-direction-column align-items-center display-flex">
+              <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--f7-theme-color); color: #fff; font-size: 32px; font-weight: bold;" class="display-flex align-items-center justify-content-center mb-4">
                 ${(state.user.username || 'U')[0].toUpperCase()}
               </div>
-              <div>
-                <div class="text-xl font-bold text-white nmr-title">${state.user.username || 'Guest'}</div>
-                <div class="text-xs text-slate-500 mt-1 uppercase tracking-widest">${state.user.email || 'guest@nmr.local'}</div>
-              </div>
-              <div class="flex gap-4 pt-2">
-                 <div class="text-center">
-                    <div class="text-lg font-bold text-white">12</div>
-                    <div class="text-[9px] text-slate-500 uppercase">Library</div>
-                 </div>
-                 <div class="w-[1px] bg-white/10"></div>
-                 <div class="text-center">
-                    <div class="text-lg font-bold text-white">450</div>
-                    <div class="text-[9px] text-slate-500 uppercase">Coins</div>
-                 </div>
+              <div class="text-align-center">
+                <div class="block-title no-margin" style="font-size: 20px; font-weight: bold; color: var(--f7-text-color);">${state.user.username || 'Guest'}</div>
+                <div class="text-color-gray">${state.user.email || ''}</div>
               </div>
             </div>
           </div>
 
-          <!-- Settings Groups (F7 List Group) -->
-          <div class="list inset no-hairlines-between nmr-panel p-0 mb-12">
+          <div class="list inset">
             <ul>
               <li>
                 <a href="/library/" class="item-link item-content">
-                  <div class="item-media"><i class="f7-icons color-purple">book</i></div>
+                  <div class="item-media"><i class="f7-icons color-blue">book</i></div>
                   <div class="item-inner">
                     <div class="item-title">My Library</div>
                   </div>
@@ -59,28 +46,19 @@
                   <div class="item-media"><i class="f7-icons color-red">bell</i></div>
                   <div class="item-inner">
                     <div class="item-title">Notifications</div>
-                    <div class="item-after"><span class="badge color-red">3</span></div>
                   </div>
                 </a>
               </li>
             </ul>
           </div>
 
-          <div class="list inset no-hairlines-between nmr-panel p-0 mb-12">
+          <div class="list inset">
             <ul>
               <li>
                 <a href="/preferences/" class="item-link item-content">
-                  <div class="item-media"><i class="f7-icons color-blue">gear</i></div>
+                  <div class="item-media"><i class="f7-icons color-gray">gear</i></div>
                   <div class="item-inner">
-                    <div class="item-title">App Preferences</div>
-                  </div>
-                </a>
-              </li>
-              <li>
-                <a href="/sessions/" class="item-link item-content">
-                  <div class="item-media"><i class="f7-icons color-green">device_phone_portrait</i></div>
-                  <div class="item-inner">
-                    <div class="item-title">Active Sessions</div>
+                    <div class="item-title">App Settings</div>
                   </div>
                 </a>
               </li>
@@ -88,9 +66,7 @@
           </div>
 
           <div class="block">
-            <button class="button button-fill button-large color-red" data-action="logout">
-              <i class="f7-icons size-18 mr-2">power</i> Logout
-            </button>
+            <button class="button button-fill color-red" data-action="logout">Logout</button>
           </div>
         `
       }

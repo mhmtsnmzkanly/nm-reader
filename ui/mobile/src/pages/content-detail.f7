@@ -1,122 +1,93 @@
 <template>
-  <div class="page nmr-page" data-name="content-detail">
-    <div class="navbar nmr-navbar">
+  <div class="page" data-name="content-detail">
+    <div class="navbar">
       <div class="navbar-bg"></div>
       <div class="navbar-inner sliding">
         <div class="left">
           <a class="link back">
-            <i class="f7-icons">chevron_left</i>
-            <span>Back</span>
+            <i class="icon icon-back"></i>
+            <span class="if-not-md">Back</span>
           </a>
         </div>
-        <div class="title nmr-title">${state.title}</div>
-        <div class="right">
-          <a class="link icon-only" data-action="share">
-            <i class="f7-icons">square_arrow_up</i>
-          </a>
-        </div>
+        <div class="title">${state.title}</div>
       </div>
     </div>
 
     <div class="page-content">
-      <!-- Hero Header with Background Blur (Native Style) -->
-      <div class="block no-margin p-0 relative overflow-hidden" style="height: 300px">
-        <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('${state.cover}'); filter: blur(20px); transform: scale(1.1); opacity: 0.4"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[#050508] to-transparent"></div>
-        <div class="relative z-10 flex flex-col items-center justify-center h-full p-5 text-center pt-12">
-          <img src="${state.cover}" class="detail-cover-shadow" style="width: 120px; height: 170px; border-radius: 12px; object-fit: cover" />
-          <div class="mt-4">
-            <div class="text-[10px] uppercase tracking-[3px] text-purple-400 font-black mb-1">${state.type}</div>
-            <h1 class="text-2xl nmr-title text-white no-margin">${state.title}</h1>
+      <div class="card card-outline">
+        <div class="card-content card-content-padding">
+          <div class="row">
+            <div class="col-33">
+              <img src="${state.cover}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1)" />
+            </div>
+            <div class="col-66">
+              <div class="text-color-gray uppercase font-bold" style="font-size: 10px; letter-spacing: 1px">${state.type}</div>
+              <h1 style="margin: 4px 0; font-size: 20px">${state.title}</h1>
+              <div class="chip color-blue">
+                <div class="chip-label">${state.chapters.length} Chapters</div>
+              </div>
+            </div>
           </div>
+        </div>
+        <div class="card-footer">
+          <button class="button button-small button-fill ${state.following ? 'color-gray' : 'color-blue'}" data-action="${state.following ? 'unfollow' : 'follow'}">
+            ${state.following ? 'Following' : 'Follow'}
+          </button>
+          <button class="button button-small color-blue" data-action="rate">Rate</button>
         </div>
       </div>
 
-      <!-- Action Buttons (F7 Block) -->
-      <div class="block">
-        <div class="row">
-          <div class="col">
-            <button class="button button-fill button-large color-purple" data-action="${state.following ? 'unfollow' : 'follow'}">
-              <i class="f7-icons size-18 mr-2">${state.following ? 'heart_fill' : 'heart'}</i>
-              ${state.following ? 'Following' : 'Follow'}
-            </button>
-          </div>
-          <div class="col-25">
-            <button class="button button-fill button-large color-gray" data-action="rate" style="background: rgba(255,255,255,0.1)">
-              <i class="f7-icons size-18">star_fill</i>
-            </button>
-          </div>
-        </div>
+      <div class="block-title">Synopsis</div>
+      <div class="block block-strong-ios block-inset-ios">
+        <p>${state.description}</p>
       </div>
 
-      <!-- Synopsis (F7 Expandable Block Style) -->
-      <div class="block-title nmr-section-title">Synopsis</div>
-      <div class="block block-strong inset nmr-panel no-margin-top">
-        <p class="text-sm text-slate-300 leading-relaxed">${state.description}</p>
-      </div>
-
-      <!-- Chapters List (F7 Inset List) -->
-      <div class="block-title nmr-section-title">Chapters (${state.chapters.length})</div>
-      <div class="list inset media-list no-hairlines-between nmr-panel p-0">
+      <div class="block-title">Chapters</div>
+      <div class="list links-list block-strong-ios block-inset-ios">
         <ul>
           ${state.chapters.map((chapter) => $h`
             <li>
-              <a href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/" class="item-link item-content">
-                <div class="item-inner">
-                  <div class="item-title-row">
-                    <div class="item-title text-sm font-bold text-slate-100">${chapter.title}</div>
-                    <div class="item-after">
-                      ${chapter.is_locked
-                        ? $h`<i class="f7-icons size-14 text-orange-400">lock_fill</i>`
-                        : $h`<i class="f7-icons size-14 text-green-400">checkmark_circle_fill</i>`
-                      }
-                    </div>
-                  </div>
-                  <div class="item-subtitle text-[10px] text-slate-500 uppercase">Chapter ${chapter.chapter_number}</div>
-                </div>
+              <a href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/">
+                <span>Chapter ${chapter.chapter_number}: ${chapter.title}</span>
+                ${chapter.is_locked ? $h`<i class="f7-icons size-14 text-color-orange">lock_fill</i>` : ''}
               </a>
             </li>
           `)}
         </ul>
       </div>
 
-      <!-- Comments (F7 List) -->
-      <div class="block-title nmr-section-title">Discussion</div>
-      <div class="list media-list no-hairlines animate-fade-in mb-12">
+      <div class="block-title">Comments</div>
+      <div class="list media-list">
         <ul>
           ${state.comments.map((comment) => $h`
             <li class="item-content">
-              <div class="item-media">
-                <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">
-                  ${comment.author[0]}
-                </div>
-              </div>
               <div class="item-inner">
                 <div class="item-title-row">
-                  <div class="item-title text-xs font-bold text-slate-200">${comment.author}</div>
-                  <div class="item-after text-[9px] text-slate-500">${comment.created_at}</div>
+                  <div class="item-title font-bold">${comment.author}</div>
+                  <div class="item-after text-color-gray" style="font-size: 10px">${comment.created_at}</div>
                 </div>
-                <div class="item-text text-xs text-slate-400 leading-relaxed">${comment.body}</div>
+                <div class="item-text">${comment.body}</div>
               </div>
             </li>
           `)}
         </ul>
-        <div class="block">
-          <form id="series-comment-form">
-            <div class="list no-hairlines-md">
-              <ul>
-                <li class="item-content item-input nmr-panel p-2">
-                  <div class="item-inner">
-                    <div class="item-input-wrap">
-                      <textarea name="body" placeholder="Write a comment..." class="text-sm"></textarea>
-                    </div>
+      </div>
+      
+      <div class="block">
+        <form id="series-comment-form">
+          <div class="list no-hairlines-md">
+            <ul>
+              <li class="item-content item-input">
+                <div class="item-inner">
+                  <div class="item-input-wrap">
+                    <textarea name="body" placeholder="Write a comment..." class="resizable"></textarea>
                   </div>
-                </li>
-              </ul>
-            </div>
-            <button class="button button-fill color-purple mt-2" type="submit">Post Comment</button>
-          </form>
-        </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <button class="button button-fill color-blue" type="submit">Post Comment</button>
+        </form>
       </div>
     </div>
   </div>
