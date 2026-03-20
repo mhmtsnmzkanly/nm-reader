@@ -115,6 +115,15 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Reader & UI Stabilization (2026-03-20)
+- **Status**: Completed.
+- **Change**: Clarified text/image distinction in reader and optimized rendering for novel/manga content.
+- **Change**: Resolved Dom7 TypeError by properly wrapping `$el` and importing `dom7` in all Framework7 components.
+- **Change**: Restored reader themes and pure Framework7 shop pages.
+- **Change**: Fixed tab navigation and structural chaos by stabilizing tab-views and fixing HTML tags.
+- **Change**: Reset mobile UI to pure Framework7 native components, removing redundant custom styling and Tailwind remnants.
+- **Change**: Redesigned Library, Profile, and Search pages using native Framework7 components for a more "app-like" feel.
+
 ### Mobile: Reader Themes (2026-03-19)
 - **Status**: Completed.
 - **Change**: Added theme selection (Dark, Light, Sepia) to the mobile reader page.
@@ -661,12 +670,112 @@ This document serves as the absolute authority on the project's architecture, co
     ```
 
 ### Google Analytics 4 Integration (2026-02-28)
-### Google Analytics 4 Integration (2026-02-28)
 - **Status**: Completed.
 - **Components**:
   - Integrated `gtag.js` in `storage/views/layout_main.php`.
   - Configured `GOOGLE_ANALYTICS_ID` in `app/Config.php` (via `.env`).
   - Updated `app/middleware.php` to include necessary Content Security Policy (CSP) directives.
+
+### Admin Dashboard & Analytics Overhaul (2026-03-07)
+- **Status**: Completed.
+- **Problem**: Dashboard metrics (Funnel, Retention, Top Contents) were hardcoded to zero, and analytics required manual CLI execution.
+- **Fix**:
+  - Implemented real database queries for all dashboard KPIs in `AdminConsoleRepository`.
+  - Introduced a **Lazy Cron** system in `AdminConsoleService`: The dashboard now automatically triggers analytics aggregation every 12 hours if data is stale.
+  - Added "Retention & Search" metrics to track user loyalty and search quality (Zero Results rate).
+  - Fixed a critical "Undefined property" error in the aggregation service injection.
+
+### Uploads Management & Preview (2026-03-07)
+- **Status**: Completed.
+- **Feature**: Added a dedicated "Uploads" tab in the Admin Panel to track all system-wide image assets.
+- **Components**:
+  - Added `file_path` column to `system_uploads` table for reliable image rendering.
+  - Created `pages_admin_uploads.php` and `admin-uploads.js` for a paginated, searchable upload gallery.
+  - Implemented image preview modals and deletion controls.
+  - Updated `UploadService` to persistently log the relative file path of every upload.
+
+### Chapter Ordering & Metadata Fixes (2026-03-07)
+- **Status**: Completed.
+- **Problem**: 
+  - Chapter images were uploading in random order.
+  - Uploader information was missing from the chapter list.
+  - 500 errors during chapter creation due to missing `created_by` column.
+- **Fix**:
+  - Implemented **Natural Sorting** (1.png, 2.png, 10.png) on both Frontend (`admin-content.js`) and Backend (`AdminController.php`) to guarantee correct reading order.
+  - Added `created_by` column to the `chapters` table and updated the admin list to show the uploader's username.
+  - Fixed SQL syntax errors in the Admin Creation CLI tool.
+
+### Reader Experience & "Long Strip" Support (2026-03-07)
+- **Status**: Completed.
+- **Fix**: Implemented settings modal for layout (Vertical/Single/Double) and image fit options.
+
+### User Retention: Reading Progress (2026-03-07)
+- **Status**: Completed.
+- **Feature**: Implemented "Continue Reading" logic. The system now tracks the last read chapter per series for each user.
+- **UI**: Added a dynamic button on series pages that replaces "Start Reading" with "Continue Reading (Ch. X)" if progress exists.
+- **Backend**: New `user_reading_progress` table and logic integrated into `ChapterService` and `SeriesService`.
+
+### Security & Data Integrity: Soft Delete (2026-03-07)
+- **Status**: Completed.
+- **Feature**: Implemented **Soft Delete** for `series` and `chapters`. Deleted items are now marked with a `deleted_at` timestamp instead of being physically removed.
+- **Refactor**: Updated `SeriesRepository` and `ChapterRepository` to filter out deleted items in all public and admin queries using `deleted_at IS NULL`.
+- **Database**: Added indices on `deleted_at` columns to maintain high query performance.
+
+### Monetization Schema Alignment (2026-03-08)
+- **Status**: Completed.
+- **Problem**: `grant-package` operations were failing with `SQLSTATE[01000]: Warning: 1265 Data truncated for column 'type'` on the remote server. Also, manual schema updates for `admin_actions` failed due to missing ENUM values.
+- **Root Cause**: 
+  - The `wallet_transactions` table on the remote database was using an outdated ENUM definition for the `type` column.
+  - The `admin_actions` table was missing several values used in the codebase (`security` target type, and multiple action types).
+- **Fix**:
+  - Updated `app/database/schema.sql` with the comprehensive ENUM lists.
+  - Recommended SQL for existing installations to align the schema:
+    ```sql
+    ALTER TABLE wallet_transactions MODIFY COLUMN `type` enum('manual_credit','manual_debit','package_credit','chapter_unlock','series_unlock','feature_unlock','refund','adjustment') NOT NULL;
+    
+    -- Align admin_actions with all values used in the codebase:
+    ALTER TABLE admin_actions MODIFY COLUMN `target_type` enum('comment','blog','content','user','system','role','series','chapter','security') NOT NULL;
+    
+    ALTER TABLE admin_actions MODIFY COLUMN `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update','auth_fail','permission_denied','create_genre','create_tag','env_update') NOT NULL;
+    ```
+
+### Queue & Notification Fix (2026-03-08)
+- **Status**: Completed.
+- **Problem**: `notify_new_chapter` jobs were failing with `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'data' in 'INSERT INTO'`.
+- **Root Cause**: The `user_notifications` table in the remote database was missing the `data` column, or the column name was conflicting with reserved keywords in some environments.
+- **Fix**:
+  - Added backticks to the `data` column in all SQL queries involving `user_notifications` and `chapters` tables across `QueueService`, `UserRepository`, `CommentVoteRepository`, `ChapterRepository`, and `AdminService`.
+  - Recommended SQL for existing installations to ensure the `data` column exists:
+    ```sql
+    ALTER TABLE user_notifications ADD COLUMN `data` longtext DEFAULT NULL AFTER body;
+    ```
+
+### API Documentation Refresh (2026-03-08)
+- **Status**: Completed.
+- **Problem**: Several endpoints (`POST /log/error`, `GET /admin/comments`, `DELETE /admin/comments/{id}`) and analytics tables were missing or incomplete in `API_REFERENCE.md` and `DATABASE.md`.
+- **Fix**: Synchronized Markdown documentation with the current `app/Config.php` routing and `app/database/schema.sql` definitions to ensure absolute authority for AI agents and developers.
+
+### Asset Optimization: Unified JS Bundling (2026-03-07)
+- **Status**: Completed.
+- **Feature**: Consolidated all fragmented JavaScript files into two primary bundles: `app-bundle.js` (Frontend) and `admin-bundle.js` (Administration).
+- **Architecture**: Implemented a modular namespace-based structure with path-based routing to prevent cross-page execution conflicts.
+- **Refactor**:
+  - Removed redundant script tags from all view files and `WebController` render calls.
+  - Standardized API communication and CSRF handling within the bundles.
+  - Improved reader stability and settings persistence.
+
+### Tailwind v4 Migration & i18n Overhaul (2026-03-15)
+- **Status**: Completed.
+- **Problem**: 
+  - Tailwind Play CDN was causing high LCP and performance overhead.
+  - New theme pages had many hardcoded Turkish strings, breaking multi-language support.
+  - Modals (Reader Settings, Notifications) were visually outdated and inconsistent with the new UI.
+- **Fix**:
+  - **Tailwind v4 CLI**: Migrated from Play CDN to a compiled and minified CSS workflow using Tailwind v4. Integrated custom CSS into Tailwind's `@layer` system for better compatibility.
+  - **i18n Implementation**: Replaced all hardcoded strings across home, content, chapter, search, blog, and profile pages with the `$__t()` helper.
+  - **Service Update**: Enhanced `I18nService` to support both `:key` and `{key}` placeholder formats and updated the controller helper to handle dynamic parameters.
+  - **Modal Modernization**: Redesigned Notifications and Reader Settings modals with a modern "glassmorphism" aesthetic and improved functional logic (tab switching, theme selection).
+  - **UI Refinement**: Added a persistent Language Selector to the header, fixed positioning issues for the User Dropdown, and added a Reader Settings shortcut to the floating reader controls for easier access.
 
 ### Admin Dashboard & Analytics Overhaul (2026-03-07)
 - **Status**: Completed.
