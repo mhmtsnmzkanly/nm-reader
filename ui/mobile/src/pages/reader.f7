@@ -204,26 +204,37 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
   };
 
   const loadChapter = async () => {
-    const payload = await api.content.getChapterFull(state.type, state.slug, state.chapterNumber);
-    const chapter = payload?.data || payload || {};
-    state.chapterId = chapter.id || null;
-    state.title = chapter.title || `Chapter ${state.chapterNumber}`;
-    state.is_locked = chapter.is_locked ?? !(chapter.access?.granted ?? true);
-    state.price_coin = chapter.price_coin || chapter.access?.chapter_unlock_price || 0;
-    
-    // Improved Text/Image detection
-    const chapterPages = chapter.pages || chapter.images || [];
-    state.is_image = (chapter.type === 'image' || chapter.type === 'manga' || (Array.isArray(chapterPages) && chapterPages.length > 0));
-    
-    if (state.is_image) {
-      state.pages = (Array.isArray(chapterPages) ? chapterPages : []).map(normalizeUrl);
-      state.paragraphs = [];
-    } else {
-      const body = String(chapter.body || chapter.content || '');
-      state.paragraphs = body.split('\n').filter((line) => line.trim() !== '');
-      state.pages = [];
+    try {
+      const payload = await api.content.getChapterFull(state.type, state.slug, state.chapterNumber);
+      const chapter = payload?.data || payload || {};
+      state.chapterId = chapter.id || null;
+      state.title = chapter.title || `Chapter ${state.chapterNumber}`;
+      state.is_locked = chapter.is_locked ?? !(chapter.access?.granted ?? true);
+      state.price_coin = chapter.price_coin || chapter.access?.chapter_unlock_price || 0;
+      
+      // Improved Text/Image detection based on explicit DTO type and data presence
+      const chapterPages = chapter.pages || chapter.images || [];
+      const hasPages = Array.isArray(chapterPages) && chapterPages.length > 0;
+      
+      // If type is explicitly 'image' or we have pages, it's an image chapter
+      state.is_image = (chapter.type === 'image' || chapter.type === 'manga' || hasPages);
+      
+      if (state.is_image) {
+        state.pages = (Array.isArray(chapterPages) ? chapterPages : []).map(normalizeUrl);
+        state.paragraphs = [];
+      } else {
+        const body = String(chapter.body || chapter.content || '');
+        state.paragraphs = body.split('\n').filter((line) => line.trim() !== '');
+        state.pages = [];
+      }
+      await loadComments();
+    } catch (err) {
+      state.error = err.message || i18n.failed_load_chapter || 'Failed to load chapter.';
+      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
+    } finally {
+      state.loading = false;
+      $update();
     }
-    await loadComments();
   };
 
   $onMounted(async () => {
@@ -237,15 +248,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
         state.theme = storedTheme;
       }
     }
-    try {
-      await loadChapter();
-    } catch (err) {
-      state.error = err.message || i18n.failed_load_chapter || 'Failed to load chapter.';
-      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
-    } finally {
-      state.loading = false;
-      $update();
-    }
+    await loadChapter();
 
     document.addEventListener('purchase:success', onPurchaseSuccess);
 

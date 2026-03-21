@@ -115,6 +115,13 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Stability & Reader Fixes (2026-03-20)
+- **Status**: Completed.
+- **Change**: Fixed **401 Unauthorized** errors by adding `checkAuth` verification during app initialization.
+- **Change**: Improved **Reader Reliability** by wrapping `loadChapter` in a try/catch/finally block to ensure loading states are cleared.
+- **Change**: Enhanced **Content Detection** in reader to accurately distinguish between text (novels) and image (manga) chapters.
+- **Change**: Fixed **Broken Images** in reader by ensuring consistent URL normalization for chapter pages.
+
 ### Mobile: Parity & Real-time Features (2026-03-20)
 - **Status**: Completed.
 - **Change**: Converted **Global Chat** from mock to functional using polling against the blog comments API.

@@ -32,6 +32,12 @@ if (session) {
     csrfToken: session.csrfToken,
     refreshToken: session.refreshToken,
   });
+  
+  // Verify token validity
+  api.user.checkAuth().catch(() => {
+    api.clearSession();
+    store.dispatch('clearAuth');
+  });
 }
 
 var app = new Framework7({

@@ -247,6 +247,9 @@ const NMR_API = {
     async getPublicProfile(person, blogPage = 1, commentPage = 1) {
       return await NMR_API.request(`/profile/${person}?blog_page=${blogPage}&comment_page=${commentPage}`);
     },
+    async checkAuth() {
+      return await NMR_API.request('/user/profile', { silent: true });
+    },
     async updateProfile(payload) { return await NMR_API.request('/user/profile', { method: 'POST', body: payload }); },
     async getHistory(page = 1, perPage = 20) { return await NMR_API.request(`/user/history?page=${page}&per_page=${perPage}`); },
     async getFollows(page = 1, perPage = 20) { return await NMR_API.request(`/user/follows?page=${page}&per_page=${perPage}`); },
