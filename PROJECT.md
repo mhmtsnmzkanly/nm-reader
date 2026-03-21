@@ -115,6 +115,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Parity & Real-time Features (2026-03-20)
+- **Status**: Completed.
+- **Change**: Converted **Global Chat** from mock to functional using polling against the blog comments API.
+- **Change**: Enhanced **User Profile** with avatar support and links to public profile/comments.
+- **Change**: Improved **Public Profile** layout and statistics display.
+
 ### Mobile: Feature Parity & Enhancements (2026-03-20)
 - **Status**: Completed.
 - **Change**: Implemented **Public Profiles** view with user statistics, bio, and recent activity (blogs/comments).

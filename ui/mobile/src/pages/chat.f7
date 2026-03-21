@@ -55,21 +55,51 @@
 </template>
 <script>
 import store from '../js/store.js';
+import api from '../js/api.js';
 
-export default (props, { $onMounted, $update, $f7, $f7ready }) => {
+export default (props, { $onMounted, $onBeforeUnmount, $update, $f7 }) => {
   const state = {
-    messages: [
-      { username: 'System', text: 'Welcome to NMR Global Chat!', time: '12:00', isMe: false, avatar: null },
-      { username: 'Admin', text: 'Feel free to discuss your favorite series here.', time: '12:01', isMe: false, avatar: null },
-    ],
+    loading: true,
+    messages: [],
+    polling: null,
+    slug: 'global-chat',
   };
 
-  const loadMessages = () => {
-    // Mock loading
-    $f7.toast.create({ text: 'Refreshing messages...', closeTimeout: 1000 }).open();
+  const loadMessages = async (silent = false) => {
+    try {
+      const payload = await api.blog.listComments(state.slug, 1, 50);
+      const data = payload?.data || payload || [];
+      const newMessages = (Array.isArray(data) ? data : []).map((row) => ({
+        id: row.id || row.comment_id,
+        username: row.username || row.author_username || 'User',
+        text: row.body || row.comment || '',
+        time: row.created_at ? new Date(row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+        isMe: store.state.auth.isLoggedIn && (row.username === store.state.auth.user.username),
+        avatar: null,
+      })).reverse(); // Oldest first for chat flow
+
+      // Only update and scroll if message count changed
+      if (newMessages.length !== state.messages.length) {
+        state.messages = newMessages;
+        $update();
+        if (!silent) scrollToBottom();
+      }
+    } catch (err) {
+      console.error('Chat load failed:', err);
+    } finally {
+      state.loading = false;
+      $update();
+    }
   };
 
-  const sendMessage = () => {
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      const pageContent = document.querySelector('.messages-content');
+      if (pageContent) pageContent.scrollTop = pageContent.scrollHeight;
+    }, 100);
+  };
+
+  const sendMessage = async () => {
     const input = document.getElementById('chat-message-input');
     const text = input?.value?.trim();
     if (!text) return;
@@ -79,29 +109,23 @@ export default (props, { $onMounted, $update, $f7, $f7ready }) => {
       return;
     }
 
-    const newMessage = {
-      username: store.state.auth.user.username,
-      text: text,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMe: true,
-      avatar: null,
-    };
-
-    state.messages.push(newMessage);
-    input.value = '';
-    $update();
-    
-    // Scroll to bottom
-    setTimeout(() => {
-      const pageContent = document.querySelector('.messages-content');
-      if (pageContent) pageContent.scrollTop = pageContent.scrollHeight;
-    }, 100);
+    try {
+      await api.blog.createComment(state.slug, text);
+      input.value = '';
+      await loadMessages();
+      scrollToBottom();
+    } catch (err) {
+      $f7.dialog.alert(err.message || 'Send failed');
+    }
   };
 
   $onMounted(() => {
-    $f7ready(() => {
-      // Any additional init
-    });
+    loadMessages();
+    state.polling = setInterval(() => loadMessages(true), 5000);
+  });
+
+  $onBeforeUnmount(() => {
+    if (state.polling) clearInterval(state.polling);
   });
 
   return $render;
