@@ -28,6 +28,19 @@
     <div class="page-content">
       <div class="searchbar-backdrop"></div>
 
+      <!-- Suggestions List -->
+      ${state.suggestions.length > 0 && !state.loading ? $h`
+        <div class="list simple-list inset no-margin-top margin-bottom-sm shadow-sm animate-fade-in">
+          <ul>
+            ${state.suggestions.map((s) => $h`
+              <li>
+                <a href="#" class="item-link" @click="${() => runSearch(s.title || s)}">${s.title || s}</a>
+              </li>
+            `)}
+          </ul>
+        </div>
+      ` : ''}
+
       ${state.loading
         ? $h`
           <div class="list media-list no-hairlines no-chevron skeleton-text skeleton-effect-blink">
@@ -94,6 +107,7 @@ export default (props, { $onMounted, $update, $el }) => {
     loading: false,
     error: '',
     items: [],
+    suggestions: [],
     query: '',
   };
 
@@ -113,8 +127,11 @@ export default (props, { $onMounted, $update, $el }) => {
   });
 
   const runSearch = async (q) => {
+    if (!q) return;
     state.loading = true;
     state.error = '';
+    state.suggestions = [];
+    state.query = q;
     $update();
     try {
       const payload = await api.content.search(q, 1, 20);
@@ -128,19 +145,41 @@ export default (props, { $onMounted, $update, $el }) => {
     }
   };
 
+  const runSuggest = async (q) => {
+    try {
+      const payload = await api.content.suggest(q);
+      const data = payload?.data || payload || [];
+      state.suggestions = (Array.isArray(data) ? data : []).slice(0, 5);
+      $update();
+    } catch (err) {
+      state.suggestions = [];
+    }
+  };
+
   $onMounted(() => {
     const input = $($el).find('input[name="q"]')[0];
     if (!input) return;
+    
+    let timer = null;
     input.addEventListener('input', (event) => {
       const value = event.target.value || '';
       state.query = value;
       if (value.length < 2) {
         state.items = [];
+        state.suggestions = [];
         state.error = '';
         $update();
         return;
       }
-      runSearch(value);
+      
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        runSuggest(value);
+      }, 300);
+    });
+
+    input.addEventListener('search', (event) => {
+      runSearch(event.target.value);
     });
   });
 

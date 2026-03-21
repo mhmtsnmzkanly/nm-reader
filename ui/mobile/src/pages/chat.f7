@@ -1,0 +1,109 @@
+<template>
+  <div class="page" data-name="chat">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner sliding">
+        <div class="title">Global Chat</div>
+        <div class="right">
+          <a class="link icon-only" @click="${loadMessages}">
+            <i class="f7-icons">arrow_2_circlepath</i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-content messages-content">
+      <div class="messages">
+        <div class="messages-title"><b>Today</b>, ${new Date().toLocaleDateString()}</div>
+        
+        ${state.messages.map((m) => $h`
+          <div class="message ${m.isMe ? 'message-sent' : 'message-received'}">
+            ${!m.isMe ? $h`
+              <div class="message-avatar" style="background-image:url(${m.avatar || 'https://cdn.framework7.io/placeholder/people-100x100-1.jpg'})"></div>
+            ` : ''}
+            <div class="message-content">
+              <div class="message-name">${m.username}</div>
+              <div class="message-bubble">
+                <div class="message-text">${m.text}</div>
+                <div class="message-footer">${m.time}</div>
+              </div>
+            </div>
+          </div>
+        `)}
+
+        ${state.messages.length === 0 ? $h`
+          <div class="block text-center mt-12">
+            <i class="f7-icons size-64 text-color-gray">chat_bubble_2</i>
+            <p class="text-color-gray">No messages yet. Be the first to say hi!</p>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- Message Toolbar -->
+    <div class="toolbar messagebar">
+      <div class="toolbar-inner">
+        <div class="messagebar-area">
+          <textarea class="resizable" placeholder="Message" id="chat-message-input"></textarea>
+        </div>
+        <a class="link icon-only" @click="${sendMessage}">
+          <i class="f7-icons">arrow_up_circle_fill</i>
+        </a>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import store from '../js/store.js';
+
+export default (props, { $onMounted, $update, $f7, $f7ready }) => {
+  const state = {
+    messages: [
+      { username: 'System', text: 'Welcome to NMR Global Chat!', time: '12:00', isMe: false, avatar: null },
+      { username: 'Admin', text: 'Feel free to discuss your favorite series here.', time: '12:01', isMe: false, avatar: null },
+    ],
+  };
+
+  const loadMessages = () => {
+    // Mock loading
+    $f7.toast.create({ text: 'Refreshing messages...', closeTimeout: 1000 }).open();
+  };
+
+  const sendMessage = () => {
+    const input = document.getElementById('chat-message-input');
+    const text = input?.value?.trim();
+    if (!text) return;
+
+    if (!store.state.auth.isLoggedIn) {
+      $f7.popup.open('.login-popup');
+      return;
+    }
+
+    const newMessage = {
+      username: store.state.auth.user.username,
+      text: text,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isMe: true,
+      avatar: null,
+    };
+
+    state.messages.push(newMessage);
+    input.value = '';
+    $update();
+    
+    // Scroll to bottom
+    setTimeout(() => {
+      const pageContent = document.querySelector('.messages-content');
+      if (pageContent) pageContent.scrollTop = pageContent.scrollHeight;
+    }, 100);
+  };
+
+  $onMounted(() => {
+    $f7ready(() => {
+      // Any additional init
+    });
+  });
+
+  return $render;
+};
+</script>

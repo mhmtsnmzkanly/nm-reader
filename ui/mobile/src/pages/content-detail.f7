@@ -23,8 +23,18 @@
             <div class="col-66">
               <div class="text-color-gray uppercase font-bold" style="font-size: 10px; letter-spacing: 1px">${state.type}</div>
               <h1 style="margin: 4px 0; font-size: 20px">${state.title}</h1>
-              <div class="chip color-blue">
-                <div class="chip-label">${state.chapters.length} Chapters</div>
+              <div class="display-flex align-items-center gap-2 margin-bottom-xs">
+                <div class="chip color-blue no-margin">
+                  <div class="chip-label">${state.chapters.length} Chapters</div>
+                </div>
+                <div class="chip ${state.status === 'completed' ? 'color-green' : 'color-orange'} no-margin">
+                  <div class="chip-label uppercase" style="font-size: 8px">${state.status}</div>
+                </div>
+              </div>
+              <div class="text-color-gray" style="font-size: 12px">
+                ${state.author ? $h`<div>Author: <span class="text-color-white">${state.author}</span></div>` : ''}
+                ${state.artist ? $h`<div>Artist: <span class="text-color-white">${state.artist}</span></div>` : ''}
+                ${state.releaseYear ? $h`<div>Released: <span class="text-color-white">${state.releaseYear}</span></div>` : ''}
               </div>
             </div>
           </div>
@@ -33,13 +43,17 @@
           <button class="button button-small button-fill ${state.following ? 'color-gray' : 'color-blue'}" data-action="${state.following ? 'unfollow' : 'follow'}">
             ${state.following ? 'Following' : 'Follow'}
           </button>
+          <div class="display-flex align-items-center text-color-yellow font-bold">
+            <i class="f7-icons size-14 margin-right-xs">star_fill</i>
+            <span>${state.ratingAvg}</span>
+          </div>
           <button class="button button-small color-blue" data-action="rate">Rate</button>
         </div>
       </div>
 
       <div class="block-title">Synopsis</div>
       <div class="block block-strong-ios block-inset-ios">
-        <p>${state.description}</p>
+        <p class="text-color-gray" style="font-size: 14px; line-height: 1.6">${state.description}</p>
       </div>
 
       <div class="block-title">Chapters</div>
@@ -63,10 +77,10 @@
             <li class="item-content">
               <div class="item-inner">
                 <div class="item-title-row">
-                  <div class="item-title font-bold">${comment.author}</div>
+                  <a href="/profile/${comment.author}/" class="item-title font-bold text-color-blue">${comment.author}</a>
                   <div class="item-after text-color-gray" style="font-size: 10px">${comment.created_at}</div>
                 </div>
-                <div class="item-text">${comment.body}</div>
+                <div class="item-text text-color-white" style="font-size: 13px">${comment.body}</div>
               </div>
             </li>
           `)}
@@ -110,6 +124,11 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
     following: false,
     type: $f7route.params.type,
     slug: $f7route.params.slug,
+    author: '',
+    artist: '',
+    status: '',
+    releaseYear: '',
+    ratingAvg: 0,
   };
 
   const normalizeCover = (value) => {
@@ -162,6 +181,13 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       state.cover = normalizeCover(contentData.cover_image || contentData.cover || contentData.thumbnail || contentData.image);
       state.following = !!contentData.is_following || !!contentData.following || false;
       state.chapters = chaptersData.map(normalizeChapter).filter((row) => row.chapter_number !== '');
+      
+      state.author = contentData.author || '';
+      state.artist = contentData.artist || '';
+      state.status = contentData.status || '';
+      state.releaseYear = contentData.release_year || '';
+      state.ratingAvg = contentData.rating_avg || 0;
+
       await loadComments();
     } catch (err) {
       state.error = err.message || i18n.failed_load_content || 'Failed to load content.';

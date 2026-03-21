@@ -115,6 +115,15 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Feature Parity & Enhancements (2026-03-20)
+- **Status**: Completed.
+- **Change**: Implemented **Public Profiles** view with user statistics, bio, and recent activity (blogs/comments).
+- **Change**: Added **Profile Editing** page for mobile, supporting bio updates and avatar uploads.
+- **Change**: Enhanced **Home Page** with a featured explore slider and popular blogs list.
+- **Change**: Implemented true **Search Autocomplete** using the backend suggestions API.
+- **Change**: Added **Global Chat** UI and integrated it into the main navigation tab bar.
+- **Change**: Improved **Content Detail** page with richer metadata (author, artist, status, release year) and linked comments to public profiles.
+
 ### Mobile: Reader & UI Stabilization (2026-03-20)
 - **Status**: Completed.
 - **Change**: Clarified text/image distinction in reader and optimized rendering for novel/manga content.

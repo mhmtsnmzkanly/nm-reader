@@ -1,0 +1,104 @@
+<template>
+  <div class="page" data-name="edit-profile">
+    <div class="navbar">
+      <div class="navbar-bg"></div>
+      <div class="navbar-inner sliding">
+        <div class="left">
+          <a class="link back">
+            <i class="icon icon-back"></i>
+            <span class="if-not-md">Back</span>
+          </a>
+        </div>
+        <div class="title">Edit Profile</div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      ${state.loading
+        ? $h`<div class="block text-center pt-12"><div class="preloader"></div></div>`
+        : $h`
+          <form id="edit-profile-form">
+            <div class="list no-hairlines-md inset">
+              <ul>
+                <li class="item-content item-input">
+                  <div class="item-inner">
+                    <div class="item-title item-label">Username</div>
+                    <div class="item-input-wrap">
+                      <input type="text" name="username" value="${state.user.username}" disabled />
+                    </div>
+                  </div>
+                </li>
+                <li class="item-content item-input">
+                  <div class="item-inner">
+                    <div class="item-title item-label">Bio</div>
+                    <div class="item-input-wrap">
+                      <textarea name="bio" class="resizable" placeholder="Tell us about yourself...">${state.user.bio}</textarea>
+                    </div>
+                  </div>
+                </li>
+                <li class="item-content item-input">
+                  <div class="item-inner">
+                    <div class="item-title item-label">Avatar</div>
+                    <div class="item-input-wrap">
+                      <input type="file" name="avatar" accept="image/*" />
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="block">
+              <button class="button button-fill button-large color-blue" type="submit">Save Changes</button>
+            </div>
+          </form>
+        `
+      }
+    </div>
+  </div>
+</template>
+<script>
+import api from '../js/api.js';
+
+export default (props, { $onMounted, $update, $f7, $el }) => {
+  const state = {
+    loading: true,
+    user: { username: '', bio: '' },
+  };
+
+  const loadData = async () => {
+    try {
+      const payload = await api.user.getProfile();
+      const data = payload?.data || payload || {};
+      state.user = {
+        username: data.username || data.user?.username || '',
+        bio: data.bio || data.user?.bio || '',
+      };
+    } catch (err) {
+      $f7.toast.create({ text: 'Failed to load profile', closeTimeout: 2000 }).open();
+    } finally {
+      state.loading = false;
+      $update();
+    }
+  };
+
+  $onMounted(() => {
+    loadData();
+
+    $el.on('submit', '#edit-profile-form', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      try {
+        $f7.preloader.show();
+        await api.user.updateProfile(formData);
+        $f7.preloader.hide();
+        $f7.toast.create({ text: 'Profile updated!', closeTimeout: 2000 }).open();
+        $f7.views.main.router.back();
+      } catch (err) {
+        $f7.preloader.hide();
+        $f7.dialog.alert(err.message || 'Update failed');
+      }
+    });
+  });
+
+  return $render;
+};
+</script>

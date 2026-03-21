@@ -17,6 +17,10 @@
             <i class="f7-icons">search</i>
             <span class="tabbar-label">Search</span>
           </a>
+          <a href="#view-chat" class="tab-link">
+            <i class="f7-icons">chat_bubble_2_fill</i>
+            <span class="tabbar-label">Chat</span>
+          </a>
           <a href="#view-profile" class="tab-link">
             <i class="f7-icons">person_fill</i>
             <span class="tabbar-label">Profile</span>
@@ -28,6 +32,7 @@
       <div id="view-home" class="view view-main view-init tab tab-active" data-url="/"></div>
       <div id="view-library" class="view view-init tab" data-name="library" data-url="/library/"></div>
       <div id="view-search" class="view view-init tab" data-name="search" data-url="/search/"></div>
+      <div id="view-chat" class="view view-init tab" data-name="chat" data-url="/chat/"></div>
       <div id="view-profile" class="view view-init tab" data-name="profile" data-url="/profile/"></div>
     </div>
 

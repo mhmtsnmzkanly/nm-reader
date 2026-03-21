@@ -12,11 +12,14 @@ import GenreDetailPage from '../pages/genre-detail.f7';
 import TagsPage from '../pages/tags.f7';
 import TagDetailPage from '../pages/tag-detail.f7';
 import ProfilePage from '../pages/profile.f7';
+import EditProfilePage from '../pages/edit-profile.f7';
+import PublicProfilePage from '../pages/public-profile.f7';
 import LibraryPage from '../pages/library.f7';
 import HistoryPage from '../pages/history.f7';
 import BlogsPage from '../pages/blogs.f7';
 import BlogDetailPage from '../pages/blog-detail.f7';
 import NotificationsPage from '../pages/notifications.f7';
+import ChatPage from '../pages/chat.f7';
 import PreferencesPage from '../pages/preferences.f7';
 import SessionsPage from '../pages/sessions.f7';
 
@@ -35,10 +38,13 @@ var routes = [
   { path: '/tags/', component: TagsPage },
   { path: '/tag/:slug/', component: TagDetailPage },
   { path: '/profile/', component: ProfilePage },
+  { path: '/profile/edit/', component: EditProfilePage },
+  { path: '/profile/:person/', component: PublicProfilePage },
   { path: '/library/', component: LibraryPage },
   { path: '/history/', component: HistoryPage },
   { path: '/blogs/', component: BlogsPage },
   { path: '/blogs/:slug/', component: BlogDetailPage },
+  { path: '/chat/', component: ChatPage },
   { path: '/notifications/', component: NotificationsPage },
   { path: '/preferences/', component: PreferencesPage },
   { path: '/sessions/', component: SessionsPage },
