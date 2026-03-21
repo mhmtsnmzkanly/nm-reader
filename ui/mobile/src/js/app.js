@@ -35,8 +35,14 @@ if (session) {
   
   // Verify token validity
   api.user.checkAuth().catch(() => {
+    console.warn('Session invalid, clearing.');
     api.clearSession();
     store.dispatch('clearAuth');
+    // Force a reload if we were on a protected page, or just update UI
+    const view = app.views?.main || app.views?.get?.('.view-main');
+    if (view && view.router && view.router.currentRoute?.path === '/profile/') {
+       view.router.navigate('/', { reloadCurrent: true });
+    }
   });
 }
 

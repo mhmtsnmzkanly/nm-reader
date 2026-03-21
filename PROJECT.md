@@ -115,6 +115,12 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Backend & Stability Improvements (2026-03-20)
+- **Status**: Completed.
+- **Change**: Created `app/Console/setup_chat.php` to automatically initialize the global chat blog entry.
+- **Change**: Fixed **500 Internal Server Error** in chat by ensuring the required `global-chat` blog exists.
+- **Change**: Enhanced **Session Cleanup** logic to force navigation away from protected pages if the authentication token is found to be invalid during app startup.
+
 ### Mobile: Stability & Reader Fixes (2026-03-20)
 - **Status**: Completed.
 - **Change**: Fixed **401 Unauthorized** errors by adding `checkAuth` verification during app initialization.
