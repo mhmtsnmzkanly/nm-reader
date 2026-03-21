@@ -11,7 +11,7 @@
         </div>
         <div class="title nmr-title">${state.title}</div>
         <div class="right">
-          <a class="link icon-only" @click="${() => state.showSettings = !state.state.showSettings}">
+          <a class="link icon-only" @click="${() => state.showSettings = !state.showSettings}">
             <i class="f7-icons">slider_horizontal_3</i>
           </a>
         </div>
@@ -19,7 +19,7 @@
     </div>
 
     <!-- Reader Progress Bar (Custom) -->
-    <div class="reader-progress-bar" id="reader-progress"></div>
+    <div class="reader-progress-bar" id="reader-progress" style="width: 0%; display: none;"></div>
 
     <div class="page-content" @scroll="${handleScroll}">
       ${state.loading
@@ -138,6 +138,16 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
   const fontKey = 'nmr_reader_font_size';
   const themeKey = 'nmr_reader_theme';
 
+  const normalizeUrl = (value) => {
+    if (!value) return '';
+    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) return value;
+    let normalized = value;
+    while (normalized.startsWith('/')) {
+      normalized = normalized.slice(1);
+    }
+    return `/${normalized}`;
+  };
+
   const updateFont = (delta) => {
     state.font_size = Math.max(12, Math.min(32, state.font_size + delta));
     if (typeof localStorage !== 'undefined') {
@@ -156,9 +166,18 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
 
   const handleScroll = (e) => {
     const el = e.target;
-    const progress = (el.scrollTop / (el.scrollHeight - el.offsetHeight)) * 100;
+    const maxScroll = el.scrollHeight - el.offsetHeight;
     const progressEl = document.getElementById('reader-progress');
-    if (progressEl) progressEl.style.width = `${progress}%`;
+    if (!progressEl) return;
+
+    if (maxScroll <= 0) {
+      progressEl.style.display = 'none';
+      return;
+    }
+
+    const progress = (el.scrollTop / maxScroll) * 100;
+    progressEl.style.display = 'block';
+    progressEl.style.width = `${progress}%`;
   };
 
   const onPurchaseSuccess = async (event) => {
@@ -194,10 +213,10 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     
     // Improved Text/Image detection
     const chapterPages = chapter.pages || chapter.images || [];
-    state.is_image = (chapter.type === 'image' || chapter.type === 'manga' || chapterPages.length > 0);
+    state.is_image = (chapter.type === 'image' || chapter.type === 'manga' || (Array.isArray(chapterPages) && chapterPages.length > 0));
     
     if (state.is_image) {
-      state.pages = Array.isArray(chapterPages) ? chapterPages : [];
+      state.pages = (Array.isArray(chapterPages) ? chapterPages : []).map(normalizeUrl);
       state.paragraphs = [];
     } else {
       const body = String(chapter.body || chapter.content || '');
