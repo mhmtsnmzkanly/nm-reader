@@ -63,44 +63,62 @@ final class UserInteractionController
 
     public function listChapterComments(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        [$page, $perPage] = $this->pagination($request);
-        $query = $request->getQueryParams();
-        $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
-        $viewerId = $_SESSION['user_id'] ?? null;
-        $items = $this->comments->listByChapter((string)$args['chapterId'], $page, $perPage, $viewerId, $cursor);
-        $meta = ['page' => $page, 'per_page' => $perPage];
-        if ($cursor !== null && $cursor !== '') {
-            $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+        try {
+            [$page, $perPage] = $this->pagination($request);
+            $query = $request->getQueryParams();
+            $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
+            $viewerId = $_SESSION['user_id'] ?? null;
+            $items = $this->comments->listByChapter((string)$args['chapterId'], $page, $perPage, $viewerId, $cursor);
+            $meta = ['page' => $page, 'per_page' => $perPage];
+            if ($cursor !== null && $cursor !== '') {
+                $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+            }
+            return ResponseHelper::success($items, $meta);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
         }
-        return ResponseHelper::success($items, $meta);
     }
 
     public function listSeriesComments(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        [$page, $perPage] = $this->pagination($request);
-        $query = $request->getQueryParams();
-        $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
-        $viewerId = $_SESSION['user_id'] ?? null;
-        $items = $this->comments->listBySeriesSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
-        $meta = ['page' => $page, 'per_page' => $perPage];
-        if ($cursor !== null && $cursor !== '') {
-            $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+        try {
+            [$page, $perPage] = $this->pagination($request);
+            $query = $request->getQueryParams();
+            $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
+            $viewerId = $_SESSION['user_id'] ?? null;
+            $items = $this->comments->listBySeriesSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
+            $meta = ['page' => $page, 'per_page' => $perPage];
+            if ($cursor !== null && $cursor !== '') {
+                $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+            }
+            return ResponseHelper::success($items, $meta);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
         }
-        return ResponseHelper::success($items, $meta);
     }
 
     public function listBlogComments(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        [$page, $perPage] = $this->pagination($request);
-        $query = $request->getQueryParams();
-        $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
-        $viewerId = $_SESSION['user_id'] ?? null;
-        $items = $this->comments->listByBlogSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
-        $meta = ['page' => $page, 'per_page' => $perPage];
-        if ($cursor !== null && $cursor !== '') {
-            $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+        try {
+            [$page, $perPage] = $this->pagination($request);
+            $query = $request->getQueryParams();
+            $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
+            $viewerId = $_SESSION['user_id'] ?? null;
+            $items = $this->comments->listByBlogSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
+            $meta = ['page' => $page, 'per_page' => $perPage];
+            if ($cursor !== null && $cursor !== '') {
+                $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+            }
+            return ResponseHelper::success($items, $meta);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
         }
-        return ResponseHelper::success($items, $meta);
     }
 
     public function voteComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

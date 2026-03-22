@@ -175,7 +175,7 @@ final class CommentService
         if ($parentId !== null) {
             $parent = $this->comments->findById($parentId);
             if ($parent === null
-                || (int) ($parent['blog_id'] ?? 0) !== (int) $blog['id']
+                || (string) ($parent['blog_id'] ?? '') !== (string) $blog['id']
                 || ($parent['chapter_id'] ?? null) !== null
             ) {
                 throw new \InvalidArgumentException('parent_id must belong to the same blog');
@@ -188,7 +188,7 @@ final class CommentService
             chapterId: null,
             body: $body,
             parentId: $parentId,
-            blogId: (int) $blog['id']
+            blogId: (string) $blog['id']
         );
         $this->analytics->track('comment_create', $userId, 'blog', (string) $blog['id'], ['comment_id' => $commentId]);
 
@@ -256,9 +256,9 @@ final class CommentService
         $cursorData = CursorPagination::decode($cursor);
         if ($cursorData !== null) {
             [$cursorCreatedAt, $cursorId] = $cursorData;
-            $rows = $this->comments->getByBlogId((int) $blog['id'], $page, $perPage, $viewerUserId, $cursorCreatedAt, $cursorId);
+            $rows = $this->comments->getByBlogId((string) $blog['id'], $page, $perPage, $viewerUserId, $cursorCreatedAt, $cursorId);
         } else {
-            $rows = $this->comments->getByBlogId((int) $blog['id'], $page, $perPage, $viewerUserId);
+            $rows = $this->comments->getByBlogId((string) $blog['id'], $page, $perPage, $viewerUserId);
         }
         return OutputSanitizer::sanitizeRows($rows, ['body', 'username']);
     }
@@ -351,7 +351,7 @@ final class CommentService
 
         $comment = $this->comments->findById($commentId);
         if ($comment === null
-            || (int) ($comment['blog_id'] ?? 0) !== (int) $blog['id']
+            || (string) ($comment['blog_id'] ?? '') !== (string) $blog['id']
             || ($comment['chapter_id'] ?? null) !== null
         ) {
             throw new \DomainException('Comment not found');

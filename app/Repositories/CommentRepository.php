@@ -44,7 +44,7 @@ final class CommentRepository
         ?string $chapterId,
         string $body,
         ?int $parentId = null,
-        ?int $blogId = null
+        ?string $blogId = null
     ): int {
         $hasBlogId = $this->commentsHasBlogId();
         if (!$hasBlogId && $blogId !== null && $contentId === null) {
@@ -62,7 +62,7 @@ final class CommentRepository
         $stmt->bindValue(':content_id', $contentId, $contentId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':chapter_id', $chapterId, $chapterId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         if ($hasBlogId) {
-            $stmt->bindValue(':blog_id', $blogId, $blogId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+            $stmt->bindValue(':blog_id', $blogId, $blogId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         }
         $stmt->bindValue(':parent_id', $parentId, $parentId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         $stmt->bindValue(':body', $body);
@@ -74,7 +74,7 @@ final class CommentRepository
     /**
      * Lists comments for a blog post, including user vote status.
      */
-    public function getByBlogId(int $blogId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
+    public function getByBlogId(string $blogId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
         $whereParts = [
@@ -108,7 +108,7 @@ final class CommentRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':viewer_user_id', $viewerUserId, $viewerUserId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         if ($this->commentsHasBlogId()) {
-            $stmt->bindValue(':blog_id', $blogId, PDO::PARAM_INT);
+            $stmt->bindValue(':blog_id', $blogId, PDO::PARAM_STR);
         } else {
             $stmt->bindValue(':blog_id_legacy', (string) $blogId, PDO::PARAM_STR);
         }

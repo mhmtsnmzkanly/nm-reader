@@ -120,6 +120,11 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
+### Mobile: Global Chat API Hardening (2026-03-23)
+- **Status**: Completed.
+- **Change**: Fixed blog comment handling to use string blog IDs (`char(6)`) instead of integer casts, restoring `global-chat` comment lookups against the active schema.
+- **Change**: Hardened comment listing endpoints to return proper `400`/`404` API responses instead of uncaught `500` errors when a chapter, series, or blog comment target is invalid or missing.
+
 ### Mobile: API Contract & Security Fixes (2026-03-23)
 - **Status**: Completed.
 - **Change**: Fixed mobile follow/unfollow API helpers for public profiles.

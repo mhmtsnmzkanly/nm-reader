@@ -121,12 +121,13 @@ Lists active feature products that can be purchased with coins.
 Lists published blog posts.
 
 #### **GET /blogs/{slug}**
-Returns a single blog post.
+Returns a single blog post. Supports optional `Authorization: Bearer` to include user-specific interaction state (e.g. if user has voted).
 
 #### **GET /blogs/{slug}/comments**
 Lists blog comments.
 - **Query Params**: `page`, `per_page`, `cursor` (optional keyset cursor: `{created_at}|{id}`).
 - **Meta**: `next_cursor` when cursor pagination is used.
+- **Errors**: `404 Not Found` when the blog slug does not exist or is not approved.
 When `cursor` is provided, `page` is ignored.
 Example cursor usage:
 `GET /api/v1/blogs/some-slug/comments?per_page=20&cursor=2026-03-18%2012:34:56|123`
@@ -445,6 +446,7 @@ Note: All routes in this group are prefixed with `/api/v1/admin`, require approp
 ### 6.5 System & Maintenance
 - **GET `/overview`**: High-level dashboard stats.
 - **GET `/metrics`**: Current KPI snapshot.
+- **GET `/dashboard`**: Alias for `/metrics` providing high-level dashboard data.
 - **GET `/metrics/insights`**: Advanced retention and search quality metrics.
 - **GET `/stats/visits` / `/stats/views`**: Granular traffic analytics.
 - **GET `/queue/jobs`**: Lists pending and failed system jobs.
