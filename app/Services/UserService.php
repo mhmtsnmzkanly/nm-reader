@@ -275,7 +275,13 @@ final class UserService
             + (((int) $stats['comment_count']) * $weights['comment_count']);
 
         return [
-            'user' => OutputSanitizer::sanitizeFields($user, ['username', 'bio']),
+            'user' => array_merge(
+                OutputSanitizer::sanitizeFields($user, ['username', 'bio']),
+                [
+                    'avatar' => $user['profile_image'] ?? null,
+                    'cover_image' => $user['cover_image'] ?? null,
+                ]
+            ),
             'is_following' => $isFollowing,
             'statistics' => [
                 'score' => $score,

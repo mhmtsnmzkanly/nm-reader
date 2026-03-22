@@ -101,6 +101,11 @@ This document serves as the absolute authority on the project's architecture, co
 - `generate_sitemap.php`: Updates `public/sitemap.xml`.
 - `analytics_aggregate.php`: Aggregates stats.
 - `retention_cleanup.php`: Deletes expired data.
+- `cache_warmer.php`: Pre-populates homepage and type listing caches.
+- `setup_chat.php`: Initializes the global chat blog entry and configuration.
+- `seed_default_data.php`: Populates initial taxonomy (genres/tags) and settings.
+- `create_admin.php`: CLI utility to create the initial root/admin user.
+- `queue_worker.php`: Processes background jobs (notifications, async tasks).
 
 ### Cron Setup
 ```bash
@@ -115,26 +120,34 @@ This document serves as the absolute authority on the project's architecture, co
 ---
 
 ## 6. Recent Activity
-### Mobile: Backend & Stability Improvements (2026-03-20)
+### Mobile: API Contract & Security Fixes (2026-03-23)
+- **Status**: Completed.
+- **Change**: Fixed mobile follow/unfollow API helpers for public profiles.
+- **Change**: Fixed mobile vote payloads to send `vote` instead of `value`, restoring comment and blog voting.
+- **Change**: Fixed mobile profile image upload field mapping from `avatar` to `profile_image`.
+- **Change**: Exposed public profile avatar data in the API response so mobile public profiles render images correctly.
+- **Change**: Hardened Turnstile verification to fail closed and return `503` when the verification service is unavailable.
+
+### Mobile: Backend & Stability Improvements (2026-03-21)
 - **Status**: Completed.
 - **Change**: Created `app/Console/setup_chat.php` to automatically initialize the global chat blog entry.
 - **Change**: Fixed **500 Internal Server Error** in chat by ensuring the required `global-chat` blog exists.
 - **Change**: Enhanced **Session Cleanup** logic to force navigation away from protected pages if the authentication token is found to be invalid during app startup.
 
-### Mobile: Stability & Reader Fixes (2026-03-20)
+### Mobile: Stability & Reader Fixes (2026-03-21)
 - **Status**: Completed.
 - **Change**: Fixed **401 Unauthorized** errors by adding `checkAuth` verification during app initialization.
 - **Change**: Improved **Reader Reliability** by wrapping `loadChapter` in a try/catch/finally block to ensure loading states are cleared.
 - **Change**: Enhanced **Content Detection** in reader to accurately distinguish between text (novels) and image (manga) chapters.
 - **Change**: Fixed **Broken Images** in reader by ensuring consistent URL normalization for chapter pages.
 
-### Mobile: Parity & Real-time Features (2026-03-20)
+### Mobile: Parity & Real-time Features (2026-03-21)
 - **Status**: Completed.
 - **Change**: Converted **Global Chat** from mock to functional using polling against the blog comments API.
 - **Change**: Enhanced **User Profile** with avatar support and links to public profile/comments.
 - **Change**: Improved **Public Profile** layout and statistics display.
 
-### Mobile: Feature Parity & Enhancements (2026-03-20)
+### Mobile: Feature Parity & Enhancements (2026-03-21)
 - **Status**: Completed.
 - **Change**: Implemented **Public Profiles** view with user statistics, bio, and recent activity (blogs/comments).
 - **Change**: Added **Profile Editing** page for mobile, supporting bio updates and avatar uploads.
@@ -143,7 +156,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Added **Global Chat** UI and integrated it into the main navigation tab bar.
 - **Change**: Improved **Content Detail** page with richer metadata (author, artist, status, release year) and linked comments to public profiles.
 
-### Mobile: Reader & UI Stabilization (2026-03-20)
+### Mobile: Reader & UI Stabilization (2026-03-21)
 - **Status**: Completed.
 - **Change**: Clarified text/image distinction in reader and optimized rendering for novel/manga content.
 - **Change**: Resolved Dom7 TypeError by properly wrapping `$el` and importing `dom7` in all Framework7 components.
@@ -171,7 +184,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Removed `tailwind.config.js` and updated `package.json` and `postcss.config.js`.
 
 ### Mobile: Framework7 CLI Scaffold (2026-03-18)
-- **Status**: In progress.
+- **Status**: Completed.
 - **Change**: Added `/mobile` web entry that serves the Framework7 app shell from `public/mobile/index.html`.
 - **Change**: Rebuilt `ui/mobile` via Framework7 CLI (Core + Vite) and configured Vite output to `public/mobile` with `/mobile/` base path.
 - **Change**: Wired P0 navigation and data screens (home, type list, content detail, reader, wallet) to the mobile API client.

@@ -257,6 +257,8 @@ const NMR_API = {
     async updatePreferences(payload) { return await NMR_API.request('/user/preferences', { method: 'PUT', body: payload }); },
     async getNotifications() { return await NMR_API.request('/user/notifications'); },
     async markNotificationsRead() { return await NMR_API.request('/user/notifications/read', { method: 'POST' }); },
+    async follow(person) { return await NMR_API.request(`/user/follows/${person}`, { method: 'POST' }); },
+    async unfollow(person) { return await NMR_API.request(`/user/follows/${person}`, { method: 'DELETE' }); },
   },
   interactions: {
     async follow(type, slug) { return await NMR_API.request(`/content/${type}/${slug}/follow`, { method: 'POST' }); },
@@ -274,8 +276,8 @@ const NMR_API = {
     async createChapterComment(chapterId, body) {
       return await NMR_API.request(`/chapter/${chapterId}/comment`, { method: 'POST', body: { body } });
     },
-    async voteComment(commentId, value = 1) {
-      return await NMR_API.request(`/comments/${commentId}/vote`, { method: 'POST', body: { value } });
+    async voteComment(commentId, vote = 1) {
+      return await NMR_API.request(`/comments/${commentId}/vote`, { method: 'POST', body: { vote } });
     },
   },
   blog: {
@@ -287,11 +289,11 @@ const NMR_API = {
     async createComment(slug, body) {
       return await NMR_API.request(`/blogs/${slug}/comments`, { method: 'POST', body: { body } });
     },
-    async vote(slug, value = 1) {
-      return await NMR_API.request(`/blogs/${slug}/vote`, { method: 'POST', body: { value } });
+    async vote(slug, vote = 1) {
+      return await NMR_API.request(`/blogs/${slug}/vote`, { method: 'POST', body: { vote } });
     },
-    async voteComment(slug, commentId, value = 1) {
-      return await NMR_API.request(`/blogs/${slug}/comments/${commentId}/vote`, { method: 'POST', body: { value } });
+    async voteComment(slug, commentId, vote = 1) {
+      return await NMR_API.request(`/blogs/${slug}/comments/${commentId}/vote`, { method: 'POST', body: { vote } });
     },
   },
   sessions: {

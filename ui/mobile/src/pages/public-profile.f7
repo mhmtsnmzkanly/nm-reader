@@ -145,7 +145,7 @@ export default (props, { $onMounted, $update, $f7route, $f7 }) => {
       const user = data.user || {};
       state.user = {
         username: user.username || 'User',
-        avatar: user.avatar || null,
+        avatar: user.avatar || user.profile_image || null,
         bio: user.bio || '',
       };
 
@@ -163,7 +163,7 @@ export default (props, { $onMounted, $update, $f7route, $f7 }) => {
       state.blogs = (Array.isArray(blogs) ? blogs : []).map(b => ({
         title: b.title || 'Blog',
         slug: b.slug || '',
-        date: b.approved_at || b.created_at ? new Date(b.approved_at || b.created_at).toLocaleDateString() : '',
+        date: (b.approved_at || b.created_at) ? new Date(b.approved_at || b.created_at).toLocaleDateString() : '',
       }));
 
       const comments = data.recent_comments || [];
