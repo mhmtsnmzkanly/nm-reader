@@ -46,9 +46,7 @@
                       `)}
                     </div>`
                     : $h`
-                      <div class="novel-content p-6" style="font-size: ${state.font_size}px;">
-                        ${state.blocks.map((block) => renderBlock(block))}
-                      </div>
+                      <div class="novel-content p-6" style="font-size: ${state.font_size}px;" innerHTML="${renderBlocksHtml(state.blocks)}"></div>
                     `
                   }
 
@@ -273,29 +271,36 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     return blocks;
   };
 
-  const renderBlock = (block) => {
-    if (block.type === 'heading') {
-      const className = block.level <= 2 ? 'text-lg font-bold' : 'font-bold';
-      return $h`<div class="${className} mb-4">${block.text}</div>`;
-    }
-    if (block.type === 'quote') {
-      return $h`<blockquote class="mb-6 text-color-gray" style="border-left: 3px solid var(--f7-theme-color); padding-left: 12px;">${block.text}</blockquote>`;
-    }
-    if (block.type === 'ul') {
-      return $h`
-        <ul class="mb-6" style="padding-left: 20px; list-style: disc;">
-          ${block.items.map((item) => $h`<li class="mb-2">${item}</li>`)}
-        </ul>
-      `;
-    }
-    if (block.type === 'ol') {
-      return $h`
-        <ol class="mb-6" style="padding-left: 20px; list-style: decimal;">
-          ${block.items.map((item) => $h`<li class="mb-2">${item}</li>`)}
-        </ol>
-      `;
-    }
-    return $h`<p class="mb-6 leading-relaxed">${block.text}</p>`;
+  const escapeHtml = (value) => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+  const renderBlocksHtml = (blocks) => {
+    return (Array.isArray(blocks) ? blocks : []).map((block) => {
+      if (block.type === 'heading') {
+        const className = block.level <= 2 ? 'text-lg font-bold' : 'font-bold';
+        return `<div class="${className} mb-4">${escapeHtml(block.text)}</div>`;
+      }
+      if (block.type === 'quote') {
+        return `<blockquote class="mb-6 text-color-gray" style="border-left: 3px solid var(--f7-theme-color); padding-left: 12px;">${escapeHtml(block.text)}</blockquote>`;
+      }
+      if (block.type === 'ul') {
+        const items = (Array.isArray(block.items) ? block.items : [])
+          .map((item) => `<li class="mb-2">${escapeHtml(item)}</li>`)
+          .join('');
+        return `<ul class="mb-6" style="padding-left: 20px; list-style: disc;">${items}</ul>`;
+      }
+      if (block.type === 'ol') {
+        const items = (Array.isArray(block.items) ? block.items : [])
+          .map((item) => `<li class="mb-2">${escapeHtml(item)}</li>`)
+          .join('');
+        return `<ol class="mb-6" style="padding-left: 20px; list-style: decimal;">${items}</ol>`;
+      }
+      return `<p class="mb-6 leading-relaxed">${escapeHtml(block.text)}</p>`;
+    }).join('');
   };
 
   const goToChapter = (chapterNumber) => {
