@@ -12,6 +12,7 @@ use App\Repositories\CommentRepository;
 use App\Repositories\CommentVoteRepository;
 use App\Repositories\SeriesRepository;
 use App\Repositories\BlogRepository;
+use App\Repositories\AdminConsoleRepository;
 use PDO;
 
 /**
@@ -31,9 +32,11 @@ final class CommentService
         private readonly ChapterRepository $chapters,
         private readonly SeriesRepository $series,
         private readonly BlogRepository $blogs,
+        private readonly AdminConsoleRepository $adminConsole,
         private readonly CacheService $cache,
         private readonly PDO $pdo,
-        private readonly AnalyticsService $analytics
+        private readonly AnalyticsService $analytics,
+        private readonly EntityIdService $entityIds
     ) {
     }
 
@@ -167,7 +170,7 @@ final class CommentService
             throw new \InvalidArgumentException('Comment body must be at most 1000 characters');
         }
 
-        $blog = $this->blogs->findApprovedBySlug($blogSlug);
+        $blog = $this->resolveApprovedBlog($blogSlug);
         if ($blog === null) {
             throw new \DomainException('Blog not found or not approved');
         }
@@ -248,7 +251,7 @@ final class CommentService
      */
     public function listByBlogSlug(string $slug, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursor = null): array
     {
-        $blog = $this->blogs->findApprovedBySlug($slug);
+        $blog = $this->resolveApprovedBlog($slug);
         if ($blog === null) {
             throw new \DomainException('Blog not found');
         }
@@ -344,7 +347,7 @@ final class CommentService
      */
     public function voteBlogComment(string $userId, string $blogSlug, int $commentId, int $vote): array
     {
-        $blog = $this->blogs->findApprovedBySlug($blogSlug);
+        $blog = $this->resolveApprovedBlog($blogSlug);
         if ($blog === null) {
             throw new \DomainException('Blog not found');
         }
@@ -367,5 +370,37 @@ final class CommentService
         $this->cache->deleteByPrefix('genre_list_');
         $this->cache->deleteByPrefix('tag_list_');
         $this->cache->deleteByPrefix('latest_chapters_');
+    }
+
+    private function resolveApprovedBlog(string $slug): ?array
+    {
+        $blog = $this->blogs->findApprovedBySlug($slug);
+        if ($blog !== null) {
+            return $blog;
+        }
+
+        if ($slug !== 'global-chat') {
+            return null;
+        }
+
+        $users = $this->adminConsole->listAllUsersForSelect();
+        $ownerId = $users[0]['id'] ?? null;
+        if (!is_string($ownerId) || $ownerId === '') {
+            return null;
+        }
+
+        $blogId = $this->entityIds->generateBlogId();
+        $this->blogs->create(
+            $blogId,
+            $ownerId,
+            'Global Chat',
+            'global-chat',
+            'Welcome to the community chat! Feel free to discuss anything here.'
+        );
+        $this->blogs->approve($blogId, $ownerId);
+        $this->cache->deleteByPrefix('blog_global-chat_');
+        $this->cache->delete('home_latest_blogs_3');
+
+        return $this->blogs->findApprovedBySlug($slug);
     }
 }
