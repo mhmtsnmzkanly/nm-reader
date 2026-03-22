@@ -124,7 +124,8 @@ export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
   const i18n = getI18n();
 
   const normalizeCover = (value) => {
-    if (!value) return '/assets/img/covers/placeholder.svg';
+    if (typeof value !== 'string') return '/assets/img/covers/placeholder.svg';
+    if (value === '') return '/assets/img/covers/placeholder.svg';
     if (value.startsWith('http://') || value.startsWith('https://')) return value;
     let normalized = value;
     while (normalized.startsWith('/')) {

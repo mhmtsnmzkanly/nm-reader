@@ -170,7 +170,8 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
   const themeKey = 'nmr_reader_theme';
 
   const normalizeUrl = (value) => {
-    if (!value) return '';
+    if (typeof value !== 'string') return '';
+    if (value === '') return '';
     if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) return value;
     let normalized = value;
     while (normalized.startsWith('/')) {
