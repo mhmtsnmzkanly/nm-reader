@@ -14,6 +14,11 @@
     </div>
 
     <div class="page-content">
+      ${state.loading
+        ? $h`<div class="block display-flex justify-content-center align-items-center" style="height: 100%"><div class="preloader"></div></div>`
+        : state.error
+          ? $h`<div class="block block-strong inset color-red text-center"><p>${state.error}</p></div>`
+          : $h`
       <div class="card card-outline">
         <div class="card-content card-content-padding">
           <div class="row">
@@ -110,6 +115,8 @@
           <button class="button button-fill color-blue" type="submit">Post Comment</button>
         </form>
       </div>
+      `
+      }
     </div>
   </div>
 </template>

@@ -134,6 +134,7 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Reader text chapters now render structured blocks (headings, lists, quotes, paragraphs) instead of flattening all content into plain newline-split paragraphs.
 - **Change**: Follow, rate, and series comment actions on content detail now enforce the same login-popup guard used elsewhere in mobile.
 - **Change**: Mobile media URL normalization now guards non-string values before calling string helpers, fixing `startsWith is not a function` crashes on malformed or partial payloads.
+- **Change**: Content detail page now renders explicit loading and error states instead of showing partially initialized content while requests are still in flight.
 
 ### Mobile: API Contract & Security Fixes (2026-03-23)
 - **Status**: Completed.
