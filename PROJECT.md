@@ -126,6 +126,14 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Hardened comment listing endpoints to return proper `400`/`404` API responses instead of uncaught `500` errors when a chapter, series, or blog comment target is invalid or missing.
 - **Change**: Added lazy bootstrap for the reserved `global-chat` blog so comment reads/writes can self-heal when the remote environment is missing the seeded chat entry.
 
+### Mobile: Chapter Page Fixes (2026-03-23)
+- **Status**: Completed.
+- **Change**: Content detail now paginates and loads additional chapter batches instead of silently truncating long chapter lists at the API default page size.
+- **Change**: Reader now shows chapter navigation controls using backend `adjacent_chapters`.
+- **Change**: Reader chapter comments can now be posted from the UI again because the missing chapter comment form was restored.
+- **Change**: Reader text chapters now render structured blocks (headings, lists, quotes, paragraphs) instead of flattening all content into plain newline-split paragraphs.
+- **Change**: Follow, rate, and series comment actions on content detail now enforce the same login-popup guard used elsewhere in mobile.
+
 ### Mobile: API Contract & Security Fixes (2026-03-23)
 - **Status**: Completed.
 - **Change**: Fixed mobile follow/unfollow API helpers for public profiles.

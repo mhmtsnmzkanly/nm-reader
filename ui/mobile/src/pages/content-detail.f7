@@ -25,7 +25,7 @@
               <h1 style="margin: 4px 0; font-size: 20px">${state.title}</h1>
               <div class="display-flex align-items-center gap-2 margin-bottom-xs">
                 <div class="chip color-blue no-margin">
-                  <div class="chip-label">${state.chapters.length} Chapters</div>
+                  <div class="chip-label">${state.chapterCount} Chapters</div>
                 </div>
                 <div class="chip ${state.status === 'completed' ? 'color-green' : 'color-orange'} no-margin">
                   <div class="chip-label uppercase" style="font-size: 8px">${state.status}</div>
@@ -69,6 +69,13 @@
           `)}
         </ul>
       </div>
+      ${state.chapterPagination.hasMore ? $h`
+        <div class="block">
+          <button class="button button-fill color-blue ${state.chapterPagination.loading ? 'disabled' : ''}" data-action="load-more-chapters">
+            ${state.chapterPagination.loading ? 'Loading...' : 'Load More Chapters'}
+          </button>
+        </div>
+      ` : ''}
 
       <div class="block-title">Comments</div>
       <div class="list media-list">
@@ -109,6 +116,7 @@
 <script>
 import $ from 'dom7';
 import api from '../js/api.js';
+import store from '../js/store.js';
 import { getI18n } from '../js/i18n.js';
 
 export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
@@ -119,6 +127,7 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
     title: 'Series',
     description: '',
     chapters: [],
+    chapterCount: 0,
     cover: '/assets/img/covers/placeholder.svg',
     comments: [],
     following: false,
@@ -129,6 +138,12 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
     status: '',
     releaseYear: '',
     ratingAvg: 0,
+    chapterPagination: {
+      page: 1,
+      perPage: 100,
+      hasMore: false,
+      loading: false,
+    },
   };
 
   const normalizeCover = (value) => {
@@ -150,6 +165,25 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
     is_locked: item.is_locked ?? !(item.access?.granted ?? true),
   });
 
+  const mergeChapters = (items, append = false) => {
+    const incoming = (Array.isArray(items) ? items : []).map(normalizeChapter).filter((row) => row.chapter_number !== '');
+    if (!append) {
+      state.chapters = incoming;
+      return;
+    }
+
+    const seen = new Set(state.chapters.map((row) => row.chapter_number));
+    state.chapters = state.chapters.concat(incoming.filter((row) => !seen.has(row.chapter_number)));
+  };
+
+  const loadChapterPage = async (page = 1, append = false) => {
+    const payload = await api.content.getChapters(state.type, state.slug, page, state.chapterPagination.perPage);
+    const data = payload?.data || payload || [];
+    mergeChapters(data, append);
+    state.chapterPagination.page = page;
+    state.chapterPagination.hasMore = Array.isArray(data) && data.length === state.chapterPagination.perPage;
+  };
+
   const loadComments = async () => {
     try {
       const payload = await api.interactions.listSeriesComments(state.type, state.slug, 1, 20);
@@ -170,7 +204,7 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
     try {
       const [contentPayload, chaptersPayload] = await Promise.all([
         api.content.getDetails(state.type, state.slug),
-        api.content.getChapters(state.type, state.slug),
+        api.content.getChapters(state.type, state.slug, 1, state.chapterPagination.perPage),
       ]);
 
       const contentData = contentPayload?.data || contentPayload || {};
@@ -180,7 +214,10 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       state.description = contentData.description || '';
       state.cover = normalizeCover(contentData.cover_image || contentData.cover || contentData.thumbnail || contentData.image);
       state.following = !!contentData.is_following || !!contentData.following || false;
-      state.chapters = chaptersData.map(normalizeChapter).filter((row) => row.chapter_number !== '');
+      state.chapterCount = Number(contentData.chapter_count || 0) || (Array.isArray(chaptersData) ? chaptersData.length : 0);
+      mergeChapters(chaptersData, false);
+      state.chapterPagination.page = 1;
+      state.chapterPagination.hasMore = Array.isArray(chaptersData) && chaptersData.length === state.chapterPagination.perPage;
       
       state.author = contentData.author || '';
       state.artist = contentData.artist || '';
@@ -201,6 +238,10 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
   $onMounted(() => {
     $($el).on('click', '[data-action="follow"]', async (event) => {
       event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
       try {
         await api.interactions.follow(state.type, state.slug);
         state.following = true;
@@ -212,6 +253,10 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
 
     $($el).on('click', '[data-action="unfollow"]', async (event) => {
       event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
       try {
         await api.interactions.unfollow(state.type, state.slug);
         state.following = false;
@@ -223,6 +268,10 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
 
     $($el).on('click', '[data-action="rate"]', (event) => {
       event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
       $f7.dialog.prompt('Rate 1-5', 'Rate', async (value) => {
         const score = Number(value);
         if (!score || score < 1 || score > 5) return;
@@ -240,6 +289,10 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       const form = event.target;
       const body = form.querySelector('textarea[name="body"]')?.value || '';
       if (!body.trim()) return;
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
       try {
         await api.interactions.createSeriesComment(state.type, state.slug, body.trim());
         form.reset();
@@ -250,8 +303,27 @@ export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
       }
     });
 
+    $($el).on('click', '[data-action="load-more-chapters"]', async (event) => {
+      event.preventDefault();
+      if (state.chapterPagination.loading || !state.chapterPagination.hasMore) return;
+      state.chapterPagination.loading = true;
+      $update();
+      try {
+        await loadChapterPage(state.chapterPagination.page + 1, true);
+      } catch (err) {
+        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Failed to load chapters.' } }));
+      } finally {
+        state.chapterPagination.loading = false;
+        $update();
+      }
+    });
+
     $($el).on('click', '[data-action="comment-vote"]', async (event) => {
       event.preventDefault();
+      if (!store.state.auth.isLoggedIn) {
+        $f7.popup.open('.login-popup');
+        return;
+      }
       const id = event.target.getAttribute('data-id');
       if (!id) return;
       try {

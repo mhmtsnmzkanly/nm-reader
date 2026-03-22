@@ -47,10 +47,21 @@
                     </div>`
                     : $h`
                       <div class="novel-content p-6" style="font-size: ${state.font_size}px;">
-                        ${state.paragraphs.map((para) => $h`<p class="mb-6 leading-relaxed">${para}</p>`)}
+                        ${state.blocks.map((block) => renderBlock(block))}
                       </div>
                     `
                   }
+
+                  <div class="block">
+                    <div class="segmented segmented-strong">
+                      <button class="button ${state.navigation.prev ? '' : 'disabled'}" data-action="go-prev">
+                        Previous
+                      </button>
+                      <button class="button ${state.navigation.next ? '' : 'disabled'}" data-action="go-next">
+                        Next
+                      </button>
+                    </div>
+                  </div>
 
                   <!-- Discussion Section at Bottom -->
                   <div class="block-title mt-12">Comments</div>
@@ -67,6 +78,22 @@
                         </li>
                       `)}
                     </ul>
+                  </div>
+                  <div class="block mb-12">
+                    <form id="chapter-comment-form">
+                      <div class="list no-hairlines-md">
+                        <ul>
+                          <li class="item-content item-input">
+                            <div class="item-inner">
+                              <div class="item-input-wrap">
+                                <textarea name="body" placeholder="Write a comment..." class="resizable"></textarea>
+                              </div>
+                            </div>
+                          </li>
+                        </ul>
+                      </div>
+                      <button class="button button-fill color-blue" type="submit">Post Comment</button>
+                    </form>
                   </div>
                 </div>
               </div>
@@ -125,7 +152,7 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     price_coin: 0,
     is_image: false,
     pages: [],
-    paragraphs: [],
+    blocks: [],
     font_size: 16,
     theme: 'dark',
     type: $f7route.params.type,
@@ -133,6 +160,10 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
     chapterNumber: $f7route.params.chapterNumber,
     chapterId: null,
     comments: [],
+    navigation: {
+      next: null,
+      prev: null,
+    },
   };
 
   const fontKey = 'nmr_reader_font_size';
@@ -162,6 +193,119 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
       localStorage.setItem(themeKey, t);
     }
     $update();
+  };
+
+  const parseMarkdownBlocks = (body) => {
+    const lines = String(body || '').replaceAll('\r\n', '\n').split('\n');
+    const blocks = [];
+    let paragraph = [];
+    let list = null;
+
+    const flushParagraph = () => {
+      if (paragraph.length === 0) return;
+      blocks.push({ type: 'paragraph', text: paragraph.join(' ').trim() });
+      paragraph = [];
+    };
+
+    const flushList = () => {
+      if (!list || list.items.length === 0) {
+        list = null;
+        return;
+      }
+      blocks.push(list);
+      list = null;
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (line === '') {
+        flushParagraph();
+        flushList();
+        continue;
+      }
+
+      const heading = line.match(/^(#{1,6})\s+(.*)$/);
+      if (heading) {
+        flushParagraph();
+        flushList();
+        blocks.push({ type: 'heading', level: heading[1].length, text: heading[2].trim() });
+        continue;
+      }
+
+      const unordered = line.match(/^[-*]\s+(.*)$/);
+      if (unordered) {
+        flushParagraph();
+        if (!list || list.type !== 'ul') {
+          flushList();
+          list = { type: 'ul', items: [] };
+        }
+        list.items.push(unordered[1].trim());
+        continue;
+      }
+
+      const ordered = line.match(/^\d+\.\s+(.*)$/);
+      if (ordered) {
+        flushParagraph();
+        if (!list || list.type !== 'ol') {
+          flushList();
+          list = { type: 'ol', items: [] };
+        }
+        list.items.push(ordered[1].trim());
+        continue;
+      }
+
+      const quote = line.match(/^>\s?(.*)$/);
+      if (quote) {
+        flushParagraph();
+        flushList();
+        blocks.push({ type: 'quote', text: quote[1].trim() });
+        continue;
+      }
+
+      flushList();
+      paragraph.push(line);
+    }
+
+    flushParagraph();
+    flushList();
+
+    return blocks;
+  };
+
+  const renderBlock = (block) => {
+    if (block.type === 'heading') {
+      const className = block.level <= 2 ? 'text-lg font-bold' : 'font-bold';
+      return $h`<div class="${className} mb-4">${block.text}</div>`;
+    }
+    if (block.type === 'quote') {
+      return $h`<blockquote class="mb-6 text-color-gray" style="border-left: 3px solid var(--f7-theme-color); padding-left: 12px;">${block.text}</blockquote>`;
+    }
+    if (block.type === 'ul') {
+      return $h`
+        <ul class="mb-6" style="padding-left: 20px; list-style: disc;">
+          ${block.items.map((item) => $h`<li class="mb-2">${item}</li>`)}
+        </ul>
+      `;
+    }
+    if (block.type === 'ol') {
+      return $h`
+        <ol class="mb-6" style="padding-left: 20px; list-style: decimal;">
+          ${block.items.map((item) => $h`<li class="mb-2">${item}</li>`)}
+        </ol>
+      `;
+    }
+    return $h`<p class="mb-6 leading-relaxed">${block.text}</p>`;
+  };
+
+  const goToChapter = (chapterNumber) => {
+    if (!chapterNumber) return;
+    state.chapterNumber = chapterNumber;
+    state.loading = true;
+    state.error = '';
+    $f7.views.main.router.navigate(`/reader/${state.type}/${state.slug}/${chapterNumber}/`, {
+      reloadCurrent: true,
+      ignoreCache: true,
+    });
   };
 
   const handleScroll = (e) => {
@@ -221,12 +365,17 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
       
       if (state.is_image) {
         state.pages = (Array.isArray(chapterPages) ? chapterPages : []).map(normalizeUrl);
-        state.paragraphs = [];
+        state.blocks = [];
       } else {
         const body = String(chapter.body || chapter.content || '');
-        state.paragraphs = body.split('\n').filter((line) => line.trim() !== '');
+        state.blocks = parseMarkdownBlocks(body);
         state.pages = [];
       }
+      const adjacent = chapter.adjacent_chapters || {};
+      state.navigation = {
+        next: adjacent.next || null,
+        prev: adjacent.prev || null,
+      };
       await loadComments();
     } catch (err) {
       state.error = err.message || i18n.failed_load_chapter || 'Failed to load chapter.';
@@ -314,6 +463,20 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $
         $update();
       } catch (err) {
         document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Vote failed' } }));
+      }
+    });
+
+    $($el).on('click', '[data-action="go-prev"]', (event) => {
+      event.preventDefault();
+      if (state.navigation.prev) {
+        goToChapter(state.navigation.prev);
+      }
+    });
+
+    $($el).on('click', '[data-action="go-next"]', (event) => {
+      event.preventDefault();
+      if (state.navigation.next) {
+        goToChapter(state.navigation.next);
       }
     });
   });

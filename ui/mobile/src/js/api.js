@@ -209,7 +209,9 @@ const NMR_API = {
     async getHome() { return await NMR_API.request('/home'); },
     async getByType(type, page = 1, perPage = 20) { return await NMR_API.request(`/content/type/${type}?page=${page}&per_page=${perPage}`); },
     async getDetails(type, slug) { return await NMR_API.request(`/content/${type}/${slug}`); },
-    async getChapters(type, slug) { return await NMR_API.request(`/content/${type}/${slug}/chapters`); },
+    async getChapters(type, slug, page = 1, perPage = 20) {
+      return await NMR_API.request(`/content/${type}/${slug}/chapters?page=${page}&per_page=${perPage}`);
+    },
     async getChapterFull(type, slug, chapterNumber) { return await NMR_API.request(`/content/${type}/${slug}/chapter/${chapterNumber}`); },
     async getLatestChapters(page = 1, perPage = 20) { return await NMR_API.request(`/latest-chapters?page=${page}&per_page=${perPage}`); },
     async search(query, page = 1, perPage = 20) {
