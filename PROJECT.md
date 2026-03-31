@@ -1,6 +1,6 @@
 # NovelMangaReader Unified Documentation
 
-This file is the single canonical project document for the repository. Legacy Markdown files now point back here.
+This file is the single canonical project document for the repository.
 
 ## Contents
 - Project Overview
