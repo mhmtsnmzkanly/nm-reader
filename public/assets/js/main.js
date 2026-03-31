@@ -1,7 +1,6 @@
 /**
  * NMR Reader - Global Logic
  */
-console.log("NMR Main JS Initializing...");
 
 // Global Modal Control
 window.openModal = function(id) {
@@ -194,7 +193,6 @@ $(document).ready(function () {
 
     const loadComments = function(cursor = null, append = false) {
         const $container = $("#commentsList");
-        console.log("loadComments trigger, container:", $container.length);
         if (!$container.length) return;
 
         const context = $container.data('context');
@@ -202,8 +200,6 @@ $(document).ready(function () {
         const type = $container.data('type');
         const chapterId = $container.data('id');
         
-        console.log("Comment Context:", { context, slug, type, chapterId });
-
         let apiUrl = '';
         if (context === 'content') {
             apiUrl = `/content/${type}/${slug}/comments`;
@@ -213,10 +209,7 @@ $(document).ready(function () {
             apiUrl = `/blogs/${slug}/comments`;
         }
 
-        console.log("Comment API URL:", apiUrl);
-
         if (!apiUrl || !window.NMRData) {
-            console.warn("API URL or NMRData missing");
             return;
         }
 
@@ -226,7 +219,6 @@ $(document).ready(function () {
 
         window.NMRData.get(apiUrl)
             .then(res => {
-                console.log("Comments received:", res.data?.length);
                 renderComments(res.data || [], append);
                 const nextCursor = res.meta?.next_cursor;
                 const $loadMore = $("#commentsLoadMore");
@@ -278,7 +270,9 @@ $(document).ready(function () {
         }
     };
 
-    loadComments();
+    if ($("#commentsList").length) {
+        loadComments();
+    }
 
     $(document).on('click', '#commentsLoadMore', function() {
         const cursor = $(this).data('cursor');

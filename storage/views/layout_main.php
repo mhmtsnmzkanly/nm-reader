@@ -383,8 +383,8 @@ str_ends_with($currentPath, "/en")
                         ]) ?>
                     </p>
                     <div class="flex gap-4">
-                        <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors"><i data-lucide="github" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors" aria-label="Updates"><i data-lucide="send" class="w-5 h-5"></i></a>
+                        <a href="#" class="text-gray-600 hover:text-blue-500 transition-colors" aria-label="Source code"><i data-lucide="code-2" class="w-5 h-5"></i></a>
                     </div>
                 </div>
 
