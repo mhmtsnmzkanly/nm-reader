@@ -1,4 +1,4 @@
-import Framework7 from 'framework7/lite-bundle';
+import Framework7 from 'framework7/bundle';
 import 'framework7/css/bundle';
 import 'framework7-icons/css/framework7-icons.css';
 import App from '../app.f7';
