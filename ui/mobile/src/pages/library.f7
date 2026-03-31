@@ -1,101 +1,77 @@
 <template>
   <div class="page" data-name="library">
-    <div class="navbar">
-      <div class="navbar-bg"></div>
-      <div class="navbar-inner sliding">
-        <div class="title">My Library</div>
-      </div>
-    </div>
-
+    ${renderAppHeader({ title: 'Library', subtitle: 'Followed content', large: true })}
     <div class="page-content">
-      ${state.loading
-        ? $h`
-          <div class="row no-gap">
-            ${[1, 2, 3, 4, 5, 6].map(() => $h`
-              <div class="col-50 skeleton-text skeleton-effect-blink">
-                <div class="card card-outline">
-                  <div class="skeleton-block" style="height: 180px; width: 100%"></div>
-                  <div class="card-content card-content-padding">
-                    <div class="skeleton-text">Loading title text here</div>
-                    <div class="skeleton-text" style="width: 50%">Category</div>
-                  </div>
-                </div>
-              </div>
-            `)}
-          </div>
-        `
-        : state.items.length
-          ? $h`
-            <div class="row no-gap">
-              ${state.items.map((item) => $h`
-                <div class="col-50">
-                  <a href="/content/${item.type}/${item.slug}/" class="card card-outline demo-card-header-pic">
-                    <div style="background-image:url(${item.cover}); height: 180px; background-size: cover; background-position: center;" class="card-header align-items-flex-end text-color-white font-bold"></div>
-                    <div class="card-content card-content-padding">
-                      <p class="no-margin font-bold text-xs line-clamp-1">${item.title}</p>
-                      <p class="no-margin text-color-gray" style="font-size: 10px">${item.type}</p>
-                    </div>
-                  </a>
-                </div>
-              `)}
-            </div>`
-          : $h`
-            <div class="block text-center pt-12">
-              <p class="text-color-gray">Your library is empty.</p>
-              <a href="/" class="button button-fill color-blue mt-4">Explore Stories</a>
-            </div>
-          `
-      }
+      ${!isAuthed ? renderAuthGuardBlock() : ''}
+      ${isAuthed && state.loading ? renderLoadingBlock('Loading your library...') : ''}
+      ${isAuthed && state.error ? renderErrorState({ title: 'Library failed', message: state.error }) : ''}
+      ${isAuthed && !state.loading && !state.error
+        ? (state.items.length
+          ? state.items.map((item) => renderContentCard(item)).join('')
+          : renderEmptyState({ title: 'Library is empty', message: 'Follow a series to keep it here.', actionHref: '/home/', actionLabel: 'Explore' }))
+        : ''}
     </div>
+    ${renderBottomNav('library')}
   </div>
 </template>
 <script>
-import api from '../js/api.js';
-import store from '../js/store.js';
-import { getI18n } from '../js/i18n.js';
+import { appStore } from '../store/app-store.js';
+import { fetchLibrary } from '../services/user/user-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+import { renderBottomNav } from '../components/bottom-nav.js';
+import { renderAuthGuardBlock } from '../components/auth-guard-block.js';
+import { renderContentCard } from '../components/content-card.js';
+import { renderLoadingBlock } from '../components/loading-block.js';
+import { renderErrorState } from '../components/error-state.js';
+import { renderEmptyState } from '../components/empty-state.js';
 
-export default (props, { $onMounted, $update, $f7 }) => {
-  const i18n = getI18n();
+export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
+  const isAuthed = appStore.isAuthenticated();
   const state = {
     loading: true,
     error: '',
     items: [],
   };
 
-  const normalizeCover = (value) => {
-    if (typeof value !== 'string') return '/assets/img/covers/placeholder.svg';
-    if (value === '') return '/assets/img/covers/placeholder.svg';
-    if (value.startsWith('http://') || value.startsWith('https://')) return value;
-    let normalized = value;
-    while (normalized.startsWith('/')) normalized = normalized.slice(1);
-    return `/${normalized}`;
-  };
-
-  const normalizeItem = (item) => ({
-    title: item.title || item.series_title || 'Series',
-    slug: item.slug || item.series_slug || '',
-    type: item.type || item.type_path || item.series_type || 'novel',
-    cover: normalizeCover(item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail),
-  });
-
-  $onMounted(async () => {
-    if (!store.state.auth.isLoggedIn) {
+  /**
+   * Loads followed content for the authenticated user.
+   */
+  async function loadPage() {
+    if (!isAuthed) {
       state.loading = false;
-      state.error = i18n.login_required || 'Login required.';
-      $f7.popup.open('.login-popup');
-      $update();
       return;
     }
+
     try {
-      const payload = await api.user.getFollows(1, 50);
-      const data = payload?.data || payload || [];
-      state.items = (Array.isArray(data) ? data : []).map(normalizeItem).filter((row) => row.slug);
-    } catch (err) {
-      state.error = err.message || 'Failed to load library.';
+      const payload = await fetchLibrary();
+      state.items = payload.items;
+    } catch (error) {
+      state.error = error.message || 'Unable to load library.';
     } finally {
       state.loading = false;
       $update();
     }
+  }
+
+  /**
+   * Retries library loading on demand.
+   */
+  function handleClick(event) {
+    if (event.target.closest('[data-action="retry-page"]')) {
+      state.loading = true;
+      state.error = '';
+      $update();
+      loadPage();
+    }
+  }
+
+  $onMounted(() => {
+    $el.addEventListener('click', handleClick);
+    loadPage();
+  });
+
+  $onBeforeUnmount(() => {
+    $el.removeEventListener('click', handleClick);
   });
 
   return $render;

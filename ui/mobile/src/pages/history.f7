@@ -1,85 +1,76 @@
 <template>
-  <div class="page nmr-page" data-name="history">
-    <div class="navbar nmr-navbar">
-      <div class="navbar-bg"></div>
-      <div class="navbar-inner">
-        <div class="left"><a class="link back text-slate-200">Back</a></div>
-        <div class="title nmr-title">History</div>
-      </div>
+  <div class="page" data-name="history">
+    ${renderAppHeader({ title: 'History', subtitle: 'Recent reading sessions', large: true })}
+    <div class="page-content">
+      ${!isAuthed ? renderAuthGuardBlock() : ''}
+      ${isAuthed && state.loading ? renderLoadingBlock('Loading reading history...') : ''}
+      ${isAuthed && state.error ? renderErrorState({ title: 'History failed', message: state.error }) : ''}
+      ${isAuthed && !state.loading && !state.error
+        ? (state.items.length
+          ? `<div class="list inset simple-list"><ul>${state.items.map((item) => `<li>${item.series_title || item.title || 'Chapter'}${item.chapter_number ? ` • Chapter ${item.chapter_number}` : ''}</li>`).join('')}</ul></div>`
+          : renderEmptyState({ title: 'No history yet', message: 'Reading progress will appear here after you open chapters.' }))
+        : ''}
     </div>
-
-    <div class="page-content px-5 pb-6 space-y-5">
-      ${state.loading
-        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
-        : state.error
-          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
-          : state.items.length
-            ? $h`<div class="space-y-4">
-              ${state.items.map((item) => $h`
-                <a class="nmr-card nmr-card-hover block px-4 py-3" href="/reader/${item.type}/${item.slug}/${item.chapter_number}/">
-                  <div class="flex items-center gap-4">
-                    <div class="w-14 h-16 rounded-xl bg-white/10 border border-white/10 overflow-hidden shrink-0" style="background-image:url('${item.cover}');background-size:cover;background-position:center;"></div>
-                    <div class="flex-1">
-                      <div class="font-semibold text-slate-100">${item.title}</div>
-                      <div class="text-xs text-slate-400 mt-1">#${item.chapter_number}</div>
-                    </div>
-                  </div>
-                </a>
-              `)}
-            </div>`
-            : $h`<div class="nmr-panel text-slate-300">No history yet.</div>`
-      }
-    </div>
+    ${renderBottomNav('history')}
   </div>
 </template>
 <script>
-import api from '../js/api.js';
-import store from '../js/store.js';
-import { getI18n } from '../js/i18n.js';
+import { appStore } from '../store/app-store.js';
+import { fetchHistory } from '../services/user/user-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+import { renderBottomNav } from '../components/bottom-nav.js';
+import { renderAuthGuardBlock } from '../components/auth-guard-block.js';
+import { renderLoadingBlock } from '../components/loading-block.js';
+import { renderErrorState } from '../components/error-state.js';
+import { renderEmptyState } from '../components/empty-state.js';
 
-export default (props, { $onMounted, $update, $f7 }) => {
-  const i18n = getI18n();
+export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
+  const isAuthed = appStore.isAuthenticated();
   const state = {
     loading: true,
     error: '',
     items: [],
   };
 
-  const normalizeCover = (value) => {
-    if (typeof value !== 'string') return '/assets/img/covers/placeholder.svg';
-    if (value === '') return '/assets/img/covers/placeholder.svg';
-    if (value.startsWith('http://') || value.startsWith('https://')) return value;
-    let normalized = value;
-    while (normalized.startsWith('/')) normalized = normalized.slice(1);
-    return `/${normalized}`;
-  };
-
-  const normalizeItem = (item) => ({
-    title: item.series_title || item.title || 'Chapter',
-    slug: item.series_slug || item.slug || '',
-    type: item.series_type || item.type || item.type_path || 'novel',
-    chapter_number: item.chapter_number || item.chapterNumber || item.number || '',
-    cover: normalizeCover(item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail),
-  });
-
-  $onMounted(async () => {
-    if (!store.state.auth.isLoggedIn) {
+  /**
+   * Loads the authenticated history feed.
+   */
+  async function loadPage() {
+    if (!isAuthed) {
       state.loading = false;
-      state.error = i18n.login_required || 'Login required.';
-      $f7.popup.open('.login-popup');
-      $update();
       return;
     }
+
     try {
-      const payload = await api.user.getHistory(1, 50);
-      const data = payload?.data || payload || [];
-      state.items = (Array.isArray(data) ? data : []).map(normalizeItem).filter((row) => row.slug);
-    } catch (err) {
-      state.error = err.message || 'Failed to load history.';
+      const payload = await fetchHistory();
+      state.items = payload.items;
+    } catch (error) {
+      state.error = error.message || 'Unable to load history.';
     } finally {
       state.loading = false;
       $update();
     }
+  }
+
+  /**
+   * Retries history loading on demand.
+   */
+  function handleClick(event) {
+    if (event.target.closest('[data-action="retry-page"]')) {
+      state.loading = true;
+      state.error = '';
+      $update();
+      loadPage();
+    }
+  }
+
+  $onMounted(() => {
+    $el.addEventListener('click', handleClick);
+    loadPage();
+  });
+
+  $onBeforeUnmount(() => {
+    $el.removeEventListener('click', handleClick);
   });
 
   return $render;

@@ -1,0 +1,129 @@
+<template>
+  <div class="page" data-name="settings">
+    ${renderAppHeader({ title: 'Settings', subtitle: 'App and reader preferences', large: true })}
+    <div class="page-content">
+      ${!isAuthed ? renderAuthGuardBlock() : ''}
+      ${isAuthed ? `
+        <div class="list inset">
+          <ul>
+            <li>
+              <a href="/profile/" class="item-link item-content">
+                <div class="item-inner"><div class="item-title">Profile</div></div>
+              </a>
+            </li>
+            <li>
+              <a href="/notifications/" class="item-link item-content">
+                <div class="item-inner"><div class="item-title">Notifications</div></div>
+              </a>
+            </li>
+            <li class="item-content item-input item-input-with-value">
+              <div class="item-inner">
+                <div class="item-title item-label">App theme</div>
+                <div class="item-input-wrap">
+                  <select name="app-theme">
+                    <option value="system" ${state.preferences.theme === 'system' ? 'selected' : ''}>System</option>
+                    <option value="light" ${state.preferences.theme === 'light' ? 'selected' : ''}>Light</option>
+                    <option value="dark" ${state.preferences.theme === 'dark' ? 'selected' : ''}>Dark</option>
+                  </select>
+                </div>
+              </div>
+            </li>
+            <li class="item-content item-input item-input-with-value">
+              <div class="item-inner">
+                <div class="item-title item-label">Reader theme</div>
+                <div class="item-input-wrap">
+                  <select name="reader-theme">
+                    <option value="dark" ${state.readerPreferences.theme === 'dark' ? 'selected' : ''}>Dark</option>
+                    <option value="light" ${state.readerPreferences.theme === 'light' ? 'selected' : ''}>Light</option>
+                  </select>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="block">
+          ${state.error ? `<div class="mobile-inline-error">${state.error}</div>` : ''}
+          <button class="button button-fill" data-action="save-settings">Save settings</button>
+          <button class="button button-outline color-red margin-top" data-action="logout">Logout</button>
+        </div>
+      ` : ''}
+    </div>
+    ${renderBottomNav('settings')}
+  </div>
+</template>
+<script>
+import { appStore } from '../store/app-store.js';
+import { logout } from '../services/auth/auth-service.js';
+import { updatePreferences } from '../services/user/user-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+import { renderBottomNav } from '../components/bottom-nav.js';
+import { renderAuthGuardBlock } from '../components/auth-guard-block.js';
+
+export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }) => {
+  const isAuthed = appStore.isAuthenticated();
+  const state = {
+    preferences: {
+      ...appStore.getState().preferences,
+    },
+    readerPreferences: {
+      ...appStore.getState().readerPreferences,
+    },
+    error: '',
+  };
+
+  /**
+   * Reads the current preference selects into local component state.
+   */
+  function syncForm() {
+    state.preferences.theme = $el.querySelector('select[name="app-theme"]')?.value || state.preferences.theme;
+    state.readerPreferences.theme = $el.querySelector('select[name="reader-theme"]')?.value || state.readerPreferences.theme;
+  }
+
+  /**
+   * Persists settings locally and remotely.
+   */
+  async function saveSettings() {
+    syncForm();
+    state.error = '';
+    $update();
+
+    try {
+      appStore.actions.setPreferences(state.preferences);
+      appStore.actions.setReaderPreferences(state.readerPreferences);
+      await updatePreferences({
+        theme: state.preferences.theme,
+        reader_theme: state.readerPreferences.theme,
+        reader_font_size: state.readerPreferences.fontSize,
+        reader_layout: state.readerPreferences.imageMode,
+      });
+    } catch (error) {
+      state.error = error.message || 'Unable to save settings.';
+      $update();
+    }
+  }
+
+  /**
+   * Handles save and logout actions.
+   */
+  async function handleClick(event) {
+    if (event.target.closest('[data-action="save-settings"]')) {
+      await saveSettings();
+    }
+
+    if (event.target.closest('[data-action="logout"]')) {
+      await logout();
+      $f7router.navigate('/login/', { reloadCurrent: true });
+    }
+  }
+
+  $onMounted(() => {
+    $el.addEventListener('click', handleClick);
+  });
+
+  $onBeforeUnmount(() => {
+    $el.removeEventListener('click', handleClick);
+  });
+
+  return $render;
+};
+</script>

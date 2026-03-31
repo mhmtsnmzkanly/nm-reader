@@ -1,0 +1,55 @@
+.reader-page.theme-dark {
+  --reader-bg: #0b0f15;
+  --reader-text: #f5f7fa;
+}
+
+.reader-page.theme-light {
+  --reader-bg: #f6f1e7;
+  --reader-text: #1c1f24;
+}
+
+.reader-page__content {
+  background: var(--reader-bg, var(--nmr-bg));
+  color: var(--reader-text, var(--nmr-text));
+}
+
+.reader-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(13, 17, 23, 0.92);
+  backdrop-filter: blur(14px);
+}
+
+.reader-text {
+  padding: 20px 18px 80px;
+  max-width: 760px;
+  margin: 0 auto;
+  line-height: 1.9;
+}
+
+.reader-text p {
+  margin: 0 0 18px;
+}
+
+.reader-image-list {
+  display: grid;
+  gap: 10px;
+  padding: 10px 0 80px;
+}
+
+.reader-image-list img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.reader-navigation {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px;
+}

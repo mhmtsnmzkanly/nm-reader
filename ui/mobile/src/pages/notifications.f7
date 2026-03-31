@@ -1,89 +1,85 @@
 <template>
-  <div class="page nmr-page" data-name="notifications">
-    <div class="navbar nmr-navbar">
-      <div class="navbar-bg"></div>
-      <div class="navbar-inner">
-        <div class="left"><a class="link back text-slate-200">Back</a></div>
-        <div class="title nmr-title">Notifications</div>
-      </div>
+  <div class="page" data-name="notifications">
+    ${renderAppHeader({ title: 'Notifications', subtitle: 'Unread and recent account events', large: true })}
+    <div class="page-content">
+      ${!isAuthed ? renderAuthGuardBlock() : ''}
+      ${isAuthed && state.loading ? renderLoadingBlock('Loading notifications...') : ''}
+      ${isAuthed && state.error ? renderErrorState({ title: 'Notifications failed', message: state.error }) : ''}
+      ${isAuthed && !state.loading && !state.error ? `
+        <div class="block">
+          <button class="button button-outline" data-action="mark-read">Mark all as read</button>
+        </div>
+        ${state.items.length
+          ? `<div class="list inset simple-list"><ul>${state.items.map((item) => `<li>${item.title || item.type || 'Notification'}</li>`).join('')}</ul></div>`
+          : renderEmptyState({ title: 'No notifications', message: 'You are all caught up.' })}
+      ` : ''}
     </div>
-
-    <div class="page-content px-5 pb-6 space-y-5">
-      <div class="flex gap-3">
-        <button class="nmr-button nmr-button-ghost" data-action="mark-read" type="button">Mark all read</button>
-      </div>
-      ${state.loading
-        ? $h`<div class="nmr-panel">${i18n.loading || 'Loading...'}</div>`
-        : state.error
-          ? $h`<div class="nmr-panel text-red-200">${state.error}</div>`
-          : state.items.length
-            ? $h`<div class="space-y-3">
-              ${state.items.map((item) => $h`
-                <div class="nmr-card px-4 py-3 space-y-2">
-                  <div class="text-sm text-slate-100">${item.title}</div>
-                  <div class="text-sm text-slate-300">${item.body}</div>
-                  <div class="text-xs text-slate-400">${item.created_at}</div>
-                </div>
-              `)}
-            </div>`
-            : $h`<div class="nmr-panel text-slate-300">No notifications.</div>`
-      }
-    </div>
+    ${renderBottomNav('settings')}
   </div>
 </template>
 <script>
-import api from '../js/api.js';
-import store from '../js/store.js';
-import { getI18n } from '../js/i18n.js';
+import { appStore } from '../store/app-store.js';
+import { fetchNotifications, markNotificationsRead } from '../services/user/user-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+import { renderBottomNav } from '../components/bottom-nav.js';
+import { renderAuthGuardBlock } from '../components/auth-guard-block.js';
+import { renderLoadingBlock } from '../components/loading-block.js';
+import { renderErrorState } from '../components/error-state.js';
+import { renderEmptyState } from '../components/empty-state.js';
 
-export default (props, { $onMounted, $update, $f7, $el }) => {
-  const i18n = getI18n();
+export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
+  const isAuthed = appStore.isAuthenticated();
   const state = {
     loading: true,
     error: '',
     items: [],
   };
 
-  const normalize = (item) => ({
-    title: item.title || item.subject || 'Notification',
-    body: item.body || item.message || '',
-    created_at: item.created_at || '',
-  });
+  /**
+   * Loads the notification feed.
+   */
+  async function loadPage() {
+    if (!isAuthed) {
+      state.loading = false;
+      return;
+    }
 
-  const load = async () => {
     try {
-      const payload = await api.user.getNotifications();
-      const data = payload?.data || payload || [];
-      state.items = (Array.isArray(data) ? data : []).map(normalize);
-    } catch (err) {
-      state.error = err.message || 'Failed to load notifications.';
+      const payload = await fetchNotifications();
+      state.items = payload.items;
+    } catch (error) {
+      state.error = error.message || 'Unable to load notifications.';
     } finally {
       state.loading = false;
       $update();
     }
-  };
+  }
 
-  $onMounted(async () => {
-    if (!store.state.auth.isLoggedIn) {
-      state.loading = false;
-      state.error = i18n.login_required || 'Login required.';
-      $f7.popup.open('.login-popup');
+  /**
+   * Handles retry and mark-read actions.
+   */
+  async function handleClick(event) {
+    if (event.target.closest('[data-action="retry-page"]')) {
+      state.loading = true;
+      state.error = '';
       $update();
+      loadPage();
       return;
     }
-    await load();
-  });
+
+    if (event.target.closest('[data-action="mark-read"]')) {
+      await markNotificationsRead().catch(() => null);
+      loadPage();
+    }
+  }
 
   $onMounted(() => {
-    $el.on('click', '[data-action="mark-read"]', async (event) => {
-      event.preventDefault();
-      try {
-        await api.user.markNotificationsRead();
-        await load();
-      } catch (err) {
-        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Failed to mark read' } }));
-      }
-    });
+    $el.addEventListener('click', handleClick);
+    loadPage();
+  });
+
+  $onBeforeUnmount(() => {
+    $el.removeEventListener('click', handleClick);
   });
 
   return $render;

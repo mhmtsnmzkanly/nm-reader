@@ -1,0 +1,108 @@
+<template>
+  <div class="page" data-name="register">
+    ${renderAppHeader({ title: 'Register', subtitle: 'Create a mobile account', back: true, large: true })}
+    <div class="page-content">
+      <div class="list inset">
+        <ul>
+          <li class="item-content item-input">
+            <div class="item-inner">
+              <div class="item-title item-label">Username</div>
+              <div class="item-input-wrap">
+                <input type="text" name="username" placeholder="Username" value="${state.form.username}" />
+              </div>
+            </div>
+          </li>
+          <li class="item-content item-input">
+            <div class="item-inner">
+              <div class="item-title item-label">Email</div>
+              <div class="item-input-wrap">
+                <input type="email" name="email" placeholder="you@example.com" value="${state.form.email}" />
+              </div>
+            </div>
+          </li>
+          <li class="item-content item-input">
+            <div class="item-inner">
+              <div class="item-title item-label">Password</div>
+              <div class="item-input-wrap">
+                <input type="password" name="password" placeholder="Password" value="${state.form.password}" />
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="block">
+        ${state.error ? `<div class="mobile-inline-error">${state.error}</div>` : ''}
+        <button class="button button-fill" data-action="submit-register" ${state.submitting ? 'disabled' : ''}>${state.submitting ? 'Creating account...' : 'Register'}</button>
+      </div>
+      <div class="block-footer">
+        Already registered?
+        <a href="/login/">Login</a>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import { register } from '../services/auth/auth-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+
+export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7, $f7router }) => {
+  const state = {
+    form: {
+      username: '',
+      email: '',
+      password: '',
+    },
+    error: '',
+    submitting: false,
+  };
+
+  /**
+   * Reads current register inputs into local component state.
+   */
+  function syncForm() {
+    state.form.username = $el.querySelector('input[name="username"]')?.value || '';
+    state.form.email = $el.querySelector('input[name="email"]')?.value || '';
+    state.form.password = $el.querySelector('input[name="password"]')?.value || '';
+  }
+
+  /**
+   * Submits registration and redirects to login on success.
+   */
+  async function submit() {
+    syncForm();
+    state.error = '';
+    state.submitting = true;
+    $update();
+
+    try {
+      await register(state.form);
+      $f7.dialog.alert('Account created. Please log in.', 'Registration');
+      $f7router.navigate('/login/', { reloadCurrent: true });
+    } catch (error) {
+      state.error = error.message || 'Registration failed.';
+    } finally {
+      state.submitting = false;
+      $update();
+    }
+  }
+
+  /**
+   * Handles register button taps.
+   */
+  function handleClick(event) {
+    if (event.target.closest('[data-action="submit-register"]')) {
+      submit();
+    }
+  }
+
+  $onMounted(() => {
+    $el.addEventListener('click', handleClick);
+  });
+
+  $onBeforeUnmount(() => {
+    $el.removeEventListener('click', handleClick);
+  });
+
+  return $render;
+};
+</script>

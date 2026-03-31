@@ -1,83 +1,31 @@
-import $ from 'dom7';
-import Framework7 from 'framework7/bundle';
-
-// Import F7 Styles
+import Framework7 from 'framework7/lite-bundle';
 import 'framework7/css/bundle';
-
-// Import Icons and App Custom Styles
-import '../css/icons.css';
-import '../css/app.css';
-
-// Import Routes
-import routes from './routes.js';
-// Import Store
-import store from './store.js';
-// Import API
-import api from './api.js';
-import { initI18n } from './i18n.js';
-
-// Import main app component
+import 'framework7-icons/css/framework7-icons.css';
 import App from '../app.f7';
+import { createRoutes } from './routes.js';
+import { configureApplicationRuntime } from './bootstrap.js';
+import { installGlobals } from './globals.js';
+import '../styles/app.css';
 
-const session = api.loadSession();
-if (session) {
-  api.setSession({
-    apiToken: session.apiToken,
-    csrfToken: session.csrfToken,
-    refreshToken: session.refreshToken,
+/**
+ * Creates the root Framework7 app with the rebuilt mobile architecture.
+ */
+function createApplication() {
+  const app = new Framework7({
+    name: 'NMR Mobile',
+    theme: 'auto',
+    el: '#app',
+    component: App,
+    routes: createRoutes(),
+    view: {
+      browserHistory: true,
+      browserHistorySeparator: '',
+    },
   });
-  store.dispatch('setAuth', {
-    user: session.user || null,
-    apiToken: session.apiToken,
-    csrfToken: session.csrfToken,
-    refreshToken: session.refreshToken,
-  });
-  
-  // Verify token validity
-  api.user.checkAuth().catch(() => {
-    console.warn('Session invalid, clearing.');
-    api.clearSession();
-    store.dispatch('clearAuth');
-    // Force a reload if we were on a protected page, or just update UI
-    const view = app.views?.main || app.views?.get?.('.view-main');
-    if (view && view.router && view.router.currentRoute?.path === '/profile/') {
-       view.router.navigate('/', { reloadCurrent: true });
-    }
-  });
+
+  configureApplicationRuntime(app);
+  installGlobals();
+  return app;
 }
 
-var app = new Framework7({
-  name: 'NMR Mobile',
-  theme: 'auto',
-  el: '#app',
-  component: App,
-  store: store,
-  routes: routes,
-});
-
-initI18n();
-
-document.addEventListener('i18n:updated', () => {
-  const view = app.views?.main || app.views?.get?.('.view-main');
-  if (view && view.router && view.router.currentRoute) {
-    view.router.refreshPage();
-  }
-});
-
-document.addEventListener('api:error', (event) => {
-  const message = event.detail?.message || 'Request failed';
-  app.toast.create({
-    text: message,
-    closeTimeout: 3000,
-  }).open();
-});
-
-document.addEventListener('page:error', (event) => {
-  const message = event.detail?.message || 'Something went wrong';
-  app.toast.create({
-    text: message,
-    closeTimeout: 3000,
-  }).open();
-});
-
-export { app };
+createApplication();

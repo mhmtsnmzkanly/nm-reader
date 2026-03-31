@@ -1,347 +1,138 @@
 <template>
   <div class="page" data-name="content-detail">
-    <div class="navbar">
-      <div class="navbar-bg"></div>
-      <div class="navbar-inner sliding">
-        <div class="left">
-          <a class="link back">
-            <i class="icon icon-back"></i>
-            <span class="if-not-md">Back</span>
-          </a>
-        </div>
-        <div class="title">${state.title}</div>
-      </div>
-    </div>
-
+    ${renderAppHeader({ title: state.detail?.title || 'Content', subtitle: 'Summary and chapters', back: true, large: true })}
     <div class="page-content">
-      ${state.loading
-        ? $h`<div class="block display-flex justify-content-center align-items-center" style="height: 100%"><div class="preloader"></div></div>`
-        : state.error
-          ? $h`<div class="block block-strong inset color-red text-center"><p>${state.error}</p></div>`
-          : $h`
-      <div class="card card-outline">
-        <div class="card-content card-content-padding">
-          <div class="row">
-            <div class="col-33">
-              <img src="${state.cover}" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1)" />
+      ${state.loading ? renderLoadingBlock('Loading content details...') : ''}
+      ${state.error ? renderErrorState({ title: 'Content failed', message: state.error }) : ''}
+
+      ${!state.loading && !state.error && state.detail ? $h`
+        <div class="card mobile-detail-card">
+          <div class="card-content card-content-padding">
+            <div class="mobile-detail-card__hero">
+              <img src="${state.detail.cover}" alt="${state.detail.title}" />
+              <div>
+                <div class="mobile-detail-card__title">${state.detail.title}</div>
+                <div class="mobile-detail-card__meta">${state.detail.type} • ${state.detail.status || 'Ongoing'}</div>
+                <p>${state.detail.description || 'No description available yet.'}</p>
+              </div>
             </div>
-            <div class="col-66">
-              <div class="text-color-gray uppercase font-bold" style="font-size: 10px; letter-spacing: 1px">${state.type}</div>
-              <h1 style="margin: 4px 0; font-size: 20px">${state.title}</h1>
-              <div class="display-flex align-items-center gap-2 margin-bottom-xs">
-                <div class="chip color-blue no-margin">
-                  <div class="chip-label">${state.chapterCount} Chapters</div>
-                </div>
-                <div class="chip ${state.status === 'completed' ? 'color-green' : 'color-orange'} no-margin">
-                  <div class="chip-label uppercase" style="font-size: 8px">${state.status}</div>
-                </div>
-              </div>
-              <div class="text-color-gray" style="font-size: 12px">
-                ${state.author ? $h`<div>Author: <span class="text-color-white">${state.author}</span></div>` : ''}
-                ${state.artist ? $h`<div>Artist: <span class="text-color-white">${state.artist}</span></div>` : ''}
-                ${state.releaseYear ? $h`<div>Released: <span class="text-color-white">${state.releaseYear}</span></div>` : ''}
-              </div>
+            ${state.wallet ? renderWalletSummaryCard(state.wallet) : ''}
+            <div class="mobile-detail-card__actions">
+              ${state.canFollow ? `<button class="button ${state.isFollowing ? 'button-outline' : 'button-fill'}" data-action="toggle-follow">${state.isFollowing ? 'Unfollow' : 'Follow'}</button>` : ''}
+              ${state.canUnlockSeries ? '<button class="button button-fill color-orange" data-action="unlock-series">Unlock series</button>' : ''}
             </div>
           </div>
         </div>
-        <div class="card-footer">
-          <button class="button button-small button-fill ${state.following ? 'color-gray' : 'color-blue'}" data-action="${state.following ? 'unfollow' : 'follow'}">
-            ${state.following ? 'Following' : 'Follow'}
-          </button>
-          <div class="display-flex align-items-center text-color-yellow font-bold">
-            <i class="f7-icons size-14 margin-right-xs">star_fill</i>
-            <span>${state.ratingAvg}</span>
+
+        <div class="block-title">Chapters</div>
+        ${state.chapters.length ? `
+          <div class="list inset media-list no-chevron">
+            <ul>${state.chapters.map((chapter) => renderChapterListItem({ type, slug, chapter })).join('')}</ul>
           </div>
-          <button class="button button-small color-blue" data-action="rate">Rate</button>
-        </div>
-      </div>
-
-      <div class="block-title">Synopsis</div>
-      <div class="block block-strong-ios block-inset-ios">
-        <p class="text-color-gray" style="font-size: 14px; line-height: 1.6">${state.description}</p>
-      </div>
-
-      <div class="block-title">Chapters</div>
-      <div class="list links-list block-strong-ios block-inset-ios">
-        <ul>
-          ${state.chapters.map((chapter) => $h`
-            <li>
-              <a href="/reader/${chapter.type}/${chapter.slug}/${chapter.chapter_number}/">
-                <span>Chapter ${chapter.chapter_number}: ${chapter.title}</span>
-                ${chapter.is_locked ? $h`<i class="f7-icons size-14 text-color-orange">lock_fill</i>` : ''}
-              </a>
-            </li>
-          `)}
-        </ul>
-      </div>
-      ${state.chapterPagination.hasMore ? $h`
-        <div class="block">
-          <button class="button button-fill color-blue ${state.chapterPagination.loading ? 'disabled' : ''}" data-action="load-more-chapters">
-            ${state.chapterPagination.loading ? 'Loading...' : 'Load More Chapters'}
-          </button>
-        </div>
+        ` : renderEmptyState({ title: 'No chapters yet', message: 'This series does not have readable chapters yet.' })}
       ` : ''}
-
-      <div class="block-title">Comments</div>
-      <div class="list media-list">
-        <ul>
-          ${state.comments.map((comment) => $h`
-            <li class="item-content">
-              <div class="item-inner">
-                <div class="item-title-row">
-                  <a href="/profile/${comment.author}/" class="item-title font-bold text-color-blue">${comment.author}</a>
-                  <div class="item-after text-color-gray" style="font-size: 10px">${comment.created_at}</div>
-                </div>
-                <div class="item-text text-color-white" style="font-size: 13px">${comment.body}</div>
-              </div>
-            </li>
-          `)}
-        </ul>
-      </div>
-      
-      <div class="block">
-        <form id="series-comment-form">
-          <div class="list no-hairlines-md">
-            <ul>
-              <li class="item-content item-input">
-                <div class="item-inner">
-                  <div class="item-input-wrap">
-                    <textarea name="body" placeholder="Write a comment..." class="resizable"></textarea>
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-          <button class="button button-fill color-blue" type="submit">Post Comment</button>
-        </form>
-      </div>
-      `
-      }
     </div>
+    ${renderBottomNav('home')}
   </div>
 </template>
 <script>
-import $ from 'dom7';
-import api from '../js/api.js';
-import store from '../js/store.js';
-import { getI18n } from '../js/i18n.js';
+import { appStore } from '../store/app-store.js';
+import { fetchChapters, fetchContentDetail, followSeries, unlockSeries, unfollowSeries } from '../services/content/content-service.js';
+import { fetchWalletSummary } from '../services/wallet/wallet-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+import { renderBottomNav } from '../components/bottom-nav.js';
+import { renderWalletSummaryCard } from '../components/wallet-summary-card.js';
+import { renderChapterListItem } from '../components/chapter-list-item.js';
+import { renderLoadingBlock } from '../components/loading-block.js';
+import { renderErrorState } from '../components/error-state.js';
+import { renderEmptyState } from '../components/empty-state.js';
 
-export default (props, { $onMounted, $update, $f7route, $el, $f7 }) => {
-  const i18n = getI18n();
+export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7 }) => {
+  const type = $route.params.type;
+  const slug = $route.params.slug;
   const state = {
     loading: true,
     error: '',
-    title: 'Series',
-    description: '',
+    detail: null,
     chapters: [],
-    chapterCount: 0,
-    cover: '/assets/img/covers/placeholder.svg',
-    comments: [],
-    following: false,
-    type: $f7route.params.type,
-    slug: $f7route.params.slug,
-    author: '',
-    artist: '',
-    status: '',
-    releaseYear: '',
-    ratingAvg: 0,
-    chapterPagination: {
-      page: 1,
-      perPage: 100,
-      hasMore: false,
-      loading: false,
-    },
+    wallet: null,
+    canFollow: false,
+    isFollowing: false,
+    canUnlockSeries: false,
   };
 
-  const normalizeCover = (value) => {
-    if (typeof value !== 'string') return '/assets/img/covers/placeholder.svg';
-    if (value === '') return '/assets/img/covers/placeholder.svg';
-    if (value.startsWith('http://') || value.startsWith('https://')) return value;
-    let normalized = value;
-    while (normalized.startsWith('/')) {
-      normalized = normalized.slice(1);
-    }
-    return `/${normalized}`;
-  };
+  /**
+   * Loads detail, chapter list, and optional wallet context in one place.
+   */
+  async function loadPage() {
+    state.loading = true;
+    state.error = '';
+    $update();
 
-  const normalizeChapter = (item) => ({
-    title: item.title || `Chapter ${item.chapter_number || item.chapterNumber || ''}`,
-    slug: state.slug,
-    type: state.type,
-    chapter_number: item.chapter_number || item.chapterNumber || item.number || '',
-    price_coin: item.price_coin || item.access?.chapter_unlock_price || 0,
-    is_locked: item.is_locked ?? !(item.access?.granted ?? true),
-  });
-
-  const mergeChapters = (items, append = false) => {
-    const incoming = (Array.isArray(items) ? items : []).map(normalizeChapter).filter((row) => row.chapter_number !== '');
-    if (!append) {
-      state.chapters = incoming;
-      return;
-    }
-
-    const seen = new Set(state.chapters.map((row) => row.chapter_number));
-    state.chapters = state.chapters.concat(incoming.filter((row) => !seen.has(row.chapter_number)));
-  };
-
-  const loadChapterPage = async (page = 1, append = false) => {
-    const payload = await api.content.getChapters(state.type, state.slug, page, state.chapterPagination.perPage);
-    const data = payload?.data || payload || [];
-    mergeChapters(data, append);
-    state.chapterPagination.page = page;
-    state.chapterPagination.hasMore = Array.isArray(data) && data.length === state.chapterPagination.perPage;
-  };
-
-  const loadComments = async () => {
     try {
-      const payload = await api.interactions.listSeriesComments(state.type, state.slug, 1, 20);
-      const data = payload?.data || payload || [];
-      state.comments = (Array.isArray(data) ? data : []).map((row) => ({
-        id: row.id || row.comment_id || 0,
-        author: row.username || row.author_username || 'User',
-        body: row.body || row.comment || '',
-        created_at: row.created_at || '',
-        votes: row.votes || row.score || 0,
-      }));
-    } catch (err) {
-      state.comments = [];
-    }
-  };
-
-  $onMounted(async () => {
-    try {
-      const [contentPayload, chaptersPayload] = await Promise.all([
-        api.content.getDetails(state.type, state.slug),
-        api.content.getChapters(state.type, state.slug, 1, state.chapterPagination.perPage),
+      const [detail, chapters] = await Promise.all([
+        fetchContentDetail(type, slug),
+        fetchChapters(type, slug),
       ]);
 
-      const contentData = contentPayload?.data || contentPayload || {};
-      const chaptersData = chaptersPayload?.data || chaptersPayload || [];
+      state.detail = detail;
+      state.chapters = chapters.items;
+      state.canFollow = appStore.isAuthenticated();
+      state.isFollowing = Boolean(detail.access?.is_following);
+      state.canUnlockSeries = Boolean(detail.access?.series_unlock_price && !detail.access?.granted && appStore.isAuthenticated());
 
-      state.title = contentData.title || 'Series';
-      state.description = contentData.description || '';
-      state.cover = normalizeCover(contentData.cover_image || contentData.cover || contentData.thumbnail || contentData.image);
-      state.following = !!contentData.is_following || !!contentData.following || false;
-      state.chapterCount = Number(contentData.chapter_count || 0) || (Array.isArray(chaptersData) ? chaptersData.length : 0);
-      mergeChapters(chaptersData, false);
-      state.chapterPagination.page = 1;
-      state.chapterPagination.hasMore = Array.isArray(chaptersData) && chaptersData.length === state.chapterPagination.perPage;
-      
-      state.author = contentData.author || '';
-      state.artist = contentData.artist || '';
-      state.status = contentData.status || '';
-      state.releaseYear = contentData.release_year || '';
-      state.ratingAvg = contentData.rating_avg || 0;
-
-      await loadComments();
-    } catch (err) {
-      state.error = err.message || i18n.failed_load_content || 'Failed to load content.';
-      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
+      if (appStore.isAuthenticated()) {
+        state.wallet = await fetchWalletSummary();
+      }
+    } catch (error) {
+      state.error = error.message || 'Unable to load this content.';
     } finally {
       state.loading = false;
       $update();
     }
-  });
+  }
+
+  /**
+   * Handles follow/unfollow and series unlock actions from the detail page.
+   */
+  async function handleClick(event) {
+    if (event.target.closest('[data-action="retry-page"]')) {
+      loadPage();
+      return;
+    }
+
+    if (event.target.closest('[data-action="toggle-follow"]')) {
+      try {
+        if (state.isFollowing) {
+          await unfollowSeries(type, slug);
+        } else {
+          await followSeries(type, slug);
+        }
+        state.isFollowing = !state.isFollowing;
+        $update();
+      } catch (error) {
+        $f7.dialog.alert(error.message || 'Follow action failed.');
+      }
+    }
+
+    if (event.target.closest('[data-action="unlock-series"]')) {
+      try {
+        await unlockSeries(type, slug);
+        state.wallet = await fetchWalletSummary();
+        await loadPage();
+      } catch (error) {
+        $f7.dialog.alert(error.message || 'Series unlock failed.');
+      }
+    }
+  }
 
   $onMounted(() => {
-    $($el).on('click', '[data-action="follow"]', async (event) => {
-      event.preventDefault();
-      if (!store.state.auth.isLoggedIn) {
-        $f7.popup.open('.login-popup');
-        return;
-      }
-      try {
-        await api.interactions.follow(state.type, state.slug);
-        state.following = true;
-        $update();
-      } catch (err) {
-        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Follow failed' } }));
-      }
-    });
+    $el.addEventListener('click', handleClick);
+    loadPage();
+  });
 
-    $($el).on('click', '[data-action="unfollow"]', async (event) => {
-      event.preventDefault();
-      if (!store.state.auth.isLoggedIn) {
-        $f7.popup.open('.login-popup');
-        return;
-      }
-      try {
-        await api.interactions.unfollow(state.type, state.slug);
-        state.following = false;
-        $update();
-      } catch (err) {
-        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Unfollow failed' } }));
-      }
-    });
-
-    $($el).on('click', '[data-action="rate"]', (event) => {
-      event.preventDefault();
-      if (!store.state.auth.isLoggedIn) {
-        $f7.popup.open('.login-popup');
-        return;
-      }
-      $f7.dialog.prompt('Rate 1-5', 'Rate', async (value) => {
-        const score = Number(value);
-        if (!score || score < 1 || score > 5) return;
-        try {
-          await api.interactions.rate(state.type, state.slug, score);
-          $f7.toast.create({ text: 'Thanks for rating!', closeTimeout: 2000 }).open();
-        } catch (err) {
-          document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Rating failed' } }));
-        }
-      });
-    });
-
-    $($el).on('submit', '#series-comment-form', async (event) => {
-      event.preventDefault();
-      const form = event.target;
-      const body = form.querySelector('textarea[name="body"]')?.value || '';
-      if (!body.trim()) return;
-      if (!store.state.auth.isLoggedIn) {
-        $f7.popup.open('.login-popup');
-        return;
-      }
-      try {
-        await api.interactions.createSeriesComment(state.type, state.slug, body.trim());
-        form.reset();
-        await loadComments();
-        $update();
-      } catch (err) {
-        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Comment failed' } }));
-      }
-    });
-
-    $($el).on('click', '[data-action="load-more-chapters"]', async (event) => {
-      event.preventDefault();
-      if (state.chapterPagination.loading || !state.chapterPagination.hasMore) return;
-      state.chapterPagination.loading = true;
-      $update();
-      try {
-        await loadChapterPage(state.chapterPagination.page + 1, true);
-      } catch (err) {
-        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Failed to load chapters.' } }));
-      } finally {
-        state.chapterPagination.loading = false;
-        $update();
-      }
-    });
-
-    $($el).on('click', '[data-action="comment-vote"]', async (event) => {
-      event.preventDefault();
-      if (!store.state.auth.isLoggedIn) {
-        $f7.popup.open('.login-popup');
-        return;
-      }
-      const id = event.target.getAttribute('data-id');
-      if (!id) return;
-      try {
-        await api.interactions.voteComment(id, 1);
-        await loadComments();
-        $update();
-      } catch (err) {
-        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Vote failed' } }));
-      }
-    });
+  $onBeforeUnmount(() => {
+    $el.removeEventListener('click', handleClick);
   });
 
   return $render;

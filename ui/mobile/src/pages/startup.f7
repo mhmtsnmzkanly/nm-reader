@@ -1,0 +1,32 @@
+<template>
+  <div class="page" data-name="startup">
+    <div class="page-content startup-screen">
+      <div class="startup-screen__content">
+        <div class="startup-screen__brand">NMR Mobile</div>
+        <div class="preloader color-blue"></div>
+        <p>Preparing your mobile session...</p>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import { runStartup } from '../js/bootstrap.js';
+
+export default (props, { $f7router, $onMounted }) => {
+  /**
+   * Executes the startup redirect flow once the page is mounted.
+   */
+  async function start() {
+    const result = await runStartup();
+    $f7router.navigate(result.route || '/home/', {
+      reloadCurrent: true,
+    });
+  }
+
+  $onMounted(() => {
+    start();
+  });
+
+  return $render;
+};
+</script>

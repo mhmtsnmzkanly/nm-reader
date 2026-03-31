@@ -446,6 +446,10 @@ Examples used in this repository:
 ## Recent Changes
 
 ### 2026-03-31
+- Rebuilt `ui/mobile` from scratch around a cleaner Framework7 Core architecture.
+- Added a new mobile folder split for `js`, `pages`, `components`, `services`, `store`, `utils`, and `styles`.
+- Replaced the old mobile app bootstrap with a startup route, centralized API client, bearer-token-first auth recovery flow, and reusable page-state patterns.
+- Split the reader architecture into explicit text-reader and image-reader handling with shared reader preferences.
 - Reorganized repository Markdown into this unified single-file document.
 - Restored the `ui/web` Tailwind build pipeline by adding `@tailwindcss/cli`.
 - Fixed the web CSS output path so builds target `public/assets/css/main.css`.

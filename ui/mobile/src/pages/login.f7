@@ -1,0 +1,103 @@
+<template>
+  <div class="page" data-name="login">
+    ${renderAppHeader({ title: 'Login', subtitle: 'Bearer-first mobile auth', back: true, large: true })}
+    <div class="page-content">
+      <div class="list inset">
+        <ul>
+          <li class="item-content item-input">
+            <div class="item-inner">
+              <div class="item-title item-label">Email</div>
+              <div class="item-input-wrap">
+                <input type="email" name="email" placeholder="you@example.com" value="${state.form.email}" />
+              </div>
+            </div>
+          </li>
+          <li class="item-content item-input">
+            <div class="item-inner">
+              <div class="item-title item-label">Password</div>
+              <div class="item-input-wrap">
+                <input type="password" name="password" placeholder="Password" value="${state.form.password}" />
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="block">
+        ${state.error ? `<div class="mobile-inline-error">${state.error}</div>` : ''}
+        <button class="button button-fill" data-action="submit-login" ${state.submitting ? 'disabled' : ''}>${state.submitting ? 'Signing in...' : 'Login'}</button>
+      </div>
+      <div class="block-footer">
+        Need an account?
+        <a href="/register/">Register</a>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import { login } from '../services/auth/auth-service.js';
+import { fetchWalletSummary } from '../services/wallet/wallet-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+import { appStore } from '../store/app-store.js';
+
+export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }) => {
+  const state = {
+    form: {
+      email: '',
+      password: '',
+    },
+    error: '',
+    submitting: false,
+  };
+
+  /**
+   * Reads the current form fields into local state.
+   */
+  function syncForm() {
+    state.form.email = $el.querySelector('input[name="email"]')?.value || '';
+    state.form.password = $el.querySelector('input[name="password"]')?.value || '';
+  }
+
+  /**
+   * Submits the mobile login flow and updates session-dependent state.
+   */
+  async function submit() {
+    syncForm();
+    state.error = '';
+    state.submitting = true;
+    $update();
+
+    try {
+      await login(state.form);
+      const wallet = await fetchWalletSummary().catch(() => null);
+      if (wallet) {
+        appStore.actions.setWalletSummary(wallet);
+      }
+      $f7router.navigate('/home/', { reloadCurrent: true });
+    } catch (error) {
+      state.error = error.message || 'Login failed.';
+    } finally {
+      state.submitting = false;
+      $update();
+    }
+  }
+
+  /**
+   * Handles the single login submit button click.
+   */
+  function handleClick(event) {
+    if (event.target.closest('[data-action="submit-login"]')) {
+      submit();
+    }
+  }
+
+  $onMounted(() => {
+    $el.addEventListener('click', handleClick);
+  });
+
+  $onBeforeUnmount(() => {
+    $el.removeEventListener('click', handleClick);
+  });
+
+  return $render;
+};
+</script>

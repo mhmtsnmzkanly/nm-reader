@@ -1,192 +1,107 @@
 <template>
   <div class="page" data-name="home">
-    <div class="navbar navbar-large">
-      <div class="navbar-bg"></div>
-      <div class="navbar-inner sliding">
-        <div class="title">NMR Reader</div>
-        <div class="right">
-          <a class="link icon-only sheet-open" data-sheet=".language-sheet" href="#">
-            <i class="f7-icons">globe</i>
-          </a>
-        </div>
-        <div class="title-large">
-          <div class="title-large-text">NMR Reader</div>
-        </div>
-      </div>
-    </div>
-
+    ${renderAppHeader({ title: 'Home', subtitle: 'Discover novels and manga', large: true })}
     <div class="page-content">
-      <!-- Featured Swiper (Explore) -->
-      ${state.explore.length > 0 ? $h`
-        <div class="block-title">Featured Stories</div>
-        <div class="swiper-container swiper-init" data-slides-per-view="auto" data-space-between="10">
-          <div class="swiper-wrapper">
-            ${state.explore.slice(0, 5).map((item) => $h`
-              <div class="swiper-slide" style="width: 280px">
-                <a href="/content/${item.type}/${item.slug}/" class="card card-outline no-margin shadow-sm">
-                  <div class="card-content">
-                    <img src="${item.cover}" style="width: 100%; height: 360px; object-fit: cover; display: block; border-radius: 8px 8px 0 0;" />
-                    <div class="card-footer font-bold text-slate-100">${item.title}</div>
-                  </div>
-                </a>
-              </div>
-            `)}
+      ${state.loading ? renderLoadingBlock('Loading discovery feed...') : ''}
+      ${state.error ? renderErrorState({ title: 'Home feed failed', message: state.error }) : ''}
+
+      ${!state.loading && !state.error ? $h`
+        <div class="block block-strong mobile-hero-block">
+          <div class="mobile-hero-block__title">Continue exploring</div>
+          <div class="mobile-hero-block__actions">
+            <a href="/types/manga/" class="button button-fill">Manga</a>
+            <a href="/types/novel/" class="button button-outline">Novel</a>
           </div>
         </div>
-      ` : ''}
 
-      <!-- Content Type Tabs -->
-      <div class="block">
-        <div class="segmented segmented-strong">
-          <a href="/types/manga/" class="button">Manga</a>
-          <a href="/types/novel/" class="button">Novel</a>
-          <a href="/types/manhwa/" class="button">Manhwa</a>
-        </div>
-      </div>
+        <div class="block-title">Featured</div>
+        ${state.explore.length
+          ? state.explore.map((item) => renderContentCard(item)).join('')
+          : renderEmptyState({ title: 'No featured content', message: 'Featured stories will appear here.' })}
 
-      <!-- Popular Blogs -->
-      ${state.blogs.length > 0 ? $h`
-        <div class="block-title">Popular Discussions</div>
-        <div class="list media-list no-chevron inset shadow-sm">
-          <ul>
-            ${state.blogs.slice(0, 3).map((blog) => $h`
-              <li>
-                <a href="/blogs/${blog.slug}/" class="item-link item-content">
-                  <div class="item-inner">
-                    <div class="item-title-row">
-                      <div class="item-title font-bold">${blog.title}</div>
-                    </div>
-                    <div class="item-subtitle text-xs text-color-gray">by ${blog.author}</div>
-                  </div>
-                </a>
-              </li>
-            `)}
-          </ul>
-        </div>
-      ` : ''}
-
-      <!-- Latest Updates -->
-      <div class="list media-list no-chevron">
-        <div class="block-title">Latest Updates</div>
-        <ul>
-          ${state.loading
-            ? [1, 2, 3].map(() => $h`
-              <li class="skeleton-text skeleton-effect-blink">
-                <div class="item-content">
-                  <div class="item-media"><div class="skeleton-block" style="width: 48px; height: 64px"></div></div>
-                  <div class="item-inner"><div class="item-title">Loading title</div><div class="item-text">Loading info</div></div>
-                </div>
-              </li>
-            `)
-            : state.latest.map((item) => $h`
-              <li>
-                <a href="/reader/${item.type}/${item.slug}/${item.chapter_number}/" class="item-link item-content">
-                  <div class="item-media">
-                    <img src="${item.cover}" width="48" style="border-radius: 4px" />
-                  </div>
-                  <div class="item-inner">
-                    <div class="item-title-row">
-                      <div class="item-title">${item.title}</div>
-                      <div class="item-after">
-                        ${item.is_locked ? $h`<span class="badge color-orange">COIN</span>` : $h`<span class="badge color-green">FREE</span>`}
+        <div class="block-title">Latest chapters</div>
+        ${state.latest.length ? $h`
+          <div class="list media-list inset no-chevron">
+            <ul>
+              ${state.latest.map((chapter) => `
+                <li>
+                  <a href="/reader/${chapter.type}/${chapter.slug}/${chapter.number}/" class="item-link item-content">
+                    <div class="item-inner">
+                      <div class="item-title-row">
+                        <div class="item-title">${chapter.title}</div>
+                        <div class="item-after">${chapter.isLocked ? 'Locked' : 'Open'}</div>
                       </div>
+                      <div class="item-subtitle">${chapter.type} • Chapter ${chapter.number}</div>
                     </div>
-                    <div class="item-subtitle">Chapter ${item.chapter_number}</div>
-                    <div class="item-text">${item.type}</div>
-                  </div>
-                </a>
-              </li>
-            `)}
-        </ul>
-      </div>
-
-      <div class="fab fab-right-bottom color-blue">
-        <a href="/search/">
-          <i class="f7-icons">search</i>
-        </a>
-      </div>
+                  </a>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        ` : renderEmptyState({ title: 'No recent chapters', message: 'Recent updates will appear here.' })}
+      ` : ''}
     </div>
+    ${renderBottomNav('home')}
   </div>
 </template>
 <script>
-import api from '../js/api.js';
-import store from '../js/store.js';
-import { getI18n } from '../js/i18n.js';
+import { fetchHome } from '../services/content/content-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+import { renderBottomNav } from '../components/bottom-nav.js';
+import { renderContentCard } from '../components/content-card.js';
+import { renderLoadingBlock } from '../components/loading-block.js';
+import { renderErrorState } from '../components/error-state.js';
+import { renderEmptyState } from '../components/empty-state.js';
 
-export default (props, { $onMounted, $update, $onBeforeUnmount }) => {
+export default (props, { $onMounted, $onBeforeUnmount, $update, $el }) => {
   const state = {
     loading: true,
-    latest: [],
+    error: '',
     explore: [],
-    blogs: [],
-    isLoggedIn: store.state.auth.isLoggedIn,
-  };
-  const i18n = getI18n();
-
-  const normalizeCover = (value) => {
-    if (typeof value !== 'string') return '/assets/img/covers/placeholder.svg';
-    if (value === '') return '/assets/img/covers/placeholder.svg';
-    if (value.startsWith('http://') || value.startsWith('https://')) return value;
-    let normalized = value;
-    while (normalized.startsWith('/')) {
-      normalized = normalized.slice(1);
-    }
-    return `/${normalized}`;
+    latest: [],
   };
 
-  const normalizeLatest = (item) => ({
-    title: item.title || item.series_title || 'Chapter',
-    slug: item.slug || item.series_slug || '',
-    type: item.type || item.series_type || '',
-    chapter_number: item.chapter_number || item.chapterNumber || item.number || '',
-    price_coin: item.price_coin || item.access?.chapter_unlock_price || 0,
-    is_locked: item.is_locked ?? !(item.access?.granted ?? true),
-    cover: normalizeCover(item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail),
-  });
-
-  const normalizeSeries = (item) => ({
-    title: item.title || 'Series',
-    slug: item.slug || '',
-    type: item.type || '',
-    cover: normalizeCover(item.cover_image || item.cover || item.thumbnail || item.image || item.series_cover || item.series_cover_image || item.series_thumbnail),
-  });
-
-  const normalizeBlog = (item) => ({
-    title: item.title || 'Blog',
-    slug: item.slug || '',
-    author: item.author_username || 'Author',
-  });
-
-  const syncAuth = () => {
-    state.isLoggedIn = store.state.auth.isLoggedIn;
+  /**
+   * Loads the home dashboard payload.
+   */
+  async function loadPage() {
+    state.loading = true;
+    state.error = '';
     $update();
-  };
 
-  $onMounted(async () => {
-    document.addEventListener('auth:updated', syncAuth);
     try {
-      const payload = await api.content.getHome();
-      const data = payload?.data || payload || {};
-      
-      const latest = data.recent_chapters || data.latest_chapters || [];
-      const explore = data.explore || [];
-      const blogs = data.popular_blogs || data.latest_blogs || [];
-
-      state.latest = latest.map(normalizeLatest).filter((row) => row.slug && row.type);
-      state.explore = explore.map(normalizeSeries).filter((row) => row.slug && row.type);
-      state.blogs = blogs.map(normalizeBlog).filter((row) => row.slug);
-    } catch (err) {
-      state.latest = [];
-      state.explore = [];
-      state.blogs = [];
+      const payload = await fetchHome();
+      state.explore = payload.explore;
+      state.latest = payload.latestChapters.map((chapter) => ({
+        ...chapter,
+        type: chapter.type || 'content',
+        slug: chapter.slug || '',
+        title: chapter.title || `Chapter ${chapter.number}`,
+      }));
+    } catch (error) {
+      state.error = error.message || 'Unable to load discovery feed.';
     } finally {
       state.loading = false;
       $update();
     }
+  }
+
+  /**
+   * Handles local retry actions from the shared error state.
+   */
+  function handleClick(event) {
+    if (event.target.closest('[data-action="retry-page"]')) {
+      loadPage();
+    }
+  }
+
+  $onMounted(() => {
+    $el.addEventListener('click', handleClick);
+    loadPage();
   });
 
   $onBeforeUnmount(() => {
-    document.removeEventListener('auth:updated', syncAuth);
+    $el.removeEventListener('click', handleClick);
   });
 
   return $render;

@@ -1,494 +1,153 @@
 <template>
-  <div class="page nmr-page no-toolbar" data-name="reader">
-    <!-- Immersive Navbar (Hides on Scroll) -->
-    <div class="navbar nmr-navbar navbar-hidden-on-scroll">
-      <div class="navbar-bg"></div>
-      <div class="navbar-inner">
-        <div class="left">
-          <a class="link back">
-            <i class="f7-icons">chevron_left</i>
-          </a>
+  <div class="page reader-page theme-${state.readerTheme}" data-name="reader">
+    ${renderAppHeader({ title: state.chapter?.series?.title || 'Reader', subtitle: state.chapter?.title || 'Reading mode', back: true })}
+    <div class="page-content reader-page__content">
+      ${state.loading ? renderLoadingBlock('Loading chapter...') : ''}
+      ${state.error ? renderErrorState({ title: 'Reader failed', message: state.error }) : ''}
+
+      ${!state.loading && !state.error && state.chapter ? $h`
+        ${state.isLocked ? `
+          <div class="block block-strong mobile-feedback-block">
+            <div class="mobile-feedback-title">Chapter locked</div>
+            <p>This chapter requires unlock before reading.</p>
+            ${state.chapterId ? `<button class="button button-fill color-orange" data-action="unlock-chapter">Unlock chapter</button>` : ''}
+          </div>
+        ` : `
+          <div class="reader-toolbar">
+            <button class="button button-small" data-action="decrease-font">A-</button>
+            <button class="button button-small" data-action="increase-font">A+</button>
+            <button class="button button-small" data-action="toggle-reader-theme">Theme</button>
+          </div>
+
+          ${state.chapter.readerType === 'text'
+            ? `<div class="reader-text" style="font-size:${state.fontSize}px">${state.renderedText}</div>`
+            : `<div class="reader-image-list">${state.chapter.images.map((image) => `<img src="${image}" alt="Chapter page" loading="lazy" />`).join('')}</div>`
+          }
+        `}
+
+        <div class="block block-strong reader-navigation">
+          <a class="button ${state.chapter.previousChapter ? '' : 'disabled'}" href="${state.chapter.previousChapter ? `/reader/${type}/${slug}/${state.chapter.previousChapter.chapter_number || state.chapter.previousChapter.number}/` : '#'}">Previous</a>
+          <a class="button button-fill" href="/content/${type}/${slug}/">Chapters</a>
+          <a class="button ${state.chapter.nextChapter ? '' : 'disabled'}" href="${state.chapter.nextChapter ? `/reader/${type}/${slug}/${state.chapter.nextChapter.chapter_number || state.chapter.nextChapter.number}/` : '#'}">Next</a>
         </div>
-        <div class="title nmr-title">${state.title}</div>
-        <div class="right">
-          <a class="link icon-only" @click="${() => state.showSettings = !state.showSettings}">
-            <i class="f7-icons">slider_horizontal_3</i>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Reader Progress Bar (Custom) -->
-    <div class="reader-progress-bar" id="reader-progress" style="width: 0%; display: none;"></div>
-
-    <div class="page-content" @scroll="${handleScroll}">
-      ${state.loading
-        ? $h`<div class="block display-flex justify-content-center align-items-center" style="height: 100%"><div class="preloader"></div></div>`
-        : state.error
-          ? $h`<div class="block nmr-panel color-red text-center m-5">${state.error}</div>`
-          : state.is_locked
-            ? $h`
-              <div class="block text-center pt-12 space-y-4">
-                <i class="f7-icons size-64 text-orange-400">lock_fill</i>
-                <h2 class="nmr-title text-2xl text-white">Unlock Chapter</h2>
-                <p class="text-slate-400">This chapter costs ${state.price_coin} coins.</p>
-                <button class="button button-fill button-large color-purple" data-action="unlock">Unlock Now</button>
-              </div>`
-            : $h`
-              <div class="reader-content-wrapper ${!state.is_image ? `reader-theme-${state.theme}` : ''}">
-                <div class="reader-container animate-fade-in pb-12">
-                  ${state.is_image
-                    ? $h`<div class="manga-images-list">
-                      ${state.pages.map((page) => $h`
-                        <div class="manga-image-item">
-                          <img class="reader-image" src="${page}" loading="lazy" />
-                        </div>
-                      `)}
-                    </div>`
-                    : $h`
-                      <div class="novel-content p-6" style="font-size: ${state.font_size}px;" innerHTML="${renderBlocksHtml(state.blocks)}"></div>
-                    `
-                  }
-
-                  <div class="block">
-                    <div class="segmented segmented-strong">
-                      <button class="button ${state.navigation.prev ? '' : 'disabled'}" data-action="go-prev">
-                        Previous
-                      </button>
-                      <button class="button ${state.navigation.next ? '' : 'disabled'}" data-action="go-next">
-                        Next
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- Discussion Section at Bottom -->
-                  <div class="block-title mt-12">Comments</div>
-                  <div class="list media-list inset mb-12">
-                    <ul>
-                      ${state.comments.map((c) => $h`
-                        <li class="item-content">
-                          <div class="item-inner">
-                            <div class="item-title-row">
-                              <div class="item-title text-xs font-bold">${c.author}</div>
-                            </div>
-                            <div class="item-text text-xs">${c.body}</div>
-                          </div>
-                        </li>
-                      `)}
-                    </ul>
-                  </div>
-                  <div class="block mb-12">
-                    <form id="chapter-comment-form">
-                      <div class="list no-hairlines-md">
-                        <ul>
-                          <li class="item-content item-input">
-                            <div class="item-inner">
-                              <div class="item-input-wrap">
-                                <textarea name="body" placeholder="Write a comment..." class="resizable"></textarea>
-                              </div>
-                            </div>
-                          </li>
-                        </ul>
-                      </div>
-                      <button class="button button-fill color-blue" type="submit">Post Comment</button>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            `
-      }
-    </div>
-
-    <!-- Reader Settings (Sheet Modal) -->
-    <div class="sheet-modal reader-settings-sheet" style="height: auto">
-      <div class="sheet-modal-inner p-5 space-y-6">
-        <div class="block-title">Reader Settings</div>
-        <div class="list no-hairlines">
-          <ul>
-            <li class="item-content">
-              <div class="item-inner">
-                <div class="item-title">Font Size</div>
-                <div class="item-after">
-                  <div class="stepper stepper-init" data-value="${state.font_size}">
-                    <div class="stepper-button-minus" @click="${() => updateFont(-1)}"></div>
-                    <div class="stepper-button-plus" @click="${() => updateFont(1)}"></div>
-                  </div>
-                </div>
-              </div>
-            </li>
-            <li class="item-content">
-              <div class="item-inner">
-                <div class="item-title">Theme</div>
-                <div class="item-after">
-                  <div class="segmented segmented-strong segmented-round">
-                    <button class="button ${state.theme === 'dark' ? 'button-active' : ''}" @click="${() => setTheme('dark')}">Dark</button>
-                    <button class="button ${state.theme === 'sepia' ? 'button-active' : ''}" @click="${() => setTheme('sepia')}">Sepia</button>
-                    <button class="button ${state.theme === 'light' ? 'button-active' : ''}" @click="${() => setTheme('light')}">Light</button>
-                  </div>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
+      ` : ''}
     </div>
   </div>
 </template>
 <script>
-import $ from 'dom7';
-import api from '../js/api.js';
-import store from '../js/store.js';
-import { getI18n } from '../js/i18n.js';
+import { appStore } from '../store/app-store.js';
+import { fetchChapter } from '../services/reader/reader-service.js';
+import { fetchWalletSummary, unlockChapter } from '../services/wallet/wallet-service.js';
+import { renderAppHeader } from '../components/app-header.js';
+import { renderLoadingBlock } from '../components/loading-block.js';
+import { renderErrorState } from '../components/error-state.js';
+import { escapeHtml } from '../utils/format.js';
 
-export default (props, { $onMounted, $onBeforeUnmount, $update, $f7route, $el, $f7 }) => {
-  const i18n = getI18n();
+export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7 }) => {
+  const type = $route.params.type;
+  const slug = $route.params.slug;
+  const chapterNumber = $route.params.chapterNumber;
   const state = {
     loading: true,
     error: '',
-    title: 'Chapter',
-    is_locked: false,
-    price_coin: 0,
-    is_image: false,
-    pages: [],
-    blocks: [],
-    font_size: 16,
-    theme: 'dark',
-    type: $f7route.params.type,
-    slug: $f7route.params.slug,
-    chapterNumber: $f7route.params.chapterNumber,
-    chapterId: null,
-    comments: [],
-    navigation: {
-      next: null,
-      prev: null,
-    },
+    chapter: null,
+    chapterId: '',
+    isLocked: false,
+    fontSize: appStore.getState().readerPreferences.fontSize,
+    readerTheme: appStore.getState().readerPreferences.theme,
+    renderedText: '',
   };
 
-  const fontKey = 'nmr_reader_font_size';
-  const themeKey = 'nmr_reader_theme';
+  /**
+   * Converts plain text chapter bodies into safe paragraph blocks.
+   */
+  function renderText(body) {
+    return String(body || '')
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean)
+      .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
+      .join('');
+  }
 
-  const normalizeUrl = (value) => {
-    if (typeof value !== 'string') return '';
-    if (value === '') return '';
-    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) return value;
-    let normalized = value;
-    while (normalized.startsWith('/')) {
-      normalized = normalized.slice(1);
-    }
-    return `/${normalized}`;
-  };
-
-  const updateFont = (delta) => {
-    state.font_size = Math.max(12, Math.min(32, state.font_size + delta));
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(fontKey, String(state.font_size));
-    }
-    $update();
-  };
-
-  const setTheme = (t) => {
-    state.theme = t;
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(themeKey, t);
-    }
-    $update();
-  };
-
-  const parseMarkdownBlocks = (body) => {
-    const lines = String(body || '').replaceAll('\r\n', '\n').split('\n');
-    const blocks = [];
-    let paragraph = [];
-    let list = null;
-
-    const flushParagraph = () => {
-      if (paragraph.length === 0) return;
-      blocks.push({ type: 'paragraph', text: paragraph.join(' ').trim() });
-      paragraph = [];
-    };
-
-    const flushList = () => {
-      if (!list || list.items.length === 0) {
-        list = null;
-        return;
-      }
-      blocks.push(list);
-      list = null;
-    };
-
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-      if (line === '') {
-        flushParagraph();
-        flushList();
-        continue;
-      }
-
-      const heading = line.match(/^(#{1,6})\s+(.*)$/);
-      if (heading) {
-        flushParagraph();
-        flushList();
-        blocks.push({ type: 'heading', level: heading[1].length, text: heading[2].trim() });
-        continue;
-      }
-
-      const unordered = line.match(/^[-*]\s+(.*)$/);
-      if (unordered) {
-        flushParagraph();
-        if (!list || list.type !== 'ul') {
-          flushList();
-          list = { type: 'ul', items: [] };
-        }
-        list.items.push(unordered[1].trim());
-        continue;
-      }
-
-      const ordered = line.match(/^\d+\.\s+(.*)$/);
-      if (ordered) {
-        flushParagraph();
-        if (!list || list.type !== 'ol') {
-          flushList();
-          list = { type: 'ol', items: [] };
-        }
-        list.items.push(ordered[1].trim());
-        continue;
-      }
-
-      const quote = line.match(/^>\s?(.*)$/);
-      if (quote) {
-        flushParagraph();
-        flushList();
-        blocks.push({ type: 'quote', text: quote[1].trim() });
-        continue;
-      }
-
-      flushList();
-      paragraph.push(line);
-    }
-
-    flushParagraph();
-    flushList();
-
-    return blocks;
-  };
-
-  const escapeHtml = (value) => String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-
-  const renderBlocksHtml = (blocks) => {
-    return (Array.isArray(blocks) ? blocks : []).map((block) => {
-      if (block.type === 'heading') {
-        const className = block.level <= 2 ? 'text-lg font-bold' : 'font-bold';
-        return `<div class="${className} mb-4">${escapeHtml(block.text)}</div>`;
-      }
-      if (block.type === 'quote') {
-        return `<blockquote class="mb-6 text-color-gray" style="border-left: 3px solid var(--f7-theme-color); padding-left: 12px;">${escapeHtml(block.text)}</blockquote>`;
-      }
-      if (block.type === 'ul') {
-        const items = (Array.isArray(block.items) ? block.items : [])
-          .map((item) => `<li class="mb-2">${escapeHtml(item)}</li>`)
-          .join('');
-        return `<ul class="mb-6" style="padding-left: 20px; list-style: disc;">${items}</ul>`;
-      }
-      if (block.type === 'ol') {
-        const items = (Array.isArray(block.items) ? block.items : [])
-          .map((item) => `<li class="mb-2">${escapeHtml(item)}</li>`)
-          .join('');
-        return `<ol class="mb-6" style="padding-left: 20px; list-style: decimal;">${items}</ol>`;
-      }
-      return `<p class="mb-6 leading-relaxed">${escapeHtml(block.text)}</p>`;
-    }).join('');
-  };
-
-  const goToChapter = (chapterNumber) => {
-    if (!chapterNumber) return;
-    state.chapterNumber = chapterNumber;
+  /**
+   * Loads the current chapter and derives the reader mode state.
+   */
+  async function loadPage() {
     state.loading = true;
     state.error = '';
-    $f7.views.main.router.navigate(`/reader/${state.type}/${state.slug}/${chapterNumber}/`, {
-      reloadCurrent: true,
-      ignoreCache: true,
-    });
-  };
-
-  const handleScroll = (e) => {
-    const el = e.target;
-    const maxScroll = el.scrollHeight - el.offsetHeight;
-    const progressEl = document.getElementById('reader-progress');
-    if (!progressEl) return;
-
-    if (maxScroll <= 0) {
-      progressEl.style.display = 'none';
-      return;
-    }
-
-    const progress = (el.scrollTop / maxScroll) * 100;
-    progressEl.style.display = 'block';
-    progressEl.style.width = `${progress}%`;
-  };
-
-  const onPurchaseSuccess = async (event) => {
-    if (event.detail?.chapterId !== state.chapterId) return;
-    await loadChapter();
     $update();
-  };
 
-  const loadComments = async () => {
-    if (!state.chapterId) return;
     try {
-      const payload = await api.interactions.listChapterComments(state.chapterId, 1, 20);
-      const data = payload?.data || payload || [];
-      state.comments = (Array.isArray(data) ? data : []).map((row) => ({
-        id: row.id || row.comment_id || 0,
-        author: row.username || row.author_username || 'User',
-        body: row.body || row.comment || '',
-        created_at: row.created_at || '',
-        votes: row.votes || row.score || 0,
-      }));
-    } catch (err) {
-      state.comments = [];
-    }
-  };
-
-  const loadChapter = async () => {
-    try {
-      const payload = await api.content.getChapterFull(state.type, state.slug, state.chapterNumber);
-      const chapter = payload?.data || payload || {};
-      state.chapterId = chapter.id || null;
-      state.title = chapter.title || `Chapter ${state.chapterNumber}`;
-      state.is_locked = chapter.is_locked ?? !(chapter.access?.granted ?? true);
-      state.price_coin = chapter.price_coin || chapter.access?.chapter_unlock_price || 0;
-      
-      // Improved Text/Image detection based on explicit DTO type and data presence
-      const chapterPages = chapter.pages || chapter.images || [];
-      const hasPages = Array.isArray(chapterPages) && chapterPages.length > 0;
-      
-      // If type is explicitly 'image' or we have pages, it's an image chapter
-      state.is_image = (chapter.type === 'image' || chapter.type === 'manga' || hasPages);
-      
-      if (state.is_image) {
-        state.pages = (Array.isArray(chapterPages) ? chapterPages : []).map(normalizeUrl);
-        state.blocks = [];
-      } else {
-        const body = String(chapter.body || chapter.content || '');
-        state.blocks = parseMarkdownBlocks(body);
-        state.pages = [];
-      }
-      const adjacent = chapter.adjacent_chapters || {};
-      state.navigation = {
-        next: adjacent.next || null,
-        prev: adjacent.prev || null,
-      };
-      await loadComments();
-    } catch (err) {
-      state.error = err.message || i18n.failed_load_chapter || 'Failed to load chapter.';
-      document.dispatchEvent(new CustomEvent('page:error', { detail: { message: state.error } }));
+      const chapter = await fetchChapter(type, slug, chapterNumber);
+      state.chapter = chapter;
+      state.chapterId = chapter.id;
+      state.isLocked = !(chapter.access?.granted ?? true);
+      state.renderedText = chapter.readerType === 'text' ? renderText(chapter.body) : '';
+    } catch (error) {
+      state.error = error.message || 'Unable to load chapter.';
     } finally {
       state.loading = false;
       $update();
     }
-  };
+  }
 
-  $onMounted(async () => {
-    if (typeof localStorage !== 'undefined') {
-      const storedSize = Number(localStorage.getItem(fontKey) || '16');
-      if (!Number.isNaN(storedSize) && storedSize > 10 && storedSize < 40) {
-        state.font_size = storedSize;
-      }
-      const storedTheme = localStorage.getItem(themeKey);
-      if (storedTheme) {
-        state.theme = storedTheme;
+  /**
+   * Updates reader preferences and persists them to the global store.
+   */
+  function updateReaderPreferences(patch) {
+    appStore.actions.setReaderPreferences(patch);
+    state.fontSize = appStore.getState().readerPreferences.fontSize;
+    state.readerTheme = appStore.getState().readerPreferences.theme;
+    $update();
+  }
+
+  /**
+   * Handles local reader controls and unlock flow.
+   */
+  async function handleClick(event) {
+    if (event.target.closest('[data-action="retry-page"]')) {
+      loadPage();
+      return;
+    }
+
+    if (event.target.closest('[data-action="decrease-font"]')) {
+      updateReaderPreferences({
+        fontSize: Math.max(14, state.fontSize - 2),
+      });
+    }
+
+    if (event.target.closest('[data-action="increase-font"]')) {
+      updateReaderPreferences({
+        fontSize: Math.min(30, state.fontSize + 2),
+      });
+    }
+
+    if (event.target.closest('[data-action="toggle-reader-theme"]')) {
+      updateReaderPreferences({
+        theme: state.readerTheme === 'dark' ? 'light' : 'dark',
+      });
+    }
+
+    if (event.target.closest('[data-action="unlock-chapter"]')) {
+      try {
+        await unlockChapter(state.chapterId);
+        const wallet = await fetchWalletSummary();
+        appStore.actions.setWalletSummary(wallet);
+        await loadPage();
+      } catch (error) {
+        $f7.dialog.alert(error.message || 'Unlock failed.');
       }
     }
-    await loadChapter();
+  }
 
-    document.addEventListener('purchase:success', onPurchaseSuccess);
-
-    $($el).on('click', '[data-action="unlock"]', async (event) => {
-      event.preventDefault();
-      if (!store.state.auth.isLoggedIn) {
-        $f7.popup.open('.login-popup');
-        return;
-      }
-      if (!state.chapterId) {
-        $f7.dialog.alert(i18n.chapter_not_available || 'Chapter not available.');
-        return;
-      }
-      document.dispatchEvent(new CustomEvent('purchase:open', { detail: { chapterId: state.chapterId, price: state.price_coin } }));
-    });
-
-    $($el).on('click', '[data-action="font-inc"]', (event) => {
-      event.preventDefault();
-      updateFont(1);
-    });
-
-    $($el).on('click', '[data-action="font-dec"]', (event) => {
-      event.preventDefault();
-      updateFont(-1);
-    });
-
-    $($el).on('click', '[data-action="set-theme"]', (event) => {
-      event.preventDefault();
-      const theme = $(event.target).data('theme');
-      if (theme) setTheme(theme);
-    });
-
-    $($el).on('submit', '#chapter-comment-form', async (event) => {
-      event.preventDefault();
-      if (!store.state.auth.isLoggedIn) {
-        $f7.popup.open('.login-popup');
-        return;
-      }
-      const form = event.target;
-      const body = $(form).find('textarea[name="body"]').val() || '';
-      if (!body.trim()) return;
-      try {
-        await api.interactions.createChapterComment(state.chapterId, body.trim());
-        form.reset();
-        await loadComments();
-        $update();
-      } catch (err) {
-        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Comment failed' } }));
-      }
-    });
-
-    $($el).on('click', '[data-action="comment-vote"]', async (event) => {
-      event.preventDefault();
-      if (!store.state.auth.isLoggedIn) {
-        $f7.popup.open('.login-popup');
-        return;
-      }
-      const id = $(event.target).data('id');
-      if (!id) return;
-      try {
-        await api.interactions.voteComment(id, 1);
-        await loadComments();
-        $update();
-      } catch (err) {
-        document.dispatchEvent(new CustomEvent('page:error', { detail: { message: err.message || 'Vote failed' } }));
-      }
-    });
-
-    $($el).on('click', '[data-action="go-prev"]', (event) => {
-      event.preventDefault();
-      if (state.navigation.prev) {
-        goToChapter(state.navigation.prev);
-      }
-    });
-
-    $($el).on('click', '[data-action="go-next"]', (event) => {
-      event.preventDefault();
-      if (state.navigation.next) {
-        goToChapter(state.navigation.next);
-      }
-    });
+  $onMounted(() => {
+    $el.addEventListener('click', handleClick);
+    loadPage();
   });
 
   $onBeforeUnmount(() => {
-    document.removeEventListener('purchase:success', onPurchaseSuccess);
+    $el.removeEventListener('click', handleClick);
   });
 
   return $render;
