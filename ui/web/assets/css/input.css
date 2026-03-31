@@ -1,11 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Lora:ital,wght@0,400;0,700;1,400&display=swap");
 @import "tailwindcss";
 
 @theme {
   --color-surface: #121212;
   --color-background: #080808;
 }
-
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Lora:ital,wght@0,400;0,700;1,400&display=swap");
 
 /* Global Reset & Base */
 body { font-family: "Inter", sans-serif; background-color: #080808; color: #e3e2e6; display: flex; flex-direction: column; min-height: 100vh; }
@@ -131,4 +130,3 @@ blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 2.5re
 .lang-item.active { color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
 .lang-item.inactive { color: #94a3b8; }
 .lang-item:hover { background: #3b82f6 !important; color: white !important; }
-

@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:css": "npx tailwindcss -i ./assets/css/input.css -o ../public/assets/css/main.css --minify",
-    "watch:css": "npx tailwindcss -i ./assets/css/input.css -o ../public/assets/css/main.css --watch",
+    "build:css": "npx tailwindcss -i ./assets/css/input.css -o ../../public/assets/css/main.css --minify",
+    "watch:css": "npx tailwindcss -i ./assets/css/input.css -o ../../public/assets/css/main.css --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/mhmtsnmzkanly/nm-reader#readme",
   "devDependencies": {
+    "@tailwindcss/cli": "^4.2.2",
     "autoprefixer": "^10.4.27",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1"

@@ -126,6 +126,13 @@ This document serves as the absolute authority on the project's architecture, co
 - **Change**: Hardened comment listing endpoints to return proper `400`/`404` API responses instead of uncaught `500` errors when a chapter, series, or blog comment target is invalid or missing.
 - **Change**: Added lazy bootstrap for the reserved `global-chat` blog so comment reads/writes can self-heal when the remote environment is missing the seeded chat entry.
 
+### Tooling: Web Tailwind Build Repair (2026-03-31)
+- **Status**: Completed.
+- **Change**: Added the dedicated `@tailwindcss/cli` dev dependency under `ui/web` so the `npm run build:css` pipeline works again with Tailwind CSS v4.
+- **Change**: Fixed the `ui/web` Tailwind output path so CSS builds write to the real web bundle target at `public/assets/css/main.css` instead of accidentally generating `ui/public/...`.
+- **Change**: Verified the web CSS build no longer fails with `npm error could not determine executable to run`.
+- **Change**: Reordered the Google Fonts import in `ui/web/assets/css/input.css` so Tailwind no longer emits the import-order optimization warning during CSS builds.
+
 ### Mobile: Chapter Page Fixes (2026-03-23)
 - **Status**: Completed.
 - **Change**: Content detail now paginates and loads additional chapter batches instead of silently truncating long chapter lists at the API default page size.
