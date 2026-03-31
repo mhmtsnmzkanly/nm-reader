@@ -38,6 +38,7 @@ import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
 import { renderEmptyState } from '../components/empty-state.js';
 import { renderWalletSummaryCard } from '../components/wallet-summary-card.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
   const isAuthed = appStore.isAuthenticated();
@@ -55,11 +56,25 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
    */
   async function loadPage() {
     if (!isAuthed) {
+      debugTrace({
+        scope: 'walletPage',
+        action: 'loadPage:skipped',
+        caller: 'walletPage.loadPage',
+        callee: 'authGuard',
+        next: 'render-auth-required',
+      });
       state.loading = false;
       return;
     }
 
     try {
+      debugTrace({
+        scope: 'walletPage',
+        action: 'loadPage:start',
+        caller: 'walletPage.loadPage',
+        callee: 'walletService.fetchWalletPanels',
+        next: 'render-wallet',
+      });
       const [wallet, packages, features, transactions] = await Promise.all([
         fetchWalletSummary(),
         fetchShopPackages(),
@@ -71,8 +86,28 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
       state.features = features;
       state.transactions = transactions.items;
       appStore.actions.setWalletSummary(wallet);
+      debugTrace({
+        scope: 'walletPage',
+        action: 'loadPage:success',
+        caller: 'walletPage.loadPage',
+        callee: 'walletService.fetchWalletPanels',
+        next: 'paint-wallet',
+        detail: {
+          packageCount: state.packages.length,
+          featureCount: state.features.length,
+          transactionCount: state.transactions.length,
+        },
+      });
     } catch (error) {
       state.error = error.message || 'Unable to load wallet.';
+      debugError({
+        scope: 'walletPage',
+        action: 'loadPage:error',
+        caller: 'walletPage.loadPage',
+        callee: 'walletService.fetchWalletPanels',
+        next: 'render-wallet-error',
+        detail: { message: state.error },
+      });
     } finally {
       state.loading = false;
       $update();
@@ -84,6 +119,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
    */
   function handleClick(event) {
     if (event.target.closest('[data-action="retry-page"]')) {
+      debugTrace({
+        scope: 'walletPage',
+        action: 'retry:click',
+        caller: 'walletPage.handleClick',
+        callee: 'walletPage.loadPage',
+        next: 'reload-wallet',
+      });
       state.loading = true;
       state.error = '';
       $update();
@@ -92,6 +134,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'walletPage',
+      action: 'mounted',
+      caller: 'framework7.page',
+      callee: 'walletPage.loadPage',
+      next: 'load-wallet',
+    });
     $el.addEventListener('click', handleClick);
     loadPage();
   });

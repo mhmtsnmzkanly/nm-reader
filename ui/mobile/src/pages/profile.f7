@@ -26,6 +26,7 @@ import { renderBottomNav } from '../components/bottom-nav.js';
 import { renderAuthGuardBlock } from '../components/auth-guard-block.js';
 import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
   const isAuthed = appStore.isAuthenticated();
@@ -40,14 +41,43 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
    */
   async function loadPage() {
     if (!isAuthed) {
+      debugTrace({
+        scope: 'profilePage',
+        action: 'loadPage:skipped',
+        caller: 'profilePage.loadPage',
+        callee: 'authGuard',
+        next: 'render-auth-required',
+      });
       state.loading = false;
       return;
     }
 
     try {
+      debugTrace({
+        scope: 'profilePage',
+        action: 'loadPage:start',
+        caller: 'profilePage.loadPage',
+        callee: 'userService.fetchProfile',
+        next: 'render-profile',
+      });
       state.profile = await fetchProfile();
+      debugTrace({
+        scope: 'profilePage',
+        action: 'loadPage:success',
+        caller: 'profilePage.loadPage',
+        callee: 'userService.fetchProfile',
+        next: 'paint-profile',
+      });
     } catch (error) {
       state.error = error.message || 'Unable to load profile.';
+      debugError({
+        scope: 'profilePage',
+        action: 'loadPage:error',
+        caller: 'profilePage.loadPage',
+        callee: 'userService.fetchProfile',
+        next: 'render-profile-error',
+        detail: { message: state.error },
+      });
     } finally {
       state.loading = false;
       $update();
@@ -59,6 +89,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
    */
   function handleClick(event) {
     if (event.target.closest('[data-action="retry-page"]')) {
+      debugTrace({
+        scope: 'profilePage',
+        action: 'retry:click',
+        caller: 'profilePage.handleClick',
+        callee: 'profilePage.loadPage',
+        next: 'reload-profile',
+      });
       state.loading = true;
       state.error = '';
       $update();
@@ -67,6 +104,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'profilePage',
+      action: 'mounted',
+      caller: 'framework7.page',
+      callee: 'profilePage.loadPage',
+      next: 'load-profile',
+    });
     $el.addEventListener('click', handleClick);
     loadPage();
   });

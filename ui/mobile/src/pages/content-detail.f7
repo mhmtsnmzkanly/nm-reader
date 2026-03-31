@@ -46,6 +46,7 @@ import { renderChapterListItem } from '../components/chapter-list-item.js';
 import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
 import { renderEmptyState } from '../components/empty-state.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7 }) => {
   const type = $route.params.type;
@@ -65,6 +66,14 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
    * Loads detail, chapter list, and optional wallet context in one place.
    */
   async function loadPage() {
+    debugTrace({
+      scope: 'contentDetailPage',
+      action: 'loadPage:start',
+      caller: 'contentDetailPage.loadPage',
+      callee: 'contentService.fetchContentDetail+fetchChapters',
+      next: 'render-content-detail',
+      detail: { type, slug },
+    });
     state.loading = true;
     state.error = '';
     $update();
@@ -84,8 +93,24 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
       if (appStore.isAuthenticated()) {
         state.wallet = await fetchWalletSummary();
       }
+      debugTrace({
+        scope: 'contentDetailPage',
+        action: 'loadPage:success',
+        caller: 'contentDetailPage.loadPage',
+        callee: 'contentService.fetchContentDetail+fetchChapters',
+        next: 'paint-content-detail',
+        detail: { type, slug, chapterCount: state.chapters.length },
+      });
     } catch (error) {
       state.error = error.message || 'Unable to load this content.';
+      debugError({
+        scope: 'contentDetailPage',
+        action: 'loadPage:error',
+        caller: 'contentDetailPage.loadPage',
+        callee: 'contentService.fetchContentDetail+fetchChapters',
+        next: 'render-content-detail-error',
+        detail: { type, slug, message: state.error },
+      });
     } finally {
       state.loading = false;
       $update();
@@ -97,11 +122,27 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
    */
   async function handleClick(event) {
     if (event.target.closest('[data-action="retry-page"]')) {
+      debugTrace({
+        scope: 'contentDetailPage',
+        action: 'retry:click',
+        caller: 'contentDetailPage.handleClick',
+        callee: 'contentDetailPage.loadPage',
+        next: 'reload-content-detail',
+        detail: { type, slug },
+      });
       loadPage();
       return;
     }
 
     if (event.target.closest('[data-action="toggle-follow"]')) {
+      debugTrace({
+        scope: 'contentDetailPage',
+        action: 'toggleFollow:start',
+        caller: 'contentDetailPage.handleClick',
+        callee: state.isFollowing ? 'contentService.unfollowSeries' : 'contentService.followSeries',
+        next: 'update-follow-state',
+        detail: { type, slug, currentlyFollowing: state.isFollowing },
+      });
       try {
         if (state.isFollowing) {
           await unfollowSeries(type, slug);
@@ -110,23 +151,71 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
         }
         state.isFollowing = !state.isFollowing;
         $update();
+        debugTrace({
+          scope: 'contentDetailPage',
+          action: 'toggleFollow:success',
+          caller: 'contentDetailPage.handleClick',
+          callee: 'contentService.follow-toggle',
+          next: 'paint-follow-state',
+          detail: { type, slug, nowFollowing: state.isFollowing },
+        });
       } catch (error) {
+        debugError({
+          scope: 'contentDetailPage',
+          action: 'toggleFollow:error',
+          caller: 'contentDetailPage.handleClick',
+          callee: 'contentService.follow-toggle',
+          next: 'show-follow-dialog',
+          detail: { type, slug, message: error.message },
+        });
         $f7.dialog.alert(error.message || 'Follow action failed.');
       }
     }
 
     if (event.target.closest('[data-action="unlock-series"]')) {
+      debugTrace({
+        scope: 'contentDetailPage',
+        action: 'unlockSeries:start',
+        caller: 'contentDetailPage.handleClick',
+        callee: 'contentService.unlockSeries',
+        next: 'refresh-wallet-and-detail',
+        detail: { type, slug },
+      });
       try {
         await unlockSeries(type, slug);
         state.wallet = await fetchWalletSummary();
         await loadPage();
+        debugTrace({
+          scope: 'contentDetailPage',
+          action: 'unlockSeries:success',
+          caller: 'contentDetailPage.handleClick',
+          callee: 'contentService.unlockSeries',
+          next: 'paint-unlocked-detail',
+          detail: { type, slug },
+        });
       } catch (error) {
+        debugError({
+          scope: 'contentDetailPage',
+          action: 'unlockSeries:error',
+          caller: 'contentDetailPage.handleClick',
+          callee: 'contentService.unlockSeries',
+          next: 'show-unlock-dialog',
+          detail: { type, slug, message: error.message },
+        });
         $f7.dialog.alert(error.message || 'Series unlock failed.');
       }
     }
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'contentDetailPage',
+      action: 'mounted',
+      caller: 'framework7.page',
+      callee: 'contentDetailPage.loadPage',
+      next: 'load-content-detail',
+      detail: { type, slug },
+    });
     $el.addEventListener('click', handleClick);
     loadPage();
   });

@@ -6,6 +6,7 @@ import { createRoutes } from './routes.js';
 import { configureApplicationRuntime } from './bootstrap.js';
 import { installGlobals } from './globals.js';
 import { isCordovaRuntime } from '../utils/env.js';
+import { debugTrace } from '../utils/debug.js';
 import '../styles/app.css';
 
 /**
@@ -13,13 +14,26 @@ import '../styles/app.css';
  */
 function createApplication() {
   const isCordova = isCordovaRuntime();
+  const routes = createRoutes();
+
+  debugTrace({
+    scope: 'app',
+    action: 'createApplication:start',
+    caller: 'ui/mobile/src/js/app.js#createApplication',
+    callee: 'Framework7 constructor',
+    next: 'initialize root app instance',
+    detail: {
+      isCordova,
+      routeCount: routes.length,
+    },
+  });
 
   const app = new Framework7({
     name: 'NMR Mobile',
     theme: 'auto',
     el: '#app',
     component: App,
-    routes: createRoutes(),
+    routes,
     view: {
       browserHistory: !isCordova,
       browserHistoryRoot: '/mobile/',
@@ -28,8 +42,25 @@ function createApplication() {
     },
   });
 
+  debugTrace({
+    scope: 'app',
+    action: 'createApplication:created',
+    caller: 'ui/mobile/src/js/app.js#createApplication',
+    callee: 'configureApplicationRuntime',
+    next: 'configure runtime handlers',
+  });
+
   configureApplicationRuntime(app);
   installGlobals();
+
+  debugTrace({
+    scope: 'app',
+    action: 'createApplication:ready',
+    caller: 'ui/mobile/src/js/app.js#createApplication',
+    callee: 'root view',
+    next: 'render /startup/ route',
+  });
+
   return app;
 }
 

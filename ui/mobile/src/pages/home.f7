@@ -52,6 +52,7 @@ import { renderContentCard } from '../components/content-card.js';
 import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
 import { renderEmptyState } from '../components/empty-state.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $onMounted, $onBeforeUnmount, $update, $el }) => {
   const state = {
@@ -65,6 +66,14 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $el }) => {
    * Loads the home dashboard payload.
    */
   async function loadPage() {
+    debugTrace({
+      scope: 'route',
+      action: 'home:loadPage:start',
+      caller: 'ui/mobile/src/pages/home.f7#loadPage',
+      callee: 'fetchHome',
+      next: 'render discovery sections',
+    });
+
     state.loading = true;
     state.error = '';
     $update();
@@ -78,7 +87,26 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $el }) => {
         slug: chapter.slug || '',
         title: chapter.title || `Chapter ${chapter.number}`,
       }));
+      debugTrace({
+        scope: 'route',
+        action: 'home:loadPage:success',
+        caller: 'home loadPage',
+        callee: 'home state',
+        next: 'render featured and latest sections',
+        detail: {
+          exploreCount: state.explore.length,
+          latestCount: state.latest.length,
+        },
+      });
     } catch (error) {
+      debugError({
+        scope: 'route',
+        action: 'home:loadPage:error',
+        caller: 'home loadPage',
+        callee: 'fetchHome',
+        next: 'render retryable home error state',
+        error,
+      });
       state.error = error.message || 'Unable to load discovery feed.';
     } finally {
       state.loading = false;
@@ -91,11 +119,25 @@ export default (props, { $onMounted, $onBeforeUnmount, $update, $el }) => {
    */
   function handleClick(event) {
     if (event.target.closest('[data-action="retry-page"]')) {
+      debugTrace({
+        scope: 'route',
+        action: 'home:retry',
+        caller: 'home click handler',
+        callee: 'loadPage',
+        next: 'retry home dashboard request',
+      });
       loadPage();
     }
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'route',
+      action: 'home:mounted',
+      caller: 'home page lifecycle',
+      callee: 'loadPage',
+      next: 'fetch discovery dashboard',
+    });
     $el.addEventListener('click', handleClick);
     loadPage();
   });

@@ -24,6 +24,7 @@ import { renderContentCard } from '../components/content-card.js';
 import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
 import { renderEmptyState } from '../components/empty-state.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
   const isAuthed = appStore.isAuthenticated();
@@ -38,15 +39,45 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
    */
   async function loadPage() {
     if (!isAuthed) {
+      debugTrace({
+        scope: 'libraryPage',
+        action: 'loadPage:skipped',
+        caller: 'libraryPage.loadPage',
+        callee: 'authGuard',
+        next: 'render-auth-required',
+      });
       state.loading = false;
       return;
     }
 
     try {
+      debugTrace({
+        scope: 'libraryPage',
+        action: 'loadPage:start',
+        caller: 'libraryPage.loadPage',
+        callee: 'userService.fetchLibrary',
+        next: 'render-library',
+      });
       const payload = await fetchLibrary();
       state.items = payload.items;
+      debugTrace({
+        scope: 'libraryPage',
+        action: 'loadPage:success',
+        caller: 'libraryPage.loadPage',
+        callee: 'userService.fetchLibrary',
+        next: 'paint-library',
+        detail: { count: state.items.length },
+      });
     } catch (error) {
       state.error = error.message || 'Unable to load library.';
+      debugError({
+        scope: 'libraryPage',
+        action: 'loadPage:error',
+        caller: 'libraryPage.loadPage',
+        callee: 'userService.fetchLibrary',
+        next: 'render-library-error',
+        detail: { message: state.error },
+      });
     } finally {
       state.loading = false;
       $update();
@@ -58,6 +89,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
    */
   function handleClick(event) {
     if (event.target.closest('[data-action="retry-page"]')) {
+      debugTrace({
+        scope: 'libraryPage',
+        action: 'retry:click',
+        caller: 'libraryPage.handleClick',
+        callee: 'libraryPage.loadPage',
+        next: 'reload-library',
+      });
       state.loading = true;
       state.error = '';
       $update();
@@ -66,6 +104,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'libraryPage',
+      action: 'mounted',
+      caller: 'framework7.page',
+      callee: 'libraryPage.loadPage',
+      next: 'load-library',
+    });
     $el.addEventListener('click', handleClick);
     loadPage();
   });

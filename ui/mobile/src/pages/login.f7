@@ -38,6 +38,7 @@ import { login } from '../services/auth/auth-service.js';
 import { fetchWalletSummary } from '../services/wallet/wallet-service.js';
 import { renderAppHeader } from '../components/app-header.js';
 import { appStore } from '../store/app-store.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }) => {
   const state = {
@@ -61,6 +62,17 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }
    * Submits the mobile login flow and updates session-dependent state.
    */
   async function submit() {
+    debugTrace({
+      scope: 'route',
+      action: 'login:submit:start',
+      caller: 'ui/mobile/src/pages/login.f7#submit',
+      callee: 'authService.login',
+      next: 'authenticate user and redirect home',
+      detail: {
+        email: state.form.email || '',
+      },
+    });
+
     syncForm();
     state.error = '';
     state.submitting = true;
@@ -72,8 +84,23 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }
       if (wallet) {
         appStore.actions.setWalletSummary(wallet);
       }
+      debugTrace({
+        scope: 'route',
+        action: 'login:submit:success',
+        caller: 'login submit',
+        callee: '$f7router.navigate(/home/)',
+        next: 'render authenticated home screen',
+      });
       $f7router.navigate('/home/', { reloadCurrent: true });
     } catch (error) {
+      debugError({
+        scope: 'route',
+        action: 'login:submit:error',
+        caller: 'login submit',
+        callee: 'authService.login',
+        next: 'render inline login error',
+        error,
+      });
       state.error = error.message || 'Login failed.';
     } finally {
       state.submitting = false;
@@ -86,11 +113,25 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }
    */
   function handleClick(event) {
     if (event.target.closest('[data-action="submit-login"]')) {
+      debugTrace({
+        scope: 'route',
+        action: 'login:clickSubmit',
+        caller: 'login click handler',
+        callee: 'submit',
+        next: 'start login request',
+      });
       submit();
     }
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'route',
+      action: 'login:mounted',
+      caller: 'login page lifecycle',
+      callee: 'login form',
+      next: 'wait for submit interaction',
+    });
     $el.addEventListener('click', handleClick);
   });
 

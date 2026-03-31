@@ -44,6 +44,7 @@
 <script>
 import { register } from '../services/auth/auth-service.js';
 import { renderAppHeader } from '../components/app-header.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7, $f7router }) => {
   const state = {
@@ -60,6 +61,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7, $f7rou
    * Reads current register inputs into local component state.
    */
   function syncForm() {
+    debugTrace({
+      scope: 'registerPage',
+      action: 'syncForm',
+      caller: 'registerPage.syncForm',
+      callee: 'DOM.inputs',
+      next: 'prepare-register-payload',
+    });
     state.form.username = $el.querySelector('input[name="username"]')?.value || '';
     state.form.email = $el.querySelector('input[name="email"]')?.value || '';
     state.form.password = $el.querySelector('input[name="password"]')?.value || '';
@@ -69,6 +77,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7, $f7rou
    * Submits registration and redirects to login on success.
    */
   async function submit() {
+    debugTrace({
+      scope: 'registerPage',
+      action: 'submit:start',
+      caller: 'registerPage.submit',
+      callee: 'authService.register',
+      next: 'navigate-login-on-success',
+    });
     syncForm();
     state.error = '';
     state.submitting = true;
@@ -76,10 +91,26 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7, $f7rou
 
     try {
       await register(state.form);
+      debugTrace({
+        scope: 'registerPage',
+        action: 'submit:success',
+        caller: 'registerPage.submit',
+        callee: 'authService.register',
+        next: 'show-success-dialog',
+        detail: { username: state.form.username },
+      });
       $f7.dialog.alert('Account created. Please log in.', 'Registration');
       $f7router.navigate('/login/', { reloadCurrent: true });
     } catch (error) {
       state.error = error.message || 'Registration failed.';
+      debugError({
+        scope: 'registerPage',
+        action: 'submit:error',
+        caller: 'registerPage.submit',
+        callee: 'authService.register',
+        next: 'render-register-error',
+        detail: { message: state.error },
+      });
     } finally {
       state.submitting = false;
       $update();
@@ -91,11 +122,25 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7, $f7rou
    */
   function handleClick(event) {
     if (event.target.closest('[data-action="submit-register"]')) {
+      debugTrace({
+        scope: 'registerPage',
+        action: 'submit:click',
+        caller: 'registerPage.handleClick',
+        callee: 'registerPage.submit',
+        next: 'attempt-register',
+      });
       submit();
     }
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'registerPage',
+      action: 'mounted',
+      caller: 'framework7.page',
+      callee: 'registerPage.handleClick',
+      next: 'wait-for-register-submit',
+    });
     $el.addEventListener('click', handleClick);
   });
 

@@ -41,6 +41,7 @@ import { fetchWalletSummary, unlockChapter } from '../services/wallet/wallet-ser
 import { renderAppHeader } from '../components/app-header.js';
 import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 import { escapeHtml } from '../utils/format.js';
 
 export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7 }) => {
@@ -74,6 +75,14 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
    * Loads the current chapter and derives the reader mode state.
    */
   async function loadPage() {
+    debugTrace({
+      scope: 'reader',
+      action: 'loadPage:start',
+      caller: 'ui/mobile/src/pages/reader.f7#loadPage',
+      callee: `fetchChapter(${type}, ${slug}, ${chapterNumber})`,
+      next: 'load reader payload and derive mode',
+    });
+
     state.loading = true;
     state.error = '';
     $update();
@@ -84,7 +93,27 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
       state.chapterId = chapter.id;
       state.isLocked = !(chapter.access?.granted ?? true);
       state.renderedText = chapter.readerType === 'text' ? renderText(chapter.body) : '';
+      debugTrace({
+        scope: 'reader',
+        action: 'loadPage:success',
+        caller: 'reader loadPage',
+        callee: 'reader state',
+        next: state.isLocked ? 'show locked prompt' : `render ${chapter.readerType} reader`,
+        detail: {
+          chapterId: state.chapterId,
+          readerType: chapter.readerType,
+          isLocked: state.isLocked,
+        },
+      });
     } catch (error) {
+      debugError({
+        scope: 'reader',
+        action: 'loadPage:error',
+        caller: 'reader loadPage',
+        callee: `fetchChapter(${type}, ${slug}, ${chapterNumber})`,
+        next: 'render reader error state',
+        error,
+      });
       state.error = error.message || 'Unable to load chapter.';
     } finally {
       state.loading = false;
@@ -96,6 +125,16 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
    * Updates reader preferences and persists them to the global store.
    */
   function updateReaderPreferences(patch) {
+    debugTrace({
+      scope: 'reader',
+      action: 'updateReaderPreferences',
+      caller: 'ui/mobile/src/pages/reader.f7#updateReaderPreferences',
+      callee: 'appStore.actions.setReaderPreferences',
+      next: 'refresh reader controls and page styles',
+      detail: {
+        patch,
+      },
+    });
     appStore.actions.setReaderPreferences(patch);
     state.fontSize = appStore.getState().readerPreferences.fontSize;
     state.readerTheme = appStore.getState().readerPreferences.theme;
@@ -107,6 +146,13 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
    */
   async function handleClick(event) {
     if (event.target.closest('[data-action="retry-page"]')) {
+      debugTrace({
+        scope: 'reader',
+        action: 'handleClick:retry',
+        caller: 'reader click handler',
+        callee: 'loadPage',
+        next: 'retry chapter load',
+      });
       loadPage();
       return;
     }
@@ -131,17 +177,47 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
 
     if (event.target.closest('[data-action="unlock-chapter"]')) {
       try {
+        debugTrace({
+          scope: 'reader',
+          action: 'handleClick:unlockChapter',
+          caller: 'reader click handler',
+          callee: `unlockChapter(${state.chapterId})`,
+          next: 'refresh wallet and reload chapter',
+          detail: {
+            chapterId: state.chapterId,
+          },
+        });
         await unlockChapter(state.chapterId);
         const wallet = await fetchWalletSummary();
         appStore.actions.setWalletSummary(wallet);
         await loadPage();
       } catch (error) {
+        debugError({
+          scope: 'reader',
+          action: 'handleClick:unlockChapterError',
+          caller: 'reader click handler',
+          callee: `unlockChapter(${state.chapterId})`,
+          next: 'show unlock failure dialog',
+          error,
+        });
         $f7.dialog.alert(error.message || 'Unlock failed.');
       }
     }
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'reader',
+      action: 'page:mounted',
+      caller: 'reader page lifecycle',
+      callee: 'loadPage',
+      next: 'fetch initial chapter payload',
+      detail: {
+        type,
+        slug,
+        chapterNumber,
+      },
+    });
     $el.addEventListener('click', handleClick);
     loadPage();
   });

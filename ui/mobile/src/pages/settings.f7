@@ -58,6 +58,7 @@ import { updatePreferences } from '../services/user/user-service.js';
 import { renderAppHeader } from '../components/app-header.js';
 import { renderBottomNav } from '../components/bottom-nav.js';
 import { renderAuthGuardBlock } from '../components/auth-guard-block.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }) => {
   const isAuthed = appStore.isAuthenticated();
@@ -75,6 +76,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }
    * Reads the current preference selects into local component state.
    */
   function syncForm() {
+    debugTrace({
+      scope: 'settingsPage',
+      action: 'syncForm',
+      caller: 'settingsPage.syncForm',
+      callee: 'DOM.selects',
+      next: 'prepare-settings-payload',
+    });
     state.preferences.theme = $el.querySelector('select[name="app-theme"]')?.value || state.preferences.theme;
     state.readerPreferences.theme = $el.querySelector('select[name="reader-theme"]')?.value || state.readerPreferences.theme;
   }
@@ -83,6 +91,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }
    * Persists settings locally and remotely.
    */
   async function saveSettings() {
+    debugTrace({
+      scope: 'settingsPage',
+      action: 'saveSettings:start',
+      caller: 'settingsPage.saveSettings',
+      callee: 'userService.updatePreferences',
+      next: 'sync-store-and-render',
+    });
     syncForm();
     state.error = '';
     $update();
@@ -96,8 +111,23 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }
         reader_font_size: state.readerPreferences.fontSize,
         reader_layout: state.readerPreferences.imageMode,
       });
+      debugTrace({
+        scope: 'settingsPage',
+        action: 'saveSettings:success',
+        caller: 'settingsPage.saveSettings',
+        callee: 'userService.updatePreferences',
+        next: 'keep-settings-screen-open',
+      });
     } catch (error) {
       state.error = error.message || 'Unable to save settings.';
+      debugError({
+        scope: 'settingsPage',
+        action: 'saveSettings:error',
+        caller: 'settingsPage.saveSettings',
+        callee: 'userService.updatePreferences',
+        next: 'render-settings-error',
+        detail: { message: state.error },
+      });
       $update();
     }
   }
@@ -107,16 +137,37 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update, $f7router }
    */
   async function handleClick(event) {
     if (event.target.closest('[data-action="save-settings"]')) {
+      debugTrace({
+        scope: 'settingsPage',
+        action: 'saveSettings:click',
+        caller: 'settingsPage.handleClick',
+        callee: 'settingsPage.saveSettings',
+        next: 'persist-settings',
+      });
       await saveSettings();
     }
 
     if (event.target.closest('[data-action="logout"]')) {
+      debugTrace({
+        scope: 'settingsPage',
+        action: 'logout:click',
+        caller: 'settingsPage.handleClick',
+        callee: 'authService.logout',
+        next: 'navigate-login',
+      });
       await logout();
       $f7router.navigate('/login/', { reloadCurrent: true });
     }
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'settingsPage',
+      action: 'mounted',
+      caller: 'framework7.page',
+      callee: 'settingsPage.handleClick',
+      next: 'wait-for-settings-actions',
+    });
     $el.addEventListener('click', handleClick);
   });
 

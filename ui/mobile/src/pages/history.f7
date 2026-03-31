@@ -23,6 +23,7 @@ import { renderAuthGuardBlock } from '../components/auth-guard-block.js';
 import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
 import { renderEmptyState } from '../components/empty-state.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
   const isAuthed = appStore.isAuthenticated();
@@ -37,15 +38,45 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
    */
   async function loadPage() {
     if (!isAuthed) {
+      debugTrace({
+        scope: 'historyPage',
+        action: 'loadPage:skipped',
+        caller: 'historyPage.loadPage',
+        callee: 'authGuard',
+        next: 'render-auth-required',
+      });
       state.loading = false;
       return;
     }
 
     try {
+      debugTrace({
+        scope: 'historyPage',
+        action: 'loadPage:start',
+        caller: 'historyPage.loadPage',
+        callee: 'userService.fetchHistory',
+        next: 'render-history',
+      });
       const payload = await fetchHistory();
       state.items = payload.items;
+      debugTrace({
+        scope: 'historyPage',
+        action: 'loadPage:success',
+        caller: 'historyPage.loadPage',
+        callee: 'userService.fetchHistory',
+        next: 'paint-history',
+        detail: { count: state.items.length },
+      });
     } catch (error) {
       state.error = error.message || 'Unable to load history.';
+      debugError({
+        scope: 'historyPage',
+        action: 'loadPage:error',
+        caller: 'historyPage.loadPage',
+        callee: 'userService.fetchHistory',
+        next: 'render-history-error',
+        detail: { message: state.error },
+      });
     } finally {
       state.loading = false;
       $update();
@@ -57,6 +88,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
    */
   function handleClick(event) {
     if (event.target.closest('[data-action="retry-page"]')) {
+      debugTrace({
+        scope: 'historyPage',
+        action: 'retry:click',
+        caller: 'historyPage.handleClick',
+        callee: 'historyPage.loadPage',
+        next: 'reload-history',
+      });
       state.loading = true;
       state.error = '';
       $update();
@@ -65,6 +103,13 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'historyPage',
+      action: 'mounted',
+      caller: 'framework7.page',
+      callee: 'historyPage.loadPage',
+      next: 'load-history',
+    });
     $el.addEventListener('click', handleClick);
     loadPage();
   });

@@ -21,6 +21,7 @@ import { renderContentCard } from '../components/content-card.js';
 import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
 import { renderEmptyState } from '../components/empty-state.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 
 export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el }) => {
   const type = $route.params.type || 'manga';
@@ -35,6 +36,14 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el }) =
    * Loads the content list for the current type route param.
    */
   async function loadPage() {
+    debugTrace({
+      scope: 'typeListPage',
+      action: 'loadPage:start',
+      caller: 'typeListPage.loadPage',
+      callee: 'contentService.fetchTypeList',
+      next: 'render-type-list-state',
+      detail: { type },
+    });
     state.loading = true;
     state.error = '';
     $update();
@@ -42,8 +51,24 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el }) =
     try {
       const payload = await fetchTypeList(type);
       state.items = payload.items;
+      debugTrace({
+        scope: 'typeListPage',
+        action: 'loadPage:success',
+        caller: 'typeListPage.loadPage',
+        callee: 'contentService.fetchTypeList',
+        next: 'paint-type-list',
+        detail: { type, count: state.items.length },
+      });
     } catch (error) {
       state.error = error.message || 'Unable to load this type.';
+      debugError({
+        scope: 'typeListPage',
+        action: 'loadPage:error',
+        caller: 'typeListPage.loadPage',
+        callee: 'contentService.fetchTypeList',
+        next: 'render-type-list-error',
+        detail: { type, message: state.error },
+      });
     } finally {
       state.loading = false;
       $update();
@@ -55,11 +80,27 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el }) =
    */
   function handleClick(event) {
     if (event.target.closest('[data-action="retry-page"]')) {
+      debugTrace({
+        scope: 'typeListPage',
+        action: 'retry:click',
+        caller: 'typeListPage.handleClick',
+        callee: 'typeListPage.loadPage',
+        next: 'reload-type-list',
+        detail: { type },
+      });
       loadPage();
     }
   }
 
   $onMounted(() => {
+    debugTrace({
+      scope: 'typeListPage',
+      action: 'mounted',
+      caller: 'framework7.page',
+      callee: 'typeListPage.loadPage',
+      next: 'load-type-list',
+      detail: { type },
+    });
     $el.addEventListener('click', handleClick);
     loadPage();
   });
