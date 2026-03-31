@@ -1,8 +1,8 @@
 /**
  * Renders a guest guard for protected pages instead of crashing into 401 responses.
  */
-export function renderAuthGuardBlock() {
-  return `
+export function renderAuthGuardBlock($h) {
+  return $h`
     <div class="block block-strong mobile-feedback-block">
       <div class="mobile-feedback-title">Login required</div>
       <p>This screen needs an authenticated mobile session.</p>

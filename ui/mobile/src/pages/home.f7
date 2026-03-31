@@ -1,9 +1,9 @@
 <template>
   <div class="page" data-name="home">
-    ${$h`${renderAppHeader({ title: 'Home', subtitle: 'Discover novels and manga', large: true })}`}
+    ${renderAppHeader($h, { title: 'Home', subtitle: 'Discover novels and manga', large: true })}
     <div class="page-content">
-      ${state.loading ? $h`${renderLoadingBlock('Loading discovery feed...')}` : ''}
-      ${state.error ? $h`${renderErrorState({ title: 'Home feed failed', message: state.error })}` : ''}
+      ${state.loading ? renderLoadingBlock($h, 'Loading discovery feed...') : ''}
+      ${state.error ? renderErrorState($h, { title: 'Home feed failed', message: state.error }) : ''}
 
       ${!state.loading && !state.error ? $h`
         <div class="block block-strong mobile-hero-block">
@@ -16,14 +16,14 @@
 
         <div class="block-title">Featured</div>
         ${state.explore.length
-          ? $h`${state.explore.map((item) => renderContentCard(item)).join('')}`
-          : $h`${renderEmptyState({ title: 'No featured content', message: 'Featured stories will appear here.' })}`}
+          ? state.explore.map((item) => renderContentCard($h, item))
+          : renderEmptyState($h, { title: 'No featured content', message: 'Featured stories will appear here.' })}
 
         <div class="block-title">Latest chapters</div>
         ${state.latest.length ? $h`
           <div class="list media-list inset no-chevron">
             <ul>
-              ${$h`${state.latest.map((chapter) => `
+              ${state.latest.map((chapter) => $h`
                 <li>
                   <a href="/reader/${chapter.type}/${chapter.slug}/${chapter.number}/" class="item-link item-content">
                     <div class="item-inner">
@@ -35,13 +35,13 @@
                     </div>
                   </a>
                 </li>
-              `).join('')}`}
+              `)}
             </ul>
           </div>
-        ` : $h`${renderEmptyState({ title: 'No recent chapters', message: 'Recent updates will appear here.' })}`}
+        ` : renderEmptyState($h, { title: 'No recent chapters', message: 'Recent updates will appear here.' })}
       ` : ''}
     </div>
-    ${$h`${renderBottomNav('home')}`}
+    ${renderBottomNav($h, 'home')}
   </div>
 </template>
 <script>

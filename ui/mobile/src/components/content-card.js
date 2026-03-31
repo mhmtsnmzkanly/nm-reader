@@ -3,8 +3,8 @@ import { escapeHtml, formatChapterLabel } from '../utils/format.js';
 /**
  * Renders a reusable content card for home and listing screens.
  */
-export function renderContentCard(item) {
-  return `
+export function renderContentCard($h, item) {
+  return $h`
     <a class="card mobile-content-card" href="/content/${item.type}/${item.slug}/">
       <div class="card-content card-content-padding">
         <div class="mobile-content-card__media">

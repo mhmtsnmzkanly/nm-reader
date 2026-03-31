@@ -3,8 +3,8 @@ import { formatCoins } from '../utils/format.js';
 /**
  * Renders the wallet summary card used by the wallet and content screens.
  */
-export function renderWalletSummaryCard(wallet) {
-  return `
+export function renderWalletSummaryCard($h, wallet) {
+  return $h`
     <div class="card mobile-wallet-card">
       <div class="card-content card-content-padding">
         <div class="mobile-wallet-card__label">Wallet balance</div>

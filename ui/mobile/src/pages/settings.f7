@@ -1,8 +1,8 @@
 <template>
   <div class="page" data-name="settings">
-    ${$h`${renderAppHeader({ title: 'Settings', subtitle: 'App and reader preferences', large: true })}`}
+    ${renderAppHeader($h, { title: 'Settings', subtitle: 'App and reader preferences', large: true })}
     <div class="page-content">
-      ${!isAuthed ? $h`${renderAuthGuardBlock()}` : ''}
+      ${!isAuthed ? renderAuthGuardBlock($h) : ''}
       ${isAuthed ? $h`
         <div class="list inset">
           <ul>
@@ -48,7 +48,7 @@
         </div>
       ` : ''}
     </div>
-    ${$h`${renderBottomNav('settings')}`}
+    ${renderBottomNav($h, 'settings')}
   </div>
 </template>
 <script>

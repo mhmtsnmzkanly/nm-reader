@@ -1,6 +1,6 @@
 <template>
   <div class="page" data-name="register">
-    ${$h`${renderAppHeader({ title: 'Register', subtitle: 'Create a mobile account', back: true, large: true })}`}
+    ${renderAppHeader($h, { title: 'Register', subtitle: 'Create a mobile account', back: true, large: true })}
     <div class="page-content">
       <div class="list inset">
         <ul>

@@ -1,31 +1,31 @@
 <template>
   <div class="page" data-name="wallet">
-    ${$h`${renderAppHeader({ title: 'Wallet', subtitle: 'Balance and unlock flows', large: true })}`}
+    ${renderAppHeader($h, { title: 'Wallet', subtitle: 'Balance and unlock flows', large: true })}
     <div class="page-content">
-      ${!isAuthed ? $h`${renderAuthGuardBlock()}` : ''}
-      ${isAuthed && state.loading ? $h`${renderLoadingBlock('Loading wallet...')}` : ''}
-      ${isAuthed && state.error ? $h`${renderErrorState({ title: 'Wallet failed', message: state.error })}` : ''}
+      ${!isAuthed ? renderAuthGuardBlock($h) : ''}
+      ${isAuthed && state.loading ? renderLoadingBlock($h, 'Loading wallet...') : ''}
+      ${isAuthed && state.error ? renderErrorState($h, { title: 'Wallet failed', message: state.error }) : ''}
 
       ${isAuthed && !state.loading && !state.error ? $h`
-        ${$h`${renderWalletSummaryCard(state.wallet)}`}
+        ${renderWalletSummaryCard($h, state.wallet)}
 
         <div class="block-title">Packages</div>
         ${state.packages.length
-          ? $h`<div class="list inset simple-list"><ul>${$h`${state.packages.map((item) => `<li>${item.name || item.title || 'Package'} • ${item.price_display || item.price_coin || 0}</li>`).join('')}`}</ul></div>`
-          : $h`${renderEmptyState({ title: 'No packages', message: 'Packages are not configured yet.' })}`}
+          ? $h`<div class="list inset simple-list"><ul>${state.packages.map((item) => $h`<li>${item.name || item.title || 'Package'} • ${item.price_display || item.price_coin || 0}</li>`)}</ul></div>`
+          : renderEmptyState($h, { title: 'No packages', message: 'Packages are not configured yet.' })}
 
         <div class="block-title">Features</div>
         ${state.features.length
-          ? $h`<div class="list inset simple-list"><ul>${$h`${state.features.map((item) => `<li>${item.code || item.name || 'Feature'} • ${item.price_coin || 0} coin</li>`).join('')}`}</ul></div>`
-          : $h`${renderEmptyState({ title: 'No features', message: 'Feature products are not configured yet.' })}`}
+          ? $h`<div class="list inset simple-list"><ul>${state.features.map((item) => $h`<li>${item.code || item.name || 'Feature'} • ${item.price_coin || 0} coin</li>`)}</ul></div>`
+          : renderEmptyState($h, { title: 'No features', message: 'Feature products are not configured yet.' })}
 
         <div class="block-title">Transactions</div>
         ${state.transactions.length
-          ? $h`<div class="list inset simple-list"><ul>${$h`${state.transactions.map((item) => `<li>${item.type || item.reference_type || 'transaction'} • ${item.amount || 0}</li>`).join('')}`}</ul></div>`
-          : $h`${renderEmptyState({ title: 'No transactions', message: 'Wallet activity will appear here.' })}`}
+          ? $h`<div class="list inset simple-list"><ul>${state.transactions.map((item) => $h`<li>${item.type || item.reference_type || 'transaction'} • ${item.amount || 0}</li>`)}</ul></div>`
+          : renderEmptyState($h, { title: 'No transactions', message: 'Wallet activity will appear here.' })}
       ` : ''}
     </div>
-    ${$h`${renderBottomNav('wallet')}`}
+    ${renderBottomNav($h, 'wallet')}
   </div>
 </template>
 <script>

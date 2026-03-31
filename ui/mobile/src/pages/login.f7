@@ -1,6 +1,6 @@
 <template>
   <div class="page" data-name="login">
-    ${$h`${renderAppHeader({ title: 'Login', subtitle: 'Bearer-first mobile auth', back: true, large: true })}`}
+    ${renderAppHeader($h, { title: 'Login', subtitle: 'Bearer-first mobile auth', back: true, large: true })}
     <div class="page-content">
       <div class="list inset">
         <ul>

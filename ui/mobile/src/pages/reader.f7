@@ -1,9 +1,9 @@
 <template>
   <div class="page reader-page theme-${state.readerTheme}" data-name="reader">
-    ${$h`${renderAppHeader({ title: state.chapter?.series?.title || 'Reader', subtitle: state.chapter?.title || 'Reading mode', back: true })}`}
+    ${renderAppHeader($h, { title: state.chapter?.series?.title || 'Reader', subtitle: state.chapter?.title || 'Reading mode', back: true })}
     <div class="page-content reader-page__content">
-      ${state.loading ? $h`${renderLoadingBlock('Loading chapter...')}` : ''}
-      ${state.error ? $h`${renderErrorState({ title: 'Reader failed', message: state.error })}` : ''}
+      ${state.loading ? renderLoadingBlock($h, 'Loading chapter...') : ''}
+      ${state.error ? renderErrorState($h, { title: 'Reader failed', message: state.error }) : ''}
 
       ${!state.loading && !state.error && state.chapter ? $h`
         ${state.isLocked ? $h`

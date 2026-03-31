@@ -1,7 +1,7 @@
 /**
  * Renders the compact bottom navigation used on primary non-reader screens.
  */
-export function renderBottomNav(active = 'home') {
+export function renderBottomNav($h, active = 'home') {
   const items = [
     { key: 'home', href: '/home/', icon: 'house_fill', label: 'Home' },
     { key: 'library', href: '/library/', icon: 'books_vertical_fill', label: 'Library' },
@@ -10,15 +10,15 @@ export function renderBottomNav(active = 'home') {
     { key: 'settings', href: '/settings/', icon: 'gear_alt_fill', label: 'Settings' },
   ];
 
-  return `
+  return $h`
     <div class="toolbar toolbar-bottom mobile-bottom-nav">
       <div class="toolbar-inner">
-        ${items.map((item) => `
+        ${items.map((item) => $h`
           <a href="${item.href}" class="link ${item.key === active ? 'tab-link-active' : ''}">
             <i class="f7-icons">${item.icon}</i>
             <span>${item.label}</span>
           </a>
-        `).join('')}
+        `)}
       </div>
     </div>
   `;

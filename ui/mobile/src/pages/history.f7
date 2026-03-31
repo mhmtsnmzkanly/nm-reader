@@ -1,17 +1,17 @@
 <template>
   <div class="page" data-name="history">
-    ${$h`${renderAppHeader({ title: 'History', subtitle: 'Recent reading sessions', large: true })}`}
+    ${renderAppHeader($h, { title: 'History', subtitle: 'Recent reading sessions', large: true })}
     <div class="page-content">
-      ${!isAuthed ? $h`${renderAuthGuardBlock()}` : ''}
-      ${isAuthed && state.loading ? $h`${renderLoadingBlock('Loading reading history...')}` : ''}
-      ${isAuthed && state.error ? $h`${renderErrorState({ title: 'History failed', message: state.error })}` : ''}
+      ${!isAuthed ? renderAuthGuardBlock($h) : ''}
+      ${isAuthed && state.loading ? renderLoadingBlock($h, 'Loading reading history...') : ''}
+      ${isAuthed && state.error ? renderErrorState($h, { title: 'History failed', message: state.error }) : ''}
       ${isAuthed && !state.loading && !state.error
         ? (state.items.length
-          ? $h`<div class="list inset simple-list"><ul>${$h`${state.items.map((item) => `<li>${item.series_title || item.title || 'Chapter'}${item.chapter_number ? ` • Chapter ${item.chapter_number}` : ''}</li>`).join('')}`}</ul></div>`
-          : $h`${renderEmptyState({ title: 'No history yet', message: 'Reading progress will appear here after you open chapters.' })}` )
+          ? $h`<div class="list inset simple-list"><ul>${state.items.map((item) => $h`<li>${item.series_title || item.title || 'Chapter'}${item.chapter_number ? ` • Chapter ${item.chapter_number}` : ''}</li>`)}</ul></div>`
+          : renderEmptyState($h, { title: 'No history yet', message: 'Reading progress will appear here after you open chapters.' }) )
         : ''}
     </div>
-    ${$h`${renderBottomNav('history')}`}
+    ${renderBottomNav($h, 'history')}
   </div>
 </template>
 <script>
