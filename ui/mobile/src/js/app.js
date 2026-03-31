@@ -34,20 +34,35 @@ function createApplication() {
     el: '#app',
     component: App,
     routes,
-    view: {
-      browserHistory: !isCordova,
-      browserHistoryRoot: '/mobile/',
-      browserHistorySeparator: '',
-      url: '/startup/',
-    },
+  });
+
+  const mainView = app.views.create('.view-main', {
+    browserHistory: !isCordova,
+    browserHistoryRoot: '/mobile/',
+    browserHistorySeparator: '',
+    url: '/startup/',
   });
 
   debugTrace({
     scope: 'app',
     action: 'createApplication:created',
     caller: 'ui/mobile/src/js/app.js#createApplication',
+    callee: 'app.views.create(.view-main)',
+    next: 'initialize main router view',
+    detail: {
+      mainViewReady: Boolean(mainView?.router),
+    },
+  });
+
+  debugTrace({
+    scope: 'app',
+    action: 'createApplication:viewReady',
+    caller: 'ui/mobile/src/js/app.js#createApplication',
     callee: 'configureApplicationRuntime',
     next: 'configure runtime handlers',
+    detail: {
+      currentUrl: mainView?.router?.currentRoute?.url || mainView?.router?.url || null,
+    },
   });
 
   configureApplicationRuntime(app);

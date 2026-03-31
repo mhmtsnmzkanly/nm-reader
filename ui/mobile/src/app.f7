@@ -1,7 +1,7 @@
 <template>
-  <div id="app">
+  <div class="app-shell">
     <div class="statusbar"></div>
-    <div class="view view-main view-init safe-areas" data-url="/startup/"></div>
+    <div class="view view-main safe-areas"></div>
   </div>
 </template>
 <script>
