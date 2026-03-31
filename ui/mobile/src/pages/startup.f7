@@ -4,7 +4,7 @@
       <div class="startup-screen__content">
         <div class="startup-screen__brand">NMR Mobile</div>
         <div class="preloader color-blue"></div>
-        <p>Preparing your mobile session...</p>
+        <p>${state.message}</p>
       </div>
     </div>
   </div>
@@ -12,15 +12,29 @@
 <script>
 import { runStartup } from '../js/bootstrap.js';
 
-export default (props, { $f7router, $onMounted }) => {
+export default (props, { $f7router, $onMounted, $update }) => {
+  const state = {
+    message: 'Preparing your mobile session...',
+  };
+
   /**
    * Executes the startup redirect flow once the page is mounted.
    */
   async function start() {
-    const result = await runStartup();
-    $f7router.navigate(result.route || '/home/', {
-      reloadCurrent: true,
-    });
+    try {
+      const result = await runStartup();
+      $f7router.navigate(result.route || '/home/', {
+        reloadCurrent: true,
+      });
+    } catch (error) {
+      state.message = 'Startup fallback engaged. Opening home...';
+      $update();
+      window.setTimeout(() => {
+        $f7router.navigate('/home/', {
+          reloadCurrent: true,
+        });
+      }, 150);
+    }
   }
 
   $onMounted(() => {

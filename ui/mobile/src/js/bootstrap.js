@@ -1,8 +1,6 @@
 import { appStore } from '../store/app-store.js';
 import { setUnauthorizedHandler } from '../services/http/client.js';
 import { tryRecoverSession } from '../services/auth/auth-service.js';
-import { fetchProfile, fetchPreferences } from '../services/user/user-service.js';
-import { fetchWalletSummary } from '../services/wallet/wallet-service.js';
 
 let startupPromise = null;
 
@@ -41,52 +39,36 @@ export async function runStartup() {
   }
 
   startupPromise = (async () => {
-    const storeState = appStore.getState();
+    try {
+      const storeState = appStore.getState();
+      if (!storeState.auth.accessToken && !storeState.auth.refreshToken) {
+        return {
+          route: '/home/',
+        };
+      }
 
-    if (!storeState.auth.accessToken && !storeState.auth.refreshToken) {
+      appStore.actions.setAuthRestoring();
+      const recovered = await tryRecoverSession();
+
+      if (!recovered) {
+        return {
+          route: '/home/',
+        };
+      }
+
+      // Startup intentionally stays lightweight.
+      // Profile, wallet, and preference payloads are fetched by their own pages
+      // so the splash screen never blocks on protected or slow secondary calls.
       return {
         route: '/home/',
       };
     }
-
-    appStore.actions.setAuthRestoring();
-    const recovered = await tryRecoverSession();
-
-    if (!recovered) {
+    catch (error) {
+      appStore.actions.clearSession();
       return {
         route: '/home/',
       };
     }
-
-    const [profile, wallet, preferences] = await Promise.allSettled([
-      fetchProfile(),
-      fetchWalletSummary(),
-      fetchPreferences(),
-    ]);
-
-    if (profile.status === 'fulfilled') {
-      appStore.actions.setUser(profile.value);
-    }
-
-    if (wallet.status === 'fulfilled') {
-      appStore.actions.setWalletSummary(wallet.value);
-    }
-
-    if (preferences.status === 'fulfilled') {
-      appStore.actions.setPreferences({
-        language: preferences.value.lang || appStore.getState().preferences.language,
-        theme: preferences.value.theme || appStore.getState().preferences.theme,
-      });
-      appStore.actions.setReaderPreferences({
-        theme: preferences.value.reader_theme || appStore.getState().readerPreferences.theme,
-        fontSize: Number(preferences.value.reader_font_size || appStore.getState().readerPreferences.fontSize),
-        imageMode: preferences.value.reader_layout || appStore.getState().readerPreferences.imageMode,
-      });
-    }
-
-    return {
-      route: '/home/',
-    };
   })();
 
   try {
