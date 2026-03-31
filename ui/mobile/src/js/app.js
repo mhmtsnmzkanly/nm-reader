@@ -6,8 +6,74 @@ import { createRoutes } from './routes.js';
 import { configureApplicationRuntime } from './bootstrap.js';
 import { installGlobals } from './globals.js';
 import { isCordovaRuntime } from '../utils/env.js';
-import { debugTrace } from '../utils/debug.js';
+import { debugError, debugTrace } from '../utils/debug.js';
 import '../styles/app.css';
+
+/**
+ * Creates the main view only after the app root component has mounted.
+ */
+function initializeMainView(app, isCordova) {
+  const viewElement = document.querySelector('.view-main');
+
+  debugTrace({
+    scope: 'app',
+    action: 'initializeMainView:start',
+    caller: 'ui/mobile/src/js/app.js#initializeMainView',
+    callee: 'document.querySelector(.view-main)',
+    next: 'create main view if shell is present',
+    detail: {
+      foundViewElement: Boolean(viewElement),
+    },
+  });
+
+  if (!viewElement) {
+    debugError({
+      scope: 'app',
+      action: 'initializeMainView:missingElement',
+      caller: 'ui/mobile/src/js/app.js#initializeMainView',
+      callee: 'app shell DOM',
+      next: 'abort main view creation',
+      detail: {
+        selector: '.view-main',
+      },
+    });
+    return null;
+  }
+
+  if (app.views.main) {
+    debugTrace({
+      scope: 'app',
+      action: 'initializeMainView:reuse',
+      caller: 'ui/mobile/src/js/app.js#initializeMainView',
+      callee: 'existing app.views.main',
+      next: 'configure runtime on current main view',
+      detail: {
+        currentUrl: app.views.main.router?.currentRoute?.url || app.views.main.router?.url || null,
+      },
+    });
+    return app.views.main;
+  }
+
+  const mainView = app.views.create(viewElement, {
+    browserHistory: !isCordova,
+    browserHistoryRoot: '/mobile/',
+    browserHistorySeparator: '',
+    url: '/startup/',
+  });
+
+  debugTrace({
+    scope: 'app',
+    action: 'initializeMainView:created',
+    caller: 'ui/mobile/src/js/app.js#initializeMainView',
+    callee: 'app.views.create(.view-main)',
+    next: 'hand off to runtime configuration',
+    detail: {
+      currentUrl: mainView?.router?.currentRoute?.url || mainView?.router?.url || null,
+    },
+  });
+
+  return mainView;
+}
 
 /**
  * Creates the root Framework7 app with the rebuilt mobile architecture.
@@ -34,10 +100,33 @@ function createApplication() {
     el: '#app',
     component: App,
     routes,
-    view: {
-      browserHistory: !isCordova,
-      browserHistoryRoot: '/mobile/',
-      browserHistorySeparator: '',
+    init: true,
+    on: {
+      init(instance) {
+        debugTrace({
+          scope: 'app',
+          action: 'createApplication:init',
+          caller: 'Framework7 init hook',
+          callee: 'initializeMainView',
+          next: 'mount startup route on main view',
+        });
+
+        const mainView = initializeMainView(instance, isCordova);
+        configureApplicationRuntime(instance);
+        installGlobals();
+
+        debugTrace({
+          scope: 'app',
+          action: 'createApplication:ready',
+          caller: 'Framework7 init hook',
+          callee: 'root view',
+          next: 'render /startup/ route',
+          detail: {
+            mainViewReady: Boolean(mainView?.router),
+            currentUrl: mainView?.router?.currentRoute?.url || mainView?.router?.url || null,
+          },
+        });
+      },
     },
   });
 
@@ -45,19 +134,8 @@ function createApplication() {
     scope: 'app',
     action: 'createApplication:created',
     caller: 'ui/mobile/src/js/app.js#createApplication',
-    callee: 'configureApplicationRuntime',
-    next: 'configure runtime handlers',
-  });
-
-  configureApplicationRuntime(app);
-  installGlobals();
-
-  debugTrace({
-    scope: 'app',
-    action: 'createApplication:ready',
-    caller: 'ui/mobile/src/js/app.js#createApplication',
-    callee: 'root view',
-    next: 'render /startup/ route',
+    callee: 'Framework7 init hook',
+    next: 'wait for app root component to mount',
   });
 
   return app;
