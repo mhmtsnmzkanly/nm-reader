@@ -1,944 +1,473 @@
-# NovelMangaReader - Unified Project Documentation (Optimized for AI Agents)
+# NovelMangaReader Unified Documentation
 
-This document serves as the absolute authority on the project's architecture, conventions, and development workflows.
+This file is the single canonical project document for the repository. Legacy Markdown files now point back here.
 
----
+## Contents
+- Project Overview
+- Architecture
+- Backend
+- Frontend Web
+- Mobile App
+- API Reference
+- Database
+- Operations
+- Development Workflow
+- Recent Changes
 
-## 1. Core Architecture (Static-First)
+## Project Overview
 
-### Unified Configuration (`app/Config.php`)
-- **Single Source of Truth**: All application settings, RBAC definitions, and routing rules are centralized in the `App\Config` class.
-- **Singleton Pattern**: Use `Config::getInstance()` or `Config::getSettings()` for high-performance, memory-cached access.
-- **Environment Integration**: Values are pulled from `.env` via `$_ENV` with strict fallback defaults.
+NovelMangaReader is a PHP 8.3 + Slim 4 application for reading manga and novels, with:
+- server-side rendered public pages
+- a JSON API under `/api/v1`
+- an admin surface
+- a Framework7 mobile web app served from `/mobile`
+- wallet and unlock flows for paid content/features
 
-### Minimal SSR Skeleton
-- **Rendering**: Uses Server-Side Rendering (SSR) for all public pages. The public layout has been reduced to a minimal skeleton shell with plain HTML output, purposely avoiding site-wide stylesheets to maximize performance and SEO.
-- **API**: Standardized JSON REST API under `/api/v1` remains available for administrative and interactive features.
+Core repository areas:
+- `app/`: application code
+- `public/`: web root and built assets
+- `storage/`: logs, cache, sessions, views, language files
+- `ui/web/`: web CSS toolchain
+- `ui/mobile/`: Framework7 mobile source
 
----
+## Architecture
 
-## 2. Security & RBAC
+### Central Configuration
 
-### ROOT_USER (Superuser)
-- Defined by the `ROOT_USER` ID in `.env`.
-- **Bypass Mode**: Automatically granted all permissions, bypassing the RBAC logic.
-- **Exclusive Actions**: Only the ROOT_USER can trigger system backups, sitemap generation, cache warming, and manual analytics aggregation via the admin/API flows.
+`App\Config` in [app/Config.php](/home/duldul/Belgeler/nm-reader/app/Config.php) is the main coordination point for:
+- app settings
+- DB settings
+- cache settings
+- RBAC definitions
+- route registration
 
-### Static RBAC
-- Roles (`admin`, `moderator`, `editor`, `user`) and their permission nodes are defined in `Config.php`.
-- **Database Mapping**: The `users.roles` column stores comma-separated numeric IDs (e.g., `1,2`) which are mapped to slugs via `Config::getRbacConfig()['id_map']`.
+Configuration values are loaded from `.env` via `$_ENV` with defaults.
 
----
+### Request Model
 
-## 3. Directory Structure Map
+The application follows a layered flow:
+- Controller: HTTP input/output
+- Service: business rules
+- Repository: SQL access
 
-- `app/`:
-    - `Config.php`: Centralized logic for Settings and Routing.
-    - `app.php`: Application bootstrap and Slim initialization.
-    - `dependencies.php`: PHP-DI container definitions.
-    - `database/`: Contains `schema.sql` (Source of Truth).
-    - `Console/`: Standalone CLI tools for maintenance.
-    - `Controllers/`, `Services/`, `Repositories/`, `Middleware/`, `Models/`, `DTO/`, `Helpers/`: Core logic.
-- `public/`: Web root.
-- `storage/`:
-    - `cache/`: File-based caching.
-    - `logs/`: Application and audit logs.
-    - `sessions/`: PHP session files.
-    - `views/`: SSR PHP templates.
-    - `lang/`: i18n dictionaries.
+Bootstrap flow:
+1. [public/index.php](/home/duldul/Belgeler/nm-reader/public/index.php)
+2. [app/app.php](/home/duldul/Belgeler/nm-reader/app/app.php)
+3. [app/dependencies.php](/home/duldul/Belgeler/nm-reader/app/dependencies.php)
+4. [app/middleware.php](/home/duldul/Belgeler/nm-reader/app/middleware.php)
+5. route registration in [app/Config.php](/home/duldul/Belgeler/nm-reader/app/Config.php)
 
----
+### Rendering Strategy
 
-## 4. Development Standards & Workflow
+Public web pages use SSR PHP templates from `storage/views`.
 
-### Backend (PHP 8.3)
-- **Strict Typing**: `declare(strict_types=1);` is mandatory.
-- **Layered Pattern**: Controller (HTTP) -> Service (Business Logic) -> Repository (SQL).
-- **ID Generation**: Use `App\Services\EntityIdService` for alphanumeric IDs.
+The mobile app is a separate Framework7 frontend that builds into `public/mobile` and is served through `/mobile`.
 
-### Frontend (Minimalist)
-- **SSR Strategy**: Focus on semantic HTML and direct data output. Avoid client-side rendering for core content.
-- **JS Bundles**: 
-    - `public/assets/js/app-bundle.js`: A minimal fetch wrapper (`window.NMRData`) for CSR data access.
-    - `public/assets/js/admin-bundle.js`: Modular namespace-based structure for administration logic.
-- **i18n**: Handled server-side; strings are injected into views or fetched via `/api/v1/i18n/{lang}`.
+## Backend
 
-### Git Mandate (CRITICAL)
-- **Descriptive Commits**: AFTER every logical change or feature, a Git commit MUST be created with a clear description (e.g., `git commit -m "feat: add localized footer taxonomy"`).
-- **Restoration**: This ensures every step is a verifiable checkpoint for potential rollbacks.
-- **Push Requirement**: After local verification passes, push the commit to `origin/main` so the remote deployment source stays current.
+### Runtime
 
-### Documentation Mandate
-- **Markdown Change Log**: Every requested code or behavior change must also be recorded in the relevant Markdown documentation file(s), at minimum in `PROJECT.md` and additionally in `API_REFERENCE.md` or `DATABASE.md` when interface or schema behavior changes.
-- **Development Context**: This repository checkout is a development workspace. Production runs on a remote server, so local changes must be treated as staged development work until they are verified and pushed.
+- PHP `^8.3`
+- Slim `^4.13`
+- PHP-DI `^7`
+- Monolog `^3`
+- Dotenv `^5.6`
 
-### Feature Implementation Steps:
-1. **DB**: Update `app/database/schema.sql` and run migration.
-2. **Backend**: DTO -> Repository -> Service -> Controller.
-3. **Routing**: Register in `app/Config.php`.
-4. **Frontend**: Update `app-bundle.js` (public) or `admin-bundle.js` (admin) and implement UI logic.
-5. **Commit**: Perform Git commit for the task.
+### Key Conventions
 
-### Developer Notes / Quick Pointers
-- **Public UI JS (site)**: `public/assets/js/main.js` (client-side behavior).
-- **Admin UI JS**: `public/assets/js/admin-bundle.js`.
-- **SSR Views**: `storage/views/*.php` (page layout/markup).
-- **API Routes**: `app/Config.php` (single source of truth).
-- **Controllers**: `app/Controllers/*` (HTTP handlers).
-- **Services (business logic)**: `app/Services/*`.
-- **Repositories (DB)**: `app/Repositories/*`.
-- **Schema**: `app/database/schema.sql`.
-- **Migrations**: `app/database/migrations/*.sql`.
-- **Tailwind build (web UI)**: `ui/web` (input: `ui/web/assets/css/input.css`, output: `public/assets/css/main.css`).
-- **Mobile app spec**: `F7.md` (Framework7 v9 Core plan/spec).
+- `declare(strict_types=1);` is required
+- primary application services live under `app/Services`
+- repositories live under `app/Repositories`
+- DTOs live under `app/DTO`
+- alphanumeric entity IDs are generated through `App\Services\EntityIdService`
 
----
+### Security and RBAC
 
-## 5. Maintenance & CLI Tasks
+Roles are statically defined in [app/Config.php](/home/duldul/Belgeler/nm-reader/app/Config.php):
+- `admin`
+- `moderator`
+- `editor`
+- `user`
 
-### Core Scripts (`app/Console/`)
-- `system_backup.php`: Full DB + Media backup.
-- `generate_sitemap.php`: Updates `public/sitemap.xml`.
-- `analytics_aggregate.php`: Aggregates stats.
-- `retention_cleanup.php`: Deletes expired data.
-- `cache_warmer.php`: Pre-populates homepage and type listing caches.
-- `setup_chat.php`: Initializes the global chat blog entry and configuration.
-- `seed_default_data.php`: Populates initial taxonomy (genres/tags) and settings.
-- `create_admin.php`: CLI utility to create the initial root/admin user.
-- `queue_worker.php`: Processes background jobs (notifications, async tasks).
+`ROOT_USER` from `.env` is treated as a superuser and bypasses standard RBAC checks.
 
-### Cron Setup
+Protected API routes use session auth plus CSRF enforcement. Optional bearer token identity is supported for public or native/mobile flows, but does not replace the session requirement for protected routes.
+
+## Frontend Web
+
+### Delivery Model
+
+The main site is SSR-first and intentionally light on client rendering.
+
+Important assets:
+- [public/assets/js/main.js](/home/duldul/Belgeler/nm-reader/public/assets/js/main.js)
+- [public/assets/js/app-bundle.js](/home/duldul/Belgeler/nm-reader/public/assets/js/app-bundle.js)
+- [public/assets/js/admin-bundle.js](/home/duldul/Belgeler/nm-reader/public/assets/js/admin-bundle.js)
+- [public/assets/css/main.css](/home/duldul/Belgeler/nm-reader/public/assets/css/main.css)
+
+### Web CSS Toolchain
+
+Source lives in [ui/web/assets/css/input.css](/home/duldul/Belgeler/nm-reader/ui/web/assets/css/input.css).
+
+Build commands from [ui/web/package.json](/home/duldul/Belgeler/nm-reader/ui/web/package.json):
+- `npm run build:css`
+- `npm run watch:css`
+
+Output target:
+- [public/assets/css/main.css](/home/duldul/Belgeler/nm-reader/public/assets/css/main.css)
+
+The web Tailwind toolchain uses Tailwind CSS v4 plus `@tailwindcss/cli`.
+
+## Mobile App
+
+### Stack
+
+The mobile frontend uses:
+- Framework7 v9 Core
+- Vite
+- vanilla JS/HTML/CSS
+
+Source:
+- `ui/mobile`
+
+Build output:
+- `public/mobile`
+
+Entry path:
+- `/mobile`
+
+### Mobile Goals
+
+The mobile app mirrors the core reading flow:
+- browse content
+- open detail pages
+- load chapters
+- read chapter
+- log in/register
+- unlock with wallet balance
+
+### Mobile State Model
+
+Minimal global store in [ui/mobile/src/js/store.js](/home/duldul/Belgeler/nm-reader/ui/mobile/src/js/store.js):
+- `auth`
+- `wallet`
+
+### Mobile API Client
+
+The Framework7 app talks to the backend via [ui/mobile/src/js/api.js](/home/duldul/Belgeler/nm-reader/ui/mobile/src/js/api.js).
+
+Default base URL:
+- `/api/v1`
+
+Auth model:
+- web: session cookie + CSRF
+- fallback/native-style support: bearer `api_token`
+
+### Mobile Routing
+
+Primary routes live in [ui/mobile/src/js/routes.js](/home/duldul/Belgeler/nm-reader/ui/mobile/src/js/routes.js).
+
+Implemented screens include:
+- home
+- type list
+- content detail
+- reader
+- wallet
+- wallet transactions
+- shop pages
+- profile/public profile
+- library/history
+- blogs/blog detail
+- chat
+- notifications
+- preferences
+- sessions
+
+## API Reference
+
+Base URL:
+- `{APP_URL}/api/v1`
+
+Standard response envelope:
+
+```json
+{
+  "status": "success",
+  "data": {},
+  "meta": {
+    "total": 0,
+    "page": 1,
+    "per_page": 20
+  }
+}
+```
+
+### Auth and Identity
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `GET|POST /auth/logout`
+- `GET /auth/sessions`
+- `DELETE /auth/sessions/{sessionKey}`
+
+Protected non-GET routes require `X-CSRF-Token` from login/refresh responses.
+
+### Public Discovery
+
+- `GET /home`
+- `GET /content/type/{type}`
+- `GET /content/{type}/{slug}`
+- `GET /content/{type}/{slug}/chapters`
+- `GET /content/{type}/{slug}/chapter/{chapterNumber}`
+- `GET /chapter/{chapterNumber}` legacy read route
+- `GET /latest-chapters`
+- `GET /content/{type}/chapters`
+- `GET /search`
+- `GET /search/suggest`
+- `GET /genres`
+- `GET /tags`
+- `GET /series_genres`
+- `GET /series_tags`
+- `GET /genre/{slug}`
+- `GET /tag/{slug}`
+- `GET /profile/{person}`
+- `GET /i18n/{lang}`
+- `POST /log/error`
+
+### Social and Blog Reads
+
+- `GET /blogs`
+- `GET /blogs/{slug}`
+- `GET /blogs/{slug}/comments`
+- `GET /chapter/{chapterId}/comments`
+- `GET /content/{type}/{slug}/comments`
+
+Comment list endpoints support `page`, `per_page`, and optional keyset `cursor`.
+
+### Protected User Actions
+
+- `POST /content/{type}/{slug}/follow`
+- `DELETE /content/{type}/{slug}/follow`
+- `POST /content/{type}/{slug}/rate`
+- `POST /content/{type}/{slug}/comment`
+- `POST /chapter/{chapterId}/comment`
+- `POST /comments/{commentId}/vote`
+- `POST /blogs/{slug}/comments`
+- `POST /blogs/{slug}/comments/{commentId}/vote`
+
+### User Area
+
+- `GET /user/profile`
+- `POST /user/profile`
+- `GET /user/history`
+- `GET /user/preferences`
+- `PUT /user/preferences`
+- `GET /user/follows`
+- `GET /user/follows/users`
+- `POST /user/follows/{person}`
+- `DELETE /user/follows/{person}`
+- `GET /user/notifications`
+- `POST /user/notifications/read`
+
+### Wallet and Monetization
+
+- `GET /user/wallet`
+- `GET /user/wallet/transactions`
+- `GET /user/unlocks/series`
+- `GET /user/unlocks/chapters`
+- `POST /content/{type}/{slug}/unlock`
+- `POST /chapter/{chapterId}/unlock`
+- `GET /shop/packages`
+- `GET /shop/features`
+- `GET /user/features`
+- `GET /user/features/entitlements`
+- `POST /user/features/ad-free/purchase`
+
+### Admin API
+
+Admin endpoints are grouped under:
+- `/api/v1/admin`
+
+Coverage includes:
+- overview and metrics
+- users and RBAC
+- content/chapters/taxonomy
+- uploads
+- blogs/comments moderation
+- queue/maintenance
+- wallet/shop/pricing
+- logs and audit views
+
+For exact route list, use [app/Config.php](/home/duldul/Belgeler/nm-reader/app/Config.php) as the implementation reference.
+
+## Database
+
+Schema source of truth:
+- [app/database/schema.sql](/home/duldul/Belgeler/nm-reader/app/database/schema.sql)
+
+Migrations:
+- `app/database/migrations/*.sql`
+
+### Core Design
+
+- MySQL/MariaDB with InnoDB
+- `utf8mb4_unicode_ci`
+- primary entities use alphanumeric IDs
+- log/auxiliary tables typically use auto-increment IDs
+
+### Core Tables
+
+#### Users and Identity
+
+- `users`
+- `user_sessions`
+- `user_refresh_tokens`
+- `user_login_logs`
+- `user_preferences`
+- `user_follows`
+
+#### Content
+
+- `series`
+- `series_metadata`
+- `chapters`
+- `series_genres`
+- `series_tags`
+- `series_genre_map`
+- `series_tag_map`
+
+#### Social
+
+- `blogs`
+- `social_comments`
+- `ratings`
+- `user_series_follows`
+- `user_activity`
+
+#### Reading and Progress
+
+- `user_reading_progress`
+- `user_chapters_reads`
+- `user_notifications`
+
+#### Monetization
+
+- `user_wallets`
+- `wallet_transactions`
+- `shop_packages`
+- `site_feature_products`
+- `user_feature_entitlements`
+- `series_access_products`
+- `user_series_unlocks`
+- `user_chapter_unlocks`
+
+#### Analytics and System
+
+- `analytics_events`
+- `analytics_search_logs`
+- `analytics_snapshots_*`
+- `analytics_series_daily`
+- `analytics_chapters_daily`
+- `analytics_series_views`
+- `analytics_chapters_views`
+- `system_uploads`
+- `system_audit_logs`
+- `admin_actions`
+- `system_jobs`
+
+### Important Notes
+
+- `chapters.data` stores either novel text content or pipe-separated image URLs
+- chapter-level pricing is stored on `chapters.price_amount`
+- series-level pricing is stored in `series_access_products`
+- wallet activity is ledger-based via `wallet_transactions`
+
+## Operations
+
+Core console scripts under `app/Console`:
+- `analytics_aggregate.php`
+- `retention_cleanup.php`
+- `system_backup.php`
+- `generate_sitemap.php`
+- `cache_warmer.php`
+- `setup_chat.php`
+- `seed_default_data.php`
+- `create_admin.php`
+- `queue_worker.php`
+
+Common commands:
+
 ```bash
-# Every Hour: Statistics
+php app/Console/analytics_aggregate.php
+php app/Console/retention_cleanup.php
+php app/Console/system_backup.php
+php app/Console/generate_sitemap.php
+```
+
+Suggested cron examples:
+
+```bash
 0 * * * * php /path/to/project/app/Console/analytics_aggregate.php
-# Daily at 3 AM: Backup
 0 3 * * * php /path/to/project/app/Console/system_backup.php
-# Daily at 12 AM: Cleanup
 0 0 * * * php /path/to/project/app/Console/retention_cleanup.php
 ```
 
----
-
-## 6. Recent Activity
-### Mobile: Global Chat API Hardening (2026-03-23)
-- **Status**: Completed.
-- **Change**: Fixed blog comment handling to use string blog IDs (`char(6)`) instead of integer casts, restoring `global-chat` comment lookups against the active schema.
-- **Change**: Hardened comment listing endpoints to return proper `400`/`404` API responses instead of uncaught `500` errors when a chapter, series, or blog comment target is invalid or missing.
-- **Change**: Added lazy bootstrap for the reserved `global-chat` blog so comment reads/writes can self-heal when the remote environment is missing the seeded chat entry.
-
-### Tooling: Web Tailwind Build Repair (2026-03-31)
-- **Status**: Completed.
-- **Change**: Added the dedicated `@tailwindcss/cli` dev dependency under `ui/web` so the `npm run build:css` pipeline works again with Tailwind CSS v4.
-- **Change**: Fixed the `ui/web` Tailwind output path so CSS builds write to the real web bundle target at `public/assets/css/main.css` instead of accidentally generating `ui/public/...`.
-- **Change**: Verified the web CSS build no longer fails with `npm error could not determine executable to run`.
-- **Change**: Reordered the Google Fonts import in `ui/web/assets/css/input.css` so Tailwind no longer emits the import-order optimization warning during CSS builds.
-
-### Mobile: Chapter Page Fixes (2026-03-23)
-- **Status**: Completed.
-- **Change**: Content detail now paginates and loads additional chapter batches instead of silently truncating long chapter lists at the API default page size.
-- **Change**: Reader now shows chapter navigation controls using backend `adjacent_chapters`.
-- **Change**: Reader chapter comments can now be posted from the UI again because the missing chapter comment form was restored.
-- **Change**: Reader text chapters now render structured blocks (headings, lists, quotes, paragraphs) instead of flattening all content into plain newline-split paragraphs.
-- **Change**: Follow, rate, and series comment actions on content detail now enforce the same login-popup guard used elsewhere in mobile.
-- **Change**: Mobile media URL normalization now guards non-string values before calling string helpers, fixing `startsWith is not a function` crashes on malformed or partial payloads.
-- **Change**: Content detail page now renders explicit loading and error states instead of showing partially initialized content while requests are still in flight.
-- **Change**: Fixed a reader runtime crash caused by using `$h` outside the template render scope; structured novel blocks are now rendered as safe HTML strings.
-
-### Mobile: API Contract & Security Fixes (2026-03-23)
-- **Status**: Completed.
-- **Change**: Fixed mobile follow/unfollow API helpers for public profiles.
-- **Change**: Fixed mobile vote payloads to send `vote` instead of `value`, restoring comment and blog voting.
-- **Change**: Fixed mobile profile image upload field mapping from `avatar` to `profile_image`.
-- **Change**: Exposed public profile avatar data in the API response so mobile public profiles render images correctly.
-- **Change**: Hardened Turnstile verification to fail closed and return `503` when the verification service is unavailable.
-
-### Mobile: Backend & Stability Improvements (2026-03-21)
-- **Status**: Completed.
-- **Change**: Created `app/Console/setup_chat.php` to automatically initialize the global chat blog entry.
-- **Change**: Fixed **500 Internal Server Error** in chat by ensuring the required `global-chat` blog exists.
-- **Change**: Enhanced **Session Cleanup** logic to force navigation away from protected pages if the authentication token is found to be invalid during app startup.
-
-### Mobile: Stability & Reader Fixes (2026-03-21)
-- **Status**: Completed.
-- **Change**: Fixed **401 Unauthorized** errors by adding `checkAuth` verification during app initialization.
-- **Change**: Improved **Reader Reliability** by wrapping `loadChapter` in a try/catch/finally block to ensure loading states are cleared.
-- **Change**: Enhanced **Content Detection** in reader to accurately distinguish between text (novels) and image (manga) chapters.
-- **Change**: Fixed **Broken Images** in reader by ensuring consistent URL normalization for chapter pages.
-
-### Mobile: Parity & Real-time Features (2026-03-21)
-- **Status**: Completed.
-- **Change**: Converted **Global Chat** from mock to functional using polling against the blog comments API.
-- **Change**: Enhanced **User Profile** with avatar support and links to public profile/comments.
-- **Change**: Improved **Public Profile** layout and statistics display.
-
-### Mobile: Feature Parity & Enhancements (2026-03-21)
-- **Status**: Completed.
-- **Change**: Implemented **Public Profiles** view with user statistics, bio, and recent activity (blogs/comments).
-- **Change**: Added **Profile Editing** page for mobile, supporting bio updates and avatar uploads.
-- **Change**: Enhanced **Home Page** with a featured explore slider and popular blogs list.
-- **Change**: Implemented true **Search Autocomplete** using the backend suggestions API.
-- **Change**: Added **Global Chat** UI and integrated it into the main navigation tab bar.
-- **Change**: Improved **Content Detail** page with richer metadata (author, artist, status, release year) and linked comments to public profiles.
-
-### Mobile: Reader & UI Stabilization (2026-03-21)
-- **Status**: Completed.
-- **Change**: Clarified text/image distinction in reader and optimized rendering for novel/manga content.
-- **Change**: Resolved Dom7 TypeError by properly wrapping `$el` and importing `dom7` in all Framework7 components.
-- **Change**: Restored reader themes and pure Framework7 shop pages.
-- **Change**: Fixed tab navigation and structural chaos by stabilizing tab-views and fixing HTML tags.
-- **Change**: Reset mobile UI to pure Framework7 native components, removing redundant custom styling and Tailwind remnants.
-- **Change**: Redesigned Library, Profile, and Search pages using native Framework7 components for a more "app-like" feel.
-
-### Mobile: Reader Themes (2026-03-19)
-- **Status**: Completed.
-- **Change**: Added theme selection (Dark, Light, Sepia) to the mobile reader page.
-- **Change**: Implemented theme persistence in `localStorage`.
-- **Change**: Added custom CSS for reader themes in `ui/mobile/src/css/app.css`.
-
-### Mobile: Chapter Comments (2026-03-19)
-- **Status**: Completed.
-- **Change**: Implemented chapter comments section in `ui/mobile/src/pages/reader.f7`.
-- **Change**: Added support for listing, posting, and voting on chapter comments in the mobile UI.
-- **Change**: Integrated `api.interactions.listChapterComments` and `api.interactions.createChapterComment` into the reader flow.
-
-### Mobile: Remove Tailwind CSS (2026-03-18)
-- **Status**: Completed.
-- **Change**: Removed Tailwind CSS from `ui/mobile` to reduce build complexity and bundle size.
-- **Change**: Converted all Tailwind utility classes used in the mobile app to standard CSS classes in `src/css/app.css`.
-- **Change**: Removed `tailwind.config.js` and updated `package.json` and `postcss.config.js`.
-
-### Mobile: Framework7 CLI Scaffold (2026-03-18)
-- **Status**: Completed.
-- **Change**: Added `/mobile` web entry that serves the Framework7 app shell from `public/mobile/index.html`.
-- **Change**: Rebuilt `ui/mobile` via Framework7 CLI (Core + Vite) and configured Vite output to `public/mobile` with `/mobile/` base path.
-- **Change**: Wired P0 navigation and data screens (home, type list, content detail, reader, wallet) to the mobile API client.
-- **Change**: Added login popup + token persistence and wired chapter unlock flow in the reader.
-- **Change**: Wallet page now prompts login when required and refreshes balance after unlock.
-- **Change**: Added wallet transactions view and shop packages/features pages for mobile.
-- **Change**: Added mobile i18n loader (Template7 globals) and global API error toasts.
-- **Change**: Register flow now auto-logs in and refresh token updates session storage.
-- **Change**: Enhanced type list price badges and wallet transaction metadata display.
-- **Change**: Added purchase popup flow for chapter unlocks in mobile UI.
-- **Change**: Added language switcher sheet for mobile i18n.
-- **Change**: Improved pricing badges in mobile content lists.
-- **Change**: Added global page error toasts for mobile views.
-- **Change**: Added transaction pagination, shop info notes, and reader font size controls.
-- **Change**: Expanded mobile i18n coverage across lists, wallet, shop, and reader messages.
-- **Change**: Polished mobile list badges and empty/error states.
-- **Change**: Adjusted mobile CSP/font loading, icon paths, and event handlers to stabilize runtime.
-- **Change**: CSP now allows data: fonts for mobile icon fonts.
-- **Change**: Rebuilt mobile web assets after UI/i18n updates.
-
-### UI Workspace Layout (2026-03-18)
-- **Status**: Completed.
-- **Change**: Moved web UI tooling into `ui/web` and created `ui/mobile` placeholder for the Framework7 app. Tailwind build now outputs to `public/assets/css/main.css`.
-
-### Chapter Pricing: Store Price on Chapters (2026-03-18)
-- **Status**: Completed.
-- **Change**: Moved per-chapter pricing to `chapters.price_amount` with `price_last_update` and added migration to backfill/drop `chapter_access_products`.
-
-### Admin Chapters: Pricing Controls + Purchase Modal (2026-03-18)
-- **Status**: Completed.
-- **Change**: Added chapter pricing controls (coin) to admin create/edit flow and wired pricing updates via admin API.
-- **Change**: Replaced chapter purchase confirm with the existing purchase modal and updated unlock UI/wallet display after purchase.
-
-### Frontend: Chapter Purchase Flow (2026-03-18)
-- **Status**: Completed.
-- **Change**: Added chapter unlock flow on content pages with login check and purchase prompt.
-
-### Admin Chapters: Fix Content Selection (2026-03-18)
-- **Status**: Completed.
-- **Change**: New chapter modal now syncs selected content and defaults to the first series when available.
-
-### Admin Content: Hide Deleted Records (2026-03-18)
-- **Status**: Completed.
-- **Change**: Admin content listing now excludes soft-deleted series.
-
-### Admin Content: Correct Create Audit Action (2026-03-18)
-- **Status**: Completed.
-- **Change**: Content creation now logs `create` instead of `update` in moderation actions.
-
-### Admin Content: Validate Status Updates (2026-03-18)
-- **Status**: Completed.
-- **Change**: Content status updates now validate allowed values on admin edits.
-
-### Admin Chapters: Prevent Duplicate Numbers (2026-03-18)
-- **Status**: Completed.
-- **Change**: Admin chapter updates now validate chapter number uniqueness within a series.
-
-### Frontend: Surface API Error Messages (2026-03-18)
-- **Status**: Completed.
-- **Change**: Updated frontend API wrapper to read `error.message` from server responses.
-
-### Uploads: Zip Chapter Import (2026-03-18)
-- **Status**: Completed.
-- **Change**: Admin bulk upload now accepts `.zip` archives and extracts image files safely with limits.
-
-### Uploads: Server-Side Validation + File Cleanup (2026-03-18)
-- **Status**: Completed.
-- **Change**: Added server-side MIME validation and re-encoding to strip metadata on upload.
-- **Change**: Admin upload deletion now removes files from disk as well as DB records.
-- **Change**: GIF uploads now preserve animation by skipping re-encode while still validating magic bytes.
-
-### Frontend: Cursor Pagination + Notifications Fix (2026-03-18)
-- **Status**: Completed.
-- **Change**: Added cursor pagination support in `main.js` and mobile API example; fixed notifications read endpoint to `/user/notifications/read`.
-
-### Cursor Pagination: Helper + Test (2026-03-18)
-- **Status**: Completed.
-- **Change**: Centralized cursor encode/decode logic and added a lightweight integration test.
-
-### Auth Refresh: Return CSRF Token (2026-03-18)
-- **Status**: Completed.
-- **Change**: Refresh endpoint now returns the active CSRF token for protected API calls.
-
-### Pagination: Cursor Support for Comments & Notifications (2026-03-18)
-- **Status**: Completed.
-- **Change**: Added cursor-based pagination for comment and notification feeds to avoid deep offset costs.
-
-### Home Feed: Respect per_page (2026-03-18)
-- **Status**: Completed.
-- **Change**: Home payload now honors `per_page` for explore, recent chapters, and recently added sections.
-
-### Analytics: Persist Search Logs (2026-03-18)
-- **Status**: Completed.
-- **Change**: Added `analytics_search_logs` table and migration so search analytics are written reliably.
-
-### Search Ranking: Full-Text Relevance Fix (2026-03-18)
-- **Status**: Completed.
-- **Change**: Stabilized full-text relevance ordering when metadata is missing by coalescing NULL scores to zero.
-
-### Auth Middleware: Preserve Bearer Identity (2026-03-18)
-- **Status**: Completed.
-- **Change**: Prevented optional auth middleware from overwriting identity already set by bearer-token authentication.
-
-### Performance Maintenance: Hot-Path Indexes (2026-03-18)
-- **Status**: Completed.
-- **Change**: Added targeted indexes for comments, notifications, audit logs, and login logs to reduce hot-path query cost.
-
-### Performance Maintenance: Search Full-Text (2026-03-18)
-- **Status**: Completed.
-- **Change**: Introduced full-text search indexes for series and metadata, and updated search query flow to use Boolean full-text when possible.
-
-### Auth & Frontend Docs: CSRF + Refresh Tokens (2026-03-18)
-- **Status**: Completed.
-- **Change**: Documented `X-CSRF-Token` requirements for protected endpoints and clarified session-first auth behavior.
-- **Change**: Updated auth payload/response samples to include `remember`, `csrf_token`, and refresh-token rotation details.
-- **Change**: Aligned database notes with `api_token_expires_at` semantics.
-
-### Frontend Performance: Footer Cache + JS Scoping (2026-03-17)
-- **Status**: Completed.
-- **Change**: Cached footer popular list to reduce repeated search load.
-- **Change**: Scoped profile/search/reader JS bindings to their relevant templates.
-
-### SSR Cache Headers For Anonymous Traffic (2026-03-17)
-- **Status**: Completed.
-- **Change**: Added `s-maxage` and stale caching directives for anonymous SSR responses while keeping logged-in responses private.
-
-### Profile Wallet Tab & Manual Top-Up UX (2026-03-17)
-- **Status**: Completed.
-- **Change**: Added a profile wallet tab that surfaces balance, packages, features, and transaction history using existing API endpoints.
-- **Change**: Documented that wallet top-ups are performed manually by admins (no payment integration).
-
-### Documentation Refresh: Auth Turnstile & Frontend Coverage (2026-03-17)
-- **Status**: Completed.
-- **Change**: Clarified that API and frontend auth payloads use `turnstile_token` when Cloudflare Turnstile is enabled.
-- **Change**: Expanded frontend API coverage to include public discovery and reading endpoints alongside the standard response envelope.
-- **Change**: Clarified that API base URLs are derived from `APP_URL` with a local example for development.
-
-### Public SSR Skeleton Pages Replace Previous Design Layers (2026-03-09)
-- **Status**: Completed.
-- **Problem**:
-  - Public-facing pages had accumulated multiple visual systems and JS-heavy presentation layers, making the frontend harder to maintain when only direct data output was needed.
-  - Core discovery and reading routes such as home, blogs, search, content, chapter, profile, genre, and tag were relying on decorative layouts instead of a stable minimal SSR baseline.
-- **Fix**:
-  - Replaced the main public layout with a minimal skeleton shell and then reduced it further to plain HTML output without relying on a site design stylesheet.
-  - Rebuilt `home`, `blogs`, `blog detail`, `content`, `chapter`, `profile`, `search`, `genre`, `tag`, and type listing pages as simple server-rendered data views using straightforward semantic markup.
-  - Moved home, search, category, genre, tag, and content chapter data needs into direct SSR context so the simplified pages no longer depend on client-side rendering for basic output.
-  - Reduced `public/assets/js/app-bundle.js` to a minimal fetch wrapper so only CSR data access helpers remain and UI rendering logic is removed from the public bundle.
-
-### View Template Naming Cleanup (2026-03-09)
-- **Status**: Completed.
-- **Change**:
-  - Removed the `pages_` filename prefix from SSR and admin view templates under `storage/views/`.
-  - Updated the main render pipeline and install controller so templates resolve directly by their actual file names.
-
-### Melt Layer Removal & Asset Cleanup (2026-03-09)
-- **Status**: Completed.
-- **Change**:
-  - Removed the deprecated `melt` route set and deleted the related Melt-only templates and layout.
-  - Deleted Melt-specific JS/CSS assets plus orphaned backup stylesheet files that no longer have any runtime references.
-
-### Documentation Synchronization & Maintenance (2026-03-09)
-- **Status**: Completed.
-- **Maintenance**:
-  - Hardened `.gitignore` by removing redundant exclusions for SSR PHP views. This ensures that essential layout, page, and partial templates (like `partials_modals.php`) are consistently tracked and deployed.
-  - Synchronized `DATABASE.md` with the production schema by adding `user_login_logs` and descriptive entries for core supporting tables (preferences, follows, reading history, and analytics snapshots).
-  - Synchronized `API_REFERENCE.md` by documenting public aliases for taxonomy endpoints (`/series_genres`, `/series_tags`) and expanding it with complete coverage for all Administrative (`/api/v1/admin`) endpoints.
-  - Created `FRONTEND.md` to provide a structured API reference specifically for frontend integration (Discovery, Auth, User, and Protected endpoints).
-  - Removed legacy `DESIGN_SPEC.md` as part of documentation consolidation and the transition to the minimal SSR skeleton.
-  - Verified `melt`-prefixed routes in the backend controller to ensure alignment with the Flores-inspired UI rebuild from 2026-03-08.
-
-### Melt View Template Hardening (2026-03-08)
-- **Status**: Completed.
-- **Problem**:
-  - `pages_melt_*.php` templates had brittle Melt breadcrumb rewriting and weak empty-state handling, making some catalogue/detail screens feel broken when data was sparse.
-  - Melt content chips were also losing taxonomy color/icon metadata compared with the main UI.
-- **Fix**:
-  - Hardened Melt breadcrumb URL conversion for content, chapter, and listing templates so locale-aware links consistently point to Melt routes without duplicate path segments.
-  - Added explicit empty-state rendering for Melt content/listing views to avoid blank sections when no SSR items are available.
-  - Restored taxonomy chip color/icon rendering in the Melt content template and made the chapter template tolerant of both `chapter` and `ssr_chapter` payload keys.
-
-### Melt Frontend Preview Routes & Flores-Inspired UI Rebuild (2026-03-08)
-- **Status**: Completed.
-- **Problem**:
-  - The existing public frontend was functionally usable but visually behind the desired reading/browsing UX target.
-  - A separate Next.js design reference existed under `floresscans.com/`, but it needed to be reinterpreted for the current PHP + Melt stack without rewriting the backend.
-- **Fix**:
-  - Added `melt`-prefixed SSR web routes for home, search, listing, content, genre/tag listing, and chapter reader flows so the legacy pages remain intact.
-  - Added a dedicated `layout_melt.php`, new `pages_melt_*.php` templates, and `public/assets/css/melt-nm.css` for the redesigned mobile-first presentation layer.
-  - Added `public/assets/js/melt-front.js` to handle Melt-specific mobile navigation, search suggestions, chapter list rendering, comment flows, and unlock/follow/rate interactions against the existing API.
-  - Updated `public/assets/js/app-bundle.js` so reader routing and global search also work correctly on `melt`-prefixed URLs.
-
-### Wallet, Coin Unlocks & Schema Alignment (2026-03-08)
-- **Status**: Completed.
-- **Problem**:
-  - The backend had no monetization model for paid chapter/series access.
-  - Active code referenced multiple tables that were missing from `app/database/schema.sql`, creating schema drift and deployment risk.
-- **Fix**:
-  - Added wallet, ledger, package, pricing, and unlock backend flows for coin-based access.
-  - Added authenticated user endpoints for wallet balance, transaction history, owned unlocks, and chapter/series unlock actions.
-  - Added administrative endpoints for manual wallet credit/debit, package management, and per-series/per-chapter pricing.
-  - Extended content/chapter API responses with access metadata so frontend changes can consume lock state without backend rework.
-  - Re-aligned `schema.sql` with active backend dependencies by restoring missing queue, preferences, follows, read-history, and analytics tables.
-
-### Package Credit & Ad-Free Feature Expansion (2026-03-08)
-- **Status**: Completed.
-- **Problem**:
-  - Admin flows still lacked package-based credit assignment to a user wallet.
-  - The monetization backend had no feature-level purchase model for using the site without ads.
-- **Fix**:
-  - Added package grant support so admins can apply a configured package directly to a user's wallet and keep fiat/cash metadata in the wallet ledger.
-  - Added feature product and user entitlement storage for coin-purchased site features.
-  - Added `ad_free` product management in the admin API and user endpoints for feature status, entitlement history, and ad-free purchase with coins.
-
-### Admin Monetization Console UI (2026-03-08)
-- **Status**: Completed.
-- **Problem**: The monetization backend endpoints existed, but there was no dedicated admin panel page to operate wallet, package, pricing, and ad-free flows.
-- **Fix**:
-  - Added a new `Monetization` admin page and sidebar entry.
-  - Added UI forms for wallet credit/debit, package grant, package management, ad-free product configuration, and series/chapter pricing updates.
-  - Added wallet summary lookup and transaction listing for a target user inside the admin panel.
-  - Replaced manual `user_id` entry with a selectable user list fed from an admin user-options endpoint.
-
-### Documentation Sync For Route/Auth Drift (2026-03-08)
-- **Status**: Completed.
-- **Problem**:
-  - Markdown references for API/admin behavior had drifted from the registered Slim routes.
-  - `ROOT_USER` restrictions were under-documented for maintenance operations.
-- **Fix**:
-  - Updated `PROJECT.md` and `API_REFERENCE.md` to match current public, authenticated, and admin endpoint coverage.
-  - Clarified that manual analytics aggregation is also restricted to `ROOT_USER`, alongside backup, sitemap, and cache warmup actions.
-
-### Content Alternative Titles Visibility (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Alternative titles were cluttering the hero section and weren't easily readable.
-- **Fix**: Moved alternative titles from the hero section to a dedicated box within the main description card in `pages_content.php`, improving detail visibility and overall layout balance.
-
-### Dropdown UX & Hover Fix (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Dropdowns in the header had conflicting hover and click behaviors, causing flickering and inconsistent visibility.
-- **Fix**:
-  - Disabled hover-based triggering for dropdowns in `site.css` to prevent conflicts with JS-based click toggles.
-  - Ensured dropdowns only open via the `.active` class, which is managed by the existing `onclick` handlers and the global click-outside listener in `main.js`.
-
-### Content Page UI Overhaul (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Layout flaws on the series detail page, including z-index issues in the hero section, tight spacing, and poor mobile responsiveness.
-- **Fix**:
-  - Overhauled `storage/views/pages_content.php` and `public/assets/css/site.css`.
-  - Fixed hero backdrop z-index and overlay transparency.
-  - Adjusted margins and padding for better alignment with the global header.
-  - Improved mobile responsiveness with better stacking and spacing.
-  - Refined metadata section with Bootstrap icons and a better grid layout.
-  - Implemented a two-column layout for chapter lists and comments on desktop for better space utilization.
-
-### Taxonomy Loading Fix (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Genres and tags were missing from content modals unless the page was manually refreshed or certain elements were present.
-- **Fix**:
-  - Refactored `loadTaxonomy` in `public/assets/js/admin-content.js` to always fetch data from the API regardless of whether the listing table elements exist on the current page.
-  - Added versioning to admin-specific script tags in `WebController.php` to ensure the latest fixes are loaded by the browser.
-
-### Markdown Library Fix (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Markdown rendering (descriptions, comments) was failing because the library was not being loaded in the public layout.
-- **Fix**:
-  - Added `marked.min.js` script inclusion to `storage/views/layout_main.php`.
-  - Refactored `NMR.parseMarkdown` in `public/assets/js/utils.js` to ensure synchronous execution and improved error handling for the library.
-
-### Browser Cache Busting (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Persistent 404 errors on comment submission despite code fixes, likely due to browsers caching old JavaScript files.
-- **Fix**: Added dynamic versioning (timestamp-based cache busting) to `content.js` and `connection.js` script inclusions to ensure clients always load the latest logic.
-
-### Taxonomy Visibility Fix (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Not all genres and tags were appearing in the content management modals.
-- **Root Cause**: The frontend was using public API endpoints which had pagination limits (capped at 20-50 items).
-- **Fix**:
-  - Added dedicated administrative endpoints (`/admin/genres` and `/admin/tags`) that return all taxonomy items without pagination.
-  - Updated `AdminConsoleService` and `AdminConsoleRepository` to support full listing of taxonomy data.
-  - Updated `public/assets/js/admin-content.js` to use these new non-paginated endpoints for populating modals.
-
-### Content Admin & UI Final Fixes (2026-03-01)
-- **Status**: Completed.
-- **Problem**:
-  - Description field still appearing empty in admin content edit.
-  - Tag and genre chips on content pages were still visually broken (no background color).
-- **Fix**:
-  - **Admin Description**: 
-    - Removed `description` from `OutputSanitizer::sanitizeRows` in `AdminConsoleService::listContents`. Sanitizing for the admin list was stripping content needed for editing.
-    - Removed redundant Edit/Create Content modals from `pages_admin_dashboard.php` to prevent ID conflicts with the dedicated `pages_admin_content.php`.
-  - **Tag UI**:
-    - Added CSS background utility classes (`.bg-primary`, `.bg-success`, etc.) to `public/assets/css/site.css`.
-    - Updated `storage/views/pages_content.php` and `storage/views/layout_main.php` to correctly wrap theme color names (like `primary`, `success`) in `var()` for the `--chip-color` variable.
-
-### Taxonomy Data Update (2026-03-01)
-- **Status**: Completed.
-- **Change**: Updated the default list of genres and tags to be more comprehensive and specifically tailored for a novel/manga platform.
-- **Details**:
-  - Genres now include specific icons (e.g., `bi-fire` for Action, `bi-heart` for Romance).
-  - Tags now include color mappings for UI badges (e.g., `danger` for OP Protagonist, `success` for Leveling).
-  - Updated both `app/database/schema.sql` and `app/Console/seed_default_data.php` to ensure consistency between new installs and existing data syncs.
-
-### Content Description Markdown Fix (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Content descriptions on series detail pages were rendered as plain text, ignoring Markdown formatting.
-- **Fix**:
-  - Updated `storage/views/pages_content.php` to include an ID and the `markdown-body` class for the description container.
-  - Updated `public/assets/js/content.js` to automatically parse and render the description using `marked.js` (via `NMR.parseMarkdown`) on page load.
-
-### Content Metadata Visibility Fix (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Description field was appearing empty when editing content in the admin panel.
-- **Root Cause**: The `AdminConsoleService::listContents` method was only allowing the `title` field to pass through its sanitization layer for administrative listings, effectively stripping `description`, `cover_image`, and other metadata before they reached the frontend.
-- **Fix**: Updated `AdminConsoleService::listContents` to include `description` in the list of allowed and sanitized fields, ensuring full metadata is available for administrative operations.
-
-### Content Management & Upload Fixes (2026-03-01)
-- **Status**: Completed.
-- **Problem**: 
-  - Content covers and descriptions were being cleared when editing a series.
-  - All uploads were using the "chapter" prefix, regardless of type.
-  - The upload tracking table was missing from the schema.
-- **Fix**:
-  - Added `cover_image` and `description` to `AdminConsoleRepository::listContents` so they are correctly populated in the edit modal.
-  - Refactored `AdminService::updateContent` to only update fields that are explicitly provided in the API payload, preventing accidental data loss.
-  - Updated `public/assets/js/admin-content.js` and `storage/views/pages_admin_content.php` to correctly pass the `type` parameter during bulk and specific image uploads.
-  - Restored the `system_uploads` table to `app/database/schema.sql` for persistent tracking of all image assets.
-
-### Content UI & Search & Social Fixes (2026-03-01)
-- **Status**: Completed.
-- **Problem**: 
-  - Tag chips on content pages were white and unreadable.
-  - Comment system was failing with 404 because it was targeting chapter-level endpoints even on series pages.
-  - Search page was showing "Please enter a search term" even when a query was provided.
-- **Fix**:
-  - Added missing theme color variables (`--primary`, `--success`, etc.) to `:root` in `public/assets/css/site.css`.
-  - Implemented series-level comment API endpoints and updated `CommentService` and `CommentRepository` to support them.
-  - Updated `public/assets/js/connection.js` and `public/assets/js/content.js` to correctly route comments based on context (chapter vs series).
-  - Updated `WebController::render` to include SSR context data in `window.__NMR_CONTEXT`, allowing `search.js` to correctly identify the search query.
-
-### Content Taxonomy Update Fix (2026-03-01)
-- **Status**: Completed.
-- **Problem**: Updating tags and genres for a content item was failing with a 404 error.
-- **Root Cause**:
-  - Missing route for `PUT /api/v1/admin/contents/{id}/taxonomy` in `app/Config.php`.
-  - Mismatch between the JSON payload keys sent by the frontend (`genres`, `tags`) and those expected by the backend controller (`series_genres`, `series_tags`).
-- **Fix**:
-  - Added the missing route to the admin API group in `app/Config.php`.
-  - Updated `AdminConsoleController::updateTaxonomy` to support both sets of keys (`series_genres`/`genres` and `series_tags`/`tags`).
-  - Implemented `updateContentTaxonomy`, `createGenre`, and `createTag` in `AdminConsoleRepository` to resolve the 500 Internal Server Error (Call to undefined method).
-
-### Auth Form Robustness Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Login/Register forms were occasionally failing with 400 Bad Request due to unreliable field extraction.
-- **Fix**:
-  - Added explicit `name` attributes to all authentication input fields in `storage/views/partials_modals.php`.
-  - Refactored `main.js` to use `FormData` and `Object.fromEntries` for clean, reliable data extraction (including Turnstile tokens).
-
-### Route Restoration & Turnstile JS Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: 
-  - Several user routes (`/user/profile`, `/user/history`, etc.) were accidentally removed during the previous logout fix.
-  - Turnstile token was not being correctly extracted from the login/register forms.
-- **Fix**:
-  - Restored all missing routes in `app/Config.php`.
-  - Updated `main.js` to use a more reliable selector `[name="cf-turnstile-response"]` for extracting the Turnstile token.
-
-### Turnstile Verification Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Turnstile verification was failing in some environments due to `file_get_contents` SSL restrictions.
-- **Fix**: 
-  - Switched verification logic in `AuthController.php` to use `cURL`.
-  - Added an automatic fallback to disable SSL verification if the initial strict request fails, ensuring reliability across different server configurations.
-
-### Database Schema Fix for Logout (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Logout was failing with `Unknown column 'revoked_at' in 'SET'`.
-- **Root Cause**: The `user_sessions` table was missing columns, and `user_refresh_tokens` and `user_login_logs` tables were completely missing from the schema.
-- **Fix**: 
-  - Updated `app/database/schema.sql` with full table definitions.
-  - Recommended SQL for existing installations:
-    ```sql
-    ALTER TABLE user_sessions ADD COLUMN last_seen_at datetime NOT NULL DEFAULT current_timestamp() AFTER expires_at;
-    ALTER TABLE user_sessions ADD COLUMN revoked_at datetime DEFAULT NULL AFTER last_seen_at;
-
-    CREATE TABLE `user_refresh_tokens` (
-      `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-      `session_key` char(32) NOT NULL,
-      `token_hash` char(64) NOT NULL,
-      `expires_at` datetime NOT NULL,
-      `revoked_at` datetime DEFAULT NULL,
-      `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-      PRIMARY KEY (`id`),
-      UNIQUE KEY `token_hash` (`token_hash`),
-      CONSTRAINT `fk_tokens_session` FOREIGN KEY (`session_key`) REFERENCES `user_sessions` (`session_key`) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-    CREATE TABLE `user_login_logs` (
-      `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-      `user_id` char(8) DEFAULT NULL,
-      `email` varchar(150) NOT NULL,
-      `ip_hash` char(64) NOT NULL,
-      `user_agent` varchar(255) DEFAULT NULL,
-      `success` tinyint(1) NOT NULL,
-      `failure_reason` varchar(50) DEFAULT NULL,
-      `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
-      PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    ```
-
-### Dropdown UX & Mobile Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Dropdowns were relying on hover, which is unreliable on mobile, and didn't close when clicking outside.
-- **Fix**:
-  - Refactored dropdown visibility to use an `.active` class in `site.css`.
-  - Added `onclick` toggles to all dropdown buttons (Library, Language, User Menu).
-  - Implemented a global click-outside listener in `main.js` to automatically close open dropdowns.
-
-### Failsafe Logout Implementation (2026-02-28)
-- **Status**: Completed.
-- **Problem**: AJAX-based logout was unreliable due to session/CSRF state conflicts.
-- **Fix**:
-  - Moved logout route to a top-level GET/POST route `/logout` in `app/Config.php`, bypassing strict CSRF/Auth middleware.
-  - Converted the logout button in the UI (`main.js`) from a button with an AJAX listener to a standard `<a>` link to `/logout`.
-  - This ensures the browser performs a full navigation, forcing the server to kill the session and the browser to reload all state.
-
-### Aggressive Logout Reliability (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Logout button was still failing for some users.
-- **Fix**:
-  - Enhanced `AuthController::logout` with `session_regenerate_id(true)` and double `Set-Cookie` headers for session and remember-me cookies.
-  - Refactored `main.js` to clear all `sessionStorage`, manually expire cookies on the client side, and use `window.location.href` for a hard reset.
-
-### Logout Fix & Robustness (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Logout button was not reliably logging users out.
-- **Fix**:
-  - Improved `AuthController::logout` to thoroughly clear `$_SESSION` and expire the session cookie.
-  - Updated `CsrfMiddleware` to skip validation for the logout endpoint to avoid 419 errors during session transitions.
-  - Refactored `main.js` to clear `sessionStorage` and force a localized hard redirect after logout.
-
-### Performance & CLS Optimizations (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Poor performance metrics (FCP 3.0s, CLS 0.839).
-- **Fix**:
-  - Implemented **Skeleton Loading** for the homepage to prevent layout jumps.
-  - Added fixed **aspect-ratio (2/3)** to series cover containers in CSS.
-  - Applied `loading="lazy"` to all dynamically rendered images in `home.js`.
-  - Reserved minimum height for Cloudflare Turnstile widget to prevent modal reflow.
-  - Set `font-display: swap` for faster initial text rendering.
-
-### Final CSP Refinement for Cloudflare Turnstile (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Persistent browser warnings regarding implicit `script-src` and preload timing.
-- **Fix**: 
-  - Added `script-src-attr 'self' 'unsafe-inline'`.
-  - Added `https://challenges.cloudflare.com` to `img-src` and `font-src`.
-
-### Refined CSP for Cloudflare Turnstile (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Browser warnings about implicit `script-src` and internal Turnstile logs.
-- **Fix**: 
-  - Added `script-src-elem` explicitly.
-  - Added `worker-src` and `child-src` for `https://challenges.cloudflare.com`.
-
-### CSP Update for Cloudflare Insights (2026-02-28)
-- **Status**: Completed.
-- **Problem**: `static.cloudflareinsights.com/beacon.min.js` was blocked by the CSP.
-- **Fix**: Updated `app/middleware.php` to allow `https://static.cloudflareinsights.com` in `script-src` and `https://cloudflareinsights.com` in `connect-src`.
-
-### Cloudflare Turnstile Integration (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Need bot protection for Login and Register forms.
-- **Fix**:
-  - Added `CLOUDFLARE_TURNSTILE_SITE_KEY` and `CLOUDFLARE_TURNSTILE_SECRET_KEY` to `app/Config.php` and `.env.example`.
-  - Updated CSP in `app/middleware.php` to allow `challenges.cloudflare.com`.
-  - Included Turnstile JS in `storage/views/layout_main.php`.
-  - Added Turnstile widget to Login and Register modals in `storage/views/partials_modals.php`.
-  - Updated `public/assets/js/connection.js` and `public/assets/js/main.js` to pass the Turnstile token to the backend.
-  - Implemented backend verification in `app/Controllers/AuthController.php`.
-
-### Follow Action 500 Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: Follow/Unfollow actions were returning 500.
-- **Root Cause**: Method name mismatch in `app/Config.php`. Routes were pointing to `followUser` and `unfollowUser` which did not exist on `UserController` (actual methods are `follow` and `unfollow`).
-- **Fix**: Updated `app/Config.php` to use the correct method names `follow` and `unfollow`.
-
-### CSRF Sync & Late-Binding Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: 419 Invalid CSRF token persistent on POST requests.
-- **Fix**:
-  - Updated `public/assets/js/connection.js` to late-bind CSRF token from `window.__NMR_CONTEXT` just-in-time for each request.
-  - Added automatic synchronization of CSRF token from `X-CSRF-Token` response headers to ensure client-side state is always fresh.
-  - Ensured `$contextJson` is correctly passed to the layout in `WebController::render`.
-
-### Profile CSRF & Favicon Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: 
-  - Follow action was failing with 419 (Invalid CSRF token) on profile pages.
-  - `/favicon.ico` was returning 404.
-- **Fix**:
-  - Refactored `storage/views/pages_profile.php` to use `Object.assign` for `window.__NMR_CONTEXT` to prevent overwriting the CSRF token injected by the layout.
-  - Created an empty `public/favicon.ico` to satisfy browser requests.
-
-### Profile UI & Social Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: 
-  - Profile page was showing 404 for missing `user.png` and `default-cover.png`.
-  - Follow button was failing with 405 because `window.__NMR_CONTEXT.person` was missing.
-- **Fix**:
-  - Updated `storage/views/pages_profile.php` to use CDN placeholders for default images.
-  - Injected `person` variable into the JavaScript context in `pages_profile.php`.
-
-### Database Schema Fix (2026-02-28)
-- **Status**: Completed.
-- **Problem**: `profile/memo` (User: memo) was failing with `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'c.content_id' in 'SELECT'`.
-- **Root Cause**: The `social_comments` table was missing the `content_id` column which is used to link comments directly to a series.
-- **Fix**:
-  - Updated `app/database/schema.sql` to include `content_id` and `fk_comments_series` in `social_comments`.
-  - Recommended SQL for existing installations:
-    ```sql
-    ALTER TABLE social_comments ADD COLUMN content_id char(6) DEFAULT NULL AFTER user_id;
-    ALTER TABLE social_comments ADD CONSTRAINT fk_comments_series FOREIGN KEY (content_id) REFERENCES series(id) ON DELETE CASCADE;
-    ```
-
-### Google Analytics 4 Integration (2026-02-28)
-- **Status**: Completed.
-- **Components**:
-  - Integrated `gtag.js` in `storage/views/layout_main.php`.
-  - Configured `GOOGLE_ANALYTICS_ID` in `app/Config.php` (via `.env`).
-  - Updated `app/middleware.php` to include necessary Content Security Policy (CSP) directives.
-
-### Admin Dashboard & Analytics Overhaul (2026-03-07)
-- **Status**: Completed.
-- **Problem**: Dashboard metrics (Funnel, Retention, Top Contents) were hardcoded to zero, and analytics required manual CLI execution.
-- **Fix**:
-  - Implemented real database queries for all dashboard KPIs in `AdminConsoleRepository`.
-  - Introduced a **Lazy Cron** system in `AdminConsoleService`: The dashboard now automatically triggers analytics aggregation every 12 hours if data is stale.
-  - Added "Retention & Search" metrics to track user loyalty and search quality (Zero Results rate).
-  - Fixed a critical "Undefined property" error in the aggregation service injection.
-
-### Uploads Management & Preview (2026-03-07)
-- **Status**: Completed.
-- **Feature**: Added a dedicated "Uploads" tab in the Admin Panel to track all system-wide image assets.
-- **Components**:
-  - Added `file_path` column to `system_uploads` table for reliable image rendering.
-  - Created `pages_admin_uploads.php` and `admin-uploads.js` for a paginated, searchable upload gallery.
-  - Implemented image preview modals and deletion controls.
-  - Updated `UploadService` to persistently log the relative file path of every upload.
-
-### Chapter Ordering & Metadata Fixes (2026-03-07)
-- **Status**: Completed.
-- **Problem**: 
-  - Chapter images were uploading in random order.
-  - Uploader information was missing from the chapter list.
-  - 500 errors during chapter creation due to missing `created_by` column.
-- **Fix**:
-  - Implemented **Natural Sorting** (1.png, 2.png, 10.png) on both Frontend (`admin-content.js`) and Backend (`AdminController.php`) to guarantee correct reading order.
-  - Added `created_by` column to the `chapters` table and updated the admin list to show the uploader's username.
-  - Fixed SQL syntax errors in the Admin Creation CLI tool.
-
-### Reader Experience & "Long Strip" Support (2026-03-07)
-- **Status**: Completed.
-- **Fix**: Implemented settings modal for layout (Vertical/Single/Double) and image fit options.
-
-### User Retention: Reading Progress (2026-03-07)
-- **Status**: Completed.
-- **Feature**: Implemented "Continue Reading" logic. The system now tracks the last read chapter per series for each user.
-- **UI**: Added a dynamic button on series pages that replaces "Start Reading" with "Continue Reading (Ch. X)" if progress exists.
-- **Backend**: New `user_reading_progress` table and logic integrated into `ChapterService` and `SeriesService`.
-
-### Security & Data Integrity: Soft Delete (2026-03-07)
-- **Status**: Completed.
-- **Feature**: Implemented **Soft Delete** for `series` and `chapters`. Deleted items are now marked with a `deleted_at` timestamp instead of being physically removed.
-- **Refactor**: Updated `SeriesRepository` and `ChapterRepository` to filter out deleted items in all public and admin queries using `deleted_at IS NULL`.
-- **Database**: Added indices on `deleted_at` columns to maintain high query performance.
-
-### Monetization Schema Alignment (2026-03-08)
-- **Status**: Completed.
-- **Problem**: `grant-package` operations were failing with `SQLSTATE[01000]: Warning: 1265 Data truncated for column 'type'` on the remote server. Also, manual schema updates for `admin_actions` failed due to missing ENUM values.
-- **Root Cause**: 
-  - The `wallet_transactions` table on the remote database was using an outdated ENUM definition for the `type` column.
-  - The `admin_actions` table was missing several values used in the codebase (`security` target type, and multiple action types).
-- **Fix**:
-  - Updated `app/database/schema.sql` with the comprehensive ENUM lists.
-  - Recommended SQL for existing installations to align the schema:
-    ```sql
-    ALTER TABLE wallet_transactions MODIFY COLUMN `type` enum('manual_credit','manual_debit','package_credit','chapter_unlock','series_unlock','feature_unlock','refund','adjustment') NOT NULL;
-    
-    -- Align admin_actions with all values used in the codebase:
-    ALTER TABLE admin_actions MODIFY COLUMN `target_type` enum('comment','blog','content','user','system','role','series','chapter','security') NOT NULL;
-    
-    ALTER TABLE admin_actions MODIFY COLUMN `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update','auth_fail','permission_denied','create_genre','create_tag','env_update') NOT NULL;
-    ```
-
-### Queue & Notification Fix (2026-03-08)
-- **Status**: Completed.
-- **Problem**: `notify_new_chapter` jobs were failing with `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'data' in 'INSERT INTO'`.
-- **Root Cause**: The `user_notifications` table in the remote database was missing the `data` column, or the column name was conflicting with reserved keywords in some environments.
-- **Fix**:
-  - Added backticks to the `data` column in all SQL queries involving `user_notifications` and `chapters` tables across `QueueService`, `UserRepository`, `CommentVoteRepository`, `ChapterRepository`, and `AdminService`.
-  - Recommended SQL for existing installations to ensure the `data` column exists:
-    ```sql
-    ALTER TABLE user_notifications ADD COLUMN `data` longtext DEFAULT NULL AFTER body;
-    ```
-
-### API Documentation Refresh (2026-03-08)
-- **Status**: Completed.
-- **Problem**: Several endpoints (`POST /log/error`, `GET /admin/comments`, `DELETE /admin/comments/{id}`) and analytics tables were missing or incomplete in `API_REFERENCE.md` and `DATABASE.md`.
-- **Fix**: Synchronized Markdown documentation with the current `app/Config.php` routing and `app/database/schema.sql` definitions to ensure absolute authority for AI agents and developers.
-
-### Asset Optimization: Unified JS Bundling (2026-03-07)
-- **Status**: Completed.
-- **Feature**: Consolidated all fragmented JavaScript files into two primary bundles: `app-bundle.js` (Frontend) and `admin-bundle.js` (Administration).
-- **Architecture**: Implemented a modular namespace-based structure with path-based routing to prevent cross-page execution conflicts.
-- **Refactor**:
-  - Removed redundant script tags from all view files and `WebController` render calls.
-  - Standardized API communication and CSRF handling within the bundles.
-  - Improved reader stability and settings persistence.
-
-### Tailwind v4 Migration & i18n Overhaul (2026-03-15)
-- **Status**: Completed.
-- **Problem**: 
-  - Tailwind Play CDN was causing high LCP and performance overhead.
-  - New theme pages had many hardcoded Turkish strings, breaking multi-language support.
-  - Modals (Reader Settings, Notifications) were visually outdated and inconsistent with the new UI.
-- **Fix**:
-  - **Tailwind v4 CLI**: Migrated from Play CDN to a compiled and minified CSS workflow using Tailwind v4. Integrated custom CSS into Tailwind's `@layer` system for better compatibility.
-  - **i18n Implementation**: Replaced all hardcoded strings across home, content, chapter, search, blog, and profile pages with the `$__t()` helper.
-  - **Service Update**: Enhanced `I18nService` to support both `:key` and `{key}` placeholder formats and updated the controller helper to handle dynamic parameters.
-  - **Modal Modernization**: Redesigned Notifications and Reader Settings modals with a modern "glassmorphism" aesthetic and improved functional logic (tab switching, theme selection).
-  - **UI Refinement**: Added a persistent Language Selector to the header, fixed positioning issues for the User Dropdown, and added a Reader Settings shortcut to the floating reader controls for easier access.
-
-### Admin Dashboard & Analytics Overhaul (2026-03-07)
-- **Status**: Completed.
-- **Problem**: Dashboard metrics (Funnel, Retention, Top Contents) were hardcoded to zero, and analytics required manual CLI execution.
-- **Fix**:
-  - Implemented real database queries for all dashboard KPIs in `AdminConsoleRepository`.
-  - Introduced a **Lazy Cron** system in `AdminConsoleService`: The dashboard now automatically triggers analytics aggregation every 12 hours if data is stale.
-  - Added "Retention & Search" metrics to track user loyalty and search quality (Zero Results rate).
-  - Fixed a critical "Undefined property" error in the aggregation service injection.
-
-### Uploads Management & Preview (2026-03-07)
-- **Status**: Completed.
-- **Feature**: Added a dedicated "Uploads" tab in the Admin Panel to track all system-wide image assets.
-- **Components**:
-  - Added `file_path` column to `system_uploads` table for reliable image rendering.
-  - Created `pages_admin_uploads.php` and `admin-uploads.js` for a paginated, searchable upload gallery.
-  - Implemented image preview modals and deletion controls.
-  - Updated `UploadService` to persistently log the relative file path of every upload.
-
-### Chapter Ordering & Metadata Fixes (2026-03-07)
-- **Status**: Completed.
-- **Problem**: 
-  - Chapter images were uploading in random order.
-  - Uploader information was missing from the chapter list.
-  - 500 errors during chapter creation due to missing `created_by` column.
-- **Fix**:
-  - Implemented **Natural Sorting** (1.png, 2.png, 10.png) on both Frontend (`admin-content.js`) and Backend (`AdminController.php`) to guarantee correct reading order.
-  - Added `created_by` column to the `chapters` table and updated the admin list to show the uploader's username.
-  - Fixed SQL syntax errors in the Admin Creation CLI tool.
-
-### Reader Experience & "Long Strip" Support (2026-03-07)
-- **Status**: Completed.
-- **Fix**: Implemented settings modal for layout (Vertical/Single/Double) and image fit options.
-
-### User Retention: Reading Progress (2026-03-07)
-- **Status**: Completed.
-- **Feature**: Implemented "Continue Reading" logic. The system now tracks the last read chapter per series for each user.
-- **UI**: Added a dynamic button on series pages that replaces "Start Reading" with "Continue Reading (Ch. X)" if progress exists.
-- **Backend**: New `user_reading_progress` table and logic integrated into `ChapterService` and `SeriesService`.
-
-### Security & Data Integrity: Soft Delete (2026-03-07)
-- **Status**: Completed.
-- **Feature**: Implemented **Soft Delete** for `series` and `chapters`. Deleted items are now marked with a `deleted_at` timestamp instead of being physically removed.
-- **Refactor**: Updated `SeriesRepository` and `ChapterRepository` to filter out deleted items in all public and admin queries using `deleted_at IS NULL`.
-- **Database**: Added indices on `deleted_at` columns to maintain high query performance.
-
-### Monetization Schema Alignment (2026-03-08)
-- **Status**: Completed.
-- **Problem**: `grant-package` operations were failing with `SQLSTATE[01000]: Warning: 1265 Data truncated for column 'type'` on the remote server. Also, manual schema updates for `admin_actions` failed due to missing ENUM values.
-- **Root Cause**: 
-  - The `wallet_transactions` table on the remote database was using an outdated ENUM definition for the `type` column.
-  - The `admin_actions` table was missing several values used in the codebase (`security` target type, and multiple action types).
-- **Fix**:
-  - Updated `app/database/schema.sql` with the comprehensive ENUM lists.
-  - Recommended SQL for existing installations to align the schema:
-    ```sql
-    ALTER TABLE wallet_transactions MODIFY COLUMN `type` enum('manual_credit','manual_debit','package_credit','chapter_unlock','series_unlock','feature_unlock','refund','adjustment') NOT NULL;
-    
-    -- Align admin_actions with all values used in the codebase:
-    ALTER TABLE admin_actions MODIFY COLUMN `target_type` enum('comment','blog','content','user','system','role','series','chapter','security') NOT NULL;
-    
-    ALTER TABLE admin_actions MODIFY COLUMN `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update','auth_fail','permission_denied','create_genre','create_tag','env_update') NOT NULL;
-    ```
-
-### Queue & Notification Fix (2026-03-08)
-- **Status**: Completed.
-- **Problem**: `notify_new_chapter` jobs were failing with `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'data' in 'INSERT INTO'`.
-- **Root Cause**: The `user_notifications` table in the remote database was missing the `data` column, or the column name was conflicting with reserved keywords in some environments.
-- **Fix**:
-  - Added backticks to the `data` column in all SQL queries involving `user_notifications` and `chapters` tables across `QueueService`, `UserRepository`, `CommentVoteRepository`, `ChapterRepository`, and `AdminService`.
-  - Recommended SQL for existing installations to ensure the `data` column exists:
-    ```sql
-    ALTER TABLE user_notifications ADD COLUMN `data` longtext DEFAULT NULL AFTER body;
-    ```
-
-### API Documentation Refresh (2026-03-08)
-- **Status**: Completed.
-- **Problem**: Several endpoints (`POST /log/error`, `GET /admin/comments`, `DELETE /admin/comments/{id}`) and analytics tables were missing or incomplete in `API_REFERENCE.md` and `DATABASE.md`.
-- **Fix**: Synchronized Markdown documentation with the current `app/Config.php` routing and `app/database/schema.sql` definitions to ensure absolute authority for AI agents and developers.
-
-### Asset Optimization: Unified JS Bundling (2026-03-07)
-- **Status**: Completed.
-- **Feature**: Consolidated all fragmented JavaScript files into two primary bundles: `app-bundle.js` (Frontend) and `admin-bundle.js` (Administration).
-- **Architecture**: Implemented a modular namespace-based structure with path-based routing to prevent cross-page execution conflicts.
-- **Refactor**:
-  - Removed redundant script tags from all view files and `WebController` render calls.
-  - Standardized API communication and CSRF handling within the bundles.
-  - Improved reader stability and settings persistence.
-
-### Tailwind v4 Migration & i18n Overhaul (2026-03-15)
-- **Status**: Completed.
-- **Problem**: 
-  - Tailwind Play CDN was causing high LCP and performance overhead.
-  - New theme pages had many hardcoded Turkish strings, breaking multi-language support.
-  - Modals (Reader Settings, Notifications) were visually outdated and inconsistent with the new UI.
-- **Fix**:
-  - **Tailwind v4 CLI**: Migrated from Play CDN to a compiled and minified CSS workflow using Tailwind v4. Integrated custom CSS into Tailwind's `@layer` system for better compatibility.
-  - **i18n Implementation**: Replaced all hardcoded strings across home, content, chapter, search, blog, and profile pages with the `$__t()` helper.
-  - **Service Update**: Enhanced `I18nService` to support both `:key` and `{key}` placeholder formats and updated the controller helper to handle dynamic parameters.
-  - **Modal Modernization**: Redesigned Notifications and Reader Settings modals with a modern "glassmorphism" aesthetic and improved functional logic (tab switching, theme selection).
-  - **UI Refinement**: Added a persistent Language Selector to the header, fixed positioning issues for the User Dropdown, and added a Reader Settings shortcut to the floating reader controls for easier access.
+## Development Workflow
+
+### Backend Change Flow
+
+1. update schema or migration if data shape changes
+2. update repository/service/controller stack
+3. register routes or config in [app/Config.php](/home/duldul/Belgeler/nm-reader/app/Config.php) if needed
+4. update views or frontend integration
+5. update this document when behavior/contracts change
+6. verify
+7. commit
+8. push
+
+### Verification Commands
+
+Examples used in this repository:
+- `php -l app/Config.php`
+- `php -l app/app.php`
+- `php -l app/dependencies.php`
+- `php -l public/index.php`
+- `npm run build` in `ui/mobile`
+- `npm run build:css` in `ui/web`
+
+### Git Expectations
+
+- commit after each logical change
+- use descriptive commit messages
+- push verified work to `origin/main`
+- do not overwrite unrelated user changes
+
+## Recent Changes
+
+### 2026-03-31
+- Reorganized repository Markdown into this unified single-file document.
+- Restored the `ui/web` Tailwind build pipeline by adding `@tailwindcss/cli`.
+- Fixed the web CSS output path so builds target `public/assets/css/main.css`.
+- Refreshed the generated web CSS bundle.
+
+### 2026-03-23
+- Hardened mobile global chat API handling for string blog IDs.
+- Added safer invalid-target handling for comment endpoints.
+- Restored long chapter pagination in mobile content detail.
+- Added reader adjacent chapter navigation and chapter comment form.
+- Improved structured text rendering for novel chapters.
+- Fixed several mobile API contract mismatches around voting, avatars, and follows.
+- Hardened Turnstile verification to fail closed.
+
+### 2026-03-21
+- Stabilized the mobile Framework7 app and completed core browse/read/auth/wallet flows.
+- Added public profiles, profile editing, search suggestions, global chat, and richer content detail views.
+
+### 2026-03-19
+- Added mobile reader themes.
+- Added chapter comments to the mobile reader.
+
+### 2026-03-18
+- Removed Tailwind from the mobile app.
+- Rebuilt `ui/mobile` on Framework7 CLI and served it from `/mobile`.

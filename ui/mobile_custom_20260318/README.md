@@ -1,13 +1,5 @@
-# ui/mobile
+# Archived Mobile Snapshot
 
-Framework7 v9 Core mobile app sources.
+Project documentation has been consolidated into [PROJECT.md](/home/duldul/Belgeler/nm-reader/PROJECT.md).
 
-## Build
-
-Run from this directory:
-
-```bash
-npm run build
-```
-
-Build output is written to `public/mobile`.
+This folder is a dated mobile snapshot and should not be treated as the canonical active documentation source.
