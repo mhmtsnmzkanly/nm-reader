@@ -102,7 +102,9 @@ function createApplication() {
     routes,
     init: true,
     on: {
-      init(instance) {
+      init() {
+        const appInstance = this;
+
         debugTrace({
           scope: 'app',
           action: 'createApplication:init',
@@ -111,8 +113,8 @@ function createApplication() {
           next: 'mount startup route on main view',
         });
 
-        const mainView = initializeMainView(instance, isCordova);
-        configureApplicationRuntime(instance);
+        const mainView = initializeMainView(appInstance, isCordova);
+        configureApplicationRuntime(appInstance);
         installGlobals();
 
         debugTrace({
