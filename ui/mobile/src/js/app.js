@@ -76,6 +76,38 @@ function initializeMainView(app, isCordova) {
 }
 
 /**
+ * Forces the first route navigation so startup page lifecycle always begins.
+ */
+function startInitialRoute(mainView) {
+  if (!mainView?.router) {
+    debugError({
+      scope: 'app',
+      action: 'startInitialRoute:missingRouter',
+      caller: 'ui/mobile/src/js/app.js#startInitialRoute',
+      callee: 'mainView.router',
+      next: 'abort initial navigation',
+    });
+    return;
+  }
+
+  debugTrace({
+    scope: 'app',
+    action: 'startInitialRoute:navigate',
+    caller: 'ui/mobile/src/js/app.js#startInitialRoute',
+    callee: 'mainView.router.navigate(/startup/)',
+    next: 'begin startup page lifecycle',
+    detail: {
+      currentUrl: mainView.router.currentRoute?.url || mainView.router.url || null,
+    },
+  });
+
+  mainView.router.navigate('/startup/', {
+    reloadCurrent: true,
+    ignoreCache: true,
+  });
+}
+
+/**
  * Creates the root Framework7 app with the rebuilt mobile architecture.
  */
 function createApplication() {
@@ -116,6 +148,7 @@ function createApplication() {
         const mainView = initializeMainView(appInstance, isCordova);
         configureApplicationRuntime(appInstance);
         installGlobals();
+        startInitialRoute(mainView);
 
         debugTrace({
           scope: 'app',
