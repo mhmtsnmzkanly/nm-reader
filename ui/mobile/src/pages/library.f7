@@ -1,17 +1,17 @@
 <template>
   <div class="page" data-name="library">
-    ${renderAppHeader({ title: 'Library', subtitle: 'Followed content', large: true })}
+    ${$h`${renderAppHeader({ title: 'Library', subtitle: 'Followed content', large: true })}`}
     <div class="page-content">
-      ${!isAuthed ? renderAuthGuardBlock() : ''}
-      ${isAuthed && state.loading ? renderLoadingBlock('Loading your library...') : ''}
-      ${isAuthed && state.error ? renderErrorState({ title: 'Library failed', message: state.error }) : ''}
+      ${!isAuthed ? $h`${renderAuthGuardBlock()}` : ''}
+      ${isAuthed && state.loading ? $h`${renderLoadingBlock('Loading your library...')}` : ''}
+      ${isAuthed && state.error ? $h`${renderErrorState({ title: 'Library failed', message: state.error })}` : ''}
       ${isAuthed && !state.loading && !state.error
         ? (state.items.length
-          ? state.items.map((item) => renderContentCard(item)).join('')
-          : renderEmptyState({ title: 'Library is empty', message: 'Follow a series to keep it here.', actionHref: '/home/', actionLabel: 'Explore' }))
+          ? $h`${state.items.map((item) => renderContentCard(item)).join('')}`
+          : $h`${renderEmptyState({ title: 'Library is empty', message: 'Follow a series to keep it here.', actionHref: '/home/', actionLabel: 'Explore' })}` )
         : ''}
     </div>
-    ${renderBottomNav('library')}
+    ${$h`${renderBottomNav('library')}`}
   </div>
 </template>
 <script>

@@ -1,16 +1,16 @@
 <template>
   <div class="page" data-name="type-list">
-    ${renderAppHeader({ title: pageTitle, subtitle: 'Browse by content type', back: true, large: true })}
+    ${$h`${renderAppHeader({ title: pageTitle, subtitle: 'Browse by content type', back: true, large: true })}`}
     <div class="page-content">
-      ${state.loading ? renderLoadingBlock('Loading type list...') : ''}
-      ${state.error ? renderErrorState({ title: 'Type list failed', message: state.error }) : ''}
+      ${state.loading ? $h`${renderLoadingBlock('Loading type list...')}` : ''}
+      ${state.error ? $h`${renderErrorState({ title: 'Type list failed', message: state.error })}` : ''}
       ${!state.loading && !state.error
         ? (state.items.length
-          ? state.items.map((item) => renderContentCard(item)).join('')
-          : renderEmptyState({ title: 'Nothing found', message: 'There is no content for this type yet.' }))
+          ? $h`${state.items.map((item) => renderContentCard(item)).join('')}`
+          : $h`${renderEmptyState({ title: 'Nothing found', message: 'There is no content for this type yet.' })}` )
         : ''}
     </div>
-    ${renderBottomNav('home')}
+    ${$h`${renderBottomNav('home')}`}
   </div>
 </template>
 <script>

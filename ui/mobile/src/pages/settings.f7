@@ -1,9 +1,9 @@
 <template>
   <div class="page" data-name="settings">
-    ${renderAppHeader({ title: 'Settings', subtitle: 'App and reader preferences', large: true })}
+    ${$h`${renderAppHeader({ title: 'Settings', subtitle: 'App and reader preferences', large: true })}`}
     <div class="page-content">
-      ${!isAuthed ? renderAuthGuardBlock() : ''}
-      ${isAuthed ? `
+      ${!isAuthed ? $h`${renderAuthGuardBlock()}` : ''}
+      ${isAuthed ? $h`
         <div class="list inset">
           <ul>
             <li>
@@ -42,13 +42,13 @@
           </ul>
         </div>
         <div class="block">
-          ${state.error ? `<div class="mobile-inline-error">${state.error}</div>` : ''}
+          ${state.error ? $h`<div class="mobile-inline-error">${state.error}</div>` : ''}
           <button class="button button-fill" data-action="save-settings">Save settings</button>
           <button class="button button-outline color-red margin-top" data-action="logout">Logout</button>
         </div>
       ` : ''}
     </div>
-    ${renderBottomNav('settings')}
+    ${$h`${renderBottomNav('settings')}`}
   </div>
 </template>
 <script>

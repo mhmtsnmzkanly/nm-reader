@@ -1,6 +1,6 @@
 <template>
   <div class="page" data-name="register">
-    ${renderAppHeader({ title: 'Register', subtitle: 'Create a mobile account', back: true, large: true })}
+    ${$h`${renderAppHeader({ title: 'Register', subtitle: 'Create a mobile account', back: true, large: true })}`}
     <div class="page-content">
       <div class="list inset">
         <ul>
@@ -31,7 +31,7 @@
         </ul>
       </div>
       <div class="block">
-        ${state.error ? `<div class="mobile-inline-error">${state.error}</div>` : ''}
+        ${state.error ? $h`<div class="mobile-inline-error">${state.error}</div>` : ''}
         <button class="button button-fill" data-action="submit-register" ${state.submitting ? 'disabled' : ''}>${state.submitting ? 'Creating account...' : 'Register'}</button>
       </div>
       <div class="block-footer">

@@ -1,18 +1,18 @@
 <template>
   <div class="page reader-page theme-${state.readerTheme}" data-name="reader">
-    ${renderAppHeader({ title: state.chapter?.series?.title || 'Reader', subtitle: state.chapter?.title || 'Reading mode', back: true })}
+    ${$h`${renderAppHeader({ title: state.chapter?.series?.title || 'Reader', subtitle: state.chapter?.title || 'Reading mode', back: true })}`}
     <div class="page-content reader-page__content">
-      ${state.loading ? renderLoadingBlock('Loading chapter...') : ''}
-      ${state.error ? renderErrorState({ title: 'Reader failed', message: state.error }) : ''}
+      ${state.loading ? $h`${renderLoadingBlock('Loading chapter...')}` : ''}
+      ${state.error ? $h`${renderErrorState({ title: 'Reader failed', message: state.error })}` : ''}
 
       ${!state.loading && !state.error && state.chapter ? $h`
-        ${state.isLocked ? `
+        ${state.isLocked ? $h`
           <div class="block block-strong mobile-feedback-block">
             <div class="mobile-feedback-title">Chapter locked</div>
             <p>This chapter requires unlock before reading.</p>
-            ${state.chapterId ? `<button class="button button-fill color-orange" data-action="unlock-chapter">Unlock chapter</button>` : ''}
+            ${state.chapterId ? $h`<button class="button button-fill color-orange" data-action="unlock-chapter">Unlock chapter</button>` : ''}
           </div>
-        ` : `
+        ` : $h`
           <div class="reader-toolbar">
             <button class="button button-small" data-action="decrease-font">A-</button>
             <button class="button button-small" data-action="increase-font">A+</button>
@@ -20,8 +20,8 @@
           </div>
 
           ${state.chapter.readerType === 'text'
-            ? `<div class="reader-text" style="font-size:${state.fontSize}px">${state.renderedText}</div>`
-            : `<div class="reader-image-list">${state.chapter.images.map((image) => `<img src="${image}" alt="Chapter page" loading="lazy" />`).join('')}</div>`
+            ? $h`<div class="reader-text" style="font-size:${state.fontSize}px">${$h`${state.renderedText}`}</div>`
+            : $h`<div class="reader-image-list">${$h`${state.chapter.images.map((image) => `<img src="${image}" alt="Chapter page" loading="lazy" />`).join('')}`}</div>`
           }
         `}
 

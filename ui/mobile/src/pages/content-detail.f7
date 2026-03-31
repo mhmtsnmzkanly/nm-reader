@@ -1,9 +1,9 @@
 <template>
   <div class="page" data-name="content-detail">
-    ${renderAppHeader({ title: state.detail?.title || 'Content', subtitle: 'Summary and chapters', back: true, large: true })}
+    ${$h`${renderAppHeader({ title: state.detail?.title || 'Content', subtitle: 'Summary and chapters', back: true, large: true })}`}
     <div class="page-content">
-      ${state.loading ? renderLoadingBlock('Loading content details...') : ''}
-      ${state.error ? renderErrorState({ title: 'Content failed', message: state.error }) : ''}
+      ${state.loading ? $h`${renderLoadingBlock('Loading content details...')}` : ''}
+      ${state.error ? $h`${renderErrorState({ title: 'Content failed', message: state.error })}` : ''}
 
       ${!state.loading && !state.error && state.detail ? $h`
         <div class="card mobile-detail-card">
@@ -16,23 +16,23 @@
                 <p>${state.detail.description || 'No description available yet.'}</p>
               </div>
             </div>
-            ${state.wallet ? renderWalletSummaryCard(state.wallet) : ''}
+            ${state.wallet ? $h`${renderWalletSummaryCard(state.wallet)}` : ''}
             <div class="mobile-detail-card__actions">
-              ${state.canFollow ? `<button class="button ${state.isFollowing ? 'button-outline' : 'button-fill'}" data-action="toggle-follow">${state.isFollowing ? 'Unfollow' : 'Follow'}</button>` : ''}
-              ${state.canUnlockSeries ? '<button class="button button-fill color-orange" data-action="unlock-series">Unlock series</button>' : ''}
+              ${state.canFollow ? $h`<button class="button ${state.isFollowing ? 'button-outline' : 'button-fill'}" data-action="toggle-follow">${state.isFollowing ? 'Unfollow' : 'Follow'}</button>` : ''}
+              ${state.canUnlockSeries ? $h`<button class="button button-fill color-orange" data-action="unlock-series">Unlock series</button>` : ''}
             </div>
           </div>
         </div>
 
         <div class="block-title">Chapters</div>
-        ${state.chapters.length ? `
+        ${state.chapters.length ? $h`
           <div class="list inset media-list no-chevron">
-            <ul>${state.chapters.map((chapter) => renderChapterListItem({ type, slug, chapter })).join('')}</ul>
+            <ul>${$h`${state.chapters.map((chapter) => renderChapterListItem({ type, slug, chapter })).join('')}`}</ul>
           </div>
-        ` : renderEmptyState({ title: 'No chapters yet', message: 'This series does not have readable chapters yet.' })}
+        ` : $h`${renderEmptyState({ title: 'No chapters yet', message: 'This series does not have readable chapters yet.' })}`}
       ` : ''}
     </div>
-    ${renderBottomNav('home')}
+    ${$h`${renderBottomNav('home')}`}
   </div>
 </template>
 <script>

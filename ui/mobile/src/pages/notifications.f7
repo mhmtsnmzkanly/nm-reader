@@ -1,20 +1,20 @@
 <template>
   <div class="page" data-name="notifications">
-    ${renderAppHeader({ title: 'Notifications', subtitle: 'Unread and recent account events', large: true })}
+    ${$h`${renderAppHeader({ title: 'Notifications', subtitle: 'Unread and recent account events', large: true })}`}
     <div class="page-content">
-      ${!isAuthed ? renderAuthGuardBlock() : ''}
-      ${isAuthed && state.loading ? renderLoadingBlock('Loading notifications...') : ''}
-      ${isAuthed && state.error ? renderErrorState({ title: 'Notifications failed', message: state.error }) : ''}
-      ${isAuthed && !state.loading && !state.error ? `
+      ${!isAuthed ? $h`${renderAuthGuardBlock()}` : ''}
+      ${isAuthed && state.loading ? $h`${renderLoadingBlock('Loading notifications...')}` : ''}
+      ${isAuthed && state.error ? $h`${renderErrorState({ title: 'Notifications failed', message: state.error })}` : ''}
+      ${isAuthed && !state.loading && !state.error ? $h`
         <div class="block">
           <button class="button button-outline" data-action="mark-read">Mark all as read</button>
         </div>
         ${state.items.length
-          ? `<div class="list inset simple-list"><ul>${state.items.map((item) => `<li>${item.title || item.type || 'Notification'}</li>`).join('')}</ul></div>`
-          : renderEmptyState({ title: 'No notifications', message: 'You are all caught up.' })}
+          ? $h`<div class="list inset simple-list"><ul>${$h`${state.items.map((item) => `<li>${item.title || item.type || 'Notification'}</li>`).join('')}`}</ul></div>`
+          : $h`${renderEmptyState({ title: 'No notifications', message: 'You are all caught up.' })}`}
       ` : ''}
     </div>
-    ${renderBottomNav('settings')}
+    ${$h`${renderBottomNav('settings')}`}
   </div>
 </template>
 <script>

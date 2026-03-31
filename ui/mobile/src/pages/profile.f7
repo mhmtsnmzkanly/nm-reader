@@ -1,11 +1,11 @@
 <template>
   <div class="page" data-name="profile">
-    ${renderAppHeader({ title: 'Profile', subtitle: 'Current account overview', large: true })}
+    ${$h`${renderAppHeader({ title: 'Profile', subtitle: 'Current account overview', large: true })}`}
     <div class="page-content">
-      ${!isAuthed ? renderAuthGuardBlock() : ''}
-      ${isAuthed && state.loading ? renderLoadingBlock('Loading profile...') : ''}
-      ${isAuthed && state.error ? renderErrorState({ title: 'Profile failed', message: state.error }) : ''}
-      ${isAuthed && !state.loading && !state.error && state.profile ? `
+      ${!isAuthed ? $h`${renderAuthGuardBlock()}` : ''}
+      ${isAuthed && state.loading ? $h`${renderLoadingBlock('Loading profile...')}` : ''}
+      ${isAuthed && state.error ? $h`${renderErrorState({ title: 'Profile failed', message: state.error })}` : ''}
+      ${isAuthed && !state.loading && !state.error && state.profile ? $h`
         <div class="card mobile-profile-card">
           <div class="card-content card-content-padding">
             <div class="mobile-profile-card__title">${state.profile.username}</div>
@@ -15,7 +15,7 @@
         </div>
       ` : ''}
     </div>
-    ${renderBottomNav('settings')}
+    ${$h`${renderBottomNav('settings')}`}
   </div>
 </template>
 <script>
