@@ -1,7 +1,17 @@
 <template>
   <div id="app">
     <div class="statusbar"></div>
-    <div class="view view-main view-init safe-areas" data-url="/startup/"></div>
+    <div class="view view-main view-init safe-areas" data-url="/startup/">
+      <div class="page" data-name="boot-fallback">
+        <div class="page-content startup-screen">
+          <div class="startup-screen__content">
+            <div class="startup-screen__brand">NMR Mobile</div>
+            <div class="preloader color-blue"></div>
+            <p>Loading interface...</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script>

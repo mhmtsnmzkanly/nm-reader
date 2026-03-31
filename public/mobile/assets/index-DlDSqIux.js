@@ -223,9 +223,19 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
     `}setTooltip(){let e=this,{app:t,el:n,svgEl:r,hiddenDatasets:i,currentIndex:a,params:{tooltip:o,datasets:s}}=e;if(o){if(!(s.filter((e,t)=>!i.includes(t)).length>0)){e.f7Tooltip&&e.f7Tooltip.hide&&e.f7Tooltip.hide();return}if(a!==null&&!e.f7Tooltip){e.f7Tooltip=t.tooltip.create({trigger:`manual`,containerEl:n,targetEl:r.querySelector(`line[data-index="${a}"]`),text:e.formatTooltip(),cssClass:`area-chart-tooltip`}),e.f7Tooltip&&e.f7Tooltip.show&&e.f7Tooltip.show();return}!e.f7Tooltip||!e.f7Tooltip.hide||!e.f7Tooltip.show||(a===null?e.f7Tooltip.hide():(e.f7Tooltip.setText(e.formatTooltip()),e.f7Tooltip.setTargetEl(r.querySelector(`line[data-index="${a}"]`)),e.f7Tooltip.show()))}}setCurrentIndex(e){e!==this.currentIndex&&(this.currentIndex=e,this.$el.trigger(`areachart:select`,{index:e}),this.emit(`local::select areaChartSelect`,this,e),this.$svgEl.find(`line`).removeClass(`area-chart-current-line`),this.$svgEl.find(`line[data-index="${e}"]`).addClass(`area-chart-current-line`),this.setTooltip())}onLegendClick(e){let t=parseInt(I(e.target).closest(`.area-chart-legend-item`).attr(`data-index`),10);this.toggleDataset(t)}onMouseEnter(){this.calcLinesOffsets()}onMouseMove(e){let t=this;t.linesOffsets||t.calcLinesOffsets();let n=e.pageX;n===void 0&&(n=0);let r=t.linesOffsets.map(e=>Math.abs(n-e)),i=Math.min(...r),a=r.indexOf(i);t.setCurrentIndex(a)}onMouseLeave(){this.setCurrentIndex(null)}attachEvents(){let{svgEl:e,$el:t}=this;e&&(e.addEventListener(`mouseenter`,this.onMouseEnter),e.addEventListener(`mousemove`,this.onMouseMove),e.addEventListener(`mouseleave`,this.onMouseLeave),t.on(`click`,`.area-chart-legend-item`,this.onLegendClick))}detachEvents(){let{svgEl:e,$el:t}=this;e&&(e.removeEventListener(`mouseenter`,this.onMouseEnter),e.removeEventListener(`mousemove`,this.onMouseMove),e.removeEventListener(`mouseleave`,this.onMouseLeave),t.off(`click`,`.area-chart-legend-item`,this.onLegendClick))}render(){let e=this,{lineChart:t,toggleDatasets:n,width:r,height:i,axis:a,axisLabels:o,legend:s,datasets:c}=e.params,l=e.getChartData(),u=e.getVerticalLines(),d=e.getVisibleLabels(),f=n?`button`:`span`;return X(`div`,null,X(`svg`,{xmlns:`http://www.w3.org/2000/svg`,width:r,height:i,viewBox:`0 0 ${r} ${i}`,preserveAspectRatio:`none`},l.map(e=>t?X(`path`,{stroke:e.color,"fill-rule":`evenodd`,d:e.points}):X(`polygon`,{fill:e.color,"fill-rule":`evenodd`,points:e.points})),u.map((e,t)=>X(`line`,{"data-index":t,fill:`#000`,x1:e,y1:0,x2:e,y2:i}))),a&&X(`div`,{class:`area-chart-axis`},o.map(t=>X(`span`,null,d.includes(t)&&X(`span`,null,e.formatAxisLabel(t))))),s&&X(`div`,{class:`area-chart-legend`},c.map((t,r)=>X(f,{"data-index":r,class:`area-chart-legend-item ${n?`area-chart-legend-button`:``}`,_type:n?`button`:void 0},X(`span`,{style:`background-color: ${t.color}`}),e.formatLegendLabel(t.label)))))}update(e={},t=!1){let n=this,{params:r}=n;if(Object.keys(e).forEach(t=>{e[t]!==void 0&&(r[t]=e[t])}),n.$svgEl.length===0)return n;n.detachEvents(),n.$svgEl.remove(),t||(n.$axisEl.remove(),n.$legendEl.remove());let i=I(n.render()),a=i.find(`svg`);if(J(n,{svgEl:a&&a[0],$svgEl:a}),!t){let e=i.find(`.area-chart-axis`),t=i.find(`.area-chart-legend`);J(n,{$axisEl:e,$legendEl:t}),n.$el.append(e),n.$el.append(t)}return n.$el.prepend(a),n.attachEvents(),n}init(){let e=this,t=I(e.render()),n=t.find(`svg`),r=t.find(`.area-chart-axis`),i=t.find(`.area-chart-legend`);return J(e,{svgEl:n&&n[0],$svgEl:n,$axisEl:r,$legendEl:i}),e.$el.append(n),e.$el.append(r),e.$el.append(i),e.attachEvents(),e}destroy(){let e=this;!e.$el||e.destroyed||(e.$el.trigger(`piechart:beforedestroy`),e.emit(`local::beforeDestroy areaChartBeforeDestroy`,e),e.detachEvents(),e.$svgEl.remove(),e.$axisEl.remove(),e.$legendEl.remove(),e.f7Tooltip&&e.f7Tooltip.destroy&&e.f7Tooltip.destroy(),delete e.$el[0].f7AreaChart,In(e),e.destroyed=!0)}},Ad={name:`areaChart`,params:{areaChart:{el:null,lineChart:!1,datasets:[],axis:!1,axisLabels:[],tooltip:!1,legend:!1,toggleDatasets:!1,width:640,height:320,maxAxisLabels:8,formatAxisLabel:null,formatLegendLabel:null,formatTooltip:null,formatTooltipAxisLabel:null,formatTooltipTotal:null,formatTooltipDataset:null}},create(){let e=this;e.areaChart=fr({defaultSelector:`.area-chart`,constructor:kd,app:e,domProp:`f7AreaChart`}),e.areaChart.update=function(t,n){if(I(t).length===0)return;let r=e.areaChart.get(t);if(r)return r.update(n),r}}},jd={};$r.use([ai]),gr.use([_r,vr,yr,br,Sr,ii,ei,Na,Ma,Fa,La,Ba,Ha,Wa,Qa,$a,to,lo,ro,fo,mo,go,vo,bo,So,wo,Eo,Oo,Ao,Mo,Po,Fo,Lo,zo,Bo,Ho,Ko,Jo,Yo,ts,rs,is,as,ss,ls,ds,gs,_s,ys,Ss,ws,Es,Os,As,Ms,Fs,Ls,Ju,Xu,Qu,ed,nd,id,ad,xd,Cd,Ed,Od,Ad,{name:`breadrumbs`,create(){tr(this,{breadrumbs:jd})}},{name:`typography`}]);var Md=gr;function Nd(){return function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div id="app">
     <div class="statusbar"></div>
-    <div class="view view-main view-init safe-areas" data-url="/startup/"></div>
+    <div class="view view-main view-init safe-areas" data-url="/startup/">
+      <div class="page" data-name="boot-fallback">
+        <div class="page-content startup-screen">
+          <div class="startup-screen__content">
+            <div class="startup-screen__brand">NMR Mobile</div>
+            <div class="preloader color-blue"></div>
+            <p>Loading interface...</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-`}}Nd.id=`c65648e1f7`;var Pd=`nmr_mobile_v2`;function Fd(e){return`${Pd}:${e}`}function Id(e,t=null){if(typeof localStorage>`u`)return t;try{let n=localStorage.getItem(Fd(e));return n?JSON.parse(n):t}catch{return t}}function Ld(e,t){if(!(typeof localStorage>`u`))try{localStorage.setItem(Fd(e),JSON.stringify(t))}catch{}}function Rd(e){if(!(typeof localStorage>`u`))try{localStorage.removeItem(Fd(e))}catch{}}var zd=`session`,Bd=`preferences`,Vd=`reader-preferences`,Hd={auth:{status:`guest`,accessToken:null,refreshToken:null,user:null},wallet:{balance:0,totalPurchased:0,totalSpent:0},preferences:{language:`tr`,theme:`system`},readerPreferences:{theme:`dark`,fontSize:18,imageMode:`vertical`}},Ud=structuredClone(Hd),Wd=new Set;function Gd(){Wd.forEach(e=>e(Ud))}function Kd(){Ld(zd,{accessToken:Ud.auth.accessToken,refreshToken:Ud.auth.refreshToken,user:Ud.auth.user}),Ld(Bd,Ud.preferences),Ld(Vd,Ud.readerPreferences)}function qd(e){Ud={...Ud,...e},Kd(),Gd()}function Jd(){let e=Id(zd,null),t=Id(Bd,null),n=Id(Vd,null);Ud={...structuredClone(Hd),auth:e?.accessToken?{status:`restoring`,accessToken:e.accessToken||null,refreshToken:e.refreshToken||null,user:e.user||null}:structuredClone(Hd.auth),preferences:{...structuredClone(Hd.preferences),...t||{}},readerPreferences:{...structuredClone(Hd.readerPreferences),...n||{}},wallet:structuredClone(Hd.wallet)},Gd()}function Yd(){return Ud}function Xd(e){return Wd.add(e),()=>Wd.delete(e)}function Zd({accessToken:e=null,refreshToken:t=null,user:n=null}={}){qd({auth:{status:e?`authenticated`:`guest`,accessToken:e,refreshToken:t,user:n}})}function Qd(){qd({auth:{...Ud.auth,status:`restoring`}})}function $d(){Ud={...Ud,auth:structuredClone(Hd.auth),wallet:structuredClone(Hd.wallet)},Rd(zd),Kd(),Gd()}function ef(e){qd({auth:{...Ud.auth,user:e,status:Ud.auth.accessToken?`authenticated`:Ud.auth.status}})}function tf(e){qd({wallet:{...structuredClone(Hd.wallet),...e||{}}})}function nf(e){qd({preferences:{...Ud.preferences,...e||{}}})}function rf(e){qd({readerPreferences:{...Ud.readerPreferences,...e||{}}})}function af(){return!!Ud.auth.accessToken}var $={hydrate:Jd,getState:Yd,subscribe:Xd,isAuthenticated:af,actions:{setSession:Zd,setAuthRestoring:Qd,clearSession:$d,setUser:ef,setWalletSummary:tf,setPreferences:nf,setReaderPreferences:rf}};function of(){if(typeof window<`u`){let e=window.NMR_MOBILE_API_BASE||window.NMR_API_BASE;if(typeof e==`string`&&e.trim()!==``)return e.trim().replace(/\/+$/,``)}if(typeof localStorage<`u`){let e=localStorage.getItem(`nmr_mobile_api_base`);if(typeof e==`string`&&e.trim()!==``)return e.trim().replace(/\/+$/,``)}return`/api/v1`}async function sf(e,t={}){let n=new AbortController,r=window.setTimeout(()=>n.abort(),t.timeout??12e3);try{let r=await fetch(`${of()}${e}`,{method:t.method||`GET`,headers:t.headers||{},body:t.body,signal:n.signal,credentials:`include`}),i=await r.text(),a=null;try{a=i?JSON.parse(i):null}catch{a=i?{message:i}:null}return{ok:r.ok,status:r.status,payload:a}}finally{window.clearTimeout(r)}}var cf=null;function lf(e){cf=e}function uf(e){let t={Accept:`application/json`,...e.headers||{}},n=$.getState().auth.accessToken;return n&&!e.skipAuth&&(t.Authorization=`Bearer ${n}`),e.body&&!(e.body instanceof FormData)&&!t[`Content-Type`]&&(t[`Content-Type`]=`application/json`),t}async function df(e,t={}){let n=uf(t),r=t.body instanceof FormData?t.body:t.body?JSON.stringify(t.body):void 0,i=await sf(e,{method:t.method,headers:n,body:r,timeout:t.timeout});if(i.status===401&&typeof cf==`function`&&!t.skipAuthRecovery&&await cf())return df(e,{...t,skipAuthRecovery:!0});if(!i.ok||i.payload?.status===`error`){let e=Error(i.payload?.error?.message||i.payload?.message||`Request failed with status ${i.status}`);throw e.status=i.status,e.payload=i.payload,e}return{data:i.payload?.data??i.payload??null,meta:i.payload?.meta??{}}}var ff=`/assets/img/covers/placeholder.svg`;function pf(e){return typeof e!=`string`||e.trim()===``?null:/^https?:\/\//i.test(e)||e.startsWith(`/`)?e:`/${e}`}function mf(e){return pf(e)||ff}function hf(e={}){return{id:e.id||``,slug:e.slug||e.series_slug||``,type:e.type||e.series_type||``,title:e.title||e.series_title||`Untitled`,description:e.description||``,cover:mf(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover_image||e.series_cover),genres:Array.isArray(e.genres)?e.genres:[],tags:Array.isArray(e.tags)?e.tags:[],author:e.author||e.author_name||``,status:e.status||``,rating:Number(e.rating_avg||e.rating||0),followers:Number(e.follow_count||0),chapterCount:Number(e.chapter_count||0),access:e.access||{}}}function gf(e={}){return{id:e.id||``,slug:e.slug||e.series_slug||``,type:e.type||e.series_type||``,title:e.title||e.name||``,number:e.chapter_number||e.chapterNumber||e.number||``,price:Number(e.price_coin||e.price_amount||e.access?.chapter_unlock_price||0),isLocked:e.is_locked??!(e.access?.granted??e.is_unlocked??!0),isPurchased:!!(e.access?.granted||e.is_chapter_unlocked||e.is_series_unlocked),createdAt:e.created_at||null,access:e.access||{}}}function _f(e={}){let t=e.type===`image`?`image`:`text`,n=typeof e.data==`string`?e.data:``;return{id:e.id||``,title:e.title||``,number:e.chapter_number||e.number||``,readerType:t,body:t===`text`?n:``,images:t===`image`?n.split(`|`).map(e=>pf(e)).filter(Boolean):[],access:e.access||{},previousChapter:e.adjacent_chapters?.previous||null,nextChapter:e.adjacent_chapters?.next||null,series:hf(e.series||{slug:e.slug||e.series_slug,type:e.series_type||e.type,title:e.series_title||e.series?.title,cover_image:e.series_cover||e.series_cover_image})}}function vf(e={}){return{id:e.id||``,username:e.username||`guest`,email:e.email||``,bio:e.bio||``,profileImage:pf(e.profile_image),coverImage:pf(e.cover_image),createdAt:e.created_at||null,isGuest:!!e.is_guest,stats:e.stats||{}}}function yf(e={}){return{balance:Number(e.balance||e.coin_balance||0),totalPurchased:Number(e.total_purchased||0),totalSpent:Number(e.total_spent||0)}}var bf=null;async function xf(e){let t=await sf(`/auth/login`,{method:`POST`,headers:{Accept:`application/json`,"Content-Type":`application/json`},body:JSON.stringify({email:e.email,password:e.password,remember:!0,turnstile_token:e.turnstileToken||``})});if(!t.ok||t.payload?.status===`error`){let e=Error(t.payload?.error?.message||t.payload?.message||`Login failed`);throw e.status=t.status,e}let n=t.payload?.data||{};return $.actions.setSession({accessToken:n.api_token||null,refreshToken:n.refresh_token||null,user:vf(n)}),vf(n)}async function Sf(e){let t=await sf(`/auth/register`,{method:`POST`,headers:{Accept:`application/json`,"Content-Type":`application/json`},body:JSON.stringify({username:e.username,email:e.email,password:e.password,turnstile_token:e.turnstileToken||``})});if(!t.ok||t.payload?.status===`error`){let e=Error(t.payload?.error?.message||t.payload?.message||`Registration failed`);throw e.status=t.status,e}return t.payload?.data||{}}async function Cf(){try{await sf(`/auth/logout`,{method:`POST`,headers:{Accept:`application/json`}})}finally{$.actions.clearSession()}}async function wf(){if(bf)return bf;let e=$.getState().auth.refreshToken;if(!e)return $.actions.clearSession(),!1;bf=(async()=>{let t=await sf(`/auth/refresh`,{method:`POST`,headers:{Accept:`application/json`,"Content-Type":`application/json`},body:JSON.stringify({refresh_token:e})});if(!t.ok||t.payload?.status===`error`)return $.actions.clearSession(),!1;let n=t.payload?.data||{};return $.actions.setSession({accessToken:n.api_token||$.getState().auth.accessToken,refreshToken:n.refresh_token||e,user:vf({...$.getState().auth.user,...n})}),!0})();try{return await bf}finally{bf=null}}async function Tf(){return vf((await df(`/user/profile`)).data||{})}async function Ef(e=1,t=20){let n=await df(`/user/follows?page=${e}&per_page=${t}`);return{items:Array.isArray(n.data)?n.data.map(hf):[],meta:n.meta}}async function Df(e=1,t=20){let n=await df(`/user/history?page=${e}&per_page=${t}`);return{items:Array.isArray(n.data)?n.data:[],meta:n.meta}}async function Of(e=1,t=20){let n=await df(`/user/notifications?page=${e}&per_page=${t}`);return{items:Array.isArray(n.data)?n.data:[],meta:n.meta}}async function kf(){return df(`/user/notifications/read`,{method:`POST`})}async function Af(){return(await df(`/user/preferences`)).data||{}}async function jf(e){return(await df(`/user/preferences`,{method:`PUT`,body:e})).data||{}}async function Mf(){return yf((await df(`/user/wallet`)).data||{})}async function Nf(e=1,t=20){let n=await df(`/user/wallet/transactions?page=${e}&per_page=${t}`);return{items:Array.isArray(n.data)?n.data:[],meta:n.meta}}async function Pf(){let e=await df(`/shop/packages`);return Array.isArray(e.data)?e.data:[]}async function Ff(){let e=await df(`/shop/features`);return Array.isArray(e.data)?e.data:[]}async function If(e){return(await df(`/chapter/${e}/unlock`,{method:`POST`})).data||{}}var Lf=null;function Rf(e){$.hydrate(),lf(async()=>{let t=await wf();return t||e.views.main.router.navigate(`/login/`),t}),document.addEventListener(`auth:expired`,()=>{e.views.main.router.navigate(`/login/`)}),document.addEventListener(`backbutton`,()=>{let t=e.views.main;t?.router?.history?.length>1&&t.router.back()})}async function zf(){if(Lf)return Lf;Lf=(async()=>{let e=$.getState();if(!e.auth.accessToken&&!e.auth.refreshToken||($.actions.setAuthRestoring(),!await wf()))return{route:`/home/`};let[t,n,r]=await Promise.allSettled([Tf(),Mf(),Af()]);return t.status===`fulfilled`&&$.actions.setUser(t.value),n.status===`fulfilled`&&$.actions.setWalletSummary(n.value),r.status===`fulfilled`&&($.actions.setPreferences({language:r.value.lang||$.getState().preferences.language,theme:r.value.theme||$.getState().preferences.theme}),$.actions.setReaderPreferences({theme:r.value.reader_theme||$.getState().readerPreferences.theme,fontSize:Number(r.value.reader_font_size||$.getState().readerPreferences.fontSize),imageMode:r.value.reader_layout||$.getState().readerPreferences.imageMode})),{route:`/home/`}})();try{return await Lf}finally{Lf=null}}function Bf(e,{$f7router:t,$onMounted:n}){async function r(){let e=await zf();t.navigate(e.route||`/home/`,{reloadCurrent:!0})}return n(()=>{r()}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}Nd.id=`42a4916c9a`;var Pd=`nmr_mobile_v2`;function Fd(e){return`${Pd}:${e}`}function Id(e,t=null){if(typeof localStorage>`u`)return t;try{let n=localStorage.getItem(Fd(e));return n?JSON.parse(n):t}catch{return t}}function Ld(e,t){if(!(typeof localStorage>`u`))try{localStorage.setItem(Fd(e),JSON.stringify(t))}catch{}}function Rd(e){if(!(typeof localStorage>`u`))try{localStorage.removeItem(Fd(e))}catch{}}var zd=`session`,Bd=`preferences`,Vd=`reader-preferences`,Hd={auth:{status:`guest`,accessToken:null,refreshToken:null,user:null},wallet:{balance:0,totalPurchased:0,totalSpent:0},preferences:{language:`tr`,theme:`system`},readerPreferences:{theme:`dark`,fontSize:18,imageMode:`vertical`}},Ud=structuredClone(Hd),Wd=new Set;function Gd(){Wd.forEach(e=>e(Ud))}function Kd(){Ld(zd,{accessToken:Ud.auth.accessToken,refreshToken:Ud.auth.refreshToken,user:Ud.auth.user}),Ld(Bd,Ud.preferences),Ld(Vd,Ud.readerPreferences)}function qd(e){Ud={...Ud,...e},Kd(),Gd()}function Jd(){let e=Id(zd,null),t=Id(Bd,null),n=Id(Vd,null);Ud={...structuredClone(Hd),auth:e?.accessToken?{status:`restoring`,accessToken:e.accessToken||null,refreshToken:e.refreshToken||null,user:e.user||null}:structuredClone(Hd.auth),preferences:{...structuredClone(Hd.preferences),...t||{}},readerPreferences:{...structuredClone(Hd.readerPreferences),...n||{}},wallet:structuredClone(Hd.wallet)},Gd()}function Yd(){return Ud}function Xd(e){return Wd.add(e),()=>Wd.delete(e)}function Zd({accessToken:e=null,refreshToken:t=null,user:n=null}={}){qd({auth:{status:e?`authenticated`:`guest`,accessToken:e,refreshToken:t,user:n}})}function Qd(){qd({auth:{...Ud.auth,status:`restoring`}})}function $d(){Ud={...Ud,auth:structuredClone(Hd.auth),wallet:structuredClone(Hd.wallet)},Rd(zd),Kd(),Gd()}function ef(e){qd({auth:{...Ud.auth,user:e,status:Ud.auth.accessToken?`authenticated`:Ud.auth.status}})}function tf(e){qd({wallet:{...structuredClone(Hd.wallet),...e||{}}})}function nf(e){qd({preferences:{...Ud.preferences,...e||{}}})}function rf(e){qd({readerPreferences:{...Ud.readerPreferences,...e||{}}})}function af(){return!!Ud.auth.accessToken}var $={hydrate:Jd,getState:Yd,subscribe:Xd,isAuthenticated:af,actions:{setSession:Zd,setAuthRestoring:Qd,clearSession:$d,setUser:ef,setWalletSummary:tf,setPreferences:nf,setReaderPreferences:rf}};function of(){return typeof window<`u`&&window.cordova!==void 0}function sf(){if(typeof window<`u`){let e=window.NMR_MOBILE_API_BASE||window.NMR_API_BASE;if(typeof e==`string`&&e.trim()!==``)return e.trim().replace(/\/+$/,``)}if(typeof localStorage<`u`){let e=localStorage.getItem(`nmr_mobile_api_base`);if(typeof e==`string`&&e.trim()!==``)return e.trim().replace(/\/+$/,``)}return`/api/v1`}async function cf(e,t={}){let n=new AbortController,r=window.setTimeout(()=>n.abort(),t.timeout??12e3);try{let r=await fetch(`${sf()}${e}`,{method:t.method||`GET`,headers:t.headers||{},body:t.body,signal:n.signal,credentials:`include`}),i=await r.text(),a=null;try{a=i?JSON.parse(i):null}catch{a=i?{message:i}:null}return{ok:r.ok,status:r.status,payload:a}}finally{window.clearTimeout(r)}}var lf=null;function uf(e){lf=e}function df(e){let t={Accept:`application/json`,...e.headers||{}},n=$.getState().auth.accessToken;return n&&!e.skipAuth&&(t.Authorization=`Bearer ${n}`),e.body&&!(e.body instanceof FormData)&&!t[`Content-Type`]&&(t[`Content-Type`]=`application/json`),t}async function ff(e,t={}){let n=df(t),r=t.body instanceof FormData?t.body:t.body?JSON.stringify(t.body):void 0,i=await cf(e,{method:t.method,headers:n,body:r,timeout:t.timeout});if(i.status===401&&typeof lf==`function`&&!t.skipAuthRecovery&&await lf())return ff(e,{...t,skipAuthRecovery:!0});if(!i.ok||i.payload?.status===`error`){let e=Error(i.payload?.error?.message||i.payload?.message||`Request failed with status ${i.status}`);throw e.status=i.status,e.payload=i.payload,e}return{data:i.payload?.data??i.payload??null,meta:i.payload?.meta??{}}}var pf=`/assets/img/covers/placeholder.svg`;function mf(e){return typeof e!=`string`||e.trim()===``?null:/^https?:\/\//i.test(e)||e.startsWith(`/`)?e:`/${e}`}function hf(e){return mf(e)||pf}function gf(e={}){return{id:e.id||``,slug:e.slug||e.series_slug||``,type:e.type||e.series_type||``,title:e.title||e.series_title||`Untitled`,description:e.description||``,cover:hf(e.cover_image||e.cover||e.thumbnail||e.image||e.series_cover_image||e.series_cover),genres:Array.isArray(e.genres)?e.genres:[],tags:Array.isArray(e.tags)?e.tags:[],author:e.author||e.author_name||``,status:e.status||``,rating:Number(e.rating_avg||e.rating||0),followers:Number(e.follow_count||0),chapterCount:Number(e.chapter_count||0),access:e.access||{}}}function _f(e={}){return{id:e.id||``,slug:e.slug||e.series_slug||``,type:e.type||e.series_type||``,title:e.title||e.name||``,number:e.chapter_number||e.chapterNumber||e.number||``,price:Number(e.price_coin||e.price_amount||e.access?.chapter_unlock_price||0),isLocked:e.is_locked??!(e.access?.granted??e.is_unlocked??!0),isPurchased:!!(e.access?.granted||e.is_chapter_unlocked||e.is_series_unlocked),createdAt:e.created_at||null,access:e.access||{}}}function vf(e={}){let t=e.type===`image`?`image`:`text`,n=typeof e.data==`string`?e.data:``;return{id:e.id||``,title:e.title||``,number:e.chapter_number||e.number||``,readerType:t,body:t===`text`?n:``,images:t===`image`?n.split(`|`).map(e=>mf(e)).filter(Boolean):[],access:e.access||{},previousChapter:e.adjacent_chapters?.previous||null,nextChapter:e.adjacent_chapters?.next||null,series:gf(e.series||{slug:e.slug||e.series_slug,type:e.series_type||e.type,title:e.series_title||e.series?.title,cover_image:e.series_cover||e.series_cover_image})}}function yf(e={}){return{id:e.id||``,username:e.username||`guest`,email:e.email||``,bio:e.bio||``,profileImage:mf(e.profile_image),coverImage:mf(e.cover_image),createdAt:e.created_at||null,isGuest:!!e.is_guest,stats:e.stats||{}}}function bf(e={}){return{balance:Number(e.balance||e.coin_balance||0),totalPurchased:Number(e.total_purchased||0),totalSpent:Number(e.total_spent||0)}}var xf=null;async function Sf(e){let t=await cf(`/auth/login`,{method:`POST`,headers:{Accept:`application/json`,"Content-Type":`application/json`},body:JSON.stringify({email:e.email,password:e.password,remember:!0,turnstile_token:e.turnstileToken||``})});if(!t.ok||t.payload?.status===`error`){let e=Error(t.payload?.error?.message||t.payload?.message||`Login failed`);throw e.status=t.status,e}let n=t.payload?.data||{};return $.actions.setSession({accessToken:n.api_token||null,refreshToken:n.refresh_token||null,user:yf(n)}),yf(n)}async function Cf(e){let t=await cf(`/auth/register`,{method:`POST`,headers:{Accept:`application/json`,"Content-Type":`application/json`},body:JSON.stringify({username:e.username,email:e.email,password:e.password,turnstile_token:e.turnstileToken||``})});if(!t.ok||t.payload?.status===`error`){let e=Error(t.payload?.error?.message||t.payload?.message||`Registration failed`);throw e.status=t.status,e}return t.payload?.data||{}}async function wf(){try{await cf(`/auth/logout`,{method:`POST`,headers:{Accept:`application/json`}})}finally{$.actions.clearSession()}}async function Tf(){if(xf)return xf;let e=$.getState().auth.refreshToken;if(!e)return $.actions.clearSession(),!1;xf=(async()=>{let t=await cf(`/auth/refresh`,{method:`POST`,headers:{Accept:`application/json`,"Content-Type":`application/json`},body:JSON.stringify({refresh_token:e})});if(!t.ok||t.payload?.status===`error`)return $.actions.clearSession(),!1;let n=t.payload?.data||{};return $.actions.setSession({accessToken:n.api_token||$.getState().auth.accessToken,refreshToken:n.refresh_token||e,user:yf({...$.getState().auth.user,...n})}),!0})();try{return await xf}finally{xf=null}}async function Ef(){return yf((await ff(`/user/profile`)).data||{})}async function Df(e=1,t=20){let n=await ff(`/user/follows?page=${e}&per_page=${t}`);return{items:Array.isArray(n.data)?n.data.map(gf):[],meta:n.meta}}async function Of(e=1,t=20){let n=await ff(`/user/history?page=${e}&per_page=${t}`);return{items:Array.isArray(n.data)?n.data:[],meta:n.meta}}async function kf(e=1,t=20){let n=await ff(`/user/notifications?page=${e}&per_page=${t}`);return{items:Array.isArray(n.data)?n.data:[],meta:n.meta}}async function Af(){return ff(`/user/notifications/read`,{method:`POST`})}async function jf(){return(await ff(`/user/preferences`)).data||{}}async function Mf(e){return(await ff(`/user/preferences`,{method:`PUT`,body:e})).data||{}}async function Nf(){return bf((await ff(`/user/wallet`)).data||{})}async function Pf(e=1,t=20){let n=await ff(`/user/wallet/transactions?page=${e}&per_page=${t}`);return{items:Array.isArray(n.data)?n.data:[],meta:n.meta}}async function Ff(){let e=await ff(`/shop/packages`);return Array.isArray(e.data)?e.data:[]}async function If(){let e=await ff(`/shop/features`);return Array.isArray(e.data)?e.data:[]}async function Lf(e){return(await ff(`/chapter/${e}/unlock`,{method:`POST`})).data||{}}var Rf=null;function zf(e){$.hydrate(),uf(async()=>{let t=await Tf();return t||e.views.main.router.navigate(`/login/`),t}),document.addEventListener(`auth:expired`,()=>{e.views.main.router.navigate(`/login/`)}),document.addEventListener(`backbutton`,()=>{let t=e.views.main;t?.router?.history?.length>1&&t.router.back()})}async function Bf(){if(Rf)return Rf;Rf=(async()=>{let e=$.getState();if(!e.auth.accessToken&&!e.auth.refreshToken||($.actions.setAuthRestoring(),!await Tf()))return{route:`/home/`};let[t,n,r]=await Promise.allSettled([Ef(),Nf(),jf()]);return t.status===`fulfilled`&&$.actions.setUser(t.value),n.status===`fulfilled`&&$.actions.setWalletSummary(n.value),r.status===`fulfilled`&&($.actions.setPreferences({language:r.value.lang||$.getState().preferences.language,theme:r.value.theme||$.getState().preferences.theme}),$.actions.setReaderPreferences({theme:r.value.reader_theme||$.getState().readerPreferences.theme,fontSize:Number(r.value.reader_font_size||$.getState().readerPreferences.fontSize),imageMode:r.value.reader_layout||$.getState().readerPreferences.imageMode})),{route:`/home/`}})();try{return await Rf}finally{Rf=null}}function Vf(e,{$f7router:t,$onMounted:n}){async function r(){let e=await Bf();t.navigate(e.route||`/home/`,{reloadCurrent:!0})}return n(()=>{r()}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="startup">
     <div class="page-content startup-screen">
       <div class="startup-screen__content">
@@ -235,24 +245,24 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       </div>
     </div>
   </div>
-`}}Bf.id=`43f87ede3d`;async function Vf(){let e=(await df(`/home`)).data||{};return{explore:Array.isArray(e.explore)?e.explore.map(hf):[],latestChapters:Array.isArray(e.recent_chapters)?e.recent_chapters.map(gf):[],recentContent:Array.isArray(e.recently_added)?e.recently_added.map(hf):[],blogs:Array.isArray(e.popular_blogs)?e.popular_blogs:[]}}async function Hf(e,t=1,n=20){let r=await df(`/content/type/${e}?page=${t}&per_page=${n}`);return{items:Array.isArray(r.data)?r.data.map(hf):[],meta:r.meta}}async function Uf(e,t){return hf((await df(`/content/${e}/${t}`)).data||{})}async function Wf(e,t,n=1,r=50){let i=await df(`/content/${e}/${t}/chapters?page=${n}&per_page=${r}`);return{items:Array.isArray(i.data)?i.data.map(gf):[],meta:i.meta}}async function Gf(e,t){return df(`/content/${e}/${t}/follow`,{method:`POST`})}async function Kf(e,t){return df(`/content/${e}/${t}/follow`,{method:`DELETE`})}async function qf(e,t){return df(`/content/${e}/${t}/unlock`,{method:`POST`})}function Jf(e){return String(e??``).replace(/&/g,`&amp;`).replace(/</g,`&lt;`).replace(/>/g,`&gt;`).replace(/"/g,`&quot;`).replace(/'/g,`&#39;`)}function Yf(e){if(!e)return``;let t=new Date(e);return Number.isNaN(t.getTime())?String(e):new Intl.DateTimeFormat(`tr-TR`,{day:`2-digit`,month:`short`,year:`numeric`}).format(t)}function Xf(e){return`${Number(e||0).toLocaleString(`tr-TR`)} coin`}function Zf(e){return e==null||e===``?`Chapter`:`Chapter ${e}`}function Qf({title:e,subtitle:t=``,back:n=!1,large:r=!1}={}){return`
+`}}Vf.id=`16c8117900`;async function Hf(){let e=(await ff(`/home`)).data||{};return{explore:Array.isArray(e.explore)?e.explore.map(gf):[],latestChapters:Array.isArray(e.recent_chapters)?e.recent_chapters.map(_f):[],recentContent:Array.isArray(e.recently_added)?e.recently_added.map(gf):[],blogs:Array.isArray(e.popular_blogs)?e.popular_blogs:[]}}async function Uf(e,t=1,n=20){let r=await ff(`/content/type/${e}?page=${t}&per_page=${n}`);return{items:Array.isArray(r.data)?r.data.map(gf):[],meta:r.meta}}async function Wf(e,t){return gf((await ff(`/content/${e}/${t}`)).data||{})}async function Gf(e,t,n=1,r=50){let i=await ff(`/content/${e}/${t}/chapters?page=${n}&per_page=${r}`);return{items:Array.isArray(i.data)?i.data.map(_f):[],meta:i.meta}}async function Kf(e,t){return ff(`/content/${e}/${t}/follow`,{method:`POST`})}async function qf(e,t){return ff(`/content/${e}/${t}/follow`,{method:`DELETE`})}async function Jf(e,t){return ff(`/content/${e}/${t}/unlock`,{method:`POST`})}function Yf(e){return String(e??``).replace(/&/g,`&amp;`).replace(/</g,`&lt;`).replace(/>/g,`&gt;`).replace(/"/g,`&quot;`).replace(/'/g,`&#39;`)}function Xf(e){if(!e)return``;let t=new Date(e);return Number.isNaN(t.getTime())?String(e):new Intl.DateTimeFormat(`tr-TR`,{day:`2-digit`,month:`short`,year:`numeric`}).format(t)}function Zf(e){return`${Number(e||0).toLocaleString(`tr-TR`)} coin`}function Qf(e){return e==null||e===``?`Chapter`:`Chapter ${e}`}function $f({title:e,subtitle:t=``,back:n=!1,large:r=!1}={}){return`
     <div class="navbar ${r?`navbar-large`:``}">
       <div class="navbar-bg"></div>
       <div class="navbar-inner sliding">
         <div class="left">
           ${n?`<a class="link back"><i class="icon f7-icons">chevron_left</i></a>`:``}
         </div>
-        <div class="title">${Jf(e||`NMR Mobile`)}</div>
+        <div class="title">${Yf(e||`NMR Mobile`)}</div>
         <div class="right"></div>
         ${r?`
           <div class="title-large">
-            <div class="title-large-text">${Jf(e||`NMR Mobile`)}</div>
-            ${t?`<div class="mobile-page-subtitle">${Jf(t)}</div>`:``}
+            <div class="title-large-text">${Yf(e||`NMR Mobile`)}</div>
+            ${t?`<div class="mobile-page-subtitle">${Yf(t)}</div>`:``}
           </div>
         `:``}
       </div>
     </div>
-  `}function $f(e=`home`){return`
+  `}function ep(e=`home`){return`
     <div class="toolbar toolbar-bottom mobile-bottom-nav">
       <div class="toolbar-inner">
         ${[{key:`home`,href:`/home/`,icon:`house_fill`,label:`Home`},{key:`library`,href:`/library/`,icon:`books_vertical_fill`,label:`Library`},{key:`history`,href:`/history/`,icon:`clock_fill`,label:`History`},{key:`wallet`,href:`/wallet/`,icon:`creditcard_fill`,label:`Wallet`},{key:`settings`,href:`/settings/`,icon:`gear_alt_fill`,label:`Settings`}].map(t=>`
@@ -263,46 +273,46 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
         `).join(``)}
       </div>
     </div>
-  `}function ep(e){return`
+  `}function tp(e){return`
     <a class="card mobile-content-card" href="/content/${e.type}/${e.slug}/">
       <div class="card-content card-content-padding">
         <div class="mobile-content-card__media">
-          <img src="${e.cover}" alt="${Jf(e.title)}" />
+          <img src="${e.cover}" alt="${Yf(e.title)}" />
         </div>
         <div class="mobile-content-card__body">
-          <div class="mobile-content-card__title">${Jf(e.title)}</div>
-          <div class="mobile-content-card__meta">${Jf(e.type||`content`)}</div>
-          <div class="mobile-content-card__description">${Jf(e.description||`No description available yet.`)}</div>
+          <div class="mobile-content-card__title">${Yf(e.title)}</div>
+          <div class="mobile-content-card__meta">${Yf(e.type||`content`)}</div>
+          <div class="mobile-content-card__description">${Yf(e.description||`No description available yet.`)}</div>
           <div class="mobile-content-card__footer">
-            <span>${Zf(e.chapterCount||``)}</span>
+            <span>${Qf(e.chapterCount||``)}</span>
             <span>${Number(e.rating||0).toFixed(1)}</span>
           </div>
         </div>
       </div>
     </a>
-  `}function tp(e=`Loading...`){return`
+  `}function np(e=`Loading...`){return`
     <div class="block block-strong mobile-feedback-block">
       <div class="preloader color-blue"></div>
       <p>${e}</p>
     </div>
-  `}function np({title:e,message:t,retryLabel:n=`Retry`}){return`
+  `}function rp({title:e,message:t,retryLabel:n=`Retry`}){return`
     <div class="block block-strong mobile-feedback-block mobile-error-block">
-      <div class="mobile-feedback-title">${Jf(e||`Something went wrong`)}</div>
-      <p>${Jf(t||`Please try again.`)}</p>
-      <button class="button button-fill color-red" data-action="retry-page">${Jf(n)}</button>
+      <div class="mobile-feedback-title">${Yf(e||`Something went wrong`)}</div>
+      <p>${Yf(t||`Please try again.`)}</p>
+      <button class="button button-fill color-red" data-action="retry-page">${Yf(n)}</button>
     </div>
-  `}function rp({title:e,message:t,actionHref:n=``,actionLabel:r=``}){return`
+  `}function ip({title:e,message:t,actionHref:n=``,actionLabel:r=``}){return`
     <div class="block block-strong mobile-feedback-block">
-      <div class="mobile-feedback-title">${Jf(e||`No data`)}</div>
-      <p>${Jf(t||`Nothing to show yet.`)}</p>
-      ${n&&r?`<a href="${n}" class="button button-fill">${Jf(r)}</a>`:``}
+      <div class="mobile-feedback-title">${Yf(e||`No data`)}</div>
+      <p>${Yf(t||`Nothing to show yet.`)}</p>
+      ${n&&r?`<a href="${n}" class="button button-fill">${Yf(r)}</a>`:``}
     </div>
-  `}function ip(e,{$onMounted:t,$onBeforeUnmount:n,$update:r,$el:i}){let a={loading:!0,error:``,explore:[],latest:[]};async function o(){a.loading=!0,a.error=``,r();try{let e=await Vf();a.explore=e.explore,a.latest=e.latestChapters.map(e=>({...e,type:e.type||`content`,slug:e.slug||``,title:e.title||`Chapter ${e.number}`}))}catch(e){a.error=e.message||`Unable to load discovery feed.`}finally{a.loading=!1,r()}}function s(e){e.target.closest(`[data-action="retry-page"]`)&&o()}return t(()=>{i.addEventListener(`click`,s),o()}),n(()=>{i.removeEventListener(`click`,s)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+  `}function ap(e,{$onMounted:t,$onBeforeUnmount:n,$update:r,$el:i}){let a={loading:!0,error:``,explore:[],latest:[]};async function o(){a.loading=!0,a.error=``,r();try{let e=await Hf();a.explore=e.explore,a.latest=e.latestChapters.map(e=>({...e,type:e.type||`content`,slug:e.slug||``,title:e.title||`Chapter ${e.number}`}))}catch(e){a.error=e.message||`Unable to load discovery feed.`}finally{a.loading=!1,r()}}function s(e){e.target.closest(`[data-action="retry-page"]`)&&o()}return t(()=>{i.addEventListener(`click`,s),o()}),n(()=>{i.removeEventListener(`click`,s)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="home">
-    ${Qf({title:`Home`,subtitle:`Discover novels and manga`,large:!0})}
+    ${$f({title:`Home`,subtitle:`Discover novels and manga`,large:!0})}
     <div class="page-content">
-      ${a.loading?tp(`Loading discovery feed...`):``}
-      ${a.error?np({title:`Home feed failed`,message:a.error}):``}
+      ${a.loading?np(`Loading discovery feed...`):``}
+      ${a.error?rp({title:`Home feed failed`,message:a.error}):``}
 
       ${!a.loading&&!a.error?t`
         <div class="block block-strong mobile-hero-block">
@@ -314,7 +324,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
         </div>
 
         <div class="block-title">Featured</div>
-        ${a.explore.length?a.explore.map(e=>ep(e)).join(``):rp({title:`No featured content`,message:`Featured stories will appear here.`})}
+        ${a.explore.length?a.explore.map(e=>tp(e)).join(``):ip({title:`No featured content`,message:`Featured stories will appear here.`})}
 
         <div class="block-title">Latest chapters</div>
         ${a.latest.length?t`
@@ -335,51 +345,51 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
               `).join(``)}
             </ul>
           </div>
-        `:rp({title:`No recent chapters`,message:`Recent updates will appear here.`})}
+        `:ip({title:`No recent chapters`,message:`Recent updates will appear here.`})}
       `:``}
     </div>
-    ${$f(`home`)}
+    ${ep(`home`)}
   </div>
-`}}ip.id=`e05f93cbd5`;function ap(e,{$route:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$el:a}){let o=t.params.type||`manga`,s=o.charAt(0).toUpperCase()+o.slice(1),c={loading:!0,error:``,items:[]};async function l(){c.loading=!0,c.error=``,i();try{c.items=(await Hf(o)).items}catch(e){c.error=e.message||`Unable to load this type.`}finally{c.loading=!1,i()}}function u(e){e.target.closest(`[data-action="retry-page"]`)&&l()}return n(()=>{a.addEventListener(`click`,u),l()}),r(()=>{a.removeEventListener(`click`,u)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}ap.id=`fc4bff020e`;function op(e,{$route:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$el:a}){let o=t.params.type||`manga`,s=o.charAt(0).toUpperCase()+o.slice(1),c={loading:!0,error:``,items:[]};async function l(){c.loading=!0,c.error=``,i();try{c.items=(await Uf(o)).items}catch(e){c.error=e.message||`Unable to load this type.`}finally{c.loading=!1,i()}}function u(e){e.target.closest(`[data-action="retry-page"]`)&&l()}return n(()=>{a.addEventListener(`click`,u),l()}),r(()=>{a.removeEventListener(`click`,u)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="type-list">
-    ${Qf({title:s,subtitle:`Browse by content type`,back:!0,large:!0})}
+    ${$f({title:s,subtitle:`Browse by content type`,back:!0,large:!0})}
     <div class="page-content">
-      ${c.loading?tp(`Loading type list...`):``}
-      ${c.error?np({title:`Type list failed`,message:c.error}):``}
-      ${!c.loading&&!c.error?c.items.length?c.items.map(e=>ep(e)).join(``):rp({title:`Nothing found`,message:`There is no content for this type yet.`}):``}
+      ${c.loading?np(`Loading type list...`):``}
+      ${c.error?rp({title:`Type list failed`,message:c.error}):``}
+      ${!c.loading&&!c.error?c.items.length?c.items.map(e=>tp(e)).join(``):ip({title:`Nothing found`,message:`There is no content for this type yet.`}):``}
     </div>
-    ${$f(`home`)}
+    ${ep(`home`)}
   </div>
-`}}ap.id=`9bf00c6749`;function op(e){return`
+`}}op.id=`06413453ba`;function sp(e){return`
     <div class="card mobile-wallet-card">
       <div class="card-content card-content-padding">
         <div class="mobile-wallet-card__label">Wallet balance</div>
-        <div class="mobile-wallet-card__value">${Xf(e.balance)}</div>
+        <div class="mobile-wallet-card__value">${Zf(e.balance)}</div>
         <div class="mobile-wallet-card__meta">
-          <span>Purchased: ${Xf(e.totalPurchased)}</span>
-          <span>Spent: ${Xf(e.totalSpent)}</span>
+          <span>Purchased: ${Zf(e.totalPurchased)}</span>
+          <span>Spent: ${Zf(e.totalSpent)}</span>
         </div>
       </div>
     </div>
-  `}function sp({type:e,slug:t,chapter:n}){let r=`/reader/${e}/${t}/${n.number}/`,i=n.isLocked?`<span class="badge color-orange">${Jf(Xf(n.price))}</span>`:`<span class="badge color-green">Open</span>`;return`
+  `}function cp({type:e,slug:t,chapter:n}){let r=`/reader/${e}/${t}/${n.number}/`,i=n.isLocked?`<span class="badge color-orange">${Yf(Zf(n.price))}</span>`:`<span class="badge color-green">Open</span>`;return`
     <li>
       <a href="${r}" class="item-link item-content">
         <div class="item-inner">
           <div class="item-title-row">
-            <div class="item-title">${Jf(n.title||Zf(n.number))}</div>
+            <div class="item-title">${Yf(n.title||Qf(n.number))}</div>
             <div class="item-after">${i}</div>
           </div>
-          <div class="item-subtitle">${Jf(Zf(n.number))}</div>
-          <div class="item-text">${Jf(Yf(n.createdAt)||(n.isPurchased?`Purchased`:`Available`))}</div>
+          <div class="item-subtitle">${Yf(Qf(n.number))}</div>
+          <div class="item-text">${Yf(Xf(n.createdAt)||(n.isPurchased?`Purchased`:`Available`))}</div>
         </div>
       </a>
     </li>
-  `}function cp(e,{$route:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$el:a,$f7:o}){let s=t.params.type,c=t.params.slug,l={loading:!0,error:``,detail:null,chapters:[],wallet:null,canFollow:!1,isFollowing:!1,canUnlockSeries:!1};async function u(){l.loading=!0,l.error=``,i();try{let[e,t]=await Promise.all([Uf(s,c),Wf(s,c)]);l.detail=e,l.chapters=t.items,l.canFollow=$.isAuthenticated(),l.isFollowing=!!e.access?.is_following,l.canUnlockSeries=!!(e.access?.series_unlock_price&&!e.access?.granted&&$.isAuthenticated()),$.isAuthenticated()&&(l.wallet=await Mf())}catch(e){l.error=e.message||`Unable to load this content.`}finally{l.loading=!1,i()}}async function d(e){if(e.target.closest(`[data-action="retry-page"]`)){u();return}if(e.target.closest(`[data-action="toggle-follow"]`))try{l.isFollowing?await Kf(s,c):await Gf(s,c),l.isFollowing=!l.isFollowing,i()}catch(e){o.dialog.alert(e.message||`Follow action failed.`)}if(e.target.closest(`[data-action="unlock-series"]`))try{await qf(s,c),l.wallet=await Mf(),await u()}catch(e){o.dialog.alert(e.message||`Series unlock failed.`)}}return n(()=>{a.addEventListener(`click`,d),u()}),r(()=>{a.removeEventListener(`click`,d)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+  `}function lp(e,{$route:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$el:a,$f7:o}){let s=t.params.type,c=t.params.slug,l={loading:!0,error:``,detail:null,chapters:[],wallet:null,canFollow:!1,isFollowing:!1,canUnlockSeries:!1};async function u(){l.loading=!0,l.error=``,i();try{let[e,t]=await Promise.all([Wf(s,c),Gf(s,c)]);l.detail=e,l.chapters=t.items,l.canFollow=$.isAuthenticated(),l.isFollowing=!!e.access?.is_following,l.canUnlockSeries=!!(e.access?.series_unlock_price&&!e.access?.granted&&$.isAuthenticated()),$.isAuthenticated()&&(l.wallet=await Nf())}catch(e){l.error=e.message||`Unable to load this content.`}finally{l.loading=!1,i()}}async function d(e){if(e.target.closest(`[data-action="retry-page"]`)){u();return}if(e.target.closest(`[data-action="toggle-follow"]`))try{l.isFollowing?await qf(s,c):await Kf(s,c),l.isFollowing=!l.isFollowing,i()}catch(e){o.dialog.alert(e.message||`Follow action failed.`)}if(e.target.closest(`[data-action="unlock-series"]`))try{await Jf(s,c),l.wallet=await Nf(),await u()}catch(e){o.dialog.alert(e.message||`Series unlock failed.`)}}return n(()=>{a.addEventListener(`click`,d),u()}),r(()=>{a.removeEventListener(`click`,d)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="content-detail">
-    ${Qf({title:l.detail?.title||`Content`,subtitle:`Summary and chapters`,back:!0,large:!0})}
+    ${$f({title:l.detail?.title||`Content`,subtitle:`Summary and chapters`,back:!0,large:!0})}
     <div class="page-content">
-      ${l.loading?tp(`Loading content details...`):``}
-      ${l.error?np({title:`Content failed`,message:l.error}):``}
+      ${l.loading?np(`Loading content details...`):``}
+      ${l.error?rp({title:`Content failed`,message:l.error}):``}
 
       ${!l.loading&&!l.error&&l.detail?t`
         <div class="card mobile-detail-card">
@@ -392,7 +402,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
                 <p>${l.detail.description||`No description available yet.`}</p>
               </div>
             </div>
-            ${l.wallet?op(l.wallet):``}
+            ${l.wallet?sp(l.wallet):``}
             <div class="mobile-detail-card__actions">
               ${l.canFollow?`<button class="button ${l.isFollowing?`button-outline`:`button-fill`}" data-action="toggle-follow">${l.isFollowing?`Unfollow`:`Follow`}</button>`:``}
               ${l.canUnlockSeries?`<button class="button button-fill color-orange" data-action="unlock-series">Unlock series</button>`:``}
@@ -403,19 +413,19 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
         <div class="block-title">Chapters</div>
         ${l.chapters.length?`
           <div class="list inset media-list no-chevron">
-            <ul>${l.chapters.map(e=>sp({type:s,slug:c,chapter:e})).join(``)}</ul>
+            <ul>${l.chapters.map(e=>cp({type:s,slug:c,chapter:e})).join(``)}</ul>
           </div>
-        `:rp({title:`No chapters yet`,message:`This series does not have readable chapters yet.`})}
+        `:ip({title:`No chapters yet`,message:`This series does not have readable chapters yet.`})}
       `:``}
     </div>
-    ${$f(`home`)}
+    ${ep(`home`)}
   </div>
-`}}cp.id=`5da592b853`;async function lp(e,t,n){return _f((await df(`/content/${e}/${t}/chapter/${n}`)).data||{})}function up(e,{$route:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$el:a,$f7:o}){let s=t.params.type,c=t.params.slug,l=t.params.chapterNumber,u={loading:!0,error:``,chapter:null,chapterId:``,isLocked:!1,fontSize:$.getState().readerPreferences.fontSize,readerTheme:$.getState().readerPreferences.theme,renderedText:``};function d(e){return String(e||``).split(/\n{2,}/).map(e=>e.trim()).filter(Boolean).map(e=>`<p>${Jf(e).replace(/\n/g,`<br>`)}</p>`).join(``)}async function f(){u.loading=!0,u.error=``,i();try{let e=await lp(s,c,l);u.chapter=e,u.chapterId=e.id,u.isLocked=!(e.access?.granted??!0),u.renderedText=e.readerType===`text`?d(e.body):``}catch(e){u.error=e.message||`Unable to load chapter.`}finally{u.loading=!1,i()}}function p(e){$.actions.setReaderPreferences(e),u.fontSize=$.getState().readerPreferences.fontSize,u.readerTheme=$.getState().readerPreferences.theme,i()}async function m(e){if(e.target.closest(`[data-action="retry-page"]`)){f();return}if(e.target.closest(`[data-action="decrease-font"]`)&&p({fontSize:Math.max(14,u.fontSize-2)}),e.target.closest(`[data-action="increase-font"]`)&&p({fontSize:Math.min(30,u.fontSize+2)}),e.target.closest(`[data-action="toggle-reader-theme"]`)&&p({theme:u.readerTheme===`dark`?`light`:`dark`}),e.target.closest(`[data-action="unlock-chapter"]`))try{await If(u.chapterId);let e=await Mf();$.actions.setWalletSummary(e),await f()}catch(e){o.dialog.alert(e.message||`Unlock failed.`)}}return n(()=>{a.addEventListener(`click`,m),f()}),r(()=>{a.removeEventListener(`click`,m)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}lp.id=`07008c49d5`;async function up(e,t,n){return vf((await ff(`/content/${e}/${t}/chapter/${n}`)).data||{})}function dp(e,{$route:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$el:a,$f7:o}){let s=t.params.type,c=t.params.slug,l=t.params.chapterNumber,u={loading:!0,error:``,chapter:null,chapterId:``,isLocked:!1,fontSize:$.getState().readerPreferences.fontSize,readerTheme:$.getState().readerPreferences.theme,renderedText:``};function d(e){return String(e||``).split(/\n{2,}/).map(e=>e.trim()).filter(Boolean).map(e=>`<p>${Yf(e).replace(/\n/g,`<br>`)}</p>`).join(``)}async function f(){u.loading=!0,u.error=``,i();try{let e=await up(s,c,l);u.chapter=e,u.chapterId=e.id,u.isLocked=!(e.access?.granted??!0),u.renderedText=e.readerType===`text`?d(e.body):``}catch(e){u.error=e.message||`Unable to load chapter.`}finally{u.loading=!1,i()}}function p(e){$.actions.setReaderPreferences(e),u.fontSize=$.getState().readerPreferences.fontSize,u.readerTheme=$.getState().readerPreferences.theme,i()}async function m(e){if(e.target.closest(`[data-action="retry-page"]`)){f();return}if(e.target.closest(`[data-action="decrease-font"]`)&&p({fontSize:Math.max(14,u.fontSize-2)}),e.target.closest(`[data-action="increase-font"]`)&&p({fontSize:Math.min(30,u.fontSize+2)}),e.target.closest(`[data-action="toggle-reader-theme"]`)&&p({theme:u.readerTheme===`dark`?`light`:`dark`}),e.target.closest(`[data-action="unlock-chapter"]`))try{await Lf(u.chapterId);let e=await Nf();$.actions.setWalletSummary(e),await f()}catch(e){o.dialog.alert(e.message||`Unlock failed.`)}}return n(()=>{a.addEventListener(`click`,m),f()}),r(()=>{a.removeEventListener(`click`,m)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page reader-page theme-${u.readerTheme}" data-name="reader">
-    ${Qf({title:u.chapter?.series?.title||`Reader`,subtitle:u.chapter?.title||`Reading mode`,back:!0})}
+    ${$f({title:u.chapter?.series?.title||`Reader`,subtitle:u.chapter?.title||`Reading mode`,back:!0})}
     <div class="page-content reader-page__content">
-      ${u.loading?tp(`Loading chapter...`):``}
-      ${u.error?np({title:`Reader failed`,message:u.error}):``}
+      ${u.loading?np(`Loading chapter...`):``}
+      ${u.error?rp({title:`Reader failed`,message:u.error}):``}
 
       ${!u.loading&&!u.error&&u.chapter?t`
         ${u.isLocked?`
@@ -442,9 +452,9 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       `:``}
     </div>
   </div>
-`}}up.id=`28371d6597`;function dp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$f7router:a}){let o={form:{email:``,password:``},error:``,submitting:!1};function s(){o.form.email=t.querySelector(`input[name="email"]`)?.value||``,o.form.password=t.querySelector(`input[name="password"]`)?.value||``}async function c(){s(),o.error=``,o.submitting=!0,i();try{await xf(o.form);let e=await Mf().catch(()=>null);e&&$.actions.setWalletSummary(e),a.navigate(`/home/`,{reloadCurrent:!0})}catch(e){o.error=e.message||`Login failed.`}finally{o.submitting=!1,i()}}function l(e){e.target.closest(`[data-action="submit-login"]`)&&c()}return n(()=>{t.addEventListener(`click`,l)}),r(()=>{t.removeEventListener(`click`,l)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}dp.id=`bfb1778ac2`;function fp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$f7router:a}){let o={form:{email:``,password:``},error:``,submitting:!1};function s(){o.form.email=t.querySelector(`input[name="email"]`)?.value||``,o.form.password=t.querySelector(`input[name="password"]`)?.value||``}async function c(){s(),o.error=``,o.submitting=!0,i();try{await Sf(o.form);let e=await Nf().catch(()=>null);e&&$.actions.setWalletSummary(e),a.navigate(`/home/`,{reloadCurrent:!0})}catch(e){o.error=e.message||`Login failed.`}finally{o.submitting=!1,i()}}function l(e){e.target.closest(`[data-action="submit-login"]`)&&c()}return n(()=>{t.addEventListener(`click`,l)}),r(()=>{t.removeEventListener(`click`,l)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="login">
-    ${Qf({title:`Login`,subtitle:`Bearer-first mobile auth`,back:!0,large:!0})}
+    ${$f({title:`Login`,subtitle:`Bearer-first mobile auth`,back:!0,large:!0})}
     <div class="page-content">
       <div class="list inset">
         <ul>
@@ -476,9 +486,9 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       </div>
     </div>
   </div>
-`}}dp.id=`9ca6b70768`;function fp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$f7:a,$f7router:o}){let s={form:{username:``,email:``,password:``},error:``,submitting:!1};function c(){s.form.username=t.querySelector(`input[name="username"]`)?.value||``,s.form.email=t.querySelector(`input[name="email"]`)?.value||``,s.form.password=t.querySelector(`input[name="password"]`)?.value||``}async function l(){c(),s.error=``,s.submitting=!0,i();try{await Sf(s.form),a.dialog.alert(`Account created. Please log in.`,`Registration`),o.navigate(`/login/`,{reloadCurrent:!0})}catch(e){s.error=e.message||`Registration failed.`}finally{s.submitting=!1,i()}}function u(e){e.target.closest(`[data-action="submit-register"]`)&&l()}return n(()=>{t.addEventListener(`click`,u)}),r(()=>{t.removeEventListener(`click`,u)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}fp.id=`749a36a255`;function pp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$f7:a,$f7router:o}){let s={form:{username:``,email:``,password:``},error:``,submitting:!1};function c(){s.form.username=t.querySelector(`input[name="username"]`)?.value||``,s.form.email=t.querySelector(`input[name="email"]`)?.value||``,s.form.password=t.querySelector(`input[name="password"]`)?.value||``}async function l(){c(),s.error=``,s.submitting=!0,i();try{await Cf(s.form),a.dialog.alert(`Account created. Please log in.`,`Registration`),o.navigate(`/login/`,{reloadCurrent:!0})}catch(e){s.error=e.message||`Registration failed.`}finally{s.submitting=!1,i()}}function u(e){e.target.closest(`[data-action="submit-register"]`)&&l()}return n(()=>{t.addEventListener(`click`,u)}),r(()=>{t.removeEventListener(`click`,u)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="register">
-    ${Qf({title:`Register`,subtitle:`Create a mobile account`,back:!0,large:!0})}
+    ${$f({title:`Register`,subtitle:`Create a mobile account`,back:!0,large:!0})}
     <div class="page-content">
       <div class="list inset">
         <ul>
@@ -518,19 +528,19 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       </div>
     </div>
   </div>
-`}}fp.id=`4a0c35f857`;function pp(){return`
+`}}pp.id=`fe8f4d429b`;function mp(){return`
     <div class="block block-strong mobile-feedback-block">
       <div class="mobile-feedback-title">Login required</div>
       <p>This screen needs an authenticated mobile session.</p>
       <a href="/login/" class="button button-fill">Go to login</a>
     </div>
-  `}function mp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,profile:null};async function s(){if(!a){o.loading=!1;return}try{o.profile=await Tf()}catch(e){o.error=e.message||`Unable to load profile.`}finally{o.loading=!1,i()}}function c(e){e.target.closest(`[data-action="retry-page"]`)&&(o.loading=!0,o.error=``,i(),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+  `}function hp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,profile:null};async function s(){if(!a){o.loading=!1;return}try{o.profile=await Ef()}catch(e){o.error=e.message||`Unable to load profile.`}finally{o.loading=!1,i()}}function c(e){e.target.closest(`[data-action="retry-page"]`)&&(o.loading=!0,o.error=``,i(),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="profile">
-    ${Qf({title:`Profile`,subtitle:`Current account overview`,large:!0})}
+    ${$f({title:`Profile`,subtitle:`Current account overview`,large:!0})}
     <div class="page-content">
-      ${a?``:pp()}
-      ${a&&o.loading?tp(`Loading profile...`):``}
-      ${a&&o.error?np({title:`Profile failed`,message:o.error}):``}
+      ${a?``:mp()}
+      ${a&&o.loading?np(`Loading profile...`):``}
+      ${a&&o.error?rp({title:`Profile failed`,message:o.error}):``}
       ${a&&!o.loading&&!o.error&&o.profile?`
         <div class="card mobile-profile-card">
           <div class="card-content card-content-padding">
@@ -541,74 +551,74 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
         </div>
       `:``}
     </div>
-    ${$f(`settings`)}
+    ${ep(`settings`)}
   </div>
-`}}mp.id=`222831c2d0`;function hp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,items:[]};async function s(){if(!a){o.loading=!1;return}try{o.items=(await Ef()).items}catch(e){o.error=e.message||`Unable to load library.`}finally{o.loading=!1,i()}}function c(e){e.target.closest(`[data-action="retry-page"]`)&&(o.loading=!0,o.error=``,i(),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}hp.id=`58121f2f3d`;function gp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,items:[]};async function s(){if(!a){o.loading=!1;return}try{o.items=(await Df()).items}catch(e){o.error=e.message||`Unable to load library.`}finally{o.loading=!1,i()}}function c(e){e.target.closest(`[data-action="retry-page"]`)&&(o.loading=!0,o.error=``,i(),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="library">
-    ${Qf({title:`Library`,subtitle:`Followed content`,large:!0})}
+    ${$f({title:`Library`,subtitle:`Followed content`,large:!0})}
     <div class="page-content">
-      ${a?``:pp()}
-      ${a&&o.loading?tp(`Loading your library...`):``}
-      ${a&&o.error?np({title:`Library failed`,message:o.error}):``}
-      ${a&&!o.loading&&!o.error?o.items.length?o.items.map(e=>ep(e)).join(``):rp({title:`Library is empty`,message:`Follow a series to keep it here.`,actionHref:`/home/`,actionLabel:`Explore`}):``}
+      ${a?``:mp()}
+      ${a&&o.loading?np(`Loading your library...`):``}
+      ${a&&o.error?rp({title:`Library failed`,message:o.error}):``}
+      ${a&&!o.loading&&!o.error?o.items.length?o.items.map(e=>tp(e)).join(``):ip({title:`Library is empty`,message:`Follow a series to keep it here.`,actionHref:`/home/`,actionLabel:`Explore`}):``}
     </div>
-    ${$f(`library`)}
+    ${ep(`library`)}
   </div>
-`}}hp.id=`0a74d83c51`;function gp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,items:[]};async function s(){if(!a){o.loading=!1;return}try{o.items=(await Df()).items}catch(e){o.error=e.message||`Unable to load history.`}finally{o.loading=!1,i()}}function c(e){e.target.closest(`[data-action="retry-page"]`)&&(o.loading=!0,o.error=``,i(),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}gp.id=`4ac1647fb8`;function _p(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,items:[]};async function s(){if(!a){o.loading=!1;return}try{o.items=(await Of()).items}catch(e){o.error=e.message||`Unable to load history.`}finally{o.loading=!1,i()}}function c(e){e.target.closest(`[data-action="retry-page"]`)&&(o.loading=!0,o.error=``,i(),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="history">
-    ${Qf({title:`History`,subtitle:`Recent reading sessions`,large:!0})}
+    ${$f({title:`History`,subtitle:`Recent reading sessions`,large:!0})}
     <div class="page-content">
-      ${a?``:pp()}
-      ${a&&o.loading?tp(`Loading reading history...`):``}
-      ${a&&o.error?np({title:`History failed`,message:o.error}):``}
-      ${a&&!o.loading&&!o.error?o.items.length?`<div class="list inset simple-list"><ul>${o.items.map(e=>`<li>${e.series_title||e.title||`Chapter`}${e.chapter_number?` • Chapter ${e.chapter_number}`:``}</li>`).join(``)}</ul></div>`:rp({title:`No history yet`,message:`Reading progress will appear here after you open chapters.`}):``}
+      ${a?``:mp()}
+      ${a&&o.loading?np(`Loading reading history...`):``}
+      ${a&&o.error?rp({title:`History failed`,message:o.error}):``}
+      ${a&&!o.loading&&!o.error?o.items.length?`<div class="list inset simple-list"><ul>${o.items.map(e=>`<li>${e.series_title||e.title||`Chapter`}${e.chapter_number?` • Chapter ${e.chapter_number}`:``}</li>`).join(``)}</ul></div>`:ip({title:`No history yet`,message:`Reading progress will appear here after you open chapters.`}):``}
     </div>
-    ${$f(`history`)}
+    ${ep(`history`)}
   </div>
-`}}gp.id=`2d5dc88a23`;function _p(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,wallet:$.getState().wallet,packages:[],features:[],transactions:[]};async function s(){if(!a){o.loading=!1;return}try{let[e,t,n,r]=await Promise.all([Mf(),Pf(),Ff(),Nf()]);o.wallet=e,o.packages=t,o.features=n,o.transactions=r.items,$.actions.setWalletSummary(e)}catch(e){o.error=e.message||`Unable to load wallet.`}finally{o.loading=!1,i()}}function c(e){e.target.closest(`[data-action="retry-page"]`)&&(o.loading=!0,o.error=``,i(),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}_p.id=`51f6c16536`;function vp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,wallet:$.getState().wallet,packages:[],features:[],transactions:[]};async function s(){if(!a){o.loading=!1;return}try{let[e,t,n,r]=await Promise.all([Nf(),Ff(),If(),Pf()]);o.wallet=e,o.packages=t,o.features=n,o.transactions=r.items,$.actions.setWalletSummary(e)}catch(e){o.error=e.message||`Unable to load wallet.`}finally{o.loading=!1,i()}}function c(e){e.target.closest(`[data-action="retry-page"]`)&&(o.loading=!0,o.error=``,i(),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="wallet">
-    ${Qf({title:`Wallet`,subtitle:`Balance and unlock flows`,large:!0})}
+    ${$f({title:`Wallet`,subtitle:`Balance and unlock flows`,large:!0})}
     <div class="page-content">
-      ${a?``:pp()}
-      ${a&&o.loading?tp(`Loading wallet...`):``}
-      ${a&&o.error?np({title:`Wallet failed`,message:o.error}):``}
+      ${a?``:mp()}
+      ${a&&o.loading?np(`Loading wallet...`):``}
+      ${a&&o.error?rp({title:`Wallet failed`,message:o.error}):``}
 
       ${a&&!o.loading&&!o.error?t`
-        ${op(o.wallet)}
+        ${sp(o.wallet)}
 
         <div class="block-title">Packages</div>
-        ${o.packages.length?`<div class="list inset simple-list"><ul>${o.packages.map(e=>`<li>${e.name||e.title||`Package`} • ${e.price_display||e.price_coin||0}</li>`).join(``)}</ul></div>`:rp({title:`No packages`,message:`Packages are not configured yet.`})}
+        ${o.packages.length?`<div class="list inset simple-list"><ul>${o.packages.map(e=>`<li>${e.name||e.title||`Package`} • ${e.price_display||e.price_coin||0}</li>`).join(``)}</ul></div>`:ip({title:`No packages`,message:`Packages are not configured yet.`})}
 
         <div class="block-title">Features</div>
-        ${o.features.length?`<div class="list inset simple-list"><ul>${o.features.map(e=>`<li>${e.code||e.name||`Feature`} • ${e.price_coin||0} coin</li>`).join(``)}</ul></div>`:rp({title:`No features`,message:`Feature products are not configured yet.`})}
+        ${o.features.length?`<div class="list inset simple-list"><ul>${o.features.map(e=>`<li>${e.code||e.name||`Feature`} • ${e.price_coin||0} coin</li>`).join(``)}</ul></div>`:ip({title:`No features`,message:`Feature products are not configured yet.`})}
 
         <div class="block-title">Transactions</div>
-        ${o.transactions.length?`<div class="list inset simple-list"><ul>${o.transactions.map(e=>`<li>${e.type||e.reference_type||`transaction`} • ${e.amount||0}</li>`).join(``)}</ul></div>`:rp({title:`No transactions`,message:`Wallet activity will appear here.`})}
+        ${o.transactions.length?`<div class="list inset simple-list"><ul>${o.transactions.map(e=>`<li>${e.type||e.reference_type||`transaction`} • ${e.amount||0}</li>`).join(``)}</ul></div>`:ip({title:`No transactions`,message:`Wallet activity will appear here.`})}
       `:``}
     </div>
-    ${$f(`wallet`)}
+    ${ep(`wallet`)}
   </div>
-`}}_p.id=`0d5a844138`;function vp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,items:[]};async function s(){if(!a){o.loading=!1;return}try{o.items=(await Of()).items}catch(e){o.error=e.message||`Unable to load notifications.`}finally{o.loading=!1,i()}}async function c(e){if(e.target.closest(`[data-action="retry-page"]`)){o.loading=!0,o.error=``,i(),s();return}e.target.closest(`[data-action="mark-read"]`)&&(await kf().catch(()=>null),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}vp.id=`792fe0edee`;function yp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i}){let a=$.isAuthenticated(),o={loading:!0,error:``,items:[]};async function s(){if(!a){o.loading=!1;return}try{o.items=(await kf()).items}catch(e){o.error=e.message||`Unable to load notifications.`}finally{o.loading=!1,i()}}async function c(e){if(e.target.closest(`[data-action="retry-page"]`)){o.loading=!0,o.error=``,i(),s();return}e.target.closest(`[data-action="mark-read"]`)&&(await Af().catch(()=>null),s())}return n(()=>{t.addEventListener(`click`,c),s()}),r(()=>{t.removeEventListener(`click`,c)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="notifications">
-    ${Qf({title:`Notifications`,subtitle:`Unread and recent account events`,large:!0})}
+    ${$f({title:`Notifications`,subtitle:`Unread and recent account events`,large:!0})}
     <div class="page-content">
-      ${a?``:pp()}
-      ${a&&o.loading?tp(`Loading notifications...`):``}
-      ${a&&o.error?np({title:`Notifications failed`,message:o.error}):``}
+      ${a?``:mp()}
+      ${a&&o.loading?np(`Loading notifications...`):``}
+      ${a&&o.error?rp({title:`Notifications failed`,message:o.error}):``}
       ${a&&!o.loading&&!o.error?`
         <div class="block">
           <button class="button button-outline" data-action="mark-read">Mark all as read</button>
         </div>
-        ${o.items.length?`<div class="list inset simple-list"><ul>${o.items.map(e=>`<li>${e.title||e.type||`Notification`}</li>`).join(``)}</ul></div>`:rp({title:`No notifications`,message:`You are all caught up.`})}
+        ${o.items.length?`<div class="list inset simple-list"><ul>${o.items.map(e=>`<li>${e.title||e.type||`Notification`}</li>`).join(``)}</ul></div>`:ip({title:`No notifications`,message:`You are all caught up.`})}
       `:``}
     </div>
-    ${$f(`settings`)}
+    ${ep(`settings`)}
   </div>
-`}}vp.id=`f4eb04540b`;function yp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$f7router:a}){let o=$.isAuthenticated(),s={preferences:{...$.getState().preferences},readerPreferences:{...$.getState().readerPreferences},error:``};function c(){s.preferences.theme=t.querySelector(`select[name="app-theme"]`)?.value||s.preferences.theme,s.readerPreferences.theme=t.querySelector(`select[name="reader-theme"]`)?.value||s.readerPreferences.theme}async function l(){c(),s.error=``,i();try{$.actions.setPreferences(s.preferences),$.actions.setReaderPreferences(s.readerPreferences),await jf({theme:s.preferences.theme,reader_theme:s.readerPreferences.theme,reader_font_size:s.readerPreferences.fontSize,reader_layout:s.readerPreferences.imageMode})}catch(e){s.error=e.message||`Unable to save settings.`,i()}}async function u(e){e.target.closest(`[data-action="save-settings"]`)&&await l(),e.target.closest(`[data-action="logout"]`)&&(await Cf(),a.navigate(`/login/`,{reloadCurrent:!0}))}return n(()=>{t.addEventListener(`click`,u)}),r(()=>{t.removeEventListener(`click`,u)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
+`}}yp.id=`eb3548bab2`;function bp(e,{$el:t,$onMounted:n,$onBeforeUnmount:r,$update:i,$f7router:a}){let o=$.isAuthenticated(),s={preferences:{...$.getState().preferences},readerPreferences:{...$.getState().readerPreferences},error:``};function c(){s.preferences.theme=t.querySelector(`select[name="app-theme"]`)?.value||s.preferences.theme,s.readerPreferences.theme=t.querySelector(`select[name="reader-theme"]`)?.value||s.readerPreferences.theme}async function l(){c(),s.error=``,i();try{$.actions.setPreferences(s.preferences),$.actions.setReaderPreferences(s.readerPreferences),await Mf({theme:s.preferences.theme,reader_theme:s.readerPreferences.theme,reader_font_size:s.readerPreferences.fontSize,reader_layout:s.readerPreferences.imageMode})}catch(e){s.error=e.message||`Unable to save settings.`,i()}}async function u(e){e.target.closest(`[data-action="save-settings"]`)&&await l(),e.target.closest(`[data-action="logout"]`)&&(await wf(),a.navigate(`/login/`,{reloadCurrent:!0}))}return n(()=>{t.addEventListener(`click`,u)}),r(()=>{t.removeEventListener(`click`,u)}),function(e){e.$;var t=e.$h;return e.$root,e.$f7,e.$f7route,e.$f7router,e.$theme,e.$update,e.$store,t`
   <div class="page" data-name="settings">
-    ${Qf({title:`Settings`,subtitle:`App and reader preferences`,large:!0})}
+    ${$f({title:`Settings`,subtitle:`App and reader preferences`,large:!0})}
     <div class="page-content">
-      ${o?``:pp()}
+      ${o?``:mp()}
       ${o?`
         <div class="list inset">
           <ul>
@@ -654,6 +664,6 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
         </div>
       `:``}
     </div>
-    ${$f(`settings`)}
+    ${ep(`settings`)}
   </div>
-`}}yp.id=`c020e3baf2`;function bp(){return[{path:`/`,redirect:`/startup/`},{path:`/startup/`,component:Bf},{path:`/home/`,component:ip},{path:`/types/:type/`,component:ap},{path:`/content/:type/:slug/`,component:cp},{path:`/reader/:type/:slug/:chapterNumber/`,component:up},{path:`/login/`,component:dp},{path:`/register/`,component:fp},{path:`/profile/`,component:mp},{path:`/library/`,component:hp},{path:`/history/`,component:gp},{path:`/wallet/`,component:_p},{path:`/notifications/`,component:vp},{path:`/settings/`,component:yp}]}function xp(){typeof window>`u`||(window.NMRMobile={getState:()=>$.getState()})}function Sp(){let e=new Md({name:`NMR Mobile`,theme:`auto`,el:`#app`,component:Nd,routes:bp(),view:{browserHistory:!0,browserHistorySeparator:``}});return Rf(e),xp(),e}Sp();
+`}}bp.id=`91c14f2fc5`;function xp(){return[{path:`/`,redirect:`/startup/`},{path:`/startup/`,component:Vf},{path:`/home/`,component:ap},{path:`/types/:type/`,component:op},{path:`/content/:type/:slug/`,component:lp},{path:`/reader/:type/:slug/:chapterNumber/`,component:dp},{path:`/login/`,component:fp},{path:`/register/`,component:pp},{path:`/profile/`,component:hp},{path:`/library/`,component:gp},{path:`/history/`,component:_p},{path:`/wallet/`,component:vp},{path:`/notifications/`,component:yp},{path:`/settings/`,component:bp}]}function Sp(){typeof window>`u`||(window.NMRMobile={getState:()=>$.getState()})}function Cp(){let e=of(),t=new Md({name:`NMR Mobile`,theme:`auto`,el:`#app`,component:Nd,routes:xp(),view:{browserHistory:!e,browserHistoryRoot:`/mobile/`,browserHistorySeparator:``,url:`/startup/`}});return zf(t),Sp(),t}Cp();
