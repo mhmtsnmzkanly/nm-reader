@@ -27,8 +27,10 @@ import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
 import { renderEmptyState } from '../components/empty-state.js';
 import { debugError, debugTrace } from '../utils/debug.js';
+import { resolveComponentElement } from '../utils/dom.js';
 
 export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
+  const rootEl = () => resolveComponentElement($el);
   const isAuthed = appStore.isAuthenticated();
   const state = {
     loading: true,
@@ -126,12 +128,12 @@ export default (props, { $el, $onMounted, $onBeforeUnmount, $update }) => {
       callee: 'notificationsPage.loadPage',
       next: 'load-notifications',
     });
-    $el.addEventListener('click', handleClick);
+    rootEl()?.addEventListener('click', handleClick);
     loadPage();
   });
 
   $onBeforeUnmount(() => {
-    $el.removeEventListener('click', handleClick);
+    rootEl()?.removeEventListener('click', handleClick);
   });
 
   return $render;

@@ -42,9 +42,11 @@ import { renderAppHeader } from '../components/app-header.js';
 import { renderLoadingBlock } from '../components/loading-block.js';
 import { renderErrorState } from '../components/error-state.js';
 import { debugError, debugTrace } from '../utils/debug.js';
+import { resolveComponentElement } from '../utils/dom.js';
 import { escapeHtml } from '../utils/format.js';
 
 export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7 }) => {
+  const rootEl = () => resolveComponentElement($el);
   const type = $route.params.type;
   const slug = $route.params.slug;
   const chapterNumber = $route.params.chapterNumber;
@@ -218,12 +220,12 @@ export default (props, { $route, $onMounted, $onBeforeUnmount, $update, $el, $f7
         chapterNumber,
       },
     });
-    $el.addEventListener('click', handleClick);
+    rootEl()?.addEventListener('click', handleClick);
     loadPage();
   });
 
   $onBeforeUnmount(() => {
-    $el.removeEventListener('click', handleClick);
+    rootEl()?.removeEventListener('click', handleClick);
   });
 
   return $render;
