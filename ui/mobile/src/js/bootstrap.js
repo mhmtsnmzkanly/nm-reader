@@ -4,6 +4,60 @@ import { tryRecoverSession } from '../services/auth/auth-service.js';
 import { debugError, debugTrace } from '../utils/debug.js';
 
 let startupPromise = null;
+let lifecycleDebugAttached = false;
+
+/**
+ * Extracts the most useful page lifecycle information from Framework7 DOM events.
+ */
+function normalizePageLifecycleEvent(event) {
+  const page = event?.detail?.page || event?.detail || {};
+  const route = page.route || {};
+  const fromRoute = page.fromRoute || {};
+
+  return {
+    pageName: page.name || page.el?.dataset?.name || 'unknown-page',
+    routePath: route.path || null,
+    routeUrl: route.url || null,
+    fromPath: fromRoute.path || null,
+    fromUrl: fromRoute.url || null,
+    routerUrl: page.router?.url || null,
+  };
+}
+
+/**
+ * Registers page lifecycle listeners once so route/page transitions stay observable.
+ */
+function attachPageLifecycleDebug() {
+  if (lifecycleDebugAttached || typeof document === 'undefined') {
+    return;
+  }
+
+  const eventMap = {
+    'page:init': 'page:init',
+    'page:mounted': 'page:mounted',
+    'page:beforein': 'page:beforeIn',
+    'page:afterin': 'page:afterIn',
+    'page:beforeout': 'page:beforeOut',
+    'page:afterout': 'page:afterOut',
+    'page:beforeremove': 'page:beforeRemove',
+  };
+
+  Object.entries(eventMap).forEach(([eventName, action]) => {
+    document.addEventListener(eventName, (event) => {
+      const detail = normalizePageLifecycleEvent(event);
+      debugTrace({
+        scope: 'router',
+        action,
+        caller: `document ${eventName}`,
+        callee: detail.pageName,
+        next: 'continue page lifecycle',
+        detail,
+      });
+    });
+  });
+
+  lifecycleDebugAttached = true;
+}
 
 /**
  * Restores local app state and configures cross-cutting runtime handlers.
@@ -18,6 +72,7 @@ export function configureApplicationRuntime(f7) {
   });
 
   appStore.hydrate();
+  attachPageLifecycleDebug();
 
   setUnauthorizedHandler(async () => {
     debugTrace({
@@ -69,6 +124,60 @@ export function configureApplicationRuntime(f7) {
       mainView.router.back();
     }
   });
+
+  if (f7?.views?.main?.router) {
+    const router = f7.views.main.router;
+    const originalNavigate = router.navigate.bind(router);
+    const originalBack = router.back.bind(router);
+
+    /**
+     * Wraps router.navigate so route intent is visible before Framework7 resolves it.
+     */
+    router.navigate = (target, options) => {
+      debugTrace({
+        scope: 'router',
+        action: 'navigate:called',
+        caller: 'router.navigate wrapper',
+        callee: 'Framework7 router.navigate',
+        next: 'resolve target route',
+        detail: {
+          fromUrl: router.currentRoute?.url || router.url || null,
+          target,
+          options: options || null,
+        },
+      });
+      return originalNavigate(target, options);
+    };
+
+    /**
+     * Wraps router.back so back-navigation intent is observable too.
+     */
+    router.back = (...args) => {
+      debugTrace({
+        scope: 'router',
+        action: 'back:called',
+        caller: 'router.back wrapper',
+        callee: 'Framework7 router.back',
+        next: 'resolve previous route',
+        detail: {
+          currentUrl: router.currentRoute?.url || router.url || null,
+          historyLength: Array.isArray(router.history) ? router.history.length : null,
+        },
+      });
+      return originalBack(...args);
+    };
+
+    debugTrace({
+      scope: 'router',
+      action: 'wrappers:installed',
+      caller: 'configureApplicationRuntime',
+      callee: 'main router',
+      next: 'observe route intent calls',
+      detail: {
+        currentUrl: router.currentRoute?.url || router.url || null,
+      },
+    });
+  }
 
   debugTrace({
     scope: 'bootstrap',
