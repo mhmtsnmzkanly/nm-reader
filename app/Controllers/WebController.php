@@ -1426,20 +1426,14 @@ final class WebController
                 'jsonLd' => $finalJsonLd
             ];
             $layoutContent = $seoService->renderShell($seoData);
-        } else if (is_file($templatePath)) {
-            // Legacy Template Capture Output
-            ob_start();
-            extract($fullContext, EXTR_SKIP);
-            include $templatePath;
-            $capturedContent = (string) ob_get_clean();
-
-            ob_start();
-            $content = $capturedContent;
-            extract($fullContext, EXTR_SKIP);
-            include $layoutPath;
-            $layoutContent = (string) ob_get_clean();
         } else {
-            $layoutContent = "<!doctype html><html><head><title>{$title}</title></head><body><div id=\"root\"></div></body></html>";
+            $seoService = new \App\Services\SeoService($basePath);
+            $layoutContent = $seoService->renderShell([
+                'title' => $title,
+                'description' => $seoDescription,
+                'canonical' => $seoCanonical,
+                'robots' => $seoRobots,
+            ]);
         }
 
         $cacheControl = $authContext["is_logged_in"]
