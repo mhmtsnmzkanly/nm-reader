@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Search, ArrowUpDown, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { ContentDetailChapter, ContentType } from '../../types/api';
 import { ChapterRow } from './ChapterRow';
+import { usePreferences } from '../../contexts/PreferencesContext';
+
 
 type ContentChapterListProps = {
   chapters: ContentDetailChapter[];
@@ -23,6 +25,7 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // desc = newest first
   const [currentPage, setCurrentPage] = useState(1);
+  const { t } = usePreferences();
 
   // Filter and sort chapters
   const filteredAndSorted = useMemo(() => {
@@ -70,10 +73,10 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
           </div>
           <div>
             <h3 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-              Bölüm <span className="italic text-[var(--accent-color)]">Listesi</span>
+              <span className="italic text-[var(--accent-color)]">{t('chapters.list')}</span>
             </h3>
             <span className="text-xs font-mono text-[var(--text-muted)]">
-              Toplam {chapters.length} Bölüm
+              {t('chapters.totalChapters', { count: chapters.length })}
             </span>
           </div>
         </div>
@@ -132,7 +135,7 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t border-[var(--border-color)] text-xs font-mono">
           <span className="text-[var(--text-muted)] text-[11px]">
-            Sayfa {safePage} / {totalPages} (Toplam {filteredAndSorted.length} bölüm)
+            {t('chapters.totalPages', { safePage, totalPages, len: filteredAndSorted.length})}
           </span>
 
           <div className="flex items-center gap-1.5">

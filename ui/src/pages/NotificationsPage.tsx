@@ -9,6 +9,7 @@ import { EmptyState } from '../components/feedback/EmptyState';
 import { ErrorState } from '../components/feedback/ErrorState';
 import { Skeleton } from '../components/feedback/Skeleton';
 import { LoginPrompt } from '../components/feedback/LoginPrompt';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 export const NotificationsPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -23,6 +24,7 @@ export const NotificationsPage: React.FC = () => {
     markAllAsRead,
     deleteNotification,
   } = useNotifications();
+  const { t } = usePreferences();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -34,10 +36,10 @@ export const NotificationsPage: React.FC = () => {
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
           <Link to="/" className="hover:text-[var(--accent-color)] transition-colors">
-            Ana Sayfa
+            {t('navigation.home')}
           </Link>
           <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-          <span className="text-[var(--text-primary)] font-medium">Bildirimler</span>
+          <span className="text-[var(--text-primary)] font-medium">{t('notifications.title')}</span>
         </nav>
 
         {/* Page Header */}
@@ -49,16 +51,16 @@ export const NotificationsPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-serif font-bold text-[var(--text-primary)]">
-                  Bildirimler
+                  {t('notifications.title')}
                 </h1>
                 {unreadCount > 0 && (
                   <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[var(--accent-color)] text-white animate-pulse">
-                    {unreadCount} Okunmamış
+                    {unreadCount} {t('notifications.unreadBadge', { count: unreadCount }) || 'Okunmamış'}
                   </span>
                 )}
               </div>
               <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">
-                Takip ettiğin serilerin yeni bölümleri, yorum yanıtları ve sistem duyuruları
+                {t('notifications.pageSubtitle')}
               </p>
             </div>
           </div>
@@ -70,8 +72,8 @@ export const NotificationsPage: React.FC = () => {
                 id="page-refresh-notifs-btn"
                 onClick={() => fetchNotifications()}
                 className="p-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-all cursor-pointer"
-                title="Bildirimleri Yenile"
-                aria-label="Bildirimleri Yenile"
+                title={t('notifications.refresh')}
+                aria-label={t('notifications.refresh')}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
@@ -84,7 +86,7 @@ export const NotificationsPage: React.FC = () => {
                   className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[var(--accent-light)] border border-[var(--accent-border)] text-[var(--accent-color)] hover:opacity-85 transition-all cursor-pointer shadow-sm"
                 >
                   <CheckCheck className="w-4 h-4" />
-                  <span>Tümünü Okundu İşaretle</span>
+                  <span>{t('notifications.markAllRead')}</span>
                 </button>
               )}
             </div>
@@ -93,7 +95,7 @@ export const NotificationsPage: React.FC = () => {
 
         {/* Not Authenticated Guard */}
         {!isAuthenticated ? (
-          <LoginPrompt message="Bildirimlerinizi görüntülemek, yeni bölüm alarmları ve topluluk etkileşimlerini takip etmek için giriş yapmalısınız." />
+          <LoginPrompt message={t('notifications.loginRequiredDesc')} />
         ) : (
           <>
             {/* Filter Tabs */}
@@ -121,15 +123,15 @@ export const NotificationsPage: React.FC = () => {
                 </div>
               ) : isError ? (
                 <ErrorState
-                  title="Bildirimler Yüklenemedi"
-                  message={errorMessage || 'Bildirim listesi yüklenirken bir iletişim hatası oluştu.'}
+                  title={t('notifications.errorTitle')}
+                  message={errorMessage || t('notifications.errorDesc')}
                   onRetry={fetchNotifications}
                 />
               ) : filteredNotifications.length === 0 ? (
                 <EmptyState
                   icon={<Bell className="w-12 h-12 text-[var(--text-muted)] opacity-40" />}
-                  title="Henüz Bildirim Yok"
-                  description="Seçilen filtre kategorisinde herhangi bir bildirim bulunmuyor. Yeni bölüm veya etkileşim olduğunda burada görünecektir."
+                  title={t('notifications.empty')}
+                  description={t('notifications.emptyFilteredDesc')}
                 />
               ) : (
                 filteredNotifications.map((notification) => (

@@ -20,7 +20,7 @@ export const ChapterRow: React.FC<ChapterRowProps> = ({
   isLastRead = false,
   onLockClick,
 }) => {
-  const { formatDate } = usePreferences();
+  const { formatDate, t } = usePreferences();
   const isLocked = chapter.is_locked || (chapter.access && !chapter.access.granted);
   const chapNum = chapter.number ?? chapter.chapter_number ?? '1';
   const pubDate = chapter.published_at || chapter.created_at;
@@ -64,7 +64,7 @@ export const ChapterRow: React.FC<ChapterRowProps> = ({
                   : 'text-[var(--text-primary)] group-hover:text-[var(--accent-color)]'
               }`}
             >
-              Bölüm {chapNum}
+              {t('content.chapter', { number: chapNum })}
             </span>
 
             {chapter.title && (
@@ -76,7 +76,7 @@ export const ChapterRow: React.FC<ChapterRowProps> = ({
             {isLastRead && (
               <Badge variant="gold" size="sm" className="gap-1 animate-pulse">
                 <Sparkles className="w-3 h-3" />
-                <span>Son Okunan</span>
+                <span>{t('chapters.lastChapter')}</span>
               </Badge>
             )}
           </div>
@@ -105,8 +105,7 @@ export const ChapterRow: React.FC<ChapterRowProps> = ({
         ) : (
           <div className="flex items-center gap-1 text-xs font-mono text-emerald-500 font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
             <CheckCircle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Ücretsiz</span>
-            <span className="sm:hidden">Oku</span>
+            <span className="sm:hidden">{t('chapters.readAction')}</span>
           </div>
         )}
       </div>

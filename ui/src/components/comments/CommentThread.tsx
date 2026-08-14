@@ -15,7 +15,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   onAddComment,
   onVote,
 }) => {
-  const { formatRelativeTime } = usePreferences();
+  const { formatRelativeTime, t } = usePreferences();
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
 
   const rootComments = comments.filter((c) => !c.parent_id);
@@ -74,7 +74,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
                 className="flex items-center gap-1 hover:text-[var(--text-primary)] transition-colors cursor-pointer text-[11px] font-mono"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-[var(--accent-color)]" />
-                <span>Yanıtla</span>
+                <span>{t('comments.reply')}</span>
               </button>
             )}
           </div>
@@ -84,7 +84,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         {replyingTo === comment.id && (
           <div className="mt-3">
             <CommentComposer
-              placeholder={`${comment.username} kullanıcısına yanıt yaz...`}
+              placeholder={t('comments.replyingTo', { user: comment.username })}
               onSubmit={async (content, isSpoiler) => {
                 await onAddComment(content, isSpoiler, comment.id);
                 setReplyingTo(null);
@@ -110,7 +110,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
       <div className="flex flex-col gap-4">
         {comments.length === 0 ? (
           <div className="p-8 text-center text-[var(--text-muted)] text-xs font-mono border border-dashed border-[var(--border-color)] rounded-2xl">
-            Henüz yorum yapılmamış. İlk yorumu sen yap!
+            {t('comments.noComments')}
           </div>
         ) : (
           rootComments.map((comment) => renderCommentItem(comment))

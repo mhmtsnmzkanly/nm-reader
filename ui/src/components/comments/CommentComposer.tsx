@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
+import { usePreferences } from '@/src/contexts/PreferencesContext';
 
 type CommentComposerProps = {
   onSubmit: (content: string, isSpoiler: boolean) => Promise<void>;
@@ -10,12 +11,13 @@ type CommentComposerProps = {
 
 export const CommentComposer: React.FC<CommentComposerProps> = ({
   onSubmit,
-  placeholder = 'Düşüncelerini paylaş...',
+  placeholder,
 }) => {
   const { isAuthenticated } = useAuth();
   const [content, setContent] = useState('');
   const [isSpoiler, setIsSpoiler] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { t } = usePreferences();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +33,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   if (!isAuthenticated) {
     return (
       <div className="p-4 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-center text-xs text-[var(--text-muted)]">
-        Yorum yapabilmek için giriş yapmalısınız.
+        {t('common.loginRequired')}
       </div>
     );
   }
@@ -41,7 +43,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('comments.writePlaceholder')}
         rows={3}
         className="w-full bg-[var(--bg-tertiary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)] border border-[var(--border-color)] resize-none font-light transition-all"
       />
@@ -55,7 +57,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
             className="rounded bg-[var(--bg-tertiary)] border-[var(--border-color)] text-[var(--accent-color)] focus:ring-[var(--accent-color)] cursor-pointer"
           />
           <EyeOff className="w-3.5 h-3.5 text-amber-500" />
-          <span className="text-[11px] font-mono">Spoiler İçeriyor</span>
+          <span className="text-[11px] font-mono">Spoiler</span>
         </label>
 
         <Button
@@ -67,7 +69,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
           className="gap-1.5 bg-[var(--accent-color)] text-white hover:opacity-90"
         >
           <Send className="w-3.5 h-3.5" />
-          <span>Gönder</span>
+          <span>{t('common.submit')}</span>
         </Button>
       </div>
     </form>
