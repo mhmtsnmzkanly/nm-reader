@@ -127,7 +127,7 @@ final class UserService
     {
         $current = $this->preferences($userId);
 
-        $lang = strtolower(trim((string) ($payload['lang'] ?? $current['lang'])));
+        $lang = strtolower(trim((string) ($payload['lang'] ?? ($payload['language']['locale'] ?? $current['lang']))));
         if (!in_array($lang, self::ALLOWED_LANGS, true)) {
             throw new \InvalidArgumentException('Invalid lang');
         }

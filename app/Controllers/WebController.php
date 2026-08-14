@@ -237,8 +237,8 @@ final class WebController
 
         $langCode = $this->i18n->resolveLocale($request);
         $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
+        $urlHelper = function(string $path) {
+            return "/" . ltrim($path, "/");
         };
 
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'content', [
@@ -311,8 +311,8 @@ final class WebController
 
         $langCode = $this->i18n->resolveLocale($request);
         $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
+        $urlHelper = function(string $path) {
+            return "/" . ltrim($path, "/");
         };
 
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'chapter', [
@@ -502,8 +502,8 @@ final class WebController
 
         $langCode = $this->i18n->resolveLocale($request);
         $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
+        $urlHelper = function(string $path) {
+            return "/" . ltrim($path, "/");
         };
 
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'blog', [
@@ -612,9 +612,9 @@ final class WebController
     ): ResponseInterface {
         $siteName = $this->siteConfig->siteName();
         $type = (string) ($args["type"] ?? "");
-        $display = ucwords(str_replace("-", " ", $type));
-        $items = $this->seriesService->byType($type, 1, 50);
-        $latest = $this->seriesService->latestChaptersByType($type, 1, 12);
+        $display = $type !== "" ? ucwords(str_replace("-", " ", $type)) : "Tum";
+        $items = $type !== "" ? $this->seriesService->byType($type, 1, 50) : $this->seriesService->search("", 1, 50);
+        $latest = $type !== "" ? $this->seriesService->latestChaptersByType($type, 1, 12) : $this->seriesService->latestChapters(1, 12);
 
         return $this->render(
             $request,
@@ -653,8 +653,8 @@ final class WebController
 
         $langCode = $this->i18n->resolveLocale($request);
         $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
+        $urlHelper = function(string $path) {
+            return "/" . ltrim($path, "/");
         };
         $items = $this->seriesService->byGenre($slug, 1, 50);
 
@@ -698,8 +698,8 @@ final class WebController
 
         $langCode = $this->i18n->resolveLocale($request);
         $lang = $this->i18n->getDictionary($langCode);
-        $urlHelper = function(string $path) use ($langCode) {
-            return "/" . $langCode . "/" . ltrim($path, "/");
+        $urlHelper = function(string $path) {
+            return "/" . ltrim($path, "/");
         };
         $items = $this->seriesService->byTag($slug, 1, 50);
 
@@ -976,126 +976,108 @@ final class WebController
         $base = $this->absoluteUrl($request, "");
         $nowIso = gmdate("Y-m-d\TH:i:s\Z");
 
-        // Global homepage (redirects)
+        // Canonical public URLs (without locale prefix)
         $push($urls, $base . "/", $nowIso, "hourly", "1.0");
+        $push($urls, $base . "/blogs", $nowIso, "daily", "0.9");
 
-        foreach ($supportedLangs as $lang) {
-            $langBase = $base . "/" . $lang;
-            $push($urls, $langBase . "/", $nowIso, "hourly", "1.0");
-            $push($urls, $langBase . "/blogs", $nowIso, "daily", "0.9");
+        foreach (
+            [
+                "light-novel",
+                "web-novel",
+                "novel",
+                "manga",
+                "manhua",
+                "manhwa",
+                "webtoon",
+            ]
+            as $type
+        ) {
+            $push($urls, $base . "/" . $type, $nowIso, "daily", "0.8");
+        }
 
-            foreach (
-                [
-                    "light-novel",
-                    "web-novel",
-                    "novel",
-                    "manga",
-                    "manhua",
-                    "manhwa",
-                    "webtoon",
-                ]
-                as $type
-            ) {
-                $push($urls, $langBase . "/" . $type, $nowIso, "daily", "0.8");
+        foreach ($this->seriesService->series_genres(1, 500) as $genre) {
+            if (!isset($genre["slug"])) {
+                continue;
             }
+            $push(
+                $urls,
+                $base . "/genre/" . rawurlencode((string) $genre["slug"]),
+                $nowIso,
+                "daily",
+                "0.7",
+            );
+        }
 
-            foreach ($this->seriesService->series_genres(1, 500) as $genre) {
-                if (!isset($genre["slug"])) {
+        foreach ($this->seriesService->series_tags(1, 500) as $tag) {
+            if (!isset($tag["slug"])) {
+                continue;
+            }
+            $push(
+                $urls,
+                $base . "/tag/" . rawurlencode((string) $tag["slug"]),
+                $nowIso,
+                "daily",
+                "0.7",
+            );
+        }
+
+        $seriesList = $this->seriesService->series(1, 500);
+        foreach ($seriesList as $series) {
+            $slug = (string) ($series["slug"] ?? "");
+            $type = (string) ($series["type"] ?? "novel");
+            if ($slug === "") {
+                continue;
+            }
+            $push(
+                $urls,
+                $base . "/" . $type . "/" . rawurlencode($slug),
+                $nowIso,
+                "daily",
+                "0.8",
+            );
+
+            // Add chapters
+            $chapters = $this->seriesService->chaptersByType(
+                $type,
+                $slug,
+                1,
+                200,
+            );
+            foreach ($chapters as $chap) {
+                $chapNumber = (string) ($chap["chapter_number"] ?? "");
+                if ($chapNumber === "") {
                     continue;
                 }
                 $push(
                     $urls,
-                    $langBase . "/genre/" . rawurlencode((string) $genre["slug"]),
-                    $nowIso,
-                    "daily",
-                    "0.7",
-                );
-            }
-
-            foreach ($this->seriesService->series_tags(1, 500) as $tag) {
-                if (!isset($tag["slug"])) {
-                    continue;
-                }
-                $push(
-                    $urls,
-                    $langBase . "/tag/" . rawurlencode((string) $tag["slug"]),
-                    $nowIso,
-                    "daily",
-                    "0.6",
-                );
-            }
-
-            foreach (
-                $this->seriesRepository->listContentsForSitemap(10000)
-                as $row
-            ) {
-                $type = str_replace("_", "-", (string) ($row["type"] ?? "novel"));
-                $slug = (string) ($row["slug"] ?? "");
-                if ($slug === "") {
-                    continue;
-                }
-                $lastmod = isset($row["created_at"])
-                    ? gmdate(
-                        "Y-m-d\TH:i:s\Z",
-                        strtotime((string) $row["created_at"]),
-                    )
-                    : null;
-                $push(
-                    $urls,
-                    $langBase . "/" . $type . "/" . rawurlencode($slug),
-                    $lastmod,
-                    "daily",
-                    "0.8",
-                );
-            }
-
-            foreach (
-                $this->seriesRepository->listChaptersForSitemap(20000)
-                as $row
-            ) {
-                $type = str_replace("_", "-", (string) ($row["type"] ?? "novel"));
-                $slug = (string) ($row["slug"] ?? "");
-                $chapter = (string) ($row["chapter_number"] ?? "");
-                if ($slug === "" || $chapter === "") {
-                    continue;
-                }
-                $lastmod = isset($row["created_at"])
-                    ? gmdate(
-                        "Y-m-d\TH:i:s\Z",
-                        strtotime((string) $row["created_at"]),
-                    )
-                    : null;
-                $push(
-                    $urls,
-                    $langBase .
+                    $base .
                         "/" .
                         $type .
                         "/" .
                         rawurlencode($slug) .
                         "/chapter/" .
-                        rawurlencode($chapter),
-                    $lastmod,
+                        rawurlencode($chapNumber),
+                    $nowIso,
                     "weekly",
-                    "0.7",
+                    "0.6",
                 );
             }
+        }
 
-            foreach ($this->blogRepository->listApprovedForSitemap(1000) as $row) {
-                $slug = (string) ($row["slug"] ?? "");
-                if ($slug === "") {
-                    continue;
-                }
-                $lastmod = isset($row["lastmod"])
-                    ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) $row["lastmod"]))
-                    : null;
-                $push(
-                    $urls,
-                    $langBase . "/blogs/" . rawurlencode($slug),
-                    $lastmod,
-                    "weekly",
-                    "0.7",
-                );
+        // Add blogs
+        $blogs = $this->blogService->list(1, 500);
+        foreach ($blogs as $blog) {
+            $slug = (string) ($blog["slug"] ?? "");
+            if ($slug === "") {
+                continue;
             }
+            $push(
+                $urls,
+                $base . "/blogs/" . rawurlencode($slug),
+                $nowIso,
+                "weekly",
+                "0.6",
+            );
         }
 
         $xml = [
@@ -1262,25 +1244,7 @@ final class WebController
             return $response->withStatus(304);
         }
 
-        // SEO Strategy: URL Lang takes precedence. 
-        if ($urlLang === null && $template !== "robotsTxt" && $template !== "sitemapXml") {
-            $uri = $request->getUri();
-            $path = $uri->getPath();
-            
-            $supportedLangs = $this->i18n->getSupportedLanguages();
-            $pathParts = explode("/", ltrim($path, "/"));
-            $firstPart = $pathParts[0] ?? "";
-            $alreadyHasLang = in_array($firstPart, $supportedLangs, true);
-
-            if ($alreadyHasLang || $path === "/logout" || str_starts_with($path, "/api") || str_starts_with($path, "/admin")) {
-                // No redirect
-            } else {
-                $newPath = "/" . $langCode . ($path === "/" ? "" : $path);
-                $query = $uri->getQuery();
-                if ($query !== "") $newPath .= "?" . $query;
-                return $response->withHeader("Location", $newPath)->withStatus(302);
-            }
-        }
+        // Clean public render without URL locale redirect
 
         // Load language for SSR
         $lang = $this->i18n->getDictionary($langCode);

@@ -160,6 +160,16 @@ final class Config
     {
         $addWebRoutes = function (RouteCollectorProxy $group, bool $includeHome = true) use ($typePattern): void {
             if ($includeHome) $group->get("", [WebController::class, "home"]);
+            $group->get("/browse", [WebController::class, "listing"]);
+            $group->get("/browse/{type:" . $typePattern . "}", [WebController::class, "listing"]);
+            $group->get("/genres", [WebController::class, "listing"]);
+            $group->get("/tags", [WebController::class, "listing"]);
+            $group->get("/library", [WebController::class, "home"]);
+            $group->get("/history", [WebController::class, "home"]);
+            $group->get("/wallet", [WebController::class, "home"]);
+            $group->get("/shop", [WebController::class, "home"]);
+            $group->get("/preferences", [WebController::class, "home"]);
+            $group->get("/notifications", [WebController::class, "home"]);
             $group->get("/blogs", [WebController::class, "blog"]);
             $group->get("/blogs/{slug}", [WebController::class, "blog"]);
             $group->get("/chat", [WebController::class, "chat"]);
@@ -170,8 +180,11 @@ final class Config
             $group->get("/{type:" . $typePattern . "}/{slug}/chapter/{chapterNumber}", [WebController::class, "chapter"]);
             $group->get("/{type:" . $typePattern . "}/{slug}", [WebController::class, "content"]);
             $group->get("/login", [WebController::class, "login"]);
+            $group->get("/register", [WebController::class, "login"]);
+            $group->get("/me", [WebController::class, "profile"]);
             $group->get("/profile", [WebController::class, "profile"]);
             $group->get("/profile/{person:[A-Za-z0-9_]+}", [WebController::class, "profile"]);
+            $group->get("/u/{person:[A-Za-z0-9_]+}", [WebController::class, "profile"]);
             $group->get("/admin", [WebController::class, "adminDashboard"]);
             $group->get("/admin/content", [WebController::class, "adminContent"]);
             $group->get("/admin/blogs", [WebController::class, "adminBlogs"]);
@@ -190,12 +203,30 @@ final class Config
         $app->get("/media/public/{filename:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "servePublicMedia"]);
         $app->get("/media/chapter/{token:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "serveChapterMedia"]);
         $app->get("/logout", [AuthController::class, "logout"]);
-        $app->get("/", fn($req, $res) => $res->withHeader("Location", "/tr")->withStatus(302));
-        $app->group("/{lang:tr|en}", function ($g) use ($addWebRoutes): void {
-            $addWebRoutes($g, true);
+
+        // Public Web Routes (Direct Clean URLs without locale prefix)
+        $app->get("/", [WebController::class, "home"]);
+        $addWebRoutes($app, false);
+
+        // Legacy /tr and /en URL Migration (301 Permanent Redirect to canonical URLs)
+        $app->get("/{lang:tr|en}", function ($req, $res) {
+            return $res->withHeader("Location", "/")->withStatus(301);
         });
-        $app->group("", function ($g) use ($addWebRoutes): void {
-            $addWebRoutes($g, false);
+        $app->get("/{lang:tr|en}/{path:.*}", function ($req, $res, array $args) {
+            $path = (string) ($args["path"] ?? "");
+            if (str_starts_with($path, "api") || str_starts_with($path, "admin") || str_starts_with($path, "media")) {
+                $payload = json_encode([
+                    "status" => "error",
+                    "error" => [
+                        "key" => "NOT_FOUND",
+                        "code" => 404,
+                        "message" => "Resource not found",
+                    ],
+                ], JSON_UNESCAPED_UNICODE);
+                $res->getBody()->write($payload);
+                return $res->withHeader("Content-Type", "application/json")->withStatus(404);
+            }
+            return $res->withHeader("Location", "/" . ltrim($path, "/"))->withStatus(301);
         });
     }
 

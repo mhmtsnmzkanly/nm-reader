@@ -24,6 +24,7 @@
     "openapi:generate": "php app/Console/generate_openapi.php",
     "test:seo": "php app/Console/run_seo_test.php",
     "test:ssr": "php app/Console/run_ssr_retirement_test.php",
+    "test:locale": "php app/Console/run_locale_regression_test.php",
     "check:storage": "php app/Console/StorageCheck.php"
   }
 }
