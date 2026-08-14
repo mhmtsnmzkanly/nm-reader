@@ -162,6 +162,7 @@ export const AuthModal: React.FC = () => {
               </label>
               <input
                 type="text"
+                autoComplete="username"
                 value={loginIdentity}
                 onChange={(e) => setLoginIdentity(e.target.value)}
                 placeholder="kullanici@nmreader.com"
@@ -176,6 +177,7 @@ export const AuthModal: React.FC = () => {
               </label>
               <input
                 type="password"
+                autoComplete="current-password"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 placeholder="••••••••"
@@ -232,9 +234,10 @@ export const AuthModal: React.FC = () => {
               </label>
               <input
                 type="text"
+                autoComplete="username"
                 value={regUsername}
                 onChange={(e) => setRegUsername(e.target.value)}
-                placeholder="Kullanıcı Adı"
+                placeholder="kullaniciadi"
                 required
                 className="w-full bg-[var(--bg-tertiary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)] border border-[var(--border-color)] transition-all"
               />
@@ -246,9 +249,10 @@ export const AuthModal: React.FC = () => {
               </label>
               <input
                 type="email"
+                autoComplete="email"
                 value={regEmail}
                 onChange={(e) => setRegEmail(e.target.value)}
-                placeholder="ornek@nmreader.com"
+                placeholder="kullanici@nmreader.com"
                 required
                 className="w-full bg-[var(--bg-tertiary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] rounded-xl p-3 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--accent-color)] border border-[var(--border-color)] transition-all"
               />
@@ -260,6 +264,7 @@ export const AuthModal: React.FC = () => {
               </label>
               <input
                 type="password"
+                autoComplete="new-password"
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
                 placeholder="••••••••"

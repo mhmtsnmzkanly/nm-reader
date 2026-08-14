@@ -30,7 +30,7 @@ export const ContentDetailPage: React.FC = () => {
   const [chapters, setChapters] = useState<ContentDetailChapter[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [relatedContent, setRelatedContent] = useState<ContentSummary[]>([]);
-  const [walletBalance, setWalletBalance] = useState<number>(180);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [isInLibrary, setIsInLibrary] = useState(false);
@@ -79,8 +79,8 @@ export const ContentDetailPage: React.FC = () => {
         const mappedChapters: ContentDetailChapter[] = chapRes.data.map((c) => ({
           ...c,
           number: Number(c.chapter_number || 1),
-          published_at: c.created_at || '2026-08-12T10:00:00Z',
-          price_coin: c.price_coin ?? (c.access?.chapter_unlock_price || (c.is_locked ? 10 : 0)),
+          published_at: c.created_at || '',
+          price_coin: c.price_coin ?? (c.access?.chapter_unlock_price || (c.is_locked ? c.price_coin || 0 : 0)),
         }));
         setChapters(mappedChapters);
       } else if (detailData.chapters) {
