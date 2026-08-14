@@ -309,6 +309,6 @@ $openapi = [
     'paths' => $paths
 ];
 
-$targetFile = $basePath . '/openapi.json';
+$targetFile = $basePath . '/docs/api/openapi.json';
 file_put_contents($targetFile, json_encode($openapi, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 echo "SUCCESS: openapi.json generated with " . count($paths) . " routes at {$targetFile}\n";
