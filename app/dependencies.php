@@ -61,6 +61,9 @@ $builder->addDefinitions([
     'settings' => $settings,
 
     \PDO::class => static function () use ($settings): \PDO {
+        if (isset($GLOBALS['TESTING_MOCK_PDO']) && $GLOBALS['TESTING_MOCK_PDO'] instanceof \PDO) {
+            return $GLOBALS['TESTING_MOCK_PDO'];
+        }
         $db = $settings['database'];
         $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $db['host'], $db['port'], $db['database'], $db['charset']);
         return new \PDO($dsn, $db['username'], $db['password'], [
@@ -145,10 +148,13 @@ $builder->addDefinitions([
     RetentionService::class => DI\autowire(RetentionService::class),
     SiteConfigService::class => DI\autowire(SiteConfigService::class),
     WalletService::class => DI\autowire(WalletService::class),
+    \App\Services\MediaService::class => DI\autowire(\App\Services\MediaService::class)
+        ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/public/uploads/'),
 
     AuthController::class => DI\autowire(AuthController::class),
     BlogController::class => DI\autowire(BlogController::class),
     ContentController::class => DI\autowire(ContentController::class),
+    \App\Controllers\MediaController::class => DI\autowire(\App\Controllers\MediaController::class),
     UserInteractionController::class => DI\autowire(UserInteractionController::class),
     UserController::class => DI\autowire(UserController::class),
     AdminPanelController::class => DI\autowire(AdminPanelController::class),

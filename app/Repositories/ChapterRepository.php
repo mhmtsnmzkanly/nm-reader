@@ -119,7 +119,10 @@ final class ChapterRepository
                     ch.chapter_number,
                     ch.title,
                     ch.type,
-                    ch.created_at
+                    ch.created_at,
+                    c.title AS series_title,
+                    c.slug AS series_slug,
+                    c.type AS series_type
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
                 WHERE c.type = :type
@@ -151,7 +154,10 @@ final class ChapterRepository
                 ch.chapter_number,
                 ch.title,
                 ch.type,
-                ch.created_at
+                ch.created_at,
+                c.title AS series_title,
+                c.slug AS series_slug,
+                c.type AS series_type
              FROM chapters ch
              INNER JOIN series c ON c.id = ch.content_id
              WHERE c.type = :type

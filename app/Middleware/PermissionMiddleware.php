@@ -36,23 +36,6 @@ final class PermissionMiddleware implements MiddlewareInterface
 
         foreach ($this->required as $perm) {
             if (!in_array($perm, $permissions, true)) {
-                // Audit 403 attempt
-                try {
-                    $pdo = \App\App::getContainer()->get(\PDO::class);
-                    $stmt = $pdo->prepare(
-                        'INSERT INTO admin_actions (moderator_user_id, target_type, target_id, action, reason, created_at)
-                         VALUES (NULL, "security", "forbidden", "permission_denied", :reason, NOW())'
-                    );
-                    $stmt->execute([
-                        'reason' => json_encode([
-                            'user_id' => $request->getAttribute('user_id'),
-                            'path' => (string) $request->getUri()->getPath(),
-                            'required' => $this->required,
-                            'missing' => $perm
-                        ])
-                    ]);
-                } catch (\Throwable) {}
-
                 return ResponseHelper::error(403, 'Insufficient permissions');
             }
         }

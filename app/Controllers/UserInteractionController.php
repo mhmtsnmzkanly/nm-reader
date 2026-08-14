@@ -69,11 +69,11 @@ final class UserInteractionController
             $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
             $viewerId = $_SESSION['user_id'] ?? null;
             $items = $this->comments->listByChapter((string)$args['chapterId'], $page, $perPage, $viewerId, $cursor);
-            $meta = ['page' => $page, 'per_page' => $perPage];
+            $nextCursor = ($cursor !== null && $cursor !== '') ? $this->nextCursor($items, $perPage) : null;
             if ($cursor !== null && $cursor !== '') {
-                $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+                return ResponseHelper::cursorPaginate($items, $perPage, $nextCursor, ['page' => $page]);
             }
-            return ResponseHelper::success($items, $meta);
+            return ResponseHelper::paginate($items, $page, $perPage);
         } catch (\InvalidArgumentException $e) {
             return ResponseHelper::error(400, $e->getMessage());
         } catch (\DomainException $e) {
@@ -89,11 +89,11 @@ final class UserInteractionController
             $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
             $viewerId = $_SESSION['user_id'] ?? null;
             $items = $this->comments->listBySeriesSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
-            $meta = ['page' => $page, 'per_page' => $perPage];
+            $nextCursor = ($cursor !== null && $cursor !== '') ? $this->nextCursor($items, $perPage) : null;
             if ($cursor !== null && $cursor !== '') {
-                $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+                return ResponseHelper::cursorPaginate($items, $perPage, $nextCursor, ['page' => $page]);
             }
-            return ResponseHelper::success($items, $meta);
+            return ResponseHelper::paginate($items, $page, $perPage);
         } catch (\InvalidArgumentException $e) {
             return ResponseHelper::error(400, $e->getMessage());
         } catch (\DomainException $e) {
@@ -109,11 +109,11 @@ final class UserInteractionController
             $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
             $viewerId = $_SESSION['user_id'] ?? null;
             $items = $this->comments->listByBlogSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
-            $meta = ['page' => $page, 'per_page' => $perPage];
+            $nextCursor = ($cursor !== null && $cursor !== '') ? $this->nextCursor($items, $perPage) : null;
             if ($cursor !== null && $cursor !== '') {
-                $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+                return ResponseHelper::cursorPaginate($items, $perPage, $nextCursor, ['page' => $page]);
             }
-            return ResponseHelper::success($items, $meta);
+            return ResponseHelper::paginate($items, $page, $perPage);
         } catch (\InvalidArgumentException $e) {
             return ResponseHelper::error(400, $e->getMessage());
         } catch (\DomainException $e) {

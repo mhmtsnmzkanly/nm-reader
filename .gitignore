@@ -25,6 +25,7 @@
 .php_cs.cache
 .DS_Store
 Thumbs.db
+/scratch/
 
 # Keep directory structure but ignore contents
 !/storage/cache/.gitkeep

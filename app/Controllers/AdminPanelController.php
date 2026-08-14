@@ -49,7 +49,7 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listContents($page, $perPage);
-        return ResponseHelper::success($result['items'], ['page' => $page, 'per_page' => $perPage, 'total' => $result['total'] ?? 0]);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['total'] ?? null);
     }
 
     public function createContent(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -71,7 +71,7 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->adminService->listChapters((string)$args['id'], $page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function getChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -113,7 +113,7 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listUsers($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function updateUser(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -162,7 +162,7 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listBlogs($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function hideBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -183,7 +183,7 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listComments($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function deleteComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -198,21 +198,21 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listAuditLogs($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function loginEvents(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listLoginEvents($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function moderationActions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listModerationActions($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function siteVisits(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -275,7 +275,7 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listUploads($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function deleteUpload(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -320,7 +320,7 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->console->listQueueJobs($page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function runQueueOnce(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -415,7 +415,7 @@ final class AdminPanelController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->wallets->packages($page, $perPage, false);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function createShopPackage(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -493,7 +493,7 @@ final class AdminPanelController
         try {
             [$page, $perPage] = $this->pagination($request);
             $result = $this->wallets->transactions((string) $args['userId'], $page, $perPage);
-            return ResponseHelper::success($result['items'], $result['meta']);
+            return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         } catch (\DomainException $exception) {
             return ResponseHelper::error(404, $exception->getMessage());
         }

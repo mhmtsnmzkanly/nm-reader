@@ -34,6 +34,62 @@ final class ResponseHelper
     }
 
     /**
+     * Returns a 200 OK paginated success response with standardized meta.pagination envelope.
+     */
+    public static function paginate(array $items, int $page, int $perPage, ?int $total = null, array $extraMeta = []): Response
+    {
+        $pagination = [
+            'type' => 'offset',
+            'page' => $page,
+            'per_page' => $perPage,
+        ];
+        if ($total !== null) {
+            $pagination['total'] = $total;
+            $pagination['total_pages'] = (int) ceil($total / max(1, $perPage));
+        }
+
+        $meta = array_merge(['pagination' => $pagination], $extraMeta);
+        $meta['page'] = $page;
+        $meta['per_page'] = $perPage;
+        if ($total !== null) {
+            $meta['total'] = $total;
+            $meta['total_pages'] = $pagination['total_pages'];
+        }
+
+        return self::json([
+            'status' => 'success',
+            'data' => $items,
+            'meta' => $meta,
+            'error' => null,
+        ], 200);
+    }
+
+    /**
+     * Returns a 200 OK cursor-paginated success response with standardized meta.pagination envelope.
+     */
+    public static function cursorPaginate(array $items, int $perPage, ?string $nextCursor = null, array $extraMeta = []): Response
+    {
+        $pagination = [
+            'type' => 'cursor',
+            'per_page' => $perPage,
+            'next_cursor' => $nextCursor,
+            'has_more' => $nextCursor !== null && $nextCursor !== '',
+        ];
+
+        $meta = array_merge(['pagination' => $pagination], $extraMeta);
+        if ($nextCursor !== null) {
+            $meta['next_cursor'] = $nextCursor;
+        }
+
+        return self::json([
+            'status' => 'success',
+            'data' => $items,
+            'meta' => $meta,
+            'error' => null,
+        ], 200);
+    }
+
+    /**
      * Returns a 201 Created success response.
      */
     public static function created(array $data = [], array $meta = []): Response

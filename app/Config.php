@@ -187,6 +187,8 @@ final class Config
         $app->get("/robots.txt", [WebController::class, "robotsTxt"]);
         $app->get("/sitemap.xml", [WebController::class, "sitemapXml"]);
         $app->get("/mobile[/{path:.*}]", [WebController::class, "mobile"]);
+        $app->get("/media/public/{filename:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "servePublicMedia"]);
+        $app->get("/media/chapter/{token:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "serveChapterMedia"]);
         $app->get("/logout", [AuthController::class, "logout"]);
         $app->get("/", fn($req, $res) => $res->withHeader("Location", "/tr")->withStatus(302));
         $app->group("/{lang:tr|en}", function ($g) use ($addWebRoutes): void {
@@ -205,10 +207,13 @@ final class Config
         $users = static fn() => $container->get(UserRepository::class);
 
         $app->group("/api/v1", function (RouteCollectorProxy $group) use ($typePattern, $cache, $authorization, $users): void {
+            $group->get("/media/public/{filename:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "servePublicMedia"]);
+            $group->get("/media/chapter/{token:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "serveChapterMedia"]);
             $group->get("/home", [ContentController::class, "home"]);
             $group->get("/genres", [ContentController::class, "genres"]);
             $group->get("/tags", [ContentController::class, "tags"]);
             $group->get("/content/type/{type:" . $typePattern . "}", [ContentController::class, "byType"]);
+            $group->get("/content/{type:" . $typePattern . "}/chapters", [ContentController::class, "latestChaptersByType"]);
             $group->get("/content/{type:" . $typePattern . "}/{slug}", [ContentController::class, "contentByType"]);
             $group->get("/content/{type:" . $typePattern . "}/{slug}/chapters", [ContentController::class, "chaptersByType"]);
             $group->get("/genre/{slug}", [ContentController::class, "genre"]);
@@ -218,7 +223,6 @@ final class Config
             $group->get("/shop/features", [ContentController::class, "shopFeatures"]);
             $group->get("/series_genres", [ContentController::class, "genres"]);
             $group->get("/series_tags", [ContentController::class, "tags"]);
-            $group->get("/content/{type:" . $typePattern . "}/chapters", [ContentController::class, "latestChaptersByType"]);
             
             $group->get("/profile/{person:[A-Za-z0-9_]+}", [UserController::class, "publicProfile"]);
             $group->get("/blogs", [BlogController::class, "list"]);

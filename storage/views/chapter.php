@@ -44,7 +44,23 @@ $nextUrl = (!empty($adjacent['next']) && is_string($adjacent['next'])) ? $url($c
 </div>
 
 <main class="pt-24 pb-32 min-h-screen">
-    <?php if ($isText): ?>
+    <?php if (!empty($chapterData['is_locked'])): ?>
+        <!-- LOCKED CONTENT VIEW -->
+        <section class="max-w-md mx-auto px-6 py-20 text-center">
+            <div class="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="lock" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-xl font-black text-white uppercase tracking-tight mb-2"><?= $__t('ui.locked_chapter', 'Kilitli Bölüm') ?></h2>
+            <p class="text-sm text-gray-400 mb-6"><?= $__t('ui.locked_chapter_desc', 'Bu bölümü okumak için kilit açmanız gerekmektedir.') ?></p>
+            <div class="p-4 rounded-xl bg-white/5 border border-white/10 mb-6 flex justify-between items-center text-sm">
+                <span class="text-gray-400"><?= $__t('ui.price', 'Ücret') ?>:</span>
+                <span class="font-bold text-amber-400"><?= (int)($chapterData['price_coin'] ?? 0) ?> <?= $__t('ui.coins', 'Coin') ?></span>
+            </div>
+            <button onclick="openUnlockModal('<?= htmlspecialchars((string)($chapterData['id'] ?? '')) ?>', <?= (int)($chapterData['price_coin'] ?? 0) ?>)" class="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all">
+                <?= $__t('ui.unlock_now', 'Kilidi Aç') ?>
+            </button>
+        </section>
+    <?php elseif ($isText): ?>
         <!-- NOVEL MODE VIEW -->
         <section class="px-6">
             <article class="novel-text prose prose-invert">

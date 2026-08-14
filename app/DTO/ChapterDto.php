@@ -37,7 +37,10 @@ final class ChapterDto
         public readonly string $createdAt,
         public readonly ?string $body = null,
         public readonly array $pages = [],
-        public readonly array $navigation = ['next' => null, 'prev' => null]
+        public readonly array $navigation = ['next' => null, 'prev' => null],
+        public readonly ?string $seriesTitle = null,
+        public readonly ?string $seriesSlug = null,
+        public readonly ?string $seriesType = null
     ) {
     }
 
@@ -55,7 +58,10 @@ final class ChapterDto
             createdAt: (string) ($row['created_at'] ?? ''),
             body: $row['body'] ?? null,
             pages: $row['pages'] ?? [],
-            navigation: $row['adjacent_chapters'] ?? ['next' => null, 'prev' => null]
+            navigation: $row['adjacent_chapters'] ?? ['next' => null, 'prev' => null],
+            seriesTitle: isset($row['series_title']) ? (string) $row['series_title'] : null,
+            seriesSlug: isset($row['series_slug']) ? (string) $row['series_slug'] : null,
+            seriesType: isset($row['series_type']) ? (string) $row['series_type'] : null
         );
     }
 
@@ -64,7 +70,7 @@ final class ChapterDto
      */
     public function toArray(?string $baseUrl = null): array
     {
-        return [
+        $data = [
             'id' => $this->id,
             'content_id' => $this->contentId,
             'chapter_number' => $this->chapterNumber,
@@ -75,5 +81,17 @@ final class ChapterDto
             'pages' => $this->pages,
             'adjacent_chapters' => $this->navigation,
         ];
+
+        if ($this->seriesTitle !== null) {
+            $data['series_title'] = $this->seriesTitle;
+        }
+        if ($this->seriesSlug !== null) {
+            $data['series_slug'] = $this->seriesSlug;
+        }
+        if ($this->seriesType !== null) {
+            $data['series_type'] = $this->seriesType;
+        }
+
+        return $data;
     }
 }

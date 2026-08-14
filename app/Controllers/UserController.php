@@ -86,7 +86,7 @@ final class UserController
 
         $items = $this->users->history($userId, $page, $perPage);
 
-        return ResponseHelper::success($items, ['page' => $page, 'per_page' => $perPage]);
+        return ResponseHelper::paginate($items, $page, $perPage);
     }
 
     /**
@@ -177,11 +177,12 @@ final class UserController
         $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
 
         $items = $this->users->notifications($userId, $page, $perPage, $cursor);
-        $meta = ['page' => $page, 'per_page' => $perPage];
+        $nextCursor = ($cursor !== null && $cursor !== '') ? $this->nextCursor($items, $perPage) : null;
+        
         if ($cursor !== null && $cursor !== '') {
-            $meta['next_cursor'] = $this->nextCursor($items, $perPage);
+            return ResponseHelper::cursorPaginate($items, $perPage, $nextCursor, ['page' => $page]);
         }
-        return ResponseHelper::success($items, $meta);
+        return ResponseHelper::paginate($items, $page, $perPage);
     }
 
     /**
@@ -204,9 +205,10 @@ final class UserController
         $page = max(1, (int) ($query['page'] ?? 1));
         $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
 
-        return ResponseHelper::success(
+        return ResponseHelper::paginate(
             $this->users->followedUsers($userId, $page, $perPage),
-            ['page' => $page, 'per_page' => $perPage]
+            $page,
+            $perPage
         );
     }
 
@@ -280,7 +282,7 @@ final class UserController
             $page = max(1, (int) ($query['page'] ?? 1));
             $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
             $result = $this->wallets->transactions($userId, $page, $perPage);
-            return ResponseHelper::success($result['items'], $result['meta']);
+            return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         } catch (\DomainException $exception) {
             return ResponseHelper::error(404, $exception->getMessage());
         }
@@ -293,7 +295,7 @@ final class UserController
         $page = max(1, (int) ($query['page'] ?? 1));
         $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
         $result = $this->wallets->seriesUnlocks($userId, $page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function chapterUnlocks(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -303,7 +305,7 @@ final class UserController
         $page = max(1, (int) ($query['page'] ?? 1));
         $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
         $result = $this->wallets->chapterUnlocks($userId, $page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function featureStatus(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -319,7 +321,7 @@ final class UserController
         $page = max(1, (int) ($query['page'] ?? 1));
         $perPage = max(1, min(50, (int) ($query['per_page'] ?? 20)));
         $result = $this->wallets->featureEntitlements($userId, $page, $perPage);
-        return ResponseHelper::success($result['items'], $result['meta']);
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
     public function purchaseAdFree(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

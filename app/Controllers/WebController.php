@@ -283,11 +283,13 @@ final class WebController
         $ip =
             (string) ($request->getServerParams()["REMOTE_ADDR"] ?? "unknown");
 
+        $userId = isset($_SESSION["user_id"]) ? (string) $_SESSION["user_id"] : null;
         $chapter = $this->seriesService->chapterDetailByTypeSlugAndNumber(
             $type,
             $slug,
             $chapterNumber,
             $ip,
+            $userId,
         );
 
         if ($chapter === null) {

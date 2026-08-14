@@ -35,9 +35,10 @@ final class BlogController
     {
         [$page, $perPage] = $this->pagination($request);
 
-        return ResponseHelper::success(
+        return ResponseHelper::paginate(
             $this->blogs->listApproved($page, $perPage),
-            ['page' => $page, 'per_page' => $perPage]
+            $page,
+            $perPage
         );
     }
 
@@ -99,9 +100,10 @@ final class BlogController
         $userId = (string) $request->getAttribute('user_id');
         [$page, $perPage] = $this->pagination($request);
 
-        return ResponseHelper::success(
+        return ResponseHelper::paginate(
             $this->blogs->listByUser($userId, $page, $perPage),
-            ['page' => $page, 'per_page' => $perPage]
+            $page,
+            $perPage
         );
     }
 
@@ -112,9 +114,10 @@ final class BlogController
     {
         [$page, $perPage] = $this->pagination($request);
 
-        return ResponseHelper::success(
+        return ResponseHelper::paginate(
             $this->blogs->listPending($page, $perPage),
-            ['page' => $page, 'per_page' => $perPage]
+            $page,
+            $perPage
         );
     }
 

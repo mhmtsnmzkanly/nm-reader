@@ -39,7 +39,8 @@ final class SeriesService
         private readonly BlogRepository $blogs,
         private readonly CacheService $cache,
         private readonly AnalyticsService $analytics,
-        private readonly WalletService $wallets
+        private readonly WalletService $wallets,
+        private readonly MediaService $media
     ) {
     }
 
@@ -522,15 +523,16 @@ final class SeriesService
     }
 
     /**
-     * Retrieves full chapter details including its content (text or pages).
+     * Retrieves detailed chapter information, evaluating authorization and recording view/reading history.
      *
-     * @param string $typeSegment Content type.
-     * @param string $slug Content slug.
+     * @param string $typeSegment
+     * @param string $slug
      * @param string $chapterNumber
      * @param string $ip Client IP for view tracking.
+     * @param string|null $userId Authenticated viewer ID.
      * @return array|null Chapter details or null.
      */
-    public function chapterDetailByTypeSlugAndNumber(string $typeSegment, string $slug, string $chapterNumber, string $ip): ?array
+    public function chapterDetailByTypeSlugAndNumber(string $typeSegment, string $slug, string $chapterNumber, string $ip, ?string $userId = null): ?array
     {
         $dbType = $this->toDbType($typeSegment);
         $chapter = $this->chapters->findByTypeSlugAndChapterNumber($dbType, $slug, $chapterNumber);
@@ -539,8 +541,9 @@ final class SeriesService
         }
 
         $chapterId = (string) $chapter['id'];
+        $contentId = (string) ($chapter['content_id'] ?? '');
         $this->chapters->recordChapterView($chapterId, hash('sha256', $ip));
-        $this->analytics->track('chapter_view', null, 'chapter', $chapterId, [], $ip);
+        $this->analytics->track('chapter_view', $userId, 'chapter', $chapterId, $contentId !== '' ? ['content_id' => $contentId] : [], $ip);
 
         $content = $this->series->findContentByTypeAndSlug($dbType, $slug);
         if (is_array($content)) {
@@ -549,15 +552,38 @@ final class SeriesService
             $chapter['series_type'] = (string) ($content['type'] ?? $dbType);
         }
 
-        if ($chapter['type'] === 'text') {
-            $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
-            $chapter['pages'] = [];
+        $access = $this->wallets->chapterAccess($contentId, $chapterId, $userId);
+
+        if (($access['granted'] ?? false) === true) {
+            if ($chapter['type'] === 'text') {
+                $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
+                $chapter['pages'] = [];
+            } else {
+                $chapter['body'] = null;
+                $rawPages = $this->chapters->findChapterPages($chapterId);
+                $chapter['pages'] = array_map(function (array $page) use ($chapterId, $userId): array {
+                    $url = $this->media->generateChapterPageUrl($chapterId, (int) ($page['page_order'] ?? 1), (string) ($page['image_path'] ?? ''), $userId);
+                    return [
+                        'page_order' => (int) ($page['page_order'] ?? 1),
+                        'url'        => $url,
+                        'image_path' => $url,
+                    ];
+                }, $rawPages);
+            }
+            if ($userId !== null && $userId !== '') {
+                $this->chapters->markRead($userId, $chapterId);
+            }
         } else {
             $chapter['body'] = null;
-            $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
+            $chapter['pages'] = [];
         }
+
         $chapter['chapter_number'] = ChapterNumber::normalize($chapter['chapter_number'] ?? '');
-        $chapter['adjacent_chapters'] = $this->chapters->findAdjacentChapters((string) ($chapter['content_id'] ?? ''), (string) $chapter['chapter_number']);
+        $chapter['adjacent_chapters'] = $this->chapters->findAdjacentChapters($contentId, (string) $chapter['chapter_number']);
+        $chapter = \App\DTO\ChapterDto::fromArray($chapter)->toArray();
+        $chapter['access'] = $access;
+        $chapter['price_coin'] = (int) ($access['chapter_unlock_price'] ?? 0);
+        $chapter['is_locked'] = !(bool) ($access['granted'] ?? false);
 
         return $chapter;
     }

@@ -30,7 +30,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         @mkdir($sessionPath, 0777, true);
     }
 
-    if (session_status() === PHP_SESSION_NONE) {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         $sessionLifetime = (int) ($settings['app']['session_lifetime_seconds'] ?? 3600);
         ini_set('session.gc_maxlifetime', (string) $sessionLifetime);
 

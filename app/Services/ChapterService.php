@@ -22,7 +22,8 @@ final class ChapterService
     public function __construct(
         private readonly ChapterRepository $chapters,
         private readonly AnalyticsService $analytics,
-        private readonly WalletService $wallets
+        private readonly WalletService $wallets,
+        private readonly MediaService $media
     )
     {
     }
@@ -52,7 +53,15 @@ final class ChapterService
             $chapter['pages'] = [];
         } else {
             $chapter['body'] = null;
-            $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
+            $rawPages = $this->chapters->findChapterPages($chapterId);
+            $chapter['pages'] = array_map(function (array $page) use ($chapterId, $userId): array {
+                $url = $this->media->generateChapterPageUrl($chapterId, (int) ($page['page_order'] ?? 1), (string) ($page['image_path'] ?? ''), $userId);
+                return [
+                    'page_order' => (int) ($page['page_order'] ?? 1),
+                    'url'        => $url,
+                    'image_path' => $url,
+                ];
+            }, $rawPages);
         }
         
         $chapter['adjacent_chapters'] = $this->chapters->findAdjacentChapters($contentId, (string) $chapter['chapter_number']);
@@ -89,7 +98,18 @@ final class ChapterService
                 $chapter['pages'] = [];
             } else {
                 $chapter['body'] = null;
-                $chapter['pages'] = $this->chapters->findChapterPages($chapterId);
+                $rawPages = $this->chapters->findChapterPages($chapterId);
+                $chapter['pages'] = array_map(function (array $page) use ($chapterId, $userId): array {
+                    $url = $this->media->generateChapterPageUrl($chapterId, (int) ($page['page_order'] ?? 1), (string) ($page['image_path'] ?? ''), $userId);
+                    return [
+                        'page_order' => (int) ($page['page_order'] ?? 1),
+                        'url'        => $url,
+                        'image_path' => $url,
+                    ];
+                }, $rawPages);
+            }
+            if ($userId !== null && $userId !== '') {
+                $this->markRead($userId, $chapterId);
             }
         } else {
             $chapter['body'] = null;
