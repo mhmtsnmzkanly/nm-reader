@@ -150,6 +150,8 @@ $builder->addDefinitions([
     WalletService::class => DI\autowire(WalletService::class),
     \App\Services\MediaService::class => DI\autowire(\App\Services\MediaService::class)
         ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/public/uploads/'),
+    \App\Services\SeoService::class => DI\autowire(\App\Services\SeoService::class)
+        ->constructorParameter('basePath', $settings['app']['base_path']),
 
     AuthController::class => DI\autowire(AuthController::class),
     BlogController::class => DI\autowire(BlogController::class),

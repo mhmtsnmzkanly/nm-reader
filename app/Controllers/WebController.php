@@ -1217,11 +1217,6 @@ final class WebController
         $templatePath = $basePath . "/storage/views/" . $template;
         $layoutPath = $basePath . "/storage/views/layout_main.php";
 
-        if (!is_file($templatePath)) {
-            $response->getBody()->write("Template not found");
-            return $response->withStatus(404);
-        }
-
         // Get lang from URL attribute (from Slim router)
         $routeContext = \Slim\Routing\RouteContext::fromRequest($request);
         $route = $routeContext->getRoute();
@@ -1375,17 +1370,45 @@ final class WebController
         $fullContext['__t'] = $__t;
         $fullContext['siteConfig'] = $this->siteConfig->all();
 
-        // Capture Output
-        ob_start();
-        extract($fullContext, EXTR_SKIP);
-        include $templatePath;
-        $capturedContent = (string) ob_get_clean();
+        // Render via React App Shell (app.html) if available
+        $appHtmlPath = $basePath . "/public/app.html";
+        if (is_file($appHtmlPath)) {
+            $seoService = new \App\Services\SeoService($basePath);
+            $seoData = [
+                'title' => $title,
+                'description' => $seo['description'] ?? 'En popüler manga, manhwa, manhua ve web novelleri Türkçe oku.',
+                'canonical' => $seo['canonical'] ?? '',
+                'robots' => $seo['robots'] ?? 'index, follow',
+                'og' => [
+                    'title' => $seo['og_title'] ?? $title,
+                    'description' => $seo['og_description'] ?? ($seo['description'] ?? ''),
+                    'image' => $seo['og_image'] ?? '',
+                    'url' => $seo['canonical'] ?? '',
+                    'type' => 'website'
+                ],
+                'twitter' => [
+                    'title' => $seo['twitter_title'] ?? ($seo['og_title'] ?? $title),
+                    'description' => $seo['twitter_description'] ?? ($seo['og_description'] ?? ($seo['description'] ?? '')),
+                    'image' => $seo['twitter_image'] ?? ($seo['og_image'] ?? ''),
+                ],
+                'jsonLd' => $seo['json_ld'] ?? null
+            ];
+            $layoutContent = $seoService->renderShell($seoData);
+        } else if (is_file($templatePath)) {
+            // Legacy Template Capture Output
+            ob_start();
+            extract($fullContext, EXTR_SKIP);
+            include $templatePath;
+            $capturedContent = (string) ob_get_clean();
 
-        ob_start();
-        $content = $capturedContent;
-        extract($fullContext, EXTR_SKIP);
-        include $layoutPath;
-        $layoutContent = (string) ob_get_clean();
+            ob_start();
+            $content = $capturedContent;
+            extract($fullContext, EXTR_SKIP);
+            include $layoutPath;
+            $layoutContent = (string) ob_get_clean();
+        } else {
+            $layoutContent = "<!doctype html><html><head><title>{$title}</title></head><body><div id=\"root\"></div></body></html>";
+        }
 
         $cacheControl = $authContext["is_logged_in"]
             ? "private, max-age=0, must-revalidate"

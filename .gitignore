@@ -1,31 +1,40 @@
 # Dependency Directories
 /vendor/
 /node_modules/
-/ui/web/node_modules/
-/ui/mobile/node_modules/
+/ui/node_modules/
+/ui/dist/
+/ui/build/
+/ui/.vite/
+/ui/.cache/
+/ui/coverage/
 
 # Configuration
 .env
 .env.local
 .env.*.local
+/ui/.env.local
+/ui/.env.*.local
 
 # Storage & Logs
 /storage/cache/*
 /storage/logs/*
 /storage/sessions/*
 /storage/backups/*
+*.log
 
 # Public Assets
 /public/uploads/*
 /public/sitemap.xml
 /public/assets/css/site.css.bak
 
-# PHP & System
+# PHP, System & IDE
 .phpunit.result.cache
 .php_cs.cache
 .DS_Store
 Thumbs.db
 /scratch/
+.idea/
+.vscode/
 
 # Keep directory structure but ignore contents
 !/storage/cache/.gitkeep

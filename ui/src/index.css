@@ -1,0 +1,145 @@
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/600.css";
+@import "@fontsource/playfair-display/700.css";
+@import "tailwindcss";
+
+:root {
+  /* ☀️ Gündüz Modu (Slate Standard) */
+  --bg-primary: #F8FAFC;       /* Slate 50 */
+  --bg-secondary: #FFFFFF;     /* Slate 0 / White */
+  --bg-tertiary: #F1F5F9;      /* Slate 100 */
+  --bg-card: #FFFFFF;          /* Surface */
+  --border-color: #E2E8F0;     /* Slate 200 */
+  --text-primary: #0F172A;     /* Slate 900 */
+  --text-secondary: #475569;   /* Slate 600 */
+  --text-muted: #64748B;       /* Slate 500 */
+  --accent-color: #4F46E5;     /* İndigo Mavi */
+  --accent-hover: #4338CA;     /* Indigo 700 */
+  --accent-light: #EEF2FF;     /* Indigo 50 */
+  --accent-border: #C7D2FE;    /* Indigo 200 */
+
+  --font-serif: 'Playfair Display', Georgia, serif;
+}
+
+[data-theme='dark'],
+.dark {
+  /* 🌙 Gece Modu (Slate Standard) */
+  --bg-primary: #0F172A;       /* Slate 900 */
+  --bg-secondary: #1E293B;     /* Slate 800 */
+  --bg-tertiary: #334155;      /* Slate 700 */
+  --bg-card: #1E293B;          /* Surface */
+  --border-color: #334155;     /* Slate 700 */
+  --text-primary: #F8FAFC;     /* Slate 50 */
+  --text-secondary: #CBD5E1;   /* Slate 300 */
+  --text-muted: #94A3B8;       /* Slate 400 */
+  --accent-color: #818CF8;     /* Açık İndigo */
+  --accent-hover: #A5B4FC;     /* Indigo 300 */
+  --accent-light: rgba(129, 140, 248, 0.15);
+  --accent-border: rgba(129, 140, 248, 0.3);
+}
+
+/* 🎨 Accent Theme Customizations (Light) */
+[data-accent='emerald'] {
+  --accent-color: #059669;
+  --accent-hover: #047857;
+  --accent-light: #ECFDF5;
+  --accent-border: #A7F3D0;
+}
+[data-accent='amber'] {
+  --accent-color: #D97706;
+  --accent-hover: #B45309;
+  --accent-light: #FFFBEB;
+  --accent-border: #FDE68A;
+}
+[data-accent='rose'] {
+  --accent-color: #E11D48;
+  --accent-hover: #BE123C;
+  --accent-light: #FFF1F2;
+  --accent-border: #FECDD3;
+}
+[data-accent='cyan'] {
+  --accent-color: #0284C7;
+  --accent-hover: #0369A1;
+  --accent-light: #F0F9FF;
+  --accent-border: #BAE6FD;
+}
+[data-accent='purple'] {
+  --accent-color: #9333EA;
+  --accent-hover: #7E22CE;
+  --accent-light: #FAF5FF;
+  --accent-border: #E9D5FF;
+}
+
+/* 🎨 Accent Theme Customizations (Dark) */
+.dark[data-accent='emerald'],
+[data-theme='dark'][data-accent='emerald'] {
+  --accent-color: #34D399;
+  --accent-hover: #6EE7B7;
+  --accent-light: rgba(52, 211, 153, 0.15);
+  --accent-border: rgba(52, 211, 153, 0.35);
+}
+.dark[data-accent='amber'],
+[data-theme='dark'][data-accent='amber'] {
+  --accent-color: #FBBF24;
+  --accent-hover: #FCD34D;
+  --accent-light: rgba(251, 191, 36, 0.15);
+  --accent-border: rgba(251, 191, 36, 0.35);
+}
+.dark[data-accent='rose'],
+[data-theme='dark'][data-accent='rose'] {
+  --accent-color: #FB7185;
+  --accent-hover: #FDA4AF;
+  --accent-light: rgba(251, 113, 133, 0.15);
+  --accent-border: rgba(251, 113, 133, 0.35);
+}
+.dark[data-accent='cyan'],
+[data-theme='dark'][data-accent='cyan'] {
+  --accent-color: #38BDF8;
+  --accent-hover: #7DD3FC;
+  --accent-light: rgba(56, 189, 248, 0.15);
+  --accent-border: rgba(56, 189, 248, 0.35);
+}
+.dark[data-accent='purple'],
+[data-theme='dark'][data-accent='purple'] {
+  --accent-color: #C084FC;
+  --accent-hover: #D8B4FE;
+  --accent-light: rgba(192, 132, 252, 0.15);
+  --accent-border: rgba(192, 132, 252, 0.35);
+}
+
+@layer base {
+  html, body, #root {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, .font-serif, .font-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
