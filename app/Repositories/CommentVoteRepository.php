@@ -112,27 +112,31 @@ final class CommentVoteRepository
      */
     public function refreshUserVoteStats(string $userId): void
     {
-        $sql = 'INSERT INTO analytics_users_votes (user_id, votes_cast, upvotes_received, downvotes_received, updated_at)
-                VALUES (
-                    :user_id,
-                    (SELECT COUNT(*) FROM comment_votes WHERE user_id = :user_id2),
-                    (SELECT COALESCE(SUM(c.upvote_count), 0) FROM social_comments c WHERE c.user_id = :user_id3),
-                    (SELECT COALESCE(SUM(c.downvote_count), 0) FROM social_comments c WHERE c.user_id = :user_id4),
-                    NOW()
-                )
-                ON DUPLICATE KEY UPDATE
-                    votes_cast = VALUES(votes_cast),
-                    upvotes_received = VALUES(upvotes_received),
-                    downvotes_received = VALUES(downvotes_received),
-                    updated_at = NOW()';
+        try {
+            $sql = 'INSERT INTO analytics_users_votes (user_id, votes_cast, upvotes_received, downvotes_received, updated_at)
+                    VALUES (
+                        :user_id,
+                        (SELECT COUNT(*) FROM comment_votes WHERE user_id = :user_id2),
+                        (SELECT COALESCE(SUM(c.upvote_count), 0) FROM social_comments c WHERE c.user_id = :user_id3),
+                        (SELECT COALESCE(SUM(c.downvote_count), 0) FROM social_comments c WHERE c.user_id = :user_id4),
+                        NOW()
+                    )
+                    ON DUPLICATE KEY UPDATE
+                        votes_cast = VALUES(votes_cast),
+                        upvotes_received = VALUES(upvotes_received),
+                        downvotes_received = VALUES(downvotes_received),
+                        updated_at = NOW()';
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'user_id' => $userId,
-            'user_id2' => $userId,
-            'user_id3' => $userId,
-            'user_id4' => $userId,
-        ]);
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                'user_id' => $userId,
+                'user_id2' => $userId,
+                'user_id3' => $userId,
+                'user_id4' => $userId,
+            ]);
+        } catch (\Throwable) {
+            // Non-blocking background analytics update
+        }
     }
 
     /**

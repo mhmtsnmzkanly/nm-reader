@@ -634,6 +634,16 @@ CREATE TABLE `system_uploads` (
   CONSTRAINT `fk_uploads_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `analytics_users_votes`;
+CREATE TABLE `analytics_users_votes` (
+  `user_id` varchar(64) NOT NULL,
+  `votes_cast` int(11) NOT NULL DEFAULT 0,
+  `upvotes_received` int(11) NOT NULL DEFAULT 0,
+  `downvotes_received` int(11) NOT NULL DEFAULT 0,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `analytics_series_daily`;
 CREATE TABLE `analytics_series_daily` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,

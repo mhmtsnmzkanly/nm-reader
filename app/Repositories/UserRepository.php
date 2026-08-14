@@ -386,20 +386,22 @@ final class UserRepository
     public function getPublicStatsByUser(string $userId): array
     {
         $sql = 'SELECT
-                    COALESCE(uvs.votes_cast, 0) AS votes_cast,
-                    COALESCE(uvs.upvotes_received, 0) AS upvotes_received,
-                    COALESCE(uvs.downvotes_received, 0) AS downvotes_received,
-                    (SELECT COUNT(*) FROM blogs b WHERE b.user_id = :user_id2 AND b.approved = 1) AS approved_blog_count,
-                    (SELECT COUNT(*) FROM social_comments c WHERE c.user_id = :user_id3) AS comment_count
+                    (SELECT COUNT(*) FROM comment_votes cv WHERE cv.user_id = :user_id1) AS votes_cast,
+                    (SELECT COALESCE(SUM(c1.upvote_count), 0) FROM social_comments c1 WHERE c1.user_id = :user_id2) AS upvotes_received,
+                    (SELECT COALESCE(SUM(c2.downvote_count), 0) FROM social_comments c2 WHERE c2.user_id = :user_id3) AS downvotes_received,
+                    (SELECT COUNT(*) FROM blogs b WHERE b.user_id = :user_id4 AND b.approved = 1) AS approved_blog_count,
+                    (SELECT COUNT(*) FROM social_comments c3 WHERE c3.user_id = :user_id5) AS comment_count
                 FROM users u
-                LEFT JOIN analytics_users_votes uvs ON uvs.user_id = u.id
                 WHERE u.id = :user_id
                 LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'user_id' => $userId,
+            'user_id1' => $userId,
             'user_id2' => $userId,
             'user_id3' => $userId,
+            'user_id4' => $userId,
+            'user_id5' => $userId,
         ]);
         $row = $stmt->fetch();
 
