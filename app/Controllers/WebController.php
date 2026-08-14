@@ -956,7 +956,6 @@ final class WebController
         ResponseInterface $response,
     ): ResponseInterface {
         $urls = [];
-        $supportedLangs = $this->i18n->getSupportedLanguages();
 
         $push = static function (
             array &$bucket,
@@ -1199,11 +1198,6 @@ final class WebController
         $templatePath = $basePath . "/storage/views/" . $template;
         $layoutPath = $basePath . "/storage/views/layout_main.php";
 
-        // Get lang from URL attribute (from Slim router)
-        $routeContext = \Slim\Routing\RouteContext::fromRequest($request);
-        $route = $routeContext->getRoute();
-        $urlLang = $route ? $route->getArgument('lang') : null;
-
         $userId = $_SESSION["user_id"] ?? null;
         $langCode = $this->i18n->resolveLocale($request, $userId ? (string)$userId : null);
 
@@ -1212,16 +1206,7 @@ final class WebController
         $prefs = $userId
             ? $this->userService->preferences((string)$userId)
             : ["theme" => $defaultTheme, "lang" => $defaultLang, "reader" => []];
-        
-        // Sync language preference from URL to DB if logged in
-        if ($urlLang !== null && $userId !== null && $urlLang !== $prefs["lang"]) {
-            try {
-                $prefs = $this->userService->updatePreferences((string)$userId, ["lang" => $urlLang]);
-            } catch (\Throwable $e) {
-                // Fail silently to not block rendering
-            }
-        }
-        
+
         $theme = $prefs["theme"] ?? "dark";
         
         // ETag Generation: Create a hash based on inputs that affect the final HTML
@@ -1268,10 +1253,8 @@ final class WebController
             "preferences" => $prefs,
         ];
         
-        $url = function(string $path) use ($langCode) {
-            $cleanPath = ltrim($path, "/");
-            return "/" . $langCode . "/" . $cleanPath;
-        };
+        // Clean canonical URL helper — no locale prefix
+        $url = fn(string $path) => '/' . ltrim($path, '/');
         $footerGenres = $this->seriesService->series_genres(1, 20);
         $footerTags = $this->seriesService->series_tags(1, 20);
         
@@ -1462,10 +1445,8 @@ final class WebController
             "csrf_token" => $_SESSION["csrf_token"] ?? null,
         ];
 
-        $url = function(string $path) use ($langCode) {
-            $cleanPath = ltrim($path, "/");
-            return "/" . $langCode . "/" . $cleanPath;
-        };
+        // Clean canonical URL helper — no locale prefix
+        $url = fn(string $path) => '/' . ltrim($path, '/');
 
         $contextJson = (string) json_encode(
             [

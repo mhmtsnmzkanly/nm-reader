@@ -25,16 +25,7 @@ final class I18nService
 
     public function resolveLocale(ServerRequestInterface $request, ?string $userId = null): string
     {
-        // 1. URL path (Direct URI parsing to avoid RouteContext dependency)
-        $path = ltrim($request->getUri()->getPath(), '/');
-        $segments = explode('/', $path);
-        $urlLang = $segments[0] ?? null;
-        
-        if ($urlLang && in_array($urlLang, $this->supportedLangs, true)) {
-            return $urlLang;
-        }
-
-        // 2. Auth User Preference
+        // 1. Auth User Preference (canonical source of truth for authenticated users)
         if ($userId) {
             try {
                 $prefs = $this->userService->preferences($userId);
@@ -46,20 +37,20 @@ final class I18nService
             }
         }
 
-        // 3. Header (X-Lang)
+        // 2. Header (X-Lang) — frontend can send explicit lang header
         $xLang = strtolower($request->getHeaderLine('X-Lang'));
         if ($xLang && in_array($xLang, $this->supportedLangs, true)) {
             return $xLang;
         }
 
-        // 4. Cookie
+        // 3. Cookie — guest/browser preference
         $cookies = $request->getCookieParams();
         $cookieLang = $cookies['nm_reader_lang'] ?? null;
         if ($cookieLang && in_array($cookieLang, $this->supportedLangs, true)) {
             return $cookieLang;
         }
 
-        // 5. Accept-Language Header
+        // 4. Accept-Language Header — browser negotiation
         $acceptLanguage = $request->getHeaderLine('Accept-Language');
         if ($acceptLanguage) {
             $negotiated = $this->parseAcceptLanguage($acceptLanguage);
@@ -68,6 +59,7 @@ final class I18nService
             }
         }
 
+        // 5. Site default
         return $this->defaultLang;
     }
 
