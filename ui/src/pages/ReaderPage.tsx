@@ -64,7 +64,7 @@ export const ChapterReader: React.FC = () => {
         chapterNumber: data.chapter_number || number,
         chapterTitle: data.title,
         page: 1,
-        totalPages: data.pages?.length || 20,
+        totalPages: data.pages?.length || 1,
         progress: 10,
       });
     } catch (err: any) {

@@ -32,7 +32,7 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
 
   const price = isSeriesUnlock
     ? seriesPrice
-    : targetChapter?.price_coin ?? 10;
+    : targetChapter?.price_coin ?? 0;
 
   const title = isSeriesUnlock
     ? `Tüm Serinin Kilidini Aç: ${seriesTitle}`

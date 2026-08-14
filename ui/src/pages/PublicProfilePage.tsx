@@ -20,7 +20,7 @@ import { ErrorState } from '../components/feedback/ErrorState';
 import { usePreferences } from '../contexts/PreferencesContext';
 
 export const PublicProfilePage: React.FC = () => {
-  const { username = 'deniz' } = useParams<{ username: string }>();
+  const { username = '' } = useParams<{ username: string }>();
   const { isAuthenticated, openAuthModal } = useAuth();
   const { formatDate, t } = usePreferences();
 
