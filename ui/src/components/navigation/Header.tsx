@@ -44,9 +44,6 @@ export const Header: React.FC = () => {
               <span className="font-light tracking-[0.15em] text-xs sm:text-sm uppercase text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors">
                 NM-READER
               </span>
-              <span className="font-serif italic text-[var(--accent-color)] text-[10px] sm:text-xs ml-1 font-normal">
-                lumiere
-              </span>
             </div>
           </Link>
 
@@ -139,32 +136,18 @@ export const Header: React.FC = () => {
           {/* Day / Night Theme Toggle */}
           <button
             onClick={toggleTheme}
-            aria-label={isDark ? 'Gündüz Moduna Geç' : 'Gece Moduna Geç'}
-            title={isDark ? '☀️ Gündüz Modu (Slate Light)' : '🌙 Gece Modu (Slate Dark)'}
             className="p-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
           >
             {isDark ? (
               <>
                 <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" />
-                <span className="hidden sm:inline text-xs font-semibold text-amber-400">Gündüz</span>
               </>
             ) : (
               <>
                 <Moon className="w-4 h-4 text-[#818CF8]" />
-                <span className="hidden sm:inline text-xs font-semibold text-[#4F46E5]">Gece</span>
               </>
             )}
           </button>
-
-          {isAuthenticated && (
-            <Link
-              to="/wallet"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--accent-light)] border border-[var(--accent-border)] text-[var(--accent-color)] hover:opacity-80 transition-all text-xs font-semibold tracking-wider"
-            >
-              <Coins className="w-3.5 h-3.5 fill-current" />
-              <span>180 Coin</span>
-            </Link>
-          )}
 
           <button
             type="button"
