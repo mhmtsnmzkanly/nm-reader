@@ -21,7 +21,7 @@ final class MediaService
     private const DEFAULT_CHAPTER_TTL = 10800; // 3 hours
 
     public function __construct(
-        private readonly string $baseUploadDir = __DIR__ . '/../../public/uploads/',
+        private readonly string $baseUploadDir = __DIR__ . '/../../storage/media/',
         private readonly string $appSecret = 'nm_reader_media_secret_key_v1_auth'
     ) {
     }

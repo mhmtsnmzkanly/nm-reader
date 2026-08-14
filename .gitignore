@@ -20,10 +20,10 @@
 /storage/logs/*
 /storage/sessions/*
 /storage/backups/*
+/storage/media/*
 *.log
 
 # Public Assets
-/public/uploads/*
 /public/sitemap.xml
 /public/assets/css/site.css.bak
 
@@ -41,4 +41,4 @@ Thumbs.db
 !/storage/logs/.gitkeep
 !/storage/sessions/.gitkeep
 !/storage/backups/.gitkeep
-!/public/uploads/.gitkeep
+!/storage/media/.gitkeep

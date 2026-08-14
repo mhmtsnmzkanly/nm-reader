@@ -149,7 +149,7 @@ $builder->addDefinitions([
     SiteConfigService::class => DI\autowire(SiteConfigService::class),
     WalletService::class => DI\autowire(WalletService::class),
     \App\Services\MediaService::class => DI\autowire(\App\Services\MediaService::class)
-        ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/public/uploads/'),
+        ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/storage/media/'),
     \App\Services\SeoService::class => DI\autowire(\App\Services\SeoService::class)
         ->constructorParameter('basePath', $settings['app']['base_path']),
 

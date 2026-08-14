@@ -37,7 +37,7 @@ final class UploadService
     public function __construct(
         private readonly UploadRepository $repository,
         private readonly EntityIdService $entityIds,
-        private readonly string $baseUploadDir = __DIR__ . '/../../public/uploads/'
+        private readonly string $baseUploadDir = __DIR__ . '/../../storage/media/'
     ) {
     }
 
@@ -272,7 +272,7 @@ final class UploadService
             }
         }
 
-        $publicPath = '/uploads/' . $fileName;
+        $publicPath = '/media/public/' . $fileName;
         $this->repository->logImageUpload(
             $userId,
             $imageId,

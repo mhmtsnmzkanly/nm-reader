@@ -63,7 +63,7 @@ if ($returnVar !== 0) {
 // 2. Media Backup (Uploads)
 echo "[2/3] Archiving media uploads...\n";
 $mediaFile = "$backupDir/media_$timestamp.tar.gz";
-$mediaPath = $basePath . '/public/uploads';
+$mediaPath = $basePath . '/storage/media';
 
 if (is_dir($mediaPath)) {
     $cmd = sprintf('tar -czf %s -C %s .', escapeshellarg($mediaFile), escapeshellarg($mediaPath));
