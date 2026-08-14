@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { contentService } from '../../services';
 import { SearchSuggestItem } from '../../types/api';
 import { Badge } from '../ui/Badge';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 export const SearchCombobox: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -13,6 +14,7 @@ export const SearchCombobox: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const navigate = useNavigate();
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const { t } = usePreferences();
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -105,7 +107,7 @@ export const SearchCombobox: React.FC = () => {
       {isOpen && suggestions.length > 0 && (
         <div className="absolute right-0 sm:left-0 sm:right-auto top-full mt-2 w-[calc(100vw-32px)] max-w-[340px] sm:w-full bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] shadow-2xl overflow-hidden z-50 max-h-80 overflow-y-auto transition-colors">
           <div className="p-2 text-[10px] uppercase tracking-[0.2em] font-semibold text-[var(--text-muted)] px-3 border-b border-[var(--border-color)]">
-            Arama Önerileri
+            {t('search.suggestion')}
           </div>
           {suggestions.map((item, idx) => (
             <div

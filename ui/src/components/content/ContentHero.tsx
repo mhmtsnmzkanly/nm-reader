@@ -10,7 +10,9 @@ import {
   Lock,
   Calendar,
   ChevronDown,
+  ChevronsDown,
   ChevronUp,
+  ChevronsUp,
   Hash,
 } from 'lucide-react';
 import { ContentDetail, ContentDetailChapter, Genre, Tag } from '../../types/api';
@@ -273,13 +275,13 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                 >
                   {isDescriptionExpanded ? (
                     <>
-                      <span>Daha Az Göster</span>
-                      <ChevronUp className="w-3 h-3" />
+                      <ChevronsUp className="w-3 h-3" />
+                      <ChevronsUp className="w-3 h-3" />
                     </>
                   ) : (
-                    <>
-                      <span>Daha Fazla Göster</span>
-                      <ChevronDown className="w-3 h-3" />
+                      <>
+                      <ChevronsDown className="w-3 h-3" />
+                      <ChevronsDown className="w-3 h-3" />
                     </>
                   )}
                 </button>
@@ -294,7 +296,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--accent-color)] font-bold flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Türler:</span>
+                      <span>{t('navigation.genres')}:</span>
                     </span>
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       {genresList.map((g) => (
@@ -318,7 +320,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)] font-bold flex items-center gap-1.5">
                       <Hash className="w-3.5 h-3.5" />
-                      <span>Etiketler:</span>
+                      <span>{t('navigation.tags')}:</span>
                     </span>
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       {tagsList.map((t) => (

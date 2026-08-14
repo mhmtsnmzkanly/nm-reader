@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Send, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
-import { usePreferences } from '@/src/contexts/PreferencesContext';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type CommentComposerProps = {
   onSubmit: (content: string, isSpoiler: boolean) => Promise<void>;

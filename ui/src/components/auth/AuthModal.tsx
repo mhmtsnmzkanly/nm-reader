@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, LogIn, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
-import { usePreferences } from '@/src/contexts/PreferencesContext';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 
 export const AuthModal: React.FC = () => {

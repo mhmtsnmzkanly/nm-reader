@@ -7,7 +7,6 @@ import {
   History,
   Settings,
   LogOut,
-  Globe,
   FileText,
   Bell,
   Languages,
@@ -160,8 +159,7 @@ export const AccountMenu: React.FC = () => {
               onClick={() => setLanguage(lang === 'tr' ? 'en' : 'tr')}
               className="flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--text-muted)] hover:text-[var(--accent-color)] cursor-pointer uppercase"
             >
-              <Globe className="w-3.5 h-3.5" />
-              <span><Languages />: {lang.toUpperCase()}</span>
+              <span><Languages className="w-3.5 h-3.5" />: {lang.toUpperCase()}</span>
             </button>
           </div>
 
