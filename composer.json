@@ -17,7 +17,10 @@
   },
   "scripts": {
     "serve": "php -S 127.0.0.1:8080 -t public public/index.php",
+    "run:apitest": "php tests/ApiTestSuite.php",
+    "test:api": "php tests/ApiTestSuite.php",
     "retention:cleanup": "php app/Console/retention_cleanup.php",
-    "analytics:aggregate": "php app/Console/analytics_aggregate.php"
+    "analytics:aggregate": "php app/Console/analytics_aggregate.php",
+    "openapi:generate": "php app/Console/generate_openapi.php"
   }
 }
