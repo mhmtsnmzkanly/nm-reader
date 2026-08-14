@@ -21,6 +21,7 @@
     "test:api": "php app/Console/ApiTestSuite.php",
     "retention:cleanup": "php app/Console/retention_cleanup.php",
     "analytics:aggregate": "php app/Console/analytics_aggregate.php",
-    "openapi:generate": "php app/Console/generate_openapi.php"
+    "openapi:generate": "php app/Console/generate_openapi.php",
+    "test:seo": "php app/Console/run_seo_test.php"
   }
 }

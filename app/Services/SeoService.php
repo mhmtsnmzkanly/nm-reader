@@ -25,9 +25,9 @@ class SeoService
      *   description?: string,
      *   canonical?: string,
      *   robots?: string,
-     *   og?: array{title?: string, description?: string, image?: string, url?: string, type?: string},
+     *   og?: array{title?: string, description?: string, image?: string, url?: string, type?: string, site_name?: string},
      *   twitter?: array{title?: string, description?: string, image?: string, card?: string},
-     *   jsonLd?: array|object
+     *   jsonLd?: array|object|null
      * } $seo
      */
     public function renderShell(array $seo = []): string
@@ -35,90 +35,168 @@ class SeoService
         $appHtmlPath = $this->basePath . '/public/app.html';
         if (!file_exists($appHtmlPath)) {
             // Fallback basic shell if build hasn't run
-            $html = '<!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><!-- SEO:TITLE --><!-- SEO:META --><!-- SEO:CANONICAL --><!-- SEO:OG --><!-- SEO:TWITTER --><!-- SEO:JSONLD --></head><body><div id="root"></div></body></html>';
+            $html = '<!doctype html><html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><!-- SEO:TITLE --><!-- SEO:META --><!-- SEO:CANONICAL --><!-- SEO:OG --><!-- SEO:TWITTER --><!-- SEO:JSONLD --></head><body class="bg-[#09090b] text-[#f4f4f5] antialiased min-h-screen"><div id="root"></div></body></html>';
         } else {
             $html = (string) file_get_contents($appHtmlPath);
         }
 
-        $title = $seo['title'] ?? 'NM-Reader — Novel & Manga Okuma Platformu';
-        $description = $seo['description'] ?? 'En popüler manga, manhwa, manhua ve web novelleri Türkçe oku.';
-        $canonical = $seo['canonical'] ?? '';
-        $robots = $seo['robots'] ?? 'index, follow';
+        $title = $this->sanitizeText($seo['title'] ?? 'NM-Reader — Novel & Manga Okuma Platformu');
+        $rawDescription = $seo['description'] ?? 'En popüler manga, manhwa, manhua ve web novelleri Türkçe oku.';
+        $description = $this->truncateDescription($rawDescription, 160);
+        $canonical = filter_var($seo['canonical'] ?? '', FILTER_SANITIZE_URL) ?: '';
+        $robots = $this->sanitizeText($seo['robots'] ?? 'index, follow');
 
         $escapedTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
         $escapedDescription = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
         $escapedRobots = htmlspecialchars($robots, ENT_QUOTES, 'UTF-8');
 
-        // 1. Replace Title
+        // 1. Clean up default title/meta tags in shell to prevent duplicates
+        $html = preg_replace('/<title>.*?<\/title>\s*/si', '', $html);
+        $html = preg_replace('/<meta name="description" content=".*?" \/>\s*/si', '', $html);
+        $html = preg_replace('/<meta name="robots" content=".*?" \/>\s*/si', '', $html);
+        $html = preg_replace('/<link rel="canonical" href=".*?" \/>\s*/si', '', $html);
+        $html = preg_replace('/<meta property="og:.*?" content=".*?" \/>\s*/si', '', $html);
+        $html = preg_replace('/<meta name="twitter:.*?" content=".*?" \/>\s*/si', '', $html);
+        $html = preg_replace('/<script type="application\/ld\+json">.*?<\/script>\s*/si', '', $html);
+
+        // 2. Inject Title
         $titleTag = "<title>{$escapedTitle}</title>";
         if (str_contains($html, '<!-- SEO:TITLE -->')) {
             $html = str_replace('<!-- SEO:TITLE -->', $titleTag, $html);
-            // Also replace any existing static title tag right after
-            $html = preg_replace('/<title>.*?<\/title>\s*/s', '', $html, 1);
-            $html = str_replace($titleTag, "<!-- SEO:TITLE -->\n    {$titleTag}", $html);
+        } else {
+            $html = str_replace('<head>', "<head>\n    {$titleTag}", $html);
         }
 
-        // 2. Replace Meta & Robots
+        // 3. Inject Meta & Robots
         $metaTags = "<meta name=\"description\" content=\"{$escapedDescription}\" />\n    <meta name=\"robots\" content=\"{$escapedRobots}\" />";
         if (str_contains($html, '<!-- SEO:META -->')) {
-            $html = str_replace('<!-- SEO:META -->', "<!-- SEO:META -->\n    {$metaTags}", $html);
-            $html = preg_replace('/<meta name="description" content=".*?" \/>\s*/s', '', $html, 1);
+            $html = str_replace('<!-- SEO:META -->', $metaTags, $html);
         }
 
-        // 3. Canonical
-        if (!empty($canonical) && str_contains($html, '<!-- SEO:CANONICAL -->')) {
-            $escapedCanonical = htmlspecialchars($canonical, ENT_QUOTES, 'UTF-8');
-            $canonicalTag = "<link rel=\"canonical\" href=\"{$escapedCanonical}\" />";
-            $html = str_replace('<!-- SEO:CANONICAL -->', "<!-- SEO:CANONICAL -->\n    {$canonicalTag}", $html);
+        // 4. Inject Canonical
+        $canonicalTag = !empty($canonical) ? "<link rel=\"canonical\" href=\"" . htmlspecialchars($canonical, ENT_QUOTES, 'UTF-8') . "\" />" : '';
+        if (str_contains($html, '<!-- SEO:CANONICAL -->')) {
+            $html = str_replace('<!-- SEO:CANONICAL -->', $canonicalTag, $html);
         }
 
-        // 4. Open Graph
+        // 5. Inject Open Graph Tags
         $og = $seo['og'] ?? [];
         $ogTags = [];
-        if (!empty($og['title'] ?? $title)) {
-            $ogTags[] = '<meta property="og:title" content="' . htmlspecialchars($og['title'] ?? $title, ENT_QUOTES, 'UTF-8') . '" />';
+        $ogTitle = $this->sanitizeText($og['title'] ?? $title);
+        $ogDescription = $this->truncateDescription($og['description'] ?? $description, 160);
+        $ogUrl = filter_var($og['url'] ?? $canonical, FILTER_SANITIZE_URL) ?: '';
+        $ogType = $this->sanitizeText($og['type'] ?? 'website');
+        $ogImage = $this->sanitizeMediaUrl($og['image'] ?? '');
+        $ogSiteName = $this->sanitizeText($og['site_name'] ?? 'NM-Reader');
+
+        if (!empty($ogTitle)) {
+            $ogTags[] = '<meta property="og:title" content="' . htmlspecialchars($ogTitle, ENT_QUOTES, 'UTF-8') . '" />';
         }
-        if (!empty($og['description'] ?? $description)) {
-            $ogTags[] = '<meta property="og:description" content="' . htmlspecialchars($og['description'] ?? $description, ENT_QUOTES, 'UTF-8') . '" />';
+        if (!empty($ogDescription)) {
+            $ogTags[] = '<meta property="og:description" content="' . htmlspecialchars($ogDescription, ENT_QUOTES, 'UTF-8') . '" />';
         }
-        if (!empty($og['url'] ?? $canonical)) {
-            $ogTags[] = '<meta property="og:url" content="' . htmlspecialchars($og['url'] ?? $canonical, ENT_QUOTES, 'UTF-8') . '" />';
+        if (!empty($ogUrl)) {
+            $ogTags[] = '<meta property="og:url" content="' . htmlspecialchars($ogUrl, ENT_QUOTES, 'UTF-8') . '" />';
         }
-        if (!empty($og['image'])) {
-            $ogTags[] = '<meta property="og:image" content="' . htmlspecialchars($og['image'], ENT_QUOTES, 'UTF-8') . '" />';
+        if (!empty($ogImage)) {
+            $ogTags[] = '<meta property="og:image" content="' . htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8') . '" />';
         }
-        if (!empty($og['type'])) {
-            $ogTags[] = '<meta property="og:type" content="' . htmlspecialchars($og['type'], ENT_QUOTES, 'UTF-8') . '" />';
+        if (!empty($ogType)) {
+            $ogTags[] = '<meta property="og:type" content="' . htmlspecialchars($ogType, ENT_QUOTES, 'UTF-8') . '" />';
         }
-        if (!empty($ogTags) && str_contains($html, '<!-- SEO:OG -->')) {
-            $html = str_replace('<!-- SEO:OG -->', "<!-- SEO:OG -->\n    " . implode("\n    ", $ogTags), $html);
+        if (!empty($ogSiteName)) {
+            $ogTags[] = '<meta property="og:site_name" content="' . htmlspecialchars($ogSiteName, ENT_QUOTES, 'UTF-8') . '" />';
         }
 
-        // 5. Twitter Card
+        $ogTagBlock = !empty($ogTags) ? implode("\n    ", $ogTags) : '';
+        if (str_contains($html, '<!-- SEO:OG -->')) {
+            $html = str_replace('<!-- SEO:OG -->', $ogTagBlock, $html);
+        }
+
+        // 6. Inject Twitter Card Tags
         $twitter = $seo['twitter'] ?? [];
         $twTags = [];
-        $twTags[] = '<meta name="twitter:card" content="' . htmlspecialchars($twitter['card'] ?? 'summary_large_image', ENT_QUOTES, 'UTF-8') . '" />';
-        if (!empty($twitter['title'] ?? $title)) {
-            $twTags[] = '<meta name="twitter:title" content="' . htmlspecialchars($twitter['title'] ?? $title, ENT_QUOTES, 'UTF-8') . '" />';
+        $twCard = $this->sanitizeText($twitter['card'] ?? 'summary_large_image');
+        $twTitle = $this->sanitizeText($twitter['title'] ?? $ogTitle);
+        $twDescription = $this->truncateDescription($twitter['description'] ?? $ogDescription, 160);
+        $twImage = $this->sanitizeMediaUrl($twitter['image'] ?? $ogImage);
+
+        $twTags[] = '<meta name="twitter:card" content="' . htmlspecialchars($twCard, ENT_QUOTES, 'UTF-8') . '" />';
+        if (!empty($twTitle)) {
+            $twTags[] = '<meta name="twitter:title" content="' . htmlspecialchars($twTitle, ENT_QUOTES, 'UTF-8') . '" />';
         }
-        if (!empty($twitter['description'] ?? $description)) {
-            $twTags[] = '<meta name="twitter:description" content="' . htmlspecialchars($twitter['description'] ?? $description, ENT_QUOTES, 'UTF-8') . '" />';
+        if (!empty($twDescription)) {
+            $twTags[] = '<meta name="twitter:description" content="' . htmlspecialchars($twDescription, ENT_QUOTES, 'UTF-8') . '" />';
         }
-        if (!empty($twitter['image'] ?? ($og['image'] ?? ''))) {
-            $twTags[] = '<meta name="twitter:image" content="' . htmlspecialchars($twitter['image'] ?? $og['image'], ENT_QUOTES, 'UTF-8') . '" />';
-        }
-        if (!empty($twTags) && str_contains($html, '<!-- SEO:TWITTER -->')) {
-            $html = str_replace('<!-- SEO:TWITTER -->', "<!-- SEO:TWITTER -->\n    " . implode("\n    ", $twTags), $html);
+        if (!empty($twImage)) {
+            $twTags[] = '<meta name="twitter:image" content="' . htmlspecialchars($twImage, ENT_QUOTES, 'UTF-8') . '" />';
         }
 
-        // 6. JSON-LD Structured Data
-        if (!empty($seo['jsonLd']) && str_contains($html, '<!-- SEO:JSONLD -->')) {
-            $jsonLdString = json_encode($seo['jsonLd'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-            $jsonLdTag = "<script type=\"application/ld+json\">\n{$jsonLdString}\n</script>";
-            $html = str_replace('<!-- SEO:JSONLD -->', "<!-- SEO:JSONLD -->\n    {$jsonLdTag}", $html);
+        $twTagBlock = !empty($twTags) ? implode("\n    ", $twTags) : '';
+        if (str_contains($html, '<!-- SEO:TWITTER -->')) {
+            $html = str_replace('<!-- SEO:TWITTER -->', $twTagBlock, $html);
         }
+
+        // 7. Inject JSON-LD Structured Data
+        $jsonLdTag = '';
+        if (!empty($seo['jsonLd'])) {
+            $jsonLdString = json_encode(
+                $seo['jsonLd'],
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_PRETTY_PRINT
+            );
+            if ($jsonLdString !== false) {
+                $jsonLdTag = "<script type=\"application/ld+json\">\n{$jsonLdString}\n</script>";
+            }
+        }
+        if (str_contains($html, '<!-- SEO:JSONLD -->')) {
+            $html = str_replace('<!-- SEO:JSONLD -->', $jsonLdTag, $html);
+        }
+
+        // 8. Clean up any leftover SEO comment placeholders
+        $html = preg_replace('/<!--\s*SEO:[A-Z_]+\s*-->\s*/', '', $html);
 
         return $html;
+    }
+
+    /**
+     * Sanitizes plain text inputs for SEO strings.
+     */
+    public function sanitizeText(string $text): string
+    {
+        $clean = strip_tags($text);
+        $clean = preg_replace('/\s+/', ' ', $clean);
+        return trim((string) $clean);
+    }
+
+    /**
+     * Truncates descriptions to a target character limit without breaking words.
+     */
+    public function truncateDescription(string $text, int $limit = 160): string
+    {
+        $clean = $this->sanitizeText($text);
+        if (mb_strlen($clean, 'UTF-8') <= $limit) {
+            return $clean;
+        }
+
+        $truncated = mb_substr($clean, 0, $limit - 3, 'UTF-8');
+        $lastSpace = mb_strrpos($truncated, ' ', 0, 'UTF-8');
+        if ($lastSpace !== false && $lastSpace > ($limit / 2)) {
+            $truncated = mb_substr($truncated, 0, $lastSpace, 'UTF-8');
+        }
+
+        return rtrim($truncated, '.,!?:;') . '...';
+    }
+
+    /**
+     * Sanitizes media URLs and guarantees NO temporary protected chapter tokens (t_*) leak into SEO.
+     */
+    public function sanitizeMediaUrl(string $url): string
+    {
+        $clean = trim($url);
+        if ($clean === '' || str_contains($clean, '/media/chapter/') || str_starts_with($clean, 't_')) {
+            return '';
+        }
+        return filter_var($clean, FILTER_SANITIZE_URL) ?: '';
     }
 
     /**
@@ -130,7 +208,7 @@ class SeoService
             '@context' => 'https://schema.org',
             '@type' => 'WebSite',
             'name' => $siteName,
-            'url' => $siteUrl,
+            'url' => rtrim($siteUrl, '/'),
             'potentialAction' => [
                 '@type' => 'SearchAction',
                 'target' => rtrim($siteUrl, '/') . '/search?q={search_term_string}',
@@ -140,44 +218,81 @@ class SeoService
     }
 
     /**
-     * Builds JSON-LD for Series (CreativeWorkSeries / Book).
+     * Builds JSON-LD for Series (CreativeWorkSeries).
      */
-    public function buildSeriesSchema(array $series, string $url): array
+    public function buildSeriesSchema(array $series, string $url, string $siteUrl = ''): array
     {
-        return [
+        $authorName = (string) ($series['author'] ?? 'Unknown');
+        $genres = (array) ($series['genres'] ?? []);
+        $image = $this->sanitizeMediaUrl((string) ($series['cover_image'] ?? ''));
+
+        $schema = [
             '@context' => 'https://schema.org',
             '@type' => 'CreativeWorkSeries',
-            'name' => $series['title'] ?? '',
-            'headline' => $series['title'] ?? '',
-            'description' => $series['description'] ?? '',
+            'name' => (string) ($series['title'] ?? ''),
+            'headline' => (string) ($series['title'] ?? ''),
+            'description' => $this->truncateDescription((string) ($series['description'] ?? ''), 250),
             'url' => $url,
-            'image' => $series['cover_image'] ?? null,
-            'genre' => $series['genres'] ?? [],
             'author' => [
                 '@type' => 'Person',
-                'name' => $series['author'] ?? 'Unknown'
-            ]
+                'name' => $authorName
+            ],
         ];
+
+        if (!empty($image)) {
+            $schema['image'] = $image;
+        }
+
+        if (!empty($genres)) {
+            $schema['genre'] = array_values(array_filter($genres, 'is_string'));
+        }
+
+        if (!empty($siteUrl)) {
+            $schema['publisher'] = [
+                '@type' => 'Organization',
+                'name' => 'NM-Reader',
+                'url' => rtrim($siteUrl, '/')
+            ];
+        }
+
+        return $schema;
     }
 
     /**
-     * Builds JSON-LD for BlogPosting / Article.
+     * Builds JSON-LD for BlogPosting.
      */
-    public function buildBlogSchema(array $blog, string $url): array
+    public function buildBlogSchema(array $blog, string $url, string $siteUrl = ''): array
     {
-        return [
+        $authorName = (string) ($blog['author_name'] ?? ($blog['username'] ?? 'NM-Reader'));
+        $image = $this->sanitizeMediaUrl((string) ($blog['cover_image'] ?? ''));
+        $datePublished = (string) ($blog['created_at'] ?? gmdate('Y-m-d H:i:s'));
+
+        $schema = [
             '@context' => 'https://schema.org',
             '@type' => 'BlogPosting',
-            'headline' => $blog['title'] ?? '',
-            'description' => $blog['summary'] ?? ($blog['excerpt'] ?? ''),
+            'headline' => (string) ($blog['title'] ?? ''),
+            'description' => $this->truncateDescription((string) ($blog['summary'] ?? ($blog['excerpt'] ?? '')), 200),
             'url' => $url,
-            'image' => $blog['cover_image'] ?? null,
-            'datePublished' => $blog['created_at'] ?? null,
+            'datePublished' => $datePublished,
             'author' => [
                 '@type' => 'Person',
-                'name' => $blog['author_name'] ?? ($blog['username'] ?? 'Author')
-            ]
+                'name' => $authorName
+            ],
         ];
+
+        if (!empty($image)) {
+            $schema['image'] = $image;
+        }
+
+        if (!empty($siteUrl)) {
+            $schema['publisher'] = [
+                '@type' => 'Organization',
+                'name' => 'NM-Reader',
+                'url' => rtrim($siteUrl, '/')
+            ];
+        }
+
+        return $schema;
     }
 
     /**
@@ -193,8 +308,8 @@ class SeoService
             $elements[] = [
                 '@type' => 'ListItem',
                 'position' => $position++,
-                'name' => $item['name'],
-                'item' => $item['url']
+                'name' => $this->sanitizeText($item['name']),
+                'item' => filter_var($item['url'], FILTER_SANITIZE_URL) ?: $item['url']
             ];
         }
 

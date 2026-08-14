@@ -439,7 +439,7 @@ final class WebController
             [
                 "title" => "$username - " . $siteName,
                 "description" => $this->truncateDescription($bio),
-                "robots" => "index,follow",
+                "robots" => $isMe ? "noindex,nofollow" : "index,follow",
             ],
         );
     }
@@ -1374,24 +1374,56 @@ final class WebController
         $appHtmlPath = $basePath . "/public/app.html";
         if (is_file($appHtmlPath)) {
             $seoService = new \App\Services\SeoService($basePath);
+            // Build merged JSON-LD graph if breadcrumbs exist
+            $jsonLdPayload = [];
+            if (!empty($seo['json_ld']) && is_array($seo['json_ld'])) {
+                $jsonLdPayload[] = $seo['json_ld'];
+            }
+            if (!empty($breadcrumbs) && is_array($breadcrumbs)) {
+                $breadcrumbItems = [];
+                foreach ($breadcrumbs as $crumb) {
+                    if (!empty($crumb['url']) && !empty($crumb['name'])) {
+                        $breadcrumbItems[] = [
+                            'name' => (string) $crumb['name'],
+                            'url' => $this->absoluteUrl($request, (string) $crumb['url'])
+                        ];
+                    }
+                }
+                if (!empty($breadcrumbItems)) {
+                    $jsonLdPayload[] = $seoService->buildBreadcrumbSchema($breadcrumbItems);
+                }
+            }
+
+            $finalJsonLd = null;
+            if (count($jsonLdPayload) === 1) {
+                $finalJsonLd = $jsonLdPayload[0];
+            } else if (count($jsonLdPayload) > 1) {
+                $finalJsonLd = [
+                    '@context' => 'https://schema.org',
+                    '@graph' => $jsonLdPayload
+                ];
+            }
+
             $seoData = [
                 'title' => $title,
-                'description' => $seo['description'] ?? 'En popüler manga, manhwa, manhua ve web novelleri Türkçe oku.',
-                'canonical' => $seo['canonical'] ?? '',
-                'robots' => $seo['robots'] ?? 'index, follow',
+                'description' => $seoDescription,
+                'canonical' => $seoCanonical,
+                'robots' => $seoRobots,
                 'og' => [
                     'title' => $seo['og_title'] ?? $title,
-                    'description' => $seo['og_description'] ?? ($seo['description'] ?? ''),
-                    'image' => $seo['og_image'] ?? '',
-                    'url' => $seo['canonical'] ?? '',
-                    'type' => 'website'
+                    'description' => $seo['og_description'] ?? $seoDescription,
+                    'image' => $seoImage,
+                    'url' => $seoCanonical,
+                    'type' => $seoType,
+                    'site_name' => $seoSiteName
                 ],
                 'twitter' => [
                     'title' => $seo['twitter_title'] ?? ($seo['og_title'] ?? $title),
-                    'description' => $seo['twitter_description'] ?? ($seo['og_description'] ?? ($seo['description'] ?? '')),
-                    'image' => $seo['twitter_image'] ?? ($seo['og_image'] ?? ''),
+                    'description' => $seo['twitter_description'] ?? ($seo['og_description'] ?? $seoDescription),
+                    'image' => $seo['twitter_image'] ?? $seoImage,
+                    'card' => 'summary_large_image'
                 ],
-                'jsonLd' => $seo['json_ld'] ?? null
+                'jsonLd' => $finalJsonLd
             ];
             $layoutContent = $seoService->renderShell($seoData);
         } else if (is_file($templatePath)) {
