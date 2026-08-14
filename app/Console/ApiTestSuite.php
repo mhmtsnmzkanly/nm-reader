@@ -287,7 +287,8 @@ final class ApiTestSuite
         $this->assertPagination('latestChaptersByType', $json);
 
         // 7. GET /api/v1/shop/packages
-        $this->assertResponse('GET /api/v1/shop/packages', $this->request('GET', '/api/v1/shop/packages'), 200, 'GET /api/v1/shop/packages');
+        $json = $this->assertResponse('GET /api/v1/shop/packages', $this->request('GET', '/api/v1/shop/packages'), 200, 'GET /api/v1/shop/packages');
+        $this->assertPagination('shopPackages', $json);
 
         // 8. GET /api/v1/shop/features
         $this->assertResponse('GET /api/v1/shop/features', $this->request('GET', '/api/v1/shop/features'), 200, 'GET /api/v1/shop/features');
@@ -331,8 +332,6 @@ final class ApiTestSuite
             $this->passCount++;
             echo "  [PASS] Reader response includes chapter payload and metadata\n";
         }
-        $this->passCount++;
-        echo "  [PASS] Reader premium access control behavior verified\n";
     }
 
     private function testCommentsAndInteractionEndpoints(): void
@@ -384,10 +383,10 @@ final class ApiTestSuite
         $this->assertResponse('GET /api/v1/user/follows/users (Guest -> 401)', $this->request('GET', '/api/v1/user/follows/users'), 401, 'GET /api/v1/user/follows/users');
 
         // 29. POST /api/v1/user/follows/{person}
-        $this->assertResponse('POST /api/v1/user/follows/person1 (Guest -> 401)', $this->request('POST', '/api/v1/user/follows/person1'), 401, 'POST /api/v1/user/follows/{person}');
+        $this->assertResponse('POST /api/v1/user/follows/target_user (Guest -> 401)', $this->request('POST', '/api/v1/user/follows/target_user'), 401, 'POST /api/v1/user/follows/{person}');
 
         // 30. DELETE /api/v1/user/follows/{person}
-        $this->assertResponse('DELETE /api/v1/user/follows/person1 (Guest -> 401)', $this->request('DELETE', '/api/v1/user/follows/person1'), 401, 'DELETE /api/v1/user/follows/{person}');
+        $this->assertResponse('DELETE /api/v1/user/follows/target_user (Guest -> 401)', $this->request('DELETE', '/api/v1/user/follows/target_user'), 401, 'DELETE /api/v1/user/follows/{person}');
     }
 
     private function testBlogEndpoints(): void
@@ -529,54 +528,54 @@ final class ApiTestSuite
     {
         echo "\n11. Testing 43 Admin Endpoints (RBAC Protection & Signature)...\n";
 
-        $adminEndpoints = [
-            ['GET', '/api/v1/admin/overview'],
-            ['GET', '/api/v1/admin/series'],
-            ['GET', '/api/v1/admin/genres'],
-            ['GET', '/api/v1/admin/tags'],
-            ['GET', '/api/v1/admin/users'],
-            ['GET', '/api/v1/admin/users/options'],
-            ['GET', '/api/v1/admin/uploads'],
-            ['DELETE', '/api/v1/admin/uploads/1'],
-            ['GET', '/api/v1/admin/blogs'],
-            ['GET', '/api/v1/admin/blogs/pending'],
-            ['GET', '/api/v1/admin/comments'],
-            ['DELETE', '/api/v1/admin/comments/1'],
-            ['PUT', '/api/v1/admin/users/usr12345'],
-            ['GET', '/api/v1/admin/rbac/roles'],
-            ['GET', '/api/v1/admin/rbac/assignments'],
-            ['POST', '/api/v1/admin/rbac/permissions/assign'],
-            ['GET', '/api/v1/admin/queue/jobs'],
-            ['POST', '/api/v1/admin/queue/run-once'],
-            ['POST', '/api/v1/admin/retention/cleanup'],
-            ['POST', '/api/v1/admin/maintenance/backup'],
-            ['POST', '/api/v1/admin/maintenance/sitemap'],
-            ['POST', '/api/v1/admin/maintenance/warmup'],
-            ['POST', '/api/v1/admin/maintenance/analytics'],
-            ['GET', '/api/v1/admin/shop/packages'],
-            ['POST', '/api/v1/admin/shop/packages'],
-            ['PUT', '/api/v1/admin/shop/packages/1'],
-            ['POST', '/api/v1/admin/wallets/usr12345/grant-package'],
-            ['POST', '/api/v1/admin/wallets/usr12345/credit'],
-            ['POST', '/api/v1/admin/wallets/usr12345/debit'],
-            ['GET', '/api/v1/admin/wallets/usr12345'],
-            ['GET', '/api/v1/admin/wallets/usr12345/transactions'],
-            ['PUT', '/api/v1/admin/series/c12345/pricing'],
-            ['PUT', '/api/v1/admin/chapters/ch1234/pricing'],
-            ['GET', '/api/v1/admin/features'],
-            ['PUT', '/api/v1/admin/features/ad-free'],
-            ['GET', '/api/v1/admin/maintenance/env'],
-            ['POST', '/api/v1/admin/maintenance/env'],
-            ['GET', '/api/v1/admin/audit-logs'],
-            ['GET', '/api/v1/admin/login-events'],
-            ['GET', '/api/v1/admin/moderation-actions'],
-            ['POST', '/api/v1/admin/moderation-actions'],
-            ['GET', '/api/v1/admin/logs/access'],
-            ['GET', '/api/v1/admin/logs/error'],
+        $adminRoutes = [
+            ['GET', '/api/v1/admin/overview', 'GET /api/v1/admin/overview'],
+            ['GET', '/api/v1/admin/series', 'GET /api/v1/admin/series'],
+            ['GET', '/api/v1/admin/genres', 'GET /api/v1/admin/genres'],
+            ['GET', '/api/v1/admin/tags', 'GET /api/v1/admin/tags'],
+            ['GET', '/api/v1/admin/users', 'GET /api/v1/admin/users'],
+            ['GET', '/api/v1/admin/users/options', 'GET /api/v1/admin/users/options'],
+            ['GET', '/api/v1/admin/uploads', 'GET /api/v1/admin/uploads'],
+            ['DELETE', '/api/v1/admin/uploads/1', 'DELETE /api/v1/admin/uploads/{id}'],
+            ['GET', '/api/v1/admin/blogs', 'GET /api/v1/admin/blogs'],
+            ['GET', '/api/v1/admin/blogs/pending', 'GET /api/v1/admin/blogs/pending'],
+            ['GET', '/api/v1/admin/comments', 'GET /api/v1/admin/comments'],
+            ['DELETE', '/api/v1/admin/comments/1', 'DELETE /api/v1/admin/comments/{id}'],
+            ['PUT', '/api/v1/admin/users/usr12345', 'PUT /api/v1/admin/users/{id}'],
+            ['GET', '/api/v1/admin/rbac/roles', 'GET /api/v1/admin/rbac/roles'],
+            ['GET', '/api/v1/admin/rbac/assignments', 'GET /api/v1/admin/rbac/assignments'],
+            ['POST', '/api/v1/admin/rbac/permissions/assign', 'POST /api/v1/admin/rbac/permissions/assign'],
+            ['GET', '/api/v1/admin/queue/jobs', 'GET /api/v1/admin/queue/jobs'],
+            ['POST', '/api/v1/admin/queue/run-once', 'POST /api/v1/admin/queue/run-once'],
+            ['POST', '/api/v1/admin/retention/cleanup', 'POST /api/v1/admin/retention/cleanup'],
+            ['POST', '/api/v1/admin/maintenance/backup', 'POST /api/v1/admin/maintenance/backup'],
+            ['POST', '/api/v1/admin/maintenance/sitemap', 'POST /api/v1/admin/maintenance/sitemap'],
+            ['POST', '/api/v1/admin/maintenance/warmup', 'POST /api/v1/admin/maintenance/warmup'],
+            ['POST', '/api/v1/admin/maintenance/analytics', 'POST /api/v1/admin/maintenance/analytics'],
+            ['GET', '/api/v1/admin/shop/packages', 'GET /api/v1/admin/shop/packages'],
+            ['POST', '/api/v1/admin/shop/packages', 'POST /api/v1/admin/shop/packages'],
+            ['PUT', '/api/v1/admin/shop/packages/1', 'PUT /api/v1/admin/shop/packages/{id}'],
+            ['POST', '/api/v1/admin/wallets/usr12345/grant-package', 'POST /api/v1/admin/wallets/{userId}/grant-package'],
+            ['POST', '/api/v1/admin/wallets/usr12345/credit', 'POST /api/v1/admin/wallets/{userId}/credit'],
+            ['POST', '/api/v1/admin/wallets/usr12345/debit', 'POST /api/v1/admin/wallets/{userId}/debit'],
+            ['GET', '/api/v1/admin/wallets/usr12345', 'GET /api/v1/admin/wallets/{userId}'],
+            ['GET', '/api/v1/admin/wallets/usr12345/transactions', 'GET /api/v1/admin/wallets/{userId}/transactions'],
+            ['PUT', '/api/v1/admin/series/c12345/pricing', 'PUT /api/v1/admin/series/{id}/pricing'],
+            ['PUT', '/api/v1/admin/chapters/ch1234/pricing', 'PUT /api/v1/admin/chapters/{id}/pricing'],
+            ['GET', '/api/v1/admin/features', 'GET /api/v1/admin/features'],
+            ['PUT', '/api/v1/admin/features/ad-free', 'PUT /api/v1/admin/features/ad-free'],
+            ['GET', '/api/v1/admin/maintenance/env', 'GET /api/v1/admin/maintenance/env'],
+            ['POST', '/api/v1/admin/maintenance/env', 'POST /api/v1/admin/maintenance/env'],
+            ['GET', '/api/v1/admin/audit-logs', 'GET /api/v1/admin/audit-logs'],
+            ['GET', '/api/v1/admin/login-events', 'GET /api/v1/admin/login-events'],
+            ['GET', '/api/v1/admin/moderation-actions', 'GET /api/v1/admin/moderation-actions'],
+            ['POST', '/api/v1/admin/moderation-actions', 'POST /api/v1/admin/moderation-actions'],
+            ['GET', '/api/v1/admin/logs/access', 'GET /api/v1/admin/logs/access'],
+            ['GET', '/api/v1/admin/logs/error', 'GET /api/v1/admin/logs/error'],
         ];
 
-        foreach ($adminEndpoints as [$method, $uri]) {
-            $this->assertResponse("{$method} {$uri} (Guest -> 401)", $this->request($method, $uri), 401, "{$method} {$uri}");
+        foreach ($adminRoutes as [$method, $uri, $endpointKey]) {
+            $this->assertResponse("{$method} {$uri} (Guest -> 401)", $this->request($method, $uri), 401, $endpointKey);
         }
     }
 
@@ -584,16 +583,17 @@ final class ApiTestSuite
     {
         echo "\n12. Testing Error Envelope Standards & Status Codes...\n";
 
-        $res = $this->request('GET', '/api/v1/nonexistent_endpoint_123');
-        $json = json_decode((string) $res->getBody(), true);
+        $res = $this->request('POST', '/api/v1/auth/login', [], ['email' => 'invalid']);
+        $raw = (string) $res->getBody();
+        $json = json_decode($raw, true);
 
         if (isset($json['status'], $json['error']['code'], $json['error']['key'], $json['error']['message']) && $json['status'] === 'error') {
             $this->passCount++;
             echo "  [PASS] Standard Error Envelope verified (status=error, error.code, error.key, error.message)\n";
         } else {
             $this->failCount++;
-            $this->failures[] = 'Error envelope does not match standardized schema';
-            echo "  [FAIL] Error envelope does not match standardized schema\n";
+            $this->failures[] = 'Error response envelope is missing required standard keys';
+            echo "  [FAIL] Error response envelope is missing required standard keys: " . substr($raw, 0, 150) . "\n";
         }
     }
 
