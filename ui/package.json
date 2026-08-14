@@ -10,7 +10,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test:client": "tsx scripts/test-client.ts"
+    "test:client": "tsx scripts/test-client.ts",
+    "test:e2e": "tsx scripts/test-e2e-runtime.ts"
   },
   "dependencies": {
     "@fontsource/playfair-display": "^5.3.0",
