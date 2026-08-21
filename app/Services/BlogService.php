@@ -223,6 +223,7 @@ final class BlogService
         
         $this->adminConsole->createModerationAction($approverUserId, 'blog', $blogId, 'approve', "Blog post approved: " . ($blog['title'] ?? $blogId));
 
+        $this->cache->delete('sitemap_xml');
         $this->cache->delete(sprintf('blog_%s', (string) $blog['slug']));
         $this->cache->delete('home_popular_blogs_3');
         $this->cache->delete('home_latest_blogs_3');
@@ -283,6 +284,7 @@ final class BlogService
 
     private function invalidateCachesBySlug(string $slug): void
     {
+        $this->cache->delete('sitemap_xml');
         if ($slug !== '') {
             $this->cache->delete(sprintf('blog_%s', $slug));
             $this->cache->deleteByPrefix(sprintf('blog_%s', $slug));

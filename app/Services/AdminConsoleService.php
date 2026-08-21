@@ -492,6 +492,7 @@ final class AdminConsoleService
     public function triggerSitemap(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
+        $this->cache->delete('sitemap_xml');
         $scriptPath = dirname(__DIR__, 2) . '/app/Console/generate_sitemap.php';
         if (!file_exists($scriptPath)) {
             throw new \RuntimeException('Sitemap script not found');

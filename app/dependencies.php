@@ -170,6 +170,7 @@ $builder->addDefinitions([
         $c->get(SeriesRepository::class),
         $c->get(BlogRepository::class),
         $c->get(I18nService::class),
+        $c->get(CacheService::class),
         $c->get('logger.error')
     ),
 ]);

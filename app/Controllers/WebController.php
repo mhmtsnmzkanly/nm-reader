@@ -11,6 +11,7 @@ use App\Services\SiteConfigService;
 use App\Services\SeriesService;
 use App\Services\UserService;
 use App\Helpers\BreadcrumbHelper;
+use App\Services\CacheService;
 use App\Services\I18nService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -37,6 +38,7 @@ final class WebController
         private readonly SeriesRepository $seriesRepository,
         private readonly BlogRepository $blogRepository,
         private readonly I18nService $i18n,
+        private readonly CacheService $cache,
         private readonly \Monolog\Logger $errorLogger,
     ) {}
 
@@ -955,6 +957,15 @@ final class WebController
         ServerRequestInterface $request,
         ResponseInterface $response,
     ): ResponseInterface {
+        $cached = $this->cache->get('sitemap_xml');
+        if (is_string($cached) && $cached !== '') {
+            $response->getBody()->write($cached);
+            return $response->withHeader(
+                "Content-Type",
+                "application/xml; charset=utf-8",
+            );
+        }
+
         $urls = [];
 
         $push = static function (
@@ -1123,8 +1134,19 @@ final class WebController
         }
 
         $xml[] = "</urlset>";
+        $xmlContent = implode("\n", $xml);
 
-        $response->getBody()->write(implode("\n", $xml));
+        // Cache generated XML for 12 hours (43200s)
+        $this->cache->set('sitemap_xml', $xmlContent, 43200);
+
+        // Sync to static file on disk if public directory is writable
+        $basePath = (string) ($this->settings["app"]["base_path"] ?? dirname(__DIR__, 2));
+        $staticFile = $basePath . '/public/sitemap.xml';
+        if (is_writable($basePath . '/public') || (is_file($staticFile) && is_writable($staticFile))) {
+            @file_put_contents($staticFile, $xmlContent);
+        }
+
+        $response->getBody()->write($xmlContent);
         return $response->withHeader(
             "Content-Type",
             "application/xml; charset=utf-8",

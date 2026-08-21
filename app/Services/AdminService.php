@@ -731,6 +731,7 @@ final class AdminService
 
     private function invalidateListingCaches(): void
     {
+        $this->cache->delete('sitemap_xml');
         $this->cache->deleteByPrefix('homepage_popular_');
         $this->cache->deleteByPrefix('type_list_');
         $this->cache->deleteByPrefix('genre_list_');
