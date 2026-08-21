@@ -1062,10 +1062,10 @@ final class WebController
         }
 
         // Add blogs
-        $blogs = $this->blogRepository->listApproved(1, 500);
+        $blogs = $this->blogRepository->listApprovedForSitemap(5000);
         foreach ($blogs as $blog) {
             $slug = (string) ($blog["slug"] ?? "");
-            $lastmod = !empty($blog["approved_at"] ?? $blog["created_at"]) ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) ($blog["approved_at"] ?? $blog["created_at"]))) : $nowIso;
+            $lastmod = !empty($blog["lastmod"]) ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) $blog["lastmod"])) : $nowIso;
             if ($slug === "") {
                 continue;
             }

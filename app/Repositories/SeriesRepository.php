@@ -820,6 +820,7 @@ final class SeriesRepository
     {
         $sql = 'SELECT type, slug, created_at
                 FROM series
+                WHERE deleted_at IS NULL
                 ORDER BY created_at DESC
                 LIMIT :limit';
         $stmt = $this->pdo->prepare($sql);
@@ -833,13 +834,14 @@ final class SeriesRepository
      */
     public function listChaptersForSitemap(int $limit = 50000): array
     {
-        $sql = 'SELECT
+        $sql = 'SELECT 
                     c.type,
                     c.slug,
                     CAST(ch.chapter_number AS CHAR) AS chapter_number,
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
+                WHERE ch.deleted_at IS NULL AND c.deleted_at IS NULL
                 ORDER BY ch.created_at DESC
                 LIMIT :limit';
         $stmt = $this->pdo->prepare($sql);
