@@ -342,40 +342,64 @@ final class AdminPanelController
 
     public function triggerBackup(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $modId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerBackup($modId));
+        try {
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->triggerBackup($modId));
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
     }
 
     public function triggerSitemap(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $modId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerSitemap($modId));
+        try {
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->triggerSitemap($modId));
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
     }
 
     public function triggerCacheWarmup(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $modId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerCacheWarmup($modId));
+        try {
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->triggerCacheWarmup($modId));
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
     }
 
     public function triggerAnalytics(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $modId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->triggerAnalytics($modId));
+        try {
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->triggerAnalytics($modId));
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
     }
 
     public function getEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $modId = (string) $request->getAttribute('user_id');
-        return ResponseHelper::success($this->console->readEnv($modId));
+        try {
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->readEnv($modId));
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
     }
 
     public function saveEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $payload = (array) $request->getParsedBody();
-        $modId = (string) $request->getAttribute('user_id');
-        $this->console->updateEnv($payload, $modId);
-        return ResponseHelper::success(['saved' => true]);
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            $this->console->updateEnv($payload, $modId);
+            return ResponseHelper::success(['saved' => true]);
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
     }
 
     public function systemAccessLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

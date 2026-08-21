@@ -264,7 +264,7 @@ final class UserService
                 }
             }
 
-            $row['score'] = (int) $row['upvote_count'] - (int) $row['downvote_count'];
+            $row['score'] = (int) ($row['upvote_count'] ?? 0) - (int) ($row['downvote_count'] ?? 0);
             return $row;
         }, $comments);
 

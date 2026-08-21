@@ -269,8 +269,16 @@ final class Config
             $group->get("/content/{type:" . $typePattern . "}/{slug}/comments", [UserInteractionController::class, "listSeriesComments"]);
             $group->get("/blogs/{slug}/comments", [UserInteractionController::class, "listBlogComments"]);
 
-            $group->post("/auth/register", [AuthController::class, "register"])->add(new RateLimitKeyedMiddleware($cache, "register_email", 3, 600, fn($req) => "email:".strtolower(trim((string)($req->getParsedBody()["email"]??"")))));
-            $group->post("/auth/login", [AuthController::class, "login"])->add(new RateLimitKeyedMiddleware($cache, "login_email", 10, 60, fn($req) => "email:".strtolower(trim((string)($req->getParsedBody()["email"]??"")))));
+            $group->post("/auth/register", [AuthController::class, "register"])->add(new RateLimitKeyedMiddleware($cache, "register_email", 5, 600, function ($req) {
+                $ip = (string) ($req->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+                $email = strtolower(trim((string) ($req->getParsedBody()['email'] ?? '')));
+                return "ip:{$ip}:email:" . ($email !== '' ? $email : 'anon');
+            }));
+            $group->post("/auth/login", [AuthController::class, "login"])->add(new RateLimitKeyedMiddleware($cache, "login_email", 10, 60, function ($req) {
+                $ip = (string) ($req->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+                $email = strtolower(trim((string) ($req->getParsedBody()['email'] ?? '')));
+                return "ip:{$ip}:email:" . ($email !== '' ? $email : 'anon');
+            }));
             $group->post("/auth/refresh", [AuthController::class, "refresh"])->add(new RateLimitMiddleware($cache, "refresh", 20, 60));
             $group->map(["GET", "POST"], "/auth/logout", [AuthController::class, "logout"]);
 

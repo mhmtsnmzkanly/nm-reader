@@ -48,25 +48,39 @@ final class ChapterService
         $this->chapters->recordChapterView($chapterId, hash('sha256', $ip));
         $chapter['chapter_number'] = ChapterNumber::normalize($chapter['chapter_number'] ?? '');
 
-        if ($chapter['type'] === 'text') {
-            $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
-            $chapter['pages'] = [];
+        $access = $this->wallets->chapterAccess($contentId, $chapterId, $userId);
+
+        if (($access['granted'] ?? false) === true) {
+            if ($chapter['type'] === 'text') {
+                $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
+                $chapter['pages'] = [];
+            } else {
+                $chapter['body'] = null;
+                $rawPages = $this->chapters->findChapterPages($chapterId);
+                $chapter['pages'] = array_map(function (array $page) use ($chapterId, $userId): array {
+                    $url = $this->media->generateChapterPageUrl($chapterId, (int) ($page['page_order'] ?? 1), (string) ($page['image_path'] ?? ''), $userId);
+                    return [
+                        'page_order' => (int) ($page['page_order'] ?? 1),
+                        'url'        => $url,
+                        'image_path' => $url,
+                    ];
+                }, $rawPages);
+            }
+            if ($userId !== null && $userId !== '') {
+                $this->markRead($userId, $chapterId);
+            }
         } else {
             $chapter['body'] = null;
-            $rawPages = $this->chapters->findChapterPages($chapterId);
-            $chapter['pages'] = array_map(function (array $page) use ($chapterId, $userId): array {
-                $url = $this->media->generateChapterPageUrl($chapterId, (int) ($page['page_order'] ?? 1), (string) ($page['image_path'] ?? ''), $userId);
-                return [
-                    'page_order' => (int) ($page['page_order'] ?? 1),
-                    'url'        => $url,
-                    'image_path' => $url,
-                ];
-            }, $rawPages);
+            $chapter['pages'] = [];
         }
         
         $chapter['adjacent_chapters'] = $this->chapters->findAdjacentChapters($contentId, (string) $chapter['chapter_number']);
+        $chapter = \App\DTO\ChapterDto::fromArray($chapter)->toArray();
+        $chapter['access'] = $access;
+        $chapter['price_coin'] = (int) ($access['chapter_unlock_price'] ?? 0);
+        $chapter['is_locked'] = !(bool) ($access['granted'] ?? false);
 
-        return \App\DTO\ChapterDto::fromArray($chapter)->toArray();
+        return $chapter;
     }
 
     public function getByTypeSlugAndNumber(string $typeSegment, string $slug, string $chapterNumber, string $ip, ?string $userId = null): ?array

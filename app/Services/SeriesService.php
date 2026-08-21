@@ -453,6 +453,7 @@ final class SeriesService
     public function clearContentCache(string $slug): void
     {
         $this->cache->delete(sprintf('content_%s', $slug));
+        $this->cache->deleteByPrefix(sprintf('content_%s', $slug));
         $this->invalidateListingCaches();
     }
 
@@ -465,7 +466,9 @@ final class SeriesService
     public function clearContentCacheByType(string $typeSegment, string $slug): void
     {
         $dbType = $this->toDbType($typeSegment);
+        $this->cache->delete(sprintf('content_%s', $slug));
         $this->cache->delete(sprintf('content_%s_%s', $dbType, $slug));
+        $this->cache->deleteByPrefix(sprintf('content_%s_%s', $dbType, $slug));
         $this->invalidateListingCaches();
     }
 

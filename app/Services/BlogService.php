@@ -94,6 +94,8 @@ final class BlogService
             $this->blogVotes->setVote($userId, $blogId, $vote);
         }
 
+        $this->invalidateCachesBySlug($slug);
+
         return array_merge([
             'blog_id' => $blogId,
             'slug' => $slug,
@@ -283,6 +285,7 @@ final class BlogService
     {
         if ($slug !== '') {
             $this->cache->delete(sprintf('blog_%s', $slug));
+            $this->cache->deleteByPrefix(sprintf('blog_%s', $slug));
         }
         $this->cache->delete('home_popular_blogs_3');
         $this->cache->delete('home_latest_blogs_3');

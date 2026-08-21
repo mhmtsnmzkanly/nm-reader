@@ -33,6 +33,11 @@ final class MediaController
     public function servePublicMedia(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $filename = (string) ($args['filename'] ?? '');
+
+        if ($this->mediaService->isChapterMedia($filename)) {
+            return ResponseHelper::error(403, 'Chapter media requires access token');
+        }
+
         $filePath = $this->mediaService->resolveFile($filename);
 
         if ($filePath === null) {

@@ -38,7 +38,11 @@ final class UserInteractionController
             $payload = (array) $request->getParsedBody();
             $commentId = $this->comments->addToChapter($userId, (string)$args['chapterId'], (string)($payload['body'] ?? ''), isset($payload['parent_id']) ? (int)$payload['parent_id'] : null);
             return ResponseHelper::created(['comment_id' => $commentId]);
-        } catch (\InvalidArgumentException $e) { return ResponseHelper::error(400, $e->getMessage()); }
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        }
     }
 
     public function createSeriesComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -48,7 +52,11 @@ final class UserInteractionController
             $payload = (array) $request->getParsedBody();
             $commentId = $this->comments->addToSeries($userId, (string)$args['type'], (string)$args['slug'], (string)($payload['body'] ?? ''), isset($payload['parent_id']) ? (int)$payload['parent_id'] : null);
             return ResponseHelper::created(['comment_id' => $commentId]);
-        } catch (\Exception $e) { return ResponseHelper::error(400, $e->getMessage()); }
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        } catch (\Exception $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        }
     }
 
     public function createBlogComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -58,7 +66,11 @@ final class UserInteractionController
             $payload = (array) $request->getParsedBody();
             $commentId = $this->comments->addToBlog($userId, (string)$args['slug'], (string)($payload['body'] ?? ''), isset($payload['parent_id']) ? (int)$payload['parent_id'] : null);
             return ResponseHelper::created(['comment_id' => $commentId]);
-        } catch (\Exception $e) { return ResponseHelper::error(400, $e->getMessage()); }
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        } catch (\Exception $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        }
     }
 
     public function listChapterComments(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -67,8 +79,8 @@ final class UserInteractionController
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
             $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
-            $viewerId = $_SESSION['user_id'] ?? null;
-            $items = $this->comments->listByChapter((string)$args['chapterId'], $page, $perPage, $viewerId, $cursor);
+            $viewerId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+            $items = $this->comments->listByChapter((string)$args['chapterId'], $page, $perPage, is_string($viewerId) ? $viewerId : null, $cursor);
             $nextCursor = ($cursor !== null && $cursor !== '') ? $this->nextCursor($items, $perPage) : null;
             if ($cursor !== null && $cursor !== '') {
                 return ResponseHelper::cursorPaginate($items, $perPage, $nextCursor, ['page' => $page]);
@@ -87,8 +99,8 @@ final class UserInteractionController
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
             $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
-            $viewerId = $_SESSION['user_id'] ?? null;
-            $items = $this->comments->listBySeriesSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
+            $viewerId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+            $items = $this->comments->listBySeriesSlug((string)$args['slug'], $page, $perPage, is_string($viewerId) ? $viewerId : null, $cursor);
             $nextCursor = ($cursor !== null && $cursor !== '') ? $this->nextCursor($items, $perPage) : null;
             if ($cursor !== null && $cursor !== '') {
                 return ResponseHelper::cursorPaginate($items, $perPage, $nextCursor, ['page' => $page]);
@@ -107,8 +119,8 @@ final class UserInteractionController
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
             $cursor = isset($query['cursor']) ? (string) $query['cursor'] : null;
-            $viewerId = $_SESSION['user_id'] ?? null;
-            $items = $this->comments->listByBlogSlug((string)$args['slug'], $page, $perPage, $viewerId, $cursor);
+            $viewerId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+            $items = $this->comments->listByBlogSlug((string)$args['slug'], $page, $perPage, is_string($viewerId) ? $viewerId : null, $cursor);
             $nextCursor = ($cursor !== null && $cursor !== '') ? $this->nextCursor($items, $perPage) : null;
             if ($cursor !== null && $cursor !== '') {
                 return ResponseHelper::cursorPaginate($items, $perPage, $nextCursor, ['page' => $page]);

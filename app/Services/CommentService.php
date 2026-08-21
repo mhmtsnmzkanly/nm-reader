@@ -64,6 +64,10 @@ final class CommentService
             throw new \InvalidArgumentException('Comment body must be at most 1000 characters');
         }
 
+        if ($this->chapters->findById($chapterId) === null) {
+            throw new \DomainException('Chapter not found');
+        }
+
         if ($parentId !== null) {
             $parent = $this->comments->findById($parentId);
             if ($parent === null || (string) ($parent['chapter_id'] ?? '') !== $chapterId) {
@@ -93,6 +97,7 @@ final class CommentService
 
             $this->cache->delete(sprintf('content_%s', $slug));
             $this->cache->delete(sprintf('content_%s_%s', $type, $slug));
+            $this->cache->deleteByPrefix(sprintf('content_%s_%s', $type, $slug));
             $this->invalidateListingCaches();
         }
 
@@ -140,6 +145,7 @@ final class CommentService
 
         $this->cache->delete(sprintf('content_%s', $slug));
         $this->cache->delete(sprintf('content_%s_%s', $type, $slug));
+        $this->cache->deleteByPrefix(sprintf('content_%s_%s', $type, $slug));
         $this->invalidateListingCaches();
 
         return $commentId;

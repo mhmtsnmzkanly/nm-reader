@@ -38,7 +38,7 @@ CREATE TABLE `series` (
   `id` char(6) NOT NULL,
   `title` varchar(200) NOT NULL,
   `slug` varchar(200) NOT NULL,
-  `type` enum('manga','manhua','manhwa','webtoon','light-novel','web-novel','novel') NOT NULL,
+  `type` enum('manga','manhua','manhwa','webtoon','novel','light_novel','web_novel','light-novel','web-novel') NOT NULL,
   `status` enum('ongoing','completed','hiatus','dropped') NOT NULL DEFAULT 'ongoing',
   `cover_image` varchar(255) DEFAULT NULL,
   `accent_color` varchar(7) DEFAULT '#2a2a2a',
@@ -348,7 +348,10 @@ CREATE TABLE `social_comments` (
   KEY `idx_comments_user_created` (`user_id`,`created_at`),
   KEY `idx_comments_parent` (`parent_id`),
   CONSTRAINT `fk_comments_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_comments_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_comments_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_comments_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_comments_blog` FOREIGN KEY (`blog_id`) REFERENCES `blogs` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_comments_parent` FOREIGN KEY (`parent_id`) REFERENCES `social_comments` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -359,14 +362,18 @@ DROP TABLE IF EXISTS `user_activity`;
 CREATE TABLE `user_activity` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` char(8) NOT NULL,
-  `chapter_id` char(6) NOT NULL,
   `tab_id` varchar(32) NOT NULL,
-  `duration_seconds` int(11) NOT NULL DEFAULT 0,
+  `chapter_id` char(6) DEFAULT NULL,
+  `started_at` datetime NOT NULL DEFAULT current_timestamp(),
   `last_seen_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `duration_seconds` int(11) NOT NULL DEFAULT 0,
+  `ip_hash` char(64) DEFAULT NULL,
   `user_agent` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_user_tab` (`user_id`,`tab_id`),
-  CONSTRAINT `fk_activity_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  KEY `idx_activity_last_seen` (`last_seen_at`),
+  CONSTRAINT `fk_activity_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_activity_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_notifications`;
@@ -401,6 +408,8 @@ CREATE TABLE `user_sessions` (
   `revoked_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`session_key`),
+  KEY `idx_sessions_user` (`user_id`),
+  KEY `idx_sessions_expires` (`expires_at`),
   CONSTRAINT `fk_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -414,6 +423,8 @@ CREATE TABLE `user_refresh_tokens` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `token_hash` (`token_hash`),
+  KEY `idx_tokens_session` (`session_key`),
+  KEY `idx_tokens_expires` (`expires_at`),
   CONSTRAINT `fk_tokens_session` FOREIGN KEY (`session_key`) REFERENCES `user_sessions` (`session_key`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -640,7 +651,7 @@ CREATE TABLE `analytics_users_votes` (
   `votes_cast` int(11) NOT NULL DEFAULT 0,
   `upvotes_received` int(11) NOT NULL DEFAULT 0,
   `downvotes_received` int(11) NOT NULL DEFAULT 0,
-  `updated_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -778,7 +789,7 @@ CREATE TABLE `system_jobs` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `job_type` varchar(64) NOT NULL,
   `payload` longtext DEFAULT NULL,
-  `status` enum('pending','done','failed') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','processing','done','failed') NOT NULL DEFAULT 'pending',
   `attempts` int(11) NOT NULL DEFAULT 0,
   `available_at` datetime NOT NULL DEFAULT current_timestamp(),
   `last_error` varchar(500) DEFAULT NULL,

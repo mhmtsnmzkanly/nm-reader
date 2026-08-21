@@ -262,9 +262,10 @@ final class AuthService
         if ($sessionRow !== false) {
             $storedUa = (string) ($sessionRow['user_agent'] ?? '');
             $storedIpHash = (string) ($sessionRow['ip_hash'] ?? '');
-            $uaSimilarity = similar_text(substr($storedUa, 0, 64), substr($userAgent, 0, 64));
+            $uaPercent = 0.0;
+            similar_text(substr($storedUa, 0, 64), substr($userAgent, 0, 64), $uaPercent);
             $ipMatches = hash_equals($storedIpHash, hash('sha256', $ip));
-            if ($uaSimilarity < 20 && !$ipMatches) {
+            if ($uaPercent < 30.0 && !$ipMatches) {
                 throw new \DomainException('Refresh denied: device changed');
             }
         }

@@ -38,6 +38,12 @@ final class CsrfMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
+        // Stateless Bearer token requests are immune to CSRF
+        $authHeader = $request->getHeaderLine('Authorization');
+        if (str_starts_with($authHeader, 'Bearer ') && $request->getAttribute('user_id') !== null) {
+            return $handler->handle($request);
+        }
+
         $headerToken = $request->getHeaderLine('X-CSRF-Token');
         $sessionToken = $_SESSION['csrf_token'] ?? null;
 

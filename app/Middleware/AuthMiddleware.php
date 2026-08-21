@@ -47,14 +47,10 @@ final class AuthMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $userId = $_SESSION['user_id'] ?? null;
+        $userId = $request->getAttribute('user_id') ?? ($_SESSION['user_id'] ?? null);
+
         if ($userId === null) {
             if ($this->optional) {
-                $existingUserId = $request->getAttribute('user_id');
-                if ($existingUserId !== null) {
-                    return $handler->handle($request);
-                }
-
                 // Allow guest with minimal guest-level attributes.
                 $request = $request
                     ->withAttribute('user_id', null)
@@ -65,35 +61,21 @@ final class AuthMiddleware implements MiddlewareInterface
                 return $handler->handle($request);
             }
 
-            // Audit suspicious 401 attempt
-            try {
-                $pdo = \App\App::getContainer()->get(\PDO::class);
-                $stmt = $pdo->prepare(
-                    'INSERT INTO admin_actions (moderator_user_id, target_type, target_id, action, reason, created_at)
-                     VALUES (NULL, "security", "unauthorized", "auth_fail", :reason, NOW())'
-                );
-                $stmt->execute([
-                    'reason' => json_encode([
-                        'path' => (string) $request->getUri()->getPath(),
-                        'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
-                        'ua' => substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255)
-                    ])
-                ]);
-            } catch (\Throwable) {}
-
             return ResponseHelper::error(401, 'Unauthorized');
         }
 
-        $roles = is_array($_SESSION['roles'] ?? null) ? $_SESSION['roles'] : [];
-        $permissions = is_array($_SESSION['permissions'] ?? null) ? $_SESSION['permissions'] : [];
+        $roles = $request->getAttribute('roles') ?? (is_array($_SESSION['roles'] ?? null) ? $_SESSION['roles'] : []);
+        $permissions = $request->getAttribute('permissions') ?? (is_array($_SESSION['permissions'] ?? null) ? $_SESSION['permissions'] : []);
         $normalizedRoles = $this->authorization->normalizeRoles($roles);
-        $effectivePermissions = $this->authorization->resolveEffectivePermissions($normalizedRoles, $permissions, (string) $userId);
-        $isAdmin = $this->authorization->highestRole($normalizedRoles) === 'admin';
+        $effectivePermissions = !empty($permissions) ? $permissions : $this->authorization->resolveEffectivePermissions($normalizedRoles, [], (string) $userId);
+        $isAdmin = in_array('admin.panel.access', $effectivePermissions, true) || $this->authorization->highestRole($normalizedRoles) === 'admin';
 
-        // Synchronize and persist normalized authorization state.
-        $_SESSION['roles'] = $normalizedRoles;
-        $_SESSION['permissions'] = $effectivePermissions;
-        $_SESSION['is_admin'] = $isAdmin;
+        // Synchronize session if session is active
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION['roles'] = $normalizedRoles;
+            $_SESSION['permissions'] = $effectivePermissions;
+            $_SESSION['is_admin'] = $isAdmin;
+        }
 
         $request = $request
             ->withAttribute('user_id', (string) $userId)

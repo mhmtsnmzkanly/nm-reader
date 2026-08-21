@@ -168,11 +168,16 @@ final class AdminConsoleService
         $info = $this->repo->deleteUpload($id);
         if ($info) {
             $filePath = (string) ($info['file_path'] ?? '');
-            if ($filePath !== '' && str_starts_with($filePath, '/')) {
+            if ($filePath !== '') {
                 $basePath = dirname(__DIR__, 2);
-                $diskPath = $basePath . '/public' . $filePath;
-                if (is_file($diskPath)) {
-                    @unlink($diskPath);
+                $cleanName = basename($filePath);
+                $storageDiskPath = $basePath . '/storage/media/' . $cleanName;
+                if (is_file($storageDiskPath)) {
+                    @unlink($storageDiskPath);
+                }
+                $publicDiskPath = $basePath . '/public' . $filePath;
+                if (is_file($publicDiskPath)) {
+                    @unlink($publicDiskPath);
                 }
             }
             $imageId = (string) ($info['image_id'] ?? '');
@@ -426,8 +431,9 @@ final class AdminConsoleService
             throw new \RuntimeException('.env file not found');
         }
 
-        // Fetch current for diff logging
+        // Fetch current for diff logging and merge
         $current = $this->readEnv($moderatorId);
+        $merged = array_merge($current, $payload);
         $diff = [];
         foreach ($payload as $k => $v) {
             $old = $current[$k] ?? '';
@@ -442,7 +448,7 @@ final class AdminConsoleService
         copy($path, $backupPath);
         try {
             $content = "# Updated via Admin Console at " . date('Y-m-d H:i:s') . "\n";
-            foreach ($payload as $key => $value) {
+            foreach ($merged as $key => $value) {
                 $key = strtoupper(trim((string)$key));
                 if ($key === '') continue;
                 // Quote values with spaces or special chars
@@ -544,7 +550,7 @@ final class AdminConsoleService
     {
         $rootId = $_ENV['ROOT_USER'] ?? getenv('ROOT_USER') ?: null;
         if ($rootId === null || $userId === null || $userId !== $rootId) {
-            throw new \RuntimeException('Unauthorized: Only the ROOT_USER can perform this action.');
+            throw new \DomainException('Unauthorized: Only the ROOT_USER can perform this action.');
         }
     }
 

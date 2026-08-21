@@ -25,8 +25,8 @@ final class AdminMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $roles = is_array($_SESSION['roles'] ?? null) ? $_SESSION['roles'] : [];
-        $isAdmin = (bool) ($_SESSION['is_admin'] ?? false) || in_array('admin', $roles, true);
+        $roles = $request->getAttribute('roles') ?? (is_array($_SESSION['roles'] ?? null) ? $_SESSION['roles'] : []);
+        $isAdmin = (bool) ($request->getAttribute('is_admin') ?? ($_SESSION['is_admin'] ?? false)) || in_array('admin', $roles, true);
         if (!$isAdmin) {
             return ResponseHelper::error(403, 'Forbidden');
         }

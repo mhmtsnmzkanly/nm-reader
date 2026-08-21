@@ -51,6 +51,15 @@ final class QueueService
                 $payload = [];
             }
 
+            // Atomically claim the job to prevent duplicate execution across workers
+            $claim = $this->pdo->prepare(
+                "UPDATE system_jobs SET status = 'processing', updated_at = NOW() WHERE id = :id AND status = 'pending'"
+            );
+            $claim->execute(['id' => $id]);
+            if ($claim->rowCount() === 0) {
+                continue;
+            }
+
             try {
                 $this->process($type, $payload);
                 $done = $this->pdo->prepare(

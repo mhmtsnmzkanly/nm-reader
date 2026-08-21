@@ -54,6 +54,8 @@ final class AuthController
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 
         $result = curl_exec($ch);
         if ($result === false) {
@@ -117,9 +119,10 @@ final class AuthController
             $res = ResponseHelper::success($user);
             if (!empty($user['refresh_token'])) {
                 $expires = time() + (30 * 24 * 60 * 60);
+                $isSecure = ($request->getUri()->getScheme() === 'https') || $this->siteConfig->enforceHttps();
                 $res = $res->withHeader(
                     'Set-Cookie',
-                    "nm_remember={$user['refresh_token']}; Expires=" . gmdate('D, d M Y H:i:s T', $expires) . "; Path=/; HttpOnly; SameSite=Lax"
+                    "nm_remember={$user['refresh_token']}; Expires=" . gmdate('D, d M Y H:i:s T', $expires) . "; Path=/; HttpOnly; SameSite=Lax" . ($isSecure ? '; Secure' : '')
                 );
             }
             return $res;
@@ -174,7 +177,7 @@ final class AuthController
         // Thoroughly clear session data
         $_SESSION = [];
         
-        if (ini_get("session.use_cookies")) {
+        if (ini_get("session.use_cookies") && !headers_sent()) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000,
                 $params["path"], $params["domain"],
@@ -182,16 +185,18 @@ final class AuthController
             );
         }
 
-        if (session_status() === PHP_SESSION_ACTIVE) {
+        if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
             session_regenerate_id(true);
             session_destroy();
         }
 
         $res = ResponseHelper::success(['logged_out' => true]);
+        $isSecure = ($request->getUri()->getScheme() === 'https') || $this->siteConfig->enforceHttps();
+        $secureSuffix = $isSecure ? '; Secure' : '';
         
         // Expire remember-me cookie and session cookie again just in case
-        $res = $res->withAddedHeader('Set-Cookie', 'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax')
-                   ->withAddedHeader('Set-Cookie', session_name() . '=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax');
+        $res = $res->withAddedHeader('Set-Cookie', 'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax' . $secureSuffix)
+                   ->withAddedHeader('Set-Cookie', session_name() . '=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax' . $secureSuffix);
 
         if ($request->getMethod() === 'GET') {
             return $res->withStatus(302)->withHeader('Location', '/');

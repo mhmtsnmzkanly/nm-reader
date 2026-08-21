@@ -61,6 +61,7 @@ final class RatingService
         $this->ratings->refreshContentSummary($contentId);
         $this->analytics->track('content_rate', $userId, 'content', $contentId, ['rating' => $rating]);
         $this->cache->delete(sprintf('content_%s', $slug));
+        $this->cache->deleteByPrefix(sprintf('content_%s', $slug));
         $this->invalidateListingCaches();
     }
 
@@ -91,6 +92,7 @@ final class RatingService
         $this->analytics->track('content_rate', $userId, 'content', $contentId, ['rating' => $rating]);
         $this->cache->delete(sprintf('content_%s', $slug));
         $this->cache->delete(sprintf('content_%s_%s', $dbType, $slug));
+        $this->cache->deleteByPrefix(sprintf('content_%s_%s', $dbType, $slug));
         $this->invalidateListingCaches();
     }
 
