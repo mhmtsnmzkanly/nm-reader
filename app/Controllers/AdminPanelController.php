@@ -380,6 +380,36 @@ final class AdminPanelController
         }
     }
 
+    public function triggerApiTests(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->triggerApiTests($modId));
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
+    }
+
+    public function triggerOpenApi(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->triggerOpenApi($modId));
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
+    }
+
+    public function triggerSeedData(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $modId = (string) $request->getAttribute('user_id');
+            return ResponseHelper::success($this->console->triggerSeedData($modId));
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(403, $e->getMessage());
+        }
+    }
+
     public function getEnvConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         try {

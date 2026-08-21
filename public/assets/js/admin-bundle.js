@@ -379,6 +379,9 @@ window.AdminApp = (function($) {
       $('#btn-trigger-backup')?.on('click', async () => { try { const r = await api('/admin/maintenance/backup', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
       $('#btn-trigger-sitemap')?.on('click', async () => { try { const r = await api('/admin/maintenance/sitemap', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
       $('#btn-trigger-warmup')?.on('click', async () => { try { const r = await api('/admin/maintenance/warmup', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
+      $('#btn-trigger-api-tests')?.on('click', async () => { try { const r = await api('/admin/maintenance/api-tests', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
+      $('#btn-trigger-openapi')?.on('click', async () => { try { const r = await api('/admin/maintenance/openapi', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
+      $('#btn-trigger-seed-data')?.on('click', async () => { try { const r = await api('/admin/maintenance/seed-data', { method: 'POST', body: '{}' }); this.printOutput(r.data || {}); } catch (e) { alert(e.message); } });
     },
     loadQueue: async function() {
       try {

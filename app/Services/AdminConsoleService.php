@@ -547,6 +547,63 @@ final class AdminConsoleService
         return ['success' => $returnVar === 0, 'output' => $output];
     }
 
+    public function triggerApiTests(?string $moderatorId = null): array
+    {
+        $this->ensureRootUser($moderatorId);
+        $scriptPath = dirname(__DIR__, 2) . '/app/Console/ApiTestSuite.php';
+        if (!file_exists($scriptPath)) {
+            throw new \RuntimeException('API test suite script not found');
+        }
+
+        $output = [];
+        $returnVar = 0;
+        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
+
+        if ($moderatorId !== null) {
+            $this->repo->createModerationAction($moderatorId, 'system', 'api_tests', 'trigger', 'Manual API test suite execution triggered');
+        }
+
+        return ['success' => $returnVar === 0, 'output' => $output];
+    }
+
+    public function triggerOpenApi(?string $moderatorId = null): array
+    {
+        $this->ensureRootUser($moderatorId);
+        $scriptPath = dirname(__DIR__, 2) . '/app/Console/generate_openapi.php';
+        if (!file_exists($scriptPath)) {
+            throw new \RuntimeException('OpenAPI generator script not found');
+        }
+
+        $output = [];
+        $returnVar = 0;
+        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
+
+        if ($moderatorId !== null) {
+            $this->repo->createModerationAction($moderatorId, 'system', 'openapi', 'trigger', 'Manual OpenAPI spec generation triggered');
+        }
+
+        return ['success' => $returnVar === 0, 'output' => $output];
+    }
+
+    public function triggerSeedData(?string $moderatorId = null): array
+    {
+        $this->ensureRootUser($moderatorId);
+        $scriptPath = dirname(__DIR__, 2) . '/app/Console/seed_default_data.php';
+        if (!file_exists($scriptPath)) {
+            throw new \RuntimeException('Seed default data script not found');
+        }
+
+        $output = [];
+        $returnVar = 0;
+        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
+
+        if ($moderatorId !== null) {
+            $this->repo->createModerationAction($moderatorId, 'system', 'seed_data', 'trigger', 'Default data seeding triggered');
+        }
+
+        return ['success' => $returnVar === 0, 'output' => $output];
+    }
+
     private function ensureRootUser(?string $userId): void
     {
         $rootId = $_ENV['ROOT_USER'] ?? getenv('ROOT_USER') ?: null;

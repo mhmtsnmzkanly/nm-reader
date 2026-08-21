@@ -355,6 +355,9 @@ final class Config
             $group->post("/maintenance/sitemap", [AdminPanelController::class, "triggerSitemap"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/warmup", [AdminPanelController::class, "triggerCacheWarmup"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/analytics", [AdminPanelController::class, "triggerAnalytics"])->add($perm(["admin.jobs.run"]));
+            $group->post("/maintenance/api-tests", [AdminPanelController::class, "triggerApiTests"])->add($perm(["admin.jobs.run"]));
+            $group->post("/maintenance/openapi", [AdminPanelController::class, "triggerOpenApi"])->add($perm(["admin.jobs.run"]));
+            $group->post("/maintenance/seed-data", [AdminPanelController::class, "triggerSeedData"])->add($perm(["admin.jobs.run"]));
             $group->get("/shop/packages", [AdminPanelController::class, "shopPackages"])->add($perm(["admin.shop.manage"]));
             $group->post("/shop/packages", [AdminPanelController::class, "createShopPackage"])->add($perm(["admin.shop.manage"]));
             $group->put("/shop/packages/{id:[0-9]+}", [AdminPanelController::class, "updateShopPackage"])->add($perm(["admin.shop.manage"]));

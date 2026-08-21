@@ -70,6 +70,24 @@
                 </button>
                 <small class="text-muted d-block mt-1 fs-9">Pre-loads popular series and homepage data.</small>
               </div>
+              <div class="col-md-4">
+                <button class="btn btn-success btn-sm w-100" id="btn-trigger-api-tests">
+                  <i class="bi bi-check-circle me-1"></i> Run API Test Suite
+                </button>
+                <small class="text-muted d-block mt-1 fs-9">Executes all 126 automated contract & endpoint tests.</small>
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-dark btn-sm w-100" id="btn-trigger-openapi">
+                  <i class="bi bi-file-earmark-code me-1"></i> Generate OpenAPI Spec
+                </button>
+                <small class="text-muted d-block mt-1 fs-9">Regenerates public/openapi.json documentation.</small>
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-outline-success btn-sm w-100" id="btn-trigger-seed-data">
+                  <i class="bi bi-database-add me-1"></i> Seed Default Data
+                </button>
+                <small class="text-muted d-block mt-1 fs-9">Inserts default genres, tags, and shop packages.</small>
+              </div>
             </div>
             <div id="maintenance-output" class="mt-3 p-2 bg-dark text-light rounded fs-8 d-none" style="max-height: 200px; overflow-y: auto;"></div>
           </div>
