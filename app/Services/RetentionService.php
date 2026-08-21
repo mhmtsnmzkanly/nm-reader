@@ -8,8 +8,10 @@ use PDO;
 
 final class RetentionService
 {
-    public function __construct(private readonly PDO $pdo)
-    {
+    public function __construct(
+        private readonly PDO $pdo,
+        private readonly ?CacheService $cache = null
+    ) {
     }
 
     public function cleanup(int $days = 30): array
@@ -23,7 +25,15 @@ final class RetentionService
             'auth_refresh_tokens_deleted' => 0,
             'job_queue_done_deleted' => 0,
             'job_queue_failed_deleted' => 0,
+            'cache_expired_deleted' => 0,
+            'cache_locks_deleted' => 0,
         ];
+
+        if ($this->cache !== null) {
+            $cachePrune = $this->cache->prune();
+            $result['cache_expired_deleted'] = $cachePrune['expired_deleted'];
+            $result['cache_locks_deleted'] = $cachePrune['stale_locks_deleted'];
+        }
 
         $result['audit_logs_deleted'] = $this->deleteSafe(
             'DELETE FROM system_audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL :days DAY)',
@@ -62,7 +72,9 @@ final class RetentionService
             + $result['auth_sessions_deleted']
             + $result['auth_refresh_tokens_deleted']
             + $result['job_queue_done_deleted']
-            + $result['job_queue_failed_deleted'];
+            + $result['job_queue_failed_deleted']
+            + $result['cache_expired_deleted']
+            + $result['cache_locks_deleted'];
 
         return $result;
     }

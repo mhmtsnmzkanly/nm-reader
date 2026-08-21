@@ -177,6 +177,75 @@ final class CacheService
     }
 
     /**
+     * Garbage collects expired cache files and stale lock files.
+     *
+     * @return array{scanned: int, expired_deleted: int, stale_locks_deleted: int}
+     */
+    public function prune(): array
+    {
+        $dir = rtrim($this->cachePath, '/');
+        $files = glob($dir . '/*.cache') ?: [];
+        $locks = glob($dir . '/*.lock') ?: [];
+        $now = time();
+        $deleted = 0;
+        $deletedLocks = 0;
+
+        foreach ($files as $file) {
+            $raw = @file_get_contents($file);
+            if ($raw === false) {
+                continue;
+            }
+            $payload = json_decode($raw, true);
+            if (is_array($payload) && isset($payload['expires_at']) && (int) $payload['expires_at'] < $now) {
+                if (@unlink($file)) {
+                    $deleted++;
+                }
+            }
+        }
+
+        // Cleanup stale locks older than 60 seconds
+        foreach ($locks as $lockFile) {
+            $mtime = @filemtime($lockFile);
+            if ($mtime !== false && ($now - $mtime) > 60) {
+                if (@unlink($lockFile)) {
+                    $deletedLocks++;
+                }
+            }
+        }
+
+        return [
+            'scanned' => count($files),
+            'expired_deleted' => $deleted,
+            'stale_locks_deleted' => $deletedLocks,
+        ];
+    }
+
+    /**
+     * Flushes the entire cache directory.
+     *
+     * @return int Total files deleted.
+     */
+    public function flush(): int
+    {
+        $dir = rtrim($this->cachePath, '/');
+        $files = glob($dir . '/*.cache') ?: [];
+        $deleted = 0;
+
+        foreach ($files as $file) {
+            if (@unlink($file)) {
+                $deleted++;
+            }
+        }
+
+        $indexFile = $this->indexFileName();
+        if (is_file($indexFile)) {
+            @unlink($indexFile);
+        }
+
+        return $deleted;
+    }
+
+    /**
      * Generates the hashed file path for a cache key.
      */
     private function fileName(string $key): string
