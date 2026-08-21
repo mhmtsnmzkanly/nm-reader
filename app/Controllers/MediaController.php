@@ -64,24 +64,43 @@ final class MediaController
             return ResponseHelper::error(404, 'Chapter page not found');
         }
 
-        return $this->streamFileResponse($request, $filePath, false);
+        $tokenExp = (int) ($data['exp'] ?? (time() + 7200));
+        return $this->streamFileResponse($request, $filePath, false, $tokenExp);
     }
 
-    private function streamFileResponse(ServerRequestInterface $request, string $filePath, bool $isPublic): ResponseInterface
-    {
+    private function streamFileResponse(
+        ServerRequestInterface $request,
+        string $filePath,
+        bool $isPublic,
+        ?int $tokenExp = null
+    ): ResponseInterface {
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mimeType = $finfo->file($filePath) ?: 'application/octet-stream';
+        $fileSize = (int) filesize($filePath);
         $mtime = filemtime($filePath) ?: time();
-        $etag = sprintf('"%s-%s"', dechex($mtime), dechex((int) filesize($filePath)));
+        $etag = sprintf('"%s-%s"', dechex($mtime), dechex($fileSize));
 
-        // HTTP Conditional caching headers check
-        $ifNoneMatch = $request->getHeaderLine('If-None-Match');
-        $ifModifiedSince = $request->getHeaderLine('If-Modified-Since');
+        $publicTtl = 31536000; // 1 Year (365 days)
+        if ($isPublic) {
+            $cacheControl = sprintf('public, max-age=%d, s-maxage=%d, immutable', $publicTtl, $publicTtl);
+            $expiresAt = gmdate('D, d M Y H:i:s T', time() + $publicTtl);
+        } else {
+            $chapterTtl = max(60, ($tokenExp ?? (time() + 7200)) - time());
+            $cacheControl = sprintf('private, max-age=%d, immutable', $chapterTtl);
+            $expiresAt = gmdate('D, d M Y H:i:s T', $tokenExp ?? (time() + $chapterTtl));
+        }
+
+        // HTTP Conditional caching headers check (304 Not Modified)
+        $ifNoneMatch = trim($request->getHeaderLine('If-None-Match'));
+        $ifModifiedSince = trim($request->getHeaderLine('If-Modified-Since'));
 
         if ($ifNoneMatch === $etag || ($ifModifiedSince !== '' && strtotime($ifModifiedSince) >= $mtime)) {
             return (new Response(304))
+                ->withHeader('Cache-Control', $cacheControl)
+                ->withHeader('Expires', $expiresAt)
                 ->withHeader('ETag', $etag)
-                ->withHeader('Last-Modified', gmdate('D, d M Y H:i:s T', $mtime));
+                ->withHeader('Last-Modified', gmdate('D, d M Y H:i:s T', $mtime))
+                ->withHeader('X-Content-Type-Options', 'nosniff');
         }
 
         $fh = fopen($filePath, 'rb');
@@ -90,19 +109,15 @@ final class MediaController
         }
 
         $stream = new Stream($fh);
-        $res = (new Response(200))
+        return (new Response(200))
             ->withBody($stream)
             ->withHeader('Content-Type', $mimeType)
-            ->withHeader('Content-Length', (string) filesize($filePath))
+            ->withHeader('Content-Length', (string) $fileSize)
+            ->withHeader('Accept-Ranges', 'bytes')
+            ->withHeader('Cache-Control', $cacheControl)
+            ->withHeader('Expires', $expiresAt)
             ->withHeader('Last-Modified', gmdate('D, d M Y H:i:s T', $mtime))
-            ->withHeader('ETag', $etag);
-
-        if ($isPublic) {
-            return $res->withHeader('Cache-Control', 'public, max-age=86400, immutable');
-        }
-
-        return $res
-            ->withHeader('Cache-Control', 'private, no-store, no-cache, must-revalidate')
-            ->withHeader('Pragma', 'no-cache');
+            ->withHeader('ETag', $etag)
+            ->withHeader('X-Content-Type-Options', 'nosniff');
     }
 }
