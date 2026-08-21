@@ -1020,60 +1020,59 @@ final class WebController
             );
         }
 
-        $seriesList = $this->seriesService->series(1, 500);
+        $seriesList = $this->seriesRepository->listContentsForSitemap(5000);
         foreach ($seriesList as $series) {
             $slug = (string) ($series["slug"] ?? "");
             $type = (string) ($series["type"] ?? "novel");
+            $lastmod = !empty($series["created_at"]) ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) $series["created_at"])) : $nowIso;
             if ($slug === "") {
                 continue;
             }
             $push(
                 $urls,
                 $base . "/" . $type . "/" . rawurlencode($slug),
-                $nowIso,
+                $lastmod,
                 "daily",
                 "0.8",
             );
+        }
 
-            // Add chapters
-            $chapters = $this->seriesService->chaptersByType(
-                $type,
-                $slug,
-                1,
-                200,
-            );
-            foreach ($chapters as $chap) {
-                $chapNumber = (string) ($chap["chapter_number"] ?? "");
-                if ($chapNumber === "") {
-                    continue;
-                }
-                $push(
-                    $urls,
-                    $base .
-                        "/" .
-                        $type .
-                        "/" .
-                        rawurlencode($slug) .
-                        "/chapter/" .
-                        rawurlencode($chapNumber),
-                    $nowIso,
-                    "weekly",
-                    "0.6",
-                );
+        $chapterList = $this->seriesRepository->listChaptersForSitemap(10000);
+        foreach ($chapterList as $chap) {
+            $slug = (string) ($chap["slug"] ?? "");
+            $type = (string) ($chap["type"] ?? "novel");
+            $chapNumber = (string) ($chap["chapter_number"] ?? "");
+            $lastmod = !empty($chap["created_at"]) ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) $chap["created_at"])) : $nowIso;
+            if ($slug === "" || $chapNumber === "") {
+                continue;
             }
+            $push(
+                $urls,
+                $base .
+                    "/" .
+                    $type .
+                    "/" .
+                    rawurlencode($slug) .
+                    "/chapter/" .
+                    rawurlencode($chapNumber),
+                $lastmod,
+                "weekly",
+                "0.6",
+            );
         }
 
         // Add blogs
-        $blogs = $this->blogService->list(1, 500);
+        $blogs = $this->blogRepository->listApproved(1, 500);
         foreach ($blogs as $blog) {
             $slug = (string) ($blog["slug"] ?? "");
+            $lastmod = !empty($blog["approved_at"] ?? $blog["created_at"]) ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) ($blog["approved_at"] ?? $blog["created_at"]))) : $nowIso;
             if ($slug === "") {
                 continue;
             }
             $push(
                 $urls,
                 $base . "/blogs/" . rawurlencode($slug),
-                $nowIso,
+                $lastmod,
                 "weekly",
                 "0.6",
             );

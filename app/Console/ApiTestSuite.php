@@ -292,6 +292,25 @@ final class ApiTestSuite
 
         // 8. GET /api/v1/shop/features
         $this->assertResponse('GET /api/v1/shop/features', $this->request('GET', '/api/v1/shop/features'), 200, 'GET /api/v1/shop/features');
+
+        // Sitemap & Robots.txt SEO routes
+        $sitemapRes = $this->request('GET', '/sitemap.xml');
+        if ($sitemapRes->getStatusCode() === 200 && str_contains((string)$sitemapRes->getBody(), '<?xml')) {
+            $this->passCount++;
+            echo "  [PASS] GET /sitemap.xml (HTTP 200 XML)\n";
+        } else {
+            $this->failCount++;
+            echo "  [FAIL] GET /sitemap.xml -> Status " . $sitemapRes->getStatusCode() . "\n";
+        }
+
+        $robotsRes = $this->request('GET', '/robots.txt');
+        if ($robotsRes->getStatusCode() === 200) {
+            $this->passCount++;
+            echo "  [PASS] GET /robots.txt (HTTP 200)\n";
+        } else {
+            $this->failCount++;
+            echo "  [FAIL] GET /robots.txt -> Status " . $robotsRes->getStatusCode() . "\n";
+        }
     }
 
     private function testTaxonomyEndpoints(): void
