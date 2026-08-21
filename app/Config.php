@@ -72,6 +72,7 @@ final class Config
                 "username" => (string) self::env("DB_USERNAME", "root"),
                 "password" => (string) self::env("DB_PASSWORD", "default000"),
                 "charset" => (string) self::env("DB_CHARSET", "utf8mb4"),
+                "persistent" => (bool) self::env("DB_PERSISTENT", false),
             ],
             "cache" => [
                 "driver" => "file",

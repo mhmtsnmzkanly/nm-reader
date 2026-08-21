@@ -27,20 +27,20 @@ $container = require __DIR__ . '/../dependencies.php';
 
 $sleep = 5;
 $limit = 50;
+$once = false;
 
 // Parse arguments
 foreach (array_slice($argv, 1) as $arg) {
     if (str_starts_with($arg, '--sleep=')) $sleep = (int) substr($arg, 8);
     if (str_starts_with($arg, '--limit=')) $limit = (int) substr($arg, 8);
+    if ($arg === '--once') $once = true;
 }
 
 /** @var QueueService $queue */
 $queue = $container->get(QueueService::class);
 
-echo "--- Job Queue Worker Started (PID: " . getmypid() . ") ---
-";
-echo "Config: sleep=$sleep seconds, batch_limit=$limit jobs
-";
+echo "--- Job Queue Worker Started (PID: " . getmypid() . ") ---" . PHP_EOL;
+echo "Config: mode=" . ($once ? 'single-run' : 'daemon') . ", sleep=$sleep seconds, batch_limit=$limit jobs" . PHP_EOL;
 
 // Graceful stop handling (SIGTERM / SIGINT)
 $running = true;
@@ -54,16 +54,21 @@ while ($running) {
     try {
         $results = $queue->runOnce($limit);
         
-        if ($results['processed'] > 0) {
-            echo "[" . date('Y-m-d H:i:s') . "] Processed: " . $results['processed'] . " | Failed: " . $results['failed'] . "
-";
+        if ($results['processed'] > 0 || $once) {
+            echo "[" . date('Y-m-d H:i:s') . "] Processed: " . $results['processed'] . " | Failed: " . $results['failed'] . " | Scanned: " . $results['scanned'] . PHP_EOL;
+        }
+
+        if ($once) {
+            break;
         }
         
         // Wait before next check
         sleep($sleep);
     } catch (\Throwable $e) {
-        echo "CRITICAL ERROR: " . $e->getMessage() . "
-";
+        echo "CRITICAL ERROR: " . $e->getMessage() . PHP_EOL;
+        if ($once) {
+            break;
+        }
         sleep(10); // Wait longer on crash
     }
 }

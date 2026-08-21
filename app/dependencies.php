@@ -66,11 +66,15 @@ $builder->addDefinitions([
         }
         $db = $settings['database'];
         $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $db['host'], $db['port'], $db['database'], $db['charset']);
-        return new \PDO($dsn, $db['username'], $db['password'], [
+        $options = [
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             \PDO::ATTR_EMULATE_PREPARES => false,
-        ]);
+        ];
+        if (!empty($db['persistent'])) {
+            $options[\PDO::ATTR_PERSISTENT] = true;
+        }
+        return new \PDO($dsn, $db['username'], $db['password'], $options);
     },
 
     CacheService::class => DI\autowire(CacheService::class)
@@ -106,6 +110,7 @@ $builder->addDefinitions([
 
     RequestIdMiddleware::class => DI\autowire(RequestIdMiddleware::class),
     \App\Middleware\ApiAuthMiddleware::class => DI\autowire(\App\Middleware\ApiAuthMiddleware::class),
+    \App\Middleware\SecurityHeadersMiddleware::class => DI\autowire(\App\Middleware\SecurityHeadersMiddleware::class),
     I18nMiddleware::class => DI\autowire(I18nMiddleware::class),
 
     UserRepository::class => DI\autowire(UserRepository::class),

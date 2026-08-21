@@ -22,6 +22,7 @@ $isInstallRoute = str_contains($requestUri, 'install-63e4qq3');
 
 // CORS must be early in the stack to handle preflight OPTIONS
 $app->add(\App\Middleware\CorsMiddleware::class);
+$app->add(\App\Middleware\SecurityHeadersMiddleware::class);
 
 // Session and Auth Middleware
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $settings, $isInstallRoute): ResponseInterface {
