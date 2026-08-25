@@ -18,23 +18,28 @@ export default defineConfig(() => {
         input: path.resolve(__dirname, "app.html"),
         output: {
           // --- 1. DOSYA ADLANDIRMA VE KLASÖRLEME ---
-          entryFileNames: "assets/js/[name]-[hash].js",
-          chunkFileNames: "assets/js/[name]-[hash].js",
+          entryFileNames: "assets/js/[hash]/[name].js",
+          chunkFileNames: "assets/js/[hash]/[name].js",
 
           // Statik varlıkları türlerine göre ayrı alt klasörlere yerleştirme:
           assetFileNames: (assetInfo) => {
             const name = assetInfo.name || "";
 
+            // index.html to app.html for backend
+            if (name === 'index.html')
+              return 'app.html';
+
             if (/\.(woff|woff2|eot|ttf|otf)$/i.test(name)) {
-              return "assets/fonts/[name]-[hash][extname]";
+              return "assets/fonts/[hash]/[name][extname]";
             }
+
             if (/\.(png|jpe?g|svg|gif|webp|ico)$/i.test(name)) {
-              return "assets/images/[name]-[hash][extname]";
+              return "assets/images/[hash]/[name][extname]";
             }
             if (/\.css$/i.test(name)) {
-              return "assets/css/[name]-[hash][extname]";
+              return "assets/css/[hash]/[name][extname]";
             }
-            return "assets/[name]-[hash][extname]";
+            return "assets/[hash]/[name][extname]";
           },
 
           // --- 2. CHUNK BÖLME (MANUAL CHUNKS) ---
