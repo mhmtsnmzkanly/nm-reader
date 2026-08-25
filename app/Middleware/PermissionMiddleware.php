@@ -30,14 +30,14 @@ final class PermissionMiddleware implements MiddlewareInterface
     /**
      * Verifies user permissions against the required list.
      */
+    #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $permissions = $request->getAttribute('permissions', []);
+        $permissions = (array) $request->getAttribute('permissions', []);
 
-        foreach ($this->required as $perm) {
-            if (!in_array($perm, $permissions, true)) {
-                return ResponseHelper::error(403, 'Insufficient permissions');
-            }
+        $hasAll = array_all($this->required, static fn(string $perm): bool => in_array($perm, $permissions, true));
+        if (!$hasAll) {
+            return ResponseHelper::error(403, 'Insufficient permissions');
         }
 
         return $handler->handle($request);

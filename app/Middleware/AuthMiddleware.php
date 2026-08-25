@@ -45,6 +45,7 @@ final class AuthMiddleware implements MiddlewareInterface
     /**
      * Processes the request identity.
      */
+    #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $userId = $request->getAttribute('user_id') ?? ($_SESSION['user_id'] ?? null);

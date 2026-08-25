@@ -3,7 +3,7 @@
   "description": "Online Novel&Manga Reader",
   "type": "project",
   "require": {
-    "php": "^8.3",
+    "php": ">=8.4",
     "slim/slim": "^4.13",
     "slim/psr7": "^1.7",
     "php-di/php-di": "^7.0",

@@ -19,7 +19,7 @@ namespace App\Services;
 final class CacheService
 {
     /** @var string Filename used to track all active cache keys. */
-    private const INDEX_FILE = '.key_index.json';
+    private const string INDEX_FILE = '.key_index.json';
 
     /**
      * @param string $cachePath Path to the storage directory.
@@ -303,7 +303,11 @@ final class CacheService
         }
 
         $raw = file_get_contents($file);
-        if ($raw === false) {
+        if ($raw === false || !json_validate($raw)) {
+            if ($raw !== false) {
+                @unlink($file);
+                $this->unregisterKey($key);
+            }
             return ['found' => false, 'value' => null];
         }
 

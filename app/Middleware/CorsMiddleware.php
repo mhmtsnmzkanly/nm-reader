@@ -18,6 +18,7 @@ use Slim\Psr7\Response;
  */
 final class CorsMiddleware implements MiddlewareInterface
 {
+    #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $origin = $request->getHeaderLine('Origin');

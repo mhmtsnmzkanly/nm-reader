@@ -24,6 +24,7 @@ final class RequestIdMiddleware implements MiddlewareInterface
     /**
      * Assigns a unique ID to the request lifecycle.
      */
+    #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $requestId = bin2hex(random_bytes(8));

@@ -27,6 +27,7 @@ final class CsrfMiddleware implements MiddlewareInterface
     /**
      * Processes token validation for the current request.
      */
+    #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (in_array($request->getMethod(), ['GET', 'HEAD', 'OPTIONS'], true)) {

@@ -70,7 +70,7 @@ final class SeriesService
             $row['type_path'] = $this->toTypeSegment($seriesType);
             $row['slug'] = (string)($row['series_slug'] ?? ''); // Ensure slug key exists
             $row['chapter_number'] = ChapterNumber::normalize($row['chapter_number'] ?? '');
-            $row['cover_image'] = $row['cover_image'] ?: '/assets/img/logo.svg'; 
+            $row['cover_image'] = ($row['cover_image'] ?? null) ?: '/assets/img/logo.svg'; 
             return $row;
         }, $recentChapters);
 

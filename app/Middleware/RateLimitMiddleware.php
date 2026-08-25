@@ -41,6 +41,7 @@ final class RateLimitMiddleware implements MiddlewareInterface
     /**
      * Checks if the client IP has exceeded its request quota.
      */
+    #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
