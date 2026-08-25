@@ -172,6 +172,9 @@ final class Config
             $group->get("/preferences", [WebController::class, "home"]);
             $group->get("/notifications", [WebController::class, "home"]);
             $group->get("/blogs", [WebController::class, "blog"]);
+            $group->get("/blogs/new", [WebController::class, "home"]);
+            $group->get("/my-blogs", [WebController::class, "home"]);
+            $group->get("/blog/{slug}", [WebController::class, "blog"]);
             $group->get("/blogs/{slug}", [WebController::class, "blog"]);
             $group->get("/chat", [WebController::class, "chat"]);
             $group->get("/search", [WebController::class, "search"]);
@@ -179,6 +182,7 @@ final class Config
             $group->get("/tag/{slug}", [WebController::class, "tag"]);
             $group->get("/{type:" . $typePattern . "}", [WebController::class, "listing"]);
             $group->get("/{type:" . $typePattern . "}/{slug}/chapter/{chapterNumber}", [WebController::class, "chapter"]);
+            $group->get("/{type:" . $typePattern . "}/{slug}/chapters", [WebController::class, "content"]);
             $group->get("/{type:" . $typePattern . "}/{slug}", [WebController::class, "content"]);
             $group->get("/login", [WebController::class, "login"]);
             $group->get("/register", [WebController::class, "login"]);
