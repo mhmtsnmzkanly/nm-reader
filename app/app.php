@@ -22,6 +22,12 @@ AppFactory::setContainer($container);
 
 $app = AppFactory::create();
 
+// Enable FastRoute precompiled route caching in production for instant dispatching
+if (!(bool) ($settings['app']['debug'] ?? false)) {
+    $cacheFile = (string) ($settings['cache']['path'] ?? ($basePath . '/storage/cache')) . '/fastroute_cache.php';
+    $app->getRouteCollector()->setCacheFile($cacheFile);
+}
+
 require __DIR__ . '/middleware.php';
 
 // Register all routes from the unified Config class

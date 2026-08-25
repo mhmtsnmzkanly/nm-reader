@@ -26,6 +26,19 @@ $app->add(\App\Middleware\SecurityHeadersMiddleware::class);
 
 // Session and Auth Middleware
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $settings, $isInstallRoute): ResponseInterface {
+    $path = (string) $request->getUri()->getPath();
+    $isStaticPublicRoute = str_starts_with($path, '/media/public/')
+        || str_starts_with($path, '/api/v1/media/public/')
+        || $path === '/health'
+        || $path === '/robots.txt'
+        || $path === '/sitemap.xml'
+        || $request->getMethod() === 'OPTIONS';
+
+    // If pure static/public asset or health check, skip session initiation completely for maximum throughput
+    if ($isStaticPublicRoute) {
+        return $handler->handle($request);
+    }
+
     $sessionPath = (string) $settings['app']['session_path'];
     if (!is_dir($sessionPath)) {
         @mkdir($sessionPath, 0777, true);
@@ -196,6 +209,11 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     $response = $handler->handle($request);
     
     if ($isInstallRoute) return $response;
+
+    $path = (string) $request->getUri()->getPath();
+    if (str_starts_with($path, '/media/public/') || str_starts_with($path, '/api/v1/media/public/') || $path === '/health' || $path === '/robots.txt') {
+        return $response;
+    }
 
     try {
         $auditLogger = $container->get('logger.audit');
