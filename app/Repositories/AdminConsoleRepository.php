@@ -918,8 +918,8 @@ final class AdminConsoleRepository
                 t.name,
                 COALESCE(SUM(s.view_count), 0) AS view_total
              FROM analytics_snapshots_series_top s
-             INNER JOIN series_tag_map ct ON ct.content_id = s.content_id
-             INNER JOIN series_tags t ON t.id = ct.tag_id
+             INNER JOIN series_taxonomy_map ct ON ct.content_id = s.content_id
+             INNER JOIN taxonomies t ON t.id = ct.taxonomy_id AND t.type = "tag"
              WHERE s.stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)
              GROUP BY t.id, t.slug, t.name
              ORDER BY view_total DESC, t.name ASC
@@ -933,8 +933,8 @@ final class AdminConsoleRepository
                 g.name,
                 COALESCE(SUM(s.view_count), 0) AS view_total
              FROM analytics_snapshots_series_top s
-             INNER JOIN series_genre_map cg ON cg.content_id = s.content_id
-             INNER JOIN series_genres g ON g.id = cg.genre_id
+             INNER JOIN series_taxonomy_map cg ON cg.content_id = s.content_id
+             INNER JOIN taxonomies g ON g.id = cg.taxonomy_id AND g.type = "genre"
              WHERE s.stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)
              GROUP BY g.id, g.slug, g.name
              ORDER BY view_total DESC, g.name ASC
