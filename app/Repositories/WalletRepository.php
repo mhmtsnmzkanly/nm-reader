@@ -292,7 +292,10 @@ final class WalletRepository
     public function getChapterPrice(string $chapterId): int
     {
         $stmt = $this->pdo->prepare(
-            'SELECT price_amount
+            'SELECT CASE 
+                WHEN is_free_after IS NOT NULL AND is_free_after <= NOW() THEN 0 
+                ELSE price_amount 
+             END AS effective_price
              FROM chapters
              WHERE id = :chapter_id AND deleted_at IS NULL
              LIMIT 1'
@@ -305,7 +308,8 @@ final class WalletRepository
     public function getChapterPricing(string $chapterId): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT price_amount, price_last_update
+            'SELECT price_amount, price_last_update, published_at, is_free_after,
+                    CASE WHEN is_free_after IS NOT NULL AND is_free_after <= NOW() THEN 1 ELSE 0 END AS is_freed
              FROM chapters
              WHERE id = :chapter_id AND deleted_at IS NULL
              LIMIT 1'
@@ -313,12 +317,17 @@ final class WalletRepository
         $stmt->execute(['chapter_id' => $chapterId]);
         $row = $stmt->fetch();
         if (!$row) {
-            return ['price_coin' => 0, 'price_last_update' => null];
+            return ['price_coin' => 0, 'price_last_update' => null, 'published_at' => null, 'is_free_after' => null];
         }
 
+        $effectivePrice = !empty($row['is_freed']) ? 0 : max(0, (int) ($row['price_amount'] ?? 0));
+
         return [
-            'price_coin' => max(0, (int) ($row['price_amount'] ?? 0)),
+            'price_coin' => $effectivePrice,
+            'base_price' => max(0, (int) ($row['price_amount'] ?? 0)),
             'price_last_update' => $row['price_last_update'] ?? null,
+            'published_at' => $row['published_at'] ?? null,
+            'is_free_after' => $row['is_free_after'] ?? null,
         ];
     }
 

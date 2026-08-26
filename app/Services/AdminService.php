@@ -342,48 +342,34 @@ final class AdminService
                 $dataVal = implode('|', $validPages);
             }
 
-            $hasNumberCol = false;
-            try {
-                $check = $this->pdo->query("SHOW COLUMNS FROM chapters LIKE 'number'");
-                $hasNumberCol = $check !== false && (bool) $check->fetch();
-            } catch (\Throwable) {}
+            $hasNumberCol = true;
+            $publishedAt = !empty($payload['published_at']) ? date('Y-m-d H:i:s', strtotime((string)$payload['published_at'])) : date('Y-m-d H:i:s');
+            $priceAmount = max(0, (int)($payload['price_amount'] ?? 0));
+            $isFreeAfter = !empty($payload['is_free_after']) ? date('Y-m-d H:i:s', strtotime((string)$payload['is_free_after'])) : null;
 
-            if ($hasNumberCol) {
-                $stmt = $this->pdo->prepare(
-                    'INSERT INTO chapters (id, content_id, `number`, chapter_number, title, type, `text`, `image`, `data`, created_by, created_at)
-                     VALUES (:cid, :content_id, :number, :chapter_number, :title, :type, :text, :image, :data, :created_by, NOW())'
-                );
-                $stmt->execute([
-                    'cid' => $chapterId,
-                    'content_id' => $contentId,
-                    'number' => (float) $chapterNumber,
-                    'chapter_number' => $chapterNumber,
-                    'title' => $title,
-                    'type' => $chapterType,
-                    'text' => $chapterType === 'text' ? $dataVal : null,
-                    'image' => $chapterType === 'image' ? $dataVal : null,
-                    'data' => $dataVal,
-                    'created_by' => $moderatorId,
-                ]);
-            } else {
-                $stmt = $this->pdo->prepare(
-                    'INSERT INTO chapters (id, content_id, chapter_number, title, type, `data`, created_by, created_at)
-                     VALUES (:cid, :content_id, :chapter_number, :title, :type, :data, :created_by, NOW())'
-                );
-                $stmt->execute([
-                    'cid' => $chapterId,
-                    'content_id' => $contentId,
-                    'chapter_number' => $chapterNumber,
-                    'title' => $title,
-                    'type' => $chapterType,
-                    'data' => $dataVal,
-                    'created_by' => $moderatorId,
-                ]);
-            }
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO chapters (id, content_id, `number`, chapter_number, title, type, `text`, `image`, `data`, price_amount, published_at, is_free_after, created_by, created_at)
+                 VALUES (:cid, :content_id, :number, :chapter_number, :title, :type, :text, :image, :data, :price_amount, :published_at, :is_free_after, :created_by, NOW())'
+            );
+            $stmt->execute([
+                'cid' => $chapterId,
+                'content_id' => $contentId,
+                'number' => (float) $chapterNumber,
+                'chapter_number' => $chapterNumber,
+                'title' => $title,
+                'type' => $chapterType,
+                'text' => $chapterType === 'text' ? $dataVal : null,
+                'image' => $chapterType === 'image' ? $dataVal : null,
+                'data' => $dataVal,
+                'price_amount' => $priceAmount,
+                'published_at' => $publishedAt,
+                'is_free_after' => $isFreeAfter,
+                'created_by' => $moderatorId,
+            ]);
 
             // Update series chapter_count
             $this->pdo->prepare(
-                'UPDATE series SET chapter_count = (SELECT COUNT(*) FROM chapters WHERE content_id = :cid) WHERE id = :sid'
+                'UPDATE series SET chapter_count = (SELECT COUNT(*) FROM chapters WHERE content_id = :cid AND deleted_at IS NULL) WHERE id = :sid'
             )->execute(['cid' => $contentId, 'sid' => $contentId]);
 
             if ($moderatorId !== null) {
@@ -420,6 +406,9 @@ final class AdminService
             'chapter_number' => ChapterNumber::normalize($chapterNumber),
             'title' => $title,
             'type' => $chapterType,
+            'price_amount' => $priceAmount,
+            'published_at' => $publishedAt,
+            'is_free_after' => $isFreeAfter,
         ];
     }
 
@@ -446,7 +435,7 @@ final class AdminService
      */
     public function listChapters(string $contentId, int $page, int $perPage): array
     {
-        $items = $this->chapters->listByContentId($contentId, $page, $perPage);
+        $items = $this->chapters->listByContentId($contentId, $page, $perPage, true);
         $items = array_map(static function (array $row): array {
             $row['chapter_number'] = ChapterNumber::normalize($row['chapter_number'] ?? '');
             return $row;
@@ -572,7 +561,7 @@ final class AdminService
         }
 
         // Fetch current to calculate diff
-        $stmt = $this->pdo->prepare('SELECT chapter_number, title, type, `data` FROM chapters WHERE id = :id');
+        $stmt = $this->pdo->prepare('SELECT chapter_number, title, type, `data`, price_amount, published_at, is_free_after FROM chapters WHERE id = :id');
         $stmt->execute(['id' => $chapterId]);
         $current = $stmt->fetch();
 
@@ -597,17 +586,24 @@ final class AdminService
             $dataVal = implode('|', $pages);
         }
 
+        $priceAmount = array_key_exists('price_amount', $payload) ? max(0, (int) $payload['price_amount']) : (int) ($current['price_amount'] ?? 0);
+        $publishedAt = array_key_exists('published_at', $payload) ? (!empty($payload['published_at']) ? date('Y-m-d H:i:s', strtotime((string)$payload['published_at'])) : null) : ($current['published_at'] ?? null);
+        $isFreeAfter = array_key_exists('is_free_after', $payload) ? (!empty($payload['is_free_after']) ? date('Y-m-d H:i:s', strtotime((string)$payload['is_free_after'])) : null) : ($current['is_free_after'] ?? null);
+
         $diff = [];
         $newValues = [
             'chapter_number' => $chapterNumber,
             'title' => $title,
             'type' => $type,
-            'data' => $dataVal
+            'data' => $dataVal,
+            'price_amount' => $priceAmount,
+            'published_at' => $publishedAt,
+            'is_free_after' => $isFreeAfter,
         ];
 
         foreach ($newValues as $key => $val) {
             if (($current[$key] ?? null) !== $val) {
-                $beforeVal = $current[$key];
+                $beforeVal = $current[$key] ?? null;
                 $afterVal = $val;
                 if ($key === 'data' && strlen((string)$val) > 255) {
                     $beforeVal = '[LARGE CONTENT]';
@@ -621,8 +617,15 @@ final class AdminService
         try {
             $this->chapters->updateChapter($chapterId, $chapterNumber, $title, $type);
 
-            $this->pdo->prepare('UPDATE chapters SET `data` = :data WHERE id = :id')
-                ->execute(['data' => $dataVal, 'id' => $chapterId]);
+            $this->pdo->prepare('UPDATE chapters SET `data` = :data, `number` = :number, `price_amount` = :price, `published_at` = :pub, `is_free_after` = :free WHERE id = :id')
+                ->execute([
+                    'data' => $dataVal,
+                    'number' => (float) $chapterNumber,
+                    'price' => $priceAmount,
+                    'pub' => $publishedAt,
+                    'free' => $isFreeAfter,
+                    'id' => $chapterId
+                ]);
 
             if ($moderatorId !== null && !empty($diff)) {
                 $this->adminConsole->createModerationAction($moderatorId, "chapter", $chapterId, "update", json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE));
@@ -641,6 +644,73 @@ final class AdminService
         $this->cache->delete(sprintf('content_%s', $slug));
         $this->cache->delete(sprintf('content_%s_%s', $typeSlug, $slug));
         $this->invalidateListingCaches();
+    }
+
+    /**
+     * Executes bulk actions on chapters (delete, publish, schedule, set_price, reorder).
+     */
+    public function bulkChapterAction(array $chapterIds, string $action, array $params = [], ?string $moderatorId = null): array
+    {
+        $chapterIds = array_values(array_unique(array_filter(array_map('strval', $chapterIds))));
+        if (empty($chapterIds)) {
+            throw new \InvalidArgumentException('No chapters selected');
+        }
+
+        $affected = 0;
+        $this->pdo->beginTransaction();
+        try {
+            switch ($action) {
+                case 'delete':
+                    $inPlaceholders = implode(',', array_fill(0, count($chapterIds), '?'));
+                    $stmt = $this->pdo->prepare("UPDATE chapters SET deleted_at = NOW() WHERE id IN ($inPlaceholders) AND deleted_at IS NULL");
+                    $stmt->execute($chapterIds);
+                    $affected = $stmt->rowCount();
+                    break;
+                case 'publish':
+                    $inPlaceholders = implode(',', array_fill(0, count($chapterIds), '?'));
+                    $stmt = $this->pdo->prepare("UPDATE chapters SET published_at = NOW() WHERE id IN ($inPlaceholders)");
+                    $stmt->execute($chapterIds);
+                    $affected = $stmt->rowCount();
+                    break;
+                case 'schedule':
+                    $date = !empty($params['published_at']) ? date('Y-m-d H:i:s', strtotime((string) $params['published_at'])) : date('Y-m-d H:i:s');
+                    $inPlaceholders = implode(',', array_fill(0, count($chapterIds), '?'));
+                    $stmt = $this->pdo->prepare("UPDATE chapters SET published_at = ? WHERE id IN ($inPlaceholders)");
+                    $stmt->execute(array_merge([$date], $chapterIds));
+                    $affected = $stmt->rowCount();
+                    break;
+                case 'set_price':
+                    $price = max(0, (int) ($params['price_amount'] ?? 0));
+                    $freeAfter = !empty($params['is_free_after']) ? date('Y-m-d H:i:s', strtotime((string) $params['is_free_after'])) : null;
+                    $inPlaceholders = implode(',', array_fill(0, count($chapterIds), '?'));
+                    $stmt = $this->pdo->prepare("UPDATE chapters SET price_amount = ?, is_free_after = ? WHERE id IN ($inPlaceholders)");
+                    $stmt->execute(array_merge([$price, $freeAfter], $chapterIds));
+                    $affected = $stmt->rowCount();
+                    break;
+                default:
+                    throw new \InvalidArgumentException("Unsupported bulk action: {$action}");
+            }
+
+            if ($moderatorId !== null && $affected > 0) {
+                $this->adminConsole->createModerationAction(
+                    $moderatorId,
+                    'chapter',
+                    implode(',', array_slice($chapterIds, 0, 5)),
+                    'bulk_' . $action,
+                    "Bulk {$action} applied to {$affected} chapters"
+                );
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+
+        $this->invalidateListingCaches();
+        return ['action' => $action, 'affected' => $affected];
     }
 
     public function createGenre(string $name): array

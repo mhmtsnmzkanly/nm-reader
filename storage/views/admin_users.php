@@ -53,5 +53,22 @@
         </table>
       </div>
     </div>
+
+    <div class="card card-outline card-primary mt-4">
+      <div class="card-header border-0 d-flex justify-content-between align-items-center">
+        <h3 class="card-title"><i class="bi bi-shield-lock-fill me-2"></i>Yetki ve Rol Matrisi (RBAC Matrix)</h3>
+        <button class="btn btn-sm btn-tool" onclick="NMR_ADMIN_USERS.loadPermissionMatrix()"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+      <div class="card-body p-0 table-responsive" id="permission-matrix-container">
+        <table class="table table-sm table-bordered table-hover align-middle mb-0 fs-8">
+          <thead class="table-dark" id="matrix-head">
+            <tr><th>Yetki Grubu / İzin Tanımı</th><th class="text-center">Super Admin</th><th class="text-center">Admin</th><th class="text-center">Editor</th><th class="text-center">Translator</th><th class="text-center">Moderator</th></tr>
+          </thead>
+          <tbody id="matrix-body">
+            <tr><td colspan="6" class="text-center py-3 text-muted">Yetki matrisi yükleniyor...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>

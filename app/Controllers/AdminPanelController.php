@@ -12,9 +12,7 @@ use App\Services\QueueService;
 use App\Services\MetricsService;
 use App\Services\RetentionService;
 use App\Services\UploadService;
-use App\Services\SystemLogService;
-use App\Services\AnalyticsAggregationService;
-use App\Services\WalletService;
+use App\Services\WebhookService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -34,7 +32,9 @@ final class AdminPanelController
         private readonly UploadService $uploadService,
         private readonly SystemLogService $logs,
         private readonly AnalyticsAggregationService $aggregation,
-        private readonly WalletService $wallets
+        private readonly WalletService $wallets,
+        private readonly WebhookService $webhooks,
+        private readonly \App\Repositories\AdminConsoleRepository $adminConsoleRepo
     ) {
     }
 
@@ -602,6 +602,149 @@ final class AdminPanelController
         } catch (\InvalidArgumentException $exception) {
             return ResponseHelper::error(400, $exception->getMessage());
         }
+    }
+
+    // --- BULK CHAPTER OPERATIONS ---
+    public function bulkChapters(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            $chapterIds = (array) ($payload['ids'] ?? []);
+            $action = (string) ($payload['action'] ?? '');
+            $params = (array) ($payload['params'] ?? []);
+
+            $result = $this->adminService->bulkChapterAction($chapterIds, $action, $params, $modId);
+            return ResponseHelper::success($result);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        }
+    }
+
+    // --- SERIES TEAM ASSIGNMENTS ---
+    public function listSeriesTeam(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        return ResponseHelper::success($this->adminConsoleRepo->listSeriesTeam((string) $args['id']));
+    }
+
+    public function assignSeriesTeam(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $userId = trim((string) ($payload['user_id'] ?? ''));
+        $role = trim((string) ($payload['role'] ?? 'translator'));
+
+        if ($userId === '') {
+            return ResponseHelper::error(400, 'user_id is required');
+        }
+
+        $result = $this->adminConsoleRepo->assignTeamMember((string) $args['id'], $userId, $role);
+        return ResponseHelper::created($result);
+    }
+
+    public function removeSeriesTeam(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $assignmentId = (int) ($args['assignmentId'] ?? 0);
+        $deleted = $this->adminConsoleRepo->removeTeamMember($assignmentId);
+        return ResponseHelper::success(['deleted' => $deleted]);
+    }
+
+    // --- PERMISSION MATRIX ---
+    public function permissionMatrix(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $roles = $this->console->listRolesWithPermissions();
+        $permissions = $this->adminConsoleRepo->getAllSystemPermissions();
+        return ResponseHelper::success([
+            'roles' => $roles,
+            'permissions' => $permissions,
+        ]);
+    }
+
+    // --- SITE SETTINGS ---
+    public function getSiteConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->siteConfig->all());
+    }
+
+    public function updateSiteConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            $updated = $this->siteConfig->update($payload, $modId);
+            return ResponseHelper::success($updated);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        }
+    }
+
+    // --- WEBHOOKS ---
+    public function listWebhooks(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->webhooks->listWebhooks());
+    }
+
+    public function createWebhook(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            return ResponseHelper::created($this->webhooks->createWebhook($payload));
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        }
+    }
+
+    public function updateWebhook(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $this->webhooks->updateWebhook((int) $args['id'], $payload);
+            return ResponseHelper::success();
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        }
+    }
+
+    public function deleteWebhook(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $this->webhooks->deleteWebhook((int) $args['id']);
+            return ResponseHelper::success(['deleted' => true]);
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        }
+    }
+
+    public function testWebhook(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $result = $this->webhooks->testWebhook((int) $args['id']);
+            return ResponseHelper::success($result);
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        }
+    }
+
+    // --- ADVANCED ANALYTICS ---
+    public function monetizationAnalytics(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $q = $request->getQueryParams();
+        $days = (int) ($q['days'] ?? 30);
+        return ResponseHelper::success($this->metricsService->monetizationAnalytics($days));
+    }
+
+    public function searchInsights(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $q = $request->getQueryParams();
+        $days = (int) ($q['days'] ?? 30);
+        $limit = (int) ($q['limit'] ?? 20);
+        return ResponseHelper::success($this->metricsService->searchInsights($days, $limit));
+    }
+
+    public function seriesReadingFunnel(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        return ResponseHelper::success($this->metricsService->seriesReadingFunnel((string) $args['id']));
     }
 
     // --- UTILS ---

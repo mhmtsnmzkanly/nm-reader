@@ -153,6 +153,8 @@ $builder->addDefinitions([
     RetentionService::class => DI\autowire(RetentionService::class),
     SiteConfigService::class => DI\autowire(SiteConfigService::class),
     WalletService::class => DI\autowire(WalletService::class),
+    \App\Services\WebhookService::class => DI\autowire(\App\Services\WebhookService::class),
+    \App\Middleware\MaintenanceMiddleware::class => DI\autowire(\App\Middleware\MaintenanceMiddleware::class),
     \App\Services\MediaService::class => DI\autowire(\App\Services\MediaService::class)
         ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/storage/media/'),
     \App\Services\SeoService::class => DI\autowire(\App\Services\SeoService::class)

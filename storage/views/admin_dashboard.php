@@ -117,8 +117,38 @@
       <!-- Retention & Search -->
       <div class="col-lg-3 mb-4">
         <div class="card card-outline card-success h-100">
-          <div class="card-header border-0"><h3 class="card-title">Retention & Search</h3></div>
-          <div class="card-body pt-0" id="metrics-retention-search"></div>
+    <!-- Advanced Monetization & Search Insights Section -->
+    <div class="row mt-4" id="advanced-analytics-section">
+      <div class="col-lg-6 mb-4">
+        <div class="card card-outline card-warning h-100">
+          <div class="card-header border-0 d-flex justify-content-between align-items-center">
+            <h3 class="card-title"><i class="bi bi-coin me-2"></i>Monetization & Coin Flow (30d)</h3>
+            <span class="badge bg-warning text-dark" id="monetization-total-coins">0 Coins Unlocked</span>
+          </div>
+          <div class="card-body p-0 table-responsive">
+            <table class="table table-sm align-middle mb-0 fs-8">
+              <thead class="table-dark"><tr><th>En Çok Gelir Getiren Seri</th><th>Tür</th><th class="text-end">Kilit Açma</th><th class="text-end">Toplam Coin</th></tr></thead>
+              <tbody id="monetization-top-series">
+                <tr><td colspan="4" class="text-center py-3 text-muted">Yükleniyor...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <div class="card card-outline card-danger h-100">
+          <div class="card-header border-0 d-flex justify-content-between align-items-center">
+            <h3 class="card-title"><i class="bi bi-search-heart me-2"></i>Sıfır Sonuç Dönen Aramalar (Fırsat Analizi)</h3>
+            <span class="badge bg-danger">Zero-Results</span>
+          </div>
+          <div class="card-body p-0 table-responsive">
+            <table class="table table-sm align-middle mb-0 fs-8">
+              <thead class="table-dark"><tr><th>Aranan Kelime / Terim</th><th class="text-center">Arama Sayısı</th><th class="text-end">Son Arama</th></tr></thead>
+              <tbody id="search-insights-zero">
+                <tr><td colspan="3" class="text-center py-3 text-muted">Yükleniyor...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

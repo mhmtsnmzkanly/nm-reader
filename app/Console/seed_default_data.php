@@ -92,7 +92,27 @@ try {
     foreach ($packages as $pkg) {
         $stmtCatalog->execute($pkg);
     }
-    echo "✅ Default coin catalog items seeded.\n";
+    // 4. Seed Default System Settings
+    $settingsData = [
+        ['site_name', 'NM Reader', 'general'],
+        ['site_slogan', 'En İyi Çevrimiçi Manga ve Novel Okuyucusu', 'general'],
+        ['default_theme', 'dark', 'appearance'],
+        ['logo_url', '', 'appearance'],
+        ['favicon_url', '', 'appearance'],
+        ['footer_text', '© 2026 NM Reader. Tüm hakları saklıdır.', 'general'],
+        ['maintenance_mode', 'false', 'security'],
+        ['maintenance_whitelist_ips', '["127.0.0.1", "::1"]', 'security']
+    ];
+
+    $stmtSettings = $pdo->prepare(
+        "INSERT INTO system_settings (setting_key, setting_value, setting_group)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value), setting_group=VALUES(setting_group)"
+    );
+    foreach ($settingsData as $s) {
+        $stmtSettings->execute($s);
+    }
+    echo "✅ Default system settings seeded.\n";
 
     echo "\n🎉 Database seeding completed successfully!\n";
 

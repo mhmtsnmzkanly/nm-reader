@@ -1253,6 +1253,107 @@ final class AdminConsoleRepository
         return $this->commentsHasBlogId;
     }
 
+    public function listSeriesTeam(string $seriesId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT t.id, t.series_id, t.user_id, t.role, t.created_at, u.username, u.email, u.profile_image
+             FROM series_team_assignments t
+             INNER JOIN users u ON u.id = t.user_id
+             WHERE t.series_id = :series_id
+             ORDER BY t.created_at ASC'
+        );
+        $stmt->execute(['series_id' => $seriesId]);
+        return $stmt->fetchAll();
+    }
+
+    public function assignTeamMember(string $seriesId, string $userId, string $role): array
+    {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO series_team_assignments (series_id, user_id, role, created_at)
+             VALUES (:sid, :uid, :role, NOW())
+             ON DUPLICATE KEY UPDATE role = VALUES(role)'
+        );
+        $stmt->execute([
+            'sid' => $seriesId,
+            'uid' => $userId,
+            'role' => $role,
+        ]);
+        $id = (int) $this->pdo->lastInsertId();
+
+        return [
+            'id' => $id,
+            'series_id' => $seriesId,
+            'user_id' => $userId,
+            'role' => $role,
+        ];
+    }
+
+    public function removeTeamMember(int $assignmentId): bool
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM series_team_assignments WHERE id = :id');
+        $stmt->execute(['id' => $assignmentId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function canUserManageSeries(string $userId, string $seriesId): bool
+    {
+        // Check if user is assigned to this series
+        $stmt = $this->pdo->prepare('SELECT 1 FROM series_team_assignments WHERE series_id = :sid AND user_id = :uid LIMIT 1');
+        $stmt->execute(['sid' => $seriesId, 'uid' => $userId]);
+        if ($stmt->fetchColumn() !== false) {
+            return true;
+        }
+
+        // Check if user is super admin / admin
+        $uStmt = $this->pdo->prepare('SELECT roles FROM users WHERE id = :uid LIMIT 1');
+        $uStmt->execute(['uid' => $userId]);
+        $roles = (string) $uStmt->fetchColumn();
+        return str_contains($roles, '1') || str_contains($roles, '2') || str_contains($roles, 'admin');
+    }
+
+    public function getAllSystemPermissions(): array
+    {
+        return [
+            'Content' => [
+                'admin.content.view' => 'İçerikleri Görüntüleme',
+                'admin.content.create' => 'Yeni Seri/İçerik Ekleme',
+                'admin.content.update' => 'İçerik Bilgilerini Düzenleme',
+                'admin.content.delete' => 'İçerik Silme (Soft-Delete)',
+            ],
+            'Chapters' => [
+                'admin.chapters.view' => 'Bölüm Listesi ve Detayını Görme',
+                'admin.chapters.create' => 'Bölüm Yükleme (Resim/Metin)',
+                'admin.chapters.update' => 'Bölüm Düzenleme ve Fiyatlandırma',
+                'admin.chapters.delete' => 'Bölüm Silme',
+                'admin.chapters.bulk' => 'Toplu Bölüm İşlemleri',
+            ],
+            'Blogs' => [
+                'admin.blogs.view' => 'Blogları Listeleme',
+                'admin.blogs.approve' => 'Blog Onaylama / Reddetme',
+                'admin.blogs.delete' => 'Blog Silme',
+            ],
+            'Comments' => [
+                'admin.comments.view' => 'Yorumları Listeleme',
+                'admin.comments.delete' => 'Yorum Silme / Moderasyon',
+            ],
+            'Users & RBAC' => [
+                'admin.users.view' => 'Kullanıcıları Listeleme',
+                'admin.users.update' => 'Kullanıcı Rolü & Bilgilerini Güncelleme',
+                'admin.roles.manage' => 'Yetki ve Rol Matrisini Yönetme',
+                'admin.team.manage' => 'Seri Ekip Atamalarını Yönetme',
+            ],
+            'Monetization' => [
+                'admin.monetization.view' => 'Cüzdan ve Satışları Görme',
+                'admin.monetization.edit' => 'Paket Oluşturma ve Bakiye Müdahalesi',
+            ],
+            'Operations & Settings' => [
+                'admin.settings.manage' => 'Site Kimliği ve Sistem Ayarlarını Değiştirme',
+                'admin.ops.trigger' => 'Önbellek, Yedek ve Kuyruk Tetikleme',
+                'admin.logs.view' => 'Sistem ve Güvenlik Loglarını İnceleme',
+            ],
+        ];
+    }
+
     private function queryList(string $sql, array $params): array
     {
         try {

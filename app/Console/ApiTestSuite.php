@@ -20,10 +20,12 @@ use PDOStatement;
 class MockPdoStatement extends PDOStatement
 {
     private array $data;
+    private int $cursor = 0;
 
     public function __construct(array $data = [])
     {
         $this->data = $data;
+        $this->cursor = 0;
     }
 
     public function bindValue(string|int $param, mixed $value, int $type = PDO::PARAM_STR): bool
@@ -38,6 +40,7 @@ class MockPdoStatement extends PDOStatement
 
     public function execute(?array $params = null): bool
     {
+        $this->cursor = 0;
         return true;
     }
 
@@ -53,7 +56,10 @@ class MockPdoStatement extends PDOStatement
 
     public function fetch(int $mode = PDO::FETCH_DEFAULT, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0): mixed
     {
-        return $this->data[0] ?? false;
+        if (isset($this->data[$this->cursor])) {
+            return $this->data[$this->cursor++];
+        }
+        return false;
     }
 
     public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array
@@ -594,6 +600,21 @@ final class ApiTestSuite
             ['POST', '/api/v1/admin/moderation-actions', 'POST /api/v1/admin/moderation-actions'],
             ['GET', '/api/v1/admin/logs/access', 'GET /api/v1/admin/logs/access'],
             ['GET', '/api/v1/admin/logs/error', 'GET /api/v1/admin/logs/error'],
+            ['POST', '/api/v1/admin/chapters/bulk', 'POST /api/v1/admin/chapters/bulk'],
+            ['GET', '/api/v1/admin/series/c12345/team', 'GET /api/v1/admin/series/{id}/team'],
+            ['POST', '/api/v1/admin/series/c12345/team', 'POST /api/v1/admin/series/{id}/team'],
+            ['DELETE', '/api/v1/admin/series/team/1', 'DELETE /api/v1/admin/series/team/{assignmentId}'],
+            ['GET', '/api/v1/admin/rbac/matrix', 'GET /api/v1/admin/rbac/matrix'],
+            ['GET', '/api/v1/admin/config/site', 'GET /api/v1/admin/config/site'],
+            ['POST', '/api/v1/admin/config/site', 'POST /api/v1/admin/config/site'],
+            ['GET', '/api/v1/admin/webhooks', 'GET /api/v1/admin/webhooks'],
+            ['POST', '/api/v1/admin/webhooks', 'POST /api/v1/admin/webhooks'],
+            ['PUT', '/api/v1/admin/webhooks/1', 'PUT /api/v1/admin/webhooks/{id}'],
+            ['DELETE', '/api/v1/admin/webhooks/1', 'DELETE /api/v1/admin/webhooks/{id}'],
+            ['POST', '/api/v1/admin/webhooks/1/test', 'POST /api/v1/admin/webhooks/{id}/test'],
+            ['GET', '/api/v1/admin/analytics/monetization', 'GET /api/v1/admin/analytics/monetization'],
+            ['GET', '/api/v1/admin/analytics/search-insights', 'GET /api/v1/admin/analytics/search-insights'],
+            ['GET', '/api/v1/admin/analytics/funnel/c12345', 'GET /api/v1/admin/analytics/funnel/{id}'],
         ];
 
         foreach ($adminRoutes as [$method, $uri, $endpointKey]) {

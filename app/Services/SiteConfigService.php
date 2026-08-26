@@ -15,16 +15,21 @@ final class SiteConfigService
      * @var array<string, array{type:string,default:mixed,max?:int,allowed?:array<int,string>}>
      */
     private const DEFINITIONS = [
-        'site_name' => ['type' => 'string', 'default' => 'NovelMangaReader', 'max' => 120],
+        'site_name' => ['type' => 'string', 'default' => 'NM Reader', 'max' => 120],
+        'site_slogan' => ['type' => 'string', 'default' => 'En İyi Çevrimiçi Manga ve Novel Okuyucusu', 'max' => 255],
         'site_abbreviation' => ['type' => 'string', 'default' => 'NMR', 'max' => 20],
         'site_logo' => ['type' => 'string', 'default' => '/assets/img/logo.svg', 'max' => 255],
+        'favicon_url' => ['type' => 'string', 'default' => '/favicon.ico', 'max' => 255],
+        'footer_text' => ['type' => 'string', 'default' => '© 2026 NM Reader. Tüm hakları saklıdır.', 'max' => 500],
         'site_description' => ['type' => 'string', 'default' => 'Read manga, manhwa, webtoon and novels.', 'max' => 1000],
         'enforce_https' => ['type' => 'bool', 'default' => false],
         'site_address' => ['type' => 'string', 'default' => '', 'max' => 255],
-        'default_language' => ['type' => 'string', 'default' => 'en', 'allowed' => ['tr', 'en']],
+        'default_language' => ['type' => 'string', 'default' => 'tr', 'allowed' => ['tr', 'en']],
         'default_theme' => ['type' => 'string', 'default' => 'dark', 'allowed' => ['default', 'dark', 'royal', 'bootstrap', 'material', 'apple', 'glass']],
         'default_profile_image' => ['type' => 'string', 'default' => '/assets/img/default-profile.png', 'max' => 255],
         'default_content_cover_image' => ['type' => 'string', 'default' => '/assets/img/covers/placeholder.svg', 'max' => 255],
+        'maintenance_mode' => ['type' => 'bool', 'default' => false],
+        'maintenance_whitelist_ips' => ['type' => 'json', 'default' => ['127.0.0.1', '::1']],
         'integrations' => ['type' => 'json', 'default' => [
             'google_analytics_id' => '',
             'google_recaptcha_site_key' => '',
@@ -43,7 +48,35 @@ final class SiteConfigService
      */
     public function all(): array
     {
-        return \App\Config::getInstance()['system'] ?? $this->defaults();
+        $cached = $this->cache->get(self::CACHE_KEY);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $settings = $this->defaults();
+        try {
+            $stmt = $this->pdo->query('SELECT setting_key, setting_value FROM system_settings');
+            if ($stmt !== false) {
+                $rows = $stmt->fetchAll();
+                if (is_array($rows)) {
+                    foreach ($rows as $row) {
+                        if (!is_array($row) || !isset($row['setting_key'])) {
+                            continue;
+                        }
+                        $key = (string) $row['setting_key'];
+                        $raw = $row['setting_value'] ?? null;
+                        if (isset(self::DEFINITIONS[$key])) {
+                            $settings[$key] = $this->castValue($key, $raw);
+                        } else {
+                            $settings[$key] = $raw;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable) {}
+
+        $this->cache->set(self::CACHE_KEY, $settings, self::CACHE_TTL);
+        return $settings;
     }
 
     public function get(string $key, mixed $default = null): mixed
@@ -57,14 +90,40 @@ final class SiteConfigService
         return (string) $this->get('site_name', self::DEFINITIONS['site_name']['default']);
     }
 
-    public function siteAbbreviation(): string
+    public function siteSlogan(): string
     {
-        return (string) $this->get('site_abbreviation', self::DEFINITIONS['site_abbreviation']['default']);
+        return (string) $this->get('site_slogan', self::DEFINITIONS['site_slogan']['default']);
     }
 
     public function siteLogo(): string
     {
         return (string) $this->get('site_logo', self::DEFINITIONS['site_logo']['default']);
+    }
+
+    public function faviconUrl(): string
+    {
+        return (string) $this->get('favicon_url', self::DEFINITIONS['favicon_url']['default']);
+    }
+
+    public function footerText(): string
+    {
+        return (string) $this->get('footer_text', self::DEFINITIONS['footer_text']['default']);
+    }
+
+    public function isMaintenanceMode(): bool
+    {
+        return (bool) $this->get('maintenance_mode', false);
+    }
+
+    public function maintenanceWhitelistIps(): array
+    {
+        $val = $this->get('maintenance_whitelist_ips', ['127.0.0.1', '::1']);
+        return is_array($val) ? $val : ['127.0.0.1', '::1'];
+    }
+
+    public function siteAbbreviation(): string
+    {
+        return (string) $this->get('site_abbreviation', self::DEFINITIONS['site_abbreviation']['default']);
     }
 
     public function siteDescription(): string
@@ -113,7 +172,28 @@ final class SiteConfigService
 
     public function update(array $payload, ?string $moderatorId = null): array
     {
-        // Settings are now static via App\Config
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO system_settings (setting_key, setting_value, setting_group, updated_at)
+             VALUES (:key, :val, :grp, NOW())
+             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()'
+        );
+
+        foreach ($payload as $key => $val) {
+            $key = (string) $key;
+            if (!isset(self::DEFINITIONS[$key])) {
+                continue;
+            }
+
+            $serialized = $this->normalizeForWrite($key, $val);
+            $group = in_array($key, ['maintenance_mode', 'maintenance_whitelist_ips'], true) ? 'security' : (in_array($key, ['default_theme', 'site_logo', 'favicon_url'], true) ? 'appearance' : 'general');
+            $stmt->execute([
+                'key' => $key,
+                'val' => $serialized,
+                'grp' => $group,
+            ]);
+        }
+
+        $this->cache->delete(self::CACHE_KEY);
         return $this->all();
     }
 

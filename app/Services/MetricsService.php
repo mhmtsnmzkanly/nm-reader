@@ -691,4 +691,139 @@ final class MetricsService
             'cache_expired_count' => (int) ($cacheStats['cache_expired_count'] ?? 0),
         ];
     }
+
+    public function monetizationAnalytics(int $days = 30): array
+    {
+        $days = $this->normalizeDays($days);
+        $startExpr = sprintf('DATE_SUB(NOW(), INTERVAL %d DAY)', $days);
+
+        $totalSpent = (int) $this->countSafe(
+            "SELECT COALESCE(SUM(price_coin), 0) FROM user_unlocks WHERE unlocked_at >= {$startExpr}"
+        );
+
+        $totalUnlocks = (int) $this->countSafe(
+            "SELECT COUNT(*) FROM user_unlocks WHERE unlocked_at >= {$startExpr}"
+        );
+
+        $topSeriesUnlocks = $this->rowsSafe(
+            "SELECT c.id, c.title, c.slug, c.type, COUNT(u.id) as unlock_count, SUM(u.price_coin) as total_coins
+             FROM user_unlocks u
+             INNER JOIN series c ON c.id = u.content_id
+             WHERE u.unlocked_at >= {$startExpr}
+             GROUP BY c.id, c.title, c.slug, c.type
+             ORDER BY total_coins DESC
+             LIMIT 10"
+        );
+
+        $topChapterUnlocks = $this->rowsSafe(
+            "SELECT ch.id, ch.chapter_number, ch.title, c.title as series_title, c.slug as series_slug, COUNT(u.id) as unlock_count, SUM(u.price_coin) as total_coins
+             FROM user_unlocks u
+             INNER JOIN chapters ch ON ch.id = u.target_id AND u.unlock_type = 'chapter'
+             LEFT JOIN series c ON c.id = ch.content_id
+             WHERE u.unlocked_at >= {$startExpr}
+             GROUP BY ch.id, ch.chapter_number, ch.title, c.title, c.slug
+             ORDER BY total_coins DESC
+             LIMIT 10"
+        );
+
+        $dailyTrend = $this->rowsSafe(
+            "SELECT DATE(unlocked_at) as stat_date, COUNT(*) as unlock_total, SUM(price_coin) as coin_total
+             FROM user_unlocks
+             WHERE unlocked_at >= {$startExpr}
+             GROUP BY DATE(unlocked_at)
+             ORDER BY stat_date ASC"
+        );
+
+        return [
+            'period_days' => $days,
+            'total_coins_spent' => $totalSpent,
+            'total_unlocks' => $totalUnlocks,
+            'top_series' => $topSeriesUnlocks,
+            'top_chapters' => $topChapterUnlocks,
+            'daily_trend' => $dailyTrend,
+        ];
+    }
+
+    public function searchInsights(int $days = 30, int $limit = 20): array
+    {
+        $days = $this->normalizeDays($days);
+        $limit = max(1, min(100, $limit));
+        $startExpr = sprintf('DATE_SUB(NOW(), INTERVAL %d DAY)', $days);
+
+        $zeroResults = $this->rowsSafe(
+            "SELECT query, COUNT(*) as search_count, MAX(searched_at) as last_searched_at
+             FROM analytics_search_logs
+             WHERE searched_at >= {$startExpr} AND result_count = 0
+             GROUP BY query
+             ORDER BY search_count DESC
+             LIMIT {$limit}"
+        );
+
+        $popularSearches = $this->rowsSafe(
+            "SELECT query, COUNT(*) as search_count, AVG(result_count) as avg_results, MAX(searched_at) as last_searched_at
+             FROM analytics_search_logs
+             WHERE searched_at >= {$startExpr}
+             GROUP BY query
+             ORDER BY search_count DESC
+             LIMIT {$limit}"
+        );
+
+        return [
+            'period_days' => $days,
+            'zero_result_searches' => $zeroResults,
+            'popular_searches' => $popularSearches,
+        ];
+    }
+
+    public function seriesReadingFunnel(string $seriesId): array
+    {
+        $chapters = $this->rowsSafe(
+            "SELECT id, number, chapter_number, title, created_at
+             FROM chapters
+             WHERE content_id = " . $this->pdo->quote($seriesId) . " AND deleted_at IS NULL
+             ORDER BY CAST(chapter_number AS DECIMAL(8,2)) ASC"
+        );
+
+        if (empty($chapters)) {
+            return ['series_id' => $seriesId, 'chapters' => [], 'total_readers' => 0];
+        }
+
+        $chapterIds = array_column($chapters, 'id');
+        $inPlaceholders = "'" . implode("','", array_map('addslashes', $chapterIds)) . "'";
+
+        $readerCounts = $this->rowsSafe(
+            "SELECT chapter_id, COUNT(DISTINCT user_id) as reader_count
+             FROM user_reading_history
+             WHERE chapter_id IN ({$inPlaceholders})
+             GROUP BY chapter_id"
+        );
+
+        $map = [];
+        foreach ($readerCounts as $rc) {
+            $map[$rc['chapter_id']] = (int) $rc['reader_count'];
+        }
+
+        $funnel = [];
+        $firstCount = 0;
+        foreach ($chapters as $index => $ch) {
+            $count = $map[$ch['id']] ?? 0;
+            if ($index === 0) {
+                $firstCount = max(1, $count);
+            }
+            $retentionPct = $firstCount > 0 ? round(($count / $firstCount) * 100, 1) : 0;
+            $funnel[] = [
+                'chapter_id' => $ch['id'],
+                'chapter_number' => $ch['chapter_number'],
+                'title' => $ch['title'],
+                'reader_count' => $count,
+                'retention_pct' => $retentionPct,
+            ];
+        }
+
+        return [
+            'series_id' => $seriesId,
+            'initial_readers' => $firstCount,
+            'funnel' => $funnel,
+        ];
+    }
 }

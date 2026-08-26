@@ -214,6 +214,8 @@ CREATE TABLE `chapters` (
   `data` longtext NOT NULL,
   `price_amount` int(10) unsigned NOT NULL DEFAULT 0,
   `price_last_update` datetime DEFAULT NULL,
+  `published_at` datetime DEFAULT NULL,
+  `is_free_after` datetime DEFAULT NULL,
   `created_by` char(8) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
@@ -221,6 +223,7 @@ CREATE TABLE `chapters` (
   KEY `idx_chapters_content_number` (`content_id`,`number`),
   KEY `idx_chapters_content` (`content_id`),
   KEY `idx_chapters_number` (`number`),
+  KEY `idx_chapters_published` (`published_at`),
   KEY `idx_chapters_creator` (`created_by`),
   KEY `idx_chapters_deleted` (`deleted_at`),
   CONSTRAINT `fk_chapters_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
@@ -761,6 +764,54 @@ CREATE TABLE `analytics_snapshots_health` (
   `suspicious_login_ips_24h` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`stat_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `series_team_assignments`;
+CREATE TABLE `series_team_assignments` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `series_id` char(6) NOT NULL,
+  `user_id` char(8) NOT NULL,
+  `role` enum('lead','translator','proofreader','cleaner','typesetter','uploader') NOT NULL DEFAULT 'translator',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_series_user_role` (`series_id`,`user_id`,`role`),
+  KEY `idx_team_user` (`user_id`),
+  CONSTRAINT `fk_team_series` FOREIGN KEY (`series_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_team_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `webhook_configs`;
+CREATE TABLE `webhook_configs` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `platform` enum('discord','telegram','custom') NOT NULL DEFAULT 'discord',
+  `event` enum('chapter_published','blog_approved','series_created') NOT NULL,
+  `webhook_url` varchar(500) NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_webhook_event_active` (`event`,`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `system_settings`;
+CREATE TABLE `system_settings` (
+  `setting_key` varchar(64) NOT NULL,
+  `setting_value` longtext DEFAULT NULL,
+  `setting_group` varchar(32) NOT NULL DEFAULT 'general',
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`setting_key`),
+  KEY `idx_settings_group` (`setting_group`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `system_settings` (`setting_key`, `setting_value`, `setting_group`) VALUES
+('site_name', 'NM Reader', 'general'),
+('site_slogan', 'En İyi Çevrimiçi Manga ve Novel Okuyucusu', 'general'),
+('default_theme', 'dark', 'appearance'),
+('logo_url', '', 'appearance'),
+('favicon_url', '', 'appearance'),
+('footer_text', '© 2026 NM Reader. Tüm hakları saklıdır.', 'general'),
+('maintenance_mode', 'false', 'security'),
+('maintenance_whitelist_ips', '["127.0.0.1", "::1"]', 'security')
+ON DUPLICATE KEY UPDATE setting_key=setting_key;
 
 DROP TABLE IF EXISTS `system_jobs`;
 CREATE TABLE `system_jobs` (

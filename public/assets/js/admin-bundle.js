@@ -108,6 +108,35 @@ window.AdminApp = (function($) {
         setH('#legacy-metrics-output', esc(JSON.stringify({ overview: d, views: viewsRes.data || {}, visits, blogs: blogStats }, null, 2)));
         this.loadRbac();
         this.loadModerationActions();
+        this.loadAdvancedAnalytics();
+      } catch (e) {}
+    },
+    loadAdvancedAnalytics: async function() {
+      try {
+        const [monRes, searchRes] = await Promise.all([
+          api('/admin/analytics/monetization?days=30'),
+          api('/admin/analytics/search-insights?days=30&limit=10')
+        ]);
+        const m = monRes.data || {};
+        const s = searchRes.data || {};
+
+        setT('#monetization-total-coins', `${m.total_coins_spent || 0} Coins Unlocked`);
+        setH('#monetization-top-series', (m.top_series || []).map(item => `
+          <tr>
+            <td><strong>${esc(item.title)}</strong></td>
+            <td><span class="badge bg-secondary">${esc(item.type)}</span></td>
+            <td class="text-end">${item.unlock_count}</td>
+            <td class="text-end fw-bold text-warning">${item.total_coins} coin</td>
+          </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center py-3 text-muted">Henüz veri yok</td></tr>');
+
+        setH('#search-insights-zero', (s.zero_result_searches || []).map(z => `
+          <tr>
+            <td><code>${esc(z.query)}</code></td>
+            <td class="text-center"><span class="badge bg-danger">${z.search_count} arama</span></td>
+            <td class="text-end small text-muted">${esc((z.last_searched_at || '').split(' ')[0])}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="3" class="text-center py-3 text-muted">Sıfır sonuç dönen arama bulunamadı</td></tr>');
       } catch (e) {}
     },
     loadRbac: async function() {
@@ -175,6 +204,46 @@ window.AdminApp = (function($) {
       });
       $('#edit-content-genres-btns, #create-content-genres-btns').on('click', 'button', (e) => { const id = String(e.currentTarget.dataset.id); const isE = e.delegateTarget.id.includes('edit'); const localSet = isE ? this._SEL_G : (this._CRE_G = this._CRE_G || new Set()); if (localSet.has(id)) localSet.delete(id); else localSet.add(id); this.renderTax(isE ? 'edit' : 'create'); });
       $('#edit-content-tags-btns, #create-content-tags-btns').on('click', 'button', (e) => { const id = String(e.currentTarget.dataset.id); const isE = e.delegateTarget.id.includes('edit'); const localSet = isE ? this._SEL_T : (this._CRE_T = this._CRE_T || new Set()); if (localSet.has(id)) localSet.delete(id); else localSet.add(id); this.renderTax(isE ? 'edit' : 'create'); });
+      $('#form-assign-team').on('submit', async (e) => {
+        e.preventDefault();
+        const cid = $('#chapters-content-id').val();
+        if (!cid) return;
+        const uid = $('#team-user-id').val().trim();
+        const role = $('#team-user-role').val();
+        try {
+          await api(`/admin/series/${cid}/team`, { method: 'POST', body: JSON.stringify({ user_id: uid, role }) });
+          $('#team-user-id').val('');
+          this.loadTeam(cid);
+        } catch (err) { alert(err.message); }
+      });
+    },
+    openTeamModal: function() {
+      const cid = $('#chapters-content-id').val();
+      if (!cid) return alert('Önce bir seri seçiniz.');
+      this.loadTeam(cid);
+      window.openModal('modal-series-team');
+    },
+    loadTeam: async function(cid) {
+      try {
+        const r = await api(`/admin/series/${cid}/team`);
+        const items = r.data || [];
+        setH('#series-team-list-body', items.map(m => `
+          <tr>
+            <td><strong>@${esc(m.username)}</strong><br><small class="text-muted">${esc(m.user_id)}</small></td>
+            <td><span class="badge bg-info">${esc(m.role)}</span></td>
+            <td><small>${(m.created_at || '').split(' ')[0]}</small></td>
+            <td class="text-end"><button type="button" class="btn btn-xs btn-outline-danger" onclick="NMR_ADMIN_CONTENT.removeTeam(${m.id})"><i class="bi bi-trash"></i></button></td>
+          </tr>
+        `).join('') || '<tr><td colspan="4" class="text-center py-2 text-muted">Henüz ekip ataması yapılmamış</td></tr>');
+      } catch (e) {}
+    },
+    removeTeam: async function(id) {
+      if (!confirm('Ekip üyesini çıkarmak istediğinizden emin misiniz?')) return;
+      try {
+        await api(`/admin/series/team/${id}`, { method: 'DELETE' });
+        const cid = $('#chapters-content-id').val();
+        if (cid) this.loadTeam(cid);
+      } catch (e) { alert(e.message); }
     },
     load: async function() {
       try {
@@ -242,19 +311,43 @@ window.AdminApp = (function($) {
         const r = await api(`/admin/upload-images?type=${encodeURIComponent(type || 'chapters')}`, { method: 'POST', body: fd, headers: {} });
         const paths = r.data?.paths || [];
         const textarea = document.getElementById('create-chapter-pages');
-        if (textarea) textarea.value = paths.join('\n');
+        if (textarea) {
+          textarea.value = paths.join('\n');
+          Chapters.renderPreviewGrid('create-chapter-preview-grid', paths);
+        }
+      } catch (e) { alert(e.message); }
+      input.value = '';
+    },
+    handleBulkUploadEdit: async function(input) {
+      const files = Array.from(input?.files || []);
+      if (!files.length) return;
+      const fd = new FormData(); files.forEach(file => fd.append('images[]', file));
+      try {
+        const r = await api(`/admin/upload-images?type=chapters`, { method: 'POST', body: fd, headers: {} });
+        const newPaths = r.data?.paths || [];
+        const textarea = document.getElementById('edit-chapter-pages');
+        if (textarea) {
+          const oldPaths = textarea.value.split('\n').map(x => x.trim()).filter(Boolean);
+          const allPaths = [...oldPaths, ...newPaths];
+          textarea.value = allPaths.join('\n');
+          Chapters.renderPreviewGrid('edit-chapter-preview-grid', allPaths);
+        }
       } catch (e) { alert(e.message); }
       input.value = '';
     }
   };
 
   const Chapters = {
+    _SEL_IDS: new Set(),
     init: function() {
       console.log("[AdminApp] Chapters Active");
       $('#chapters-content-id').on('change', () => { this.syncMeta(); this.load(); });
       $('#btn-refresh-chapters').on('click', () => this.load());
       $('#btn-add-chapter').on('click', () => window.openModal('modal-create-chapter'));
       $('#create-chapter-type, #edit-chapter-type').on('change', (e) => this.toggle($(e.target).val(), e.target.id.includes('edit') ? 'edit' : 'create'));
+      $('#create-chapter-pages').on('input', (e) => this.renderPreviewGrid('create-chapter-preview-grid', $(e.target).val().split('\n').filter(Boolean)));
+      $('#edit-chapter-pages').on('input', (e) => this.renderPreviewGrid('edit-chapter-preview-grid', $(e.target).val().split('\n').filter(Boolean)));
+
       $('#form-create-chapter, #form-edit-chapter').on('submit', async (e) => {
         e.preventDefault(); const isE = e.target.id.includes('edit'); const fd = new FormData(e.target); const cid = $('#chapters-content-id').val();
         const p = Object.fromEntries(fd);
@@ -280,6 +373,63 @@ window.AdminApp = (function($) {
         if (act === 'delete' && confirm('Delete?')) { try { await api(`/admin/chapters/${id}`, { method: 'DELETE' }); this.load(); } catch (e) { alert(e.message); } }
       });
     },
+    toggleAllChapters: function(cb) {
+      const checked = cb.checked;
+      $('.ch-select-box').prop('checked', checked);
+      this._SEL_IDS.clear();
+      if (checked) {
+        $('.ch-select-box').each((_, el) => this._SEL_IDS.add(el.dataset.id));
+      }
+      this.updateBulkBar();
+    },
+    toggleChapter: function(cb, id) {
+      if (cb.checked) this._SEL_IDS.add(id);
+      else this._SEL_IDS.delete(id);
+      this.updateBulkBar();
+    },
+    updateBulkBar: function() {
+      const count = this._SEL_IDS.size;
+      $('#bulk-selected-count').text(`${count} seçildi:`);
+      $('#bulk-action-bar').toggleClass('d-none', count === 0).toggleClass('d-flex', count > 0);
+    },
+    bulkAction: async function(action, params = {}) {
+      if (this._SEL_IDS.size === 0) return;
+      if (action === 'delete' && !confirm(`${this._SEL_IDS.size} bölümü silmek istediğinize emin misiniz?`)) return;
+      try {
+        await api('/admin/chapters/bulk', {
+          method: 'POST',
+          body: JSON.stringify({ ids: Array.from(this._SEL_IDS), action, params })
+        });
+        this._SEL_IDS.clear();
+        this.updateBulkBar();
+        this.load();
+      } catch (err) { alert(err.message); }
+    },
+    promptBulkSchedule: function() {
+      const dt = window.prompt('Yayınlama tarihi (YYYY-MM-DD HH:MM):', new Date().toISOString().slice(0, 16).replace('T', ' '));
+      if (!dt) return;
+      this.bulkAction('schedule', { published_at: dt });
+    },
+    promptBulkPrice: function() {
+      const price = window.prompt('Bölüm fiyatı (Coin):', '10');
+      if (price === null) return;
+      const freeAfter = window.prompt('Erken erişim bitiş tarihi (Opsiyonel: YYYY-MM-DD HH:MM):', '');
+      this.bulkAction('set_price', { price_amount: Number(price), is_free_after: freeAfter });
+    },
+    renderPreviewGrid: function(containerId, pages) {
+      const grid = document.getElementById(containerId);
+      if (!grid) return;
+      if (!pages || !pages.length) {
+        grid.innerHTML = '<small class="text-muted w-100">Görsel bulunamadı.</small>';
+        return;
+      }
+      grid.innerHTML = pages.map((p, i) => `
+        <div class="d-inline-block position-relative border rounded p-1 bg-dark text-center" style="width: 70px;">
+          <img src="${esc(p.trim())}" style="height: 60px; max-width: 100%; object-fit: cover;" class="rounded mb-1">
+          <div class="badge bg-secondary" style="font-size: 0.65rem;">#${i + 1}</div>
+        </div>
+      `).join('');
+    },
     syncMeta: function() {
       const cid = $('#chapters-content-id').val();
       const content = (Content._DATA || []).find(x => x.id == cid);
@@ -287,16 +437,45 @@ window.AdminApp = (function($) {
     },
     load: async function() {
       const cid = $('#chapters-content-id').val(); if (!cid) return;
+      this._SEL_IDS.clear();
+      this.updateBulkBar();
       try { const res = await api(`/admin/content/${cid}/chapters`); const items = res.data?.items || res.data || [];
-      setH('#chapters-list-body', items.map(ch => `<tr><td>${ch.chapter_number}</td><td>${ch.title || ''}</td><td>${ch.type}</td><td><span class="badge bg-light text-dark">${ch.username || 'System'}</span></td><td><small>${(ch.created_at || '').split(' ')[0]}</small></td><td class="text-end"><div class="btn-group btn-group-sm"><button class="btn btn-outline-info" data-action="edit" data-id="${ch.id}"><i class="bi bi-pencil"></i></button><button class="btn btn-outline-danger" data-action="delete" data-id="${ch.id}"><i class="bi bi-trash"></i></button></div></td></tr>`).join('') || '<tr><td colspan="6">No data</td></tr>');
+      setH('#chapters-list-body', items.map(ch => `
+        <tr>
+          <td><input type="checkbox" class="ch-select-box" data-id="${ch.id}" onchange="NMR_ADMIN_CONTENT.toggleChapter(this, '${ch.id}')"></td>
+          <td><strong>${ch.chapter_number}</strong></td>
+          <td>${ch.title || '-'}</td>
+          <td><span class="badge bg-light text-dark">${ch.type}</span></td>
+          <td>${Number(ch.price_amount || 0) > 0 ? `<span class="badge bg-warning text-dark">${ch.price_amount} coin</span>` : '<span class="badge bg-success">Ücretsiz</span>'}</td>
+          <td><small class="text-muted">${ch.published_at ? ch.published_at.split(' ')[0] : 'Anında'}</small></td>
+          <td><span class="badge bg-light text-dark">${ch.username || 'System'}</span></td>
+          <td><small>${(ch.created_at || '').split(' ')[0]}</small></td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-info" data-action="edit" data-id="${ch.id}"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger" data-action="delete" data-id="${ch.id}"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="9" class="text-center py-2">Bölüm bulunamadı</td></tr>');
       } catch (e) {}
     },
     openEdit: async function(id) {
       try {
         const r = await api(`/admin/chapters/${id}`); const ch = r.data; const f = $('#form-edit-chapter');
         f.find('[name="id"]').val(ch.id); f.find('[name="chapter_number"]').val(ch.chapter_number); f.find('[name="title"]').val(ch.title || ''); f.find('[name="type"]').val(ch.type);
-        if (ch.type === 'image') { $('#edit-chapter-pages').val((ch.pages || []).join('\n')); $('#edit-chapter-body').val(''); } else { $('#edit-chapter-body').val(ch.body || ch.data || ''); $('#edit-chapter-pages').val(''); }
-        $('#edit-chapter-price').val(ch.pricing?.price_coin ?? 0);
+        if (ch.type === 'image') {
+          const pages = ch.pages || [];
+          $('#edit-chapter-pages').val(pages.join('\n'));
+          $('#edit-chapter-body').val('');
+          this.renderPreviewGrid('edit-chapter-preview-grid', pages);
+        } else {
+          $('#edit-chapter-body').val(ch.body || ch.data || '');
+          $('#edit-chapter-pages').val('');
+        }
+        $('#edit-chapter-price').val(ch.pricing?.base_price ?? ch.price_amount ?? 0);
+        if (ch.pricing?.published_at) $('#edit-chapter-published-at').val(ch.pricing.published_at.slice(0, 16));
+        if (ch.pricing?.is_free_after) $('#edit-chapter-free-after').val(ch.pricing.is_free_after.slice(0, 16));
         this.toggle(ch.type, 'edit'); window.openModal('modal-edit-chapter');
       } catch (e) { alert(e.message); }
     },
@@ -322,13 +501,41 @@ window.AdminApp = (function($) {
   const Users = {
     _U: [], _R: [],
     init: function() {
-      this.loadRoles(); this.load(); $('#btn-refresh-users')?.on('click', () => { this.loadRoles(); this.load(); });
+      this.loadRoles(); this.load(); this.loadPermissionMatrix();
+      $('#btn-refresh-users')?.on('click', () => { this.loadRoles(); this.load(); this.loadPermissionMatrix(); });
       $('#users-list-body').on('click', 'button[data-action="edit"]', (e) => this.open(e.currentTarget.dataset.id));
       $('#form-edit-user').on('submit', async (e) => { e.preventDefault(); const fd = new FormData(e.target); try { await api(`/admin/users/${fd.get('id')}`, { method: 'PUT', body: JSON.stringify({ role: fd.get('role'), is_banned: !!fd.get('is_banned'), email: fd.get('email'), bio: fd.get('bio') }) }); window.closeModal(); this.load(); } catch (e) { alert(e.message); } });
     },
     loadRoles: async function() { try { const r = await api('/admin/rbac/roles'); this._R = r.data?.items || r.data || []; setH('#edit-user-role', this._R.map(x => `<option value="${esc(x.slug)}">${esc(x.name || x.slug)}</option>`).join('') || '<option value="user">User</option>'); } catch (e) {} },
-    load: async function() { try { const r = await api('/admin/users'); this._U = r.data?.items || r.data || []; setH('#users-list-body', this._U.map(u => `<tr><td>${u.id}</td><td><b>${u.username}</b></td><td>${u.email || ''}</td><td><span class="badge bg-secondary">${u.role_names || 'user'}</span></td><td class="text-end"><button class="btn btn-xs btn-outline-secondary" data-action="edit" data-id="${u.id}"><i class="bi bi-person-gear"></i></button></td></tr>`).join('')); } catch (e) {} },
-    open: function(id) { const u = this._U.find(x => x.id == id); if (!u) return; $('#edit-user-id').val(u.id); $('#edit-user-username').val(u.username); $('#edit-user-email').val(u.email || ''); $('#edit-user-bio').val(u.bio || ''); $('#edit-user-banned').prop('checked', !!u.is_banned); $('#edit-user-role').val(((u.role_names || 'user').split(',')[0] || 'user').trim()); window.openModal('modal-edit-user'); }
+    load: async function() { try { const r = await api('/admin/users'); this._U = r.data?.items || r.data || []; setH('#users-list-body', this._U.map(u => `<tr><td>${u.id}</td><td><b>${u.username}</b></td><td>${u.email || ''}</td><td><span class="badge bg-secondary">${u.role_names || 'user'}</span></td><td><small>${(u.created_at || '').split(' ')[0]}</small></td><td class="text-end"><button class="btn btn-xs btn-outline-secondary" data-action="edit" data-id="${u.id}"><i class="bi bi-person-gear"></i></button></td></tr>`).join('')); } catch (e) {} },
+    open: function(id) { const u = this._U.find(x => x.id == id); if (!u) return; $('#edit-user-id').val(u.id); $('#edit-user-username').val(u.username); $('#edit-user-email').val(u.email || ''); $('#edit-user-bio').val(u.bio || ''); $('#edit-user-banned').prop('checked', !!u.is_banned); $('#edit-user-role').val(((u.role_names || 'user').split(',')[0] || 'user').trim()); window.openModal('modal-edit-user'); },
+    loadPermissionMatrix: async function() {
+      try {
+        const r = await api('/admin/rbac/matrix');
+        const d = r.data || {};
+        const roles = d.roles || [];
+        const perms = d.permissions || {};
+
+        let thead = '<tr><th>Yetki Grubu / İzin Tanımı</th>' + roles.map(role => `<th class="text-center">${esc(role.name || role.slug)}</th>`).join('') + '</tr>';
+        setH('#matrix-head', thead);
+
+        let rowsHtml = '';
+        for (const [groupName, groupPerms] of Object.entries(perms)) {
+          rowsHtml += `<tr class="table-secondary"><td colspan="${roles.length + 1}"><strong><i class="bi bi-folder2-open me-1"></i>${esc(groupName)}</strong></td></tr>`;
+          for (const [permCode, permLabel] of Object.entries(groupPerms)) {
+            rowsHtml += `<tr>
+              <td><code>${esc(permCode)}</code> <span class="text-muted ms-1">(${esc(permLabel)})</span></td>
+              ${roles.map(role => {
+                const rolePerms = String(role.permissions || '').split(',');
+                const has = role.slug === 'superadmin' || rolePerms.includes(permCode) || rolePerms.includes('*');
+                return `<td class="text-center">${has ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-x-circle text-muted opacity-50"></i>'}</td>`;
+              }).join('')}
+            </tr>`;
+          }
+        }
+        setH('#matrix-body', rowsHtml || '<tr><td colspan="6" class="text-center py-2 text-muted">İzin matrisi bulunamadı</td></tr>');
+      } catch (e) {}
+    }
   };
 
   const Comments = {
@@ -352,15 +559,30 @@ window.AdminApp = (function($) {
   };
 
   const Uploads = {
-    init: function() { if (!$('#uploads-list').length) return; this.load(1); $('#refresh-uploads').on('click', () => this.load(1)); $('#uploads-list').on('click', 'button[data-action="delete-upload"]', async (e) => { if(confirm('Delete?')) { await api(`/admin/uploads/${e.currentTarget.dataset.id}`, { method: 'DELETE' }); this.load(1); } }); },
-    load: async function(p) { try { const r = await api(`/admin/uploads?page=${p}`); const items = r.data?.items || r.data || []; setH('#uploads-list', items.map(i => `<tr><td><img src="${i.file_path}" class="img-thumbnail" style="height:40px;cursor:pointer" onclick="window.previewImg('${i.file_path}')"></td><td><small>${esc(i.original_name)}</small></td><td>${esc((i.mime_type || '').split('/')[1] || i.mime_type || '-')}</td><td>${((i.file_size || 0)/1024).toFixed(1)}KB</td><td>@${esc(i.username || 'System')}</td><td>${fmtDate(i.created_at)}</td><td><button class="btn btn-xs btn-outline-danger" data-id="${i.id}" data-action="delete-upload"><i class="bi bi-trash"></i></button></td></tr>`).join('') || '<tr><td colspan="7">No data</td></tr>'); } catch (e) {} }
+    init: function() {
+      if (!$('#uploads-list-body').length) return;
+      this.load();
+      $('#btn-refresh-uploads')?.on('click', () => this.load());
+      $('#uploads-list-body').on('click', 'button[data-action="delete"]', async (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (!id || !confirm('Delete?')) return;
+        try { await api(`/admin/uploads/${id}`, { method: 'DELETE' }); this.load(); } catch (err) { alert(err.message); }
+      });
+    },
+    load: async function() {
+      try {
+        const r = await api('/admin/uploads');
+        const items = r.data?.items || r.data || [];
+        setH('#uploads-list-body', items.map(u => `<tr><td>${u.id}</td><td><a href="${esc(u.file_path)}" target="_blank">${esc(u.original_name || u.file_path)}</a></td><td>${esc(u.mime_type || '-')}</td><td>${Math.round((u.file_size || 0) / 1024)} KB</td><td>${esc(u.created_at || '')}</td><td><button class="btn btn-xs btn-outline-danger" data-action="delete" data-id="${u.id}"><i class="bi bi-trash"></i></button></td></tr>`).join('') || '<tr><td colspan="6">No uploads</td></tr>');
+      } catch (e) {}
+    }
   };
 
   const Ops = {
     init: function() {
-      if (!$('#queue-jobs-list').length && !$('#btn-trigger-analytics').length) return;
+      if (!$('#queue-jobs-list').length && !$('#queue-jobs-body').length && !$('#btn-trigger-analytics').length) return;
       this.loadQueue();
-      $('#btn-run-jobs')?.on('click', async () => {
+      $('#btn-run-jobs, #btn-run-queue')?.on('click', async () => {
         try {
           const limit = parseInt($('#jobs-limit').val(), 10) || 5;
           const r = await api('/admin/queue/run-once', { method: 'POST', body: JSON.stringify({ limit }) });
@@ -368,7 +590,7 @@ window.AdminApp = (function($) {
           this.loadQueue();
         } catch (e) { alert(e.message); }
       });
-      $('#btn-run-cleanup')?.on('click', async () => {
+      $('#btn-run-cleanup, #btn-cleanup-retention')?.on('click', async () => {
         try {
           const days = parseInt($('#cleanup-days').val(), 10) || 30;
           const r = await api('/admin/retention/cleanup', { method: 'POST', body: JSON.stringify({ days }) });
@@ -388,6 +610,7 @@ window.AdminApp = (function($) {
         const r = await api('/admin/queue/jobs');
         const items = r.data?.items || r.data || [];
         setH('#queue-jobs-list', items.map(j => `<div class="border-bottom pb-1 mb-1"><strong>#${j.id}</strong> <code>${esc(j.job_type)}</code> <span class="badge bg-${j.status === 'done' ? 'success' : (j.status === 'failed' ? 'danger' : 'secondary')}">${esc(j.status)}</span><div class="small text-muted">${fmtDate(j.created_at)} ${fmtTime(j.created_at)} | attempts: ${j.attempts || 0}</div>${j.last_error ? `<div class="small text-danger">${esc(j.last_error)}</div>` : ''}</div>`).join('') || 'No queued jobs.');
+        setH('#queue-jobs-body', items.map(j => `<tr><td>${j.id}</td><td>${esc(j.job_type)}</td><td><span class="badge bg-${j.status === 'done' ? 'success' : (j.status === 'failed' ? 'danger' : 'warning')}">${esc(j.status)}</span></td><td>${j.attempts}</td><td>${esc(j.created_at || '')}</td></tr>`).join('') || '<tr><td colspan="5">No jobs</td></tr>');
       } catch (e) {
         setH('#queue-jobs-list', esc(e.message));
       }
@@ -675,9 +898,46 @@ window.AdminApp = (function($) {
 
   const Config = {
     init: function() {
-      if (!$('#form-env-config').length) return;
-      this.load();
-      $('#btn-reload-env')?.on('click', () => this.load());
+      this.loadBranding();
+      this.loadMaintenance();
+      this.loadWebhooks();
+      this.loadEnv();
+
+      $('#form-site-branding').on('submit', async (e) => {
+        e.preventDefault();
+        const d = Object.fromEntries(new FormData(e.target));
+        try {
+          await api('/admin/config/site', { method: 'POST', body: JSON.stringify(d) });
+          alert('Site kimliği ve tema ayarları kaydedildi!');
+        } catch (err) { alert(err.message); }
+      });
+
+      $('#form-maintenance-mode').on('submit', async (e) => {
+        e.preventDefault();
+        const enabled = $('#cfg-maintenance-toggle').is(':checked');
+        const rawIps = $('#cfg-whitelist-ips').val().trim();
+        let ips = ['127.0.0.1', '::1'];
+        if (rawIps) {
+          try { ips = JSON.parse(rawIps); } catch { ips = rawIps.split('\n').map(x => x.trim()).filter(Boolean); }
+        }
+        try {
+          await api('/admin/config/site', { method: 'POST', body: JSON.stringify({ maintenance_mode: enabled, maintenance_whitelist_ips: ips }) });
+          alert('Bakım modu ayarları güncellendi!');
+        } catch (err) { alert(err.message); }
+      });
+
+      $('#form-create-webhook').on('submit', async (e) => {
+        e.preventDefault();
+        const d = Object.fromEntries(new FormData(e.target));
+        try {
+          await api('/admin/webhooks', { method: 'POST', body: JSON.stringify(d) });
+          window.closeModal();
+          e.target.reset();
+          this.loadWebhooks();
+        } catch (err) { alert(err.message); }
+      });
+
+      $('#btn-reload-env')?.on('click', () => this.loadEnv());
       $('#btn-add-var')?.on('click', () => this.addVar());
       $('#form-env-config').on('submit', async (e) => {
         e.preventDefault();
@@ -685,47 +945,100 @@ window.AdminApp = (function($) {
         $('#form-env-config').find('[data-env-key]').each((_, el) => { payload[$(el).data('envKey')] = $(el).val(); });
         try {
           await api('/admin/maintenance/env', { method: 'POST', body: JSON.stringify(payload) });
-          this.flash('Saved');
+          alert('Değişiklikler kaydedildi!');
         } catch (err) { alert(err.message); }
       });
       $('#env-sections-wrapper').on('click', '.btn-remove', (e) => { $(e.currentTarget).closest('.env-row').remove(); });
     },
-    load: async function() {
+    loadBranding: async function() {
+      try {
+        const r = await api('/admin/config/site');
+        const d = r.data || {};
+        $('#cfg-site-name').val(d.site_name || '');
+        $('#cfg-site-slogan').val(d.site_slogan || '');
+        $('#cfg-site-logo').val(d.site_logo || '');
+        $('#cfg-favicon-url').val(d.favicon_url || '');
+        $('#cfg-default-theme').val(d.default_theme || 'dark');
+        $('#cfg-default-language').val(d.default_language || 'tr');
+        $('#cfg-footer-text').val(d.footer_text || '');
+      } catch (e) {}
+    },
+    loadMaintenance: async function() {
+      try {
+        const r = await api('/admin/config/site');
+        const d = r.data || {};
+        $('#cfg-maintenance-toggle').prop('checked', !!d.maintenance_mode);
+        const ips = d.maintenance_whitelist_ips || ['127.0.0.1', '::1'];
+        $('#cfg-whitelist-ips').val(JSON.stringify(ips, null, 2));
+      } catch (e) {}
+    },
+    loadWebhooks: async function() {
+      try {
+        const r = await api('/admin/webhooks');
+        const items = r.data || [];
+        setH('#webhooks-list-body', items.map(w => `
+          <tr>
+            <td>${w.id}</td>
+            <td><span class="badge bg-${w.platform === 'discord' ? 'primary' : 'info'}"><i class="bi bi-${w.platform === 'discord' ? 'discord' : 'send'} me-1"></i>${esc(w.platform)}</span></td>
+            <td><code>${esc(w.event)}</code></td>
+            <td class="text-truncate" style="max-width: 250px;">${esc(w.webhook_url)}</td>
+            <td><span class="badge bg-${Number(w.is_active) ? 'success' : 'secondary'}">${Number(w.is_active) ? 'Aktif' : 'Pasif'}</span></td>
+            <td class="text-end">
+              <button class="btn btn-xs btn-outline-info me-1" onclick="NMR_ADMIN_CONFIG.testWebhook(${w.id})"><i class="bi bi-send-check"></i> Test</button>
+              <button class="btn btn-xs btn-outline-danger" onclick="NMR_ADMIN_CONFIG.deleteWebhook(${w.id})"><i class="bi bi-trash"></i></button>
+            </td>
+          </tr>
+        `).join('') || '<tr><td colspan="6" class="text-center py-3 text-muted">Henüz webhook eklenmedi</td></tr>');
+      } catch (e) {}
+    },
+    testWebhook: async function(id) {
+      try {
+        const r = await api(`/admin/webhooks/${id}/test`, { method: 'POST' });
+        alert(r.data?.message || 'Test sinyali gönderildi!');
+      } catch (err) { alert(err.message); }
+    },
+    deleteWebhook: async function(id) {
+      if (!confirm('Bu webhooku silmek istediğinizden emin misiniz?')) return;
+      try {
+        await api(`/admin/webhooks/${id}`, { method: 'DELETE' });
+        this.loadWebhooks();
+      } catch (err) { alert(err.message); }
+    },
+    loadEnv: async function() {
+      if (!$('#env-sections-wrapper').length) return;
       try {
         const r = await api('/admin/maintenance/env');
         const data = r.data || {};
         const rows = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
-        setH('#env-sections-wrapper', rows.map(([k, v]) => this.row(k, v)).join('') || '<div class="text-muted">No variables.</div>');
-      } catch (e) {
-        setH('#env-sections-wrapper', `<div class="alert alert-danger mb-0">${esc(e.message)}</div>`);
-      }
-    },
-    row: function(key, value) {
-      return `<div class="card env-section"><div class="card-body env-row"><div class="row g-2 align-items-center"><div class="col-md-4"><div class="env-key-label">KEY</div><input class="form-control form-control-sm" value="${esc(key)}" data-env-key="${esc(key)}" readonly></div><div class="col-md-7"><div class="env-key-label">VALUE</div><input class="form-control form-control-sm" value="${esc(value)}" data-env-key="${esc(key)}"></div><div class="col-md-1 text-end"><button type="button" class="btn btn-outline-danger btn-sm btn-remove">&times;</button></div></div></div></div>`;
+        setH('#env-sections-wrapper', rows.map(([k, v]) => `<div class="card env-section"><div class="card-body env-row"><div class="row g-2 align-items-center"><div class="col-md-4"><div class="env-key-label">KEY</div><input class="form-control form-control-sm" value="${esc(k)}" data-env-key="${esc(k)}" readonly></div><div class="col-md-7"><div class="env-key-label">VALUE</div><input class="form-control form-control-sm" value="${esc(v)}" data-env-key="${esc(k)}"></div><div class="col-md-1 text-end"><button type="button" class="btn btn-outline-danger btn-sm btn-remove">&times;</button></div></div></div></div>`).join('') || '<div class="text-muted">No variables.</div>');
+      } catch (e) {}
     },
     addVar: function() {
       const key = window.prompt('ENV key');
       if (!key) return;
-      $('#env-sections-wrapper').prepend(this.row(key.trim().toUpperCase(), ''));
-    },
-    flash: function(text) {
-      const btn = $('#btn-save-env');
-      if (!btn.length) return;
-      const old = btn.html();
-      btn.html(`<i class="bi bi-check2 me-2"></i>${esc(text)}`);
-      setTimeout(() => btn.html(old), 1500);
+      $('#env-sections-wrapper').prepend(`<div class="card env-section"><div class="card-body env-row"><div class="row g-2 align-items-center"><div class="col-md-4"><div class="env-key-label">KEY</div><input class="form-control form-control-sm" value="${esc(key.trim().toUpperCase())}" data-env-key="${esc(key.trim().toUpperCase())}" readonly></div><div class="col-md-7"><div class="env-key-label">VALUE</div><input class="form-control form-control-sm" value="" data-env-key="${esc(key.trim().toUpperCase())}"></div><div class="col-md-1 text-end"><button type="button" class="btn btn-outline-danger btn-sm btn-remove">&times;</button></div></div></div></div>`);
     }
   };
 
-  window.previewImg = (url) => { $('#full-preview').attr('src', url); window.openModal('preview-modal'); };
-  window.NMR_ADMIN_CONTENT = Content;
+  window.NMR_ADMIN_CONTENT = {
+    ...Content,
+    toggleAllChapters: (cb) => Chapters.toggleAllChapters(cb),
+    toggleChapter: (cb, id) => Chapters.toggleChapter(cb, id),
+    bulkAction: (act) => Chapters.bulkAction(act),
+    promptBulkSchedule: () => Chapters.promptBulkSchedule(),
+    promptBulkPrice: () => Chapters.promptBulkPrice(),
+    openTeamModal: () => Content.openTeamModal(),
+    removeTeam: (id) => Content.removeTeam(id)
+  };
+  window.NMR_ADMIN_USERS = Users;
+  window.NMR_ADMIN_CONFIG = Config;
   window.NMR_ADMIN = { promptCreateTaxonomy: (...args) => Content.promptCreateTaxonomy(...args) };
 
   return {
     init: function() {
       const p = window.location.pathname; const l = (p.split('/')[1] === 'tr' || p.split('/')[1] === 'en') ? '/' + p.split('/')[1] : '';
       const c = p.replace(l, '');
-      if (c === '/admin') { Dashboard.init(); Content.init(); Blogs.init(); Ops.init(); Logs.init(); }
+      if (c === '/admin') { Dashboard.init(); Content.init(); Blogs.init(); Ops.init(); }
       if (c.includes('/admin/content')) { Content.init(); Chapters.init(); }
       if (c.includes('/admin/blogs')) Blogs.init();
       if (c.includes('/admin/comments')) Comments.init();
@@ -733,7 +1046,6 @@ window.AdminApp = (function($) {
       if (c.includes('/admin/uploads')) Uploads.init();
       if (c.includes('/admin/ops')) Ops.init();
       if (c.includes('/admin/monetization')) Monetization.init();
-      if (c.includes('/admin/logs')) Logs.init();
       if (c.includes('/admin/config')) Config.init();
     }
   };
