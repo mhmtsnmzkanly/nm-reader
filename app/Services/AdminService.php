@@ -223,6 +223,21 @@ final class AdminService
     private function upsertContentMetadata(string $contentId, ?string $author, ?string $artist, ?string $alternativeTitles, ?string $country, ?int $releaseYear): void
     {
         try {
+            $this->pdo->prepare(
+                'UPDATE series
+                 SET author = :author, artist = :artist, alternative_titles = :alternative_titles, country = :country, release_year = :release_year
+                 WHERE id = :content_id'
+            )->execute([
+                'content_id' => $contentId,
+                'author' => $author,
+                'artist' => $artist,
+                'alternative_titles' => $alternativeTitles,
+                'country' => $country,
+                'release_year' => $releaseYear !== null ? (string) $releaseYear : null,
+            ]);
+        } catch (\Throwable) {}
+
+        try {
             $stmt = $this->pdo->prepare(
                 'INSERT INTO series_metadata (content_id, author, artist, alternative_titles, country, release_year, created_at, updated_at)
                  VALUES (:content_id, :author, :artist, :alternative_titles, :country, :release_year, NOW(), NOW())
@@ -236,9 +251,7 @@ final class AdminService
                 'country' => $country,
                 'release_year' => $releaseYear,
             ]);
-        } catch (\Throwable) {
-            // metadata table may not exist; fail silently
-        }
+        } catch (\Throwable) {}
     }
 
     private function sanitizePerson(string $value): ?string

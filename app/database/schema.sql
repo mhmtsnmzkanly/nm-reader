@@ -43,16 +43,22 @@ CREATE TABLE `series` (
   `cover_image` varchar(255) DEFAULT NULL,
   `accent_color` varchar(7) DEFAULT '#2a2a2a',
   `description` text DEFAULT NULL,
+  `author` varchar(100) DEFAULT NULL,
+  `artist` varchar(100) DEFAULT NULL,
+  `alternative_titles` varchar(255) DEFAULT NULL,
+  `country` varchar(50) DEFAULT NULL,
+  `release_year` varchar(4) DEFAULT NULL,
   `rating_avg` decimal(3,2) DEFAULT 0.00,
   `rating_count` int(11) DEFAULT 0,
   `chapter_count` int(11) DEFAULT 0,
   `comment_count` int(11) DEFAULT 0,
   `deleted_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`),
   KEY `idx_series_deleted` (`deleted_at`),
-  FULLTEXT KEY `ft_series_search` (`title`,`slug`,`description`)
+  FULLTEXT KEY `ft_series_search` (`title`,`slug`,`description`,`author`,`artist`,`alternative_titles`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `series_metadata`;
@@ -71,8 +77,31 @@ CREATE TABLE `series_metadata` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
--- Taxonomy (Genres & Tags with initial data)
+-- Unified Taxonomy & Legacy Taxonomies
 -- --------------------------------------------------------
+
+DROP TABLE IF EXISTS `taxonomies`;
+CREATE TABLE `taxonomies` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` enum('genre','tag','theme','demographic') NOT NULL DEFAULT 'genre',
+  `name` varchar(50) NOT NULL,
+  `slug` varchar(50) NOT NULL,
+  `ui_config` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_taxonomy_type_slug` (`type`,`slug`),
+  KEY `idx_taxonomy_type` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `series_taxonomy_map`;
+CREATE TABLE `series_taxonomy_map` (
+  `content_id` char(6) NOT NULL,
+  `taxonomy_id` int(11) NOT NULL,
+  PRIMARY KEY (`content_id`,`taxonomy_id`),
+  KEY `idx_taxonomy_map_tax` (`taxonomy_id`),
+  CONSTRAINT `fk_tax_map_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_tax_map_tax` FOREIGN KEY (`taxonomy_id`) REFERENCES `taxonomies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `series_genres`;
 CREATE TABLE `series_genres` (
