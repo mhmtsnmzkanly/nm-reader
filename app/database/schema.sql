@@ -332,6 +332,8 @@ DROP TABLE IF EXISTS `social_comments`;
 CREATE TABLE `social_comments` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` char(8) NOT NULL,
+  `target_type` enum('series','chapter','blog') NOT NULL DEFAULT 'series',
+  `target_id` varchar(32) NOT NULL DEFAULT '',
   `content_id` char(6) DEFAULT NULL,
   `chapter_id` char(6) DEFAULT NULL,
   `blog_id` char(6) DEFAULT NULL,
@@ -342,6 +344,7 @@ CREATE TABLE `social_comments` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
+  KEY `idx_comments_target` (`target_type`,`target_id`,`created_at`),
   KEY `idx_comments_content_created` (`content_id`,`created_at`),
   KEY `idx_comments_chapter_created` (`chapter_id`,`created_at`),
   KEY `idx_comments_blog_created` (`blog_id`,`created_at`),

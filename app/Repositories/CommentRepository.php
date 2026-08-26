@@ -20,6 +20,9 @@ final class CommentRepository
     /** @var bool|null Cache for checking existence of 'blog_id' column in comments table. */
     private ?bool $commentsHasBlogId = null;
 
+    /** @var bool|null Cache for checking existence of 'target_type' column in comments table. */
+    private ?bool $commentsHasTargetType = null;
+
     public function __construct(private readonly PDO $pdo)
     {
     }
@@ -47,9 +50,38 @@ final class CommentRepository
         ?string $blogId = null
     ): int {
         $hasBlogId = $this->commentsHasBlogId();
+        $hasTargetType = $this->commentsHasTargetType();
+
         if (!$hasBlogId && $blogId !== null && $contentId === null) {
             // Backward compatibility for schemas where blog comments are stored in content_id.
             $contentId = (string) $blogId;
+        }
+
+        $targetType = 'series';
+        $targetId = (string) ($contentId ?? '');
+        if ($chapterId !== null && $chapterId !== '') {
+            $targetType = 'chapter';
+            $targetId = (string) $chapterId;
+        } elseif ($blogId !== null && $blogId !== '') {
+            $targetType = 'blog';
+            $targetId = (string) $blogId;
+        }
+
+        if ($hasTargetType) {
+            $sql = 'INSERT INTO social_comments (user_id, target_type, target_id, content_id, chapter_id, blog_id, parent_id, body)
+                    VALUES (:user_id, :target_type, :target_id, :content_id, :chapter_id, :blog_id, :parent_id, :body)';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+            $stmt->bindValue(':target_type', $targetType, PDO::PARAM_STR);
+            $stmt->bindValue(':target_id', $targetId, PDO::PARAM_STR);
+            $stmt->bindValue(':content_id', $contentId, $contentId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':chapter_id', $chapterId, $chapterId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':blog_id', $blogId, $blogId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':parent_id', $parentId, $parentId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+            $stmt->bindValue(':body', $body);
+            $stmt->execute();
+
+            return (int) $this->pdo->lastInsertId();
         }
 
         $sql = $hasBlogId
@@ -251,5 +283,21 @@ final class CommentRepository
         }
 
         return $this->commentsHasBlogId;
+    }
+
+    private function commentsHasTargetType(): bool
+    {
+        if ($this->commentsHasTargetType !== null) {
+            return $this->commentsHasTargetType;
+        }
+
+        try {
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM social_comments LIKE 'target_type'");
+            $this->commentsHasTargetType = $stmt !== false && (bool) $stmt->fetch();
+        } catch (\Throwable) {
+            $this->commentsHasTargetType = false;
+        }
+
+        return $this->commentsHasTargetType;
     }
 }
