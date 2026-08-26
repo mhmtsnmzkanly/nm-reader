@@ -28,7 +28,7 @@ final class BlogVoteRepository
     public function findUserVote(string $userId, string $blogId): ?int
     {
         $stmt = $this->pdo->prepare(
-            'SELECT vote FROM blog_votes WHERE user_id = :user_id AND blog_id = :blog_id LIMIT 1'
+            'SELECT vote FROM votes WHERE user_id = :user_id AND target_type = "blog" AND target_id = :blog_id LIMIT 1'
         );
         $stmt->execute([
             'user_id' => $userId,
@@ -47,8 +47,8 @@ final class BlogVoteRepository
     public function setVote(string $userId, string $blogId, int $vote): void
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO blog_votes (user_id, blog_id, vote, created_at, updated_at)
-             VALUES (:user_id, :blog_id, :vote, NOW(), NOW())
+            'INSERT INTO votes (user_id, target_type, target_id, vote, created_at, updated_at)
+             VALUES (:user_id, "blog", :blog_id, :vote, NOW(), NOW())
              ON DUPLICATE KEY UPDATE vote = VALUES(vote), updated_at = NOW()'
         );
         $stmt->execute([
@@ -64,7 +64,7 @@ final class BlogVoteRepository
     public function removeVote(string $userId, string $blogId): void
     {
         $stmt = $this->pdo->prepare(
-            'DELETE FROM blog_votes WHERE user_id = :user_id AND blog_id = :blog_id'
+            'DELETE FROM votes WHERE user_id = :user_id AND target_type = "blog" AND target_id = :blog_id'
         );
         $stmt->execute([
             'user_id' => $userId,
@@ -87,8 +87,8 @@ final class BlogVoteRepository
             'SELECT
                 SUM(CASE WHEN vote = 1 THEN 1 ELSE 0 END) AS upvote_count,
                 SUM(CASE WHEN vote = -1 THEN 1 ELSE 0 END) AS downvote_count
-             FROM blog_votes
-             WHERE blog_id = :blog_id'
+             FROM votes
+             WHERE target_type = "blog" AND target_id = :blog_id'
         );
         $stmt->execute(['blog_id' => $blogId]);
         $totals = $stmt->fetch() ?: [];

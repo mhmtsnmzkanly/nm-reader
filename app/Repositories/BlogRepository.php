@@ -84,9 +84,9 @@ final class BlogRepository
                     b.updated_at,
                     u.username AS author_username,
                     au.username AS approver_username,
-                    (SELECT COUNT(*) FROM blog_votes WHERE blog_id = b.id AND vote = 1) AS upvote_count,
-                    (SELECT COUNT(*) FROM blog_votes WHERE blog_id = b.id AND vote = -1) AS downvote_count,
-                    (CASE WHEN :user_id IS NOT NULL THEN (SELECT vote FROM blog_votes WHERE blog_id = b.id AND user_id = :user_id2) ELSE 0 END) AS my_vote
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS upvote_count,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = -1) AS downvote_count,
+                    (CASE WHEN :user_id IS NOT NULL THEN (SELECT vote FROM votes WHERE target_type = "blog" AND target_id = b.id AND user_id = :user_id2) ELSE 0 END) AS my_vote
                 FROM blogs b
                 INNER JOIN users u ON u.id = b.user_id
                 LEFT JOIN users au ON au.id = b.approver_user_id

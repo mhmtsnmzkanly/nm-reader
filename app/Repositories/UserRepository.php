@@ -265,20 +265,26 @@ final class UserRepository
     public function listRecentCommentsByUser(string $userId, int $page = 1, int $perPage = 10): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $sql = 'SELECT
+        $sql = 'SELECT 
                     c.id,
+                    c.user_id,
                     c.body,
                     c.created_at,
-                    c.chapter_id,
-                    c.content_id,
+                    c.target_type,
+                    c.target_id,
+                    (CASE WHEN c.target_type = "chapter" THEN c.target_id ELSE NULL END) AS chapter_id,
+                    (CASE WHEN c.target_type = "series" THEN c.target_id ELSE ch.content_id END) AS content_id,
                     c.upvote_count,
                     c.downvote_count,
                     ch.chapter_number,
                     ct.slug AS content_slug,
                     ct.type AS content_type
-                FROM social_comments c
-                LEFT JOIN chapters ch ON ch.id = c.chapter_id
-                LEFT JOIN series ct ON ct.id = COALESCE(c.content_id, ch.content_id)
+                FROM comments c
+                LEFT JOIN chapters ch ON (c.target_type = "chapter" AND ch.id = c.target_id)
+                LEFT JOIN series ct ON (
+                    (c.target_type = "series" AND ct.id = c.target_id) OR
+                    (c.target_type = "chapter" AND ct.id = ch.content_id)
+                )
                 WHERE c.user_id = :user_id
                 ORDER BY c.created_at DESC
                 LIMIT :limit OFFSET :offset';
@@ -300,11 +306,11 @@ final class UserRepository
     public function getPublicStatsByUser(string $userId): array
     {
         $sql = 'SELECT
-                    (SELECT COUNT(*) FROM comment_votes cv WHERE cv.user_id = :user_id1) AS votes_cast,
-                    (SELECT COALESCE(SUM(c1.upvote_count), 0) FROM social_comments c1 WHERE c1.user_id = :user_id2) AS upvotes_received,
-                    (SELECT COALESCE(SUM(c2.downvote_count), 0) FROM social_comments c2 WHERE c2.user_id = :user_id3) AS downvotes_received,
+                    (SELECT COUNT(*) FROM votes cv WHERE cv.user_id = :user_id1) AS votes_cast,
+                    (SELECT COALESCE(SUM(c1.upvote_count), 0) FROM comments c1 WHERE c1.user_id = :user_id2) AS upvotes_received,
+                    (SELECT COALESCE(SUM(c2.downvote_count), 0) FROM comments c2 WHERE c2.user_id = :user_id3) AS downvotes_received,
                     (SELECT COUNT(*) FROM blogs b WHERE b.user_id = :user_id4 AND b.approved = 1) AS approved_blog_count,
-                    (SELECT COUNT(*) FROM social_comments c3 WHERE c3.user_id = :user_id5) AS comment_count
+                    (SELECT COUNT(*) FROM comments c3 WHERE c3.user_id = :user_id5) AS comment_count
                 FROM users u
                 WHERE u.id = :user_id
                 LIMIT 1';

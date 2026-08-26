@@ -24,7 +24,7 @@ final class MetricsService
             'users_total' => $this->countSafe('SELECT COUNT(*) FROM users'),
             'contents_total' => $this->countSafe('SELECT COUNT(*) FROM series'),
             'chapters_total' => $this->countSafe('SELECT COUNT(*) FROM chapters'),
-            'comments_total' => $this->countSafe('SELECT COUNT(*) FROM social_comments'),
+            'comments_total' => $this->countSafe('SELECT COUNT(*) FROM comments'),
             'ratings_total' => $this->countSafe('SELECT COUNT(*) FROM ratings'),
             'content_follows_total' => $this->countSafe('SELECT COUNT(*) FROM user_series_follows'),
             'user_follows_total' => $this->countSafe('SELECT COUNT(*) FROM user_follows'),
@@ -195,7 +195,7 @@ final class MetricsService
              WHERE created_at >= {$startExpr} AND created_at < {$endExpr}"
         );
         $comments = $this->countSafe(
-            "SELECT COUNT(*) FROM social_comments
+            "SELECT COUNT(*) FROM comments
              WHERE created_at >= {$startExpr} AND created_at < {$endExpr}"
         );
 
@@ -245,9 +245,9 @@ final class MetricsService
 
         $comments = $this->countSafe(
             "SELECT COUNT(*)
-             FROM social_comments cm
-             LEFT JOIN chapters ch ON ch.id = cm.chapter_id
-             INNER JOIN series_taxonomy_map cg ON cg.content_id = COALESCE(cm.content_id, ch.content_id)
+             FROM comments cm
+             LEFT JOIN chapters ch ON (cm.target_type = 'chapter' AND ch.id = cm.target_id)
+             INNER JOIN series_taxonomy_map cg ON cg.content_id = (CASE WHEN cm.target_type = 'series' THEN cm.target_id WHEN cm.target_type = 'chapter' THEN ch.content_id ELSE NULL END)
              INNER JOIN taxonomies g ON g.id = cg.taxonomy_id AND g.type = 'genre'
              WHERE g.slug = " . $this->pdo->quote($slug) . "
                AND cm.created_at >= {$startExpr}
@@ -304,9 +304,9 @@ final class MetricsService
             ) r ON r.genre_id = g.id
             LEFT JOIN (
                 SELECT cg.taxonomy_id AS genre_id, COUNT(*) AS comment_total
-                FROM social_comments cm
-                LEFT JOIN chapters ch ON ch.id = cm.chapter_id
-                INNER JOIN series_taxonomy_map cg ON cg.content_id = COALESCE(cm.content_id, ch.content_id)
+                FROM comments cm
+                LEFT JOIN chapters ch ON (cm.target_type = 'chapter' AND ch.id = cm.target_id)
+                INNER JOIN series_taxonomy_map cg ON cg.content_id = (CASE WHEN cm.target_type = 'series' THEN cm.target_id WHEN cm.target_type = 'chapter' THEN ch.content_id ELSE NULL END)
                 WHERE cm.created_at >= {$startExpr} AND cm.created_at < {$endExpr}
                 GROUP BY cg.taxonomy_id
             ) c ON c.genre_id = g.id
@@ -579,12 +579,14 @@ final class MetricsService
                 WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
                 GROUP BY content_id
              ) f ON f.content_id = c.id
-             LEFT JOIN (
-                SELECT content_id, COUNT(*) AS comment_count_7d
-                FROM social_comments
-                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                GROUP BY content_id
-             ) cm ON cm.content_id = c.id
+               LEFT JOIN (
+                  SELECT 
+                     (CASE WHEN target_type = "series" THEN target_id WHEN target_type = "chapter" THEN (SELECT content_id FROM chapters WHERE id = target_id) ELSE NULL END) AS content_id,
+                     COUNT(*) AS comment_count_7d
+                  FROM comments
+                  WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                  GROUP BY content_id
+               ) cm ON cm.content_id = c.id
              ORDER BY quality_score DESC
              LIMIT 10'
         );

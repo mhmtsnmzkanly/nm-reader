@@ -29,11 +29,11 @@ final class CommentVoteRepository
     public function findUserVote(string $userId, int $commentId): ?int
     {
         $stmt = $this->pdo->prepare(
-            'SELECT vote FROM comment_votes WHERE user_id = :user_id AND comment_id = :comment_id LIMIT 1'
+            'SELECT vote FROM votes WHERE user_id = :user_id AND target_type = "comment" AND target_id = :comment_id LIMIT 1'
         );
         $stmt->execute([
             'user_id' => $userId,
-            'comment_id' => $commentId,
+            'comment_id' => (string) $commentId,
         ]);
         $row = $stmt->fetch();
 
@@ -48,13 +48,13 @@ final class CommentVoteRepository
     public function setVote(string $userId, int $commentId, int $vote): void
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO comment_votes (user_id, comment_id, vote, created_at, updated_at)
-             VALUES (:user_id, :comment_id, :vote, NOW(), NOW())
+            'INSERT INTO votes (user_id, target_type, target_id, vote, created_at, updated_at)
+             VALUES (:user_id, "comment", :comment_id, :vote, NOW(), NOW())
              ON DUPLICATE KEY UPDATE vote = VALUES(vote), updated_at = NOW()'
         );
         $stmt->execute([
             'user_id' => $userId,
-            'comment_id' => $commentId,
+            'comment_id' => (string) $commentId,
             'vote' => $vote,
         ]);
     }
@@ -65,29 +65,29 @@ final class CommentVoteRepository
     public function removeVote(string $userId, int $commentId): void
     {
         $stmt = $this->pdo->prepare(
-            'DELETE FROM comment_votes WHERE user_id = :user_id AND comment_id = :comment_id'
+            'DELETE FROM votes WHERE user_id = :user_id AND target_type = "comment" AND target_id = :comment_id'
         );
         $stmt->execute([
             'user_id' => $userId,
-            'comment_id' => $commentId,
+            'comment_id' => (string) $commentId,
         ]);
     }
 
     /**
-     * Recalculates and updates the cached upvote/downvote counters in the  'social_comments' table.
+     * Recalculates and updates the cached upvote/downvote counters in the  'comments' table.
      */
     public function refreshCommentCounters(int $commentId): void
     {
         $stmt = $this->pdo->prepare(
-            'UPDATE social_comments c
+            'UPDATE comments c
              SET
-                upvote_count = (SELECT COUNT(*) FROM comment_votes WHERE comment_id = :comment_id AND vote = 1),
-                downvote_count = (SELECT COUNT(*) FROM comment_votes WHERE comment_id = :comment_id2 AND vote = -1)
+                upvote_count = (SELECT COUNT(*) FROM votes WHERE target_type = "comment" AND target_id = :comment_id AND vote = 1),
+                downvote_count = (SELECT COUNT(*) FROM votes WHERE target_type = "comment" AND target_id = :comment_id2 AND vote = -1)
              WHERE c.id = :comment_id3'
         );
         $stmt->execute([
-            'comment_id' => $commentId,
-            'comment_id2' => $commentId,
+            'comment_id' => (string) $commentId,
+            'comment_id2' => (string) $commentId,
             'comment_id3' => $commentId,
         ]);
     }
@@ -97,7 +97,7 @@ final class CommentVoteRepository
      */
     public function getCommentOwnerId(int $commentId): ?string
     {
-        $stmt = $this->pdo->prepare('SELECT user_id FROM social_comments WHERE id = :id LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT user_id FROM comments WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $commentId]);
         $row = $stmt->fetch();
 
@@ -116,9 +116,9 @@ final class CommentVoteRepository
             $sql = 'INSERT INTO analytics_users_votes (user_id, votes_cast, upvotes_received, downvotes_received, updated_at)
                     VALUES (
                         :user_id,
-                        (SELECT COUNT(*) FROM comment_votes WHERE user_id = :user_id2),
-                        (SELECT COALESCE(SUM(c.upvote_count), 0) FROM social_comments c WHERE c.user_id = :user_id3),
-                        (SELECT COALESCE(SUM(c.downvote_count), 0) FROM social_comments c WHERE c.user_id = :user_id4),
+                        (SELECT COUNT(*) FROM votes WHERE user_id = :user_id2 AND target_type = "comment"),
+                        (SELECT COALESCE(SUM(c.upvote_count), 0) FROM comments c WHERE c.user_id = :user_id3),
+                        (SELECT COALESCE(SUM(c.downvote_count), 0) FROM comments c WHERE c.user_id = :user_id4),
                         NOW()
                     )
                     ON DUPLICATE KEY UPDATE

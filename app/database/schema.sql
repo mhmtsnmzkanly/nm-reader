@@ -295,18 +295,6 @@ CREATE TABLE `blogs` (
   CONSTRAINT `fk_blogs_approver` FOREIGN KEY (`approver_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `blog_votes`;
-CREATE TABLE `blog_votes` (
-  `blog_id` char(6) NOT NULL,
-  `user_id` char(8) NOT NULL,
-  `vote` tinyint(4) NOT NULL, -- 1 for upvote, -1 for downvote
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`blog_id`,`user_id`),
-  CONSTRAINT `fk_blog_votes_blog` FOREIGN KEY (`blog_id`) REFERENCES `blogs` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_blog_votes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 DROP TABLE IF EXISTS `ratings`;
 CREATE TABLE `ratings` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -320,27 +308,12 @@ CREATE TABLE `ratings` (
   CONSTRAINT `fk_ratings_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `comment_votes`;
-CREATE TABLE `comment_votes` (
-  `comment_id` bigint(20) unsigned NOT NULL,
-  `user_id` char(8) NOT NULL,
-  `vote` tinyint(4) NOT NULL, -- 1 for upvote, -1 for downvote
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`comment_id`,`user_id`),
-  CONSTRAINT `fk_comment_votes_comment` FOREIGN KEY (`comment_id`) REFERENCES `social_comments` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_comment_votes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-DROP TABLE IF EXISTS `social_comments`;
-CREATE TABLE `social_comments` (
+DROP TABLE IF EXISTS `comments`;
+CREATE TABLE `comments` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` char(8) NOT NULL,
   `target_type` enum('series','chapter','blog') NOT NULL DEFAULT 'series',
-  `target_id` varchar(32) NOT NULL DEFAULT '',
-  `content_id` char(6) DEFAULT NULL,
-  `chapter_id` char(6) DEFAULT NULL,
-  `blog_id` char(6) DEFAULT NULL,
+  `target_id` varchar(32) NOT NULL,
   `parent_id` bigint(20) unsigned DEFAULT NULL,
   `body` text NOT NULL,
   `upvote_count` int(11) DEFAULT 0,
@@ -349,16 +322,26 @@ CREATE TABLE `social_comments` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_comments_target` (`target_type`,`target_id`,`created_at`),
-  KEY `idx_comments_content_created` (`content_id`,`created_at`),
-  KEY `idx_comments_chapter_created` (`chapter_id`,`created_at`),
-  KEY `idx_comments_blog_created` (`blog_id`,`created_at`),
-  KEY `idx_comments_user_created` (`user_id`,`created_at`),
+  KEY `idx_comments_user` (`user_id`,`created_at`),
   KEY `idx_comments_parent` (`parent_id`),
   CONSTRAINT `fk_comments_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_comments_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_comments_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_comments_blog` FOREIGN KEY (`blog_id`) REFERENCES `blogs` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_comments_parent` FOREIGN KEY (`parent_id`) REFERENCES `social_comments` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_comments_parent` FOREIGN KEY (`parent_id`) REFERENCES `comments` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `votes`;
+CREATE TABLE `votes` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `target_type` enum('blog','comment') NOT NULL,
+  `target_id` varchar(32) NOT NULL,
+  `vote` tinyint(4) NOT NULL DEFAULT 1, -- 1 for upvote, -1 for downvote
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_user_target_vote` (`user_id`,`target_type`,`target_id`),
+  KEY `idx_votes_target` (`target_type`,`target_id`),
+  KEY `idx_votes_user` (`user_id`),
+  CONSTRAINT `fk_votes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------

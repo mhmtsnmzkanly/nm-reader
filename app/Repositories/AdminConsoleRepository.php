@@ -23,7 +23,7 @@ final class AdminConsoleRepository
     /** @var bool|null Cache for checking if 'blogs' table has 'deleted_at'. */
     private ?bool $blogsHasDeletedAt = null;
 
-    /** @var bool|null Cache for checking if  'social_comments' table has 'blog_id'. */
+    /** @var bool|null Cache for checking if  'comments' table has 'blog_id'. */
     private ?bool $commentsHasBlogId = null;
 
     public function __construct(private readonly PDO $pdo)
@@ -83,7 +83,7 @@ final class AdminConsoleRepository
             'users_total' => $this->count('SELECT COUNT(*) FROM users'),
             'contents_total' => $this->count('SELECT COUNT(*) FROM series'),
             'chapters_total' => $this->count('SELECT COUNT(*) FROM chapters'),
-            'comments_total' => $this->count('SELECT COUNT(*) FROM social_comments'),
+            'comments_total' => $this->count('SELECT COUNT(*) FROM comments'),
             'today_content_views_total' => (int)($todayViews ?? 0),
             'blogs_pending_total' => $this->count('SELECT COUNT(*) FROM blogs WHERE approved = 0'),
             'queue_pending_total' => $this->count("SELECT COUNT(*) FROM system_jobs WHERE status = 'pending'"),
@@ -191,7 +191,7 @@ final class AdminConsoleRepository
                       AND ma.action = "ban"
                       AND (ma.target_id = u.id OR ma.target_id = u.username)
                 ) AS is_banned,
-                (SELECT COUNT(*) FROM social_comments c WHERE c.user_id = u.id) AS comment_count,
+                (SELECT COUNT(*) FROM comments c WHERE c.user_id = u.id) AS comment_count,
                 (SELECT COUNT(*) FROM blogs b WHERE b.user_id = u.id) AS blog_count,
                 (SELECT COUNT(*) FROM user_series_follows f WHERE f.user_id = u.id) AS follow_count,
                 (SELECT COALESCE(SUM(duration_seconds), 0) FROM user_activity ua WHERE ua.user_id = u.id) AS total_seconds
@@ -443,7 +443,7 @@ final class AdminConsoleRepository
     public function listComments(int $page, int $perPage): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $total = $this->count('SELECT COUNT(*) FROM social_comments');
+        $total = $this->count('SELECT COUNT(*) FROM comments');
 
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -454,15 +454,22 @@ final class AdminConsoleRepository
                 c.created_at,
                 c.upvote_count,
                 c.downvote_count,
-                s.title AS content_title,
-                b.title AS blog_title,
+                c.target_type,
+                c.target_id,
+                (CASE 
+                    WHEN c.target_type = "series" THEN s.title
+                    WHEN c.target_type = "chapter" THEN s2.title
+                    ELSE NULL 
+                 END) AS content_title,
+                (CASE WHEN c.target_type = "blog" THEN b.title ELSE NULL END) AS blog_title,
                 ch.chapter_number
-             FROM social_comments c
+             FROM comments c
              INNER JOIN users u ON u.id = c.user_id
-             LEFT JOIN chapters ch ON ch.id = c.chapter_id
-             LEFT JOIN series s ON s.id = ch.content_id
-             LEFT JOIN blogs b ON b.id = c.blog_id
-            ORDER BY c.created_at DESC
+             LEFT JOIN chapters ch ON (c.target_type = "chapter" AND ch.id = c.target_id)
+             LEFT JOIN series s ON (c.target_type = "series" AND s.id = c.target_id)
+             LEFT JOIN series s2 ON (c.target_type = "chapter" AND s2.id = ch.content_id)
+             LEFT JOIN blogs b ON (c.target_type = "blog" AND b.id = c.target_id)
+             ORDER BY c.created_at DESC
              LIMIT :limit OFFSET :offset'
         );
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
@@ -482,33 +489,35 @@ final class AdminConsoleRepository
     {
         // 1. Fetch data before deletion for auditing
         $stmt = $this->pdo->prepare(
-            'SELECT c.user_id, c.body, c.content_id, c.chapter_id, c.blog_id, u.username as author_name
-             FROM social_comments c
+            'SELECT c.user_id, c.body, c.target_type, c.target_id, u.username as author_name
+             FROM comments c
              INNER JOIN users u ON u.id = c.user_id
              WHERE c.id = :id LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
         $comment = $stmt->fetch();
-
         if (!$comment) {
             return false;
         }
 
         $this->pdo->beginTransaction();
         try {
-            $stmt = $this->pdo->prepare('DELETE FROM social_comments WHERE id = :id');
+            $stmt = $this->pdo->prepare('DELETE FROM comments WHERE id = :id');
             $stmt->execute(['id' => $id]);
             $success = $stmt->rowCount() > 0;
 
             if ($success) {
+                // Clean up any votes on this comment
+                $delVotes = $this->pdo->prepare('DELETE FROM votes WHERE target_type = "comment" AND target_id = :id');
+                $delVotes->execute(['id' => (string) $id]);
+
                 $context = [
                     'author_id' => $comment['user_id'],
                     'author_name' => $comment['author_name'],
                     'body' => $comment['body'],
                     'location' => [
-                        'content_id' => $comment['content_id'],
-                        'chapter_id' => $comment['chapter_id'],
-                        'blog_id' => $comment['blog_id'],
+                        'target_type' => $comment['target_type'],
+                        'target_id' => $comment['target_id'],
                     ]
                 ];
 
@@ -1143,19 +1152,20 @@ final class AdminConsoleRepository
                  ) ua ON ua.user_id = u.id
                  LEFT JOIN (
                     SELECT user_id, COUNT(*) AS comment_count
-                    FROM social_comments
+                    FROM comments
                     GROUP BY user_id
                  ) c ON c.user_id = u.id
                  LEFT JOIN (
                     SELECT user_id, COUNT(*) AS votes_given
-                    FROM comment_votes
+                    FROM votes
+                    WHERE target_type = "comment"
                     GROUP BY user_id
                  ) vg ON vg.user_id = u.id
                  LEFT JOIN (
                     SELECT user_id,
                            COALESCE(SUM(upvote_count), 0) AS up_votes,
                            COALESCE(SUM(downvote_count), 0) AS down_votes
-                    FROM social_comments
+                    FROM comments
                     GROUP BY user_id
                  ) vr ON vr.user_id = u.id
                  ORDER BY score DESC, u.created_at DESC
@@ -1244,7 +1254,7 @@ final class AdminConsoleRepository
         }
 
         try {
-            $stmt = $this->pdo->query("SHOW COLUMNS FROM social_comments LIKE 'blog_id'");
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM comments LIKE 'blog_id'");
             $this->commentsHasBlogId = $stmt !== false && (bool) $stmt->fetch();
         } catch (\Throwable) {
             $this->commentsHasBlogId = false;

@@ -16,9 +16,10 @@ use App\Repositories\ChapterRepository;
 use App\Repositories\CommentRepository;
 use App\Repositories\CommentVoteRepository;
 use App\Repositories\BlogVoteRepository;
-use App\Repositories\UserActivityRepository;
 use App\Repositories\RatingRepository;
 use App\Repositories\SeriesRepository;
+use App\Repositories\VoteRepository;
+use App\Repositories\UserActivityRepository;
 use App\Repositories\UploadRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
@@ -121,6 +122,7 @@ $builder->addDefinitions([
     CommentRepository::class => DI\autowire(CommentRepository::class),
     CommentVoteRepository::class => DI\autowire(CommentVoteRepository::class),
     BlogVoteRepository::class => DI\autowire(BlogVoteRepository::class),
+    VoteRepository::class => DI\autowire(VoteRepository::class),
     UserActivityRepository::class => DI\autowire(UserActivityRepository::class),
     RatingRepository::class => DI\autowire(RatingRepository::class),
     UploadRepository::class => DI\autowire(UploadRepository::class),
