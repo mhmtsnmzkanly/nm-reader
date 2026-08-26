@@ -62,21 +62,6 @@ CREATE TABLE `series` (
   FULLTEXT KEY `ft_series_search` (`title`,`slug`,`description`,`author`,`artist`,`alternative_titles`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `series_metadata`;
-CREATE TABLE `series_metadata` (
-  `content_id` char(6) NOT NULL,
-  `author` varchar(100) DEFAULT NULL,
-  `artist` varchar(100) DEFAULT NULL,
-  `alternative_titles` varchar(255) DEFAULT NULL,
-  `country` varchar(50) DEFAULT NULL,
-  `release_year` varchar(4) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`content_id`),
-  FULLTEXT KEY `ft_series_meta_search` (`author`,`artist`,`alternative_titles`),
-  CONSTRAINT `fk_metadata_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- --------------------------------------------------------
 -- Unified Taxonomy & Legacy Taxonomies
 -- --------------------------------------------------------
@@ -535,23 +520,6 @@ CREATE TABLE `user_series_follows` (
   PRIMARY KEY (`user_id`,`content_id`),
   CONSTRAINT `fk_follows_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_follows_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-DROP TABLE IF EXISTS `user_preferences`;
-CREATE TABLE `user_preferences` (
-  `user_id` char(8) NOT NULL,
-  `lang` varchar(8) NOT NULL DEFAULT 'tr',
-  `theme` varchar(32) NOT NULL DEFAULT 'default',
-  `reader_layout` varchar(32) NOT NULL DEFAULT 'vertical',
-  `reader_font_size` int(11) NOT NULL DEFAULT 18,
-  `reader_font_family` varchar(64) NOT NULL DEFAULT 'var(--font-sans)',
-  `reader_line_height` decimal(3,1) NOT NULL DEFAULT 1.8,
-  `reader_font_weight` int(11) NOT NULL DEFAULT 400,
-  `reader_reading_direction` varchar(8) NOT NULL DEFAULT 'ltr',
-  `reader_image_fit` varchar(16) NOT NULL DEFAULT 'width',
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`user_id`),
-  CONSTRAINT `fk_user_preferences_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_follows`;

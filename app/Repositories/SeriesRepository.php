@@ -41,10 +41,9 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    cm.author,
-                    cm.artist
+                    c.author,
+                    c.artist
                 FROM series c
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE c.deleted_at IS NULL
                 ORDER BY c.rating_count DESC, c.rating_avg DESC, c.chapter_count DESC
                 LIMIT :limit OFFSET :offset';
@@ -73,12 +72,11 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    cm.author,
-                    cm.artist,
+                    c.author,
+                    c.artist,
                     MAX(ch.created_at) as last_chapter_at
                 FROM series c
                 INNER JOIN chapters ch ON ch.content_id = c.id
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE c.deleted_at IS NULL AND ch.deleted_at IS NULL
                 GROUP BY c.id
                 ORDER BY last_chapter_at DESC
@@ -107,10 +105,9 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    cm.author,
-                    cm.artist
+                    c.author,
+                    c.artist
                 FROM series c
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE c.deleted_at IS NULL
                 ORDER BY c.created_at DESC
                 LIMIT :limit';
@@ -144,14 +141,13 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
-                    cm.author,
-                    cm.artist,
-                    cm.country,
-                    cm.release_year,
+                    c.author,
+                    c.artist,
+                    c.country,
+                    c.release_year,
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
                     GROUP_CONCAT(DISTINCT CONCAT(t.name, "::", t.slug, "::", COALESCE(t.ui_config, "{}")) ORDER BY t.name SEPARATOR "||") AS series_tags_raw
                 FROM series c
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 LEFT JOIN series_genre_map cg ON cg.content_id = c.id
                 LEFT JOIN series_genres g ON g.id = cg.genre_id
                 LEFT JOIN series_tag_map ct ON ct.content_id = c.id
@@ -177,7 +173,7 @@ final class SeriesRepository
                     c.title,
                     c.slug,
                     c.description,
-                    cm.alternative_titles,
+                    c.alternative_titles,
                     c.type,
                     c.status,
                     c.cover_image,
@@ -186,15 +182,14 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
-                    cm.author,
-                    cm.artist,
-                    cm.country,
-                    cm.release_year,
+                    c.author,
+                    c.artist,
+                    c.country,
+                    c.release_year,
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
                     GROUP_CONCAT(DISTINCT CONCAT(t.name, "::", t.slug, "::", COALESCE(t.ui_config, "{}")) ORDER BY t.name SEPARATOR "||") AS series_tags_raw,
                     (CASE WHEN ucf.user_id IS NOT NULL THEN 1 ELSE 0 END) AS is_followed
                 FROM series c
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 LEFT JOIN series_genre_map cg ON cg.content_id = c.id
                 LEFT JOIN series_genres g ON g.id = cg.genre_id
                 LEFT JOIN series_tag_map ct ON ct.content_id = c.id
@@ -311,10 +306,9 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    cm.author,
-                    cm.artist
+                    c.author,
+                    c.artist
                 FROM series c
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE c.type = :type AND c.deleted_at IS NULL
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
@@ -345,12 +339,11 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    cm.author,
-                    cm.artist
+                    c.author,
+                    c.artist
                 FROM series c
                 INNER JOIN series_genre_map cg ON cg.content_id = c.id
                 INNER JOIN series_genres g ON g.id = cg.genre_id
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE g.slug = :slug AND c.deleted_at IS NULL
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
@@ -381,12 +374,11 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    cm.author,
-                    cm.artist
+                    c.author,
+                    c.artist
                 FROM series c
                 INNER JOIN series_tag_map ct ON ct.content_id = c.id
                 INNER JOIN series_tags t ON t.id = ct.tag_id
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE t.slug = :slug AND c.deleted_at IS NULL
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
@@ -514,10 +506,9 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.cover_image,
-                    cm.author,
-                    cm.artist' . $selectRelevance . '
+                    c.author,
+                    c.artist' . $selectRelevance . '
                 FROM series c
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE ' . implode(' AND ', $where) . '
                 ORDER BY ' . $orderBy . '
                 LIMIT :limit OFFSET :offset';
@@ -689,11 +680,10 @@ final class SeriesRepository
                     c.chapter_count,
                     c.comment_count,
                     c.created_at,
-                    cm.author,
-                    cm.artist
+                    c.author,
+                    c.artist
                 FROM user_series_follows ucf
                 INNER JOIN series c ON c.id = ucf.content_id
-                LEFT JOIN series_metadata cm ON cm.content_id = c.id
                 WHERE ucf.user_id = :user_id
                 ORDER BY c.created_at DESC
                 LIMIT :limit OFFSET :offset';

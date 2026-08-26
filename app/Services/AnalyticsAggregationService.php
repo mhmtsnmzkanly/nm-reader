@@ -165,7 +165,7 @@ final class AnalyticsAggregationService
         $sql = "INSERT INTO analytics_snapshots_daily (stat_date, metric_name, metric_value)
                 SELECT CURRENT_DATE(), CONCAT('author_views:', m.author), COUNT(*)
                 FROM analytics_events e
-                INNER JOIN series_metadata m ON m.content_id = e.entity_id
+                INNER JOIN series m ON m.id = e.entity_id
                 WHERE e.event_type = 'content_view' AND e.entity_type = 'content'
                   AND m.author IS NOT NULL AND m.author <> ''
                   AND e.created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)

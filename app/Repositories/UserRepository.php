@@ -164,60 +164,39 @@ final class UserRepository
      * @param string $userId
      * @return array|null
      */
+    public function getPreferences(string $userId): ?array
+    {
+        try {
+            $userStmt = $this->pdo->prepare('SELECT settings FROM users WHERE id = :user_id LIMIT 1');
+            $userStmt->execute(['user_id' => $userId]);
+            $settingsRaw = $userStmt->fetchColumn();
+            if ($settingsRaw && ($decoded = json_decode((string) $settingsRaw, true))) {
+                return [
+                    'user_id' => $userId,
+                    'lang' => $decoded['lang'] ?? 'tr',
+                    'theme' => $decoded['theme'] ?? 'dark',
+                    'reader_layout' => $decoded['reader']['layout'] ?? ($decoded['reader_layout'] ?? 'single'),
+                    'reader_font_size' => (int) ($decoded['reader']['fontSize'] ?? ($decoded['reader_font_size'] ?? 18)),
+                    'reader_font_family' => $decoded['reader']['fontFamily'] ?? ($decoded['reader_font_family'] ?? 'Inter'),
+                    'reader_line_height' => (string) ($decoded['reader']['lineHeight'] ?? ($decoded['reader_line_height'] ?? '1.6')),
+                    'reader_font_weight' => (int) ($decoded['reader']['fontWeight'] ?? ($decoded['reader_font_weight'] ?? 400)),
+                    'reader_reading_direction' => $decoded['reader']['readingDirection'] ?? ($decoded['reader_reading_direction'] ?? 'ltr'),
+                    'reader_image_fit' => $decoded['reader']['imageFit'] ?? ($decoded['reader_image_fit'] ?? 'contain'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ];
+            }
+        } catch (\Throwable) {}
+
+        return null;
+    }
+
     public function getPreferencesByUserId(string $userId): ?array
     {
-        $selectLang = $this->hasUserPreferencesLangColumn() ? "lang,\n" : '';
-        $sql = 'SELECT
-                    user_id,
-                    ' . $selectLang . '
-                    theme,
-                    reader_layout,
-                    reader_font_size,
-                    reader_font_family,
-                    reader_line_height,
-                    reader_font_weight,
-                    reader_reading_direction,
-                    reader_image_fit,
-                    updated_at
-                FROM user_preferences
-                WHERE user_id = :user_id
-                LIMIT 1';
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['user_id' => $userId]);
-        $row = $stmt->fetch();
-
-        if ($row === false) {
-            try {
-                $userStmt = $this->pdo->prepare('SELECT settings FROM users WHERE id = :user_id LIMIT 1');
-                $userStmt->execute(['user_id' => $userId]);
-                $settingsRaw = $userStmt->fetchColumn();
-                if ($settingsRaw && ($decoded = json_decode($settingsRaw, true))) {
-                    return [
-                        'user_id' => $userId,
-                        'lang' => $decoded['lang'] ?? 'tr',
-                        'theme' => $decoded['theme'] ?? 'dark',
-                        'reader_layout' => $decoded['reader']['layout'] ?? 'single',
-                        'reader_font_size' => (int) ($decoded['reader']['fontSize'] ?? 18),
-                        'reader_font_family' => $decoded['reader']['fontFamily'] ?? 'Inter',
-                        'reader_line_height' => $decoded['reader']['lineHeight'] ?? '1.6',
-                        'reader_font_weight' => (int) ($decoded['reader']['fontWeight'] ?? 400),
-                        'reader_reading_direction' => $decoded['reader']['readingDirection'] ?? 'ltr',
-                        'reader_image_fit' => $decoded['reader']['imageFit'] ?? 'contain',
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ];
-                }
-            } catch (\Throwable) {}
-            return null;
-        }
-
-        return $row;
+        return $this->getPreferences($userId);
     }
 
     /**
      * Updates or inserts (upserts) user preferences.
-     *
-     * Handles schema variations (presence of 'lang' column).
      */
     public function upsertPreferences(
         string $userId,
@@ -231,79 +210,18 @@ final class UserRepository
         string $readingDirection,
         string $imageFit
     ): void {
-        if ($this->hasUserPreferencesLangColumn()) {
-            $sql = 'INSERT INTO user_preferences (
-                        user_id,
-                        lang,
-                        theme,
-                        reader_layout,
-                        reader_font_size,
-                        reader_font_family,
-                        reader_line_height,
-                        reader_font_weight,
-                        reader_reading_direction,
-                        reader_image_fit
-                    ) VALUES (
-                        :user_id,
-                        :lang,
-                        :theme,
-                        :reader_layout,
-                        :reader_font_size,
-                        :reader_font_family,
-                        :reader_line_height,
-                        :reader_font_weight,
-                        :reader_reading_direction,
-                        :reader_image_fit
-                    )
-                    ON DUPLICATE KEY UPDATE
-                        lang = VALUES(lang),
-                        theme = VALUES(theme),
-                        reader_layout = VALUES(reader_layout),
-                        reader_font_size = VALUES(reader_font_size),
-                        reader_font_family = VALUES(reader_font_family),
-                        reader_line_height = VALUES(reader_line_height),
-                        reader_font_weight = VALUES(reader_font_weight),
-                        reader_reading_direction = VALUES(reader_reading_direction),
-                        reader_image_fit = VALUES(reader_image_fit),
-                        updated_at = NOW()';
-        } else {
-            $sql = 'INSERT INTO user_preferences (
-                        user_id,
-                        theme,
-                        reader_layout,
-                        reader_font_size,
-                        reader_font_family,
-                        reader_line_height,
-                        reader_font_weight,
-                        reader_reading_direction,
-                        reader_image_fit
-                    ) VALUES (
-                        :user_id,
-                        :theme,
-                        :reader_layout,
-                        :reader_font_size,
-                        :reader_font_family,
-                        :reader_line_height,
-                        :reader_font_weight,
-                        :reader_reading_direction,
-                        :reader_image_fit
-                    )
-                    ON DUPLICATE KEY UPDATE
-                        theme = VALUES(theme),
-                        reader_layout = VALUES(reader_layout),
-                        reader_font_size = VALUES(reader_font_size),
-                        reader_font_family = VALUES(reader_font_family),
-                        reader_line_height = VALUES(reader_line_height),
-                        reader_font_weight = VALUES(reader_font_weight),
-                        reader_reading_direction = VALUES(reader_reading_direction),
-                        reader_image_fit = VALUES(reader_image_fit),
-                        updated_at = NOW()';
-        }
-
-        $stmt = $this->pdo->prepare($sql);
-        $params = [
-            'user_id' => $userId,
+        $settingsJson = json_encode([
+            'lang' => $lang,
             'theme' => $theme,
+            'reader' => [
+                'layout' => $layout,
+                'fontSize' => $fontSize,
+                'fontFamily' => $fontFamily,
+                'lineHeight' => $lineHeight,
+                'fontWeight' => $fontWeight,
+                'readingDirection' => $readingDirection,
+                'imageFit' => $imageFit,
+            ],
             'reader_layout' => $layout,
             'reader_font_size' => $fontSize,
             'reader_font_family' => $fontFamily,
@@ -311,66 +229,14 @@ final class UserRepository
             'reader_font_weight' => $fontWeight,
             'reader_reading_direction' => $readingDirection,
             'reader_image_fit' => $imageFit,
-        ];
-        if ($this->hasUserPreferencesLangColumn()) {
-            $params['lang'] = $lang;
-        }
-        $stmt->execute($params);
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        // Sync to users.settings JSON
-        try {
-            $settingsJson = json_encode([
-                'lang' => $lang,
-                'theme' => $theme,
-                'reader' => [
-                    'layout' => $layout,
-                    'fontSize' => $fontSize,
-                    'fontFamily' => $fontFamily,
-                    'lineHeight' => $lineHeight,
-                    'fontWeight' => $fontWeight,
-                    'readingDirection' => $readingDirection,
-                    'imageFit' => $imageFit,
-                ],
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-            $this->pdo->prepare(
-                'UPDATE users SET settings = :settings WHERE id = :user_id'
-            )->execute([
-                'settings' => $settingsJson,
-                'user_id' => $userId,
-            ]);
-        } catch (\Throwable) {}
-    }
-
-    /**
-     * Detects if the 'user_preferences' table has a 'lang' column.
-     */
-    private function hasUserPreferencesLangColumn(): bool
-    {
-        if ($this->userPreferencesHasLang !== null) {
-            return $this->userPreferencesHasLang;
-        }
-
-        try {
-            $stmt = $this->pdo->prepare(
-                'SELECT 1
-                 FROM information_schema.columns
-                 WHERE table_schema = DATABASE()
-                   AND table_name = :table_name
-                   AND column_name = :column_name
-                 LIMIT 1'
-            );
-            $stmt->execute([
-                'table_name' => 'user_preferences',
-                'column_name' => 'lang',
-            ]);
-
-            $this->userPreferencesHasLang = $stmt->fetchColumn() !== false;
-            return $this->userPreferencesHasLang;
-        } catch (\Throwable) {
-            $this->userPreferencesHasLang = false;
-            return false;
-        }
+        $this->pdo->prepare(
+            'UPDATE users SET settings = :settings WHERE id = :user_id'
+        )->execute([
+            'settings' => $settingsJson,
+            'user_id' => $userId,
+        ]);
     }
 
     /**

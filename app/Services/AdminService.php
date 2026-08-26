@@ -236,22 +236,6 @@ final class AdminService
                 'release_year' => $releaseYear !== null ? (string) $releaseYear : null,
             ]);
         } catch (\Throwable) {}
-
-        try {
-            $stmt = $this->pdo->prepare(
-                'INSERT INTO series_metadata (content_id, author, artist, alternative_titles, country, release_year, created_at, updated_at)
-                 VALUES (:content_id, :author, :artist, :alternative_titles, :country, :release_year, NOW(), NOW())
-                 ON DUPLICATE KEY UPDATE author = VALUES(author), artist = VALUES(artist), alternative_titles = VALUES(alternative_titles), country = VALUES(country), release_year = VALUES(release_year), updated_at = NOW()'
-            );
-            $stmt->execute([
-                'content_id' => $contentId,
-                'author' => $author,
-                'artist' => $artist,
-                'alternative_titles' => $alternativeTitles,
-                'country' => $country,
-                'release_year' => $releaseYear,
-            ]);
-        } catch (\Throwable) {}
     }
 
     private function sanitizePerson(string $value): ?string

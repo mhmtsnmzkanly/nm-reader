@@ -145,14 +145,13 @@ final class AdminConsoleRepository
                 c.rating_avg,
                 c.rating_count,
                 c.created_at,
-                cm.author,
-                cm.artist,
-                cm.country,
-                cm.release_year,
+                c.author,
+                c.artist,
+                c.country,
+                c.release_year,
                 (SELECT GROUP_CONCAT(genre_id) FROM series_genre_map WHERE content_id = c.id) as genre_ids,
                 (SELECT GROUP_CONCAT(tag_id) FROM series_tag_map WHERE content_id = c.id) as tag_ids
              FROM series c
-             LEFT JOIN series_metadata cm ON cm.content_id = c.id
              WHERE c.deleted_at IS NULL
              ORDER BY c.created_at DESC
              LIMIT :limit OFFSET :offset'
