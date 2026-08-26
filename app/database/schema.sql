@@ -540,6 +540,47 @@ CREATE TABLE `wallet_transactions` (
   CONSTRAINT `fk_wallet_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `coin_catalog`;
+CREATE TABLE `coin_catalog` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `catalog_type` enum('coin_package','feature_pass','series_bundle') NOT NULL,
+  `item_key` varchar(32) NOT NULL,
+  `name` varchar(120) NOT NULL,
+  `coin_amount` int(10) unsigned NOT NULL DEFAULT 0,
+  `bonus_coin` int(10) unsigned NOT NULL DEFAULT 0,
+  `coin_price` int(10) unsigned NOT NULL DEFAULT 0,
+  `fiat_price` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `currency` char(3) NOT NULL DEFAULT 'TRY',
+  `duration_days` int(10) unsigned DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_catalog_item` (`item_key`),
+  KEY `idx_catalog_type_active` (`catalog_type`,`is_active`,`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_unlocks`;
+CREATE TABLE `user_unlocks` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `unlock_type` enum('chapter','series','feature') NOT NULL,
+  `target_id` varchar(32) NOT NULL,
+  `content_id` char(6) DEFAULT NULL,
+  `price_coin` int(10) unsigned NOT NULL DEFAULT 0,
+  `transaction_id` bigint(20) unsigned DEFAULT NULL,
+  `starts_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `expires_at` datetime DEFAULT NULL,
+  `unlocked_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_user_unlock` (`user_id`,`unlock_type`,`target_id`),
+  KEY `idx_unlock_lookup` (`user_id`,`content_id`,`unlock_type`),
+  KEY `idx_unlock_active` (`user_id`,`unlock_type`,`expires_at`),
+  CONSTRAINT `fk_user_unlocks_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_unlocks_tx` FOREIGN KEY (`transaction_id`) REFERENCES `wallet_transactions` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `shop_packages`;
 CREATE TABLE `shop_packages` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,

@@ -103,6 +103,8 @@ final class QueueService
             $seriesTitle = (string) ($payload['series_title'] ?? 'Series');
             if ($contentId === '' || $chapterId === '') {
                 throw new \RuntimeException('Invalid notify_new_chapter payload');
+            }
+
             $eventTitle = 'Yeni bolum yayinlandi';
             $eventBody = sprintf('%s icin yeni bolum (%s) yayinda.', $seriesTitle, $chapterNumber);
             $eventData = json_encode([

@@ -365,6 +365,20 @@ final class WalletRepository
             'price_coin' => $priceCoin,
             'transaction_id' => $transactionId,
         ]);
+
+        try {
+            $this->pdo->prepare(
+                'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, unlocked_at)
+                 VALUES (:user_id, "series", :target_id, :content_id, :price_coin, :transaction_id, NOW())
+                 ON DUPLICATE KEY UPDATE price_coin = VALUES(price_coin)'
+            )->execute([
+                'user_id' => $userId,
+                'target_id' => $contentId,
+                'content_id' => $contentId,
+                'price_coin' => $priceCoin,
+                'transaction_id' => $transactionId,
+            ]);
+        } catch (\Throwable) {}
     }
 
     public function createChapterUnlock(string $userId, string $chapterId, string $contentId, int $priceCoin, ?int $transactionId): void
@@ -380,6 +394,20 @@ final class WalletRepository
             'price_coin' => $priceCoin,
             'transaction_id' => $transactionId,
         ]);
+
+        try {
+            $this->pdo->prepare(
+                'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, unlocked_at)
+                 VALUES (:user_id, "chapter", :target_id, :content_id, :price_coin, :transaction_id, NOW())
+                 ON DUPLICATE KEY UPDATE price_coin = VALUES(price_coin)'
+            )->execute([
+                'user_id' => $userId,
+                'target_id' => $chapterId,
+                'content_id' => $contentId,
+                'price_coin' => $priceCoin,
+                'transaction_id' => $transactionId,
+            ]);
+        } catch (\Throwable) {}
     }
 
     public function listSeriesUnlocks(string $userId, int $page, int $perPage): array
@@ -505,7 +533,23 @@ final class WalletRepository
             'starts_at' => $startsAt,
             'expires_at' => $expiresAt,
         ]);
-        return (int) $this->pdo->lastInsertId();
+        $id = (int) $this->pdo->lastInsertId();
+
+        try {
+            $this->pdo->prepare(
+                'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, starts_at, expires_at, unlocked_at)
+                 VALUES (:user_id, "feature", :target_id, NULL, 0, :transaction_id, :starts_at, :expires_at, NOW())
+                 ON DUPLICATE KEY UPDATE expires_at = VALUES(expires_at)'
+            )->execute([
+                'user_id' => $userId,
+                'target_id' => $featureKey,
+                'transaction_id' => $transactionId,
+                'starts_at' => $startsAt,
+                'expires_at' => $expiresAt,
+            ]);
+        } catch (\Throwable) {}
+
+        return $id;
     }
 
     public function getLatestActiveFeatureEntitlement(string $userId, string $featureKey): ?array
