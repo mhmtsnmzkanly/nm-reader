@@ -281,6 +281,29 @@ CREATE TABLE `chapters` (
   CONSTRAINT `fk_chapters_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `user_reading_history`;
+CREATE TABLE `user_reading_history` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `content_id` char(6) NOT NULL,
+  `chapter_id` char(6) NOT NULL,
+  `chapter_number` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `progress_pct` tinyint unsigned NOT NULL DEFAULT 100,
+  `last_page` int unsigned DEFAULT NULL,
+  `scroll_offset` int unsigned DEFAULT NULL,
+  `is_completed` tinyint(1) NOT NULL DEFAULT 1,
+  `read_duration_seconds` int unsigned NOT NULL DEFAULT 0,
+  `read_count` smallint unsigned NOT NULL DEFAULT 1,
+  `last_read_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_user_chapter` (`user_id`,`chapter_id`),
+  KEY `idx_history_user_content` (`user_id`,`content_id`,`chapter_number`),
+  KEY `idx_history_user_recent` (`user_id`,`last_read_at`),
+  CONSTRAINT `fk_reading_history_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_reading_history_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_reading_history_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `user_reading_progress`;
 CREATE TABLE `user_reading_progress` (
   `user_id` char(8) NOT NULL,
@@ -298,8 +321,10 @@ DROP TABLE IF EXISTS `user_chapters_reads`;
 CREATE TABLE `user_chapters_reads` (
   `user_id` char(8) NOT NULL,
   `chapter_id` char(6) NOT NULL,
+  `content_id` char(6) DEFAULT NULL,
   `read_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`user_id`,`chapter_id`),
+  KEY `idx_user_reads_content` (`user_id`,`content_id`),
   KEY `idx_user_reads_read_at` (`read_at`),
   CONSTRAINT `fk_user_reads_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_user_reads_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE CASCADE
