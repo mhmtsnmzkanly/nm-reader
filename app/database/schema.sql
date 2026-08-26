@@ -376,10 +376,9 @@ CREATE TABLE `user_activity` (
   CONSTRAINT `fk_activity_chapter` FOREIGN KEY (`chapter_id`) REFERENCES `chapters` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-DROP TABLE IF EXISTS `user_notifications`;
-CREATE TABLE `user_notifications` (
+DROP TABLE IF EXISTS `notification_events`;
+CREATE TABLE `notification_events` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` char(8) NOT NULL,
   `actor_user_id` char(8) DEFAULT NULL,
   `type` varchar(50) NOT NULL,
   `target_type` varchar(30) DEFAULT NULL,
@@ -387,14 +386,35 @@ CREATE TABLE `user_notifications` (
   `title` varchar(120) NOT NULL,
   `body` text NOT NULL,
   `data` longtext DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_events_type_created` (`type`,`created_at`),
+  KEY `idx_events_actor` (`actor_user_id`),
+  CONSTRAINT `fk_notification_events_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `user_notifications`;
+CREATE TABLE `user_notifications` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `event_id` bigint(20) unsigned DEFAULT NULL,
+  `actor_user_id` char(8) DEFAULT NULL,
+  `type` varchar(50) NOT NULL DEFAULT '',
+  `target_type` varchar(30) DEFAULT NULL,
+  `target_id` varchar(32) DEFAULT NULL,
+  `title` varchar(120) NOT NULL DEFAULT '',
+  `body` text DEFAULT NULL,
+  `data` longtext DEFAULT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
   `read_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_notifications_user_created` (`user_id`,`created_at`),
   KEY `idx_notifications_user_read` (`user_id`,`is_read`,`created_at`),
+  KEY `idx_notifications_event` (`event_id`),
   CONSTRAINT `fk_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_notifications_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_notifications_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_notifications_event` FOREIGN KEY (`event_id`) REFERENCES `notification_events` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_sessions`;

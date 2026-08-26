@@ -103,11 +103,35 @@ final class QueueService
             $seriesTitle = (string) ($payload['series_title'] ?? 'Series');
             if ($contentId === '' || $chapterId === '') {
                 throw new \RuntimeException('Invalid notify_new_chapter payload');
-            }
+            $eventTitle = 'Yeni bolum yayinlandi';
+            $eventBody = sprintf('%s icin yeni bolum (%s) yayinda.', $seriesTitle, $chapterNumber);
+            $eventData = json_encode([
+                'source' => 'new_chapter',
+                'content_id' => $contentId,
+                'chapter_id' => $chapterId,
+                'chapter_number' => $chapterNumber,
+            ], JSON_UNESCAPED_UNICODE) ?: '{}';
 
-            $sql = 'INSERT INTO user_notifications (user_id, actor_user_id, type, title, body, `data`, is_read, created_at)
+            $eventId = null;
+            try {
+                $stmtEvent = $this->pdo->prepare(
+                    'INSERT INTO notification_events (actor_user_id, type, target_type, target_id, title, body, `data`, created_at)
+                     VALUES (NULL, :type, "chapter", :chapter_id, :title, :body, :data, NOW())'
+                );
+                $stmtEvent->execute([
+                    'type' => 'new_chapter',
+                    'chapter_id' => $chapterId,
+                    'title' => $eventTitle,
+                    'body' => $eventBody,
+                    'data' => $eventData,
+                ]);
+                $eventId = (int) $this->pdo->lastInsertId();
+            } catch (\Throwable) {}
+
+            $sql = 'INSERT INTO user_notifications (user_id, event_id, actor_user_id, type, title, body, `data`, is_read, created_at)
                     SELECT
                         f.user_id,
+                        :event_id,
                         NULL,
                         :type,
                         :title,
@@ -119,15 +143,11 @@ final class QueueService
                     WHERE f.content_id = :content_id';
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([
+                'event_id' => $eventId,
                 'type' => 'new_chapter',
-                'title' => 'Yeni bolum yayinlandi',
-                'body' => sprintf('%s icin yeni bolum (%s) yayinda.', $seriesTitle, $chapterNumber),
-                'data' => json_encode([
-                    'source' => 'new_chapter',
-                    'content_id' => $contentId,
-                    'chapter_id' => $chapterId,
-                    'chapter_number' => $chapterNumber,
-                ], JSON_UNESCAPED_UNICODE) ?: '{}',
+                'title' => $eventTitle,
+                'body' => $eventBody,
+                'data' => $eventData,
                 'content_id' => $contentId,
             ]);
             return;

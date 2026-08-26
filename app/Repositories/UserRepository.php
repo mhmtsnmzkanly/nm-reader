@@ -451,16 +451,17 @@ final class UserRepository
         $where = implode(' AND ', $whereParts);
         $sql = 'SELECT
                     n.id,
-                    n.type,
-                    n.title,
-                    n.body,
-                    n.`data`,
+                    COALESCE(e.type, n.type) AS type,
+                    COALESCE(e.title, n.title) AS title,
+                    COALESCE(e.body, n.body) AS body,
+                    COALESCE(e.`data`, n.`data`) AS `data`,
                     n.is_read,
                     n.created_at,
-                    n.actor_user_id,
+                    COALESCE(e.actor_user_id, n.actor_user_id) AS actor_user_id,
                     u.username AS actor_username
                 FROM user_notifications n
-                LEFT JOIN users u ON u.id = n.actor_user_id
+                LEFT JOIN notification_events e ON e.id = n.event_id
+                LEFT JOIN users u ON u.id = COALESCE(e.actor_user_id, n.actor_user_id)
                 WHERE ' . $where . '
                 ORDER BY n.created_at DESC, n.id DESC
                 LIMIT :limit' . ($cursorCreatedAt !== null && $cursorId !== null ? '' : ' OFFSET :offset');
