@@ -345,19 +345,44 @@ final class AdminService
                 $dataVal = implode('|', $validPages);
             }
 
-            $stmt = $this->pdo->prepare(
-                'INSERT INTO chapters (id, content_id, chapter_number, title, type, `data`, created_by, created_at)
-                 VALUES (:cid, :content_id, :chapter_number, :title, :type, :data, :created_by, NOW())'
-            );
-            $stmt->execute([
-                'cid' => $chapterId,
-                'content_id' => $contentId,
-                'chapter_number' => $chapterNumber,
-                'title' => $title,
-                'type' => $chapterType,
-                'data' => $dataVal,
-                'created_by' => $moderatorId,
-            ]);
+            $hasNumberCol = false;
+            try {
+                $check = $this->pdo->query("SHOW COLUMNS FROM chapters LIKE 'number'");
+                $hasNumberCol = $check !== false && (bool) $check->fetch();
+            } catch (\Throwable) {}
+
+            if ($hasNumberCol) {
+                $stmt = $this->pdo->prepare(
+                    'INSERT INTO chapters (id, content_id, `number`, chapter_number, title, type, `text`, `image`, `data`, created_by, created_at)
+                     VALUES (:cid, :content_id, :number, :chapter_number, :title, :type, :text, :image, :data, :created_by, NOW())'
+                );
+                $stmt->execute([
+                    'cid' => $chapterId,
+                    'content_id' => $contentId,
+                    'number' => (float) $chapterNumber,
+                    'chapter_number' => $chapterNumber,
+                    'title' => $title,
+                    'type' => $chapterType,
+                    'text' => $chapterType === 'text' ? $dataVal : null,
+                    'image' => $chapterType === 'image' ? $dataVal : null,
+                    'data' => $dataVal,
+                    'created_by' => $moderatorId,
+                ]);
+            } else {
+                $stmt = $this->pdo->prepare(
+                    'INSERT INTO chapters (id, content_id, chapter_number, title, type, `data`, created_by, created_at)
+                     VALUES (:cid, :content_id, :chapter_number, :title, :type, :data, :created_by, NOW())'
+                );
+                $stmt->execute([
+                    'cid' => $chapterId,
+                    'content_id' => $contentId,
+                    'chapter_number' => $chapterNumber,
+                    'title' => $title,
+                    'type' => $chapterType,
+                    'data' => $dataVal,
+                    'created_by' => $moderatorId,
+                ]);
+            }
 
             // Update series chapter_count
             $this->pdo->prepare(

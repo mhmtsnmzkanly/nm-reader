@@ -179,7 +179,7 @@ final class ChapterRepository
 
     public function findChapterText(string $chapterId): ?string
     {
-        $stmt = $this->pdo->prepare('SELECT `data` FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT COALESCE(`text`, `data`) AS `data` FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
         $stmt->execute(['chapter_id' => $chapterId]);
         $row = $stmt->fetch();
 
@@ -188,7 +188,7 @@ final class ChapterRepository
 
     public function findChapterPages(string $chapterId): array
     {
-        $stmt = $this->pdo->prepare('SELECT `data` FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT COALESCE(`image`, `data`) AS `data` FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
         $stmt->execute(['chapter_id' => $chapterId]);
         $row = $stmt->fetch();
         

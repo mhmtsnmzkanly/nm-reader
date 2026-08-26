@@ -230,22 +230,27 @@ DROP TABLE IF EXISTS `chapters`;
 CREATE TABLE `chapters` (
   `id` char(6) NOT NULL,
   `content_id` char(6) NOT NULL,
-  `chapter_number` varchar(10) NOT NULL,
+  `number` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `chapter_number` varchar(10) NOT NULL DEFAULT '',
   `title` varchar(200) DEFAULT NULL,
-  `data` longtext NOT NULL,
   `type` enum('text','image') NOT NULL DEFAULT 'image',
+  `text` longtext DEFAULT NULL,
+  `image` longtext DEFAULT NULL,
+  `data` longtext NOT NULL,
   `price_amount` int(10) unsigned NOT NULL DEFAULT 0,
   `price_last_update` datetime DEFAULT NULL,
   `created_by` char(8) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
+  KEY `idx_chapters_content_number` (`content_id`,`number`),
   KEY `idx_chapters_content` (`content_id`),
+  KEY `idx_chapters_number` (`number`),
   KEY `idx_chapters_creator` (`created_by`),
   KEY `idx_chapters_deleted` (`deleted_at`),
   CONSTRAINT `fk_chapters_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_chapters_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_reading_progress`;
 CREATE TABLE `user_reading_progress` (
