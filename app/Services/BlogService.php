@@ -25,7 +25,8 @@ final class BlogService
         private readonly SlugService $slugService,
         private readonly CacheService $cache,
         private readonly EntityIdService $entityIds,
-        private readonly \App\Repositories\AdminConsoleRepository $adminConsole
+        private readonly \App\Repositories\AdminConsoleRepository $adminConsole,
+        private readonly ContentSecurityScanner $scanner
     ) {
     }
 
@@ -117,8 +118,8 @@ final class BlogService
             throw new \InvalidArgumentException($error);
         }
 
-        $title = Validator::sanitizeText((string) $payload['title']);
-        $body = Validator::sanitizeMultilineText((string) $payload['body']);
+        $title = $this->scanner->assertSafe(Validator::sanitizeText((string) $payload['title']), 'blog_title');
+        $body = $this->scanner->assertSafe(Validator::sanitizeMultilineText((string) $payload['body']), 'blog_body');
 
         if ($title === '' || strlen($title) < 3 || strlen($title) > 160) {
             throw new \InvalidArgumentException('Title must be 3-160 characters');

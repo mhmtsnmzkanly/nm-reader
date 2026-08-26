@@ -36,7 +36,8 @@ final class CommentService
         private readonly CacheService $cache,
         private readonly PDO $pdo,
         private readonly AnalyticsService $analytics,
-        private readonly EntityIdService $entityIds
+        private readonly EntityIdService $entityIds,
+        private readonly ContentSecurityScanner $scanner
     ) {
     }
 
@@ -56,7 +57,7 @@ final class CommentService
             throw new \InvalidArgumentException('parent_id must be a positive integer');
         }
 
-        $body = Validator::sanitizeMultilineText($body);
+        $body = $this->scanner->assertSafe(Validator::sanitizeMultilineText($body), 'chapter_comment');
         if ($body === '') {
             throw new \InvalidArgumentException('Comment body is required');
         }
@@ -113,7 +114,7 @@ final class CommentService
             throw new \InvalidArgumentException('parent_id must be a positive integer');
         }
 
-        $body = Validator::sanitizeMultilineText($body);
+        $body = $this->scanner->assertSafe(Validator::sanitizeMultilineText($body), 'series_comment');
         if ($body === '') {
             throw new \InvalidArgumentException('Comment body is required');
         }
@@ -168,7 +169,7 @@ final class CommentService
             throw new \InvalidArgumentException('parent_id must be a positive integer');
         }
 
-        $body = Validator::sanitizeMultilineText($body);
+        $body = $this->scanner->assertSafe(Validator::sanitizeMultilineText($body), 'blog_comment');
         if ($body === '') {
             throw new \InvalidArgumentException('Comment body is required');
         }

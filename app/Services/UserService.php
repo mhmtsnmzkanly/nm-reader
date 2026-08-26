@@ -44,7 +44,8 @@ final class UserService
 
     public function __construct(
         private readonly UserRepository $users,
-        private readonly UploadService $uploadService
+        private readonly UploadService $uploadService,
+        private readonly ContentSecurityScanner $scanner
     )
     {
     }
@@ -318,7 +319,7 @@ final class UserService
             return null;
         }
 
-        $bio = Validator::sanitizeMultilineText((string) ($payload['bio'] ?? (string) ($current['bio'] ?? '')));
+        $bio = $this->scanner->assertSafe(Validator::sanitizeMultilineText((string) ($payload['bio'] ?? (string) ($current['bio'] ?? ''))), 'user_bio');
         if (strlen($bio) > 1000) {
             throw new \InvalidArgumentException('bio must be at most 1000 characters');
         }

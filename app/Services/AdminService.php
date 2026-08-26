@@ -44,7 +44,8 @@ final class AdminService
         private readonly SlugService $slugService,
         private readonly CacheService $cache,
         private readonly QueueService $queue,
-        private readonly \App\Repositories\AdminConsoleRepository $adminConsole
+        private readonly \App\Repositories\AdminConsoleRepository $adminConsole,
+        private readonly ContentSecurityScanner $scanner
     ) {
     }
 
@@ -324,7 +325,7 @@ final class AdminService
                 if ($body === '') {
                     throw new \InvalidArgumentException('body is required for text chapters');
                 }
-                $dataVal = $body;
+                $dataVal = $this->scanner->assertSafe($body, 'novel_chapter');
             } else {
                 $pages = $payload['pages'] ?? null;
                 if (!is_array($pages) || count($pages) === 0) {
@@ -562,7 +563,7 @@ final class AdminService
             if ($body === '') {
                 throw new \InvalidArgumentException('body is required for text chapters');
             }
-            $dataVal = $body;
+            $dataVal = $this->scanner->assertSafe($body, 'novel_chapter');
         } else {
             $pages = $this->normalizePagesPayload($payload['pages'] ?? null);
             if (count($pages) === 0) {

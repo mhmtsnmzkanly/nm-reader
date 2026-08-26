@@ -157,6 +157,8 @@ $builder->addDefinitions([
         ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/storage/media/'),
     \App\Services\SeoService::class => DI\autowire(\App\Services\SeoService::class)
         ->constructorParameter('basePath', $settings['app']['base_path']),
+    \App\Services\ContentSecurityScanner::class => DI\autowire(\App\Services\ContentSecurityScanner::class)
+        ->constructorParameter('logger', DI\get('logger.error')),
 
     AuthController::class => DI\autowire(AuthController::class),
     BlogController::class => DI\autowire(BlogController::class),
