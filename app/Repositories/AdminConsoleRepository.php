@@ -149,8 +149,8 @@ final class AdminConsoleRepository
                 c.artist,
                 c.country,
                 c.release_year,
-                (SELECT GROUP_CONCAT(genre_id) FROM series_genre_map WHERE content_id = c.id) as genre_ids,
-                (SELECT GROUP_CONCAT(tag_id) FROM series_tag_map WHERE content_id = c.id) as tag_ids
+                (SELECT GROUP_CONCAT(stm.taxonomy_id) FROM series_taxonomy_map stm INNER JOIN taxonomies t ON t.id = stm.taxonomy_id WHERE stm.content_id = c.id AND t.type = "genre") as genre_ids,
+                (SELECT GROUP_CONCAT(stm.taxonomy_id) FROM series_taxonomy_map stm INNER JOIN taxonomies t ON t.id = stm.taxonomy_id WHERE stm.content_id = c.id AND t.type = "tag") as tag_ids
              FROM series c
              WHERE c.deleted_at IS NULL
              ORDER BY c.created_at DESC
@@ -644,7 +644,7 @@ final class AdminConsoleRepository
     public function createGenre(string $name): array
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
-        $stmt = $this->pdo->prepare('INSERT INTO series_genres (name, slug) VALUES (:name, :slug)');
+        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug) VALUES ("genre", :name, :slug)');
         $stmt->execute(['name' => $name, 'slug' => $slug]);
         $id = (int)$this->pdo->lastInsertId();
 
@@ -657,7 +657,7 @@ final class AdminConsoleRepository
     public function createTag(string $name): array
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
-        $stmt = $this->pdo->prepare('INSERT INTO series_tags (name, slug) VALUES (:name, :slug)');
+        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug) VALUES ("tag", :name, :slug)');
         $stmt->execute(['name' => $name, 'slug' => $slug]);
         $id = (int)$this->pdo->lastInsertId();
 
@@ -671,21 +671,12 @@ final class AdminConsoleRepository
     {
         $this->pdo->beginTransaction();
         try {
-            // Genres
-            $this->pdo->prepare('DELETE FROM series_genre_map WHERE content_id = :id')->execute(['id' => $contentId]);
-            if (!empty($genreIds)) {
-                $stmt = $this->pdo->prepare('INSERT INTO series_genre_map (content_id, genre_id) VALUES (:id, :gid)');
-                foreach ($genreIds as $gid) {
-                    if ($gid) $stmt->execute(['id' => $contentId, 'gid' => $gid]);
-                }
-            }
-
-            // Tags
-            $this->pdo->prepare('DELETE FROM series_tag_map WHERE content_id = :id')->execute(['id' => $contentId]);
-            if (!empty($tagIds)) {
-                $stmt = $this->pdo->prepare('INSERT INTO series_tag_map (content_id, tag_id) VALUES (:id, :tid)');
-                foreach ($tagIds as $tid) {
-                    if ($tid) $stmt->execute(['id' => $contentId, 'tid' => $tid]);
+            $this->pdo->prepare('DELETE FROM series_taxonomy_map WHERE content_id = :id AND taxonomy_id IN (SELECT id FROM taxonomies WHERE type IN ("genre", "tag"))')->execute(['id' => $contentId]);
+            $allTaxIds = array_filter(array_merge($genreIds, $tagIds));
+            if (!empty($allTaxIds)) {
+                $stmt = $this->pdo->prepare('INSERT INTO series_taxonomy_map (content_id, taxonomy_id) VALUES (:id, :tid) ON DUPLICATE KEY UPDATE content_id = VALUES(content_id)');
+                foreach ($allTaxIds as $tid) {
+                    if ($tid) $stmt->execute(['id' => $contentId, 'tid' => (int) $tid]);
                 }
             }
 
@@ -701,7 +692,7 @@ final class AdminConsoleRepository
      */
     public function listAllGenres(): array
     {
-        $stmt = $this->pdo->query('SELECT id, name, slug, ui_config FROM series_genres ORDER BY name ASC');
+        $stmt = $this->pdo->query('SELECT id, name, slug, ui_config FROM taxonomies WHERE type = "genre" ORDER BY name ASC');
         return $stmt->fetchAll();
     }
 
@@ -710,7 +701,7 @@ final class AdminConsoleRepository
      */
     public function listAllTags(): array
     {
-        $stmt = $this->pdo->query('SELECT id, name, slug, ui_config FROM series_tags ORDER BY name ASC');
+        $stmt = $this->pdo->query('SELECT id, name, slug, ui_config FROM taxonomies WHERE type = "tag" ORDER BY name ASC');
         return $stmt->fetchAll();
     }
 

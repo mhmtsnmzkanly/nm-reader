@@ -167,7 +167,7 @@ final class MetricsService
     private function genreExists(string $slug): bool
     {
         try {
-            $stmt = $this->pdo->prepare('SELECT 1 FROM series_genres WHERE slug = :slug LIMIT 1');
+            $stmt = $this->pdo->prepare('SELECT 1 FROM taxonomies WHERE slug = :slug AND type = "genre" LIMIT 1');
             $stmt->execute(['slug' => $slug]);
             return $stmt->fetchColumn() !== false;
         } catch (\Throwable) {
@@ -209,15 +209,15 @@ final class MetricsService
             ? 'NOW()'
             : sprintf('DATE_SUB(NOW(), INTERVAL %d DAY)', $offsetDays);
 
-        $nameStmt = $this->pdo->prepare('SELECT name FROM series_genres WHERE slug = :slug LIMIT 1');
+        $nameStmt = $this->pdo->prepare('SELECT name FROM taxonomies WHERE slug = :slug AND type = "genre" LIMIT 1');
         $nameStmt->execute(['slug' => $slug]);
         $genreName = (string) ($nameStmt->fetchColumn() ?: $slug);
 
         $views = $this->countSafe(
             "SELECT COUNT(*)
              FROM analytics_series_views cv
-             INNER JOIN series_genre_map cg ON cg.content_id = cv.content_id
-             INNER JOIN series_genres g ON g.id = cg.genre_id
+             INNER JOIN series_taxonomy_map cg ON cg.content_id = cv.content_id
+             INNER JOIN taxonomies g ON g.id = cg.taxonomy_id AND g.type = 'genre'
              WHERE g.slug = " . $this->pdo->quote($slug) . "
                AND cv.viewed_at >= {$startExpr}
                AND cv.viewed_at < {$endExpr}"
@@ -226,8 +226,8 @@ final class MetricsService
         $follows = $this->countSafe(
             "SELECT COUNT(*)
              FROM user_series_follows f
-             INNER JOIN series_genre_map cg ON cg.content_id = f.content_id
-             INNER JOIN series_genres g ON g.id = cg.genre_id
+             INNER JOIN series_taxonomy_map cg ON cg.content_id = f.content_id
+             INNER JOIN taxonomies g ON g.id = cg.taxonomy_id AND g.type = 'genre'
              WHERE g.slug = " . $this->pdo->quote($slug) . "
                AND f.created_at >= {$startExpr}
                AND f.created_at < {$endExpr}"
@@ -236,8 +236,8 @@ final class MetricsService
         $ratings = $this->countSafe(
             "SELECT COUNT(*)
              FROM ratings r
-             INNER JOIN series_genre_map cg ON cg.content_id = r.content_id
-             INNER JOIN series_genres g ON g.id = cg.genre_id
+             INNER JOIN series_taxonomy_map cg ON cg.content_id = r.content_id
+             INNER JOIN taxonomies g ON g.id = cg.taxonomy_id AND g.type = 'genre'
              WHERE g.slug = " . $this->pdo->quote($slug) . "
                AND r.updated_at >= {$startExpr}
                AND r.updated_at < {$endExpr}"
@@ -247,8 +247,8 @@ final class MetricsService
             "SELECT COUNT(*)
              FROM social_comments cm
              LEFT JOIN chapters ch ON ch.id = cm.chapter_id
-             INNER JOIN series_genre_map cg ON cg.content_id = COALESCE(cm.content_id, ch.content_id)
-             INNER JOIN series_genres g ON g.id = cg.genre_id
+             INNER JOIN series_taxonomy_map cg ON cg.content_id = COALESCE(cm.content_id, ch.content_id)
+             INNER JOIN taxonomies g ON g.id = cg.taxonomy_id AND g.type = 'genre'
              WHERE g.slug = " . $this->pdo->quote($slug) . "
                AND cm.created_at >= {$startExpr}
                AND cm.created_at < {$endExpr}"
@@ -280,36 +280,37 @@ final class MetricsService
                     (COALESCE(r.rating_total, 0) * 2) +
                     (COALESCE(c.comment_total, 0) * 2)
                 ) AS engagement_score
-            FROM series_genres g
+            FROM taxonomies g
             LEFT JOIN (
-                SELECT cg.genre_id, COUNT(*) AS view_total
+                SELECT cg.taxonomy_id AS genre_id, COUNT(*) AS view_total
                 FROM analytics_series_views cv
-                INNER JOIN series_genre_map cg ON cg.content_id = cv.content_id
+                INNER JOIN series_taxonomy_map cg ON cg.content_id = cv.content_id
                 WHERE cv.viewed_at >= {$startExpr} AND cv.viewed_at < {$endExpr}
-                GROUP BY cg.genre_id
+                GROUP BY cg.taxonomy_id
             ) v ON v.genre_id = g.id
             LEFT JOIN (
-                SELECT cg.genre_id, COUNT(*) AS follow_total
+                SELECT cg.taxonomy_id AS genre_id, COUNT(*) AS follow_total
                 FROM user_series_follows f
-                INNER JOIN series_genre_map cg ON cg.content_id = f.content_id
+                INNER JOIN series_taxonomy_map cg ON cg.content_id = f.content_id
                 WHERE f.created_at >= {$startExpr} AND f.created_at < {$endExpr}
-                GROUP BY cg.genre_id
+                GROUP BY cg.taxonomy_id
             ) f ON f.genre_id = g.id
             LEFT JOIN (
-                SELECT cg.genre_id, COUNT(*) AS rating_total
+                SELECT cg.taxonomy_id AS genre_id, COUNT(*) AS rating_total
                 FROM ratings r
-                INNER JOIN series_genre_map cg ON cg.content_id = r.content_id
+                INNER JOIN series_taxonomy_map cg ON cg.content_id = r.content_id
                 WHERE r.updated_at >= {$startExpr} AND r.updated_at < {$endExpr}
-                GROUP BY cg.genre_id
+                GROUP BY cg.taxonomy_id
             ) r ON r.genre_id = g.id
             LEFT JOIN (
-                SELECT cg.genre_id, COUNT(*) AS comment_total
+                SELECT cg.taxonomy_id AS genre_id, COUNT(*) AS comment_total
                 FROM social_comments cm
                 LEFT JOIN chapters ch ON ch.id = cm.chapter_id
-                INNER JOIN series_genre_map cg ON cg.content_id = COALESCE(cm.content_id, ch.content_id)
+                INNER JOIN series_taxonomy_map cg ON cg.content_id = COALESCE(cm.content_id, ch.content_id)
                 WHERE cm.created_at >= {$startExpr} AND cm.created_at < {$endExpr}
-                GROUP BY cg.genre_id
+                GROUP BY cg.taxonomy_id
             ) c ON c.genre_id = g.id
+            WHERE g.type = 'genre'
             HAVING engagement_score > 0
             ORDER BY engagement_score DESC, g.name ASC
             LIMIT {$limit}
@@ -636,9 +637,10 @@ final class MetricsService
                 g.name,
                 COUNT(DISTINCT cg.content_id) AS content_total,
                 COUNT(ucf.user_id) AS follow_total
-             FROM series_genres g
-             LEFT JOIN series_genre_map cg ON cg.genre_id = g.id
+             FROM taxonomies g
+             LEFT JOIN series_taxonomy_map cg ON cg.taxonomy_id = g.id
              LEFT JOIN user_series_follows ucf ON ucf.content_id = cg.content_id
+             WHERE g.type = "genre"
              GROUP BY g.id, g.slug, g.name
              ORDER BY follow_total DESC, content_total DESC
              LIMIT 10'

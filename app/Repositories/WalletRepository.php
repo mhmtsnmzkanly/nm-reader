@@ -143,9 +143,9 @@ final class WalletRepository
     public function findPackageById(int $id): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, name, coin_amount, bonus_coin, display_price, currency, is_active, sort_order, created_at, updated_at
-             FROM shop_packages
-             WHERE id = :id
+            'SELECT id, name, coin_amount, bonus_coin, fiat_price AS display_price, currency, is_active, sort_order, created_at, updated_at
+             FROM coin_catalog
+             WHERE id = :id AND catalog_type = "coin_package"
              LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
@@ -180,10 +180,11 @@ final class WalletRepository
     public function listPackages(int $page, int $perPage, bool $activeOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $where = $activeOnly ? 'WHERE is_active = 1' : '';
+        $where = $activeOnly ? 'AND is_active = 1' : '';
         $stmt = $this->pdo->prepare(
-            "SELECT id, name, coin_amount, bonus_coin, display_price, currency, is_active, sort_order, created_at, updated_at
-             FROM shop_packages
+            "SELECT id, name, coin_amount, bonus_coin, fiat_price AS display_price, currency, is_active, sort_order, created_at, updated_at
+             FROM coin_catalog
+             WHERE catalog_type = 'coin_package'
              {$where}
              ORDER BY sort_order ASC, id ASC
              LIMIT :limit OFFSET :offset"
@@ -196,21 +197,23 @@ final class WalletRepository
 
     public function countPackages(bool $activeOnly = false): int
     {
-        $sql = $activeOnly ? 'SELECT COUNT(*) FROM shop_packages WHERE is_active = 1' : 'SELECT COUNT(*) FROM shop_packages';
+        $sql = $activeOnly ? "SELECT COUNT(*) FROM coin_catalog WHERE catalog_type = 'coin_package' AND is_active = 1" : "SELECT COUNT(*) FROM coin_catalog WHERE catalog_type = 'coin_package'";
         return (int) $this->pdo->query($sql)->fetchColumn();
     }
 
     public function createPackage(string $name, int $coinAmount, int $bonusCoin, string $displayPrice, string $currency, bool $isActive, int $sortOrder): int
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO shop_packages (name, coin_amount, bonus_coin, display_price, currency, is_active, sort_order, created_at, updated_at)
-             VALUES (:name, :coin_amount, :bonus_coin, :display_price, :currency, :is_active, :sort_order, NOW(), NOW())'
+            'INSERT INTO coin_catalog (catalog_type, item_key, name, coin_amount, bonus_coin, fiat_price, currency, is_active, sort_order, created_at, updated_at)
+             VALUES ("coin_package", :item_key, :name, :coin_amount, :bonus_coin, :fiat_price, :currency, :is_active, :sort_order, NOW(), NOW())'
         );
+        $itemKey = 'pkg_' . bin2hex(random_bytes(6));
         $stmt->execute([
+            'item_key' => $itemKey,
             'name' => $name,
             'coin_amount' => $coinAmount,
             'bonus_coin' => $bonusCoin,
-            'display_price' => $displayPrice,
+            'fiat_price' => (float) $displayPrice,
             'currency' => $currency,
             'is_active' => $isActive ? 1 : 0,
             'sort_order' => $sortOrder,
@@ -221,23 +224,23 @@ final class WalletRepository
     public function updatePackage(int $id, string $name, int $coinAmount, int $bonusCoin, string $displayPrice, string $currency, bool $isActive, int $sortOrder): void
     {
         $stmt = $this->pdo->prepare(
-            'UPDATE shop_packages
+            'UPDATE coin_catalog
              SET name = :name,
                  coin_amount = :coin_amount,
                  bonus_coin = :bonus_coin,
-                 display_price = :display_price,
+                 fiat_price = :fiat_price,
                  currency = :currency,
                  is_active = :is_active,
                  sort_order = :sort_order,
                  updated_at = NOW()
-             WHERE id = :id'
+             WHERE id = :id AND catalog_type = "coin_package"'
         );
         $stmt->execute([
             'id' => $id,
             'name' => $name,
             'coin_amount' => $coinAmount,
             'bonus_coin' => $bonusCoin,
-            'display_price' => $displayPrice,
+            'fiat_price' => (float) $displayPrice,
             'currency' => $currency,
             'is_active' => $isActive ? 1 : 0,
             'sort_order' => $sortOrder,
@@ -247,12 +250,13 @@ final class WalletRepository
     public function upsertSeriesPricing(string $contentId, int $priceCoin, bool $isActive): void
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO series_access_products (content_id, price_coin, is_active, updated_at)
-             VALUES (:content_id, :price_coin, :is_active, NOW())
-             ON DUPLICATE KEY UPDATE price_coin = VALUES(price_coin), is_active = VALUES(is_active), updated_at = NOW()'
+            'INSERT INTO coin_catalog (catalog_type, item_key, name, coin_price, is_active, updated_at)
+             VALUES ("series_bundle", :item_key, :name, :price_coin, :is_active, NOW())
+             ON DUPLICATE KEY UPDATE coin_price = VALUES(coin_price), is_active = VALUES(is_active), updated_at = NOW()'
         );
         $stmt->execute([
-            'content_id' => $contentId,
+            'item_key' => $contentId,
+            'name' => 'Series Bundle ' . $contentId,
             'price_coin' => $priceCoin,
             'is_active' => $isActive ? 1 : 0,
         ]);
@@ -275,9 +279,9 @@ final class WalletRepository
     public function getSeriesPrice(string $contentId): int
     {
         $stmt = $this->pdo->prepare(
-            'SELECT price_coin
-             FROM series_access_products
-             WHERE content_id = :content_id AND is_active = 1
+            'SELECT coin_price
+             FROM coin_catalog
+             WHERE item_key = :content_id AND catalog_type = "series_bundle" AND is_active = 1
              LIMIT 1'
         );
         $stmt->execute(['content_id' => $contentId]);
@@ -320,7 +324,7 @@ final class WalletRepository
 
     public function hasSeriesPricing(string $contentId): bool
     {
-        $stmt = $this->pdo->prepare('SELECT 1 FROM series_access_products WHERE content_id = :content_id AND is_active = 1 AND price_coin > 0 LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT 1 FROM coin_catalog WHERE item_key = :content_id AND catalog_type = "series_bundle" AND is_active = 1 AND coin_price > 0 LIMIT 1');
         $stmt->execute(['content_id' => $contentId]);
         return $stmt->fetchColumn() !== false;
     }
@@ -341,73 +345,59 @@ final class WalletRepository
 
     public function hasSeriesUnlock(string $userId, string $contentId): bool
     {
-        $stmt = $this->pdo->prepare('SELECT 1 FROM user_series_unlocks WHERE user_id = :user_id AND content_id = :content_id LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT 1 FROM user_unlocks WHERE user_id = :user_id AND unlock_type = "series" AND target_id = :content_id LIMIT 1');
         $stmt->execute(['user_id' => $userId, 'content_id' => $contentId]);
         return $stmt->fetchColumn() !== false;
     }
 
     public function hasChapterUnlock(string $userId, string $chapterId): bool
     {
-        $stmt = $this->pdo->prepare('SELECT 1 FROM user_chapter_unlocks WHERE user_id = :user_id AND chapter_id = :chapter_id LIMIT 1');
-        $stmt->execute(['user_id' => $userId, 'chapter_id' => $chapterId]);
+        $stmt = $this->pdo->prepare(
+            'SELECT 1 FROM user_unlocks
+             WHERE user_id = :user_id
+               AND (
+                   (unlock_type = "chapter" AND target_id = :chapter_id)
+                   OR (unlock_type = "series" AND target_id = (SELECT content_id FROM chapters WHERE id = :chapter_id_sub))
+               ) LIMIT 1'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'chapter_id' => $chapterId,
+            'chapter_id_sub' => $chapterId,
+        ]);
         return $stmt->fetchColumn() !== false;
     }
 
     public function createSeriesUnlock(string $userId, string $contentId, int $priceCoin, ?int $transactionId): void
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO user_series_unlocks (user_id, content_id, price_coin, transaction_id, unlocked_at)
-             VALUES (:user_id, :content_id, :price_coin, :transaction_id, NOW())'
+            'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, unlocked_at)
+             VALUES (:user_id, "series", :target_id, :content_id, :price_coin, :transaction_id, NOW())
+             ON DUPLICATE KEY UPDATE price_coin = VALUES(price_coin)'
         );
         $stmt->execute([
             'user_id' => $userId,
+            'target_id' => $contentId,
             'content_id' => $contentId,
             'price_coin' => $priceCoin,
             'transaction_id' => $transactionId,
         ]);
-
-        try {
-            $this->pdo->prepare(
-                'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, unlocked_at)
-                 VALUES (:user_id, "series", :target_id, :content_id, :price_coin, :transaction_id, NOW())
-                 ON DUPLICATE KEY UPDATE price_coin = VALUES(price_coin)'
-            )->execute([
-                'user_id' => $userId,
-                'target_id' => $contentId,
-                'content_id' => $contentId,
-                'price_coin' => $priceCoin,
-                'transaction_id' => $transactionId,
-            ]);
-        } catch (\Throwable) {}
     }
 
     public function createChapterUnlock(string $userId, string $chapterId, string $contentId, int $priceCoin, ?int $transactionId): void
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO user_chapter_unlocks (user_id, chapter_id, content_id, price_coin, transaction_id, unlocked_at)
-             VALUES (:user_id, :chapter_id, :content_id, :price_coin, :transaction_id, NOW())'
+            'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, unlocked_at)
+             VALUES (:user_id, "chapter", :target_id, :content_id, :price_coin, :transaction_id, NOW())
+             ON DUPLICATE KEY UPDATE price_coin = VALUES(price_coin)'
         );
         $stmt->execute([
             'user_id' => $userId,
-            'chapter_id' => $chapterId,
+            'target_id' => $chapterId,
             'content_id' => $contentId,
             'price_coin' => $priceCoin,
             'transaction_id' => $transactionId,
         ]);
-
-        try {
-            $this->pdo->prepare(
-                'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, unlocked_at)
-                 VALUES (:user_id, "chapter", :target_id, :content_id, :price_coin, :transaction_id, NOW())
-                 ON DUPLICATE KEY UPDATE price_coin = VALUES(price_coin)'
-            )->execute([
-                'user_id' => $userId,
-                'target_id' => $chapterId,
-                'content_id' => $contentId,
-                'price_coin' => $priceCoin,
-                'transaction_id' => $transactionId,
-            ]);
-        } catch (\Throwable) {}
     }
 
     public function listSeriesUnlocks(string $userId, int $page, int $perPage): array
@@ -415,9 +405,9 @@ final class WalletRepository
         $offset = max(0, ($page - 1) * $perPage);
         $stmt = $this->pdo->prepare(
             'SELECT u.id, u.content_id, s.title AS content_title, s.slug AS content_slug, s.type AS content_type, u.price_coin, u.transaction_id, u.unlocked_at
-             FROM user_series_unlocks u
+             FROM user_unlocks u
              INNER JOIN series s ON s.id = u.content_id
-             WHERE u.user_id = :user_id
+             WHERE u.user_id = :user_id AND u.unlock_type = "series"
              ORDER BY u.id DESC
              LIMIT :limit OFFSET :offset'
         );
@@ -430,7 +420,7 @@ final class WalletRepository
 
     public function countSeriesUnlocks(string $userId): int
     {
-        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_series_unlocks WHERE user_id = :user_id');
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_unlocks WHERE user_id = :user_id AND unlock_type = "series"');
         $stmt->execute(['user_id' => $userId]);
         return (int) $stmt->fetchColumn();
     }
@@ -439,12 +429,12 @@ final class WalletRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $stmt = $this->pdo->prepare(
-            'SELECT u.id, u.content_id, u.chapter_id, s.title AS content_title, s.slug AS content_slug, s.type AS content_type,
-                    ch.chapter_number, ch.title AS chapter_title, u.price_coin, u.transaction_id, u.unlocked_at
-             FROM user_chapter_unlocks u
+            'SELECT u.id, u.content_id, u.target_id AS chapter_id, s.title AS content_title, s.slug AS content_slug, s.type AS content_type,
+                    COALESCE(ch.chapter_number, CAST(ch.number AS CHAR)) AS chapter_number, ch.title AS chapter_title, u.price_coin, u.transaction_id, u.unlocked_at
+             FROM user_unlocks u
              INNER JOIN series s ON s.id = u.content_id
-             INNER JOIN chapters ch ON ch.id = u.chapter_id
-             WHERE u.user_id = :user_id
+             INNER JOIN chapters ch ON ch.id = u.target_id
+             WHERE u.user_id = :user_id AND u.unlock_type = "chapter"
              ORDER BY u.id DESC
              LIMIT :limit OFFSET :offset'
         );
@@ -457,7 +447,7 @@ final class WalletRepository
 
     public function countChapterUnlocks(string $userId): int
     {
-        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_chapter_unlocks WHERE user_id = :user_id');
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_unlocks WHERE user_id = :user_id AND unlock_type = "chapter"');
         $stmt->execute(['user_id' => $userId]);
         return (int) $stmt->fetchColumn();
     }
@@ -465,8 +455,8 @@ final class WalletRepository
     public function upsertFeatureProduct(string $featureKey, string $name, int $coinPrice, int $durationDays, bool $isActive): void
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO site_feature_products (feature_key, name, coin_price, duration_days, is_active, updated_at)
-             VALUES (:feature_key, :name, :coin_price, :duration_days, :is_active, NOW())
+            'INSERT INTO coin_catalog (catalog_type, item_key, name, coin_price, duration_days, is_active, updated_at)
+             VALUES ("feature_pass", :feature_key, :name, :coin_price, :duration_days, :is_active, NOW())
              ON DUPLICATE KEY UPDATE
                 name = VALUES(name),
                 coin_price = VALUES(coin_price),
@@ -486,9 +476,9 @@ final class WalletRepository
     public function getFeatureProduct(string $featureKey): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT feature_key, name, coin_price, duration_days, is_active, updated_at
-             FROM site_feature_products
-             WHERE feature_key = :feature_key
+            'SELECT item_key AS feature_key, name, coin_price, duration_days, is_active, updated_at
+             FROM coin_catalog
+             WHERE item_key = :feature_key AND catalog_type = "feature_pass"
              LIMIT 1'
         );
         $stmt->execute(['feature_key' => $featureKey]);
@@ -498,12 +488,13 @@ final class WalletRepository
 
     public function listFeatureProducts(bool $activeOnly = true): array
     {
-        $where = $activeOnly ? 'WHERE is_active = 1' : '';
+        $where = $activeOnly ? 'AND is_active = 1' : '';
         $stmt = $this->pdo->query(
-            "SELECT feature_key, name, coin_price, duration_days, is_active, updated_at
-             FROM site_feature_products
+            "SELECT item_key AS feature_key, name, coin_price, duration_days, is_active, updated_at
+             FROM coin_catalog
+             WHERE catalog_type = 'feature_pass'
              {$where}
-             ORDER BY feature_key ASC"
+             ORDER BY item_key ASC"
         );
         return $stmt->fetchAll();
     }
@@ -518,48 +509,30 @@ final class WalletRepository
         string $expiresAt
     ): int {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO user_feature_entitlements (
-                user_id, feature_key, source_type, source_id, transaction_id, starts_at, expires_at, created_at
-             ) VALUES (
-                :user_id, :feature_key, :source_type, :source_id, :transaction_id, :starts_at, :expires_at, NOW()
-             )'
+            'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, starts_at, expires_at, unlocked_at)
+             VALUES (:user_id, "feature", :target_id, NULL, 0, :transaction_id, :starts_at, :expires_at, NOW())
+             ON DUPLICATE KEY UPDATE expires_at = VALUES(expires_at)'
         );
         $stmt->execute([
             'user_id' => $userId,
-            'feature_key' => $featureKey,
-            'source_type' => $sourceType,
-            'source_id' => $sourceId,
+            'target_id' => $featureKey,
             'transaction_id' => $transactionId,
             'starts_at' => $startsAt,
             'expires_at' => $expiresAt,
         ]);
-        $id = (int) $this->pdo->lastInsertId();
 
-        try {
-            $this->pdo->prepare(
-                'INSERT INTO user_unlocks (user_id, unlock_type, target_id, content_id, price_coin, transaction_id, starts_at, expires_at, unlocked_at)
-                 VALUES (:user_id, "feature", :target_id, NULL, 0, :transaction_id, :starts_at, :expires_at, NOW())
-                 ON DUPLICATE KEY UPDATE expires_at = VALUES(expires_at)'
-            )->execute([
-                'user_id' => $userId,
-                'target_id' => $featureKey,
-                'transaction_id' => $transactionId,
-                'starts_at' => $startsAt,
-                'expires_at' => $expiresAt,
-            ]);
-        } catch (\Throwable) {}
-
-        return $id;
+        return (int) $this->pdo->lastInsertId();
     }
 
     public function getLatestActiveFeatureEntitlement(string $userId, string $featureKey): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, user_id, feature_key, source_type, source_id, transaction_id, starts_at, expires_at, created_at
-             FROM user_feature_entitlements
+            'SELECT id, user_id, target_id AS feature_key, transaction_id, starts_at, expires_at, unlocked_at AS created_at
+             FROM user_unlocks
              WHERE user_id = :user_id
-               AND feature_key = :feature_key
-               AND expires_at > NOW()
+               AND unlock_type = "feature"
+               AND target_id = :feature_key
+               AND (expires_at IS NULL OR expires_at > NOW())
              ORDER BY expires_at DESC, id DESC
              LIMIT 1'
         );
@@ -575,9 +548,9 @@ final class WalletRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $stmt = $this->pdo->prepare(
-            'SELECT id, feature_key, source_type, source_id, transaction_id, starts_at, expires_at, created_at
-             FROM user_feature_entitlements
-             WHERE user_id = :user_id
+            'SELECT id, target_id AS feature_key, transaction_id, starts_at, expires_at, unlocked_at AS created_at
+             FROM user_unlocks
+             WHERE user_id = :user_id AND unlock_type = "feature"
              ORDER BY id DESC
              LIMIT :limit OFFSET :offset'
         );
@@ -590,7 +563,7 @@ final class WalletRepository
 
     public function countFeatureEntitlements(string $userId): int
     {
-        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_feature_entitlements WHERE user_id = :user_id');
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_unlocks WHERE user_id = :user_id AND unlock_type = "feature"');
         $stmt->execute(['user_id' => $userId]);
         return (int) $stmt->fetchColumn();
     }

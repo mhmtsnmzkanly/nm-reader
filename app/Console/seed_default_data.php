@@ -64,99 +64,35 @@ try {
         ['Shoujo', 'shoujo', '{"icon": "bi-flower1"}']
     ];
 
-    $stmtGenre = $pdo->prepare("INSERT INTO series_genres (name, slug, ui_config) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name), ui_config=VALUES(ui_config)");
+    $stmtTaxonomy = $pdo->prepare("INSERT INTO taxonomies (type, name, slug, ui_config) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name), ui_config=VALUES(ui_config)");
     foreach ($genres as $g) {
-        $stmtGenre->execute($g);
+        $stmtTaxonomy->execute(['genre', $g[0], $g[1], $g[2]]);
     }
-    echo "✅ " . count($genres) . " Genres seeded.\n";
+    echo "✅ " . count($genres) . " Genres seeded into taxonomies.\n";
 
-    // 2. Tags
-    $tags = [
-        ['Game System', 'game-system', '{"color": "primary"}'],
-        ['Leveling', 'leveling', '{"color": "success"}'],
-        ['Skill System', 'skill-system', '{"color": "info"}'],
-        ['Status Window', 'status-window', '{"color": "secondary"}'],
-        ['Dungeon', 'dungeon', '{"color": "dark"}'],
-        ['Tower', 'tower', '{"color": "warning"}'],
-        ['Raid', 'raid', '{"color": "danger"}'],
-        ['OP Protagonist', 'op-protagonist', '{"color": "danger"}'],
-        ['Genius MC', 'genius-mc', '{"color": "dark"}'],
-        ['Weak to Strong', 'weak-to-strong', '{"color": "success"}'],
-        ['Regression', 'regression', '{"color": "warning"}'],
-        ['Reincarnation', 'reincarnation', '{"color": "success"}'],
-        ['Time Travel', 'time-travel', '{"color": "info"}'],
-        ['Second Chance', 'second-chance', '{"color": "primary"}'],
-        ['Transmigration', 'transmigration', '{"color": "secondary"}'],
-        ['Isekai', 'isekai', '{"color": "success"}'],
-        ['Cultivation', 'cultivation', '{"color": "warning"}'],
-        ['Murim', 'murim', '{"color": "dark"}'],
-        ['Swordsmanship', 'swordsmanship', '{"color": "dark"}'],
-        ['Necromancer', 'necromancer', '{"color": "dark"}'],
-        ['Assassin', 'assassin', '{"color": "danger"}'],
-        ['Magic Academy', 'magic-academy', '{"color": "primary"}'],
-        ['Summoner', 'summoner', '{"color": "info"}'],
-        ['Tamer', 'tamer', '{"color": "secondary"}'],
-        ['Alchemy', 'alchemy', '{"color": "warning"}'],
-        ['Blacksmith', 'blacksmith', '{"color": "dark"}'],
-        ['Demons', 'demons', '{"color": "danger"}'],
-        ['Angels', 'angels', '{"color": "info"}'],
-        ['Gods', 'gods', '{"color": "warning"}'],
-        ['Dragons', 'dragons', '{"color": "danger"}'],
-        ['Monsters', 'monsters', '{"color": "dark"}'],
-        ['Vampires', 'vampires', '{"color": "danger"}'],
-        ['Werewolves', 'werewolves', '{"color": "secondary"}'],
-        ['Survival', 'survival', '{"color": "warning"}'],
-        ['Revenge', 'revenge', '{"color": "danger"}'],
-        ['Betrayal', 'betrayal', '{"color": "dark"}'],
-        ['Political', 'political', '{"color": "secondary"}'],
-        ['Kingdom Building', 'kingdom-building', '{"color": "primary"}'],
-        ['Empire', 'empire', '{"color": "dark"}'],
-        ['War', 'war', '{"color": "danger"}'],
-        ['Post-Apocalyptic', 'post-apocalyptic', '{"color": "dark"}'],
-        ['Magic', 'magic', '{"color": "info"}'],
-        ['Elemental Powers', 'elemental-powers', '{"color": "primary"}'],
-        ['Superpowers', 'superpowers', '{"color": "info"}'],
-        ['System Admin', 'system-admin', '{"color": "dark"}'],
-        ['Virtual Reality', 'virtual-reality', '{"color": "secondary"}'],
-        ['VRMMO', 'vrmmo', '{"color": "primary"}'],
-        ['Love Triangle', 'love-triangle', '{"color": "warning"}'],
-        ['Slow Burn', 'slow-burn', '{"color": "secondary"}'],
-        ['Enemies to Lovers', 'enemies-to-lovers', '{"color": "danger"}'],
-        ['Childhood Friends', 'childhood-friends', '{"color": "primary"}'],
-        ['Contract Marriage', 'contract-marriage', '{"color": "dark"}'],
-        ['Marriage of Convenience', 'marriage-of-convenience', '{"color": "dark"}'],
-        ['Harem', 'harem', '{"color": "warning"}'],
-        ['Reverse Harem', 'reverse-harem', '{"color": "info"}'],
-        ['Dark Fantasy', 'dark-fantasy', '{"color": "dark"}'],
-        ['Tragedy', 'tragedy', '{"color": "danger"}'],
-        ['Psychological Trauma', 'psychological-trauma', '{"color": "dark"}'],
-        ['Mind Games', 'mind-games', '{"color": "secondary"}'],
-        ['Antihero', 'antihero', '{"color": "dark"}'],
-        ['Villain Protagonist', 'villain-protagonist', '{"color": "danger"}'],
-        ['School Life', 'school-life', '{"color": "primary"}'],
-        ['Academy', 'academy', '{"color": "info"}'],
-        ['Office Romance', 'office-romance', '{"color": "secondary"}'],
-        ['Age Gap', 'age-gap', '{"color": "warning"}'],
-        ['Gender Bender', 'gender-bender', '{"color": "secondary"}'],
-        ['Crossdressing', 'crossdressing', '{"color": "dark"}'],
-        ['Mecha Combat', 'mecha-combat', '{"color": "primary"}'],
-        ['Military Strategy', 'military-strategy', '{"color": "dark"}'],
-        ['Space Opera', 'space-opera', '{"color": "info"}'],
-        ['Cyberpunk Elements', 'cyberpunk-elements', '{"color": "secondary"}'],
-        ['AI', 'ai', '{"color": "primary"}'],
-        ['Robots', 'robots', '{"color": "info"}'],
-        ['Cooking', 'cooking', '{"color": "success"}'],
-        ['Crafting', 'crafting', '{"color": "secondary"}'],
-        ['Farming', 'farming', '{"color": "success"}'],
-        ['Merchant', 'merchant', '{"color": "warning"}'],
-        ['Healer', 'healer', '{"color": "success"}']
+    foreach ($tags as $t) {
+        $stmtTaxonomy->execute(['tag', $t[0], $t[1], $t[2]]);
+    }
+    echo "✅ " . count($tags) . " Tags seeded into taxonomies.\n";
+
+    // 3. Seed Default Coin Catalog Packages & Feature Passes
+    $packages = [
+        ['coin_package', 'pkg_starter', 'Starter Coin Pack', 100, 10, 19.99, 'TRY', 1, 1],
+        ['coin_package', 'pkg_popular', 'Popular Coin Pack', 500, 75, 89.99, 'TRY', 1, 2],
+        ['coin_package', 'pkg_vip', 'VIP Ultra Pack', 1200, 250, 199.99, 'TRY', 1, 3],
+        ['feature_pass', 'ad_free', 'Ad-Free Pass (30 Days)', 0, 0, 0, 'TRY', 1, 4],
+        ['feature_pass', 'early_access', 'VIP Early Access (30 Days)', 0, 0, 0, 'TRY', 1, 5],
     ];
 
-    $stmtTag = $pdo->prepare("INSERT INTO series_tags (name, slug, ui_config) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name), ui_config=VALUES(ui_config)");
-    foreach ($tags as $t) {
-        $stmtTag->execute($t);
+    $stmtCatalog = $pdo->prepare(
+        "INSERT INTO coin_catalog (catalog_type, item_key, name, coin_amount, bonus_coin, fiat_price, currency, is_active, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE name=VALUES(name), coin_amount=VALUES(coin_amount), bonus_coin=VALUES(bonus_coin), fiat_price=VALUES(fiat_price), is_active=VALUES(is_active), sort_order=VALUES(sort_order)"
+    );
+    foreach ($packages as $pkg) {
+        $stmtCatalog->execute($pkg);
     }
-    echo "✅ " . count($tags) . " Tags seeded.\n";
+    echo "✅ Default coin catalog items seeded.\n";
 
     echo "\n🎉 Database seeding completed successfully!\n";
 

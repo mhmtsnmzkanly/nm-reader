@@ -649,7 +649,7 @@ final class AdminService
         if ($name === '') throw new \InvalidArgumentException('Name is required');
         $slug = $this->slugService->normalize($name);
         
-        $stmt = $this->pdo->prepare('INSERT INTO series_genres (name, slug) VALUES (:name, :slug)');
+        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug) VALUES ("genre", :name, :slug)');
         $stmt->execute(['name' => $name, 'slug' => $slug]);
         $id = (int) $this->pdo->lastInsertId();
         
@@ -663,7 +663,7 @@ final class AdminService
         if ($name === '') throw new \InvalidArgumentException('Name is required');
         $slug = $this->slugService->normalize($name);
         
-        $stmt = $this->pdo->prepare('INSERT INTO series_tags (name, slug) VALUES (:name, :slug)');
+        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug) VALUES ("tag", :name, :slug)');
         $stmt->execute(['name' => $name, 'slug' => $slug]);
         $id = (int) $this->pdo->lastInsertId();
         
@@ -683,18 +683,13 @@ final class AdminService
 
         $this->pdo->beginTransaction();
         try {
-            // Genres
-            $this->pdo->prepare('DELETE FROM series_genre_map WHERE content_id = :id')->execute(['id' => $contentId]);
-            $insGenre = $this->pdo->prepare('INSERT INTO series_genre_map (content_id, genre_id) VALUES (:cid, :gid)');
-            foreach ($genreIds as $gid) {
-                $insGenre->execute(['cid' => $contentId, 'gid' => (int)$gid]);
-            }
-
-            // Tags
-            $this->pdo->prepare('DELETE FROM series_tag_map WHERE content_id = :id')->execute(['id' => $contentId]);
-            $insTag = $this->pdo->prepare('INSERT INTO series_tag_map (content_id, tag_id) VALUES (:cid, :tid)');
-            foreach ($tagIds as $tid) {
-                $insTag->execute(['cid' => $contentId, 'tid' => (int)$tid]);
+            $this->pdo->prepare('DELETE FROM series_taxonomy_map WHERE content_id = :id AND taxonomy_id IN (SELECT id FROM taxonomies WHERE type IN ("genre", "tag"))')->execute(['id' => $contentId]);
+            $allTaxIds = array_filter(array_merge($genreIds, $tagIds));
+            if (!empty($allTaxIds)) {
+                $stmt = $this->pdo->prepare('INSERT INTO series_taxonomy_map (content_id, taxonomy_id) VALUES (:cid, :tid) ON DUPLICATE KEY UPDATE content_id = VALUES(content_id)');
+                foreach ($allTaxIds as $tid) {
+                    if ($tid) $stmt->execute(['cid' => $contentId, 'tid' => (int) $tid]);
+                }
             }
 
             $this->pdo->commit();

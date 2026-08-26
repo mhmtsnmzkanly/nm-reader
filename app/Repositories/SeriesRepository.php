@@ -148,10 +148,10 @@ final class SeriesRepository
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
                     GROUP_CONCAT(DISTINCT CONCAT(t.name, "::", t.slug, "::", COALESCE(t.ui_config, "{}")) ORDER BY t.name SEPARATOR "||") AS series_tags_raw
                 FROM series c
-                LEFT JOIN series_genre_map cg ON cg.content_id = c.id
-                LEFT JOIN series_genres g ON g.id = cg.genre_id
-                LEFT JOIN series_tag_map ct ON ct.content_id = c.id
-                LEFT JOIN series_tags t ON t.id = ct.tag_id
+                LEFT JOIN series_taxonomy_map stmg ON stmg.content_id = c.id
+                LEFT JOIN taxonomies g ON g.id = stmg.taxonomy_id AND g.type = "genre"
+                LEFT JOIN series_taxonomy_map stmt ON stmt.content_id = c.id
+                LEFT JOIN taxonomies t ON t.id = stmt.taxonomy_id AND t.type = "tag"
                 WHERE c.slug = :slug AND c.deleted_at IS NULL
                 GROUP BY c.id
                 LIMIT 1';
@@ -190,10 +190,10 @@ final class SeriesRepository
                     GROUP_CONCAT(DISTINCT CONCAT(t.name, "::", t.slug, "::", COALESCE(t.ui_config, "{}")) ORDER BY t.name SEPARATOR "||") AS series_tags_raw,
                     (CASE WHEN ucf.user_id IS NOT NULL THEN 1 ELSE 0 END) AS is_followed
                 FROM series c
-                LEFT JOIN series_genre_map cg ON cg.content_id = c.id
-                LEFT JOIN series_genres g ON g.id = cg.genre_id
-                LEFT JOIN series_tag_map ct ON ct.content_id = c.id
-                LEFT JOIN series_tags t ON t.id = ct.tag_id
+                LEFT JOIN series_taxonomy_map stmg ON stmg.content_id = c.id
+                LEFT JOIN taxonomies g ON g.id = stmg.taxonomy_id AND g.type = "genre"
+                LEFT JOIN series_taxonomy_map stmt ON stmt.content_id = c.id
+                LEFT JOIN taxonomies t ON t.id = stmt.taxonomy_id AND t.type = "tag"
                 LEFT JOIN user_series_follows ucf ON ucf.content_id = c.id AND ucf.user_id = :user_id
                 WHERE c.type = :type AND c.slug = :slug AND c.deleted_at IS NULL
                 GROUP BY c.id
@@ -342,8 +342,8 @@ final class SeriesRepository
                     c.author,
                     c.artist
                 FROM series c
-                INNER JOIN series_genre_map cg ON cg.content_id = c.id
-                INNER JOIN series_genres g ON g.id = cg.genre_id
+                INNER JOIN series_taxonomy_map stm ON stm.content_id = c.id
+                INNER JOIN taxonomies g ON g.id = stm.taxonomy_id AND g.type = "genre"
                 WHERE g.slug = :slug AND c.deleted_at IS NULL
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
@@ -377,8 +377,8 @@ final class SeriesRepository
                     c.author,
                     c.artist
                 FROM series c
-                INNER JOIN series_tag_map ct ON ct.content_id = c.id
-                INNER JOIN series_tags t ON t.id = ct.tag_id
+                INNER JOIN series_taxonomy_map stm ON stm.content_id = c.id
+                INNER JOIN taxonomies t ON t.id = stm.taxonomy_id AND t.type = "tag"
                 WHERE t.slug = :slug AND c.deleted_at IS NULL
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
@@ -439,15 +439,13 @@ final class SeriesRepository
             if ($this->canUseFullText($query)) {
                 $useFullText = true;
                 $booleanQuery = $this->toBooleanSearchQuery($query);
-                $where[] = '(MATCH(c.title, c.slug, c.description) AGAINST (:q IN BOOLEAN MODE)
-                    OR MATCH(cm.author, cm.artist, cm.alternative_titles) AGAINST (:q IN BOOLEAN MODE))';
+                $where[] = 'MATCH(c.title, c.slug, c.description, c.author, c.artist, c.alternative_titles) AGAINST (:q IN BOOLEAN MODE)';
                 $params['q'] = $booleanQuery;
                 $selectRelevance = ',
-                    (COALESCE(MATCH(c.title, c.slug, c.description) AGAINST (:q IN BOOLEAN MODE), 0)
-                        + COALESCE(MATCH(cm.author, cm.artist, cm.alternative_titles) AGAINST (:q IN BOOLEAN MODE), 0)) AS relevance';
+                    (COALESCE(MATCH(c.title, c.slug, c.description, c.author, c.artist, c.alternative_titles) AGAINST (:q IN BOOLEAN MODE), 0)) AS relevance';
             } else {
                 $searchParam = '%' . $query . '%';
-                $where[] = '(c.title LIKE :q1 OR c.slug LIKE :q2 OR c.description LIKE :q3 OR cm.author LIKE :q4 OR cm.artist LIKE :q5)';
+                $where[] = '(c.title LIKE :q1 OR c.slug LIKE :q2 OR c.description LIKE :q3 OR c.author LIKE :q4 OR c.artist LIKE :q5)';
                 $params['q1'] = $searchParam;
                 $params['q2'] = $searchParam;
                 $params['q3'] = $searchParam;
@@ -464,7 +462,7 @@ final class SeriesRepository
                 $placeholders[] = ':' . $key;
                 $params[$key] = $slug;
             }
-            $where[] = 'c.id IN (SELECT content_id FROM series_genre_map WHERE genre_id IN (SELECT id FROM series_genres WHERE slug IN (' . implode(',', $placeholders) . ')))';
+            $where[] = 'c.id IN (SELECT content_id FROM series_taxonomy_map WHERE taxonomy_id IN (SELECT id FROM taxonomies WHERE type = "genre" AND slug IN (' . implode(',', $placeholders) . ')))';
         }
 
         if (!empty($filters['tags'])) {
@@ -475,7 +473,7 @@ final class SeriesRepository
                 $placeholders[] = ':' . $key;
                 $params[$key] = $slug;
             }
-            $where[] = 'c.id IN (SELECT content_id FROM series_tag_map WHERE tag_id IN (SELECT id FROM series_tags WHERE slug IN (' . implode(',', $placeholders) . ')))';
+            $where[] = 'c.id IN (SELECT content_id FROM series_taxonomy_map WHERE taxonomy_id IN (SELECT id FROM taxonomies WHERE type = "tag" AND slug IN (' . implode(',', $placeholders) . ')))';
         }
 
         if (!empty($filters['status']) && $filters['status'] !== 'TÜMÜ') {
@@ -565,7 +563,7 @@ final class SeriesRepository
     public function getGenres(int $page, int $perPage): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $sql = 'SELECT id, name, slug, ui_config FROM series_genres ORDER BY name ASC LIMIT :limit OFFSET :offset';
+        $sql = 'SELECT id, name, slug, ui_config FROM taxonomies WHERE type = "genre" ORDER BY name ASC LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -585,8 +583,9 @@ final class SeriesRepository
                     t.slug,
                     t.ui_config,
                     COUNT(ct.content_id) AS content_count
-                FROM series_tags t
-                LEFT JOIN series_tag_map ct ON ct.tag_id = t.id
+                FROM taxonomies t
+                LEFT JOIN series_taxonomy_map ct ON ct.taxonomy_id = t.id
+                WHERE t.type = "tag"
                 GROUP BY t.id, t.name, t.slug
                 ORDER BY t.name ASC
                 LIMIT :limit OFFSET :offset';
