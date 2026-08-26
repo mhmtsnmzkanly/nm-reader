@@ -187,7 +187,31 @@ final class UserRepository
         $stmt->execute(['user_id' => $userId]);
         $row = $stmt->fetch();
 
-        return $row === false ? null : $row;
+        if ($row === false) {
+            try {
+                $userStmt = $this->pdo->prepare('SELECT settings FROM users WHERE id = :user_id LIMIT 1');
+                $userStmt->execute(['user_id' => $userId]);
+                $settingsRaw = $userStmt->fetchColumn();
+                if ($settingsRaw && ($decoded = json_decode($settingsRaw, true))) {
+                    return [
+                        'user_id' => $userId,
+                        'lang' => $decoded['lang'] ?? 'tr',
+                        'theme' => $decoded['theme'] ?? 'dark',
+                        'reader_layout' => $decoded['reader']['layout'] ?? 'single',
+                        'reader_font_size' => (int) ($decoded['reader']['fontSize'] ?? 18),
+                        'reader_font_family' => $decoded['reader']['fontFamily'] ?? 'Inter',
+                        'reader_line_height' => $decoded['reader']['lineHeight'] ?? '1.6',
+                        'reader_font_weight' => (int) ($decoded['reader']['fontWeight'] ?? 400),
+                        'reader_reading_direction' => $decoded['reader']['readingDirection'] ?? 'ltr',
+                        'reader_image_fit' => $decoded['reader']['imageFit'] ?? 'contain',
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ];
+                }
+            } catch (\Throwable) {}
+            return null;
+        }
+
+        return $row;
     }
 
     /**
@@ -292,6 +316,30 @@ final class UserRepository
             $params['lang'] = $lang;
         }
         $stmt->execute($params);
+
+        // Sync to users.settings JSON
+        try {
+            $settingsJson = json_encode([
+                'lang' => $lang,
+                'theme' => $theme,
+                'reader' => [
+                    'layout' => $layout,
+                    'fontSize' => $fontSize,
+                    'fontFamily' => $fontFamily,
+                    'lineHeight' => $lineHeight,
+                    'fontWeight' => $fontWeight,
+                    'readingDirection' => $readingDirection,
+                    'imageFit' => $imageFit,
+                ],
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+            $this->pdo->prepare(
+                'UPDATE users SET settings = :settings WHERE id = :user_id'
+            )->execute([
+                'settings' => $settingsJson,
+                'user_id' => $userId,
+            ]);
+        } catch (\Throwable) {}
     }
 
     /**

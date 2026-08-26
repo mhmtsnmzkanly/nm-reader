@@ -25,6 +25,7 @@ CREATE TABLE `users` (
   `roles` varchar(255) DEFAULT '4',
   `api_token` varchar(64) DEFAULT NULL,
   `api_token_expires_at` datetime DEFAULT NULL,
+  `settings` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`settings`)),
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
