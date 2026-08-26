@@ -28,6 +28,7 @@ final class AnalyticsAggregationService
             'search_rows' => $this->aggregateSearchSnapshot($days),
             'auth_rows' => $this->aggregateAuthSnapshot($days),
             'health_rows' => $this->aggregateSystemHealth(),
+            'daily_metrics_synced' => $this->syncToDailyMetrics($days),
         ];
     }
 
@@ -323,5 +324,44 @@ final class AnalyticsAggregationService
         }
         $stmt->execute();
         return $stmt->rowCount();
+    }
+
+    private function syncToDailyMetrics(int $days): int
+    {
+        $count = 0;
+        try {
+            // 1. Content top views
+            $count += (int) $this->pdo->exec(
+                "INSERT INTO analytics_daily_metrics (stat_date, metric_category, metric_key, entity_type, entity_id, metric_value)
+                 SELECT CURRENT_DATE(), 'content', 'top_views_7d', 'series', entity_id, COUNT(*)
+                 FROM analytics_events
+                 WHERE event_type = 'content_view' AND entity_type = 'content' AND entity_id IS NOT NULL
+                   AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                 GROUP BY entity_id
+                 ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)"
+            );
+
+            // 2. Chapter top views
+            $count += (int) $this->pdo->exec(
+                "INSERT INTO analytics_daily_metrics (stat_date, metric_category, metric_key, entity_type, entity_id, metric_value)
+                 SELECT CURRENT_DATE(), 'chapter', 'top_views_7d', 'chapter', entity_id, COUNT(*)
+                 FROM analytics_events
+                 WHERE event_type = 'chapter_view' AND entity_type = 'chapter' AND entity_id IS NOT NULL
+                   AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                 GROUP BY entity_id
+                 ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)"
+            );
+
+            // 3. Funnel & general totals
+            $count += (int) $this->pdo->exec(
+                "INSERT INTO analytics_daily_metrics (stat_date, metric_category, metric_key, entity_type, entity_id, metric_value)
+                 SELECT stat_date, 'funnel', metric_name, '', '', metric_value
+                 FROM analytics_snapshots_daily
+                 WHERE stat_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                 ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)"
+            );
+        } catch (\Throwable) {}
+
+        return $count;
     }
 }

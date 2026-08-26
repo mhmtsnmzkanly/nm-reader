@@ -725,6 +725,22 @@ CREATE TABLE `analytics_search_logs` (
   KEY `idx_search_logs_query` (`query`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `analytics_daily_metrics`;
+CREATE TABLE `analytics_daily_metrics` (
+  `stat_date` date NOT NULL,
+  `metric_category` enum('content','chapter','search','community','auth','system','finance','funnel','hourly') NOT NULL,
+  `metric_key` varchar(64) NOT NULL,
+  `entity_type` varchar(24) NOT NULL DEFAULT '',
+  `entity_id` varchar(32) NOT NULL DEFAULT '',
+  `metric_value` bigint(20) NOT NULL DEFAULT 0,
+  `metadata` longtext DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`stat_date`,`metric_key`,`entity_id`),
+  KEY `idx_metrics_lookup` (`metric_key`,`stat_date`),
+  KEY `idx_entity_history` (`entity_type`,`entity_id`,`stat_date`),
+  KEY `idx_category_date` (`metric_category`,`stat_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `analytics_snapshots_daily`;
 CREATE TABLE `analytics_snapshots_daily` (
   `stat_date` date NOT NULL,
