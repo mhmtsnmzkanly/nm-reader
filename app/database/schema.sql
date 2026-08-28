@@ -283,6 +283,7 @@ CREATE TABLE `blogs` (
   `slug` varchar(255) NOT NULL,
   `body` longtext NOT NULL,
   `cover_image` varchar(255) DEFAULT NULL,
+  `status` enum('draft','pending','published','rejected','hidden') NOT NULL DEFAULT 'pending',
   `approved` tinyint(1) NOT NULL DEFAULT 0,
   `approver_user_id` char(8) DEFAULT NULL,
   `approved_at` datetime DEFAULT NULL,
@@ -291,6 +292,7 @@ CREATE TABLE `blogs` (
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`),
+  KEY `idx_blogs_status` (`status`),
   CONSTRAINT `fk_blogs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_blogs_approver` FOREIGN KEY (`approver_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

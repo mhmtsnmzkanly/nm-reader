@@ -29,17 +29,32 @@ final class BlogController
     }
 
     /**
-     * Lists approved blog posts with pagination.
+     * Lists approved blog posts with pagination and sorting.
      */
     public function list(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
+        $query = $request->getQueryParams();
+        $sort = ($query['sort'] ?? '') === 'popular' ? 'popular' : 'latest';
 
         return ResponseHelper::paginate(
-            $this->blogs->listApproved($page, $perPage),
+            $this->blogs->listApproved($page, $perPage, $sort),
             $page,
             $perPage
         );
+    }
+
+    /**
+     * Lists related approved blog posts.
+     */
+    public function related(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $slug = (string) $args['slug'];
+        $query = $request->getQueryParams();
+        $limit = max(1, min(10, (int) ($query['limit'] ?? 3)));
+        $items = $this->blogs->getRelatedApproved($slug, $limit);
+
+        return ResponseHelper::success($items);
     }
 
     /**
@@ -155,6 +170,56 @@ final class BlogController
     }
 
     /**
+     * Updates an existing blog post owned by the authenticated user.
+     */
+    public function update(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            $blogId = (string) $args['id'];
+            $payload = (array) $request->getParsedBody();
+
+            $updated = $this->blogs->updateBlog($blogId, $userId, $payload);
+            return ResponseHelper::success($updated);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        }
+    }
+
+    /**
+     * Deletes a blog post owned by the authenticated user.
+     */
+    public function delete(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            $blogId = (string) $args['id'];
+            $this->blogs->deleteBlog($blogId, $userId);
+
+            return ResponseHelper::success(['deleted' => true]);
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        }
+    }
+
+    /**
+     * Retrieves a single blog post owned by user for editing (including drafts/pending).
+     */
+    public function showMyBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $userId = (string) $request->getAttribute('user_id');
+        $blogId = (string) $args['id'];
+        $blog = $this->blogs->getUserBlog($blogId, $userId);
+        if ($blog === null) {
+            return ResponseHelper::error(404, 'Blog not found');
+        }
+
+        return ResponseHelper::success($blog);
+    }
+
+    /**
      * Uploads an image for a blog post.
      */
     public function uploadImage(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -170,8 +235,12 @@ final class BlogController
 
             $dto = new UploadDto($userId, $file, 'blogs');
             $path = $this->uploadService->handleImageUpload($dto);
+            $publicUrl = '/media/public/' . ltrim($path, '/');
 
-            return ResponseHelper::success(['path' => $path]);
+            return ResponseHelper::success([
+                'path' => $path,
+                'url' => $publicUrl,
+            ]);
         } catch (\InvalidArgumentException|\RuntimeException $e) {
             return ResponseHelper::error(400, $e->getMessage());
         }

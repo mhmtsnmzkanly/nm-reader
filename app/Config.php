@@ -263,6 +263,7 @@ final class Config
             $group->get("/profile/{person:[A-Za-z0-9_]+}", [UserController::class, "publicProfile"]);
             $group->get("/blogs", [BlogController::class, "list"]);
             $group->get("/blogs/{slug}", [BlogController::class, "show"])->add(new AuthMiddleware(true, $authorization));
+            $group->get("/blogs/{slug}/related", [BlogController::class, "related"]);
             $group->get("/content/{type:".$typePattern."}/{slug}/chapter/{chapterNumber}", [ContentController::class, "chapterDetail"]);
             $group->get("/search", [ContentController::class, "search"]);
             $group->get("/search/suggest", [ContentController::class, "suggest"]);
@@ -310,7 +311,10 @@ final class Config
                 $secure->post("/content/{type:" . $typePattern . "}/{slug}/unlock", [ContentController::class, "unlockByType"]);
                 $secure->post("/chapter/{chapterId:[a-z0-9]{6}}/unlock", [ContentController::class, "unlockChapter"]);
                 $secure->get("/user/blogs", [BlogController::class, "listMyBlogs"]);
+                $secure->get("/user/blogs/{id:[a-z0-9]{6}}", [BlogController::class, "showMyBlog"]);
                 $secure->post("/blogs", [BlogController::class, "create"])->add(new RestrictedActionMiddleware($users, "blog creation"));
+                $secure->put("/blogs/{id:[a-z0-9]{6}}", [BlogController::class, "update"])->add(new RestrictedActionMiddleware($users, "blog update"));
+                $secure->delete("/blogs/{id:[a-z0-9]{6}}", [BlogController::class, "delete"])->add(new RestrictedActionMiddleware($users, "blog deletion"));
                 $secure->post("/blogs/image", [BlogController::class, "uploadImage"]);
                 $secure->post("/blogs/{slug}/vote", [BlogController::class, "vote"])->add(new RestrictedActionMiddleware($users, "voting"));
                 $secure->post("/blogs/{slug}/comments", [UserInteractionController::class, "createBlogComment"])->add(new RestrictedActionMiddleware($users, "commenting"));

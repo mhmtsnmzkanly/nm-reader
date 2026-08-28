@@ -31,32 +31,83 @@ final class BlogRepository
      * @param int $perPage
      * @return array
      */
-    public function listApproved(int $page, int $perPage): array
+    public function listApproved(int $page, int $perPage, string $sort = 'latest'): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $orderClause = $sort === 'popular'
+            ? 'ORDER BY likes DESC, comments_count DESC, b.approved_at DESC'
+            : 'ORDER BY b.approved_at DESC, b.created_at DESC';
+
         $sql = 'SELECT
                     b.id,
                     b.user_id,
                     b.title,
                     b.slug,
                     b.body,
+                    b.cover_image,
+                    b.status,
                     b.approved,
                     b.approver_user_id,
                     b.approved_at,
                     b.created_at,
                     b.updated_at,
                     u.username AS author_username,
-                    au.username AS approver_username
+                    au.username AS approver_username,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS likes,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS upvote_count,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = -1) AS downvote_count,
+                    (SELECT COUNT(*) FROM comments WHERE target_type = "blog" AND target_id = b.id AND deleted_at IS NULL) AS comments_count,
+                    SUBSTRING(b.body, 1, 200) AS excerpt
                 FROM blogs b
                 INNER JOIN users u ON u.id = b.user_id
                 LEFT JOIN users au ON au.id = b.approver_user_id
                 WHERE b.approved = 1' . $this->deletedAtCondition('b') . '
-                ORDER BY b.approved_at DESC, b.created_at DESC
+                ' . $orderClause . '
                 LIMIT :limit OFFSET :offset';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Lists related approved blog posts excluding the given slug.
+     */
+    public function listRelatedApproved(string $slug, int $limit = 3): array
+    {
+        $sql = 'SELECT
+                    b.id,
+                    b.user_id,
+                    b.title,
+                    b.slug,
+                    b.body,
+                    b.cover_image,
+                    b.status,
+                    b.approved,
+                    b.approver_user_id,
+                    b.approved_at,
+                    b.created_at,
+                    b.updated_at,
+                    u.username AS author_username,
+                    au.username AS approver_username,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS likes,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS upvote_count,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = -1) AS downvote_count,
+                    (SELECT COUNT(*) FROM comments WHERE target_type = "blog" AND target_id = b.id AND deleted_at IS NULL) AS comments_count,
+                    SUBSTRING(b.body, 1, 200) AS excerpt
+                FROM blogs b
+                INNER JOIN users u ON u.id = b.user_id
+                LEFT JOIN users au ON au.id = b.approver_user_id
+                WHERE b.approved = 1 AND b.slug != :slug' . $this->deletedAtCondition('b') . '
+                ORDER BY b.approved_at DESC, b.created_at DESC
+                LIMIT :limit';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll();
@@ -77,6 +128,8 @@ final class BlogRepository
                     b.title,
                     b.slug,
                     b.body,
+                    b.cover_image,
+                    b.status,
                     b.approved,
                     b.approver_user_id,
                     b.approved_at,
@@ -84,9 +137,12 @@ final class BlogRepository
                     b.updated_at,
                     u.username AS author_username,
                     au.username AS approver_username,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS likes,
                     (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS upvote_count,
                     (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = -1) AS downvote_count,
-                    (CASE WHEN :user_id IS NOT NULL THEN (SELECT vote FROM votes WHERE target_type = "blog" AND target_id = b.id AND user_id = :user_id2) ELSE 0 END) AS my_vote
+                    (CASE WHEN :user_id IS NOT NULL THEN (SELECT vote FROM votes WHERE target_type = "blog" AND target_id = b.id AND user_id = :user_id2) ELSE 0 END) AS my_vote,
+                    (SELECT COUNT(*) FROM comments WHERE target_type = "blog" AND target_id = b.id AND deleted_at IS NULL) AS comments_count,
+                    SUBSTRING(b.body, 1, 200) AS excerpt
                 FROM blogs b
                 INNER JOIN users u ON u.id = b.user_id
                 LEFT JOIN users au ON au.id = b.approver_user_id
@@ -109,7 +165,7 @@ final class BlogRepository
      */
     public function findById(string $blogId): ?array
     {
-        $sql = 'SELECT id, user_id, title, slug, body, approved, ' . $this->deletedAtSelectExpr() . ' AS deleted_at, approver_user_id, approved_at, created_at, updated_at
+        $sql = 'SELECT id, user_id, title, slug, body, cover_image, status, approved, ' . $this->deletedAtSelectExpr() . ' AS deleted_at, approver_user_id, approved_at, created_at, updated_at
                 FROM blogs
                 WHERE id = :id
                 LIMIT 1';
@@ -121,12 +177,35 @@ final class BlogRepository
     }
 
     /**
+     * Retrieves blog by ID belonging to a specific user.
+     */
+    public function findByIdAndUser(string $blogId, string $userId): ?array
+    {
+        $sql = 'SELECT id, user_id, title, slug, body, cover_image, status, approved, approver_user_id, approved_at, created_at, updated_at,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS likes,
+                    (SELECT COUNT(*) FROM comments WHERE target_type = "blog" AND target_id = b.id AND deleted_at IS NULL) AS comments_count
+                FROM blogs b
+                WHERE b.id = :id AND b.user_id = :user_id' . $this->deletedAtCondition('b') . '
+                LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['id' => $blogId, 'user_id' => $userId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /**
      * Checks if a slug is already taken.
      */
-    public function existsBySlug(string $slug): bool
+    public function existsBySlug(string $slug, ?string $excludeId = null): bool
     {
-        $stmt = $this->pdo->prepare('SELECT id FROM blogs WHERE slug = :slug LIMIT 1');
-        $stmt->execute(['slug' => $slug]);
+        $sql = 'SELECT id FROM blogs WHERE slug = :slug' . ($excludeId !== null ? ' AND id != :exclude_id' : '') . ' LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $params = ['slug' => $slug];
+        if ($excludeId !== null) {
+            $params['exclude_id'] = $excludeId;
+        }
+        $stmt->execute($params);
 
         return $stmt->fetch() !== false;
     }
@@ -142,14 +221,15 @@ final class BlogRepository
     }
 
     /**
-     * Creates a new pending blog entry.
+     * Creates a new pending or draft blog entry.
      *
      * @return string The inserted ID.
      */
-    public function create(string $id, string $userId, string $title, string $slug, string $body): string
+    public function create(string $id, string $userId, string $title, string $slug, string $body, ?string $coverImage = null, string $status = 'pending'): string
     {
-        $sql = 'INSERT INTO blogs (id, user_id, title, slug, body, approved)
-                VALUES (:id, :user_id, :title, :slug, :body, 0)';
+        $approved = $status === 'published' ? 1 : 0;
+        $sql = 'INSERT INTO blogs (id, user_id, title, slug, body, cover_image, status, approved)
+                VALUES (:id, :user_id, :title, :slug, :body, :cover_image, :status, :approved)';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'id' => $id,
@@ -157,9 +237,54 @@ final class BlogRepository
             'title' => $title,
             'slug' => $slug,
             'body' => $body,
+            'cover_image' => $coverImage,
+            'status' => $status,
+            'approved' => $approved,
         ]);
 
         return $id;
+    }
+
+    /**
+     * Updates an existing blog post owned by user.
+     */
+    public function updateByUser(string $blogId, string $userId, string $title, string $slug, string $body, ?string $coverImage, string $status): bool
+    {
+        $approved = $status === 'published' ? 1 : 0;
+        $sql = 'UPDATE blogs
+                SET title = :title,
+                    slug = :slug,
+                    body = :body,
+                    cover_image = :cover_image,
+                    status = :status,
+                    approved = :approved,
+                    updated_at = NOW()
+                WHERE id = :id AND user_id = :user_id';
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            'id' => $blogId,
+            'user_id' => $userId,
+            'title' => $title,
+            'slug' => $slug,
+            'body' => $body,
+            'cover_image' => $coverImage,
+            'status' => $status,
+            'approved' => $approved,
+        ]);
+    }
+
+    /**
+     * Soft deletes a blog post owned by user.
+     */
+    public function deleteByUser(string $blogId, string $userId): bool
+    {
+        if ($this->hasDeletedAtColumn()) {
+            $stmt = $this->pdo->prepare('UPDATE blogs SET deleted_at = NOW() WHERE id = :id AND user_id = :user_id');
+            return $stmt->execute(['id' => $blogId, 'user_id' => $userId]);
+        }
+
+        $stmt = $this->pdo->prepare('DELETE FROM blogs WHERE id = :id AND user_id = :user_id');
+        return $stmt->execute(['id' => $blogId, 'user_id' => $userId]);
     }
 
     /**
@@ -169,19 +294,26 @@ final class BlogRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $sql = 'SELECT
-                    id,
-                    user_id,
-                    title,
-                    slug,
-                    body,
-                    approved,
-                    approver_user_id,
-                    approved_at,
-                    created_at,
-                    updated_at
-                FROM blogs
-                WHERE user_id = :user_id
-                ORDER BY created_at DESC
+                    b.id,
+                    b.user_id,
+                    b.title,
+                    b.slug,
+                    b.body,
+                    b.cover_image,
+                    b.status,
+                    b.approved,
+                    b.approver_user_id,
+                    b.approved_at,
+                    b.created_at,
+                    b.updated_at,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS likes,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = 1) AS upvote_count,
+                    (SELECT COUNT(*) FROM votes WHERE target_type = "blog" AND target_id = b.id AND vote = -1) AS downvote_count,
+                    (SELECT COUNT(*) FROM comments WHERE target_type = "blog" AND target_id = b.id AND deleted_at IS NULL) AS comments_count,
+                    SUBSTRING(b.body, 1, 200) AS excerpt
+                FROM blogs b
+                WHERE b.user_id = :user_id' . $this->deletedAtCondition('b') . '
+                ORDER BY b.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
         $stmt = $this->pdo->prepare($sql);
@@ -205,6 +337,8 @@ final class BlogRepository
                     b.title,
                     b.slug,
                     b.body,
+                    b.cover_image,
+                    b.status,
                     b.approved,
                     b.created_at,
                     b.updated_at,
@@ -232,6 +366,7 @@ final class BlogRepository
         try {
             $sql = 'UPDATE blogs
                     SET approved = 1,
+                        status = "published",
                         approver_user_id = :approver_user_id,
                         approved_at = NOW()
                     WHERE id = :id';

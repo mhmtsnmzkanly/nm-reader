@@ -37,11 +37,22 @@ final class BlogService
      * @param int $perPage
      * @return array Sanitized blog list.
      */
-    public function listApproved(int $page, int $perPage): array
+    public function listApproved(int $page, int $perPage, string $sort = 'latest'): array
     {
-        $cacheKey = sprintf('blogs_approved_%d_%d', $page, $perPage);
-        $rows = $this->cache->remember($cacheKey, 120, fn () => $this->blogs->listApproved($page, $perPage));
-        return OutputSanitizer::sanitizeRows($rows, ['title', 'body', 'author_username', 'approver_username']);
+        $cacheKey = sprintf('blogs_approved_%d_%d_%s', $page, $perPage, $sort);
+        $rows = $this->cache->remember($cacheKey, 120, fn () => $this->blogs->listApproved($page, $perPage, $sort));
+        return OutputSanitizer::sanitizeRows($rows, ['title', 'body', 'author_username', 'approver_username', 'cover_image', 'status', 'excerpt']);
+    }
+
+    /**
+     * Lists related approved blog posts.
+     */
+    public function getRelatedApproved(string $slug, int $limit = 3): array
+    {
+        $limit = max(1, min(10, $limit));
+        $cacheKey = sprintf('blogs_related_%s_%d', $slug, $limit);
+        $rows = $this->cache->remember($cacheKey, 180, fn () => $this->blogs->listRelatedApproved($slug, $limit));
+        return OutputSanitizer::sanitizeRows($rows, ['title', 'body', 'author_username', 'approver_username', 'cover_image', 'status', 'excerpt']);
     }
 
     /**
@@ -59,7 +70,7 @@ final class BlogService
             return null;
         }
 
-        return OutputSanitizer::sanitizeFields($row, ['title', 'body', 'author_username', 'approver_username', 'upvote_count', 'downvote_count', 'my_vote']);
+        return OutputSanitizer::sanitizeFields($row, ['title', 'body', 'author_username', 'approver_username', 'upvote_count', 'downvote_count', 'my_vote', 'cover_image', 'status', 'excerpt']);
     }
 
     /**
@@ -104,11 +115,11 @@ final class BlogService
     }
 
     /**
-     * Creates a new blog post in 'pending' state.
+     * Creates a new blog post in 'pending' or 'draft' state.
      *
      * @param string $userId
-     * @param array $payload Title and body content.
-     * @return array ID and slug of the created post.
+     * @param array $payload Title, body, cover_image, status.
+     * @return array ID, slug, and status of the created post.
      * @throws \InvalidArgumentException If validation fails.
      */
     public function createPending(string $userId, array $payload): array
@@ -120,6 +131,8 @@ final class BlogService
 
         $title = $this->scanner->assertSafe(Validator::sanitizeText((string) $payload['title']), 'blog_title');
         $body = $this->scanner->assertSafe(Validator::sanitizeMultilineText((string) $payload['body']), 'blog_body');
+        $coverImage = !empty($payload['cover_image']) ? Validator::sanitizeText((string) $payload['cover_image']) : null;
+        $status = in_array($payload['status'] ?? '', ['draft', 'pending'], true) ? (string) $payload['status'] : 'pending';
 
         if ($title === '' || strlen($title) < 3 || strlen($title) > 160) {
             throw new \InvalidArgumentException('Title must be 3-160 characters');
@@ -142,15 +155,105 @@ final class BlogService
         }
 
         $id = $this->entityIds->generateBlogId();
-        $blogId = $this->blogs->create($id, $userId, $title, $slug, $body);
+        $blogId = $this->blogs->create($id, $userId, $title, $slug, $body, $coverImage, $status);
         $this->cache->delete('home_latest_blogs_3');
         $this->cache->deleteByPrefix('blogs_approved_');
 
         return [
             'id' => $blogId,
             'slug' => $slug,
+            'status' => $status,
             'approved' => false,
+            'cover_image' => $coverImage,
         ];
+    }
+
+    /**
+     * Updates an existing blog post belonging to the user.
+     */
+    public function updateBlog(string $blogId, string $userId, array $payload): array
+    {
+        $existing = $this->blogs->findByIdAndUser($blogId, $userId);
+        if ($existing === null) {
+            throw new \DomainException('Blog not found or unauthorized');
+        }
+
+        $title = !empty($payload['title'])
+            ? $this->scanner->assertSafe(Validator::sanitizeText((string) $payload['title']), 'blog_title')
+            : (string) $existing['title'];
+        $body = !empty($payload['body'])
+            ? $this->scanner->assertSafe(Validator::sanitizeMultilineText((string) $payload['body']), 'blog_body')
+            : (string) $existing['body'];
+        $coverImage = array_key_exists('cover_image', $payload)
+            ? (!empty($payload['cover_image']) ? Validator::sanitizeText((string) $payload['cover_image']) : null)
+            : ($existing['cover_image'] ?? null);
+        $status = in_array($payload['status'] ?? '', ['draft', 'pending'], true)
+            ? (string) $payload['status']
+            : (string) ($existing['status'] ?? 'pending');
+
+        if (strlen($title) < 3 || strlen($title) > 160) {
+            throw new \InvalidArgumentException('Title must be 3-160 characters');
+        }
+
+        if (strlen($body) < 20 || strlen($body) > 10000) {
+            throw new \InvalidArgumentException('Body must be 20-10000 characters');
+        }
+
+        $slug = (string) $existing['slug'];
+        if ($title !== $existing['title']) {
+            $baseSlug = $this->slugService->normalize($title);
+            if ($baseSlug === '') {
+                $baseSlug = 'blog';
+            }
+            $slug = $baseSlug;
+            $suffix = 2;
+            while ($this->blogs->existsBySlug($slug, $blogId)) {
+                $slug = sprintf('%s-%d', $baseSlug, $suffix);
+                $suffix++;
+            }
+        }
+
+        $this->blogs->updateByUser($blogId, $userId, $title, $slug, $body, $coverImage, $status);
+        $this->invalidateCachesBySlug((string) $existing['slug']);
+        if ($slug !== $existing['slug']) {
+            $this->invalidateCachesBySlug($slug);
+        }
+
+        return [
+            'id' => $blogId,
+            'title' => $title,
+            'slug' => $slug,
+            'status' => $status,
+            'approved' => $status === 'published',
+            'cover_image' => $coverImage,
+        ];
+    }
+
+    /**
+     * Deletes a user's own blog post.
+     */
+    public function deleteBlog(string $blogId, string $userId): void
+    {
+        $existing = $this->blogs->findByIdAndUser($blogId, $userId);
+        if ($existing === null) {
+            throw new \DomainException('Blog not found or unauthorized');
+        }
+
+        $this->blogs->deleteByUser($blogId, $userId);
+        $this->invalidateCachesBySlug((string) ($existing['slug'] ?? ''));
+    }
+
+    /**
+     * Gets a single blog owned by user (including draft/pending status).
+     */
+    public function getUserBlog(string $blogId, string $userId): ?array
+    {
+        $row = $this->blogs->findByIdAndUser($blogId, $userId);
+        if ($row === null) {
+            return null;
+        }
+
+        return OutputSanitizer::sanitizeFields($row, ['title', 'body', 'status']);
     }
 
     /**
@@ -164,7 +267,7 @@ final class BlogService
     public function listByUser(string $userId, int $page, int $perPage): array
     {
         $rows = $this->blogs->listByUser($userId, $page, $perPage);
-        return OutputSanitizer::sanitizeRows($rows, ['title', 'body']);
+        return OutputSanitizer::sanitizeRows($rows, ['title', 'body', 'cover_image', 'status', 'excerpt']);
     }
 
     /**
@@ -177,7 +280,7 @@ final class BlogService
     public function listPending(int $page, int $perPage): array
     {
         $rows = $this->blogs->listPending($page, $perPage);
-        return OutputSanitizer::sanitizeRows($rows, ['title', 'body', 'author_username']);
+        return OutputSanitizer::sanitizeRows($rows, ['title', 'body', 'author_username', 'cover_image', 'status']);
     }
 
     /**

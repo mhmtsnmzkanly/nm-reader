@@ -419,11 +419,14 @@ final class ApiTestSuite
         echo "\n6. Testing Blog Endpoints...\n";
 
         // 31. GET /api/v1/blogs
-        $json = $this->assertResponse('GET /api/v1/blogs', $this->request('GET', '/api/v1/blogs'), 200, 'GET /api/v1/blogs');
+        $json = $this->assertResponse('GET /api/v1/blogs', $this->request('GET', '/api/v1/blogs?sort=popular'), 200, 'GET /api/v1/blogs');
         $this->assertPagination('blogs', $json);
 
         // 32. GET /api/v1/blogs/{slug}
         $this->assertResponse('GET /api/v1/blogs/test-slug', $this->request('GET', '/api/v1/blogs/test-slug'), 200, 'GET /api/v1/blogs/{slug}');
+
+        // 32a. GET /api/v1/blogs/{slug}/related
+        $this->assertResponse('GET /api/v1/blogs/test-slug/related', $this->request('GET', '/api/v1/blogs/test-slug/related'), 200, 'GET /api/v1/blogs/{slug}/related');
 
         // 33. POST /api/v1/blogs
         $this->assertResponse('POST /api/v1/blogs (Guest -> 401)', $this->request('POST', '/api/v1/blogs', [], ['title' => 'T', 'body' => 'B']), 401, 'POST /api/v1/blogs');
@@ -436,6 +439,15 @@ final class ApiTestSuite
 
         // 36. GET /api/v1/user/blogs
         $this->assertResponse('GET /api/v1/user/blogs (Guest -> 401)', $this->request('GET', '/api/v1/user/blogs'), 401, 'GET /api/v1/user/blogs');
+
+        // 36a. GET /api/v1/user/blogs/{id}
+        $this->assertResponse('GET /api/v1/user/blogs/blg001 (Guest -> 401)', $this->request('GET', '/api/v1/user/blogs/blg001'), 401, 'GET /api/v1/user/blogs/{id:[a-z0-9]{6}}');
+
+        // 36b. PUT /api/v1/blogs/{id}
+        $this->assertResponse('PUT /api/v1/blogs/blg001 (Guest -> 401)', $this->request('PUT', '/api/v1/blogs/blg001', [], ['title' => 'Updated']), 401, 'PUT /api/v1/blogs/{id:[a-z0-9]{6}}');
+
+        // 36c. DELETE /api/v1/blogs/{id}
+        $this->assertResponse('DELETE /api/v1/blogs/blg001 (Guest -> 401)', $this->request('DELETE', '/api/v1/blogs/blg001'), 401, 'DELETE /api/v1/blogs/{id:[a-z0-9]{6}}');
     }
 
     private function testSearchEndpoints(): void
