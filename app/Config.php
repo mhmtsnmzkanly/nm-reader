@@ -326,6 +326,7 @@ final class Config
                 $secure->get("/user/follows/users", [UserController::class, "followedUsers"]);
                 $secure->post("/user/follows/{person:[A-Za-z0-9_]+}", [UserController::class, "follow"]);
                 $secure->delete("/user/follows/{person:[A-Za-z0-9_]+}", [UserController::class, "unfollow"]);
+                $secure->post("/reports", [\App\Controllers\ReportController::class, "create"])->add(new RestrictedActionMiddleware($users, "reporting"));
             })->add(new CsrfMiddleware())->add(new AuthMiddleware($authorization));
         });
     }
@@ -415,6 +416,10 @@ final class Config
             $group->put("/webhooks/{id:[0-9]+}", [AdminPanelController::class, "updateWebhook"])->add($perm(["admin.panel.access"]));
             $group->delete("/webhooks/{id:[0-9]+}", [AdminPanelController::class, "deleteWebhook"])->add($perm(["admin.panel.access"]));
             $group->post("/webhooks/{id:[0-9]+}/test", [AdminPanelController::class, "testWebhook"])->add($perm(["admin.panel.access"]));
+            $group->get("/reports", [\App\Controllers\ReportController::class, "list"])->add($perm(["admin.panel.access"]));
+            $group->get("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "show"])->add($perm(["admin.panel.access"]));
+            $group->patch("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "update"])->add($perm(["admin.panel.access"]));
+            $group->put("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "update"])->add($perm(["admin.panel.access"]));
             $group->get("/analytics/monetization", [AdminPanelController::class, "monetizationAnalytics"])->add($perm(["admin.metrics.view"]));
             $group->get("/analytics/search-insights", [AdminPanelController::class, "searchInsights"])->add($perm(["admin.metrics.view"]));
             $group->get("/analytics/funnel/{id:[a-z0-9]{6}}", [AdminPanelController::class, "seriesReadingFunnel"])->add($perm(["admin.metrics.view"]));

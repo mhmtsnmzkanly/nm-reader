@@ -548,6 +548,9 @@ final class ApiTestSuite
 
         // 64. POST /api/v1/user/notifications/read
         $this->assertResponse('POST /api/v1/user/notifications/read (Guest -> 401)', $this->request('POST', '/api/v1/user/notifications/read'), 401, 'POST /api/v1/user/notifications/read');
+
+        // 64a. POST /api/v1/reports
+        $this->assertResponse('POST /api/v1/reports (Guest -> 401)', $this->request('POST', '/api/v1/reports', [], ['target_type' => 'blog', 'target_id' => 'b1', 'reason' => 'spam']), 401, 'POST /api/v1/reports');
     }
 
     private function testMediaEndpoints(): void
@@ -563,7 +566,7 @@ final class ApiTestSuite
 
     private function testAdminEndpoints(): void
     {
-        echo "\n11. Testing 43 Admin Endpoints (RBAC Protection & Signature)...\n";
+        echo "\n11. Testing 46 Admin Endpoints (RBAC Protection & Signature)...\n";
 
         $adminRoutes = [
             ['GET', '/api/v1/admin/overview', 'GET /api/v1/admin/overview'],
@@ -624,6 +627,10 @@ final class ApiTestSuite
             ['PUT', '/api/v1/admin/webhooks/1', 'PUT /api/v1/admin/webhooks/{id}'],
             ['DELETE', '/api/v1/admin/webhooks/1', 'DELETE /api/v1/admin/webhooks/{id}'],
             ['POST', '/api/v1/admin/webhooks/1/test', 'POST /api/v1/admin/webhooks/{id}/test'],
+            ['GET', '/api/v1/admin/reports', 'GET /api/v1/admin/reports'],
+            ['GET', '/api/v1/admin/reports/1', 'GET /api/v1/admin/reports/{id:[0-9]+}'],
+            ['PATCH', '/api/v1/admin/reports/1', 'PATCH /api/v1/admin/reports/{id:[0-9]+}'],
+            ['PUT', '/api/v1/admin/reports/1', 'PUT /api/v1/admin/reports/{id:[0-9]+}'],
             ['GET', '/api/v1/admin/analytics/monetization', 'GET /api/v1/admin/analytics/monetization'],
             ['GET', '/api/v1/admin/analytics/search-insights', 'GET /api/v1/admin/analytics/search-insights'],
             ['GET', '/api/v1/admin/analytics/funnel/c12345', 'GET /api/v1/admin/analytics/funnel/{id}'],

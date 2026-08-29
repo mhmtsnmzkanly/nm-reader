@@ -127,6 +127,7 @@ $builder->addDefinitions([
     RatingRepository::class => DI\autowire(RatingRepository::class),
     UploadRepository::class => DI\autowire(UploadRepository::class),
     WalletRepository::class => DI\autowire(WalletRepository::class),
+    \App\Repositories\ReportRepository::class => DI\autowire(\App\Repositories\ReportRepository::class),
 
     AuthService::class => DI\autowire(AuthService::class)
         ->constructorParameter('sessionLifetimeSeconds', (int) ($settings['app']['session_lifetime_seconds'] ?? 7200))
@@ -138,6 +139,7 @@ $builder->addDefinitions([
         ->constructorParameter('logger', DI\get('logger.error')),
     AnalyticsAggregationService::class => DI\autowire(AnalyticsAggregationService::class),
     BlogService::class => DI\autowire(BlogService::class),
+    \App\Services\ReportService::class => DI\autowire(\App\Services\ReportService::class),
     SeriesService::class => DI\autowire(SeriesService::class),
     ChapterService::class => DI\autowire(ChapterService::class),
     CommentService::class => DI\autowire(CommentService::class),
