@@ -54,17 +54,20 @@ final class SeriesService
      * @param int $perPage Items per page.
      * @return array Consolidated homepage data.
      */
-    public function home(int $page, int $perPage): array
+    public function home(int $page, int $perPage, ?string $userId = null): array
     {
         $limit = max(1, min(50, $perPage));
+        $includeMembersOnly = $userId !== null && $userId !== '';
+        $cacheSuffix = $includeMembersOnly ? 'members' : 'public';
+
         // 1. Explore Section (mixed/popular logic)
-        $cacheKeyExplore = sprintf('homepage_explore_%d_%d', $page, $limit);
-        $exploreItems = $this->cache->remember($cacheKeyExplore, 120, fn () => $this->series->getHomepagePopular($page, $limit));
+        $cacheKeyExplore = sprintf('homepage_explore_%d_%d_%s', $page, $limit, $cacheSuffix);
+        $exploreItems = $this->cache->remember($cacheKeyExplore, 120, fn () => $this->series->getHomepagePopular($page, $limit, $includeMembersOnly));
         $explore = $this->mapAndAppendPaths($exploreItems);
 
         // 2. Recently Updated (individual latest chapters)
-        $cacheKeyChapters = sprintf('homepage_recent_chapters_%d', $limit);
-        $recentChapters = $this->cache->remember($cacheKeyChapters, 60, fn () => $this->series->getLatestChapters(1, $limit));
+        $cacheKeyChapters = sprintf('homepage_recent_chapters_%d_%s', $limit, $cacheSuffix);
+        $recentChapters = $this->cache->remember($cacheKeyChapters, 60, fn () => $this->series->getLatestChapters(1, $limit, $includeMembersOnly));
         $recentChapters = array_map(function($row) {
             $seriesType = (string)($row['series_type'] ?? 'novel');
             $row['type_path'] = $this->toTypeSegment($seriesType);
@@ -75,8 +78,8 @@ final class SeriesService
         }, $recentChapters);
 
         // 3. Recently Added (new content entries)
-        $cacheKeyAdded = sprintf('homepage_recently_added_%d', $limit);
-        $addedItems = $this->cache->remember($cacheKeyAdded, 120, fn () => $this->series->getRecentlyAdded($limit));
+        $cacheKeyAdded = sprintf('homepage_recently_added_%d_%s', $limit, $cacheSuffix);
+        $addedItems = $this->cache->remember($cacheKeyAdded, 120, fn () => $this->series->getRecentlyAdded($limit, $includeMembersOnly));
         $recentlyAdded = $this->mapAndAppendPaths($addedItems);
 
         $popularBlogs = $this->cache->remember('home_popular_blogs_3', 120, fn () => $this->blogs->homePopular(3));
@@ -159,6 +162,11 @@ final class SeriesService
             return null;
         }
 
+        $isMembersOnly = (bool) ($row['is_members_only'] ?? false);
+        if ($isMembersOnly && ($userId === null || $userId === '')) {
+            throw new \DomainException('MEMBERS_ONLY_REQUIRED: Bu içerik yalnızca kayıtlı üyelere özeldir.');
+        }
+
         $this->series->recordContentView((string) $row['id'], hash('sha256', $ip));
         $this->analytics->track('content_view', $userId, 'content', (string) $row['id'], [], $ip);
 
@@ -239,13 +247,15 @@ final class SeriesService
      * @param string $typeSegment
      * @param int $page
      * @param int $perPage
+     * @param string|null $userId
      * @return array
      */
-    public function byType(string $typeSegment, int $page, int $perPage): array
+    public function byType(string $typeSegment, int $page, int $perPage, ?string $userId = null): array
     {
         $dbType = $this->toDbType($typeSegment);
-        $cacheKey = sprintf('type_list_%s_%d_%d', $dbType, $page, $perPage);
-        $items = $this->cache->remember($cacheKey, 180, fn () => $this->series->getByType($dbType, $page, $perPage));
+        $includeMembersOnly = $userId !== null && $userId !== '';
+        $cacheKey = sprintf('type_list_%s_%d_%d_%s', $dbType, $page, $perPage, $includeMembersOnly ? 'members' : 'public');
+        $items = $this->cache->remember($cacheKey, 180, fn () => $this->series->getByType($dbType, $page, $perPage, $includeMembersOnly));
         $mapped = array_map(static fn (array $row) => ContentDto::fromArray($row)->toArray(), $items);
 
         return array_map(fn (array $row) => $this->appendTypePathFields($row), $mapped);
@@ -257,12 +267,14 @@ final class SeriesService
      * @param string $slug Genre identifier.
      * @param int $page
      * @param int $perPage
+     * @param string|null $userId
      * @return array
      */
-    public function byGenre(string $slug, int $page, int $perPage): array
+    public function byGenre(string $slug, int $page, int $perPage, ?string $userId = null): array
     {
-        $cacheKey = sprintf('genre_list_%s_%d_%d', $slug, $page, $perPage);
-        $items = $this->cache->remember($cacheKey, 180, fn () => $this->series->getByGenreSlug($slug, $page, $perPage));
+        $includeMembersOnly = $userId !== null && $userId !== '';
+        $cacheKey = sprintf('genre_list_%s_%d_%d_%s', $slug, $page, $perPage, $includeMembersOnly ? 'members' : 'public');
+        $items = $this->cache->remember($cacheKey, 180, fn () => $this->series->getByGenreSlug($slug, $page, $perPage, $includeMembersOnly));
         $mapped = array_map(static fn (array $row) => ContentDto::fromArray($row)->toArray(), $items);
 
         return array_map(fn (array $row) => $this->appendTypePathFields($row), $mapped);
@@ -274,12 +286,14 @@ final class SeriesService
      * @param string $slug Tag identifier.
      * @param int $page
      * @param int $perPage
+     * @param string|null $userId
      * @return array
      */
-    public function byTag(string $slug, int $page, int $perPage): array
+    public function byTag(string $slug, int $page, int $perPage, ?string $userId = null): array
     {
-        $cacheKey = sprintf('tag_list_%s_%d_%d', $slug, $page, $perPage);
-        $items = $this->cache->remember($cacheKey, 180, fn () => $this->series->getByTagSlug($slug, $page, $perPage));
+        $includeMembersOnly = $userId !== null && $userId !== '';
+        $cacheKey = sprintf('tag_list_%s_%d_%d_%s', $slug, $page, $perPage, $includeMembersOnly ? 'members' : 'public');
+        $items = $this->cache->remember($cacheKey, 180, fn () => $this->series->getByTagSlug($slug, $page, $perPage, $includeMembersOnly));
         $mapped = array_map(static fn (array $row) => ContentDto::fromArray($row)->toArray(), $items);
 
         return array_map(fn (array $row) => $this->appendTypePathFields($row), $mapped);
@@ -332,11 +346,13 @@ final class SeriesService
      * @param int $page
      * @param int $perPage
      * @param array $filters Advanced filters.
+     * @param string|null $userId
      * @return array
      */
-    public function search(string $query, int $page, int $perPage, array $filters = []): array
+    public function search(string $query, int $page, int $perPage, array $filters = [], ?string $userId = null): array
     {
-        $items = $this->series->search($query, $page, $perPage, $filters);
+        $includeMembersOnly = $userId !== null && $userId !== '';
+        $items = $this->series->search($query, $page, $perPage, $filters, $includeMembersOnly);
         $mapped = array_map(static fn (array $row) => ContentDto::fromArray($row)->toArray(), $items);
 
         return array_map(fn (array $row) => $this->appendTypePathFields($row), $mapped);
@@ -598,10 +614,11 @@ final class SeriesService
      * @param int $perPage
      * @return array
      */
-    public function latestChapters(int $page, int $perPage): array
+    public function latestChapters(int $page, int $perPage, ?string $userId = null): array
     {
-        $cacheKey = sprintf('latest_chapters_%d_%d', $page, $perPage);
-        $rows = $this->cache->remember($cacheKey, 60, fn () => $this->series->getLatestChapters($page, $perPage));
+        $includeMembersOnly = $userId !== null && $userId !== '';
+        $cacheKey = sprintf('latest_chapters_%d_%d_%s', $page, $perPage, $includeMembersOnly ? 'members' : 'public');
+        $rows = $this->cache->remember($cacheKey, 60, fn () => $this->series->getLatestChapters($page, $perPage, $includeMembersOnly));
         return array_map(function($row) {
             $row['type_path'] = $this->toTypeSegment((string)($row['series_type'] ?? 'novel'));
             $row['chapter_number'] = ChapterNumber::normalize($row['chapter_number'] ?? '');
@@ -615,13 +632,15 @@ final class SeriesService
      * @param string $typeSegment
      * @param int $page
      * @param int $perPage
+     * @param string|null $userId
      * @return array
      */
-    public function latestChaptersByType(string $typeSegment, int $page, int $perPage): array
+    public function latestChaptersByType(string $typeSegment, int $page, int $perPage, ?string $userId = null): array
     {
         $dbType = $this->toDbType($typeSegment);
-        $cacheKey = sprintf('latest_chapters_%s_%d_%d', $dbType, $page, $perPage);
-        $rows = $this->cache->remember($cacheKey, 60, fn () => $this->series->getLatestChaptersByType($dbType, $page, $perPage));
+        $includeMembersOnly = $userId !== null && $userId !== '';
+        $cacheKey = sprintf('latest_chapters_%s_%d_%d_%s', $dbType, $page, $perPage, $includeMembersOnly ? 'members' : 'public');
+        $rows = $this->cache->remember($cacheKey, 60, fn () => $this->series->getLatestChaptersByType($dbType, $page, $perPage, $includeMembersOnly));
 
         return array_map(function ($row) {
             $row['type_path'] = $this->toTypeSegment((string) ($row['series_type'] ?? 'novel'));

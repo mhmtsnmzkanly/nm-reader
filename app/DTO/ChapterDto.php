@@ -40,7 +40,9 @@ final class ChapterDto
         public readonly array $navigation = ['next' => null, 'prev' => null],
         public readonly ?string $seriesTitle = null,
         public readonly ?string $seriesSlug = null,
-        public readonly ?string $seriesType = null
+        public readonly ?string $seriesType = null,
+        public readonly bool $isMembersOnly = false,
+        public readonly bool $isAdult = false
     ) {
     }
 
@@ -61,7 +63,9 @@ final class ChapterDto
             navigation: $row['adjacent_chapters'] ?? ['next' => null, 'prev' => null],
             seriesTitle: isset($row['series_title']) ? (string) $row['series_title'] : null,
             seriesSlug: isset($row['series_slug']) ? (string) $row['series_slug'] : null,
-            seriesType: isset($row['series_type']) ? (string) $row['series_type'] : null
+            seriesType: isset($row['series_type']) ? (string) $row['series_type'] : null,
+            isMembersOnly: (bool) ($row['is_members_only'] ?? false),
+            isAdult: (bool) ($row['is_adult'] ?? false)
         );
     }
 
@@ -80,6 +84,8 @@ final class ChapterDto
             'body' => $this->body,
             'pages' => $this->pages,
             'adjacent_chapters' => $this->navigation,
+            'is_members_only' => $this->isMembersOnly,
+            'is_adult' => $this->isAdult,
         ];
 
         if ($this->seriesTitle !== null) {

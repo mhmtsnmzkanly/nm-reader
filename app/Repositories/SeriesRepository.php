@@ -27,15 +27,18 @@ final class SeriesRepository
      * @param int $perPage
      * @return array
      */
-    public function getHomepagePopular(int $page, int $perPage): array
+    public function getHomepagePopular(int $page, int $perPage, bool $includeMembersOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $membersOnlyCondition = $includeMembersOnly ? '' : ' AND c.is_members_only = 0';
         $sql = 'SELECT 
                     c.id,
                     c.title,
                     c.slug,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.rating_avg,
                     c.rating_count,
                     c.chapter_count,
@@ -44,7 +47,7 @@ final class SeriesRepository
                     c.author,
                     c.artist
                 FROM series c
-                WHERE c.deleted_at IS NULL
+                WHERE c.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY c.rating_count DESC, c.rating_avg DESC, c.chapter_count DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -59,14 +62,17 @@ final class SeriesRepository
     /**
      * Gets series that recently received new chapters.
      */
-    public function getRecentlyUpdated(int $limit): array
+    public function getRecentlyUpdated(int $limit, bool $includeMembersOnly = false): array
     {
+        $membersOnlyCondition = $includeMembersOnly ? '' : ' AND c.is_members_only = 0';
         $sql = 'SELECT 
                     c.id,
                     c.title,
                     c.slug,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.rating_avg,
                     c.rating_count,
                     c.chapter_count,
@@ -77,7 +83,7 @@ final class SeriesRepository
                     MAX(ch.created_at) as last_chapter_at
                 FROM series c
                 INNER JOIN chapters ch ON ch.content_id = c.id
-                WHERE c.deleted_at IS NULL AND ch.deleted_at IS NULL
+                WHERE c.deleted_at IS NULL AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
                 GROUP BY c.id
                 ORDER BY last_chapter_at DESC
                 LIMIT :limit';
@@ -92,14 +98,17 @@ final class SeriesRepository
     /**
      * Gets the most recently created content entries.
      */
-    public function getRecentlyAdded(int $limit): array
+    public function getRecentlyAdded(int $limit, bool $includeMembersOnly = false): array
     {
+        $membersOnlyCondition = $includeMembersOnly ? '' : ' AND c.is_members_only = 0';
         $sql = 'SELECT 
                     c.id,
                     c.title,
                     c.slug,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.rating_avg,
                     c.rating_count,
                     c.chapter_count,
@@ -108,7 +117,7 @@ final class SeriesRepository
                     c.author,
                     c.artist
                 FROM series c
-                WHERE c.deleted_at IS NULL
+                WHERE c.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY c.created_at DESC
                 LIMIT :limit';
 
@@ -132,9 +141,11 @@ final class SeriesRepository
                     c.title,
                     c.slug,
                     c.description,
-                    cm.alternative_titles,
+                    c.alternative_titles,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.cover_image,
                     c.rating_avg,
                     c.rating_count,
@@ -176,6 +187,8 @@ final class SeriesRepository
                     c.alternative_titles,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.cover_image,
                     c.rating_avg,
                     c.rating_count,
@@ -292,15 +305,18 @@ final class SeriesRepository
     /**
      * Paginated listing of content by type (e.g., all manga).
      */
-    public function getByType(string $type, int $page, int $perPage): array
+    public function getByType(string $type, int $page, int $perPage, bool $includeMembersOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $membersOnlyCondition = $includeMembersOnly ? '' : ' AND c.is_members_only = 0';
         $sql = 'SELECT 
                     c.id,
                     c.title,
                     c.slug,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.rating_avg,
                     c.rating_count,
                     c.chapter_count,
@@ -309,7 +325,7 @@ final class SeriesRepository
                     c.author,
                     c.artist
                 FROM series c
-                WHERE c.type = :type AND c.deleted_at IS NULL
+                WHERE c.type = :type AND c.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -325,15 +341,18 @@ final class SeriesRepository
     /**
      * Paginated listing of content associated with a genre.
      */
-    public function getByGenreSlug(string $slug, int $page, int $perPage): array
+    public function getByGenreSlug(string $slug, int $page, int $perPage, bool $includeMembersOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $membersOnlyCondition = $includeMembersOnly ? '' : ' AND c.is_members_only = 0';
         $sql = 'SELECT 
                     c.id,
                     c.title,
                     c.slug,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.rating_avg,
                     c.rating_count,
                     c.chapter_count,
@@ -344,7 +363,7 @@ final class SeriesRepository
                 FROM series c
                 INNER JOIN series_taxonomy_map stm ON stm.content_id = c.id
                 INNER JOIN taxonomies g ON g.id = stm.taxonomy_id AND g.type = "genre"
-                WHERE g.slug = :slug AND c.deleted_at IS NULL
+                WHERE g.slug = :slug AND c.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -360,15 +379,18 @@ final class SeriesRepository
     /**
      * Paginated listing of content associated with a tag.
      */
-    public function getByTagSlug(string $slug, int $page, int $perPage): array
+    public function getByTagSlug(string $slug, int $page, int $perPage, bool $includeMembersOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $membersOnlyCondition = $includeMembersOnly ? '' : ' AND c.is_members_only = 0';
         $sql = 'SELECT 
                     c.id,
                     c.title,
                     c.slug,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.rating_avg,
                     c.rating_count,
                     c.chapter_count,
@@ -379,7 +401,7 @@ final class SeriesRepository
                 FROM series c
                 INNER JOIN series_taxonomy_map stm ON stm.content_id = c.id
                 INNER JOIN taxonomies t ON t.id = stm.taxonomy_id AND t.type = "tag"
-                WHERE t.slug = :slug AND c.deleted_at IS NULL
+                WHERE t.slug = :slug AND c.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -424,14 +446,18 @@ final class SeriesRepository
      * @param int $page
      * @param int $perPage
      * @param array $filters Optional filters: genres (slug array), tags (slug array), status, sort.
+     * @param bool $includeMembersOnly Whether to include members-only content.
      * @return array
      */
-    public function search(string $query, int $page, int $perPage, array $filters = []): array
+    public function search(string $query, int $page, int $perPage, array $filters = [], bool $includeMembersOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
         
         $params = [];
         $where = ['c.deleted_at IS NULL'];
+        if (!$includeMembersOnly) {
+            $where[] = 'c.is_members_only = 0';
+        }
         $selectRelevance = '';
         $useFullText = false;
 
@@ -499,6 +525,8 @@ final class SeriesRepository
                     c.slug,
                     c.type,
                     c.status,
+                    c.is_adult,
+                    c.is_members_only,
                     c.rating_avg,
                     c.rating_count,
                     c.chapter_count,
@@ -734,19 +762,23 @@ final class SeriesRepository
     /**
      * Gets individual latest chapter entries across all series.
      */
-    public function getLatestChapters(int $page, int $perPage): array
+    public function getLatestChapters(int $page, int $perPage, bool $includeMembersOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $membersOnlyCondition = $includeMembersOnly ? '' : ' AND c.is_members_only = 0 AND ch.is_members_only = 0';
         $sql = 'SELECT 
                     ch.chapter_number,
                     ch.title AS chapter_title,
                     c.title AS series_title,
                     c.slug AS series_slug,
                     c.type AS series_type,
+                    c.is_adult,
+                    c.is_members_only,
                     c.cover_image,
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
+                WHERE c.deleted_at IS NULL AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY ch.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
@@ -759,19 +791,22 @@ final class SeriesRepository
     /**
      * Gets latest chapters filtered by content type.
      */
-    public function getLatestChaptersByType(string $type, int $page, int $perPage): array
+    public function getLatestChaptersByType(string $type, int $page, int $perPage, bool $includeMembersOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
+        $membersOnlyCondition = $includeMembersOnly ? '' : ' AND c.is_members_only = 0 AND ch.is_members_only = 0';
         $sql = 'SELECT
                     ch.chapter_number,
                     ch.title AS chapter_title,
                     c.title AS series_title,
                     c.slug AS series_slug,
                     c.type AS series_type,
+                    c.is_adult,
+                    c.is_members_only,
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.type = :type AND c.deleted_at IS NULL
+                WHERE c.type = :type AND c.deleted_at IS NULL AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY ch.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);

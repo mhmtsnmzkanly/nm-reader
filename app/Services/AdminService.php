@@ -103,12 +103,14 @@ final class AdminService
         }
 
         $id = $this->entityIds->generateContentId();
+        $isAdult = !empty($payload['is_adult']) ? 1 : 0;
+        $isMembersOnly = !empty($payload['is_members_only']) ? 1 : 0;
 
         $sql = 'INSERT INTO series (
-                    id, title, slug, description, type, status, cover_image,
+                    id, title, slug, description, type, status, is_adult, is_members_only, cover_image,
                     rating_avg, rating_count, chapter_count, comment_count, created_at
                 ) VALUES (
-                    :id, :title, :slug, :description, :type, :status, :cover_image,
+                    :id, :title, :slug, :description, :type, :status, :is_adult, :is_members_only, :cover_image,
                     0, 0, 0, 0, NOW()
                 )';
 
@@ -120,6 +122,8 @@ final class AdminService
             'description' => $description,
             'type' => $dbType,
             'status' => $status,
+            'is_adult' => $isAdult,
+            'is_members_only' => $isMembersOnly,
             'cover_image' => $coverImage,
         ]);
 
@@ -137,6 +141,8 @@ final class AdminService
             'slug' => $slug,
             'type' => $dbType,
             'status' => $status,
+            'is_adult' => (bool) $isAdult,
+            'is_members_only' => (bool) $isMembersOnly,
             'url_path' => '/' . str_replace('_', '-', $dbType) . '/' . $slug,
         ];
     }
@@ -195,6 +201,14 @@ final class AdminService
         if ($coverImage !== null) {
             $updates[] = 'cover_image = :cover_image';
             $params['cover_image'] = $coverImage === '' ? null : $coverImage;
+        }
+        if (isset($payload['is_adult'])) {
+            $updates[] = 'is_adult = :is_adult';
+            $params['is_adult'] = !empty($payload['is_adult']) ? 1 : 0;
+        }
+        if (isset($payload['is_members_only'])) {
+            $updates[] = 'is_members_only = :is_members_only';
+            $params['is_members_only'] = !empty($payload['is_members_only']) ? 1 : 0;
         }
 
         $this->pdo->beginTransaction();
@@ -346,10 +360,11 @@ final class AdminService
             $publishedAt = !empty($payload['published_at']) ? date('Y-m-d H:i:s', strtotime((string)$payload['published_at'])) : date('Y-m-d H:i:s');
             $priceAmount = max(0, (int)($payload['price_amount'] ?? 0));
             $isFreeAfter = !empty($payload['is_free_after']) ? date('Y-m-d H:i:s', strtotime((string)$payload['is_free_after'])) : null;
+            $isMembersOnly = !empty($payload['is_members_only']) ? 1 : 0;
 
             $stmt = $this->pdo->prepare(
-                'INSERT INTO chapters (id, content_id, `number`, chapter_number, title, type, `text`, `image`, `data`, price_amount, published_at, is_free_after, created_by, created_at)
-                 VALUES (:cid, :content_id, :number, :chapter_number, :title, :type, :text, :image, :data, :price_amount, :published_at, :is_free_after, :created_by, NOW())'
+                'INSERT INTO chapters (id, content_id, `number`, chapter_number, title, type, is_members_only, `text`, `image`, `data`, price_amount, published_at, is_free_after, created_by, created_at)
+                 VALUES (:cid, :content_id, :number, :chapter_number, :title, :type, :is_members_only, :text, :image, :data, :price_amount, :published_at, :is_free_after, :created_by, NOW())'
             );
             $stmt->execute([
                 'cid' => $chapterId,
@@ -358,6 +373,7 @@ final class AdminService
                 'chapter_number' => $chapterNumber,
                 'title' => $title,
                 'type' => $chapterType,
+                'is_members_only' => $isMembersOnly,
                 'text' => $chapterType === 'text' ? $dataVal : null,
                 'image' => $chapterType === 'image' ? $dataVal : null,
                 'data' => $dataVal,
@@ -591,6 +607,7 @@ final class AdminService
         $isFreeAfter = array_key_exists('is_free_after', $payload) ? (!empty($payload['is_free_after']) ? date('Y-m-d H:i:s', strtotime((string)$payload['is_free_after'])) : null) : ($current['is_free_after'] ?? null);
 
         $diff = [];
+        $isMembersOnly = isset($payload['is_members_only']) ? (!empty($payload['is_members_only']) ? 1 : 0) : null;
         $newValues = [
             'chapter_number' => $chapterNumber,
             'title' => $title,
@@ -600,6 +617,9 @@ final class AdminService
             'published_at' => $publishedAt,
             'is_free_after' => $isFreeAfter,
         ];
+        if ($isMembersOnly !== null) {
+            $newValues['is_members_only'] = $isMembersOnly;
+        }
 
         foreach ($newValues as $key => $val) {
             if (($current[$key] ?? null) !== $val) {
@@ -617,15 +637,22 @@ final class AdminService
         try {
             $this->chapters->updateChapter($chapterId, $chapterNumber, $title, $type);
 
-            $this->pdo->prepare('UPDATE chapters SET `data` = :data, `number` = :number, `price_amount` = :price, `published_at` = :pub, `is_free_after` = :free WHERE id = :id')
-                ->execute([
-                    'data' => $dataVal,
-                    'number' => (float) $chapterNumber,
-                    'price' => $priceAmount,
-                    'pub' => $publishedAt,
-                    'free' => $isFreeAfter,
-                    'id' => $chapterId
-                ]);
+            $updateFields = ['`data` = :data', '`number` = :number', '`price_amount` = :price', '`published_at` = :pub', '`is_free_after` = :free'];
+            $params = [
+                'data' => $dataVal,
+                'number' => (float) $chapterNumber,
+                'price' => $priceAmount,
+                'pub' => $publishedAt,
+                'free' => $isFreeAfter,
+                'id' => $chapterId
+            ];
+            if ($isMembersOnly !== null) {
+                $updateFields[] = '`is_members_only` = :is_members_only';
+                $params['is_members_only'] = $isMembersOnly;
+            }
+
+            $this->pdo->prepare('UPDATE chapters SET ' . implode(', ', $updateFields) . ' WHERE id = :id')
+                ->execute($params);
 
             if ($moderatorId !== null && !empty($diff)) {
                 $this->adminConsole->createModerationAction($moderatorId, "chapter", $chapterId, "update", json_encode(['diff' => $diff], JSON_UNESCAPED_UNICODE));

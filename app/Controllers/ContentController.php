@@ -35,8 +35,8 @@ final class ContentController
     public function home(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $items = $this->seriesService->home($page, $perPage);
-        $userId = $request->getAttribute('user_id');
+        $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+        $items = $this->seriesService->home($page, $perPage, is_string($userId) ? $userId : null);
         $this->analytics->track('home_view', is_string($userId) ? $userId : null, 'home', null, ['page' => $page, 'per_page' => $perPage], (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown'));
         return ResponseHelper::paginate($items, $page, $perPage);
     }
@@ -45,21 +45,24 @@ final class ContentController
     {
         try {
             [$page, $perPage] = $this->pagination($request);
-            return ResponseHelper::paginate($this->seriesService->byType((string)$args['type'], $page, $perPage), $page, $perPage);
+            $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+            return ResponseHelper::paginate($this->seriesService->byType((string)$args['type'], $page, $perPage, is_string($userId) ? $userId : null), $page, $perPage);
         } catch (\DomainException $e) { return ResponseHelper::error(400, $e->getMessage()); }
     }
 
     public function latestChapters(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        return ResponseHelper::paginate($this->seriesService->latestChapters($page, $perPage), $page, $perPage);
+        $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+        return ResponseHelper::paginate($this->seriesService->latestChapters($page, $perPage, is_string($userId) ? $userId : null), $page, $perPage);
     }
 
     public function latestChaptersByType(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {
             [$page, $perPage] = $this->pagination($request);
-            return ResponseHelper::paginate($this->seriesService->latestChaptersByType((string)$args['type'], $page, $perPage), $page, $perPage);
+            $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+            return ResponseHelper::paginate($this->seriesService->latestChaptersByType((string)$args['type'], $page, $perPage, is_string($userId) ? $userId : null), $page, $perPage);
         } catch (\DomainException $e) { return ResponseHelper::error(400, $e->getMessage()); }
     }
 
@@ -79,7 +82,10 @@ final class ContentController
             $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
             $item = $this->seriesService->contentDetailByType((string)$args['type'], (string)$args['slug'], $ip, is_string($userId) ? $userId : null);
             return $item ? ResponseHelper::success($item) : ResponseHelper::error(404, 'Content not found');
-        } catch (\DomainException $e) { return ResponseHelper::error(400, $e->getMessage()); }
+        } catch (\DomainException $e) {
+            $code = str_contains($e->getMessage(), 'MEMBERS_ONLY_REQUIRED') ? 401 : 400;
+            return ResponseHelper::error($code, $e->getMessage());
+        }
     }
 
     // --- CHAPTERS ---
@@ -120,7 +126,8 @@ final class ContentController
     public function genre(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        return ResponseHelper::paginate($this->seriesService->byGenre((string)$args['slug'], $page, $perPage), $page, $perPage);
+        $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+        return ResponseHelper::paginate($this->seriesService->byGenre((string)$args['slug'], $page, $perPage, is_string($userId) ? $userId : null), $page, $perPage);
     }
 
     public function tags(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -132,7 +139,8 @@ final class ContentController
     public function tag(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        return ResponseHelper::paginate($this->seriesService->byTag((string)$args['slug'], $page, $perPage), $page, $perPage);
+        $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+        return ResponseHelper::paginate($this->seriesService->byTag((string)$args['slug'], $page, $perPage, is_string($userId) ? $userId : null), $page, $perPage);
     }
 
     // --- SEARCH ---
@@ -154,9 +162,9 @@ final class ContentController
             'sort' => $sort,
         ];
 
-        $items = $this->seriesService->search($query, $page, $perPage, $filters);
-        $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
         $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+        $items = $this->seriesService->search($query, $page, $perPage, $filters, is_string($userId) ? $userId : null);
+        $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
         $this->seriesService->logSearch($query, count($items), is_string($userId) ? $userId : null, $ip);
 
         $meta = ['q' => $query];

@@ -48,7 +48,14 @@ final class ChapterService
         $this->chapters->recordChapterView($chapterId, hash('sha256', $ip));
         $chapter['chapter_number'] = ChapterNumber::normalize($chapter['chapter_number'] ?? '');
 
+        $isMembersOnly = (bool) ($chapter['is_members_only'] ?? false) || (bool) ($chapter['series_is_members_only'] ?? false);
         $access = $this->wallets->chapterAccess($contentId, $chapterId, $userId);
+
+        if ($isMembersOnly && ($userId === null || $userId === '')) {
+            $access['granted'] = false;
+            $access['is_members_only'] = true;
+            $access['reason'] = 'members_only';
+        }
 
         if (($access['granted'] ?? false) === true) {
             if ($chapter['type'] === 'text') {
@@ -104,7 +111,14 @@ final class ChapterService
         $this->chapters->recordChapterView($chapterId, hash('sha256', $ip));
         $chapter['chapter_number'] = ChapterNumber::normalize($chapter['chapter_number'] ?? '');
 
+        $isMembersOnly = (bool) ($chapter['is_members_only'] ?? false) || (bool) ($chapter['series_is_members_only'] ?? false);
         $access = $this->wallets->chapterAccess($contentId, $chapterId, $userId);
+
+        if ($isMembersOnly && ($userId === null || $userId === '')) {
+            $access['granted'] = false;
+            $access['is_members_only'] = true;
+            $access['reason'] = 'members_only';
+        }
 
         if (($access['granted'] ?? false) === true) {
             if ($chapter['type'] === 'text') {

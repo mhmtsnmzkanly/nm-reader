@@ -28,7 +28,7 @@ final class ChapterRepository
      */
     public function findById(string $chapterId): ?array
     {
-        $sql = 'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.`data`, ch.created_at, ch.created_by, u.username
+        $sql = 'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.is_members_only, ch.`data`, ch.created_at, ch.created_by, u.username
                 FROM chapters ch
                 LEFT JOIN users u ON u.id = ch.created_by
                 WHERE ch.id = :id AND ch.deleted_at IS NULL LIMIT 1';
@@ -75,10 +75,12 @@ final class ChapterRepository
      */
     public function findByChapterNumber(string $chapterNumber): ?array
     {
-        $sql = 'SELECT id, content_id, chapter_number, title, type, created_at
-                FROM chapters
-                WHERE chapter_number = :chapter_number AND deleted_at IS NULL
-                ORDER BY id DESC
+        $sql = 'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.is_members_only, ch.created_at,
+                       c.is_adult, c.is_members_only AS series_is_members_only
+                FROM chapters ch
+                INNER JOIN series c ON c.id = ch.content_id
+                WHERE ch.chapter_number = :chapter_number AND ch.deleted_at IS NULL AND c.deleted_at IS NULL
+                ORDER BY ch.id DESC
                 LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['chapter_number' => $chapterNumber]);
@@ -94,11 +96,13 @@ final class ChapterRepository
 
         // Decimal-safe fallback for imprecise string matches.
         $fallback = $this->pdo->prepare(
-            'SELECT id, content_id, chapter_number, title, type, created_at
-             FROM chapters
-             WHERE CAST(chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
-               AND deleted_at IS NULL
-             ORDER BY id DESC
+            'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.is_members_only, ch.created_at,
+                    c.is_adult, c.is_members_only AS series_is_members_only
+             FROM chapters ch
+             INNER JOIN series c ON c.id = ch.content_id
+             WHERE CAST(ch.chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
+               AND ch.deleted_at IS NULL AND c.deleted_at IS NULL
+             ORDER BY ch.id DESC
              LIMIT 1'
         );
         $fallback->execute(['chapter_number' => $chapterNumber]);
@@ -119,16 +123,20 @@ final class ChapterRepository
                     ch.chapter_number,
                     ch.title,
                     ch.type,
+                    ch.is_members_only,
                     ch.created_at,
                     c.title AS series_title,
                     c.slug AS series_slug,
-                    c.type AS series_type
+                    c.type AS series_type,
+                    c.is_adult,
+                    c.is_members_only AS series_is_members_only
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
                 WHERE c.type = :type
                   AND c.slug = :slug
                   AND ch.chapter_number = :chapter_number
                   AND ch.deleted_at IS NULL
+                  AND c.deleted_at IS NULL
                 LIMIT 1';
 
         $stmt = $this->pdo->prepare($sql);
@@ -154,16 +162,20 @@ final class ChapterRepository
                 ch.chapter_number,
                 ch.title,
                 ch.type,
+                ch.is_members_only,
                 ch.created_at,
                 c.title AS series_title,
                 c.slug AS series_slug,
-                c.type AS series_type
+                c.type AS series_type,
+                c.is_adult,
+                c.is_members_only AS series_is_members_only
              FROM chapters ch
              INNER JOIN series c ON c.id = ch.content_id
              WHERE c.type = :type
                AND c.slug = :slug
                AND CAST(ch.chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
                AND ch.deleted_at IS NULL
+               AND c.deleted_at IS NULL
              ORDER BY ch.id ASC
              LIMIT 1'
         );
@@ -211,7 +223,7 @@ final class ChapterRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $stmt = $this->pdo->prepare(
-            'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.created_at, u.username
+            'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.is_members_only, ch.created_at, u.username
              FROM chapters ch
              LEFT JOIN users u ON u.id = ch.created_by
              WHERE ch.content_id = :content_id AND ch.deleted_at IS NULL

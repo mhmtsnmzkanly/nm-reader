@@ -138,6 +138,8 @@ final class AdminConsoleRepository
                 cm.alternative_titles,
                 c.type,
                 c.status,
+                c.is_adult,
+                c.is_members_only,
                 c.cover_image,
                 c.description,
                 c.chapter_count,
