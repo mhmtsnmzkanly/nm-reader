@@ -810,31 +810,43 @@ CREATE TABLE `webhook_configs` (
 
 DROP TABLE IF EXISTS `system_settings`;
 CREATE TABLE `system_settings` (
-  `setting_key` varchar(64) NOT NULL,
-  `setting_value` longtext DEFAULT NULL,
-  `setting_group` varchar(32) NOT NULL DEFAULT 'general',
+  `group` varchar(32) NOT NULL DEFAULT 'general',
+  `key` varchar(64) NOT NULL,
+  `type` enum('string','int','bool','json') NOT NULL DEFAULT 'string',
+  `value` longtext DEFAULT NULL,
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`setting_key`),
-  KEY `idx_settings_group` (`setting_group`)
+  PRIMARY KEY (`key`),
+  KEY `idx_settings_group` (`group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `system_settings` (`setting_key`, `setting_value`, `setting_group`) VALUES
-('site_name', 'NM Reader', 'general'),
-('site_slogan', 'En İyi Çevrimiçi Manga ve Novel Okuyucusu', 'general'),
-('default_theme', 'dark', 'appearance'),
-('logo_url', '', 'appearance'),
-('favicon_url', '', 'appearance'),
-('footer_text', '© 2026 NM Reader. Tüm hakları saklıdır.', 'general'),
-('maintenance_mode', 'false', 'security'),
-('maintenance_whitelist_ips', '["127.0.0.1", "::1"]', 'security'),
-('mail_enabled', 'true', 'mail'),
-('mail_send_on_register', 'true', 'mail'),
-('email_verification_required', 'false', 'mail'),
-('password_reset_subject', 'Şifre Sıfırlama Talebi - {{site_name}}', 'mail'),
-('password_reset_body', '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">Şifre Sıfırlama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} hesabınız için bir şifre sıfırlama talebi aldık. Şifrenizi yenilemek için aşağıdaki butona tıklayabilirsiniz:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Şifremi Sıfırla</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir. Talebi siz yapmadıysanız bu e-postayı güvenle silebilirsiniz.</p></div>', 'mail'),
-('email_verification_subject', 'E-posta Adresinizi Doğrulayın - {{site_name}}', 'mail'),
-('email_verification_body', '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">E-posta Doğrulama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} ailesine hoş geldiniz! Hesabınızı doğrulamak ve güvenliğinizi sağlamak için lütfen aşağıdaki butona tıklayın:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #e11d48; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">E-postamı Doğrula</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir.</p></div>', 'mail')
-ON DUPLICATE KEY UPDATE setting_key=setting_key;
+INSERT INTO `system_settings` (`group`, `key`, `type`, `value`) VALUES
+('general', 'site_name', 'string', 'NM Reader'),
+('general', 'site_slogan', 'string', 'En İyi Çevrimiçi Manga ve Novel Okuyucusu'),
+('general', 'site_abbreviation', 'string', 'NMR'),
+('general', 'site_description', 'string', 'Read manga, manhwa, webtoon and novels.'),
+('general', 'site_address', 'string', ''),
+('general', 'default_language', 'string', 'tr'),
+('general', 'footer_text', 'string', '© 2026 NM Reader. Tüm hakları saklıdır.'),
+('appearance', 'default_theme', 'string', 'dark'),
+('appearance', 'site_logo', 'string', '/assets/img/logo.svg'),
+('appearance', 'logo_url', 'string', '/assets/img/logo.svg'),
+('appearance', 'favicon_url', 'string', '/favicon.ico'),
+('appearance', 'default_profile_image', 'string', '/assets/img/default-profile.png'),
+('appearance', 'default_content_cover_image', 'string', '/assets/img/covers/placeholder.svg'),
+('security', 'maintenance_mode', 'bool', 'false'),
+('security', 'maintenance_whitelist_ips', 'json', '["127.0.0.1", "::1"]'),
+('security', 'enforce_https', 'bool', 'false'),
+('mail', 'mail_enabled', 'bool', 'true'),
+('mail', 'mail_send_on_register', 'bool', 'true'),
+('mail', 'email_verification_required', 'bool', 'false'),
+('mail', 'mail_from_name', 'string', 'NM Reader'),
+('mail', 'mail_from_address', 'string', 'noreply@nmreader.com'),
+('mail', 'password_reset_subject', 'string', 'Şifre Sıfırlama Talebi - {{site_name}}'),
+('mail', 'password_reset_body', 'string', '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">Şifre Sıfırlama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} hesabınız için bir şifre sıfırlama talebi aldık. Şifrenizi yenilemek için aşağıdaki butona tıklayabilirsiniz:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Şifremi Sıfırla</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir. Talebi siz yapmadıysanız bu e-postayı güvenle silebilirsiniz.</p></div>'),
+('mail', 'email_verification_subject', 'string', 'E-posta Adresinizi Doğrulayın - {{site_name}}'),
+('mail', 'email_verification_body', 'string', '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">E-posta Doğrulama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} ailesine hoş geldiniz! Hesabınızı doğrulamak ve güvenliğinizi sağlamak için lütfen aşağıdaki butona tıklayın:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #e11d48; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">E-postamı Doğrula</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir.</p></div>'),
+('integrations', 'integrations', 'json', '{"google_analytics_id":"","google_recaptcha_site_key":"","google_recaptcha_secret_key":"","resend_api_key":""}')
+ON DUPLICATE KEY UPDATE `group`=VALUES(`group`), `type`=VALUES(`type`), `value`=VALUES(`value`);
 
 DROP TABLE IF EXISTS `system_jobs`;
 CREATE TABLE `system_jobs` (

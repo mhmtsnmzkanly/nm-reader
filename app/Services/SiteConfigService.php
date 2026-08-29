@@ -8,38 +8,50 @@ use PDO;
 
 final class SiteConfigService
 {
-    private const CACHE_KEY = 'site_config:all:v1';
+    private const CACHE_KEY = 'site_config:all:v2';
     private const CACHE_TTL = 600;
 
     /**
-     * @var array<string, array{type:string,default:mixed,max?:int,allowed?:array<int,string>}>
+     * Definitions of all supported settings, their groups, types, and defaults.
+     *
+     * @var array<string, array{group:string,type:'string'|'int'|'bool'|'json',default:mixed,max?:int,allowed?:array<int,string>}>
      */
     private const DEFINITIONS = [
-        'site_name' => ['type' => 'string', 'default' => 'NM Reader', 'max' => 120],
-        'site_slogan' => ['type' => 'string', 'default' => 'En İyi Çevrimiçi Manga ve Novel Okuyucusu', 'max' => 255],
-        'site_abbreviation' => ['type' => 'string', 'default' => 'NMR', 'max' => 20],
-        'site_logo' => ['type' => 'string', 'default' => '/assets/img/logo.svg', 'max' => 255],
-        'favicon_url' => ['type' => 'string', 'default' => '/favicon.ico', 'max' => 255],
-        'footer_text' => ['type' => 'string', 'default' => '© 2026 NM Reader. Tüm hakları saklıdır.', 'max' => 500],
-        'site_description' => ['type' => 'string', 'default' => 'Read manga, manhwa, webtoon and novels.', 'max' => 1000],
-        'enforce_https' => ['type' => 'bool', 'default' => false],
-        'site_address' => ['type' => 'string', 'default' => '', 'max' => 255],
-        'default_language' => ['type' => 'string', 'default' => 'tr', 'allowed' => ['tr', 'en']],
-        'default_theme' => ['type' => 'string', 'default' => 'dark', 'allowed' => ['default', 'dark', 'royal', 'bootstrap', 'material', 'apple', 'glass']],
-        'default_profile_image' => ['type' => 'string', 'default' => '/assets/img/default-profile.png', 'max' => 255],
-        'default_content_cover_image' => ['type' => 'string', 'default' => '/assets/img/covers/placeholder.svg', 'max' => 255],
-        'maintenance_mode' => ['type' => 'bool', 'default' => false],
-        'maintenance_whitelist_ips' => ['type' => 'json', 'default' => ['127.0.0.1', '::1']],
-        'mail_enabled' => ['type' => 'bool', 'default' => true],
-        'mail_send_on_register' => ['type' => 'bool', 'default' => true],
-        'email_verification_required' => ['type' => 'bool', 'default' => false],
-        'mail_from_name' => ['type' => 'string', 'default' => 'NM Reader', 'max' => 120],
-        'mail_from_address' => ['type' => 'string', 'default' => 'noreply@nmreader.com', 'max' => 150],
-        'password_reset_subject' => ['type' => 'string', 'default' => 'Şifre Sıfırlama Talebi - {{site_name}}', 'max' => 255],
-        'password_reset_body' => ['type' => 'string', 'default' => '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">Şifre Sıfırlama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} hesabınız için bir şifre sıfırlama talebi aldık. Şifrenizi yenilemek için aşağıdaki butona tıklayabilirsiniz:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Şifremi Sıfırla</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir. Talebi siz yapmadıysanız bu e-postayı güvenle silebilirsiniz.</p></div>'],
-        'email_verification_subject' => ['type' => 'string', 'default' => 'E-posta Adresinizi Doğrulayın - {{site_name}}', 'max' => 255],
-        'email_verification_body' => ['type' => 'string', 'default' => '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">E-posta Doğrulama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} ailesine hoş geldiniz! Hesabınızı doğrulamak ve güvenliğinizi sağlamak için lütfen aşağıdaki butona tıklayın:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #e11d48; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">E-postamı Doğrula</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir.</p></div>'],
-        'integrations' => ['type' => 'json', 'default' => [
+        // General Group
+        'site_name' => ['group' => 'general', 'type' => 'string', 'default' => 'NM Reader', 'max' => 120],
+        'site_slogan' => ['group' => 'general', 'type' => 'string', 'default' => 'En İyi Çevrimiçi Manga ve Novel Okuyucusu', 'max' => 255],
+        'site_abbreviation' => ['group' => 'general', 'type' => 'string', 'default' => 'NMR', 'max' => 20],
+        'site_description' => ['group' => 'general', 'type' => 'string', 'default' => 'Read manga, manhwa, webtoon and novels.', 'max' => 1000],
+        'site_address' => ['group' => 'general', 'type' => 'string', 'default' => '', 'max' => 255],
+        'default_language' => ['group' => 'general', 'type' => 'string', 'default' => 'tr', 'allowed' => ['tr', 'en']],
+        'footer_text' => ['group' => 'general', 'type' => 'string', 'default' => '© 2026 NM Reader. Tüm hakları saklıdır.', 'max' => 500],
+
+        // Appearance Group
+        'default_theme' => ['group' => 'appearance', 'type' => 'string', 'default' => 'dark', 'allowed' => ['default', 'dark', 'royal', 'bootstrap', 'material', 'apple', 'glass']],
+        'site_logo' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/logo.svg', 'max' => 255],
+        'logo_url' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/logo.svg', 'max' => 255],
+        'favicon_url' => ['group' => 'appearance', 'type' => 'string', 'default' => '/favicon.ico', 'max' => 255],
+        'default_profile_image' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/default-profile.png', 'max' => 255],
+        'default_content_cover_image' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/covers/placeholder.svg', 'max' => 255],
+
+        // Security Group
+        'maintenance_mode' => ['group' => 'security', 'type' => 'bool', 'default' => false],
+        'maintenance_whitelist_ips' => ['group' => 'security', 'type' => 'json', 'default' => ['127.0.0.1', '::1']],
+        'enforce_https' => ['group' => 'security', 'type' => 'bool', 'default' => false],
+
+        // Mail Group
+        'mail_enabled' => ['group' => 'mail', 'type' => 'bool', 'default' => true],
+        'mail_send_on_register' => ['group' => 'mail', 'type' => 'bool', 'default' => true],
+        'email_verification_required' => ['group' => 'mail', 'type' => 'bool', 'default' => false],
+        'mail_from_name' => ['group' => 'mail', 'type' => 'string', 'default' => 'NM Reader', 'max' => 120],
+        'mail_from_address' => ['group' => 'mail', 'type' => 'string', 'default' => 'noreply@nmreader.com', 'max' => 150],
+        'password_reset_subject' => ['group' => 'mail', 'type' => 'string', 'default' => 'Şifre Sıfırlama Talebi - {{site_name}}', 'max' => 255],
+        'password_reset_body' => ['group' => 'mail', 'type' => 'string', 'default' => '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">Şifre Sıfırlama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} hesabınız için bir şifre sıfırlama talebi aldık. Şifrenizi yenilemek için aşağıdaki butona tıklayabilirsiniz:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Şifremi Sıfırla</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir. Talebi siz yapmadıysanız bu e-postayı güvenle silebilirsiniz.</p></div>'],
+        'email_verification_subject' => ['group' => 'mail', 'type' => 'string', 'default' => 'E-posta Adresinizi Doğrulayın - {{site_name}}', 'max' => 255],
+        'email_verification_body' => ['group' => 'mail', 'type' => 'string', 'default' => '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">E-posta Doğrulama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} ailesine hoş geldiniz! Hesabınızı doğrulamak ve güvenliğinizi sağlamak için lütfen aşağıdaki butona tıklayın:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #e11d48; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">E-postamı Doğrula</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir.</p></div>'],
+
+        // Integrations Group
+        'integrations' => ['group' => 'integrations', 'type' => 'json', 'default' => [
             'google_analytics_id' => '',
             'google_recaptcha_site_key' => '',
             'google_recaptcha_secret_key' => '',
@@ -54,6 +66,8 @@ final class SiteConfigService
     }
 
     /**
+     * Returns all settings mapped with their casted values.
+     *
      * @return array<string, mixed>
      */
     public function all(): array
@@ -65,30 +79,32 @@ final class SiteConfigService
 
         $settings = $this->defaults();
         try {
-            $stmt = $this->pdo->query('SELECT setting_key, setting_value FROM system_settings');
+            $stmt = $this->pdo->query('SELECT `group`, `key`, `type`, `value` FROM system_settings');
             if ($stmt !== false) {
                 $rows = $stmt->fetchAll();
                 if (is_array($rows)) {
                     foreach ($rows as $row) {
-                        if (!is_array($row) || !isset($row['setting_key'])) {
+                        if (!is_array($row) || !isset($row['key'])) {
                             continue;
                         }
-                        $key = (string) $row['setting_key'];
-                        $raw = $row['setting_value'] ?? null;
-                        if (isset(self::DEFINITIONS[$key])) {
-                            $settings[$key] = $this->castValue($key, $raw);
-                        } else {
-                            $settings[$key] = $raw;
-                        }
+                        $key = (string) $row['key'];
+                        $type = (string) ($row['type'] ?? (self::DEFINITIONS[$key]['type'] ?? 'string'));
+                        $raw = $row['value'] ?? null;
+                        $settings[$key] = $this->castValueByType($key, $type, $raw);
                     }
                 }
             }
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+            // Return defaults on DB error
+        }
 
         $this->cache->set(self::CACHE_KEY, $settings, self::CACHE_TTL);
         return $settings;
     }
 
+    /**
+     * Gets a single setting value with an optional fallback default.
+     */
     public function get(string $key, mixed $default = null): mixed
     {
         $all = $this->all();
@@ -180,12 +196,20 @@ final class SiteConfigService
         return is_array($value) ? $value : (array) self::DEFINITIONS['integrations']['default'];
     }
 
+    /**
+     * Updates site settings with strict type checking and normalization.
+     *
+     * @param array<string, mixed> $payload
+     * @param string|null $moderatorId
+     * @return array<string, mixed>
+     * @throws \InvalidArgumentException If a value does not match its required type.
+     */
     public function update(array $payload, ?string $moderatorId = null): array
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO system_settings (setting_key, setting_value, setting_group, updated_at)
-             VALUES (:key, :val, :grp, NOW())
-             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = NOW()'
+            'INSERT INTO system_settings (`group`, `key`, `type`, `value`, updated_at)
+             VALUES (:grp, :key, :typ, :val, NOW())
+             ON DUPLICATE KEY UPDATE `group` = VALUES(`group`), `type` = VALUES(`type`), `value` = VALUES(`value`), updated_at = NOW()'
         );
 
         foreach ($payload as $key => $val) {
@@ -194,17 +218,17 @@ final class SiteConfigService
                 continue;
             }
 
-            $serialized = $this->normalizeForWrite($key, $val);
-            $mailKeys = ['mail_enabled', 'mail_send_on_register', 'email_verification_required', 'mail_from_name', 'mail_from_address', 'password_reset_subject', 'password_reset_body', 'email_verification_subject', 'email_verification_body'];
-            $group = in_array($key, ['maintenance_mode', 'maintenance_whitelist_ips'], true)
-                ? 'security'
-                : (in_array($key, ['default_theme', 'site_logo', 'favicon_url'], true)
-                    ? 'appearance'
-                    : (in_array($key, $mailKeys, true) ? 'mail' : 'general'));
+            $definition = self::DEFINITIONS[$key];
+            $group = $definition['group'];
+            $type = $definition['type'];
+
+            $serialized = $this->normalizeForWrite($key, $val, $type, $definition);
+
             $stmt->execute([
-                'key' => $key,
-                'val' => $serialized,
                 'grp' => $group,
+                'key' => $key,
+                'typ' => $type,
+                'val' => $serialized,
             ]);
         }
 
@@ -226,71 +250,145 @@ final class SiteConfigService
     }
 
     /**
-     * @return array<string, array{type:string,default:mixed,max?:int,allowed?:array<int,string>}>
+     * @return array<string, array{group:string,type:string,default:mixed,max?:int,allowed?:array<int,string>}>
      */
     public function definitions(): array
     {
         return self::DEFINITIONS;
     }
 
-    private function castValue(string $key, mixed $raw): mixed
+    private function castValueByType(string $key, string $type, mixed $raw): mixed
     {
-        $definition = self::DEFINITIONS[$key];
+        $definition = self::DEFINITIONS[$key] ?? ['default' => null, 'type' => $type];
 
-        return match ($definition['type']) {
+        return match ($type) {
+            'int' => $this->toInt($raw, $definition['default'] ?? 0),
             'bool' => $this->toBool($raw),
-            'json' => $this->toJson($raw, $definition['default']),
+            'json' => $this->toJson($raw, $definition['default'] ?? []),
             default => $this->toString($raw, $definition),
         };
     }
 
-    private function normalizeForWrite(string $key, mixed $value): string
+    private function normalizeForWrite(string $key, mixed $value, string $type, array $definition): string
     {
-        $definition = self::DEFINITIONS[$key];
-        $type = $definition['type'];
+        return match ($type) {
+            'int' => $this->normalizeInt($key, $value),
+            'bool' => $this->normalizeBool($key, $value),
+            'json' => $this->normalizeJson($key, $value),
+            default => $this->normalizeString($key, $value, $definition),
+        };
+    }
 
-        if ($type === 'bool') {
-            return $this->toBool($value) ? '1' : '0';
+    private function normalizeInt(string $key, mixed $value): string
+    {
+        if (is_int($value)) {
+            return (string) $value;
         }
 
-        if ($type === 'json') {
-            if (!is_array($value)) {
-                throw new \InvalidArgumentException(sprintf('%s must be an object/array', $key));
-            }
+        if (is_string($value) && filter_var($value, FILTER_VALIDATE_INT) !== false) {
+            return (string) (int) $value;
+        }
 
+        throw new \InvalidArgumentException(sprintf("Setting '%s' must be an integer.", $key));
+    }
+
+    private function normalizeBool(string $key, mixed $value): string
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (is_int($value)) {
+            if ($value === 1) return 'true';
+            if ($value === 0) return 'false';
+        }
+
+        if (is_string($value)) {
+            $normalized = strtolower(trim($value));
+            if (in_array($normalized, ['true', '1', 'yes', 'on'], true)) {
+                return 'true';
+            }
+            if (in_array($normalized, ['false', '0', 'no', 'off', ''], true)) {
+                return 'false';
+            }
+        }
+
+        throw new \InvalidArgumentException(sprintf("Setting '%s' must be a boolean (true/false).", $key));
+    }
+
+    private function normalizeJson(string $key, mixed $value): string
+    {
+        if (is_array($value)) {
             $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             if ($encoded === false) {
-                throw new \InvalidArgumentException(sprintf('%s contains invalid JSON data', $key));
+                throw new \InvalidArgumentException(sprintf("Setting '%s' contains invalid JSON data.", $key));
+            }
+            return $encoded;
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed === '') {
+                return '{}';
             }
 
-            return $encoded;
+            // Validate JSON
+            if (function_exists('json_validate')) {
+                if (!json_validate($trimmed)) {
+                    throw new \InvalidArgumentException(sprintf("Setting '%s' must be valid JSON.", $key));
+                }
+            } else {
+                json_decode($trimmed);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new \InvalidArgumentException(sprintf("Setting '%s' must be valid JSON.", $key));
+                }
+            }
+
+            return $trimmed;
+        }
+
+        throw new \InvalidArgumentException(sprintf("Setting '%s' must be a JSON array, object, or valid JSON string.", $key));
+    }
+
+    private function normalizeString(string $key, mixed $value, array $definition): string
+    {
+        if (!is_string($value) && !is_scalar($value)) {
+            throw new \InvalidArgumentException(sprintf("Setting '%s' must be a string.", $key));
         }
 
         $string = trim((string) $value);
 
         if (isset($definition['allowed']) && !in_array($string, $definition['allowed'], true)) {
-            throw new \InvalidArgumentException(sprintf('Invalid %s value', $key));
+            throw new \InvalidArgumentException(sprintf("Invalid value '%s' for setting '%s'. Allowed: %s", $string, $key, implode(', ', $definition['allowed'])));
         }
 
         if (isset($definition['max']) && mb_strlen($string) > (int) $definition['max']) {
-            throw new \InvalidArgumentException(sprintf('%s exceeds max length %d', $key, (int) $definition['max']));
+            throw new \InvalidArgumentException(sprintf("Setting '%s' exceeds maximum allowed length of %d characters.", $key, (int) $definition['max']));
         }
 
         return $string;
     }
 
-    /**
-     * @param array{type:string,default:mixed,max?:int,allowed?:array<int,string>} $definition
-     */
+    private function toInt(mixed $raw, mixed $fallback): int
+    {
+        if (is_int($raw)) {
+            return $raw;
+        }
+        if (is_string($raw) && filter_var($raw, FILTER_VALIDATE_INT) !== false) {
+            return (int) $raw;
+        }
+        return is_int($fallback) ? $fallback : 0;
+    }
+
     private function toString(mixed $raw, array $definition): string
     {
         $value = trim((string) $raw);
         if ($value === '') {
-            $value = (string) $definition['default'];
+            $value = (string) ($definition['default'] ?? '');
         }
 
         if (isset($definition['allowed']) && !in_array($value, $definition['allowed'], true)) {
-            return (string) $definition['default'];
+            return (string) ($definition['default'] ?? '');
         }
 
         if (isset($definition['max']) && mb_strlen($value) > (int) $definition['max']) {
