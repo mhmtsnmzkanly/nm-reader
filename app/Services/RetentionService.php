@@ -43,9 +43,9 @@ final class RetentionService
             'DELETE FROM user_login_logs WHERE attempted_at < DATE_SUB(NOW(), INTERVAL :days DAY)',
             $days
         );
-        $result['auth_refresh_tokens_deleted'] = $this->deleteSafe(
-            'DELETE FROM user_refresh_tokens
-             WHERE (revoked_at IS NOT NULL AND revoked_at < DATE_SUB(NOW(), INTERVAL :days DAY))
+        $result['auth_tokens_deleted'] = $this->deleteSafe(
+            'DELETE FROM user_tokens
+             WHERE (used_at IS NOT NULL AND used_at < DATE_SUB(NOW(), INTERVAL :days DAY))
                 OR expires_at < DATE_SUB(NOW(), INTERVAL :days DAY)',
             $days
         );

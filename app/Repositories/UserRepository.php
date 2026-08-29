@@ -39,7 +39,7 @@ final class UserRepository
      */
     public function findByEmail(string $email): ?array
     {
-        $sql = 'SELECT id, username, email, password_hash, bio, created_at FROM users WHERE email = :email LIMIT 1';
+        $sql = 'SELECT id, username, email, email_verified_at, password_hash, bio, created_at FROM users WHERE email = :email LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['email' => $email]);
         $row = $stmt->fetch();
@@ -55,7 +55,7 @@ final class UserRepository
      */
     public function findByUsername(string $username): ?array
     {
-        $sql = 'SELECT id, username, email, password_hash, bio, created_at FROM users WHERE username = :username LIMIT 1';
+        $sql = 'SELECT id, username, email, email_verified_at, password_hash, bio, created_at FROM users WHERE username = :username LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['username' => $username]);
         $row = $stmt->fetch();
@@ -94,12 +94,27 @@ final class UserRepository
      */
     public function findById(string $id): ?array
     {
-        $sql = 'SELECT id, username, email, bio, profile_image, cover_image, created_at FROM users WHERE id = :id LIMIT 1';
+        $sql = 'SELECT id, username, email, email_verified_at, bio, profile_image, cover_image, created_at FROM users WHERE id = :id LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
         return $row === false ? null : $row;
+    }
+
+    public function markEmailVerified(string $userId): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE users SET email_verified_at = NOW() WHERE id = :id');
+        $stmt->execute(['id' => $userId]);
+    }
+
+    public function updatePassword(string $userId, string $passwordHash): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE users SET password_hash = :hash WHERE id = :id');
+        $stmt->execute([
+            'id' => $userId,
+            'hash' => $passwordHash,
+        ]);
     }
 
     /**

@@ -285,6 +285,16 @@ final class Config
                 $email = strtolower(trim((string) ($req->getParsedBody()['email'] ?? '')));
                 return "ip:{$ip}:email:" . ($email !== '' ? $email : 'anon');
             }));
+            $group->post("/auth/forgot-password", [AuthController::class, "forgotPassword"])->add(new RateLimitKeyedMiddleware($cache, "forgot_password", 5, 600, function ($req) {
+                $ip = (string) ($req->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+                $email = strtolower(trim((string) ($req->getParsedBody()['email'] ?? '')));
+                return "ip:{$ip}:email:" . ($email !== '' ? $email : 'anon');
+            }));
+            $group->post("/auth/reset-password", [AuthController::class, "resetPassword"])->add(new RateLimitMiddleware($cache, "reset_password", 10, 600));
+            $group->map(["GET", "POST"], "/auth/verify-email", [AuthController::class, "verifyEmail"])->add(new RateLimitMiddleware($cache, "verify_email", 15, 600));
+            $group->post("/auth/verify-email/resend", [AuthController::class, "resendVerificationEmail"])
+                ->add(new RateLimitMiddleware($cache, "resend_verify_email", 5, 300))
+                ->add(new AuthMiddleware(true, $authorization));
             $group->post("/auth/refresh", [AuthController::class, "refresh"])->add(new RateLimitMiddleware($cache, "refresh", 20, 60));
             $group->map(["GET", "POST"], "/auth/logout", [AuthController::class, "logout"]);
 

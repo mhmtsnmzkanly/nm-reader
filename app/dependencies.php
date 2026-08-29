@@ -112,6 +112,7 @@ $builder->addDefinitions([
     RequestIdMiddleware::class => DI\autowire(RequestIdMiddleware::class),
     \App\Middleware\ApiAuthMiddleware::class => DI\autowire(\App\Middleware\ApiAuthMiddleware::class),
     \App\Middleware\SecurityHeadersMiddleware::class => DI\autowire(\App\Middleware\SecurityHeadersMiddleware::class),
+    \App\Middleware\RequireVerifiedEmailMiddleware::class => DI\autowire(\App\Middleware\RequireVerifiedEmailMiddleware::class),
     I18nMiddleware::class => DI\autowire(I18nMiddleware::class),
 
     UserRepository::class => DI\autowire(UserRepository::class),
@@ -128,11 +129,13 @@ $builder->addDefinitions([
     UploadRepository::class => DI\autowire(UploadRepository::class),
     WalletRepository::class => DI\autowire(WalletRepository::class),
     \App\Repositories\ReportRepository::class => DI\autowire(\App\Repositories\ReportRepository::class),
+    \App\Repositories\UserTokenRepository::class => DI\autowire(\App\Repositories\UserTokenRepository::class),
 
     AuthService::class => DI\autowire(AuthService::class)
         ->constructorParameter('sessionLifetimeSeconds', (int) ($settings['app']['session_lifetime_seconds'] ?? 7200))
         ->constructorParameter('refreshTokenDays', (int) ($settings['app']['refresh_token_days'] ?? 30)),
     AuthorizationService::class => DI\autowire(AuthorizationService::class),
+    \App\Services\MailService::class => DI\autowire(\App\Services\MailService::class),
     I18nService::class => DI\autowire(I18nService::class)
         ->constructorParameter('rootPath', $settings['app']['base_path']),
     AnalyticsService::class => DI\autowire(AnalyticsService::class)

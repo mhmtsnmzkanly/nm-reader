@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Helpers\ResponseHelper;
 use App\Services\AuthService;
+use App\Services\SiteConfigService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -13,7 +14,7 @@ use Psr\Http\Message\ServerRequestInterface;
  * Controller for handling Authentication-related requests.
  *
  * Provides endpoints for user registration, login (with cookie management),
- * logout, session refreshing, and administrative session revocation.
+ * logout, password reset, email verification, session refreshing, and revocation.
  *
  * @package App\Controllers
  */
@@ -21,7 +22,7 @@ final class AuthController
 {
     public function __construct(
         private readonly AuthService $authService,
-        private readonly \App\Services\SiteConfigService $siteConfig
+        private readonly SiteConfigService $siteConfig
     ) {
     }
 
@@ -73,12 +74,24 @@ final class AuthController
         }
     }
 
+    private function resolveAppUrl(ServerRequestInterface $request): string
+    {
+        $siteAddress = trim($this->siteConfig->siteAddress());
+        if ($siteAddress !== '') {
+            return rtrim($siteAddress, '/');
+        }
+
+        $uri = $request->getUri();
+        $scheme = $uri->getScheme() ?: 'http';
+        $host = $uri->getHost() ?: 'localhost';
+        $port = $uri->getPort();
+        $portStr = ($port && !in_array($port, [80, 443], true)) ? ":{$port}" : '';
+
+        return "{$scheme}://{$host}{$portStr}";
+    }
+
     /**
      * Handles user registration.
-     *
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @return ResponseInterface 201 Created on success, or error JSON.
      */
     public function register(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
@@ -87,7 +100,7 @@ final class AuthController
             $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
             $this->verifyTurnstile($payload, $ip);
 
-            $user = $this->authService->register($payload);
+            $user = $this->authService->register($payload, $this->resolveAppUrl($request));
             return ResponseHelper::created($user);
         } catch (\InvalidArgumentException $exception) {
             return ResponseHelper::error(400, $exception->getMessage());
@@ -100,10 +113,6 @@ final class AuthController
 
     /**
      * Handles user login and optional 'remember-me' cookie issuance.
-     *
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @return ResponseInterface User data JSON with Set-Cookie header if applicable.
      */
     public function login(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
@@ -137,10 +146,6 @@ final class AuthController
 
     /**
      * Refreshes the session using a long-lived refresh token.
-     *
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @return ResponseInterface Updated user/token JSON.
      */
     public function refresh(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
@@ -163,18 +168,97 @@ final class AuthController
     }
 
     /**
+     * Handles forgot password requests.
+     */
+    public function forgotPassword(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $this->verifyTurnstile($payload, $ip);
+
+            $email = (string) ($payload['email'] ?? '');
+            $this->authService->forgotPassword($email, $this->resolveAppUrl($request));
+
+            return ResponseHelper::success([
+                'message' => 'Eğer e-posta adresi kayıtlı ise sıfırlama bağlantısı gönderilmiştir.'
+            ]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(500, 'Şifre sıfırlama işlemi sırasında bir hata oluştu.');
+        }
+    }
+
+    /**
+     * Resets password using token.
+     */
+    public function resetPassword(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $token = (string) ($payload['token'] ?? '');
+            $password = (string) ($payload['password'] ?? '');
+
+            $result = $this->authService->resetPassword($token, $password);
+            return ResponseHelper::success($result);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(500, 'Şifre güncellenirken bir hata oluştu.');
+        }
+    }
+
+    /**
+     * Verifies email address using token.
+     */
+    public function verifyEmail(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $token = (string) ($payload['token'] ?? ($request->getQueryParams()['token'] ?? ''));
+
+            $result = $this->authService->verifyEmail($token);
+            return ResponseHelper::success($result);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(500, 'E-posta doğrulanırken bir hata oluştu.');
+        }
+    }
+
+    /**
+     * Resends verification email for authenticated user.
+     */
+    public function resendVerificationEmail(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            if ($userId === '') {
+                return ResponseHelper::error(401, 'Unauthorized');
+            }
+
+            $this->authService->resendVerificationEmail($userId, $this->resolveAppUrl($request));
+            return ResponseHelper::success(['message' => 'Doğrulama e-postası tekrar gönderildi.']);
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(500, 'Doğrulama e-postası gönderilemedi.');
+        }
+    }
+
+    /**
      * Destroys the current user session and clears authentication cookies.
-     *
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @return ResponseInterface Redirect for GET requests, JSON for API calls.
      */
     public function logout(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $sessionKey = isset($_SESSION['session_key']) ? (string) $_SESSION['session_key'] : null;
         $this->authService->logout($sessionKey);
         
-        // Thoroughly clear session data
         $_SESSION = [];
         
         if (ini_get("session.use_cookies") && !headers_sent()) {
@@ -194,7 +278,6 @@ final class AuthController
         $isSecure = ($request->getUri()->getScheme() === 'https') || $this->siteConfig->enforceHttps();
         $secureSuffix = $isSecure ? '; Secure' : '';
         
-        // Expire remember-me cookie and session cookie again just in case
         $res = $res->withAddedHeader('Set-Cookie', 'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax' . $secureSuffix)
                    ->withAddedHeader('Set-Cookie', session_name() . '=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax' . $secureSuffix);
 
@@ -207,10 +290,6 @@ final class AuthController
 
     /**
      * Lists all active sessions for the authenticated user.
-     *
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @return ResponseInterface JSON list of sessions.
      */
     public function sessions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
@@ -220,11 +299,6 @@ final class AuthController
 
     /**
      * Terminates a specific session belonging to the user.
-     *
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param array $args Contains 'sessionKey'.
-     * @return ResponseInterface JSON confirmation.
      */
     public function revokeSession(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {

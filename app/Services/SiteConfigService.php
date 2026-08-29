@@ -30,10 +30,20 @@ final class SiteConfigService
         'default_content_cover_image' => ['type' => 'string', 'default' => '/assets/img/covers/placeholder.svg', 'max' => 255],
         'maintenance_mode' => ['type' => 'bool', 'default' => false],
         'maintenance_whitelist_ips' => ['type' => 'json', 'default' => ['127.0.0.1', '::1']],
+        'mail_enabled' => ['type' => 'bool', 'default' => true],
+        'mail_send_on_register' => ['type' => 'bool', 'default' => true],
+        'email_verification_required' => ['type' => 'bool', 'default' => false],
+        'mail_from_name' => ['type' => 'string', 'default' => 'NM Reader', 'max' => 120],
+        'mail_from_address' => ['type' => 'string', 'default' => 'noreply@nmreader.com', 'max' => 150],
+        'password_reset_subject' => ['type' => 'string', 'default' => 'Şifre Sıfırlama Talebi - {{site_name}}', 'max' => 255],
+        'password_reset_body' => ['type' => 'string', 'default' => '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">Şifre Sıfırlama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} hesabınız için bir şifre sıfırlama talebi aldık. Şifrenizi yenilemek için aşağıdaki butona tıklayabilirsiniz:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Şifremi Sıfırla</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir. Talebi siz yapmadıysanız bu e-postayı güvenle silebilirsiniz.</p></div>'],
+        'email_verification_subject' => ['type' => 'string', 'default' => 'E-posta Adresinizi Doğrulayın - {{site_name}}', 'max' => 255],
+        'email_verification_body' => ['type' => 'string', 'default' => '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">E-posta Doğrulama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} ailesine hoş geldiniz! Hesabınızı doğrulamak ve güvenliğinizi sağlamak için lütfen aşağıdaki butona tıklayın:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #e11d48; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">E-postamı Doğrula</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir.</p></div>'],
         'integrations' => ['type' => 'json', 'default' => [
             'google_analytics_id' => '',
             'google_recaptcha_site_key' => '',
             'google_recaptcha_secret_key' => '',
+            'resend_api_key' => '',
         ]],
     ];
 
@@ -185,7 +195,12 @@ final class SiteConfigService
             }
 
             $serialized = $this->normalizeForWrite($key, $val);
-            $group = in_array($key, ['maintenance_mode', 'maintenance_whitelist_ips'], true) ? 'security' : (in_array($key, ['default_theme', 'site_logo', 'favicon_url'], true) ? 'appearance' : 'general');
+            $mailKeys = ['mail_enabled', 'mail_send_on_register', 'email_verification_required', 'mail_from_name', 'mail_from_address', 'password_reset_subject', 'password_reset_body', 'email_verification_subject', 'email_verification_body'];
+            $group = in_array($key, ['maintenance_mode', 'maintenance_whitelist_ips'], true)
+                ? 'security'
+                : (in_array($key, ['default_theme', 'site_logo', 'favicon_url'], true)
+                    ? 'appearance'
+                    : (in_array($key, $mailKeys, true) ? 'mail' : 'general'));
             $stmt->execute([
                 'key' => $key,
                 'val' => $serialized,

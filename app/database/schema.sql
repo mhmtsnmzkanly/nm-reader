@@ -18,6 +18,7 @@ CREATE TABLE `users` (
   `id` char(8) NOT NULL,
   `username` varchar(50) NOT NULL,
   `email` varchar(150) NOT NULL,
+  `email_verified_at` datetime DEFAULT NULL,
   `password_hash` varchar(255) NOT NULL,
   `bio` text DEFAULT NULL,
   `profile_image` varchar(255) DEFAULT NULL,
@@ -451,18 +452,23 @@ CREATE TABLE `user_sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_refresh_tokens`;
-CREATE TABLE `user_refresh_tokens` (
+DROP TABLE IF EXISTS `user_tokens`;
+CREATE TABLE `user_tokens` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `session_key` char(32) NOT NULL,
+  `user_id` char(8) DEFAULT NULL,
+  `session_key` char(32) DEFAULT NULL,
+  `type` enum('refresh','password_reset','email_verification') NOT NULL,
+  `email` varchar(150) DEFAULT NULL,
   `token_hash` char(64) NOT NULL,
   `expires_at` datetime NOT NULL,
-  `revoked_at` datetime DEFAULT NULL,
+  `used_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `token_hash` (`token_hash`),
+  KEY `idx_tokens_lookup` (`token_hash`,`type`,`expires_at`,`used_at`),
+  KEY `idx_tokens_user` (`user_id`,`type`),
   KEY `idx_tokens_session` (`session_key`),
-  KEY `idx_tokens_expires` (`expires_at`),
-  CONSTRAINT `fk_tokens_session` FOREIGN KEY (`session_key`) REFERENCES `user_sessions` (`session_key`) ON DELETE CASCADE
+  CONSTRAINT `fk_tokens_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `user_login_logs`;
@@ -820,7 +826,14 @@ INSERT INTO `system_settings` (`setting_key`, `setting_value`, `setting_group`) 
 ('favicon_url', '', 'appearance'),
 ('footer_text', '© 2026 NM Reader. Tüm hakları saklıdır.', 'general'),
 ('maintenance_mode', 'false', 'security'),
-('maintenance_whitelist_ips', '["127.0.0.1", "::1"]', 'security')
+('maintenance_whitelist_ips', '["127.0.0.1", "::1"]', 'security'),
+('mail_enabled', 'true', 'mail'),
+('mail_send_on_register', 'true', 'mail'),
+('email_verification_required', 'false', 'mail'),
+('password_reset_subject', 'Şifre Sıfırlama Talebi - {{site_name}}', 'mail'),
+('password_reset_body', '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">Şifre Sıfırlama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} hesabınız için bir şifre sıfırlama talebi aldık. Şifrenizi yenilemek için aşağıdaki butona tıklayabilirsiniz:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">Şifremi Sıfırla</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir. Talebi siz yapmadıysanız bu e-postayı güvenle silebilirsiniz.</p></div>', 'mail'),
+('email_verification_subject', 'E-posta Adresinizi Doğrulayın - {{site_name}}', 'mail'),
+('email_verification_body', '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">E-posta Doğrulama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} ailesine hoş geldiniz! Hesabınızı doğrulamak ve güvenliğinizi sağlamak için lütfen aşağıdaki butona tıklayın:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #e11d48; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">E-postamı Doğrula</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir.</p></div>', 'mail')
 ON DUPLICATE KEY UPDATE setting_key=setting_key;
 
 DROP TABLE IF EXISTS `system_jobs`;

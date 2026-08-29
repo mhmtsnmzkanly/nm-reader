@@ -6,15 +6,15 @@ namespace App\Services;
 
 use App\Helpers\Validator;
 use App\Repositories\UserRepository;
+use App\Repositories\UserTokenRepository;
 use App\Services\AnalyticsService;
+use App\Services\AuthorizationService;
+use App\Services\CacheService;
+use App\Services\MailService;
 use PDO;
 
 /**
- * Service for handling Authentication, Registration, and Session Management.
- *
- * This service manages user login, registration, session creation/revocation,
- * role resolution, and permission caching. It acts as the central security
- * enforcement point for identity verification.
+ * Service for handling Authentication, Registration, Password Resets, Email Verifications, and Sessions.
  *
  * @package App\Services
  */
@@ -22,6 +22,8 @@ final class AuthService
 {
     public function __construct(
         private readonly UserRepository $users,
+        private readonly UserTokenRepository $userTokens,
+        private readonly MailService $mailService,
         private readonly CacheService $cache,
         private readonly PDO $pdo,
         private readonly AnalyticsService $analytics,
@@ -34,15 +36,11 @@ final class AuthService
     /**
      * Registers a new user.
      *
-     * Validates input, checks for duplicates, and creates a user record.
-     *
      * @param array $payload Input data (username, email, password).
-     * @return array The newly created user's basic info (id, username, email).
-     * @throws \InvalidArgumentException If validation fails.
-     * @throws \DomainException If email or username already exists.
-     * @throws \RuntimeException If user ID generation fails.
+     * @param string|null $appUrl
+     * @return array The newly created user's basic info.
      */
-    public function register(array $payload): array
+    public function register(array $payload, ?string $appUrl = null): array
     {
         $error = Validator::requireFields($payload, ['username', 'email', 'password']);
         if ($error !== null) {
@@ -88,25 +86,29 @@ final class AuthService
             throw new \RuntimeException('Unable to generate user id');
         }
 
+        // Send email verification if configured
+        if ($this->mailService->isMailEnabled() && $this->mailService->isSendOnRegisterEnabled()) {
+            try {
+                $verificationToken = bin2hex(random_bytes(32));
+                $tokenHash = hash('sha256', $verificationToken);
+                $expiresAt = (new \DateTimeImmutable())->modify('+24 hours');
+                $this->userTokens->createToken('email_verification', $tokenHash, $expiresAt, $id, $email);
+                $this->mailService->sendEmailVerification($email, $username, $verificationToken, $appUrl ?: 'http://localhost:3000');
+            } catch (\Throwable) {
+                // Email failure on register should not abort account creation
+            }
+        }
+
         return [
             'id' => $id,
             'username' => $username,
             'email' => $email,
+            'email_verified' => false,
         ];
     }
 
     /**
      * Authenticates a user and establishes a session.
-     *
-     * Verifies credentials, manages rate limiting, creates session records,
-     * and optionally issues a refresh token.
-     *
-     * @param array $payload Login data (email, password, remember).
-     * @param string $ip Client IP address for security tracking.
-     * @param string $userAgent Client User-Agent string.
-     * @return array Auth result including tokens, user info, roles, and permissions.
-     * @throws \InvalidArgumentException If input is missing.
-     * @throws \DomainException If rate limited or invalid credentials.
      */
     public function login(array $payload, string $ip, string $userAgent): array
     {
@@ -174,21 +176,12 @@ final class AuthService
         if ($remember) {
             $refreshToken = bin2hex(random_bytes(48));
             $tokenHash = hash('sha256', $refreshToken);
-            $stmt = $this->pdo->prepare(
-                'INSERT INTO user_refresh_tokens (session_key, token_hash, expires_at)
-                 VALUES (:session_key, :token_hash, :expires_at)'
-            );
-            $stmt->execute([
-                'session_key' => $sessionKey,
-                'token_hash' => $tokenHash,
-                'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
-            ]);
+            $this->userTokens->createToken('refresh', $tokenHash, $expiresAt, (string) $user['id'], null, $sessionKey);
         }
 
         $this->clearFailedLogins($email, $ip);
         $this->recordLoginEvent($email, (string) $user['id'], $ip, $userAgent, true, null);
 
-        // Explicitly write and close to ensure reload sees the data
         session_write_close();
 
         $token = bin2hex(random_bytes(32));
@@ -200,6 +193,7 @@ final class AuthService
             'id' => (string) $user['id'],
             'username' => (string) $user['username'],
             'email' => (string) $user['email'],
+            'email_verified' => !empty($user['email_verified_at']),
             'csrf_token' => (string) $_SESSION['csrf_token'],
             'refresh_token' => $refreshToken,
             'api_token' => $token,
@@ -210,16 +204,6 @@ final class AuthService
 
     /**
      * Refreshes a session using a valid refresh token.
-     *
-     * Rotates the refresh token (one-time use), extends the session lifetime,
-     * and performs basic device binding checks (IP/UA).
-     *
-     * @param string $refreshToken The token provided by the client.
-     * @param string $ip Client IP.
-     * @param string $userAgent Client User-Agent.
-     * @return array New token data and user info.
-     * @throws \InvalidArgumentException If token is missing.
-     * @throws \DomainException If token is invalid, expired, or device mismatch detected.
      */
     public function refresh(string $refreshToken, string $ip, string $userAgent): array
     {
@@ -228,24 +212,8 @@ final class AuthService
         }
 
         $hash = hash('sha256', $refreshToken);
-        $sql = 'SELECT
-                    t.session_key,
-                    s.user_id,
-                    u.username,
-                    u.email
-                FROM user_refresh_tokens t
-                INNER JOIN user_sessions s ON s.session_key = t.session_key
-                INNER JOIN users u ON u.id = s.user_id
-                WHERE t.token_hash = :token_hash
-                  AND t.revoked_at IS NULL
-                  AND t.expires_at > NOW()
-                  AND s.revoked_at IS NULL
-                  AND s.expires_at > NOW()
-                LIMIT 1';
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['token_hash' => $hash]);
-        $row = $stmt->fetch();
-        if ($row === false) {
+        $row = $this->userTokens->findValidRefreshToken($hash);
+        if ($row === null) {
             throw new \DomainException('Invalid refresh token');
         }
 
@@ -253,7 +221,7 @@ final class AuthService
         $newToken = bin2hex(random_bytes(48));
         $newHash = hash('sha256', $newToken);
 
-        // Enforce simple device binding: reject if IP/UA changed too much
+        // Enforce simple device binding
         $stmt = $this->pdo->prepare(
             'SELECT ip_hash, user_agent FROM user_sessions WHERE session_key = :session_key LIMIT 1'
         );
@@ -272,19 +240,10 @@ final class AuthService
 
         $this->pdo->beginTransaction();
         try {
-            $revokeOld = $this->pdo->prepare(
-                'UPDATE user_refresh_tokens SET revoked_at = NOW() WHERE token_hash = :token_hash'
-            );
-            $revokeOld->execute(['token_hash' => $hash]);
+            $this->userTokens->consumeToken($hash);
 
-            $insertNew = $this->pdo->prepare(
-                'INSERT INTO user_refresh_tokens (session_key, token_hash, expires_at, revoked_at, created_at)
-                 VALUES (:session_key, :token_hash, DATE_ADD(NOW(), INTERVAL 30 DAY), NULL, NOW())'
-            );
-            $insertNew->execute([
-                'session_key' => $sessionKey,
-                'token_hash' => $newHash,
-            ]);
+            $expiresAt = (new \DateTimeImmutable())->modify('+' . $this->refreshTokenDays . ' days');
+            $this->userTokens->createToken('refresh', $newHash, $expiresAt, (string) $row['user_id'], null, $sessionKey);
 
             $touchSession = $this->pdo->prepare(
                 'UPDATE user_sessions
@@ -325,9 +284,122 @@ final class AuthService
     }
 
     /**
+     * Initiates a password reset request.
+     */
+    public function forgotPassword(string $email, ?string $appUrl = null): void
+    {
+        $email = strtolower(trim($email));
+        if (!Validator::validEmail($email)) {
+            throw new \InvalidArgumentException('Email format is invalid');
+        }
+
+        $user = $this->users->findByEmail($email);
+        if ($user === null) {
+            // Mitigate user enumeration: return silently
+            return;
+        }
+
+        $userId = (string) $user['id'];
+        $this->userTokens->revokeActiveTokensForUser($userId, 'password_reset');
+
+        $resetToken = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $resetToken);
+        $expiresAt = (new \DateTimeImmutable())->modify('+1 hour');
+
+        $this->userTokens->createToken('password_reset', $tokenHash, $expiresAt, $userId, $email);
+        $this->mailService->sendPasswordReset($email, (string) $user['username'], $resetToken, $appUrl ?: 'http://localhost:3000');
+    }
+
+    /**
+     * Resets a user password using a verified token.
+     */
+    public function resetPassword(string $token, string $password): array
+    {
+        $token = trim($token);
+        if ($token === '') {
+            throw new \InvalidArgumentException('Token is required');
+        }
+
+        if (!Validator::validPassword($password)) {
+            throw new \InvalidArgumentException('Password must be 8-128 chars and include upper, lower, number');
+        }
+
+        $tokenHash = hash('sha256', $token);
+        $tokenRow = $this->userTokens->findValidToken($tokenHash, 'password_reset');
+        if ($tokenRow === null) {
+            throw new \DomainException('auth.invalid_or_expired_reset_token');
+        }
+
+        $userId = (string) $tokenRow['user_id'];
+        $newHash = password_hash($password, PASSWORD_DEFAULT);
+        $this->users->updatePassword($userId, $newHash);
+        $this->userTokens->consumeToken($tokenHash);
+
+        // Invalidate active sessions on password reset
+        $stmt = $this->pdo->prepare('UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+
+        return [
+            'id' => $userId,
+            'message' => 'Password reset successfully',
+        ];
+    }
+
+    /**
+     * Verifies user email with a token.
+     */
+    public function verifyEmail(string $token): array
+    {
+        $token = trim($token);
+        if ($token === '') {
+            throw new \InvalidArgumentException('Token is required');
+        }
+
+        $tokenHash = hash('sha256', $token);
+        $tokenRow = $this->userTokens->findValidToken($tokenHash, 'email_verification');
+        if ($tokenRow === null) {
+            throw new \DomainException('auth.invalid_or_expired_verification_token');
+        }
+
+        $userId = (string) $tokenRow['user_id'];
+        $this->users->markEmailVerified($userId);
+        $this->userTokens->consumeToken($tokenHash);
+
+        return [
+            'id' => $userId,
+            'email_verified' => true,
+        ];
+    }
+
+    /**
+     * Resends email verification link for an authenticated user.
+     */
+    public function resendVerificationEmail(string $userId, ?string $appUrl = null): void
+    {
+        $user = $this->users->findById($userId);
+        if ($user === null) {
+            throw new \DomainException('User not found');
+        }
+
+        if (!empty($user['email_verified_at'])) {
+            throw new \DomainException('auth.email_already_verified');
+        }
+
+        $email = (string) $user['email'];
+        $username = (string) $user['username'];
+
+        $this->userTokens->revokeActiveTokensForUser($userId, 'email_verification');
+
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $token);
+        $expiresAt = (new \DateTimeImmutable())->modify('+24 hours');
+
+        $this->userTokens->createToken('email_verification', $tokenHash, $expiresAt, $userId, $email);
+        $this->mailService->sendEmailVerification($email, $username, $token, $appUrl ?: 'http://localhost:3000');
+    }
+
+    /**
      * Revokes a specific session and its associated tokens.
-     *
-     * @param string|null $sessionKey The session identifier.
      */
     public function logout(?string $sessionKey): void
     {
@@ -340,17 +412,11 @@ final class AuthService
         );
         $stmt->execute(['session_key' => $sessionKey]);
 
-        $stmt = $this->pdo->prepare(
-            'UPDATE user_refresh_tokens SET revoked_at = NOW() WHERE session_key = :session_key AND revoked_at IS NULL'
-        );
-        $stmt->execute(['session_key' => $sessionKey]);
+        $this->userTokens->revokeTokensBySessionKey($sessionKey);
     }
 
     /**
      * Lists active sessions for a user.
-     *
-     * @param string $userId
-     * @return array List of sessions (key, user agent, last seen).
      */
     public function listSessions(string $userId): array
     {
@@ -366,10 +432,6 @@ final class AuthService
 
     /**
      * Forcefully revokes a session by ID.
-     *
-     * @param string $userId Owner of the session.
-     * @param string $sessionKey Session to revoke.
-     * @param string|null $moderatorId
      */
     public function revokeSession(string $userId, string $sessionKey, ?string $moderatorId = null): void
     {
@@ -383,12 +445,7 @@ final class AuthService
             'session_key' => $sessionKey,
         ]);
 
-        $stmt = $this->pdo->prepare(
-            'UPDATE user_refresh_tokens
-             SET revoked_at = NOW()
-             WHERE session_key = :session_key AND revoked_at IS NULL'
-        );
-        $stmt->execute(['session_key' => $sessionKey]);
+        $this->userTokens->revokeTokensBySessionKey($sessionKey);
 
         if ($moderatorId !== null) {
             try {
@@ -419,7 +476,6 @@ final class AuthService
             if ($userRolesRaw !== '') {
                 $roleIds = explode(',', $userRolesRaw);
                 
-                // Static Map from Config
                 $config = \App\Config::getSettings()['rbac'] ?? [];
                 $idToSlug = array_flip((array) ($config['id_map'] ?? []));
                 

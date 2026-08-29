@@ -484,6 +484,20 @@ final class ApiTestSuite
         // 44. POST /api/v1/auth/login
         $this->assertResponse('POST /api/v1/auth/login (empty -> 400)', $this->request('POST', '/api/v1/auth/login', [], []), 400, 'POST /api/v1/auth/login');
 
+        // 44a. POST /api/v1/auth/forgot-password
+        $this->assertResponse('POST /api/v1/auth/forgot-password (empty -> 400)', $this->request('POST', '/api/v1/auth/forgot-password', [], []), 400, 'POST /api/v1/auth/forgot-password');
+        $this->assertResponse('POST /api/v1/auth/forgot-password (valid email -> 200)', $this->request('POST', '/api/v1/auth/forgot-password', [], ['email' => 'user@example.com']), 200, 'POST /api/v1/auth/forgot-password');
+
+        // 44b. POST /api/v1/auth/reset-password
+        $this->assertResponse('POST /api/v1/auth/reset-password (empty -> 400)', $this->request('POST', '/api/v1/auth/reset-password', [], []), 400, 'POST /api/v1/auth/reset-password');
+
+        // 44c. POST & GET /api/v1/auth/verify-email
+        $this->assertResponse('POST /api/v1/auth/verify-email (empty -> 400)', $this->request('POST', '/api/v1/auth/verify-email', [], []), 400, 'POST /api/v1/auth/verify-email');
+        $this->assertResponse('GET /api/v1/auth/verify-email (empty -> 400)', $this->request('GET', '/api/v1/auth/verify-email'), 400, 'GET /api/v1/auth/verify-email');
+
+        // 44d. POST /api/v1/auth/verify-email/resend
+        $this->assertResponse('POST /api/v1/auth/verify-email/resend (Guest -> 401)', $this->request('POST', '/api/v1/auth/verify-email/resend'), 401, 'POST /api/v1/auth/verify-email/resend');
+
         // 45. POST /api/v1/auth/refresh
         $this->assertResponse('POST /api/v1/auth/refresh (empty -> 400)', $this->request('POST', '/api/v1/auth/refresh', [], []), 400, 'POST /api/v1/auth/refresh');
 
