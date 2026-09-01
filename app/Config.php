@@ -202,6 +202,10 @@ final class Config
             $group->get("/admin/uploads", [WebController::class, "adminUploads"]);
             $group->get("/admin/logs", [WebController::class, "adminLogs"]);
             $group->get("/admin/tutorial", [WebController::class, "adminTutorial"]);
+
+            // Unified Lime-CSR Admin Console Shell
+            $group->get("/panel", [WebController::class, "adminPanelLime"]);
+            $group->get("/panel/{section:.*}", [WebController::class, "adminPanelLime"]);
         };
         $app->get("/robots.txt", [WebController::class, "robotsTxt"]);
         $app->get("/sitemap.xml", [WebController::class, "sitemapXml"]);

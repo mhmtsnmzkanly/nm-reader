@@ -757,6 +757,81 @@ final class WebController
         );
     }
 
+    public function adminPanelLime(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+    ): ResponseInterface {
+        if (!$this->canAccessAdminPanel()) {
+            return $response->withHeader("Location", "/")->withStatus(302);
+        }
+
+        $basePath = (string) $this->settings["app"]["base_path"];
+        $templatePath = $basePath . "/storage/views/admin_panel_lime.php";
+
+        if (!is_file($templatePath)) {
+            $response->getBody()->write("Panel Template not found");
+            return $response->withStatus(404);
+        }
+
+        $userId = $_SESSION["user_id"] ?? null;
+        $langCode = $this->i18n->resolveLocale($request, $userId ? (string)$userId : null);
+        $defaultLang = $this->i18n->getDefaultLanguage();
+
+        $lang = $this->i18n->getDictionary($langCode);
+        $langHash = md5((string) json_encode($lang, JSON_UNESCAPED_UNICODE));
+
+        $authContext = [
+            "is_logged_in" => isset($_SESSION["user_id"]),
+            "is_admin" => $this->canAccessAdminPanel(),
+            "user_id" => $userId,
+            "username" => $_SESSION["username"] ?? null,
+            "roles" => $this->effectiveRoles(),
+            "permissions" => $this->effectivePermissions(),
+            "csrf_token" => $_SESSION["csrf_token"] ?? null,
+        ];
+
+        $url = fn(string $path) => '/' . ltrim($path, '/');
+
+        $contextJson = (string) json_encode(
+            [
+                "auth" => $authContext,
+                "lang_code" => $langCode,
+                "lang_hash" => $langHash,
+                "default_lang" => $defaultLang,
+                "supported_langs" => $this->i18n->getSupportedLanguages(),
+                "site_config" => $this->siteConfig->all(),
+            ],
+            JSON_HEX_TAG |
+                JSON_HEX_AMP |
+                JSON_HEX_APOS |
+                JSON_HEX_QUOT |
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES,
+        );
+        $adminUsername = (string) ($authContext["username"] ?? "admin");
+        $siteConfig = $this->siteConfig->all();
+        $__t = fn(string $key, array $params = []) => $this->i18n->translate($langCode, $key, $params);
+
+        ob_start();
+        extract([
+            "url" => $url,
+            "__t" => $__t,
+            "adminUsername" => $adminUsername,
+            "contextJson" => $contextJson,
+            "siteConfig" => $siteConfig,
+            "authContext" => $authContext,
+        ], EXTR_SKIP);
+        include $templatePath;
+        $html = (string) ob_get_clean();
+
+        $response->getBody()->write($html);
+        return $response
+            ->withHeader("Content-Type", "text/html; charset=utf-8")
+            ->withHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            ->withHeader("Pragma", "no-cache")
+            ->withHeader("Expires", "0");
+    }
+
     public function adminDashboard(
         ServerRequestInterface $request,
         ResponseInterface $response,

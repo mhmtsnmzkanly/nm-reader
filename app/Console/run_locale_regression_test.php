@@ -151,6 +151,9 @@ class LocaleRegressionSuite
         $resAdmin = $this->request('GET', '/admin');
         $this->assert('GET /admin does not redirect to /tr/admin', $resAdmin->getStatusCode() === 200 || ($resAdmin->getStatusCode() === 302 && $resAdmin->getHeaderLine('Location') === '/'));
 
+        $resPanel = $this->request('GET', '/panel');
+        $this->assert('GET /panel does not redirect to /tr/panel', $resPanel->getStatusCode() === 200 || ($resPanel->getStatusCode() === 302 && $resPanel->getHeaderLine('Location') === '/'));
+
         $resApiHome = $this->request('GET', '/api/v1/home');
         $this->assert('GET /api/v1/home returns 200 OK without locale redirect', $resApiHome->getStatusCode() === 200);
 
