@@ -112,26 +112,32 @@ final class AuthService
      */
     public function login(array $payload, string $ip, string $userAgent): array
     {
-        $error = Validator::requireFields($payload, ['email', 'password']);
-        if ($error !== null) {
-            throw new \InvalidArgumentException($error);
-        }
-
-        $email = strtolower(trim((string) $payload['email']));
-        $password = (string) $payload['password'];
+        $identity = strtolower(trim((string) ($payload['identity'] ?? $payload['email'] ?? $payload['username'] ?? '')));
+        $password = (string) ($payload['password'] ?? '');
         $remember = (bool) ($payload['remember'] ?? false);
 
+        if ($identity === '') {
+            throw new \InvalidArgumentException('"email" is required');
+        }
+
+        if ($password === '') {
+            throw new \InvalidArgumentException('"password" is required');
+        }
+
         try {
-            $this->assertLoginAllowed($email, $ip);
+            $this->assertLoginAllowed($identity, $ip);
         } catch (\DomainException $e) {
-            $this->recordLoginEvent($email, null, $ip, $userAgent, false, 'auth.rate_limited');
+            $this->recordLoginEvent($identity, null, $ip, $userAgent, false, 'auth.rate_limited');
             throw new \DomainException('auth.rate_limited');
         }
 
-        $user = $this->users->findByEmail($email);
+        $user = str_contains($identity, '@')
+            ? $this->users->findByEmail($identity)
+            : ($this->users->findByUsername($identity) ?? $this->users->findByEmail($identity));
+
         if ($user === null || !password_verify($password, (string) $user['password_hash'])) {
-            $this->recordFailedLogin($email, $ip);
-            $this->recordLoginEvent($email, null, $ip, $userAgent, false, 'auth.invalid_credentials');
+            $this->recordFailedLogin($identity, $ip);
+            $this->recordLoginEvent($identity, null, $ip, $userAgent, false, 'auth.invalid_credentials');
             throw new \DomainException('auth.invalid_credentials');
         }
 

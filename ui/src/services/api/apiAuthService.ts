@@ -8,7 +8,7 @@ export class ApiAuthService implements IAuthService {
     password: string,
     remember = false
   ): Promise<ApiResponse<AuthPayload>> {
-    return api.post<AuthPayload>('/auth/login', { identity, password, remember });
+    return api.post<AuthPayload>('/auth/login', { identity, email: identity, password, remember });
   }
 
   async register(
