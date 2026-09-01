@@ -31,10 +31,10 @@ final class AuthController
      */
     private function verifyTurnstile(array $payload, string $ip): void
     {
-        $siteKey = $this->siteConfig->get('integrations')['cloudflare_turnstile_site_key'] ?? '';
-        $secretKey = $this->siteConfig->get('integrations')['cloudflare_turnstile_secret_key'] ?? '';
+        $siteKey = trim((string) ($_ENV['CLOUDFLARE_TURNSTILE_SITE_KEY'] ?? getenv('CLOUDFLARE_TURNSTILE_SITE_KEY') ?: ''));
+        $secretKey = trim((string) ($_ENV['CLOUDFLARE_TURNSTILE_SECRET_KEY'] ?? getenv('CLOUDFLARE_TURNSTILE_SECRET_KEY') ?: ''));
 
-        if (empty($siteKey) || empty($secretKey)) {
+        if ($siteKey === '' || $secretKey === '') {
             return;
         }
 

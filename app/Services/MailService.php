@@ -43,11 +43,7 @@ final class MailService
 
     public function getApiKey(): string
     {
-        $envKey = trim((string) ($_ENV['RESEND_API_KEY'] ?? getenv('RESEND_API_KEY') ?: ''));
-        if ($envKey !== '') {
-            return $envKey;
-        }
-        return trim((string) ($this->siteConfig->get('integrations')['resend_api_key'] ?? ''));
+        return trim((string) ($_ENV['RESEND_API_KEY'] ?? getenv('RESEND_API_KEY') ?: ''));
     }
 
     public function getFromAddress(): string

@@ -75,9 +75,8 @@ final class WebController
         }
 
         $html = (string) file_get_contents($file);
-        $integrations = $this->siteConfig->integrations();
-        $gaId = trim((string) ($integrations['google_analytics_id'] ?? ''));
-        $turnstileKey = trim((string) ($integrations['cloudflare_turnstile_site_key'] ?? ''));
+        $gaId = trim((string) ($_ENV['GOOGLE_ANALYTICS_ID'] ?? getenv('GOOGLE_ANALYTICS_ID') ?: ''));
+        $turnstileKey = trim((string) ($_ENV['CLOUDFLARE_TURNSTILE_SITE_KEY'] ?? getenv('CLOUDFLARE_TURNSTILE_SITE_KEY') ?: ''));
 
         $injected = '';
         if ($gaId !== '') {

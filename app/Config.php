@@ -104,6 +104,7 @@ final class Config
             "default_profile_image" => (string) self::env("DEFAULT_PROFILE_IMAGE", "/assets/img/default-profile.png"),
             "default_content_cover_image" => (string) self::env("DEFAULT_CONTENT_COVER_IMAGE", "/assets/img/covers/placeholder.svg"),
             "integrations" => [
+                "resend_api_key" => (string) self::env("RESEND_API_KEY", ""),
                 "google_analytics_id" => (string) self::env("GOOGLE_ANALYTICS_ID", ""),
                 "google_recaptcha_site_key" => (string) self::env("GOOGLE_RECAPTCHA_SITE_KEY", ""),
                 "google_recaptcha_secret_key" => (string) self::env("GOOGLE_RECAPTCHA_SECRET_KEY", ""),
