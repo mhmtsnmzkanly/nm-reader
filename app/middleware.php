@@ -130,6 +130,10 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         $response = $response->withHeader('Set-Cookie', $cookie);
     }
     
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        @session_write_close();
+    }
+
     return $response;
 });
 
@@ -156,18 +160,6 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     } catch (\Throwable) {
         return $handler->handle($request);
     }
-});
-
-// Security Headers
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
-    $response = $handler->handle($request);
-
-    return $response
-        ->withHeader('X-Content-Type-Options', 'nosniff')
-        ->withHeader('X-Frame-Options', 'DENY')
-        ->withHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
-        ->withHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), xr-spatial-tracking=(), interest-cohort=()')
-        ->withHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://code.jquery.com https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com https://static.cloudflareinsights.com; script-src-elem 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://code.jquery.com https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com https://static.cloudflareinsights.com; script-src-attr 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com https://challenges.cloudflare.com; img-src 'self' data: https: https://www.google-analytics.com https://www.googletagmanager.com https://challenges.cloudflare.com; connect-src 'self' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com https://cloudflareinsights.com; frame-src https://challenges.cloudflare.com; worker-src 'self' https://challenges.cloudflare.com; child-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
 });
 
 $app->addBodyParsingMiddleware();
@@ -231,14 +223,25 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             'status_code' => $status, 'ip_hash' => $ipHash, 'user_agent' => $userAgent, 'duration_ms' => $duration,
         ]);
 
-        $stmt = $pdo->prepare(
-            'INSERT INTO system_audit_logs (user_id, method, path, status_code, ip_hash, user_agent, duration_ms, created_at)
-             VALUES (:user_id, :method, :path, :status_code, :ip_hash, :user_agent, :duration_ms, NOW())'
-        );
-        $stmt->execute([
-            'user_id' => $userId, 'method' => $method, 'path' => $path,
-            'status_code' => $status, 'ip_hash' => $ipHash, 'user_agent' => $userAgent, 'duration_ms' => $duration,
-        ]);
+        // Selectively write to database system_audit_logs: mutations, sensitive security/finance routes, or error responses
+        $isMutation = in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true);
+        $isSensitive = str_contains($path, '/admin/')
+            || str_contains($path, '/auth/')
+            || str_contains($path, '/wallet/')
+            || str_contains($path, '/reports')
+            || str_contains($path, '/user/');
+        $isFailure = $status >= 400;
+
+        if ($isMutation || $isSensitive || $isFailure) {
+            $stmt = $pdo->prepare(
+                'INSERT INTO system_audit_logs (user_id, method, path, status_code, ip_hash, user_agent, duration_ms, created_at)
+                 VALUES (:user_id, :method, :path, :status_code, :ip_hash, :user_agent, :duration_ms, NOW())'
+            );
+            $stmt->execute([
+                'user_id' => $userId, 'method' => $method, 'path' => $path,
+                'status_code' => $status, 'ip_hash' => $ipHash, 'user_agent' => $userAgent, 'duration_ms' => $duration,
+            ]);
+        }
     } catch (\Throwable) {}
 
     return $response;

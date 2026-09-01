@@ -447,19 +447,23 @@ final class ChapterRepository
      */
     public function recordChapterView(string $chapterId, string $ipHash): void
     {
-        $sql = 'INSERT INTO analytics_chapters_views (chapter_id, ip_hash, viewed_at) VALUES (:chapter_id, :ip_hash, NOW())';
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'chapter_id' => $chapterId,
-            'ip_hash' => $ipHash,
-        ]);
+        try {
+            $sql = 'INSERT INTO analytics_chapters_views (chapter_id, ip_hash, viewed_at) VALUES (:chapter_id, :ip_hash, NOW())';
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                'chapter_id' => $chapterId,
+                'ip_hash' => $ipHash,
+            ]);
 
-        $daily = $this->pdo->prepare(
-            'INSERT INTO analytics_chapters_daily (chapter_id, stat_date, view_count, comment_count)
-             VALUES (:chapter_id, CURRENT_DATE(), 1, 0)
-             ON DUPLICATE KEY UPDATE view_count = view_count + 1'
-        );
-        $daily->execute(['chapter_id' => $chapterId]);
+            $daily = $this->pdo->prepare(
+                'INSERT INTO analytics_chapters_daily (chapter_id, stat_date, view_count, comment_count)
+                 VALUES (:chapter_id, CURRENT_DATE(), 1, 0)
+                 ON DUPLICATE KEY UPDATE view_count = view_count + 1'
+            );
+            $daily->execute(['chapter_id' => $chapterId]);
+        } catch (\Throwable) {
+            // Non-blocking for reader execution
+        }
     }
 
     /**
@@ -467,12 +471,16 @@ final class ChapterRepository
      */
     public function incrementDailyCommentCount(string $chapterId): void
     {
-        $daily = $this->pdo->prepare(
-            'INSERT INTO analytics_chapters_daily (chapter_id, stat_date, view_count, comment_count)
-             VALUES (:chapter_id, CURRENT_DATE(), 0, 1)
-             ON DUPLICATE KEY UPDATE comment_count = comment_count + 1'
-        );
-        $daily->execute(['chapter_id' => $chapterId]);
+        try {
+            $daily = $this->pdo->prepare(
+                'INSERT INTO analytics_chapters_daily (chapter_id, stat_date, view_count, comment_count)
+                 VALUES (:chapter_id, CURRENT_DATE(), 0, 1)
+                 ON DUPLICATE KEY UPDATE comment_count = comment_count + 1'
+            );
+            $daily->execute(['chapter_id' => $chapterId]);
+        } catch (\Throwable) {
+            // Non-blocking
+        }
     }
 
 

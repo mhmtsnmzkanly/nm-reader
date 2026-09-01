@@ -11,6 +11,8 @@ final class SiteConfigService
     private const CACHE_KEY = 'site_config:all:v2';
     private const CACHE_TTL = 600;
 
+    private static ?array $memoryCache = null;
+
     /**
      * Definitions of all supported settings, their groups, types, and defaults.
      *
@@ -64,8 +66,13 @@ final class SiteConfigService
      */
     public function all(): array
     {
+        if (self::$memoryCache !== null) {
+            return self::$memoryCache;
+        }
+
         $cached = $this->cache->get(self::CACHE_KEY);
         if (is_array($cached)) {
+            self::$memoryCache = $cached;
             return $cached;
         }
 
@@ -91,6 +98,7 @@ final class SiteConfigService
         }
 
         $this->cache->set(self::CACHE_KEY, $settings, self::CACHE_TTL);
+        self::$memoryCache = $settings;
         return $settings;
     }
 
@@ -217,6 +225,7 @@ final class SiteConfigService
         }
 
         $this->cache->delete(self::CACHE_KEY);
+        self::$memoryCache = null;
         return $this->all();
     }
 
