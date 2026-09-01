@@ -32,7 +32,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
   compact = false,
 }) => {
   const navigate = useNavigate();
-  const { formatRelativeTime } = usePreferences();
+  const { formatRelativeTime, t } = usePreferences();
   const isUnread = notification.is_read === 0;
   const targetUrl = getNotificationTargetUrl(notification);
 
@@ -145,7 +145,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
         {/* Target link hint if applicable */}
         {targetUrl && (
           <div className="flex items-center gap-1 text-[11px] font-medium text-[var(--accent-color)] mt-0.5 group-hover:underline">
-            <span>İncele</span>
+            <span>{t('notifications.inspect')}</span>
             <ExternalLink className="w-3 h-3 opacity-70" />
           </div>
         )}
@@ -162,8 +162,8 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
               e.stopPropagation();
               onMarkAsRead(notification.id);
             }}
-            title="Okundu olarak işaretle"
-            aria-label="Okundu olarak işaretle"
+            title={t('notifications.markAsReadTitle')}
+            aria-label={t('notifications.markAsReadTitle')}
             className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--accent-color)] hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer"
           >
             <Check className="w-3.5 h-3.5" />
@@ -179,8 +179,8 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
               e.stopPropagation();
               onDelete(notification.id);
             }}
-            title="Bildirimi sil"
-            aria-label="Bildirimi sil"
+            title={t('notifications.deleteTitle')}
+            aria-label={t('notifications.deleteTitle')}
             className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-500/10 opacity-60 group-hover:opacity-100 transition-all cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -190,8 +190,8 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
         {isUnread && (
           <span
             className="w-2 h-2 rounded-full bg-[var(--accent-color)] shrink-0 ml-1 animate-pulse"
-            title="Okunmadı"
-            aria-label="Okunmadı"
+            title={t('notifications.unreadState')}
+            aria-label={t('notifications.unreadState')}
           />
         )}
       </div>

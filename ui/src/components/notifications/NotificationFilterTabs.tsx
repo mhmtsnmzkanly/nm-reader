@@ -1,12 +1,14 @@
 import React from 'react';
 import { NotificationCategory, useNotifications } from '../../contexts/NotificationsContext';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type TabItem = {
   id: NotificationCategory;
-  label: string;
+  labelKey: string;
 };
 
 export const NotificationFilterTabs: React.FC = () => {
+  const { t } = usePreferences();
   const { activeFilter, setActiveFilter, notifications, unreadCount } = useNotifications();
 
   const chaptersCount = notifications.filter(
@@ -33,11 +35,11 @@ export const NotificationFilterTabs: React.FC = () => {
   ).length;
 
   const tabs: (TabItem & { count?: number; badge?: number })[] = [
-    { id: 'all', label: 'Tümü', count: notifications.length },
-    { id: 'unread', label: 'Okunmamış', badge: unreadCount },
-    { id: 'chapters', label: 'Bölümler', count: chaptersCount },
-    { id: 'social', label: 'Sosyal & Yorumlar', count: socialCount },
-    { id: 'system', label: 'Sistem & Cüzdan', count: systemCount },
+    { id: 'all', labelKey: 'notifications.filterAll', count: notifications.length },
+    { id: 'unread', labelKey: 'notifications.filterUnread', badge: unreadCount },
+    { id: 'chapters', labelKey: 'notifications.filterChapters', count: chaptersCount },
+    { id: 'social', labelKey: 'notifications.filterSocial', count: socialCount },
+    { id: 'system', labelKey: 'notifications.filterSystem', count: systemCount },
   ];
 
   return (
@@ -56,7 +58,7 @@ export const NotificationFilterTabs: React.FC = () => {
                 : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-color)]'
             }`}
           >
-            <span>{tab.label}</span>
+            <span>{t(tab.labelKey)}</span>
             {tab.badge !== undefined && tab.badge > 0 ? (
               <span
                 className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${

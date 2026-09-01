@@ -21,8 +21,14 @@ import { Skeleton } from '../components/feedback/Skeleton';
 import { ErrorState } from '../components/feedback/ErrorState';
 import { EmptyState } from '../components/feedback/EmptyState';
 import { Button } from '../components/ui/Button';
+import { usePreferences } from '../contexts/PreferencesContext';
+import { useAuth } from '../contexts/AuthContext';
+import { AdultGateModal, isAdultConfirmed } from '../components/content/AdultGateModal';
+import { MembersOnlyLock } from '../components/content/MembersOnlyLock';
 
 export const ContentDetailPage: React.FC = () => {
+  const { t } = usePreferences();
+  const { user } = useAuth();
   const { type = 'manga', slug = '' } = useParams<{ type: string; slug: string }>();
   const navigate = useNavigate();
 
@@ -39,6 +45,9 @@ export const ContentDetailPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Adult gate state
+  const [isAdultConfirmedState, setIsAdultConfirmedState] = useState(() => isAdultConfirmed());
 
   // Unlock Modal State
   const [isUnlockModalOpen, setIsUnlockModalOpen] = useState(false);
@@ -60,7 +69,7 @@ export const ContentDetailPage: React.FC = () => {
       ]);
 
       if (detailRes.status === 'error') {
-        setError(detailRes.error.message || 'İçerik bulunamadı.');
+        setError(detailRes.error.message || t('content.notFoundTitle'));
         setIsLoading(false);
         return;
       }
@@ -79,8 +88,8 @@ export const ContentDetailPage: React.FC = () => {
         const mappedChapters: ContentDetailChapter[] = chapRes.data.map((c) => ({
           ...c,
           number: Number(c.chapter_number || 1),
-          published_at: c.created_at || '',
-          price_coin: c.price_coin ?? (c.access?.chapter_unlock_price || (c.is_locked ? c.price_coin || 0 : 0)),
+          published_at: c.created_at || (c as any).published_at || '',
+          price_coin: c.price_coin ?? (c.access?.chapter_unlock_price || 0),
         }));
         setChapters(mappedChapters);
       } else if (detailData.chapters) {
@@ -102,11 +111,11 @@ export const ContentDetailPage: React.FC = () => {
         setRelatedContent(typeRes.data.filter((c) => c.slug !== slug).slice(0, 3));
       }
     } catch {
-      setError('Veriler yüklenirken bir ağ hatası meydana geldi.');
+      setError(t('content.networkError'));
     } finally {
       setIsLoading(false);
     }
-  }, [type, slug]);
+  }, [type, slug, t]);
 
   useEffect(() => {
     loadData();
@@ -223,15 +232,15 @@ export const ContentDetailPage: React.FC = () => {
         <Breadcrumb items={breadcrumbItems} className="mb-6" />
         {error ? (
           <ErrorState
-            title="İçerik Yüklenemedi"
+            title={t('content.loadErrorTitle')}
             message={error}
             onRetry={loadData}
           />
         ) : (
           <EmptyState
-            title="İçerik Bulunamadı"
-            description="Aradığınız manga veya çizgi roman silinmiş ya da taşınmış olabilir."
-            actionLabel="Ana Sayfaya Dön"
+            title={t('content.notFoundTitle')}
+            description={t('content.notFoundDesc')}
+            actionLabel={t('feedback.backHome')}
             onAction={() => navigate('/')}
           />
         )}
@@ -244,7 +253,7 @@ export const ContentDetailPage: React.FC = () => {
       ? content.rating.average
       : typeof content.rating === 'number'
       ? content.rating
-      : content.rating_avg ?? content.rating_average ?? 5;
+      : content.rating_avg ?? content.rating_average ?? 0;
 
   const genresList = content.genres || content.series_genres || [];
   const tagsList = content.tags || content.series_tags || [];
@@ -274,7 +283,7 @@ export const ContentDetailPage: React.FC = () => {
           {/* Structured Metadata Card */}
           <ContentMetadata content={content} chapterCount={chapters.length} />
 
-          {/* Section with Tabs: Bölüm Listesi & Yorumlar/Değerlendirme */}
+          {/* Section with Tabs: Chapter List & Comments/Reviews */}
           <div className="flex flex-col gap-5">
             {/* Tab Controls Header */}
             <div className="flex items-center gap-2 border-b border-[var(--border-color)] pb-2 overflow-x-auto">
@@ -288,7 +297,7 @@ export const ContentDetailPage: React.FC = () => {
                 }`}
               >
                 <BookOpen className="w-4 h-4 shrink-0" />
-                <span>Bölüm Listesi</span>
+                <span>{t('content.chapterList')}</span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
                     activeTab === 'chapters'
@@ -310,7 +319,7 @@ export const ContentDetailPage: React.FC = () => {
                 }`}
               >
                 <MessageSquare className="w-4 h-4 shrink-0" />
-                <span>Yorumlar & Değerlendirme</span>
+                <span>{t('content.commentsAndReviews')}</span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
                     activeTab === 'comments'
@@ -322,6 +331,11 @@ export const ContentDetailPage: React.FC = () => {
                 </span>
               </button>
             </div>
+
+            {/* Members-Only Banner if guest */}
+            {content.is_members_only && !user && (
+              <MembersOnlyLock compact className="mb-2" />
+            )}
 
             {/* Tab 1: Chapter List */}
             {activeTab === 'chapters' && (
@@ -337,17 +351,17 @@ export const ContentDetailPage: React.FC = () => {
             {/* Tab 2: Reviews & Comments */}
             {activeTab === 'comments' && (
               <div className="flex flex-col gap-6">
-                {/* 1. Üstte: Değerlendirme & Oy */}
+                {/* 1. Rating & Vote */}
                 <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 sm:p-6 flex flex-col gap-4 shadow-sm transition-colors duration-300">
                   <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
                     <div className="flex items-center gap-2">
                       <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
                       <h3 className="font-serif text-lg sm:text-xl font-bold text-[var(--text-primary)]">
-                        Değerlendirme <span className="italic text-[var(--accent-color)]">& Puan Ver</span>
+                        {t('content.reviewAndRate')}
                       </h3>
                     </div>
                     <span className="text-xs font-mono text-[var(--text-muted)]">
-                      Genel Puan: <strong className="text-[var(--text-primary)] font-bold">{initialScore > 5 ? (initialScore / 2).toFixed(1) : initialScore.toFixed(1)}</strong> / 5.0
+                      {t('content.overallRating')}: <strong className="text-[var(--text-primary)] font-bold">{initialScore > 5 ? (initialScore / 2).toFixed(1) : initialScore.toFixed(1)}</strong> / 5.0
                     </span>
                   </div>
 
@@ -358,14 +372,14 @@ export const ContentDetailPage: React.FC = () => {
                   />
                 </div>
 
-                {/* 2. Bir altında: Yorum yapma formu ve ardından yapılan yorumlar */}
+                {/* 2. Community Discussions */}
                 <section className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 sm:p-6 flex flex-col gap-5 shadow-sm transition-colors duration-300">
                   <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
                     <h3 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-                      Topluluk <span className="italic text-[var(--accent-color)]">Tartışmaları</span>
+                      {t('content.communityDiscussions')}
                     </h3>
                     <span className="text-xs font-mono text-[var(--text-muted)]">
-                      {comments.length} Yorum
+                      {t('content.commentsCount', { count: comments.length })}
                     </span>
                   </div>
 
@@ -386,15 +400,15 @@ export const ContentDetailPage: React.FC = () => {
           <div className="p-5 rounded-2xl bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-tertiary)] border border-[var(--border-color)] flex flex-col gap-3.5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)] font-semibold">
-                Cüzdan Bakiyen
+                {t('content.yourWalletBalance')}
               </span>
               <div className="flex items-center gap-1.5 text-amber-500 font-mono font-bold text-sm">
                 <Coins className="w-4 h-4" />
-                <span>{walletBalance} Coin</span>
+                <span>{walletBalance} {t('common.coin')}</span>
               </div>
             </div>
             <p className="text-xs text-[var(--text-secondary)] font-light leading-relaxed">
-              Kilitli bölümleri anında açmak veya serinin tamamına erken erişmek için Coin bakiyenizi kullanabilirsiniz.
+              {t('content.walletBalanceHint')}
             </p>
 
             {/* Unlock Series CTA if applicable */}
@@ -409,13 +423,13 @@ export const ContentDetailPage: React.FC = () => {
                   className="gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-xs shadow-md cursor-pointer justify-center py-2.5"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Tüm Seriyi Aç ({content.series_unlock_price} Coin)</span>
+                  <span>{t('content.unlockEntireSeriesBtn', { price: content.series_unlock_price })}</span>
                 </Button>
               )}
 
             <Link to="/shop" className="pt-0.5">
               <Button variant="outline" size="sm" fullWidth className="gap-1.5 text-xs font-mono justify-between cursor-pointer">
-                <span>Coin Mağazasına Git</span>
+                <span>{t('content.goToCoinShop')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
@@ -425,10 +439,10 @@ export const ContentDetailPage: React.FC = () => {
           <div className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl flex flex-col gap-3 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-mono font-bold text-[var(--accent-color)]">
               <ShieldCheck className="w-4 h-4" />
-              <span className="uppercase tracking-wider">Lisans & Güvenlik</span>
+              <span className="uppercase tracking-wider">{t('content.licenseAndSecurity')}</span>
             </div>
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-light">
-              Bu içerik telif hakları kapsamında nm-reader dijital platformunda lisanslı olarak yayınlanmaktadır. Çeviri ve düzenleme hakları saklıdır.
+              {t('content.licenseDisclaimer')}
             </p>
           </div>
 
@@ -437,7 +451,7 @@ export const ContentDetailPage: React.FC = () => {
             <div className="flex flex-col gap-3.5">
               <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[var(--text-primary)]">
                 <Sparkles className="w-3.5 h-3.5 text-[var(--accent-color)]" />
-                <span>Benzer İçerikler</span>
+                <span>{t('content.similarTitles')}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-3">
                 {relatedContent.map((item) => (
@@ -456,10 +470,25 @@ export const ContentDetailPage: React.FC = () => {
         targetChapter={unlockTargetChapter}
         isSeriesUnlock={isSeriesUnlockTarget}
         seriesTitle={content.title}
-        seriesPrice={content.series_unlock_price || 120}
+        seriesPrice={content.series_unlock_price || 0}
         walletBalance={walletBalance}
         onConfirmUnlock={handleConfirmUnlock}
       />
+
+      {/* Adult Content Gate Modal */}
+      {content.is_adult && !isAdultConfirmedState && (
+        <AdultGateModal
+          isOpen={true}
+          onConfirm={() => setIsAdultConfirmedState(true)}
+          onCancel={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/');
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

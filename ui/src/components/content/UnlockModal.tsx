@@ -4,6 +4,7 @@ import { Lock, Coins, AlertCircle, CheckCircle2, ShoppingBag } from 'lucide-reac
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { ContentDetailChapter } from '../../types/api';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type UnlockModalProps = {
   isOpen: boolean;
@@ -26,23 +27,26 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
   walletBalance,
   onConfirmUnlock,
 }) => {
+  const { t } = usePreferences();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const price = isSeriesUnlock
     ? seriesPrice
-    : targetChapter?.price_coin ?? 0;
+    : targetChapter?.price_coin ?? 10;
+
+  const chapNum = targetChapter?.number || targetChapter?.chapter_number || '';
 
   const title = isSeriesUnlock
-    ? `Tüm Serinin Kilidini Aç: ${seriesTitle}`
-    : `Bölüm ${targetChapter?.number || targetChapter?.chapter_number || ''} Kilidini Aç`;
+    ? t('unlockModal.unlockSeriesTitle', { title: seriesTitle })
+    : t('unlockModal.unlockChapterTitle', { number: chapNum });
 
   const itemSubtitle = isSeriesUnlock
-    ? 'Bu serideki mevcut ve gelecekteki tüm kilitli bölümlere süresiz erişim kazanırsınız.'
+    ? t('unlockModal.seriesPerpetualDesc')
     : targetChapter?.title
-    ? `"${targetChapter.title}" başlıklı bölüme süresiz erişim kazanırsınız.`
-    : 'Bu bölüme süresiz erişim kazanırsınız.';
+    ? t('unlockModal.chapterPerpetualDescWithTitle', { title: targetChapter.title })
+    : t('unlockModal.chapterPerpetualDesc');
 
   const hasEnoughCoins = walletBalance >= price;
 
@@ -59,17 +63,17 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
           onClose();
         }, 1200);
       } else {
-        setError('Kilit açma işlemi gerçekleştirilemedi. Lütfen bakiyenizi kontrol edin.');
+        setError(t('unlockModal.errorFailed'));
       }
     } catch {
-      setError('Bir hata meydana geldi.');
+      setError(t('unlockModal.errorOccurred'));
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} title="Kilitli İçeriğe Erişim">
+    <Dialog isOpen={isOpen} onClose={onClose} title={t('unlockModal.title')}>
       <div className="flex flex-col gap-5 py-2">
         {/* Header Icon + Info */}
         <div className="flex items-start gap-4 p-4 rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-color)]">
@@ -89,18 +93,22 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
         {/* Coin & Balance Summary */}
         <div className="grid grid-cols-2 gap-3 font-mono text-xs">
           <div className="p-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">İşlem Ücreti</span>
+            <span className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">
+              {t('unlockModal.fee')}
+            </span>
             <div className="flex items-center gap-1.5 text-amber-500 font-bold text-base">
               <Coins className="w-4 h-4" />
-              <span>{price} Coin</span>
+              <span>{price} {t('wallet.coin')}</span>
             </div>
           </div>
 
           <div className="p-3.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex flex-col gap-1">
-            <span className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">Mevcut Bakiyeniz</span>
+            <span className="text-[10px] uppercase text-[var(--text-muted)] tracking-wider">
+              {t('unlockModal.currentBalance')}
+            </span>
             <div className={`flex items-center gap-1.5 font-bold text-base ${hasEnoughCoins ? 'text-emerald-500' : 'text-rose-500'}`}>
               <Coins className="w-4 h-4" />
-              <span>{walletBalance} Coin</span>
+              <span>{walletBalance} {t('wallet.coin')}</span>
             </div>
           </div>
         </div>
@@ -109,7 +117,7 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
         {isSuccess && (
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-mono flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-            <span>Kilit başarıyla açıldı! Yönlendiriliyorsunuz...</span>
+            <span>{t('unlockModal.successRedirecting')}</span>
           </div>
         )}
 
@@ -124,10 +132,10 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
           <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex flex-col gap-2">
             <div className="flex items-center gap-1.5 font-semibold font-mono">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>Yetersiz Bakiye</span>
+              <span>{t('unlockModal.insufficientBalanceTitle')}</span>
             </div>
             <p className="text-[11px] leading-relaxed">
-              Bu bölümü açmak için {price - walletBalance} Coin daha gereklidir. Mağazadan Coin paketi temin edebilirsiniz.
+              {t('unlockModal.insufficientBalanceDesc', { missing: price - walletBalance })}
             </p>
           </div>
         )}
@@ -135,7 +143,7 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-color)]">
           <Button variant="ghost" size="md" onClick={onClose} disabled={isProcessing}>
-            Vazgeç
+            {t('unlockModal.cancel')}
           </Button>
 
           {hasEnoughCoins ? (
@@ -145,16 +153,16 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
               onClick={handleUnlock}
               isLoading={isProcessing}
               disabled={isSuccess}
-              className="gap-2 bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold"
+              className="gap-2 bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold cursor-pointer"
             >
               <Lock className="w-4 h-4" />
-              <span>{price} Coin ile Aç</span>
+              <span>{t('unlockModal.unlockWithCoins', { price })}</span>
             </Button>
           ) : (
             <Link to="/shop" onClick={onClose}>
-              <Button variant="gold" size="md" className="gap-2 bg-[var(--accent-color)] text-white hover:opacity-90">
+              <Button variant="gold" size="md" className="gap-2 bg-[var(--accent-color)] text-white hover:opacity-90 cursor-pointer">
                 <ShoppingBag className="w-4 h-4" />
-                <span>Coin Satın Al</span>
+                <span>{t('unlockModal.buyCoins')}</span>
               </Button>
             </Link>
           )}

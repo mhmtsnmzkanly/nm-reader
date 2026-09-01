@@ -8,7 +8,6 @@ import {
 } from '../types/api';
 import { AppLanguage, AppTheme } from '../types/domain';
 import { userService } from '../services';
-import { subscribeAuthState } from '../api/auth';
 import { getTranslation } from '../i18n';
 import { formatRelativeTime as utilFormatRelativeTime, formatDate as utilFormatDate } from '../utils/formatDate';
 
@@ -255,9 +254,13 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
           }
           return merged;
         });
+      } else if (res.status === 'error') {
+        setIsError(true);
+        setErrorMessage(res.error?.message || 'Ayarlar yüklenemedi.');
       }
-    } catch {
-      // Unauthenticated / guest requests safely fallback to localStorage preferences without raising errors
+    } catch (err: any) {
+      setIsError(true);
+      setErrorMessage(err?.message || 'Bağlantı hatası oluştu.');
     } finally {
       setIsLoading(false);
     }
@@ -265,12 +268,6 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   useEffect(() => {
     fetchRemotePreferences();
-    const unsub = subscribeAuthState((isAuth) => {
-      if (isAuth) {
-        fetchRemotePreferences();
-      }
-    });
-    return unsub;
   }, [fetchRemotePreferences]);
 
   // Sync theme & accent with HTML root attributes and system theme detection

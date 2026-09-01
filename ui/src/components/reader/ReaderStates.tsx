@@ -1,7 +1,9 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 export const ReaderLoading: React.FC = () => {
+  const { t } = usePreferences();
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col items-center justify-center p-6 animate-pulse transition-colors duration-300">
       <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
@@ -18,7 +20,9 @@ export const ReaderLoading: React.FC = () => {
           <div className="h-4 bg-[var(--bg-tertiary)] rounded-md w-5/6 mx-auto" />
           <div className="h-4 bg-[var(--bg-tertiary)] rounded-md w-4/5 mx-auto" />
         </div>
-        <span className="text-xs font-mono text-[var(--text-muted)] mt-4">Bölüm yükleniyor...</span>
+        <span className="text-xs font-mono text-[var(--text-muted)] mt-4">
+          {t('reader.loadingChapter')}
+        </span>
       </div>
     </div>
   );
@@ -30,9 +34,12 @@ type ReaderErrorProps = {
 };
 
 export const ReaderError: React.FC<ReaderErrorProps> = ({
-  message = 'Bölüm yüklenemedi.',
+  message,
   onRetry,
 }) => {
+  const { t } = usePreferences();
+  const displayMessage = message || t('reader.errorTitle');
+
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center p-6 transition-colors duration-300">
       <div className="max-w-md w-full p-8 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl flex flex-col items-center text-center gap-6">
@@ -42,10 +49,10 @@ export const ReaderError: React.FC<ReaderErrorProps> = ({
 
         <div className="flex flex-col gap-2">
           <h2 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-            {message}
+            {displayMessage}
           </h2>
           <p className="text-xs text-[var(--text-secondary)] font-light">
-            Bölüm verileri alınırken bir hata oluştu. Lütfen bağlantınızı kontrol edip tekrar deneyin.
+            {t('reader.errorDesc')}
           </p>
         </div>
 
@@ -56,7 +63,7 @@ export const ReaderError: React.FC<ReaderErrorProps> = ({
           className="py-2.5 px-6 rounded-xl bg-[var(--accent-color)] text-white font-bold text-sm hover:opacity-90 transition-colors shadow-lg cursor-pointer flex items-center justify-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
-          <span>Yeniden Dene</span>
+          <span>{t('reader.retry')}</span>
         </button>
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
   LibraryItem,
   ReadingHistoryItem,
   NotificationItem,
+  FollowingUserItem,
 } from '../../types/api';
 import {
   mockUserProfile,
@@ -23,6 +24,7 @@ import {
   mockNotifications,
   mockBlogs,
   mockComments,
+  mockFollowingUsers,
 } from '../../mocks/fixtures';
 import { scenarioManager } from '../../mocks/scenarios';
 
@@ -273,6 +275,15 @@ export class MockUserService implements IUserService {
         entry.stats.followers_count = Math.max(0, entry.stats.followers_count - 1);
         if (entry.user.stats) entry.user.stats.followers_count = Math.max(0, (entry.user.stats.followers_count || 1) - 1);
       }
+
+      const listTarget = mockFollowingUsers.find(
+        (u) => u.username.toLowerCase() === normalized
+      );
+      if (listTarget) {
+        listTarget.is_following = nextState;
+        listTarget.followers_count = entry.stats.followers_count;
+      }
+
       return makeSuccess({
         is_following: nextState,
         followers_count: entry.stats.followers_count,
@@ -715,5 +726,28 @@ export class MockUserService implements IUserService {
       return makeSuccess({ deleted: true });
     }
     return makeError(404, 'NOT_FOUND', 'Bildirim bulunamadı');
+  }
+
+  async getFollowingUsers(
+    page = 1,
+    per_page = 20
+  ): Promise<ApiResponse<FollowingUserItem[]>> {
+    await delay();
+    const sc = scenarioManager.getScenario();
+    if (sc === 'normal_guest') {
+      return makeError(401, 'UNAUTHORIZED', 'Authentication required');
+    }
+    if (sc === 'empty_data') {
+      return makeSuccess([], { page, per_page, total: 0, total_pages: 0 });
+    }
+
+    const validPage = Math.max(1, page);
+    const validPerPage = Math.min(50, Math.max(1, per_page));
+    const total = mockFollowingUsers.length;
+    const total_pages = Math.ceil(total / validPerPage) || 1;
+    const start = (validPage - 1) * validPerPage;
+    const paginated = mockFollowingUsers.slice(start, start + validPerPage);
+
+    return makeSuccess(paginated, { page: validPage, per_page: validPerPage, total, total_pages });
   }
 }

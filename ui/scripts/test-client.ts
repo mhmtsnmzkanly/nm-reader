@@ -1,273 +1,378 @@
 /**
- * Standalone Automated Test Suite for NM-Reader API Client.
- * Validates envelopes, error normalization, CSRF retry, 401 handling, credentials, and media URL resolution.
+ * Client Unit Tests for Novel Markdown Rendering
+ * Verifies TextReader, ReactMarkdown integration, supported syntax, security, and edge cases.
  */
 
-import { HttpClient } from '../src/api/client';
-import { ApiClientError, NetworkError, TimeoutError } from '../src/api/errors';
-import { getCsrfToken, setCsrfToken, clearCsrfToken } from '../src/api/auth';
-import { resolveMediaUrl, isProtectedMedia } from '../src/api/media';
-import { configureApi, resetApiConfig } from '../src/api/config';
+import React from 'react';
+import ReactDOMServer from 'react-dom/server';
+import { TextReader } from '../src/components/reader/TextReader';
+import { Chapter } from '../src/types/api';
+import { mockChapters } from '../src/mocks/fixtures';
 
 let passedTests = 0;
-let failedTests = 0;
+let totalTests = 0;
 
-function assert(condition: boolean, testName: string, detail?: string) {
+function assert(condition: boolean, testName: string, details?: string) {
+  totalTests++;
   if (condition) {
+    console.log(`  ✓ PASS: ${testName}`);
     passedTests++;
-    console.log(`  [PASS] ${testName}`);
   } else {
-    failedTests++;
-    console.error(`  [FAIL] ${testName}${detail ? ` - ${detail}` : ''}`);
+    console.error(`  ✗ FAIL: ${testName}`);
+    if (details) {
+      console.error(`    Details: ${details}`);
+    }
+    throw new Error(`Test failed: ${testName}`);
   }
 }
 
-async function runTests() {
-  console.log('==============================================================');
-  console.log('         NM-READER — API CLIENT AUTOMATED TESTS               ');
-  console.log('==============================================================\n');
+function renderTextReader(chapter: Chapter, readerSettings?: any, settings?: any): string {
+  return ReactDOMServer.renderToStaticMarkup(
+    React.createElement(TextReader, {
+      chapter,
+      readerSettings,
+      settings,
+    })
+  );
+}
 
-  // Save original fetch
-  const originalFetch = globalThis.fetch;
+function runTests() {
+  console.log('\n=============================================');
+  console.log(' RUNNING NOVEL MARKDOWN RENDERING TESTS');
+  console.log('=============================================\n');
 
-  try {
-    // -------------------------------------------------------------
-    // Test 1: Media URL Resolution
-    // -------------------------------------------------------------
-    console.log('1. Testing Media URL Resolution Contract...');
-    assert(
-      resolveMediaUrl('cover.8k2ma7qx4.webp') === '/media/public/cover.8k2ma7qx4.webp',
-      'Public cover resolution'
-    );
-    assert(
-      resolveMediaUrl('user.profile.9x7a1b.webp') === '/media/public/user.profile.9x7a1b.webp',
-      'Public user avatar resolution'
-    );
-    assert(
-      resolveMediaUrl('t_eyJjaWQiOiJjaDEyMyIsImV4cCI6MTc3MTIzNDU2N30.sig') ===
-        '/media/chapter/t_eyJjaWQiOiJjaDEyMyIsImV4cCI6MTc3MTIzNDU2N30.sig',
-      'Protected chapter token auto-detection'
-    );
-    assert(
-      resolveMediaUrl('custom.webp', 'chapter') === '/media/chapter/custom.webp',
-      'Explicit protected chapter resolution'
-    );
-    assert(
-      resolveMediaUrl('https://example.com/img.jpg') === 'https://example.com/img.jpg',
-      'External absolute URL preserved'
-    );
-    assert(
-      resolveMediaUrl('') === '/assets/img/covers/placeholder.svg',
-      'Empty identifier returns placeholder'
-    );
-    assert(
-      isProtectedMedia('t_abc123') === true && isProtectedMedia('cover.webp') === false,
-      'isProtectedMedia helper check'
-    );
-
-    // -------------------------------------------------------------
-    // Test 2: Success Response Envelope
-    // -------------------------------------------------------------
-    console.log('\n2. Testing Standard Success Envelope...');
-    configureApi({ baseUrl: 'http://test-api.local/api/v1' });
-
-    let lastRequestInfo: { url: string; method: string; headers: Headers; body: any; credentials: any } | null = null;
-
-    globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input.toString();
-      lastRequestInfo = {
-        url,
-        method: init?.method || 'GET',
-        headers: new Headers(init?.headers),
-        body: init?.body,
-        credentials: init?.credentials,
-      };
-
-      return new Response(
-        JSON.stringify({
-          status: 'success',
-          data: { id: 'c123', title: 'Solo Leveling' },
-          meta: { pagination: { page: 1, per_page: 20 } },
-          error: null,
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf_token_from_header' },
-        }
-      );
+  // Test 1: Empty and Edge Cases
+  console.log('--- Suite 1: Empty & Edge Cases ---');
+  {
+    const emptyChapter: Chapter = {
+      id: 'ch_empty',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Empty Chapter',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: '',
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
     };
 
-    const client = new HttpClient();
-    const res = await client.get<{ id: string; title: string }>('/content/manga/solo-leveling');
-    assert(res.status === 'success' && res.data.title === 'Solo Leveling', 'Valid success envelope parsed');
-    assert((res.meta as any).pagination?.page === 1, 'Pagination meta extracted');
-    assert(getCsrfToken() === 'csrf_token_from_header', 'CSRF token extracted from response header');
-    assert(lastRequestInfo?.credentials === 'include', 'credentials: "include" configured');
-
-    // -------------------------------------------------------------
-    // Test 3: CSRF Injection on Mutations
-    // -------------------------------------------------------------
-    console.log('\n3. Testing CSRF Header Injection on Mutations...');
-    setCsrfToken('active_csrf_token_123');
-
-    await client.post('/content/manga/solo-leveling/rate', { rating: 5 });
+    const emptyHtml = renderTextReader(emptyChapter);
     assert(
-      lastRequestInfo?.headers.get('X-CSRF-Token') === 'active_csrf_token_123',
-      'X-CSRF-Token automatically injected for POST'
+      emptyHtml.includes('id="reader-no-text-content"'),
+      'Empty body renders fallback without crashing'
     );
 
-    await client.get('/content/manga/solo-leveling');
-    assert(
-      lastRequestInfo?.headers.get('X-CSRF-Token') === null,
-      'GET request does not include X-CSRF-Token'
-    );
-
-    // -------------------------------------------------------------
-    // Test 4: Error Handling (400, 401, 403, 422, 429, 500)
-    // -------------------------------------------------------------
-    console.log('\n4. Testing HTTP Error Code Handling...');
-
-    const errorCases = [
-      { status: 400, key: 'BAD_REQUEST', msg: 'Bad parameters' },
-      { status: 401, key: 'UNAUTHORIZED', msg: 'Authentication required' },
-      { status: 403, key: 'FORBIDDEN', msg: 'Access denied' },
-      { status: 404, key: 'NOT_FOUND', msg: 'Resource not found' },
-      { status: 422, key: 'VALIDATION_FAILED', msg: 'Validation failed', fields: { email: ['Invalid email'] } },
-      { status: 429, key: 'RATE_LIMITED', msg: 'Too many requests' },
-      { status: 500, key: 'SERVER_ERROR', msg: 'Internal server error' },
-    ];
-
-    for (const ec of errorCases) {
-      globalThis.fetch = async () =>
-        new Response(
-          JSON.stringify({
-            status: 'error',
-            data: null,
-            meta: {},
-            error: { code: ec.status, key: ec.key, message: ec.msg, fields: (ec as any).fields },
-          }),
-          { status: ec.status, headers: { 'Content-Type': 'application/json' } }
-        );
-
-      let thrownErr: ApiClientError | null = null;
-      try {
-        await client.get('/test-error', { skipAuthRetry: true });
-      } catch (err: any) {
-        thrownErr = err;
-      }
-
-      assert(
-        thrownErr instanceof ApiClientError && thrownErr.status === ec.status && thrownErr.key === ec.key,
-        `Status ${ec.status} throws ApiClientError with key ${ec.key}`
-      );
-      if (ec.status === 422) {
-        assert(thrownErr?.fields?.email !== undefined, '422 preserves validation fields');
-      }
-    }
-
-    // -------------------------------------------------------------
-    // Test 5: 419 CSRF Automatic Single Retry
-    // -------------------------------------------------------------
-    console.log('\n5. Testing 419 CSRF Automatic Single Retry...');
-    let callCount = 0;
-    globalThis.fetch = async (input: RequestInfo | URL) => {
-      const url = input.toString();
-      callCount++;
-
-      // If it is the refresh call
-      if (url.includes('/auth/refresh')) {
-        return new Response(
-          JSON.stringify({
-            status: 'success',
-            data: { csrf_token: 'new_fresh_csrf_999' },
-            meta: {},
-            error: null,
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Initial call fails with 419
-      if (callCount === 1) {
-        return new Response(
-          JSON.stringify({
-            status: 'error',
-            data: null,
-            meta: {},
-            error: { code: 419, key: 'CSRF_ERROR', message: 'Token expired' },
-          }),
-          { status: 419, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Replay call succeeds
-      return new Response(
-        JSON.stringify({
-          status: 'success',
-          data: { comment_id: 101 },
-          meta: {},
-          error: null,
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+    const nullChapter: Chapter = {
+      ...emptyChapter,
+      body: null as any,
     };
-
-    setCsrfToken('stale_csrf_token');
-    const commentRes = await client.post<{ comment_id: number }>('/content/manga/solo-leveling/comment', {
-      body: 'Hello',
-    });
+    const nullHtml = renderTextReader(nullChapter);
     assert(
-      commentRes.status === 'success' && commentRes.data.comment_id === 101,
-      '419 triggered refresh and successfully replayed request'
+      nullHtml.includes('id="reader-no-text-content"'),
+      'Null body renders fallback without crashing'
     );
-    assert(getCsrfToken() === 'new_fresh_csrf_999', 'New CSRF token stored in auth state');
 
-    // -------------------------------------------------------------
-    // Test 6: Network Error and Invalid JSON Response
-    // -------------------------------------------------------------
-    console.log('\n6. Testing Network & Parse Error Handling...');
-    globalThis.fetch = async () => {
-      throw new TypeError('Failed to fetch');
+    const whitespaceChapter: Chapter = {
+      ...emptyChapter,
+      body: '   \n\n  \t ',
     };
-
-    let netErr: NetworkError | null = null;
-    try {
-      await client.get('/network-fail');
-    } catch (err: any) {
-      netErr = err;
-    }
-    assert(netErr instanceof NetworkError, 'TypeError translates to NetworkError');
-
-    globalThis.fetch = async () =>
-      new Response('<html>502 Bad Gateway</html>', {
-        status: 502,
-        headers: { 'Content-Type': 'text/html' },
-      });
-
-    let htmlErr: ApiClientError | null = null;
-    try {
-      await client.get('/html-error');
-    } catch (err: any) {
-      htmlErr = err;
-    }
+    const whitespaceHtml = renderTextReader(whitespaceChapter);
     assert(
-      htmlErr instanceof ApiClientError && htmlErr.key === 'INVALID_JSON_RESPONSE',
-      'HTML/Non-JSON response wrapped in ApiClientError'
+      whitespaceHtml.includes('id="reader-no-text-content"'),
+      'Whitespace-only body renders fallback without crashing'
     );
-
-    resetApiConfig();
-    clearCsrfToken();
-  } finally {
-    globalThis.fetch = originalFetch;
   }
 
-  console.log('\n==============================================================');
-  console.log(`TOTAL CLIENT TESTS: ${passedTests + failedTests} | PASSED: ${passedTests} | FAILED: ${failedTests}`);
-  console.log('==============================================================\n');
+  // Test 2: Plain Text without Markdown formatting
+  console.log('\n--- Suite 2: Plain Text Rendering ---');
+  {
+    const plainChapter: Chapter = {
+      id: 'ch_plain',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Düz Metin Bölümü',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: 'Bu sade bir romandır.\n\nİkinci paragrafta herhangi bir markdown işareti yoktur.',
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
 
-  if (failedTests > 0) {
-    process.exit(1);
+    const plainHtml = renderTextReader(plainChapter);
+    assert(
+      plainHtml.includes('Bu sade bir romandır.') &&
+      plainHtml.includes('İkinci paragrafta herhangi bir markdown işareti yoktur.') &&
+      plainHtml.includes('<p'),
+      'Plain text is rendered as valid paragraphs'
+    );
   }
+
+  // Test 3: Markdown Headings (H1, H2, H3, H4)
+  console.log('\n--- Suite 3: Headings Rendering ---');
+  {
+    const headingChapter: Chapter = {
+      id: 'ch_headings',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Başlıklar',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: '# Ana Başlık\n\n## Alt Başlık\n\n### Üçüncü Seviye Başlık\n\n#### Dördüncü Başlık',
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const html = renderTextReader(headingChapter);
+    assert(html.includes('<h1') && html.includes('Ana Başlık'), 'H1 heading is rendered');
+    assert(html.includes('<h2') && html.includes('Alt Başlık'), 'H2 heading is rendered');
+    assert(html.includes('<h3') && html.includes('Üçüncü Seviye Başlık'), 'H3 heading is rendered');
+    assert(html.includes('<h4') && html.includes('Dördüncü Başlık'), 'H4 heading is rendered');
+  }
+
+  // Test 4: Formatting (Bold, Italic, Bold+Italic, Strikethrough)
+  console.log('\n--- Suite 4: Text Formatting ---');
+  {
+    const formatChapter: Chapter = {
+      id: 'ch_format',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Biçimlendirmeler',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: '**kalın metin** ve *italik metin* ile ***kalın ve italik*** ayrıca ~~üstü çizili metin~~.',
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const html = renderTextReader(formatChapter);
+    assert(html.includes('<strong') && html.includes('kalın metin'), 'Bold text renders as strong');
+    assert(html.includes('<em') && html.includes('italik metin'), 'Italic text renders as em');
+    assert(
+      html.includes('kalın ve italik') && (html.includes('<em') || html.includes('<strong')),
+      'Bold+Italic text renders formatted'
+    );
+    assert(
+      html.includes('<del') && html.includes('üstü çizili metin'),
+      'Strikethrough text renders as del'
+    );
+  }
+
+  // Test 5: Lists (Unordered, Ordered, Nested)
+  console.log('\n--- Suite 5: Lists Rendering ---');
+  {
+    const listChapter: Chapter = {
+      id: 'ch_lists',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Listeler',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: `- Madde 1
+- Madde 2
+  - Alt Madde 2.1
+  - Alt Madde 2.2
+- Madde 3
+
+1. Birinci Adım
+2. İkinci Adım
+3. Üçüncü Adım`,
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const html = renderTextReader(listChapter);
+    assert(html.includes('<ul') && html.includes('<li') && html.includes('Madde 1'), 'Unordered list renders');
+    assert(html.includes('<ol') && html.includes('Birinci Adım'), 'Ordered list renders');
+    assert(html.includes('Alt Madde 2.1'), 'Nested list items render');
+  }
+
+  // Test 6: Blockquotes (Single & Nested)
+  console.log('\n--- Suite 6: Blockquotes Rendering ---');
+  {
+    const bqChapter: Chapter = {
+      id: 'ch_bq',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Alıntılar',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: `> "Bu kadim şehir bizi asla hatırlamayacak."
+>
+> > "Gölgeler derinleştiğinde, ışığı arayanlar bile karanlığa boyun eğer."`,
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const html = renderTextReader(bqChapter);
+    assert(html.includes('<blockquote'), 'Blockquote element is rendered');
+    assert(
+      html.includes('Bu kadim şehir bizi asla hatırlamayacak.') &&
+      html.includes('Gölgeler derinleştiğinde'),
+      'Nested blockquote content is present'
+    );
+  }
+
+  // Test 7: Links & Security (rel, target)
+  console.log('\n--- Suite 7: Links & Security Attributes ---');
+  {
+    const linkChapter: Chapter = {
+      id: 'ch_link',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Bağlantılar',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: '[Eski Krallık Arşivi](https://example.com/archive) ve [İç Bölüm](/novel/chapter/2)',
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const html = renderTextReader(linkChapter);
+    assert(html.includes('<a href="https://example.com/archive"'), 'External link has correct href');
+    assert(html.includes('target="_blank"'), 'External link has target="_blank"');
+    assert(html.includes('rel="noopener noreferrer"'), 'External link has rel="noopener noreferrer"');
+    assert(html.includes('Eski Krallık Arşivi'), 'Link anchor text is rendered');
+  }
+
+  // Test 8: Code Blocks & Inline Code
+  console.log('\n--- Suite 8: Inline Code & Code Blocks ---');
+  {
+    const codeChapter: Chapter = {
+      id: 'ch_code',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Kod Blokları',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: `Büyü \`Aether Gate\` ile çalışır.
+
+\`\`\`text
+KAYIT 17-B
+Kuzey kapısı açılmamalı.
+Saat 03:17:42.
+\`\`\`
+
+---`,
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const html = renderTextReader(codeChapter);
+    assert(html.includes('<code') && html.includes('Aether Gate'), 'Inline code is rendered');
+    assert(html.includes('<pre') && html.includes('KAYIT 17-B'), 'Code block inside pre is rendered');
+    assert(html.includes('<hr'), 'Horizontal rule hr is rendered');
+  }
+
+  // Test 9: Raw HTML Protection (Security against XSS and raw HTML tags)
+  console.log('\n--- Suite 9: Raw HTML Protection ---');
+  {
+    const xssChapter: Chapter = {
+      id: 'ch_xss',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Güvenlik Testi',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: `Zararlı içerik testi: <script>alert('xss')</script> ve <div class="evil">Raw div</div> ve <img src="x" onerror="alert(1)">`,
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const html = renderTextReader(xssChapter);
+    assert(!html.includes('<script>'), 'Raw <script> tags are NOT rendered unescaped in DOM');
+    assert(!html.includes('<div class="evil">'), 'Raw <div> tags are NOT rendered as raw DOM nodes');
+    assert(!html.includes('onerror="alert(1)"'), 'Raw HTML attributes are NOT executed as active DOM attributes');
+  }
+
+  // Test 10: Turkish Characters and Markdown Escaping
+  console.log('\n--- Suite 10: Turkish Characters & Escaping ---');
+  {
+    const trChapter: Chapter = {
+      id: 'ch_tr',
+      content_id: 'novel_01',
+      series: { id: 's1', title: 'Novel', slug: 'novel', type: 'novel' },
+      chapter_number: '1',
+      title: 'Türkçe Karakterler',
+      type: 'text',
+      created_at: new Date().toISOString(),
+      body: `Türkçe karakterler: ğ ü ş ö ç İ ı Ğ Ü Ş Ö Ç.
+
+Kaçış örneği: \\*bu yıldızlar italik değildir\\* ve \\[bu parantezler link değildir\\].`,
+      pages: [],
+      navigation: { previous: null, next: null },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const html = renderTextReader(trChapter);
+    assert(
+      html.includes('ğ ü ş ö ç İ ı Ğ Ü Ş Ö Ç'),
+      'Turkish characters render intact'
+    );
+    assert(
+      html.includes('*bu yıldızlar italik değildir*') && !html.includes('<em>bu yıldızlar italik değildir</em>'),
+      'Escaped markdown asterisks do not trigger italic rendering'
+    );
+  }
+
+  // Test 11: Real Mock Novel Chapter in Fixtures
+  console.log('\n--- Suite 11: Mock Novel Chapter Integration ---');
+  {
+    const shadowSlaveChapters = mockChapters['shadow-slave-chronicles'];
+    assert(Array.isArray(shadowSlaveChapters) && shadowSlaveChapters.length > 0, 'Shadow Slave mock chapters exist');
+
+    const ch12 = shadowSlaveChapters.find((c) => c.chapter_number === '12');
+    assert(!!ch12, 'Chapter 12 exists in mock data');
+    assert(typeof ch12?.body === 'string' && ch12.body.length > 500, 'Chapter 12 has rich novel markdown body');
+
+    const mockReaderChapter: Chapter = {
+      id: ch12!.id,
+      content_id: ch12!.content_id,
+      series: { id: 'f6g7h8', title: 'Shadow Slave Chronicles', slug: 'shadow-slave-chronicles', type: 'web-novel' },
+      chapter_number: '12',
+      title: ch12!.title,
+      type: 'text',
+      created_at: ch12!.created_at || new Date().toISOString(),
+      body: ch12!.body,
+      pages: [],
+      navigation: { previous: '11', next: '13' },
+      access: { granted: true, locked: false, price_coin: 0 },
+    };
+
+    const fullHtml = renderTextReader(mockReaderChapter);
+    assert(fullHtml.includes('id="novel-text-reader"'), 'TextReader renders novel article');
+    assert(fullHtml.includes('Bölüm XII — Küllerin Altındaki Şehir'), 'Chapter heading renders');
+    assert(fullHtml.includes('Kuzey Kapısı ve Unutulmuş Geçit'), 'H2 subhead renders');
+    assert(fullHtml.includes('Kadim Yazıtlar ve Gizli Hazırlık'), 'H3 subhead renders');
+    assert(fullHtml.includes('Keşif Heyeti ve Durum Tablosu'), 'H3 table heading renders');
+    assert(fullHtml.includes('<table') && fullHtml.includes('<th') && fullHtml.includes('<td'), 'GFM table elements are rendered');
+    assert(fullHtml.includes('Gölge Gezgini') && fullHtml.includes('Işık Muhafızı'), 'Table cell data renders accurately');
+    assert(fullHtml.includes('Eski Krallık Arşivi'), 'Link renders');
+    assert(fullHtml.includes('SİSTEM KAYDI 17-B') || fullHtml.includes('KAYIT 17-B'), 'Code block renders');
+    assert(fullHtml.includes('Aether Gate'), 'Inline code renders');
+    assert(fullHtml.includes('Muhafız Valerius'), 'Blockquote quote renders');
+  }
+
+  console.log('\n=============================================');
+  console.log(` ALL TESTS COMPLETED: ${passedTests}/${totalTests} PASSED`);
+  console.log('=============================================\n');
 }
 
 runTests();

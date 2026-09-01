@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 export type PaginationProps = {
   currentPage: number;
@@ -23,6 +24,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   disabled = false,
   onPageChange,
 }) => {
+  const { t } = usePreferences();
   const isPrevDisabled = disabled || !hasPrev || currentPage <= 1;
   const isNextDisabled =
     disabled || (typeof totalPages === 'number' && totalPages > 0 ? currentPage >= totalPages : !hasNext);
@@ -30,12 +32,14 @@ export const Pagination: React.FC<PaginationProps> = ({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 my-6 p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)]">
       <div className="text-xs text-[var(--text-muted)] font-mono">
-        Sayfa <span className="font-bold text-[var(--text-primary)]">{currentPage}</span>
+        {t('common.page')} <span className="font-bold text-[var(--text-primary)]">{currentPage}</span>
         {typeof totalPages === 'number' && totalPages > 0 && (
           <> / <span className="font-bold text-[var(--text-primary)]">{totalPages}</span></>
         )}
         {typeof total === 'number' && (
-          <span className="ml-2 text-[var(--text-muted)]">(Toplam {total} sonuç)</span>
+          <span className="ml-2 text-[var(--text-muted)]">
+            ({t('common.totalResultsCount', { count: total })})
+          </span>
         )}
       </div>
 
@@ -48,7 +52,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           className="cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
-          Önceki
+          {t('common.previous')}
         </Button>
 
         <Button
@@ -58,7 +62,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(currentPage + 1)}
           className="cursor-pointer"
         >
-          Sonraki
+          {t('common.next')}
           <ChevronRight className="w-4 h-4 ml-1" />
         </Button>
       </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Palette, Calendar, Globe, Star, Eye, BookOpen, Layers } from 'lucide-react';
 import { ContentDetail } from '../../types/api';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type ContentMetadataProps = {
   content: ContentDetail;
@@ -8,12 +9,14 @@ type ContentMetadataProps = {
 };
 
 export const ContentMetadata: React.FC<ContentMetadataProps> = ({ content, chapterCount }) => {
+  const { t } = usePreferences();
+
   const authorName =
     typeof content.author === 'object' && content.author !== null
       ? content.author.name
       : typeof content.author === 'string'
       ? content.author
-      : 'Bilinmiyor';
+      : t('contentMetadata.unknown');
 
   const artistName =
     typeof content.artist === 'object' && content.artist !== null
@@ -41,67 +44,71 @@ export const ContentMetadata: React.FC<ContentMetadataProps> = ({ content, chapt
 
   const statusLabel =
     content.status?.toLowerCase() === 'completed'
-      ? 'Tamamlandı'
+      ? t('contentMetadata.statusCompleted')
       : content.status?.toLowerCase() === 'hiatus'
-      ? 'Ara Verildi'
-      : 'Devam Ediyor';
-
+      ? t('contentMetadata.statusHiatus')
+      : t('contentMetadata.statusOngoing');
 
   const metaItems = [
     {
       icon: <User className="w-4 h-4 text-[var(--accent-color)]" />,
-      label: 'Yazar',
+      label: t('contentMetadata.author'),
       value: authorName,
     },
     ...(artistName
       ? [
           {
             icon: <Palette className="w-4 h-4 text-[var(--accent-color)]" />,
-            label: 'Çizer',
+            label: t('contentMetadata.artist'),
             value: artistName,
           },
         ]
       : []),
     {
       icon: <Layers className="w-4 h-4 text-[var(--accent-color)]" />,
-      label: 'Tür / Format',
+      label: t('contentMetadata.typeFormat'),
       value: content.type?.toUpperCase() || 'MANGA',
     },
     {
       icon: <Globe className="w-4 h-4 text-[var(--accent-color)]" />,
-      label: 'Durum',
+      label: t('contentMetadata.status'),
       value: statusLabel,
     },
     ...(content.release_year
       ? [
           {
             icon: <Calendar className="w-4 h-4 text-[var(--accent-color)]" />,
-            label: 'Yayın Yılı',
+            label: t('contentMetadata.releaseYear'),
             value: String(content.release_year),
           },
         ]
       : []),
     {
       icon: <Star className="w-4 h-4 text-amber-500 fill-amber-500" />,
-      label: 'Puan',
-      value: `${ratingAvg.toFixed(1)} / 10 (${ratingCount.toLocaleString()} oy)`,
+      label: t('contentMetadata.score'),
+      value: t('contentMetadata.scoreValue', {
+        score: ratingAvg.toFixed(1),
+        count: ratingCount.toLocaleString(),
+      }),
     },
     {
       icon: <Eye className="w-4 h-4 text-sky-500" />,
-      label: 'Görüntülenme',
+      label: t('contentMetadata.views'),
       value: viewCount.toLocaleString(),
     },
     {
       icon: <BookOpen className="w-4 h-4 text-emerald-500" />,
-      label: 'Bölüm Sayısı',
-      value: `${chapterCount || content.chapter_count || 0} Bölüm`,
+      label: t('contentMetadata.chapterCount'),
+      value: t('contentMetadata.chapterCountValue', {
+        count: chapterCount || content.chapter_count || 0,
+      }),
     },
   ];
 
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 sm:p-6 flex flex-col gap-4 shadow-sm">
+    <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 sm:p-6 flex flex-col gap-4 shadow-sm transition-colors duration-300">
       <h3 className="font-serif text-lg font-bold text-[var(--text-primary)] border-b border-[var(--border-color)] pb-3">
-        İçerik <span className="italic text-[var(--accent-color)]">Bilgileri</span>
+        {t('contentMetadata.title')}
       </h3>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-xs font-mono">
@@ -114,13 +121,12 @@ export const ContentMetadata: React.FC<ContentMetadataProps> = ({ content, chapt
               {item.icon}
               <span className="truncate">{item.label}</span>
             </div>
-            <span className="font-semibold text-[var(--text-primary)] truncate text-xs sm:text-sm pt-0.5">
+            <span className="font-medium text-[var(--text-primary)] truncate font-sans text-xs">
               {item.value}
             </span>
           </div>
         ))}
       </div>
-
     </div>
   );
 };

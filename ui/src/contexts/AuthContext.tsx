@@ -4,6 +4,8 @@ import { ScenarioType } from '../types/domain';
 import { authService, userService } from '../services';
 import { scenarioManager } from '../mocks/scenarios';
 
+type AuthModalTab = 'login' | 'register' | 'forgot-password';
+
 type AuthContextType = {
   user: UserProfile | null;
   isAuthenticated: boolean;
@@ -15,8 +17,8 @@ type AuthContextType = {
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   isAuthModalOpen: boolean;
-  authModalTab: 'login' | 'register';
-  openAuthModal: (tab?: 'login' | 'register') => void;
+  authModalTab: AuthModalTab;
+  openAuthModal: (tab?: AuthModalTab) => void;
   closeAuthModal: () => void;
   isNotificationsModalOpen: boolean;
   openNotificationsModal: () => void;
@@ -30,10 +32,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [scenario, setScenarioState] = useState<ScenarioType>(scenarioManager.getScenario());
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
+  const [authModalTab, setAuthModalTab] = useState<AuthModalTab>('login');
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState<boolean>(false);
 
-  const openAuthModal = (tab: 'login' | 'register' = 'login') => {
+  const openAuthModal = (tab: AuthModalTab = 'login') => {
     setAuthModalTab(tab);
     setIsAuthModalOpen(true);
   };

@@ -7,9 +7,10 @@ import {
   History,
   Settings,
   LogOut,
+  Globe,
   FileText,
   Bell,
-  Languages,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePreferences } from '../../contexts/PreferencesContext';
@@ -39,8 +40,8 @@ export const AccountMenu: React.FC = () => {
         type="button"
         onClick={() => openAuthModal('login')}
         className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] hover:text-[var(--accent-color)] hover:border-[var(--accent-color)] transition-all cursor-pointer shadow-sm active:scale-95"
-        title="Giriş Yap / Kayıt Ol"
-        aria-label="Giriş Yap veya Kayıt Ol"
+        title={t('navigation.login')}
+        aria-label={t('navigation.login')}
       >
         <User className="w-4 h-4" />
       </button>
@@ -73,7 +74,7 @@ export const AccountMenu: React.FC = () => {
         <div className="absolute right-0 top-full mt-2 w-64 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] shadow-2xl p-2 z-50 animate-in zoom-in-95 transition-colors">
           <div className="p-3 border-b border-[var(--border-color)] mb-1">
             <div className="font-semibold text-sm text-[var(--text-primary)] truncate">
-              {user.username || 'Kullanıcı'}
+              {user.username || t('common.unnamedUser')}
             </div>
             {user.email && (
               <div className="text-xs text-[var(--text-muted)] truncate">{user.email}</div>
@@ -112,7 +113,7 @@ export const AccountMenu: React.FC = () => {
               className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--accent-color)] rounded-lg transition-colors"
             >
               <Coins className="w-4 h-4 text-[var(--accent-color)]" />
-              <span>{t('navigation.wallet')} (180 Coin)</span>
+              <span>{t('navigation.wallet')}</span>
             </Link>
 
             <Link
@@ -150,6 +151,20 @@ export const AccountMenu: React.FC = () => {
               <Settings className="w-4 h-4 text-[var(--text-muted)]" />
               <span>{t('navigation.preferences')}</span>
             </Link>
+
+            {/* Admin / Moderator Panel Link */}
+            {(user.roles?.some((r) => ['admin', 'moderator', 'editor', 'superadmin'].includes(r.toLowerCase())) ||
+              user.permissions?.includes('access_panel') ||
+              user.username === 'admin') && (
+              <a
+                href="/panel"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-amber-500 hover:bg-amber-500/10 rounded-lg transition-colors mt-0.5 border border-amber-500/20"
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-500" />
+                <span>{t('navigation.adminPanel')}</span>
+              </a>
+            )}
           </div>
 
           <div className="my-2 border-t border-[var(--border-color)]" />
@@ -159,7 +174,8 @@ export const AccountMenu: React.FC = () => {
               onClick={() => setLanguage(lang === 'tr' ? 'en' : 'tr')}
               className="flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--text-muted)] hover:text-[var(--accent-color)] cursor-pointer uppercase"
             >
-              <span><Languages className="w-3.5 h-3.5" />: {lang.toUpperCase()}</span>
+              <Globe className="w-3.5 h-3.5" />
+              <span>Dil: {lang.toUpperCase()}</span>
             </button>
           </div>
 

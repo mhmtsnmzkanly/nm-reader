@@ -111,6 +111,9 @@ export type ContentDetailChapter = {
   pages?: ChapterPage[];
   access?: ChapterAccess;
   adjacent_chapters?: { prev: string | null; next: string | null };
+  is_adult?: boolean;
+  is_members_only?: boolean;
+  translator_note?: string | null;
 };
 
 export type ContentSummary = {
@@ -141,6 +144,8 @@ export type ContentSummary = {
   created_at?: string | null;
   type_path?: string;
   url_path?: string;
+  is_adult?: boolean;
+  is_members_only?: boolean;
 };
 
 export type ReadingProgress = {
@@ -229,7 +234,11 @@ export type Chapter = {
   body: string | null;
   pages: ChapterPage[];
   navigation: ChapterNavigation;
+  adjacent_chapters?: { prev: string | null; next: string | null };
   access: ChapterAccess;
+  is_adult?: boolean;
+  is_members_only?: boolean;
+  translator_note?: string | null;
 };
 
 export type ChapterSummary = {
@@ -245,8 +254,12 @@ export type ChapterSummary = {
   access: ChapterAccess;
   price_coin: number;
   is_locked: boolean;
+  is_adult?: boolean;
+  is_members_only?: boolean;
+  translator_note?: string | null;
 };
 
+export type ChapterDetail = Chapter;
 export type ChapterReader = Chapter;
 
 export type ExploreItem = {
@@ -315,6 +328,7 @@ export type BlogItem = {
   content: string;
   stats: BlogStats;
   user_state?: BlogUserState;
+  status?: 'draft' | 'pending' | 'published' | 'rejected' | string;
   // Compatibility fields
   user_id?: string;
   approved?: number;
@@ -349,6 +363,10 @@ export type SearchSuggestItem = {
   slug: string;
   type: ContentType;
   cover_image: string | null;
+  rating_avg?: number;
+  chapter_count?: number;
+  status?: string;
+  author?: string | null;
 };
 
 export type Comment = {
@@ -396,15 +414,33 @@ export type UserActivityItem = {
   created_at: string;
 };
 
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  email_verified?: boolean;
+  display_name?: string;
+  avatar?: string | null;
+  profile_image?: string | null;
+  cover_image?: string | null;
+  bio?: string | null;
+  roles?: string[];
+  permissions?: string[];
+  created_at?: string | null;
+}
+
 export type UserProfile = {
   id: string | null;
   username: string;
   display_name?: string;
   email: string | null;
+  email_verified?: boolean;
   bio: string | null;
   avatar?: string | null;
   profile_image: string | null;
   cover_image: string | null;
+  roles?: string[];
+  permissions?: string[];
   joined_at?: string | null;
   created_at: string | null;
   is_guest: boolean;
@@ -419,6 +455,7 @@ export type AuthPayload = {
   id: string;
   username: string;
   email: string;
+  email_verified?: boolean;
   csrf_token: string;
   refresh_token: string | null;
   api_token: string;
@@ -616,7 +653,15 @@ export type WalletTransaction = {
   created_at: string;
 };
 
-export type TransactionFilterType = 'ALL' | 'CREDIT' | 'PURCHASE' | 'REFUND';
+export type TransactionFilterType =
+  | 'ALL'
+  | 'CREDIT'
+  | 'PURCHASE'
+  | 'REFUND'
+  | 'TOPUP'
+  | 'CHAPTER_UNLOCK'
+  | 'REWARD'
+  | 'AD_FREE';
 export type TransactionSortOption = 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
 
 export type ShopPackage = {
@@ -646,12 +691,16 @@ export type FeatureProduct = {
 export type FeatureEntitlement = {
   id: number;
   feature_key: string;
+  name?: string;
+  description?: string;
   source_type: string;
   source_id: string;
   transaction_id: number;
   starts_at: string;
   expires_at: string;
   created_at: string;
+  is_active?: boolean;
+  badge?: string;
 };
 
 export type FeatureStatusMap = {
@@ -666,23 +715,58 @@ export type FeatureStatusMap = {
 export type SeriesUnlockRow = {
   id: number;
   content_id: string;
-  content_title: string;
+  content_title?: string;
+  title?: string;
+  series_title?: string;
   content_slug: string;
-  content_type: ContentType;
+  series_slug?: string;
+  content_type?: ContentType;
+  type?: ContentType;
   price_coin: number;
   transaction_id: number;
   unlocked_at: string;
+  created_at?: string;
+  cover_image?: string | null;
+  cover?: string | null;
+  chapter_count?: number;
+  author?: string | null;
 };
 
 export type ChapterUnlockRow = {
   id: number;
   content_id: string;
+  content_slug?: string;
+  series_slug?: string;
+  content_title?: string;
+  title?: string;
+  series_title?: string;
+  content_type?: ContentType;
+  type?: ContentType;
+  content_cover?: string | null;
+  cover_image?: string | null;
   chapter_id: string;
-  chapter_number: string;
+  chapter_number: string | number;
   chapter_title: string | null;
   price_coin: number;
   transaction_id: number;
   unlocked_at: string;
+  created_at?: string;
+};
+
+export type FollowingUserItem = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar: string | null;
+  profile_image?: string | null;
+  bio?: string | null;
+  role?: string;
+  followed_at: string;
+  is_following: boolean;
+  followers_count?: number;
+  following_count?: number;
+  reading_count?: number;
+  chapters_read?: number;
 };
 
 export type PublicProfileData = {
@@ -715,7 +799,13 @@ export type UserSession = {
   id: string;
   ip_address: string;
   user_agent: string;
+  device?: string;
+  device_info?: string;
+  location?: string;
   last_activity: string;
+  last_active_at?: string;
+  lastSeen?: string;
   is_current: boolean;
+  current?: boolean;
   created_at: string;
 };

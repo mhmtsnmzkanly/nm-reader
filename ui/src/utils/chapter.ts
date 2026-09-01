@@ -7,9 +7,9 @@ export function normalizeChapter(
   const raw = response?.chapter ?? response?.data ?? response ?? {};
 
   const series = raw.series ?? {
-    id: raw.content_id || fallbackSeries?.id || '',
-    title: fallbackSeries?.title || '',
-    slug: fallbackSeries?.slug || '',
+    id: raw.content_id || fallbackSeries?.id || 'series_001',
+    title: fallbackSeries?.title || 'Series',
+    slug: fallbackSeries?.slug || 'series-slug',
     type: fallbackSeries?.type || 'manga',
   };
 
@@ -49,7 +49,14 @@ export function normalizeChapter(
       previous: nav.previous ? String(nav.previous) : null,
       next: nav.next ? String(nav.next) : null,
     },
+    adjacent_chapters: {
+      prev: nav.previous ? String(nav.previous) : (raw.adjacent_chapters?.prev ? String(raw.adjacent_chapters.prev) : null),
+      next: nav.next ? String(nav.next) : (raw.adjacent_chapters?.next ? String(raw.adjacent_chapters.next) : null),
+    },
     access,
+    is_adult: raw.is_adult ?? false,
+    is_members_only: raw.is_members_only ?? false,
+    translator_note: raw.translator_note ?? null,
   };
 }
 

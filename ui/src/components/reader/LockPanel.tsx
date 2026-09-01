@@ -16,7 +16,7 @@ export const LockPanel: React.FC<LockPanelProps> = ({ chapter, onUnlock }) => {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const coinPrice = chapter.access?.price_coin ?? chapter.price_coin ?? 10;
+  const coinPrice = chapter.access?.price_coin ?? (chapter as any).price_coin ?? chapter.access?.chapter_unlock_price ?? 0;
 
   useEffect(() => {
     const fetchBalance = async () => {
@@ -63,7 +63,7 @@ export const LockPanel: React.FC<LockPanelProps> = ({ chapter, onUnlock }) => {
           {t('reader.lockedContent')}
         </span>
         <h2 className="font-serif text-2xl font-bold text-[var(--text-primary)]">
-          {t('reader.chapterLocked', { number: chapter.chapter_number || chapter.number })}
+          {t('reader.chapterLocked', { number: chapter.chapter_number || (chapter as any).number })}
         </h2>
         <p className="text-xs text-[var(--text-secondary)] font-light max-w-xs leading-relaxed">
           {t('reader.lockedDescription')}
@@ -153,7 +153,7 @@ export const LockPanel: React.FC<LockPanelProps> = ({ chapter, onUnlock }) => {
         )}
 
         <Link
-          to={`/manga/${chapter.series?.slug || chapter.content_slug || ''}`}
+          to={`/manga/${chapter.series?.slug || (chapter as any).content_slug || ''}`}
           className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] font-mono transition-colors pt-1"
         >
           {t('reader.returnToSeries')}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Eye } from 'lucide-react';
+import { Star, Eye, Lock } from 'lucide-react';
 import { ContentSummary } from '../../types/api';
 import { Badge } from '../ui/Badge';
 import { usePreferences } from '../../contexts/PreferencesContext';
@@ -46,12 +46,29 @@ export const ContentCard: React.FC<ContentCardProps> = ({ content, rank }) => {
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent opacity-80 group-hover:opacity-40 transition-opacity" />
 
         {/* Top Badges */}
-        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
+        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10 flex-wrap max-w-[calc(100%-44px)]">
           <Badge variant="gold" size="sm">
             {content.type}
           </Badge>
+          {content.is_adult && (
+            <span
+              className="px-1.5 py-0.5 rounded-md bg-rose-600 text-white font-mono font-bold text-[10px] tracking-wider shadow-sm border border-rose-400/30"
+              title={t('adult.longBadge')}
+            >
+              {t('adult.badge')}
+            </span>
+          )}
+          {content.is_members_only && (
+            <span
+              className="px-1.5 py-0.5 rounded-md bg-purple-600 text-white font-mono font-bold text-[10px] tracking-wider shadow-sm border border-purple-400/30 flex items-center gap-0.5"
+              title={t('membersOnly.badge')}
+            >
+              <Lock className="w-2.5 h-2.5 shrink-0" />
+              <span className="hidden sm:inline">{t('membersOnly.shortBadge')}</span>
+            </span>
+          )}
           {content.status === 'ongoing' && (
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title={t('browse.statusOngoing')} />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" title={t('browse.statusOngoing')} />
           )}
         </div>
 

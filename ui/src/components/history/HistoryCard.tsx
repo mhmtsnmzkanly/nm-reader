@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Play, Trash2, BookOpen, CheckCircle2, Star } from 'lucide-react';
+import { Clock, Play, Trash2, CheckCircle2, Star } from 'lucide-react';
 import { ReadingHistoryItem } from '../../types/api';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -12,14 +12,13 @@ type HistoryCardProps = {
 };
 
 export const HistoryCard: React.FC<HistoryCardProps> = ({ item, onRemove }) => {
-  const { formatDate, formatRelativeTime, t } = usePreferences();
+  const { formatDate, t } = usePreferences();
   const contentSlug = item.content?.slug || item.content_slug || '';
   const contentType = item.content?.type || item.content_type || 'manga';
-  const contentTitle = item.content?.title || item.content_title || 'Başlıksız Seri';
+  const contentTitle = item.content?.title || item.content_title || t('common.untitledSeries');
   const coverImage = item.content?.cover || item.content_cover_image || item.series?.cover;
   const rating = item.content?.rating;
 
-  const chapId = item.chapter?.id || item.chapter_id;
   const chapNum = item.chapter?.number ?? item.chapter_number ?? 1;
   const chapTitle = item.chapter?.title ?? item.chapter_title;
   const progress = item.progress ?? 0;

@@ -3,6 +3,7 @@ import { Coins, Sparkles, Check, X, ShieldCheck, ArrowRight, Loader2 } from 'luc
 import { walletService } from '../../services';
 import { ShopPackage } from '../../types/api';
 import { Button } from '../ui/Button';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type TopUpModalProps = {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = usePreferences();
   const [packages, setPackages] = useState<ShopPackage[]>([]);
   const [selectedPkg, setSelectedPkg] = useState<ShopPackage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +53,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
       const res = await walletService.purchasePackage(selectedPkg.id);
       if (res.status === 'success' && res.data) {
         const total = selectedPkg.coin_amount + selectedPkg.bonus_coin;
-        setSuccessMessage(`+${total} Coin başarıyla cüzdanınıza yüklendi!`);
+        setSuccessMessage(t('topUpModal.successMessage', { total }));
         setTimeout(() => {
           onSuccess(res.data.balance, selectedPkg);
           onClose();
@@ -70,7 +72,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl flex flex-col gap-6 relative"
+        className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl flex flex-col gap-6 relative transition-colors duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -81,16 +83,17 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
             </div>
             <div>
               <span className="text-[10px] uppercase tracking-widest text-[var(--accent-color)] font-mono font-bold">
-                Coin Mağazası
+                {t('topUpModal.badge')}
               </span>
               <h3 className="font-serif font-bold text-lg text-[var(--text-primary)]">
-                Bakiye Yükle
+                {t('topUpModal.title')}
               </h3>
             </div>
           </div>
 
           <button
             onClick={onClose}
+            aria-label="Close"
             className="w-8 h-8 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
@@ -103,7 +106,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
               <Check className="w-8 h-8" />
             </div>
             <h4 className="font-serif text-lg font-bold text-[var(--text-primary)]">
-              İşlem Başarılı!
+              {t('topUpModal.successTitle')}
             </h4>
             <p className="text-xs text-[var(--text-secondary)] max-w-xs">
               {successMessage}
@@ -114,7 +117,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
             {/* Packages Grid */}
             <div className="flex flex-col gap-2.5">
               <label className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">
-                Paket Seçin
+                {t('topUpModal.selectPackage')}
               </label>
 
               {isLoading ? (
@@ -139,7 +142,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
                       >
                         {pkg.is_featured && (
                           <span className="absolute top-3 right-3 text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--accent-color)] text-white">
-                            Popüler
+                            {t('topUpModal.popular')}
                           </span>
                         )}
 
@@ -157,7 +160,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
                           </div>
                           {pkg.bonus_coin > 0 && (
                             <span className="text-[10px] text-emerald-500 font-mono font-semibold block mt-0.5">
-                              +{pkg.bonus_coin} Bonus Coin
+                              {t('topUpModal.bonusCoin', { count: pkg.bonus_coin })}
                             </span>
                           )}
                         </div>
@@ -183,7 +186,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
             {selectedPkg && (
               <div className="flex flex-col gap-3 pt-2">
                 <div className="p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-between text-xs font-mono">
-                  <span className="text-[var(--text-muted)]">Ödenecek Tutar:</span>
+                  <span className="text-[var(--text-muted)]">{t('topUpModal.amountToPay')}</span>
                   <span className="font-bold text-sm text-[var(--text-primary)]">
                     ₺{selectedPkg.display_price} {selectedPkg.currency}
                   </span>
@@ -195,18 +198,21 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
                   fullWidth
                   disabled={isPurchasing}
                   onClick={handlePurchase}
-                  className="gap-2 bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold shadow-lg shadow-[var(--accent-color)]/25 py-3"
+                  className="gap-2 bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold shadow-lg shadow-[var(--accent-color)]/25 py-3 cursor-pointer"
                 >
                   {isPurchasing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>İşlem Yapılıyor...</span>
+                      <span>{t('topUpModal.processing')}</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 text-white" />
                       <span>
-                        ₺{selectedPkg.display_price} ile {selectedPkg.coin_amount + selectedPkg.bonus_coin} Coin Yükle
+                        {t('topUpModal.loadCoinsCta', {
+                          price: selectedPkg.display_price,
+                          total: selectedPkg.coin_amount + selectedPkg.bonus_coin,
+                        })}
                       </span>
                       <ArrowRight className="w-4 h-4 text-white ml-1" />
                     </>
@@ -215,7 +221,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
 
                 <div className="flex items-center justify-center gap-1.5 text-[10px] text-[var(--text-muted)] font-mono">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Güvenli 256-Bit SSL Şifreli Ödeme Altyapısı</span>
+                  <span>{t('topUpModal.sslSecure')}</span>
                 </div>
               </div>
             )}

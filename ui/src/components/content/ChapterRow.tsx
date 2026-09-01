@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, CheckCircle, FileText, Image as ImageIcon, Sparkles } from 'lucide-react';
-import { ContentDetailChapter, ContentType } from '../../types/api';
+import { ContentDetailChapter, ChapterSummary, ContentType } from '../../types/api';
 import { Badge } from '../ui/Badge';
 import { usePreferences } from '../../contexts/PreferencesContext';
 
 type ChapterRowProps = {
-  chapter: ContentDetailChapter;
+  chapter: ContentDetailChapter | ChapterSummary | any;
   contentType: ContentType;
   contentSlug: string;
   isLastRead?: boolean;
@@ -64,7 +64,7 @@ export const ChapterRow: React.FC<ChapterRowProps> = ({
                   : 'text-[var(--text-primary)] group-hover:text-[var(--accent-color)]'
               }`}
             >
-              {t('content.chapter', { number: chapNum })}
+              {t('chapters.chapterNumber', { number: chapNum })}
             </span>
 
             {chapter.title && (
@@ -76,8 +76,27 @@ export const ChapterRow: React.FC<ChapterRowProps> = ({
             {isLastRead && (
               <Badge variant="gold" size="sm" className="gap-1 animate-pulse">
                 <Sparkles className="w-3 h-3" />
-                <span>{t('chapters.lastChapter')}</span>
+                <span>{t('chapters.lastRead')}</span>
               </Badge>
+            )}
+
+            {chapter.is_adult && (
+              <span
+                className="px-1.5 py-0.5 rounded-md bg-rose-600 text-white font-mono font-bold text-[10px] tracking-wider border border-rose-400/30"
+                title={t('adult.longBadge')}
+              >
+                {t('adult.badge')}
+              </span>
+            )}
+
+            {chapter.is_members_only && (
+              <span
+                className="px-1.5 py-0.5 rounded-md bg-purple-600 text-white font-mono font-bold text-[10px] tracking-wider border border-purple-400/30 inline-flex items-center gap-0.5"
+                title={t('membersOnly.badge')}
+              >
+                <Lock className="w-2.5 h-2.5" />
+                <span>{t('membersOnly.badge')}</span>
+              </span>
             )}
           </div>
 
@@ -100,12 +119,13 @@ export const ChapterRow: React.FC<ChapterRowProps> = ({
             className="gap-1.5 py-1 px-2.5 font-mono cursor-pointer hover:scale-105 transition-transform"
           >
             <Lock className="w-3.5 h-3.5 text-amber-500" />
-            <span>{chapter.price_coin || 10} Coin</span>
+            <span>{chapter.price_coin || 10} {t('wallet.coin')}</span>
           </Badge>
         ) : (
           <div className="flex items-center gap-1 text-xs font-mono text-emerald-500 font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
             <CheckCircle className="w-3.5 h-3.5" />
-            <span className="sm:hidden">{t('chapters.readAction')}</span>
+            <span className="hidden sm:inline">{t('chapters.free')}</span>
+            <span className="sm:hidden">{t('chapters.read')}</span>
           </div>
         )}
       </div>

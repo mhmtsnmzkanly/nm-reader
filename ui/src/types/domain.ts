@@ -25,11 +25,12 @@ export type ScenarioType =
   | 'insufficient_coins'
   | 'network_error'
   | 'empty_data'
-  | 'forbidden_commenting';
+  | 'forbidden_commenting'
+  | 'maintenance';
 
 export type ReaderSettingsState = UserPreferences['reader'];
 
-export type ProfileTab = 'overview' | 'library' | 'history' | 'following' | 'activity';
+export type ProfileTab = 'overview' | 'library' | 'history' | 'following' | 'sessions' | 'activity';
 
 export type FilterState = {
   type?: ContentType | 'all';

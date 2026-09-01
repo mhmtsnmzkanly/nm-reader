@@ -1,9 +1,15 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import fs from "fs";
 import { defineConfig } from "vite";
 
 export default defineConfig(() => {
+  // Projede app.html veya index.html hangisi varsa giriş olarak kullan
+  const inputHtml = fs.existsSync(path.resolve(__dirname, "app.html"))
+    ? path.resolve(__dirname, "app.html")
+    : path.resolve(__dirname, "index.html");
+
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -15,7 +21,7 @@ export default defineConfig(() => {
       outDir: path.resolve(__dirname, "../public"),
       emptyOutDir: false,
       rollupOptions: {
-        input: path.resolve(__dirname, "app.html"),
+        input: inputHtml,
         output: {
           // --- 1. DOSYA ADLANDIRMA VE KLASÖRLEME ---
           entryFileNames: "assets/js/[hash]/[name].js",
@@ -25,9 +31,10 @@ export default defineConfig(() => {
           assetFileNames: (assetInfo) => {
             const name = assetInfo.name || "";
 
-            // index.html to app.html for backend
-            if (name === 'index.html')
-              return 'app.html';
+            // index.html to app.html for backend if needed
+            if (name === "index.html" || name === "app.html") {
+              return "app.html";
+            }
 
             if (/\.(woff|woff2|eot|ttf|otf)$/i.test(name)) {
               return "assets/fonts/[hash]/[name][extname]";
@@ -43,21 +50,21 @@ export default defineConfig(() => {
           },
 
           // --- 2. CHUNK BÖLME (MANUAL CHUNKS) ---
+          // React hook/context uyumsuzluğunu önleyecek şekilde izole chunking
           manualChunks(id) {
             if (id.includes("node_modules")) {
-              // React çekirdek kütüphanelerini ayrı bir chunk yap
               if (
-                id.includes("react") ||
-                id.includes("react-dom") ||
-                id.includes("react-router")
+                id.includes("/react/") ||
+                id.includes("/react-dom/") ||
+                id.includes("/react-router/") ||
+                id.includes("/react-router-dom/") ||
+                id.includes("/scheduler/")
               ) {
                 return "react";
               }
-              // Büyük ikon veya UI kütüphaneleri varsa ayırabilirsiniz (örnek: lucide-react)
               if (id.includes("lucide-react")) {
                 return "lucide";
               }
-              // Geriye kalan diğer üçüncü parti kütüphaneler
               return "vendor";
             }
           },

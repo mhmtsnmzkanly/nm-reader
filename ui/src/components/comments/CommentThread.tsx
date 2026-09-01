@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import { Comment } from '../../types/api';
 import { CommentComposer } from './CommentComposer';
+import { ReportButton } from '../feedback/ReportButton';
 import { usePreferences } from '../../contexts/PreferencesContext';
 
 type CommentThreadProps = {
@@ -42,6 +43,14 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
               {formatRelativeTime(comment.created_at || '')}
             </span>
           </div>
+
+          <ReportButton
+            targetType="comment"
+            targetId={comment.id}
+            targetTitle={comment.body ? `${comment.username}: ${comment.body.substring(0, 30)}...` : comment.username}
+            variant="icon"
+            className="p-1 rounded-lg text-[var(--text-muted)] hover:text-amber-500 hover:bg-amber-500/10"
+          />
         </div>
 
         {/* Comment Body */}
@@ -84,7 +93,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
         {replyingTo === comment.id && (
           <div className="mt-3">
             <CommentComposer
-              placeholder={t('comments.replyingTo', { user: comment.username })}
+              placeholder={t('comments.replyToUser', { user: comment.username })}
               onSubmit={async (content, isSpoiler) => {
                 await onAddComment(content, isSpoiler, comment.id);
                 setReplyingTo(null);

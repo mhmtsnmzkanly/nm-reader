@@ -5,9 +5,11 @@ class ScenarioManager {
   private listeners: Array<(s: ScenarioType) => void> = [];
 
   constructor() {
-    const saved = localStorage.getItem('nm_reader_scenario');
-    if (saved) {
-      this.currentScenario = saved as ScenarioType;
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('nm_reader_scenario');
+      if (saved) {
+        this.currentScenario = saved as ScenarioType;
+      }
     }
   }
 
@@ -17,7 +19,9 @@ class ScenarioManager {
 
   public setScenario(scenario: ScenarioType): void {
     this.currentScenario = scenario;
-    localStorage.setItem('nm_reader_scenario', scenario);
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      localStorage.setItem('nm_reader_scenario', scenario);
+    }
     this.listeners.forEach((fn) => fn(scenario));
   }
 

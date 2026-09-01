@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Edit3, UserCheck, UserPlus, Sparkles, BookOpen, Bookmark, MessageSquare, Layers } from 'lucide-react';
+import { Calendar, Edit3, UserCheck, UserPlus, BookOpen, Bookmark, MessageSquare, Layers } from 'lucide-react';
 import { UserProfile } from '../../types/api';
 import { Avatar } from './Avatar';
 import { Button } from '../ui/Button';
@@ -25,7 +25,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   className = '',
 }) => {
   const { formatDate, t } = usePreferences();
-  const displayName = user.display_name || user.username || 'Kullanıcı';
+  const displayName = user.display_name || user.username || t('profile.defaultUser');
   const username = user.username || 'user';
   const avatar = user.avatar || user.profile_image;
   const cover = user.cover_image || 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=1200&auto=format&fit=crop&q=80';
@@ -37,16 +37,16 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         month: 'long',
         year: 'numeric',
       })
-    : '2025';
+    : '';
 
-  const stats = user.stats || {
-    chapters_read: 1284,
-    series_following: 34,
-    library_count: 52,
-    comments: 86,
-    score: 1420,
-    followers_count: 89,
-    following_count: 14,
+  const stats = {
+    chapters_read: user.stats?.chapters_read ?? 0,
+    series_following: user.stats?.series_following ?? 0,
+    library_count: user.stats?.library_count ?? 0,
+    comments: user.stats?.comments ?? (user.stats as any)?.comments_count ?? 0,
+    score: user.stats?.score ?? 0,
+    followers_count: user.stats?.followers_count ?? 0,
+    following_count: user.stats?.following_count ?? 0,
   };
 
   return (
@@ -87,7 +87,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </span>
                 {user.is_guest && (
                   <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 text-[10px] font-bold uppercase">
-                    Misafir
+                    {t('profile.guestBadge')}
                   </span>
                 )}
               </div>
@@ -96,21 +96,21 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <div className="flex items-center gap-4 text-xs text-[var(--text-muted)] font-mono flex-wrap mt-0.5">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-[var(--accent-color)]" />
-                  <span>{formattedJoinDate} tarihinde katıldı</span>
+                  <span>{t('profile.joinedAt', { date: formattedJoinDate })}</span>
                 </span>
                 <span>•</span>
                 <span className="text-[var(--text-secondary)]">
                   <strong className="text-[var(--text-primary)] font-bold">
                     {stats.followers_count ?? 0}
                   </strong>{' '}
-                  Takipçi
+                  {t('profile.followers')}
                 </span>
                 <span>•</span>
                 <span className="text-[var(--text-secondary)]">
                   <strong className="text-[var(--text-primary)] font-bold">
                     {stats.following_count ?? 0}
                   </strong>{' '}
-                  Takip
+                  {t('profile.following')}
                 </span>
               </div>
             </div>
@@ -126,7 +126,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 className="w-full sm:w-auto gap-2 rounded-xl"
               >
                 <Edit3 className="w-4 h-4 text-[var(--accent-color)]" />
-                <span>Profili Düzenle</span>
+                <span>{t('profile.editProfileBtn')}</span>
               </Button>
             ) : (
               <Button
@@ -139,12 +139,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 {isFollowing ? (
                   <>
                     <UserCheck className="w-4 h-4 text-emerald-500" />
-                    <span>Takip Ediliyor</span>
+                    <span>{t('profile.followingStatus')}</span>
                   </>
                 ) : (
                   <>
                     <UserPlus className="w-4 h-4" />
-                    <span>Takip Et</span>
+                    <span>{t('profile.followUser')}</span>
                   </>
                 )}
               </Button>
@@ -161,8 +161,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           ) : (
             <p className="text-xs text-[var(--text-muted)] italic">
               {isOwnProfile
-                ? 'Henüz bir biyografi eklenmemiş. Kendinizi tanıtmak için profili düzenleyin.'
-                : 'Bu kullanıcı henüz bir biyografi eklemedi.'}
+                ? t('profile.noBioOwn')
+                : t('profile.noBioOther')}
             </p>
           )}
         </div>
@@ -175,10 +175,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Okunan Bölüm
+                {t('profile.chaptersRead')}
               </span>
               <span className="font-serif text-lg font-bold text-[var(--text-primary)]">
-                {(stats.chapters_read ?? 0).toLocaleString('tr-TR')}
+                {(stats.chapters_read ?? 0).toLocaleString()}
               </span>
             </div>
           </div>
@@ -189,7 +189,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Kütüphane
+                {t('profile.library')}
               </span>
               <span className="font-serif text-lg font-bold text-[var(--text-primary)]">
                 {stats.library_count ?? 0}
@@ -203,7 +203,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Takip Edilen
+                {t('profile.followingCount')}
               </span>
               <span className="font-serif text-lg font-bold text-[var(--text-primary)]">
                 {stats.series_following ?? 0}
@@ -217,10 +217,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Yorumlar
+                {t('profile.comments')}
               </span>
               <span className="font-serif text-lg font-bold text-[var(--text-primary)]">
-                {stats.comments ?? stats.comments_count ?? 0}
+                {stats.comments ?? (stats as any).comments_count ?? 0}
               </span>
             </div>
           </div>

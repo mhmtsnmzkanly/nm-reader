@@ -1,20 +1,21 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Bookmark, Filter, ArrowUpDown, Compass, Sparkles, AlertCircle } from 'lucide-react';
+import { Bookmark, ArrowUpDown, Compass, AlertCircle } from 'lucide-react';
 import { userService, contentService } from '../services';
 import { LibraryItem, ContentType } from '../types/api';
 import { LibraryCard } from '../components/library/LibraryCard';
 import { Pagination } from '../components/feedback/Pagination';
 import { EmptyState } from '../components/feedback/EmptyState';
 import { ErrorState } from '../components/feedback/ErrorState';
-import { Skeleton } from '../components/feedback/Skeleton';
 import { Dialog } from '../components/ui/Dialog';
 import { Button } from '../components/ui/Button';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 type FilterType = 'all' | 'manga' | 'manhwa' | 'novel';
 type SortType = 'recently_added' | 'recently_read' | 'title' | 'rating';
 
 export const LibraryPage: React.FC = () => {
+  const { t } = usePreferences();
   const [library, setLibrary] = useState<LibraryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,14 +44,14 @@ export const LibraryPage: React.FC = () => {
           setTotalCount(Number(res.meta.total) || res.data.length);
         }
       } else {
-        setError(res.error?.message || 'Kütüphane yüklenirken bir hata oluştu.');
+        setError(res.error?.message || t('library.loadError'));
       }
     } catch {
-      setError('Bağlantı hatası meydana geldi. Lütfen tekrar deneyin.');
+      setError(t('library.networkError'));
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, activeFilter, activeSort]);
+  }, [currentPage, activeFilter, activeSort, t]);
 
   useEffect(() => {
     fetchLibrary();
@@ -102,17 +103,17 @@ export const LibraryPage: React.FC = () => {
   };
 
   const filterTabs: { key: FilterType; label: string }[] = [
-    { key: 'all', label: 'Tümü' },
+    { key: 'all', label: t('common.activeAll') },
     { key: 'manga', label: 'Manga' },
     { key: 'manhwa', label: 'Manhwa / Webtoon' },
-    { key: 'novel', label: 'Roman & LN' },
+    { key: 'novel', label: 'Novel' },
   ];
 
   const sortOptions: { key: SortType; label: string }[] = [
-    { key: 'recently_added', label: 'En Son Eklenenler' },
-    { key: 'recently_read', label: 'Son Okuma Durumu' },
-    { key: 'title', label: 'Başlık (A-Z)' },
-    { key: 'rating', label: 'Puan (Yüksekten Düşüğe)' },
+    { key: 'recently_added', label: t('library.sortRecent') },
+    { key: 'recently_read', label: t('library.sortReading') },
+    { key: 'title', label: t('library.sortTitle') },
+    { key: 'rating', label: t('library.sortRating') },
   ];
 
   return (
@@ -122,24 +123,24 @@ export const LibraryPage: React.FC = () => {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--accent-color)] font-bold">
-              Kişisel Koleksiyon
+              {t('library.personalCollection')}
             </span>
             <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-[var(--accent-light)] text-[var(--accent-color)]">
-              {totalCount} Seri
+              {t('common.seriesCount', { count: totalCount })}
             </span>
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-            Kütüphanem
+            {t('library.libraryTitle')}
           </h1>
           <p className="text-sm text-[var(--text-secondary)] font-light max-w-xl">
-            Kaydettiğiniz tüm serileri, okuma ilerlemenizi ve son kalınan bölümleri buradan yönetebilirsiniz.
+            {t('library.librarySubtitle')}
           </p>
         </div>
 
         <Link to="/browse">
           <Button variant="outline" size="sm" className="gap-2 cursor-pointer w-full sm:w-auto">
             <Compass className="w-4 h-4 text-[var(--accent-color)]" />
-            <span>Yeni Seriler Keşfet</span>
+            <span>{t('library.discoverNew')}</span>
           </Button>
         </Link>
       </div>
@@ -176,7 +177,7 @@ export const LibraryPage: React.FC = () => {
               setActiveSort(e.target.value as SortType);
               setCurrentPage(1);
             }}
-            aria-label="Sıralama Ölçütü"
+            aria-label={t('library.sortCriteria')}
             className="w-full sm:w-auto bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl px-3 py-1.5 text-xs font-mono font-medium focus:outline-none focus:border-[var(--accent-color)] cursor-pointer"
           >
             {sortOptions.map((opt) => (
@@ -205,7 +206,7 @@ export const LibraryPage: React.FC = () => {
         </div>
       ) : error ? (
         <ErrorState
-          title="Kütüphane Yüklenemedi"
+          title={t('feedback.errorTitle')}
           message={error}
           onRetry={fetchLibrary}
         />
@@ -213,15 +214,15 @@ export const LibraryPage: React.FC = () => {
         <EmptyState
           title={
             activeFilter === 'all'
-              ? 'Kütüphanenizde Henüz İçerik Yok'
-              : 'Bu Filtreye Uygun Seri Bulunamadı'
+              ? t('library.emptyTitle')
+              : t('library.emptyFilteredTitle')
           }
           description={
             activeFilter === 'all'
-              ? 'Beğendiğiniz serileri kütüphanenize ekleyerek okuma sürecinizi takip edebilir, kaldığınız bölümden okumaya devam edebilirsiniz.'
-              : 'Seçtiğiniz kategoride kütüphanenize eklenmiş bir seri bulunmuyor. Farklı bir filtre seçebilir veya serileri keşfedebilirsiniz.'
+              ? t('library.emptyDesc')
+              : t('library.emptyFilteredDesc')
           }
-          actionLabel="Serileri Keşfet"
+          actionLabel={t('library.exploreCta')}
           onAction={() => window.location.assign('/browse')}
           icon={<Bookmark className="w-12 h-12 text-[var(--accent-color)]" />}
         />
@@ -258,7 +259,7 @@ export const LibraryPage: React.FC = () => {
       <Dialog
         isOpen={Boolean(itemToRemove)}
         onClose={() => !isRemoving && setItemToRemove(null)}
-        title="Kütüphaneden Kaldır"
+        title={t('library.removeModalTitle')}
       >
         <div className="flex flex-col gap-4">
           <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
@@ -267,7 +268,7 @@ export const LibraryPage: React.FC = () => {
               <strong className="text-[var(--text-primary)] font-semibold font-serif">
                 {itemToRemove?.content.title}
               </strong>{' '}
-              serisini kütüphanenizden kaldırmak istediğinize emin misiniz? (Okuma ilerleme geçmişiniz profilinizde saklanmaya devam edecektir.)
+              {t('library.removeConfirmDesc')}
             </p>
           </div>
 
@@ -279,7 +280,7 @@ export const LibraryPage: React.FC = () => {
               onClick={() => setItemToRemove(null)}
               className="cursor-pointer"
             >
-              Vazgeç
+              {t('common.cancelAlt')}
             </Button>
             <Button
               variant="danger"
@@ -288,7 +289,7 @@ export const LibraryPage: React.FC = () => {
               onClick={handleConfirmRemove}
               className="cursor-pointer bg-rose-600 hover:bg-rose-700 text-white"
             >
-              {isRemoving ? 'Kaldırılıyor...' : 'Evet, Kaldır'}
+              {isRemoving ? t('library.removing') : t('library.removeConfirmBtn')}
             </Button>
           </div>
         </div>

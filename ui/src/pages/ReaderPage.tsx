@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { Chapter, ContentType } from '../types/api';
 import { fetchChapter } from '../services/chapterService';
 import { contentService, userService } from '../services';
 import { getReadingProgress, chapterUrl } from '../utils/chapter';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useAuth } from '../contexts/AuthContext';
+import { AdultGateModal, isAdultConfirmed } from '../components/content/AdultGateModal';
+import { MembersOnlyLock } from '../components/content/MembersOnlyLock';
 
 import { ReaderHeader } from '../components/reader/ReaderChrome';
 import { NovelReader } from '../components/reader/TextReader';
@@ -13,6 +16,7 @@ import { MangaReader } from '../components/reader/ImageReader';
 import { LockedChapter } from '../components/reader/LockPanel';
 import { ReaderLoading, ReaderError } from '../components/reader/ReaderStates';
 import { ReaderSettings } from '../components/reader/ReaderSettings';
+import { ChapterComments } from '../components/reader/ChapterComments';
 
 export const ChapterReader: React.FC = () => {
   const navigate = useNavigate();
@@ -27,7 +31,8 @@ export const ChapterReader: React.FC = () => {
   const slug = params.slug || '';
   const number = params.chapterNumber || params.number || '1';
 
-  const { readerSettings } = usePreferences();
+  const { readerSettings, t } = usePreferences();
+  const { user } = useAuth();
 
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -36,6 +41,7 @@ export const ChapterReader: React.FC = () => {
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [bookmarked, setBookmarked] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isAdultConfirmedState, setIsAdultConfirmedState] = useState(() => isAdultConfirmed());
 
   // Load chapter data & initial follow/bookmark status
   const loadChapter = useCallback(async () => {
@@ -64,15 +70,15 @@ export const ChapterReader: React.FC = () => {
         chapterNumber: data.chapter_number || number,
         chapterTitle: data.title,
         page: 1,
-        totalPages: data.pages?.length || 1,
+        totalPages: data.pages?.length || 20,
         progress: 10,
       });
     } catch (err: any) {
-      setError(err?.message || 'Bölüm yüklenemedi.');
+      setError(err?.message || t('reader.errorTitle'));
     } finally {
       setLoading(false);
     }
-  }, [type, slug, number]);
+  }, [type, slug, number, t]);
 
   useEffect(() => {
     loadChapter();
@@ -160,12 +166,12 @@ export const ChapterReader: React.FC = () => {
   }
 
   if (error || !chapter) {
-    return <ReaderError message={error || 'Bölüm yüklenemedi.'} onRetry={loadChapter} />;
+    return <ReaderError message={error || t('reader.errorTitle')} onRetry={loadChapter} />;
   }
 
   const isChapterLocked = chapter.access?.locked || !chapter.access?.granted;
-  const prevChap = chapter.navigation?.previous;
-  const nextChap = chapter.navigation?.next;
+  const prevChap = chapter.adjacent_chapters?.prev ?? chapter.navigation?.previous ?? null;
+  const nextChap = chapter.adjacent_chapters?.next ?? chapter.navigation?.next ?? null;
   const totalPages = chapter.pages?.length || 0;
 
   const handleNextChapter = () => {
@@ -198,47 +204,75 @@ export const ChapterReader: React.FC = () => {
 
       {/* Main Reader Content Area */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-4 flex flex-col justify-center">
-        {isChapterLocked ? (
+        {chapter.is_members_only && !user ? (
+          <MembersOnlyLock className="my-8" />
+        ) : isChapterLocked ? (
           <LockedChapter chapter={chapter} onUnlock={handleUnlock} />
-        ) : chapter.type === 'text' ? (
-          <NovelReader chapter={chapter} readerSettings={readerSettings} />
         ) : (
-          <MangaReader
-            chapter={chapter}
-            readerSettings={readerSettings}
-            currentPageIndex={currentPageIndex}
-            onPageChange={setCurrentPageIndex}
-            onNextChapter={nextChap ? handleNextChapter : undefined}
-            onPrevChapter={prevChap ? handlePrevChapter : undefined}
-            isSettingsOpen={isSettingsOpen}
-          />
+          <>
+            {/* Translator Note Banner */}
+            {chapter.translator_note && (
+              <div className="my-4 max-w-4xl mx-auto w-full p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 shadow-sm">
+                <span className="font-bold flex items-center gap-2 mb-1 text-amber-400">
+                  <Info className="w-4 h-4 text-amber-400" />
+                  {t('reader.translatorNote') || 'Çevirmen Notu:'}
+                </span>
+                <p className="text-sm text-[var(--text-primary)] whitespace-pre-line leading-relaxed">
+                  {chapter.translator_note}
+                </p>
+              </div>
+            )}
+
+            {chapter.type === 'text' ? (
+              <NovelReader chapter={chapter} readerSettings={readerSettings} />
+            ) : (
+              <MangaReader
+                chapter={chapter}
+                readerSettings={readerSettings}
+                currentPageIndex={currentPageIndex}
+                onPageChange={setCurrentPageIndex}
+                onNextChapter={nextChap ? handleNextChapter : undefined}
+                onPrevChapter={prevChap ? handlePrevChapter : undefined}
+                isSettingsOpen={isSettingsOpen}
+              />
+            )}
+          </>
         )}
 
         {/* End of Chapter Navigation Widget */}
-        {!isChapterLocked && (
-          <div className="max-w-2xl mx-auto w-full mt-8 pt-8 border-t border-[var(--border-color)] flex items-center justify-between gap-4 px-4">
-            <button
-              disabled={!prevChap}
-              onClick={handlePrevChapter}
-              className="py-3 px-5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Önceki Bölüm</span>
-            </button>
+        {!isChapterLocked && (!chapter.is_members_only || user) && (
+          <>
+            <div className="max-w-2xl mx-auto w-full mt-8 pt-8 border-t border-[var(--border-color)] flex items-center justify-between gap-4 px-4">
+              <button
+                disabled={!prevChap}
+                onClick={handlePrevChapter}
+                className="py-3 px-5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2 active:scale-95 shadow-sm"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>{t('reader.prevChapter')}</span>
+              </button>
 
-            <span className="text-xs font-mono text-[var(--text-muted)]">
-              Bölüm {chapter.chapter_number}
-            </span>
+              <span className="text-xs font-mono text-[var(--text-muted)]">
+                {t('chapters.chapterNumber', { number: chapter.chapter_number })}
+              </span>
 
-            <button
-              disabled={!nextChap}
-              onClick={handleNextChapter}
-              className="py-3 px-5 rounded-xl bg-[var(--accent-color)] text-white text-xs font-bold hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-[var(--accent-color)]/20 active:scale-95"
-            >
-              <span>Sonraki Bölüm</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+              <button
+                disabled={!nextChap}
+                onClick={handleNextChapter}
+                className="py-3 px-5 rounded-xl bg-[var(--accent-color)] text-white text-xs font-bold hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-[var(--accent-color)]/20 active:scale-95"
+              >
+                <span>{t('reader.nextChapter')}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Chapter Comments Section */}
+            <ChapterComments
+              chapterId={String(chapter.id)}
+              chapterNumber={chapter.chapter_number}
+              seriesSlug={slug}
+            />
+          </>
         )}
       </main>
 
@@ -248,6 +282,21 @@ export const ChapterReader: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)}
         mode={chapter.type === 'text' ? 'text' : 'image'}
       />
+
+      {/* Adult Content Warning Modal */}
+      {chapter.is_adult && !isAdultConfirmedState && (
+        <AdultGateModal
+          isOpen={true}
+          onConfirm={() => setIsAdultConfirmedState(true)}
+          onCancel={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate(`/${type}/${slug}`);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

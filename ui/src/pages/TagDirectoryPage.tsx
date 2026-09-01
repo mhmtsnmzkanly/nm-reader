@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { contentService } from '../services';
 import { Tag } from '../types/api';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 export const TagDirectoryPage: React.FC = () => {
+  const { t } = usePreferences();
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,10 +27,10 @@ export const TagDirectoryPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8 transition-colors duration-300">
       <div className="border-b border-[var(--border-color)] pb-6">
         <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--accent-color)] font-bold">
-          Etiketler
+          {t('navigation.tags')}
         </span>
         <h1 className="font-serif text-3xl font-bold text-[var(--text-primary)]">
-          Etiket <span className="italic text-[var(--accent-color)]">Listesi</span>
+          {t('tag.directoryTitle')}
         </h1>
       </div>
 
@@ -51,7 +53,7 @@ export const TagDirectoryPage: React.FC = () => {
                   #{tag.name}
                 </span>
                 <span className="text-[10px] text-[var(--text-muted)]">
-                  {tag.content_count || 0} İçerik
+                  {t('common.contentsCount', { count: tag.content_count || 0 })}
                 </span>
               </div>
               <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent-color)] transition-colors" />

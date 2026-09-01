@@ -3,9 +3,12 @@ import { useParams, Link } from 'react-router-dom';
 import { contentService } from '../services';
 import { ChapterSummary, ContentType } from '../types/api';
 import { ChapterRow } from '../components/content/ChapterRow';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 export const ChapterListPage: React.FC = () => {
+  const { t } = usePreferences();
   const { type = 'manga', slug = '' } = useParams<{ type: string; slug: string }>();
+  const [contentTitle, setContentTitle] = useState<string>('');
   const [chapters, setChapters] = useState<ChapterSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -14,12 +17,23 @@ export const ChapterListPage: React.FC = () => {
 
     const fetchChapters = async () => {
       setIsLoading(true);
-      const res = await contentService.getChapters(type as ContentType, slug);
+      try {
+        const [chapRes, detailRes] = await Promise.all([
+          contentService.getChapters(type as ContentType, slug),
+          contentService.getContentDetail(type as ContentType, slug),
+        ]);
 
-      if (res.status === 'success') {
-        setChapters(res.data);
+        if (chapRes.status === 'success') {
+          setChapters(chapRes.data);
+        }
+        if (detailRes.status === 'success' && detailRes.data) {
+          setContentTitle(detailRes.data.title);
+        }
+      } catch {
+        // ignore
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchChapters();
@@ -33,10 +47,10 @@ export const ChapterListPage: React.FC = () => {
             to={`/${type}/${slug}`}
             className="text-xs font-mono uppercase text-[var(--accent-color)] hover:underline"
           >
-            &larr; Seri Detayına Dön
+            &larr; {t('chapter.backToSeries')}
           </Link>
           <h1 className="font-serif text-3xl text-[var(--text-primary)] font-bold capitalize mt-1">
-            {slug.replace('-', ' ')} <span className="italic text-[var(--accent-color)]">Bölümleri</span>
+            {contentTitle || slug.replace(/-/g, ' ')} <span className="italic text-[var(--accent-color)]">{t('content.chapters')}</span>
           </h1>
         </div>
       </div>
@@ -49,7 +63,7 @@ export const ChapterListPage: React.FC = () => {
         </div>
       ) : chapters.length === 0 ? (
         <div className="p-12 text-center text-[var(--text-muted)] font-mono text-xs border border-dashed border-[var(--border-color)] rounded-2xl">
-          Henüz eklenmiş bir bölüm yok.
+          {t('content.noChapters')}
         </div>
       ) : (
         <div className="flex flex-col gap-2">

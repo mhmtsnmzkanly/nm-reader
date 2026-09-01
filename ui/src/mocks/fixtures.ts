@@ -16,6 +16,7 @@ import {
   ChapterUnlockRow,
   UserProfile,
   UserSession,
+  FollowingUserItem,
   HomeData,
   FeatureEntitlement,
   LibraryItem,
@@ -191,6 +192,8 @@ export const mockContentSummaries: ContentSummary[] = [
     created_at: '2026-02-10 11:00:00',
     type_path: 'light-novel',
     url_path: '/light-novel/overlord-of-the-abyss',
+    is_adult: true,
+    is_members_only: false,
   },
   {
     id: 'f6g7h8',
@@ -214,6 +217,8 @@ export const mockContentSummaries: ContentSummary[] = [
     created_at: '2026-02-15 09:00:00',
     type_path: 'web-novel',
     url_path: '/web-novel/shadow-slave-chronicles',
+    is_adult: false,
+    is_members_only: true,
   },
   {
     id: 'g7h8i9',
@@ -356,6 +361,61 @@ export const mockContentDetails: Record<string, ContentDetail> = {
     is_series_unlocked: false,
     has_any_premium: true,
   },
+  'shadow-slave-chronicles': {
+    ...mockContentSummaries[6],
+    genres: [
+      { id: 1, name: 'Action', slug: 'action', ui_config: { icon: 'Zap' } },
+      { id: 2, name: 'Fantasy', slug: 'fantasy', ui_config: { icon: 'Sparkles' } },
+    ],
+    tags: [
+      { id: 104, name: 'Monsters', slug: 'monsters', ui_config: {} },
+      { id: 105, name: 'Level Up', slug: 'level-up', ui_config: {} },
+    ],
+    series_genres: [mockGenres[0], mockGenres[1]],
+    series_tags: [mockTags[3], mockTags[4]],
+    user_state: {
+      is_following: true,
+      is_in_library: true,
+      last_read_chapter_id: 'ch12ss',
+      last_read_chapter_number: 12,
+      last_read_progress: 100,
+    },
+    reading_progress: {
+      last_chapter_id: 'ch12ss',
+      last_page: 1,
+      updated_at: '2026-08-10 22:15:00',
+    },
+    series_unlock_price: 100,
+    is_series_unlocked: false,
+    has_any_premium: true,
+  },
+  'the-count-of-monte-cristo': {
+    ...mockContentSummaries[7],
+    genres: [
+      { id: 3, name: 'Romance', slug: 'romance', ui_config: { icon: 'Heart' } },
+      { id: 5, name: 'Mystery', slug: 'mystery', ui_config: { icon: 'Compass' } },
+    ],
+    tags: [
+      { id: 101, name: 'Classic', slug: 'classic', ui_config: {} },
+    ],
+    series_genres: [mockGenres[2], mockGenres[4]],
+    series_tags: [mockTags[0]],
+    user_state: {
+      is_following: false,
+      is_in_library: true,
+      last_read_chapter_id: 'ch01mc',
+      last_read_chapter_number: 1,
+      last_read_progress: 40,
+    },
+    reading_progress: {
+      last_chapter_id: 'ch01mc',
+      last_page: 1,
+      updated_at: '2026-08-06 16:20:00',
+    },
+    series_unlock_price: 0,
+    is_series_unlocked: true,
+    has_any_premium: false,
+  },
 };
 
 export const mockChapters: Record<string, (ChapterSummary & { number?: number; published_at?: string })[]> = {
@@ -492,6 +552,7 @@ export const mockChapters: Record<string, (ChapterSummary & { number?: number; p
       },
       price_coin: 0,
       is_locked: false,
+      translator_note: 'Bu bölümde geçen terimler kadim efsanelerle ilişkilidir. Keyifli okumalar dileriz! - Çevirmen & Editör Ekibi',
     },
     {
       id: 'chapter-100',
@@ -741,7 +802,23 @@ export const mockChapters: Record<string, (ChapterSummary & { number?: number; p
       title: 'The End and the Beginning',
       type: 'text',
       created_at: '2026-02-10 11:00:00',
-      body: `Chapter 1: The End and the Beginning\n\nThe virtual clock on the user interface flashed 23:59:45. In fifteen seconds, YGGDRASIL, the revolutionary DMMO-RPG that had reigned over the gaming industry for twelve years, would close its servers forever.\n\nSitting at the head of the colossal obsidian table inside the Great Tomb of Nazarick, Momonga let out a silent sigh through his skeletal avatar.\n\n"It really is over, isn't it?" he muttered, looking around the empty throne room where forty-one supreme beings once laughed and fought together. Now, only he remained.\n\n23:59:58...\n23:59:59...\n00:00:00...\n\nMomonga closed his eyes, expecting the system force-disconnect screen. Instead, the smell of burnt lavender and sulfur filled his nostrils, and the massive brass doors of the throne room swung open with a deafening groan.`,
+      body: `# Bölüm 1: Son ve Başlangıç
+
+Kullanıcı arayüzündeki sanal saat **23:59:45** değerini gösteriyordu. On beş saniye sonra, oyun dünyasına tam on iki yıl boyunca hükmeden devrim niteliğindeki DMMO-RPG *YGGDRASIL*, sunucularını sonsuza dek kapatacaktı.
+
+Nazarick Büyük Mezarı'nın içindeki devasa obsidyen masanın başında oturan **Momonga**, iskelet avatarının göğsünden derin ve sessiz bir iç çekti.
+
+> "Gerçekten bitti demek ha?"
+
+Kırk bir yüce varlığın bir zamanlar birlikte gülüp savaştığı boş taht odasına baktı. Şimdi ise geriye yalnızca o kalmıştı.
+
+\`\`\`text
+23:59:58...
+23:59:59...
+00:00:00...
+\`\`\`
+
+Momonga gözlerini kapattı ve sistemin zorunlu bağlantı kesme ekranını bekledi. Ancak bunun yerine, yanık lavanta ve kükürt kokusu burnuna doldu; taht odasının devasa pirinç kapıları sağır edici bir gıcırtıyla ardına kadar açıldı.`,
       pages: [],
       adjacent_chapters: { next: '2', prev: null },
       access: {
@@ -757,6 +834,9 @@ export const mockChapters: Record<string, (ChapterSummary & { number?: number; p
       },
       price_coin: 0,
       is_locked: false,
+      is_adult: true,
+      is_members_only: false,
+      translator_note: 'YGGDRASIL evrenine hoş geldiniz! Bu roman serisinde geçen lonca ve büyü isimleri orijinal terimler korunarak çevrilmiştir. İyi okumalar.',
     },
     {
       id: 'ch02ov',
@@ -781,6 +861,177 @@ export const mockChapters: Record<string, (ChapterSummary & { number?: number; p
       },
       price_coin: 15,
       is_locked: true,
+      is_adult: true,
+      is_members_only: false,
+    },
+  ],
+  'shadow-slave-chronicles': [
+    {
+      id: 'ch12ss',
+      content_id: 'f6g7h8',
+      chapter_number: '12',
+      title: 'Bölüm XII — Küllerin Altındaki Şehir',
+      type: 'text',
+      created_at: '2026-02-15 09:00:00',
+      body: `# Bölüm XII — Küllerin Altındaki Şehir
+
+Yağmur üçüncü gündür durmaksızın yağıyordu. Gökyüzündeki kurşun rengi bulutlar, yıkık dökük kentin sarp kuleleri üzerine ağır bir keder gibi çökmüştü. Islak arnavut kaldırımlarında yankılanan adımları, unutulmuş sokakların derinliklerinde kaybolup gidiyordu. Harabelerin üzerinden yükselen soğuk sis, taş blokların arasına sızmış kadim rünlerin ışığını boğuyordu.
+
+Sunny, omuzlarındaki yıpranmış pelerinini biraz daha sıkarak **Kuzey Kapısı** yönüne doğru ilerledi. Havadaki nem, paslanmış metal ve kadim büyü kokusuyla karışmıştı.
+
+## Kuzey Kapısı ve Unutulmuş Geçit
+
+Kuzey kapısına vardığında, devasa kemerin üzerindeki **kadim mühür** hafifçe titriyordu. Gölgeler etrafında *sessizce* süzülürken, içindeki fısıltı giderek güçlendi: ***asla geri dönmemeliydik***. 
+
+Ancak geri dönmek artık bir seçenek değildi; ~~eski kaçış rotası artık güvenli değildi~~ çünkü harabelerin girişindeki taş köprü çoktan çökmüştü. Önlerindeki tek yol, sislerin ardında uyuyan labirentti.
+
+> "Bu kadim şehir bizi asla hatırlamayacak. Yalnızca geride bıraktığımız küller ve sessizlik yankılanacak."
+> — *Muhafız Valerius*
+
+Fırtınanın ortasında zihninde beliren kadim ses yankılanmaya devam ediyordu:
+
+> İlk seviye uyarı zihninde belirdi:
+>
+> > "Gölgeler derinleştiğinde, ışığı arayanlar bile karanlığa boyun eğer. Kapıyı sakın açma."
+
+### Kadim Yazıtlar ve Gizli Hazırlık
+
+Kemerin sol tarafındaki granit duvarda bir dizi sembol belirdi. Bir sonraki aşamaya geçebilmek için planı adım adım uygulaması gerekiyordu:
+
+1. Kuzey kapısına devriye değişiminde ulaş.
+2. Kadim bekçilerin görüş alanından *gölgeleri kullanarak* sessizce sıyrıl.
+3. Yeraltı arşivinin kilitli mahzenine sız ve \`Aether Gate\` geçidini aktifleştir.
+4. Geri dönüş işaretini yak.
+
+Gerekli ekipman kontrolünü son bir kez yaptı:
+
+- Eski pirinç anahtar
+- Yağ lambası ve yedek fitil
+- Harita parçası
+- Gümüş hançer
+
+Çantasındaki diğer eşyaları düzenlerken iç içe geçmiş bölmeleri kontrol etti:
+
+- Çanta ve Teçhizat
+  - Büyülü gereçler
+    - Kristal pusula
+    - Gece görüş iksiri
+    - Rünik parşömen
+  - Temel malzemeler
+    - Keten sargı bezi
+    - Demir tırmanma kancası
+- İkinci yedek torba
+
+### Keşif Heyeti ve Durum Tablosu
+
+Grup üyelerinin son durumları ve büyü enerji seviyeleri taş tablete şu şekilde kazınmıştı:
+
+| Karakter | Rol / Sınıf | Durum | Enerji / Rezonans |
+|:---|:---|:---:|---:|
+| **Sunny** | Gölge Gezgini | Aktif | %94 |
+| **Nephis** | Işık Muhafızı | Teyakkuzda | %88 |
+| **Cassie** | Kâhin | Odaklanmış | %65 |
+| **Effie** | Ön Saflar | Hazır | %100 |
+
+Detaylı bilgi ve geçmiş haritalar için arşiv kayıtlarına göz atmıştı: [Eski Krallık Arşivi](https://example.com/ancient-archives).
+
+---
+
+Kapının yanındaki taşa oyulmuş kontrol paneli mavi bir parıltıyla aydınlandı. Ekranda beliren sistem kaydı şu şekildeydi:
+
+\`\`\`text
+[SİSTEM KAYDI 17-B]
+Kuzey kapısı açılmamalı.
+Saat 03:17:42.
+Mühür Durumu: KRİTİK HASAR
+Rezonans Frekansı: 432.8 Hz
+Hedef Koordinat: 41°00'N 28°58'E
+\`\`\`
+
+Sunny derin bir nefes aldı. Türkçe karakterler (ğ, ü, ş, ö, ç, İ, ı) ve kadim glifler yazıtların üzerinde parıldıyordu.
+
+Markdown karakterlerinin kaçış örnekleri de metinde güvenle korunuyordu: \\*bu yıldızlar italik değildir\\*, \\_bu alt çizgiler vurgu değildir\\_ ve \\[bu köşeli parantezler bağlantı değildir\\].
+
+Karanlık koridorun sonundaki meşale alevi son bir kez titredi ve ardından her şey derin bir sessizliğe gömüldü.`,
+      pages: [],
+      adjacent_chapters: { next: '13', prev: '11' },
+      access: {
+        granted: true,
+        reason: 'granted',
+        series_unlock_price: 0,
+        chapter_unlock_price: 0,
+        is_series_unlocked: false,
+        is_chapter_unlocked: false,
+        is_free: true,
+        requires_series_unlock: false,
+        requires_chapter_unlock: false,
+      },
+      price_coin: 0,
+      is_locked: false,
+      is_adult: false,
+      is_members_only: true,
+    },
+    {
+      id: 'ch11ss',
+      content_id: 'f6g7h8',
+      chapter_number: '11',
+      title: 'Karanlık Çanlar',
+      type: 'text',
+      created_at: '2026-02-08 09:00:00',
+      body: `# Bölüm XI — Karanlık Çanlar
+
+Sisin içinde yankılanan çan sesleri yakındaki tehlikenin habercisiydi.`,
+      pages: [],
+      adjacent_chapters: { next: '12', prev: null },
+      access: {
+        granted: true,
+        reason: 'granted',
+        series_unlock_price: 0,
+        chapter_unlock_price: 0,
+        is_series_unlocked: false,
+        is_chapter_unlocked: false,
+        is_free: true,
+        requires_series_unlock: false,
+        requires_chapter_unlock: false,
+      },
+      price_coin: 0,
+      is_locked: false,
+      is_adult: false,
+      is_members_only: true,
+    },
+  ],
+  'the-count-of-monte-cristo': [
+    {
+      id: 'ch01mc',
+      content_id: 'g7h8i9',
+      chapter_number: '1',
+      title: 'Marsilya’ya Varış',
+      type: 'text',
+      created_at: '2026-03-01 10:00:00',
+      body: `# Bölüm I — Marsilya’ya Varış
+
+24 Şubat 1815 günü, Notre-Dame de la Garde kulesindeki gözcü, üç direkli *Firavun* gemisinin yaklaşmakta olduğunu bildirdi.
+
+Gemi limana yanaşırken genç Edmond Dantès güvertede gururla duruyordu:
+
+> "Deniz sabırlı olanları ödüllendirir."
+
+Ancak onu bekleyen komplodan henüz habersizdi.`,
+      pages: [],
+      adjacent_chapters: { next: '2', prev: null },
+      access: {
+        granted: true,
+        reason: 'granted',
+        series_unlock_price: 0,
+        chapter_unlock_price: 0,
+        is_series_unlocked: false,
+        is_chapter_unlocked: false,
+        is_free: true,
+        requires_series_unlock: false,
+        requires_chapter_unlock: false,
+      },
+      price_coin: 0,
+      is_locked: false,
     },
   ],
 };
@@ -1437,6 +1688,89 @@ Bir hikayeyi unutulmaz kılan, olay örgüsünün karmaşıklığından ziyade k
     downvote_count: 1,
     my_vote: 0,
   },
+  {
+    id: 'blog-015',
+    slug: 'mecha-and-sci-fi-worldbuilding-notes',
+    title: 'Mecha ve Bilimkurgu Evren Tasarımı Üzerine Notlar',
+    excerpt: 'Gelecek kurgularında inandırıcı teknolojiler ve siyasi fraksiyonlar oluşturma rehberi.',
+    cover_image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
+    author: {
+      id: 'u8k2m4qz',
+      username: 'deniz',
+      display_name: 'Deniz Yazar',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    },
+    published_at: '2026-08-14T10:00:00Z',
+    read_time: 4,
+    tags: [
+      { id: 'scifi', name: 'Bilimkurgu', slug: 'scifi' },
+      { id: 'writing', name: 'Yazarlık', slug: 'writing' },
+    ],
+    content: `# Mecha ve Bilimkurgu Evren Tasarımı
+
+Sert bilimkurgu ile uzay operası arasındaki dengede mekanik tasarımların hikayeye entegrasyonu...`,
+    stats: {
+      views: 0,
+      likes: 0,
+      comments: 0,
+    },
+    user_state: {
+      liked: false,
+    },
+    status: 'draft',
+    approved: 0,
+    user_id: 'u8k2m4qz',
+    created_at: '2026-08-14T10:00:00Z',
+    body: 'Gelecek kurgularında inandırıcı teknolojiler ve siyasi fraksiyonlar oluşturma rehberi.',
+    author_username: 'deniz',
+    views: 0,
+    likes: 0,
+    comments_count: 0,
+    upvote_count: 0,
+    downvote_count: 0,
+    my_vote: 0,
+  },
+  {
+    id: 'blog-016',
+    slug: 'unfiltered-thoughts-on-recent-releases',
+    title: 'Son Çıkan Çizgi Romanlar Hakkında Değerlendirme',
+    excerpt: 'Yazım kurallarına ve topluluk rehberine uygunluk incelemesi neticesi bildirimi.',
+    cover_image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80',
+    author: {
+      id: 'u8k2m4qz',
+      username: 'deniz',
+      display_name: 'Deniz Yazar',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    },
+    published_at: '2026-08-10T12:00:00Z',
+    read_time: 3,
+    tags: [
+      { id: 'analysis', name: 'Analiz', slug: 'analysis' },
+    ],
+    content: `# Son Çıkan Çizgi Romanlar Hakkında Değerlendirme
+
+Topluluk kurallarına aykırı veya eksik biçimlendirme içeren taslak örneği...`,
+    stats: {
+      views: 12,
+      likes: 0,
+      comments: 0,
+    },
+    user_state: {
+      liked: false,
+    },
+    status: 'rejected',
+    approved: 0,
+    user_id: 'u8k2m4qz',
+    created_at: '2026-08-10T12:00:00Z',
+    body: 'Yazım kurallarına ve topluluk rehberine uygunluk incelemesi neticesi bildirimi.',
+    author_username: 'deniz',
+    views: 12,
+    likes: 0,
+    comments_count: 0,
+    upvote_count: 0,
+    downvote_count: 0,
+    my_vote: 0,
+  },
 ];
 
 export const mockComments: Comment[] = [
@@ -1805,27 +2139,203 @@ export const mockEntitlements: FeatureEntitlement[] = [
   {
     id: 1,
     feature_key: 'ad_free',
+    name: 'Reklamsız Deneyim (Ad-Free)',
+    description: 'Tüm webtoon, manga ve roman sayfalarında reklamsız ve kesintisiz okuma deneyimi.',
     source_type: 'shop',
     source_id: 'ad_free',
     transaction_id: 15,
-    starts_at: '2026-07-25 14:00:00',
-    expires_at: '2026-08-24 14:00:00',
-    created_at: '2026-07-25 14:00:00',
+    starts_at: '2026-08-01 14:00:00',
+    expires_at: '2026-08-31 14:00:00',
+    created_at: '2026-08-01 14:00:00',
+    is_active: true,
+    badge: 'AKTİF',
+  },
+  {
+    id: 2,
+    feature_key: 'early_access_vip',
+    name: 'VIP Erken Erişim Rozeti',
+    description: 'Yeni çevrilen bölümlere 24 saat önceden öncelikli erişim avantajı.',
+    source_type: 'subscription',
+    source_id: 'vip_reader',
+    transaction_id: 8,
+    starts_at: '2026-07-15 00:00:00',
+    expires_at: '2026-09-15 00:00:00',
+    created_at: '2026-07-15 00:00:00',
+    is_active: true,
+    badge: 'AKTİF',
+  },
+  {
+    id: 3,
+    feature_key: 'speed_pass_bundle',
+    name: 'Hızlı Okuma Paketi (Speed Pass)',
+    description: 'Önceki dönem promosyonu hızlı okuma hızlandırıcı yetkisi.',
+    source_type: 'event',
+    source_id: 'summer_event_2026',
+    transaction_id: 4,
+    starts_at: '2026-06-01 00:00:00',
+    expires_at: '2026-07-01 00:00:00',
+    created_at: '2026-06-01 00:00:00',
+    is_active: false,
+    badge: 'SÜRESİ DOLDU',
   },
 ];
 
-export const mockSeriesUnlocks: SeriesUnlockRow[] = [];
+export const mockSeriesUnlocks: SeriesUnlockRow[] = [
+  {
+    id: 1,
+    content_id: 'series-001',
+    content_title: 'Solo Example',
+    content_slug: 'solo-example',
+    content_type: 'manga',
+    price_coin: 99,
+    transaction_id: 101,
+    unlocked_at: '2026-08-05 14:30:00',
+    cover_image: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
+    cover: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
+    chapter_count: 16,
+    author: 'Chugong',
+  },
+  {
+    id: 2,
+    content_id: 'series-004',
+    content_title: 'Reborn As The Apex Archmage',
+    content_slug: 'reborn-apex-archmage',
+    content_type: 'light-novel',
+    price_coin: 75,
+    transaction_id: 13,
+    unlocked_at: '2026-07-10 11:20:00',
+    cover_image: 'https://images.unsplash.com/photo-1519074069444-1ba4eae16748?w=600&auto=format&fit=crop&q=80',
+    cover: 'https://images.unsplash.com/photo-1519074069444-1ba4eae16748?w=600&auto=format&fit=crop&q=80',
+    chapter_count: 45,
+    author: 'Fallen Star Studio',
+  },
+  {
+    id: 3,
+    content_id: 'd4e5f6',
+    content_title: 'Mythos Realm: Underworld Ascendant',
+    content_slug: 'mythos-realm',
+    content_type: 'webtoon',
+    price_coin: 120,
+    transaction_id: 104,
+    unlocked_at: '2026-06-25 09:45:00',
+    cover_image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80',
+    cover: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80',
+    chapter_count: 210,
+    author: 'Rachel Smythe',
+  },
+];
 
 export const mockChapterUnlocks: ChapterUnlockRow[] = [
   {
     id: 10,
     content_id: 'a1b2c3',
+    content_slug: 'the-glass-harbor',
+    content_title: 'The Glass Harbor',
+    content_type: 'manga',
+    content_cover: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
     chapter_id: 'ch52aa',
     chapter_number: '52',
     chapter_title: 'Low Tide',
     price_coin: 12,
     transaction_id: 17,
     unlocked_at: '2026-08-11 20:30:00',
+  },
+  {
+    id: 11,
+    content_id: 'series-001',
+    content_slug: 'solo-example',
+    content_title: 'Solo Example',
+    content_type: 'manga',
+    content_cover: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
+    chapter_id: 'ch101',
+    chapter_number: '101',
+    chapter_title: 'The Beginning of Shadow',
+    price_coin: 10,
+    transaction_id: 16,
+    unlocked_at: '2026-08-10 14:15:00',
+  },
+  {
+    id: 12,
+    content_id: 'b2c3d4',
+    content_slug: 'shadow-monarch-chronicles',
+    content_title: 'Shadow Monarch Chronicles',
+    content_type: 'manhwa',
+    content_cover: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80',
+    chapter_id: 'chapter-102',
+    chapter_number: '179',
+    chapter_title: 'The Final Monarch Stand',
+    price_coin: 15,
+    transaction_id: 18,
+    unlocked_at: '2026-08-08 18:20:00',
+  },
+  {
+    id: 13,
+    content_id: 'series-004',
+    content_slug: 'reborn-apex-archmage',
+    content_title: 'Reborn As The Apex Archmage',
+    content_type: 'light-novel',
+    content_cover: 'https://images.unsplash.com/photo-1519074069444-1ba4eae16748?w=600&auto=format&fit=crop&q=80',
+    chapter_id: 'chapter-104',
+    chapter_number: '45',
+    chapter_title: 'Academy Magic Duel',
+    price_coin: 10,
+    transaction_id: 19,
+    unlocked_at: '2026-08-04 11:00:00',
+  },
+];
+
+export const mockFollowingUsers: FollowingUserItem[] = [
+  {
+    id: 'user-chugong',
+    username: 'chugong',
+    display_name: 'Chugong (Author)',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    profile_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    bio: 'Solo Leveling evreninin yaratıcısı. Yeni projeler ve webtoon senaryoları üzerine çalışıyor.',
+    followed_at: '2026-07-15 11:30:00',
+    is_following: true,
+    followers_count: 14200,
+    following_count: 12,
+    reading_count: 48,
+  },
+  {
+    id: 'user-kaan',
+    username: 'kaan',
+    display_name: 'Kaan Demir',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    profile_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    bio: 'Isekai ve wuxia manhua tutkunu. Gece okumaları ve bölüm teorileri.',
+    followed_at: '2026-08-01 09:15:00',
+    is_following: true,
+    followers_count: 154,
+    following_count: 45,
+    reading_count: 2150,
+  },
+  {
+    id: 'user-selin',
+    username: 'selin',
+    display_name: 'Selin Arslan',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
+    profile_image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
+    bio: 'Romantizm ve dram webtoon eleştirmeni. Her hafta 15+ seri takipte.',
+    followed_at: '2026-08-05 16:40:00',
+    is_following: true,
+    followers_count: 820,
+    following_count: 94,
+    reading_count: 980,
+  },
+  {
+    id: 'user-elena',
+    username: 'elena',
+    display_name: 'Elena Rostova',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+    profile_image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+    bio: 'Light novel çevirmeni ve editör. Fantastik kurgu kitaplığı düzenleyicisi.',
+    followed_at: '2026-08-10 14:20:00',
+    is_following: true,
+    followers_count: 430,
+    following_count: 28,
+    reading_count: 640,
   },
 ];
 
@@ -2497,6 +3007,7 @@ export const mockUserProfile: UserProfile = {
   username: 'deniz',
   display_name: 'Deniz Yılmaz',
   email: 'deniz@example.test',
+  email_verified: false,
   bio: 'Manga, manhwa ve web roman tutkunu. Çeviri ve kurgu tartışmalarını sever.',
   avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
   profile_image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80',
@@ -2818,18 +3329,35 @@ export const mockSessions: UserSession[] = [
   {
     id: 'sess_1a2b3c',
     ip_address: '192.168.1.42',
-    user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/128.0.0.0',
-    last_activity: '2026-08-12 08:50:00',
+    user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+    device: 'MacBook Pro (Chrome 128)',
+    last_activity: '2026-08-14 10:45:00',
+    lastSeen: '2026-08-14 10:45:00',
     is_current: true,
+    current: true,
     created_at: '2026-08-01 10:00:00',
   },
   {
     id: 'sess_4d5e6f',
     ip_address: '10.0.0.15',
-    user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Mobile/15E148',
-    last_activity: '2026-08-10 19:20:00',
+    user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+    device: 'iPhone 15 Pro (Safari 17.5)',
+    last_activity: '2026-08-13 19:20:00',
+    lastSeen: '2026-08-13 19:20:00',
     is_current: false,
+    current: false,
     created_at: '2026-08-05 14:00:00',
+  },
+  {
+    id: 'sess_7g8h9i',
+    ip_address: '88.241.12.98',
+    user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0',
+    device: 'Windows Desktop (Firefox 129)',
+    last_activity: '2026-08-09 22:15:00',
+    lastSeen: '2026-08-09 22:15:00',
+    is_current: false,
+    current: false,
+    created_at: '2026-07-20 09:30:00',
   },
 ];
 

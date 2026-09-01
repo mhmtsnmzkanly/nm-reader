@@ -12,6 +12,7 @@ import { LoginPrompt } from '../components/feedback/LoginPrompt';
 import { usePreferences } from '../contexts/PreferencesContext';
 
 export const NotificationsPage: React.FC = () => {
+  const { t } = usePreferences();
   const { isAuthenticated } = useAuth();
   const {
     filteredNotifications,
@@ -24,7 +25,6 @@ export const NotificationsPage: React.FC = () => {
     markAllAsRead,
     deleteNotification,
   } = useNotifications();
-  const { t } = usePreferences();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -55,12 +55,12 @@ export const NotificationsPage: React.FC = () => {
                 </h1>
                 {unreadCount > 0 && (
                   <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[var(--accent-color)] text-white animate-pulse">
-                    {unreadCount} {t('notifications.unreadBadge', { count: unreadCount }) || 'Okunmamış'}
+                    {t('notifications.unreadBadge', { count: unreadCount })}
                   </span>
                 )}
               </div>
               <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">
-                {t('notifications.pageSubtitle')}
+                {t('notifications.headerSubtitle')}
               </p>
             </div>
           </div>
@@ -72,8 +72,8 @@ export const NotificationsPage: React.FC = () => {
                 id="page-refresh-notifs-btn"
                 onClick={() => fetchNotifications()}
                 className="p-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-all cursor-pointer"
-                title={t('notifications.refresh')}
-                aria-label={t('notifications.refresh')}
+                title={t('notifications.refreshTitle')}
+                aria-label={t('notifications.refreshTitle')}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
@@ -95,7 +95,7 @@ export const NotificationsPage: React.FC = () => {
 
         {/* Not Authenticated Guard */}
         {!isAuthenticated ? (
-          <LoginPrompt message={t('notifications.loginRequiredDesc')} />
+          <LoginPrompt message={t('notifications.loginPrompt')} />
         ) : (
           <>
             {/* Filter Tabs */}
@@ -123,15 +123,15 @@ export const NotificationsPage: React.FC = () => {
                 </div>
               ) : isError ? (
                 <ErrorState
-                  title={t('notifications.errorTitle')}
-                  message={errorMessage || t('notifications.errorDesc')}
+                  title={t('notifications.loadErrorTitle')}
+                  message={errorMessage || t('notifications.loadErrorDesc')}
                   onRetry={fetchNotifications}
                 />
               ) : filteredNotifications.length === 0 ? (
                 <EmptyState
                   icon={<Bell className="w-12 h-12 text-[var(--text-muted)] opacity-40" />}
-                  title={t('notifications.empty')}
-                  description={t('notifications.emptyFilteredDesc')}
+                  title={t('notifications.emptyTitle')}
+                  description={t('notifications.emptyDesc')}
                 />
               ) : (
                 filteredNotifications.map((notification) => (

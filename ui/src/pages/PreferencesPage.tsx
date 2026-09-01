@@ -23,8 +23,8 @@ import {
 import { usePreferences, PresetType } from '../contexts/PreferencesContext';
 import { SettingCard } from '../components/preferences/SettingCard';
 import { SettingToggle } from '../components/preferences/SettingToggle';
+import { SessionManager } from '../components/account/SessionManager';
 import { Dialog } from '../components/ui/Dialog';
-import { Button } from '../components/ui/Button';
 
 export const PreferencesPage: React.FC = () => {
   const {
@@ -36,7 +36,6 @@ export const PreferencesPage: React.FC = () => {
     readerSettings,
     notificationSettings,
     isLoading,
-    isSaving,
     isError,
     errorMessage,
     t,
@@ -87,6 +86,8 @@ export const PreferencesPage: React.FC = () => {
     );
   }
 
+  const activeNotifsCount = Object.values(notificationSettings).filter(Boolean).length;
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-8 transition-colors duration-300">
       {/* Page Header */}
@@ -128,7 +129,7 @@ export const PreferencesPage: React.FC = () => {
         <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-500 flex items-center justify-between gap-3 text-xs sm:text-sm">
           <div className="flex items-center gap-2.5">
             <AlertCircle className="w-5 h-5 shrink-0" />
-            <span>{errorMessage || 'Ayarlar yüklenirken bir hata oluştu.'}</span>
+            <span>{errorMessage || t('preferences.updateError')}</span>
           </div>
           <button
             type="button"
@@ -239,13 +240,13 @@ export const PreferencesPage: React.FC = () => {
             {
               key: 'tr',
               label: 'Türkçe',
-              subtitle: 'Varsayılan uygulama dili',
+              subtitle: t('preferences.langTurkishDesc'),
               flag: '🇹🇷',
             },
             {
               key: 'en',
               label: 'English',
-              subtitle: 'Application interface in English',
+              subtitle: t('preferences.langEnglishDesc'),
               flag: '🇺🇸',
             },
           ].map((item) => {
@@ -415,9 +416,9 @@ export const PreferencesPage: React.FC = () => {
         description={t('preferences.notificationsDesc')}
         icon={<Bell className="w-5 h-5" />}
         badge={
-          Object.values(notificationSettings).filter(Boolean).length === 5
-            ? 'Tümü Aktif'
-            : `${Object.values(notificationSettings).filter(Boolean).length}/5 Aktif`
+          activeNotifsCount === 5
+            ? '5/5'
+            : `${activeNotifsCount}/5`
         }
       >
         <div className="flex flex-col gap-1">
@@ -472,7 +473,7 @@ export const PreferencesPage: React.FC = () => {
       <SettingCard
         id="test-presets"
         title={t('preferences.presetsTitle')}
-        description="Prototip doğrulaması için tek tıkla test senaryosu yapılandırmaları uygulayın."
+        description={t('preferences.presetsDesc')}
         icon={<Sparkles className="w-5 h-5" />}
         badge="PROTOTYPE PRESETS"
       >
@@ -487,7 +488,7 @@ export const PreferencesPage: React.FC = () => {
               {t('preferences.presetDefault')}
             </span>
             <span className="text-[10px] text-[var(--text-muted)]">
-              Dark • TR • Dikey • Tüm Bildirimler
+              {t('preferences.presetDarkTRDesc')}
             </span>
           </button>
 
@@ -501,7 +502,7 @@ export const PreferencesPage: React.FC = () => {
               {t('preferences.presetLightRtl')}
             </span>
             <span className="text-[10px] text-[var(--text-muted)]">
-              Light • TR • RTL Tek Sayfa • UI Sabit
+              Light • RTL Single Page • Fixed UI
             </span>
           </button>
 
@@ -515,7 +516,7 @@ export const PreferencesPage: React.FC = () => {
               {t('preferences.presetMinimalNotifs')}
             </span>
             <span className="text-[10px] text-[var(--text-muted)]">
-              Dark Emerald • Yalnızca Yeni Bölüm & Sistem
+              {t('preferences.presetEmeraldDesc')}
             </span>
           </button>
         </div>
@@ -525,36 +526,10 @@ export const PreferencesPage: React.FC = () => {
       <SettingCard
         id="sessions"
         title={t('preferences.sessionsSection')}
-        description="Mevcut oturum durumu ve senkronizasyon zaman damgası."
+        description={t('preferences.sessionsDesc')}
         icon={<ShieldCheck className="w-5 h-5" />}
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)]">
-          <div className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-[var(--text-primary)]">
-                {preferences.account?.email || 'deniz@example.test'}
-              </span>
-              <span className="text-[11px] font-mono text-[var(--text-muted)]">
-                {t('preferences.lastSync', {
-                  date: preferences.account?.last_sync
-                    ? new Date(preferences.account.last_sync).toLocaleString()
-                    : new Date().toLocaleTimeString(),
-                })}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-bold font-mono">
-              {t('preferences.currentSession')} (Web App)
-            </span>
-          </div>
-        </div>
-
-        <p className="text-[11px] text-[var(--text-muted)] leading-relaxed mt-1">
-          {t('preferences.testingNotice')}
-        </p>
+        <SessionManager />
       </SettingCard>
 
       {/* Confirmation Dialog for Reset to Defaults */}

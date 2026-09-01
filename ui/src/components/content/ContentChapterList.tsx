@@ -4,7 +4,6 @@ import { ContentDetailChapter, ContentType } from '../../types/api';
 import { ChapterRow } from './ChapterRow';
 import { usePreferences } from '../../contexts/PreferencesContext';
 
-
 type ContentChapterListProps = {
   chapters: ContentDetailChapter[];
   contentType: ContentType;
@@ -22,10 +21,10 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
   lastReadChapterId,
   onLockClick,
 }) => {
+  const { t } = usePreferences();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // desc = newest first
   const [currentPage, setCurrentPage] = useState(1);
-  const { t } = usePreferences();
 
   // Filter and sort chapters
   const filteredAndSorted = useMemo(() => {
@@ -73,10 +72,10 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
           </div>
           <div>
             <h3 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-              <span className="italic text-[var(--accent-color)]">{t('chapters.list')}</span>
+              {t('chapters.title')}
             </h3>
             <span className="text-xs font-mono text-[var(--text-muted)]">
-              {t('chapters.totalChapters', { count: chapters.length })}
+              {t('content.chaptersCount', { count: chapters.length })}
             </span>
           </div>
         </div>
@@ -88,7 +87,7 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-muted)]" />
             <input
               type="text"
-              placeholder="Bölüm ara..."
+              placeholder={t('chapters.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -103,10 +102,10 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
             type="button"
             onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-colors cursor-pointer"
-            title={sortOrder === 'desc' ? 'Yeniden Eskiye (En Son İlk)' : 'Eskiden Yeniye (İlk Bölüm İlk)'}
+            title={sortOrder === 'desc' ? t('chapters.sortDesc') : t('chapters.sortAsc')}
           >
             <ArrowUpDown className="w-3.5 h-3.5" />
-            <span>{sortOrder === 'desc' ? 'Yeniden Eskiye' : 'Eskiden Yeniye'}</span>
+            <span>{sortOrder === 'desc' ? t('chapters.sortDesc') : t('chapters.sortAsc')}</span>
           </button>
         </div>
       </div>
@@ -114,7 +113,7 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
       {/* Chapters Grid / List */}
       {paginatedChapters.length === 0 ? (
         <div className="p-8 text-center text-xs font-mono text-[var(--text-muted)] border border-dashed border-[var(--border-color)] rounded-xl">
-          Arama kriterine uygun bölüm bulunamadı.
+          {t('chapters.noChapters')}
         </div>
       ) : (
         <div className="flex flex-col gap-2.5">
@@ -135,7 +134,7 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t border-[var(--border-color)] text-xs font-mono">
           <span className="text-[var(--text-muted)] text-[11px]">
-            {t('chapters.totalPages', { safePage, totalPages, len: filteredAndSorted.length})}
+            {t('common.page')} {safePage} / {totalPages} ({t('common.resultsCountSimple', { count: filteredAndSorted.length })})
           </span>
 
           <div className="flex items-center gap-1.5">
@@ -143,6 +142,7 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
               type="button"
               disabled={safePage <= 1}
               onClick={() => handlePageChange(safePage - 1)}
+              aria-label="Previous Page"
               className="p-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -165,10 +165,10 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
                   key={pageNum}
                   type="button"
                   onClick={() => handlePageChange(pageNum)}
-                  className={`w-7 h-7 rounded-lg text-xs font-mono font-semibold transition-colors cursor-pointer ${
+                  className={`w-7 h-7 rounded-lg text-xs font-mono transition-colors cursor-pointer ${
                     safePage === pageNum
-                      ? 'bg-[var(--accent-color)] text-white'
-                      : 'bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      ? 'bg-[var(--accent-color)] text-white font-bold'
+                      : 'border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)]'
                   }`}
                 >
                   {pageNum}
@@ -180,6 +180,7 @@ export const ContentChapterList: React.FC<ContentChapterListProps> = ({
               type="button"
               disabled={safePage >= totalPages}
               onClick={() => handlePageChange(safePage + 1)}
+              aria-label="Next Page"
               className="p-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               <ChevronRight className="w-4 h-4" />

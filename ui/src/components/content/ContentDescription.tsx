@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type ContentDescriptionProps = {
   description?: string | null;
@@ -10,15 +11,16 @@ export const ContentDescription: React.FC<ContentDescriptionProps> = ({
   description,
   summary,
 }) => {
+  const { t } = usePreferences();
   const [isExpanded, setIsExpanded] = useState(false);
-  const text = description || summary || 'Bu içerik için henüz bir açıklama girilmemiştir.';
+  const text = description || summary || t('content.noDescription');
 
   const isLong = text.length > 280;
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-5 sm:p-6 flex flex-col gap-3 shadow-sm transition-colors duration-300">
       <h3 className="font-serif text-lg font-bold text-[var(--text-primary)] border-b border-[var(--border-color)] pb-3">
-        Özet & <span className="italic text-[var(--accent-color)]">Açıklama</span>
+        {t('content.summaryTitle')}
       </h3>
 
       <div className="relative">
@@ -43,12 +45,12 @@ export const ContentDescription: React.FC<ContentDescriptionProps> = ({
         >
           {isExpanded ? (
             <>
-              <span>Daha Az Göster</span>
+              <span>{t('content.showLess')}</span>
               <ChevronUp className="w-3.5 h-3.5" />
             </>
           ) : (
             <>
-              <span>Daha Fazla Göster</span>
+              <span>{t('content.showMore')}</span>
               <ChevronDown className="w-3.5 h-3.5" />
             </>
           )}

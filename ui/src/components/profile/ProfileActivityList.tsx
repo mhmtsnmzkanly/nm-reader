@@ -14,7 +14,7 @@ export const ProfileActivityList: React.FC<ProfileActivityListProps> = ({
   activities = [],
   className = '',
 }) => {
-  const { formatDate, formatRelativeTime, t } = usePreferences();
+  const { formatDate, t } = usePreferences();
   if (activities.length === 0) {
     return (
       <EmptyState
@@ -39,11 +39,11 @@ export const ProfileActivityList: React.FC<ProfileActivityListProps> = ({
   };
 
   const getTypeLabel = (type: string, targetType: string) => {
-    if (type === 'favorite') return 'Kütüphaneye Ekledi';
-    if (type === 'blog') return 'Blog İncelemesi';
-    if (targetType === 'chapter') return 'Bölüm Yorumu';
-    if (targetType === 'blog') return 'Blog Yorumu';
-    return 'Seri Yorumu';
+    if (type === 'favorite') return t('profile.activityAddedToLibrary');
+    if (type === 'blog') return t('profile.activityBlogReview');
+    if (targetType === 'chapter') return t('profile.activityChapterComment');
+    if (targetType === 'blog') return t('profile.activityBlogComment');
+    return t('profile.activitySeriesComment');
   };
 
   const getTargetLink = (target: UserActivityItem['target']) => {

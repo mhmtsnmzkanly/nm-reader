@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, AlertCircle, RefreshCw, Layers } from 'lucide-react';
 import { Chapter } from '../../types/api';
 import { ReaderSettingsState } from '../../types/domain';
+import { usePreferences } from '../../contexts/PreferencesContext';
+import { TranslatorNoteCard } from './TranslatorNoteCard';
 
 type ImageReaderProps = {
   chapter: Chapter;
@@ -20,8 +22,8 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
   onPageChange,
   onNextChapter,
   onPrevChapter,
-  isSettingsOpen = false,
 }) => {
+  const { t } = usePreferences();
   const pages = chapter.pages || [];
   const totalPages = pages.length;
 
@@ -108,41 +110,6 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
     }
   }, [readingDirection, goToPrevPage, goToNextPage]);
 
-  // Keyboard navigation for paginated modes
-  useEffect(() => {
-    if (layout === 'vertical') return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if typing in an input or modal is open
-      if (isSettingsOpen) return;
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-        return;
-      }
-
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        handleLeftAction();
-      } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
-        e.preventDefault();
-        handleRightAction();
-      } else if (e.key === 'PageUp') {
-        e.preventDefault();
-        handleLeftAction();
-      } else if (e.key === 'Home') {
-        e.preventDefault();
-        onPageChange(0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        onPageChange(totalPages - 1);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [layout, handleLeftAction, handleRightAction, isSettingsOpen, onPageChange, totalPages]);
-
-  // Touch Swipe Handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     if (layout === 'vertical') return;
     touchStartX.current = e.touches[0].clientX;
@@ -171,7 +138,7 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
   if (totalPages === 0) {
     return (
       <div className="p-12 text-center text-[var(--text-muted)] font-mono text-xs border border-dashed border-[var(--border-color)] rounded-2xl my-12 max-w-2xl mx-auto">
-        Bölüm sayfaları henüz yüklenmedi.
+        {t('reader.noPages')}
       </div>
     );
   }
@@ -203,7 +170,7 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
         {!isLoaded && !isError && (
           <div className="absolute inset-0 min-h-[400px] bg-[var(--bg-tertiary)]/60 animate-pulse rounded-lg flex items-center justify-center">
             <span className="text-xs font-mono text-[var(--text-muted)]">
-              Sayfa {index + 1} yükleniyor...
+              {t('reader.pageLoading', { page: index + 1 })}
             </span>
           </div>
         )}
@@ -213,15 +180,15 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
           <div className="p-8 text-center bg-[var(--bg-card)] border border-rose-500/20 rounded-2xl flex flex-col items-center gap-3 my-4 max-w-sm">
             <AlertCircle className="w-8 h-8 text-rose-500" />
             <p className="text-xs text-[var(--text-secondary)]">
-              {labelPrefix || `Sayfa ${index + 1}`} yüklenirken hata oluştu.
+              {labelPrefix || t('reader.pageError', { page: index + 1 })}
             </p>
             <button
               type="button"
               onClick={() => retryImage(index)}
-              className="py-1.5 px-4 rounded-lg bg-[var(--accent-color)] text-white text-xs font-semibold hover:opacity-90 transition-all flex items-center gap-1.5"
+              className="py-1.5 px-4 rounded-lg bg-[var(--accent-color)] text-white text-xs font-semibold hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>Yeniden Dene</span>
+              <span>{t('reader.retry')}</span>
             </button>
           </div>
         ) : (
@@ -229,7 +196,7 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
             src={page.image_path}
             loading={layout === 'vertical' ? 'lazy' : 'eager'}
             decoding="async"
-            alt={`Sayfa ${index + 1}`}
+            alt={`${t('reader.page')} ${index + 1}`}
             referrerPolicy="no-referrer"
             onLoad={() => handleImageLoad(index)}
             onError={() => handleImageError(index)}
@@ -246,6 +213,15 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
   if (layout === 'vertical') {
     return (
       <div className="flex flex-col items-center justify-center gap-2 w-full max-w-5xl mx-auto py-2 overflow-hidden">
+        {chapter.translator_note && (
+          <div className="w-full px-2 sm:px-4 mb-3 max-w-4xl">
+            <TranslatorNoteCard
+              note={chapter.translator_note}
+              isRtl={readingDirection === 'rtl'}
+            />
+          </div>
+        )}
+
         {pages.map((_, index) => (
           <div key={index} className="w-full relative overflow-hidden flex justify-center">
             {renderSinglePageImage(index)}
@@ -253,7 +229,7 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
         ))}
 
         <div className="w-full py-10 mt-6 text-center text-xs font-mono text-[var(--text-muted)] tracking-widest uppercase bg-[var(--bg-card)] border-t border-[var(--border-color)] rounded-xl">
-          — BÖLÜM SONU —
+          — {t('reader.endOfChapter')} —
         </div>
       </div>
     );
@@ -270,12 +246,22 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Translator Note on First Page */}
+        {isFirstPage && chapter.translator_note && (
+          <div className="w-full px-2 sm:px-4 mb-4 max-w-4xl">
+            <TranslatorNoteCard
+              note={chapter.translator_note}
+              isRtl={readingDirection === 'rtl'}
+            />
+          </div>
+        )}
+
         {/* Interactive Click Zones for intuitive reading */}
         <div className="relative w-full flex items-center justify-center min-h-[60vh] sm:min-h-[75vh]">
           {/* Left Click Zone */}
           <div
             onClick={handleLeftAction}
-            title={readingDirection === 'rtl' ? 'Sonraki Sayfa' : 'Önceki Sayfa'}
+            title={readingDirection === 'rtl' ? t('reader.nextPage') : t('reader.prevPage')}
             className="absolute left-0 top-0 bottom-0 w-1/3 z-20 cursor-pointer group flex items-center justify-start pl-2 sm:pl-4 opacity-0 hover:opacity-100 transition-opacity"
           >
             <div className="p-2.5 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] text-[var(--text-primary)] shadow-lg group-hover:scale-110 transition-transform">
@@ -291,7 +277,7 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
           {/* Right Click Zone */}
           <div
             onClick={handleRightAction}
-            title={readingDirection === 'rtl' ? 'Önceki Sayfa' : 'Sonraki Sayfa'}
+            title={readingDirection === 'rtl' ? t('reader.prevPage') : t('reader.nextPage')}
             className="absolute right-0 top-0 bottom-0 w-1/3 z-20 cursor-pointer group flex items-center justify-end pr-2 sm:pr-4 opacity-0 hover:opacity-100 transition-opacity"
           >
             <div className="p-2.5 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] text-[var(--text-primary)] shadow-lg group-hover:scale-110 transition-transform">
@@ -309,12 +295,12 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
             className="py-1.5 px-3 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Önceki Sayfa</span>
+            <span className="hidden sm:inline">{t('reader.prevPage')}</span>
           </button>
 
           {/* Page Selector & Counter */}
           <div className="flex items-center gap-2 px-2">
-            <span className="text-[var(--text-secondary)]">Sayfa</span>
+            <span className="text-[var(--text-secondary)]">{t('reader.page')}</span>
             <select
               value={currentPageIndex}
               onChange={(e) => onPageChange(Number(e.target.value))}
@@ -338,7 +324,7 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
             onClick={goToNextPage}
             className="py-1.5 px-3 rounded-lg bg-[var(--accent-color)] text-white font-bold hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
           >
-            <span className="hidden sm:inline">Sonraki Sayfa</span>
+            <span className="hidden sm:inline">{t('reader.nextPage')}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -351,8 +337,6 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
   const page1Index = currentPageIndex;
   const page2Index = currentPageIndex + 1 < totalPages ? currentPageIndex + 1 : null;
 
-  // In RTL, right page is first (page1Index), left page is second (page2Index)
-  // In LTR, left page is first (page1Index), right page is second (page2Index)
   const leftPageIndex = isRtl ? page2Index : page1Index;
   const rightPageIndex = isRtl ? page1Index : page2Index;
 
@@ -367,12 +351,22 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Translator Note on First Spread */}
+      {isFirstSpread && chapter.translator_note && (
+        <div className="w-full px-2 sm:px-4 mb-4 max-w-5xl">
+          <TranslatorNoteCard
+            note={chapter.translator_note}
+            isRtl={readingDirection === 'rtl'}
+          />
+        </div>
+      )}
+
       {/* Interactive Click Zones for Double Spread */}
       <div className="relative w-full flex items-center justify-center min-h-[60vh] sm:min-h-[75vh]">
         {/* Left Click Zone */}
         <div
           onClick={handleLeftAction}
-          title={isRtl ? 'Sonraki Sayfalar' : 'Önceki Sayfalar'}
+          title={isRtl ? t('reader.nextPage') : t('reader.prevPage')}
           className="absolute left-0 top-0 bottom-0 w-1/4 z-20 cursor-pointer group flex items-center justify-start pl-2 sm:pl-4 opacity-0 hover:opacity-100 transition-opacity"
         >
           <div className="p-2.5 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] text-[var(--text-primary)] shadow-lg group-hover:scale-110 transition-transform">
@@ -396,7 +390,7 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
         {/* Right Click Zone */}
         <div
           onClick={handleRightAction}
-          title={isRtl ? 'Önceki Sayfalar' : 'Sonraki Sayfalar'}
+          title={isRtl ? t('reader.prevPage') : t('reader.nextPage')}
           className="absolute right-0 top-0 bottom-0 w-1/4 z-20 cursor-pointer group flex items-center justify-end pr-2 sm:pr-4 opacity-0 hover:opacity-100 transition-opacity"
         >
           <div className="p-2.5 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] text-[var(--text-primary)] shadow-lg group-hover:scale-110 transition-transform">
@@ -414,13 +408,13 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
           className="py-1.5 px-3 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Önceki</span>
+          <span className="hidden sm:inline">{t('reader.prev')}</span>
         </button>
 
         {/* Page Selector & Counter */}
         <div className="flex items-center gap-2 px-2">
           <Layers className="w-4 h-4 text-[var(--accent-color)]" />
-          <span className="text-[var(--text-secondary)]">Sayfa {spreadDisplay} / {totalPages}</span>
+          <span className="text-[var(--text-secondary)]">{t('reader.page')} {spreadDisplay} / {totalPages}</span>
           <span className="text-[10px] text-[var(--accent-color)] font-semibold ml-1">
             ({Math.round(((currentPageIndex + 1) / totalPages) * 100)}%)
           </span>
@@ -432,7 +426,7 @@ export const ImageReader: React.FC<ImageReaderProps> = ({
           onClick={goToNextPage}
           className="py-1.5 px-3 rounded-lg bg-[var(--accent-color)] text-white font-bold hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
         >
-          <span className="hidden sm:inline">Sonraki</span>
+          <span className="hidden sm:inline">{t('reader.next')}</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>

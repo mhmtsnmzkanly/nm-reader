@@ -4,7 +4,6 @@ import {
   Bookmark,
   MessageSquare,
   FileText,
-  Sparkles,
   ArrowLeft,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,7 +19,7 @@ import { ErrorState } from '../components/feedback/ErrorState';
 import { usePreferences } from '../contexts/PreferencesContext';
 
 export const PublicProfilePage: React.FC = () => {
-  const { username = '' } = useParams<{ username: string }>();
+  const { username = 'deniz' } = useParams<{ username: string }>();
   const { isAuthenticated, openAuthModal } = useAuth();
   const { formatDate, t } = usePreferences();
 
@@ -44,11 +43,11 @@ export const PublicProfilePage: React.FC = () => {
         if (res.status === 'success') {
           setProfileData(res.data);
         } else {
-          setErrorMessage(res.error?.message || 'Kullanıcı profili bulunamadı.');
+          setErrorMessage(res.error?.message || t('profile.userNotFoundDesc'));
         }
       } catch (err: unknown) {
         if (!isMounted) return;
-        setErrorMessage(err instanceof Error ? err.message : 'Profil yüklenirken bir hata oluştu.');
+        setErrorMessage(err instanceof Error ? err.message : t('profile.updateError'));
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -61,7 +60,7 @@ export const PublicProfilePage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [username]);
+  }, [username, t]);
 
   const handleToggleFollow = async () => {
     if (!isAuthenticated) {
@@ -127,8 +126,8 @@ export const PublicProfilePage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto my-16 px-4">
         <ErrorState
-          title="Kullanıcı Bulunamadı"
-          message={errorMessage || 'Aradığınız profil mevcut değil veya silinmiş olabilir.'}
+          title={t('profile.userNotFoundTitle')}
+          message={errorMessage || t('profile.userNotFoundDesc')}
           onRetry={() => window.location.reload()}
         />
         <div className="mt-6 flex justify-center">
@@ -137,7 +136,7 @@ export const PublicProfilePage: React.FC = () => {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-xs font-mono font-semibold text-[var(--text-primary)] hover:text-[var(--accent-color)] hover:border-[var(--accent-color)] transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Keşfete Geri Dön</span>
+            <span>{t('common.backToExplore')}</span>
           </Link>
         </div>
       </div>
@@ -148,9 +147,9 @@ export const PublicProfilePage: React.FC = () => {
   const isFollowing = Boolean(profileData.user_state?.is_following);
 
   const tabs: { key: ProfileTab; label: string; count?: number }[] = [
-    { key: 'overview', label: 'Genel Bakış' },
-    { key: 'library', label: 'Kütüphane', count: library.length },
-    { key: 'activity', label: 'Aktiviteler', count: activities.length },
+    { key: 'overview', label: t('profile.tabsOverview') },
+    { key: 'library', label: t('profile.tabsLibrary'), count: library.length },
+    { key: 'activity', label: t('profile.tabsActivity'), count: activities.length },
   ];
 
   return (
@@ -216,7 +215,7 @@ export const PublicProfilePage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Bookmark className="w-4 h-4 text-[var(--accent-color)]" />
                   <h2 className="font-serif text-lg font-bold text-[var(--text-primary)]">
-                    Takip Edilen Seriler
+                    {t('profile.followedSeriesTitle')}
                   </h2>
                 </div>
                 {library.length > 0 && (
@@ -225,7 +224,7 @@ export const PublicProfilePage: React.FC = () => {
                     onClick={() => setActiveTab('library')}
                     className="text-xs font-mono text-[var(--accent-color)] hover:underline cursor-pointer"
                   >
-                    Tümünü Gör ({library.length}) →
+                    {t('common.seeAllWithCount', { count: library.length })}
                   </button>
                 )}
               </div>
@@ -234,8 +233,8 @@ export const PublicProfilePage: React.FC = () => {
                 items={library}
                 limit={5}
                 showViewAll={false}
-                emptyTitle="Takip Edilen Seri Yok"
-                emptyDescription="Bu kullanıcı henüz herhangi bir seriyi kütüphanesine eklememiş."
+                emptyTitle={t('profile.libraryGridEmptyTitle')}
+                emptyDescription={t('profile.libraryEmptyOther')}
               />
             </div>
 
@@ -245,7 +244,7 @@ export const PublicProfilePage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-[var(--accent-color)]" />
                   <h2 className="font-serif text-lg font-bold text-[var(--text-primary)]">
-                    Kullanıcı Aktiviteleri
+                    {t('profile.userActivitiesTitle')}
                   </h2>
                 </div>
                 {activities.length > 0 && (
@@ -254,7 +253,7 @@ export const PublicProfilePage: React.FC = () => {
                     onClick={() => setActiveTab('activity')}
                     className="text-xs font-mono text-[var(--accent-color)] hover:underline cursor-pointer"
                   >
-                    Tümünü Gör ({activities.length}) →
+                    {t('common.seeAllWithCount', { count: activities.length })}
                   </button>
                 )}
               </div>
@@ -268,7 +267,7 @@ export const PublicProfilePage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-amber-500" />
                   <h2 className="font-serif text-lg font-bold text-[var(--text-primary)]">
-                    Yayınlanan Yazılar
+                    {t('profile.userPublishedPosts')}
                   </h2>
                 </div>
 
@@ -289,7 +288,7 @@ export const PublicProfilePage: React.FC = () => {
                       </div>
                       <div className="flex items-center justify-between text-[11px] font-mono text-[var(--text-muted)] pt-2 border-t border-[var(--border-color)]/60">
                         <span>{formatDate(b.created_at)}</span>
-                        <span>{b.likes} Beğeni</span>
+                        <span>{t('common.likesCount', { count: b.likes })}</span>
                       </div>
                     </Link>
                   ))}
@@ -304,18 +303,18 @@ export const PublicProfilePage: React.FC = () => {
           <div className="flex flex-col gap-6">
             <div className="border-b border-[var(--border-color)] pb-4">
               <h2 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-                Kütüphane ({library.length})
+                {t('profile.tabsLibrary')} ({library.length})
               </h2>
               <p className="text-xs text-[var(--text-muted)]">
-                {user.display_name || user.username} tarafından takip edilen ve okunan seriler
+                {t('profile.userLibrarySubtitle', { user: user.display_name || user.username })}
               </p>
             </div>
 
             <ProfileLibraryGrid
               items={library}
               showViewAll={false}
-              emptyTitle="Takip Edilen Seri Yok"
-              emptyDescription="Bu kullanıcı henüz herhangi bir seriyi kütüphanesine eklememiş."
+              emptyTitle={t('profile.libraryGridEmptyTitle')}
+              emptyDescription={t('profile.libraryEmptyOther')}
             />
           </div>
         )}
@@ -325,10 +324,10 @@ export const PublicProfilePage: React.FC = () => {
           <div className="flex flex-col gap-6">
             <div className="border-b border-[var(--border-color)] pb-4">
               <h2 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-                Aktivite ve Yorumlar
+                {t('profile.communityActivitiesTitle')}
               </h2>
               <p className="text-xs text-[var(--text-muted)]">
-                {user.display_name || user.username} tarafından paylaşılan tüm yorumlar ve incelemeler
+                {t('profile.userCommentsSubtitle', { user: user.display_name || user.username })}
               </p>
             </div>
 

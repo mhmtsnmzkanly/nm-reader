@@ -10,14 +10,15 @@ import {
   Lock,
   Calendar,
   ChevronDown,
-  ChevronsDown,
   ChevronUp,
-  ChevronsUp,
   Hash,
+  ZoomIn,
 } from 'lucide-react';
 import { ContentDetail, ContentDetailChapter, Genre, Tag } from '../../types/api';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { ReportButton } from '../feedback/ReportButton';
+import { ImageLightboxModal } from '../ui/ImageLightboxModal';
 import { usePreferences } from '../../contexts/PreferencesContext';
 
 type ContentHeroProps = {
@@ -43,6 +44,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
 }) => {
   const { t } = usePreferences();
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const typeLabels: Record<string, string> = {
     manga: 'Manga',
@@ -87,7 +89,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
     content.user_state?.last_read_chapter_number;
 
   const descriptionText =
-    content.description || content.summary || 'Bu içerik için henüz bir açıklama girilmemiştir.';
+    content.description || content.summary || t('content.noDescription');
   const isDescriptionLong = descriptionText.length > 240;
 
   const altTitles = Array.isArray(content.alternative_titles)
@@ -99,7 +101,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
   const genresList: Genre[] =
     genres ||
     content.genres ||
-    (content.genre ? [{ id: '1', name: content.genre, slug: content.genre.toLowerCase() }] : []);
+    ((content as any).genre ? [{ id: '1', name: (content as any).genre, slug: (content as any).genre.toLowerCase() }] : []);
   const tagsList: Tag[] = tags || content.tags || [];
 
   return (
@@ -121,19 +123,46 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
         <div className="flex flex-col md:flex-row gap-6 sm:gap-8 items-start">
           {/* Cover Column */}
           <div className="w-full sm:w-56 md:w-60 lg:w-64 flex-shrink-0 flex flex-col items-center gap-3.5 mx-auto md:mx-0">
-            <div className="aspect-[3/4] w-48 sm:w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-[var(--border-color)] bg-[var(--bg-tertiary)] relative group">
-              {/* Top gradient overlay & Top-Center chips: Series Type & Release Year */}
+            <div
+              onClick={() => coverUrl && setIsLightboxOpen(true)}
+              className={`aspect-[3/4] w-48 sm:w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-[var(--border-color)] bg-[var(--bg-tertiary)] relative group ${
+                coverUrl ? 'cursor-pointer' : ''
+              }`}
+              title={coverUrl ? 'Görseli büyütmek için tıklayın' : undefined}
+            >
+              {/* Top gradient overlay & Top-Center chips: Series Type & Release Year & Adult/Members */}
               <div className="absolute top-0 inset-x-0 h-14 bg-gradient-to-b from-black/70 via-black/30 to-transparent z-[5] pointer-events-none" />
-              <div className="absolute top-2.5 inset-x-0 flex items-center justify-center gap-1.5 z-10 px-2 pointer-events-none">
+              <div className="absolute top-2.5 inset-x-0 flex items-center justify-center gap-1.5 z-10 px-2 pointer-events-none flex-wrap">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-mono uppercase tracking-wider font-bold bg-amber-500 text-black shadow-md backdrop-blur-xs border border-amber-300/60">
                   {typeLabels[content.type] || content.type}
                 </span>
+                {content.is_adult && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-mono font-bold bg-rose-600 text-white shadow-md backdrop-blur-xs border border-rose-400/40">
+                    {t('adult.badge')}
+                  </span>
+                )}
+                {content.is_members_only && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-mono font-bold bg-purple-600 text-white shadow-md backdrop-blur-xs border border-purple-400/40 flex items-center gap-1">
+                    <Lock className="w-2.5 h-2.5" />
+                    <span>{t('membersOnly.badge')}</span>
+                  </span>
+                )}
                 {content.release_year && (
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-mono font-bold bg-black/75 text-white shadow-md backdrop-blur-xs border border-white/20">
                     {content.release_year}
                   </span>
                 )}
               </div>
+
+              {/* Hover Zoom Prompt Pill in center */}
+              {coverUrl && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-black/25 backdrop-blur-[2px]">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/80 text-white font-mono text-xs font-semibold shadow-xl border border-white/20 transform scale-90 group-hover:scale-100 transition-transform duration-200">
+                    <ZoomIn className="w-3.5 h-3.5 text-[var(--accent-color)]" />
+                    <span>Görseli Büyüt</span>
+                  </div>
+                </div>
+              )}
 
               {/* Bottom gradient overlay & Bottom-Center chip: Rating */}
               <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-[5] pointer-events-none" />
@@ -150,7 +179,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                   src={coverUrl}
                   alt={content.title}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--bg-tertiary)] text-[var(--accent-color)] font-serif text-4xl font-bold">
@@ -230,9 +259,19 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
           <div className="flex-1 flex flex-col justify-between gap-4 sm:gap-5 min-w-0 w-full">
             {/* 1. Title & Alt Titles */}
             <div className="flex flex-col gap-1.5">
-              <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--text-primary)] leading-tight break-words">
-                {content.title}
-              </h1>
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--text-primary)] leading-tight break-words flex-1">
+                  {content.title}
+                </h1>
+                <ReportButton
+                  targetType="series"
+                  targetId={content.id}
+                  targetTitle={content.title}
+                  variant="button"
+                  size="sm"
+                  className="shrink-0"
+                />
+              </div>
 
               {altTitles.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
@@ -246,13 +285,31 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                   ))}
                 </div>
               )}
+
+              {/* Content Flags (Adult / Members Only) */}
+              {(content.is_adult || content.is_members_only) && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {content.is_adult && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold shadow-xs">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                      <span>{t('adult.longBadge')}</span>
+                    </div>
+                  )}
+                  {content.is_members_only && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 text-xs font-semibold shadow-xs">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{t('membersOnly.badge')}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 2. Description / Summary */}
             <div className="flex flex-col gap-2 bg-[var(--bg-tertiary)]/50 rounded-2xl p-4 sm:p-5 border border-[var(--border-color)]/70">
               <div className="flex items-center justify-between border-b border-[var(--border-color)]/50 pb-2">
                 <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-[var(--accent-color)]">
-                  Özet & Açıklama
+                  {t('content.summaryTitle')}
                 </span>
               </div>
               <div className="relative">
@@ -275,13 +332,13 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                 >
                   {isDescriptionExpanded ? (
                     <>
-                      <ChevronsUp className="w-3 h-3" />
-                      <ChevronsUp className="w-3 h-3" />
+                      <span>{t('content.showLess')}</span>
+                      <ChevronUp className="w-3 h-3" />
                     </>
                   ) : (
-                      <>
-                      <ChevronsDown className="w-3 h-3" />
-                      <ChevronsDown className="w-3 h-3" />
+                    <>
+                      <span>{t('content.showMore')}</span>
+                      <ChevronDown className="w-3 h-3" />
                     </>
                   )}
                 </button>
@@ -296,7 +353,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--accent-color)] font-bold flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>{t('navigation.genres')}:</span>
+                      <span>{t('content.genres')}:</span>
                     </span>
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       {genresList.map((g) => (
@@ -320,7 +377,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)] font-bold flex items-center gap-1.5">
                       <Hash className="w-3.5 h-3.5" />
-                      <span>{t('navigation.tags')}:</span>
+                      <span>{t('content.tags')}:</span>
                     </span>
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       {tagsList.map((t) => (
@@ -343,6 +400,23 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Cover Image Lightbox Modal */}
+      {coverUrl && (
+        <ImageLightboxModal
+          isOpen={isLightboxOpen}
+          onClose={() => setIsLightboxOpen(false)}
+          imageUrl={coverUrl}
+          altText={content.title}
+          title={content.title}
+          badge={typeLabels[content.type] || content.type}
+          meta={
+            content.release_year
+              ? `${content.release_year} • ★ ${ratingAvg.toFixed(1)}/10`
+              : `★ ${ratingAvg.toFixed(1)}/10`
+          }
+        />
+      )}
     </div>
   );
 };

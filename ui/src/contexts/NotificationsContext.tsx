@@ -53,6 +53,10 @@ type NotificationsContextType = {
   markAsRead: (id: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   deleteNotification: (id: number) => Promise<void>;
+  isModalOpen: boolean;
+  openNotificationsModal: () => void;
+  closeNotificationsModal: () => void;
+  toggleNotificationsModal: () => void;
 };
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -64,6 +68,11 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isError, setIsError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<NotificationCategory>('all');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  const openNotificationsModal = useCallback(() => setIsModalOpen(true), []);
+  const closeNotificationsModal = useCallback(() => setIsModalOpen(false), []);
+  const toggleNotificationsModal = useCallback(() => setIsModalOpen((prev) => !prev), []);
 
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) {
@@ -176,6 +185,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         markAsRead,
         markAllAsRead,
         deleteNotification,
+        isModalOpen,
+        openNotificationsModal,
+        closeNotificationsModal,
+        toggleNotificationsModal,
       }}
     >
       {children}

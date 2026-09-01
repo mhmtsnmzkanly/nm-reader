@@ -13,9 +13,9 @@ export const ContentGenresTags: React.FC<ContentGenresTagsProps> = ({
   genres = [],
   tags = [],
 }) => {
+  const { t } = usePreferences();
   const hasGenres = genres && genres.length > 0;
   const hasTags = tags && tags.length > 0;
-  const { t } = usePreferences();
 
   if (!hasGenres && !hasTags) return null;
 
@@ -26,7 +26,7 @@ export const ContentGenresTags: React.FC<ContentGenresTagsProps> = ({
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[var(--accent-color)]">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{t('genres.directory')}</span>
+            <span>{t('common.genres')}</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -51,19 +51,19 @@ export const ContentGenresTags: React.FC<ContentGenresTagsProps> = ({
         <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-color)]">
           <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             <Hash className="w-3.5 h-3.5" />
-            <span>{t('tags.directory')}</span>
+            <span>{t('common.tags')}</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {tags.map((t) => (
+            {tags.map((item) => (
               <Link
-                key={`tag-${t.id || t.slug}`}
-                to={`/tag/${t.slug}`}
+                key={`tag-${item.id || item.slug}`}
+                to={`/tag/${item.slug}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-color)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-all shadow-2xs"
               >
-                <span>#{t.name}</span>
-                {t.content_count !== undefined && (
-                  <span className="text-[10px] opacity-70 font-mono">({t.content_count})</span>
+                <span>#{item.name}</span>
+                {item.content_count !== undefined && (
+                  <span className="text-[10px] opacity-70 font-mono">({item.content_count})</span>
                 )}
               </Link>
             ))}

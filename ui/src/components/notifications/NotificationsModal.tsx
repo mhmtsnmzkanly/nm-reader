@@ -1,8 +1,15 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Bell, CheckCheck, ExternalLink, RefreshCw } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import {
+  Bell,
+  CheckCheck,
+  ExternalLink,
+  RefreshCw,
+  X,
+} from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationsContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePreferences } from '../../contexts/PreferencesContext';
 import { NotificationCard } from './NotificationCard';
 import { NotificationFilterTabs } from './NotificationFilterTabs';
 import { EmptyState } from '../feedback/EmptyState';
@@ -11,8 +18,10 @@ import { Skeleton } from '../feedback/Skeleton';
 import { Button } from '../ui/Button';
 
 export const NotificationsModal: React.FC = () => {
-  const { isNotificationsModalOpen, closeNotificationsModal, isAuthenticated, openAuthModal } = useAuth();
+  const { t } = usePreferences();
   const {
+    isModalOpen,
+    closeNotificationsModal,
     filteredNotifications,
     unreadCount,
     isLoading,
@@ -23,19 +32,22 @@ export const NotificationsModal: React.FC = () => {
     markAllAsRead,
     deleteNotification,
   } = useNotifications();
+
+  const { isAuthenticated, openAuthModal } = useAuth();
   const navigate = useNavigate();
 
+  // Close modal on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isNotificationsModalOpen) {
+      if (e.key === 'Escape' && isModalOpen) {
         closeNotificationsModal();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isNotificationsModalOpen, closeNotificationsModal]);
+  }, [isModalOpen, closeNotificationsModal]);
 
-  if (!isNotificationsModalOpen) return null;
+  if (!isModalOpen) return null;
 
   const handleViewAll = () => {
     closeNotificationsModal();
@@ -44,19 +56,21 @@ export const NotificationsModal: React.FC = () => {
 
   return (
     <div
-      id="notifications-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+      id="notifications-modal-container"
+      className="fixed inset-0 z-50 flex items-start justify-center sm:justify-end sm:items-start p-3 sm:p-6 sm:pt-16 pointer-events-auto"
     >
-      {/* Backdrop overlay */}
+      {/* Backdrop */}
       <div
-        className="absolute inset-0"
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-fade-in"
         onClick={closeNotificationsModal}
         aria-hidden="true"
       />
 
-      {/* Modal Container */}
+      {/* Modal Card */}
       <div
-        id="notifications-modal-container"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('notifications.title')}
         className="relative w-full max-w-lg bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[88vh] transition-colors duration-300"
       >
         {/* Modal Header */}
@@ -68,15 +82,15 @@ export const NotificationsModal: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-serif font-bold text-lg text-[var(--text-primary)]">
-                  Bildirimler
+                  {t('notifications.title')}
                 </h3>
                 {unreadCount > 0 && (
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[var(--accent-color)] text-white animate-pulse">
-                    {unreadCount} Yeni
+                    {t('notifications.newBadge', { count: unreadCount })}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[var(--text-muted)]">Güncellemeler ve duyurular</p>
+              <p className="text-xs text-[var(--text-muted)]">{t('notifications.modalSubtitle')}</p>
             </div>
           </div>
 
@@ -85,8 +99,8 @@ export const NotificationsModal: React.FC = () => {
               type="button"
               id="refresh-notif-btn"
               onClick={() => fetchNotifications()}
-              title="Yenile"
-              aria-label="Bildirimleri Yenile"
+              title={t('notifications.refreshTitle')}
+              aria-label={t('notifications.refreshTitle')}
               className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-full transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -96,7 +110,7 @@ export const NotificationsModal: React.FC = () => {
               id="close-notif-modal-btn"
               onClick={closeNotificationsModal}
               className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] rounded-full transition-colors cursor-pointer"
-              aria-label="Kapat"
+              aria-label={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -116,8 +130,8 @@ export const NotificationsModal: React.FC = () => {
                   className="flex items-center gap-1 text-xs font-semibold text-[var(--accent-color)] hover:underline whitespace-nowrap cursor-pointer shrink-0 ml-1"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Tümünü Okundu İşaretle</span>
-                  <span className="sm:hidden">Tümü Okundu</span>
+                  <span className="hidden sm:inline">{t('notifications.markAllRead')}</span>
+                  <span className="sm:hidden">{t('notifications.markAllReadShort')}</span>
                 </button>
               )}
             </div>
@@ -133,10 +147,10 @@ export const NotificationsModal: React.FC = () => {
               </div>
               <div className="flex flex-col gap-1 max-w-xs">
                 <h4 className="font-bold text-sm text-[var(--text-primary)]">
-                  Bildirimlerinizi Görmek İçin Giriş Yapın
+                  {t('notifications.loginPromptTitle')}
                 </h4>
                 <p className="text-xs text-[var(--text-muted)]">
-                  Takip ettiğiniz serilerin yeni bölümleri ve etkileşim bildirimlerinden anında haberdar olun.
+                  {t('notifications.loginPrompt')}
                 </p>
               </div>
               <Button
@@ -148,7 +162,7 @@ export const NotificationsModal: React.FC = () => {
                 }}
                 className="bg-[var(--accent-color)] text-white hover:opacity-90 cursor-pointer"
               >
-                Giriş Yap / Kayıt Ol
+                {t('notifications.loginOrRegister')}
               </Button>
             </div>
           ) : isLoading && filteredNotifications.length === 0 ? (
@@ -168,15 +182,15 @@ export const NotificationsModal: React.FC = () => {
             </div>
           ) : isError ? (
             <ErrorState
-              title="Bildirimler Yüklenemedi"
-              message={errorMessage || 'Bildirim listesi yüklenirken bir problem oluştu.'}
+              title={t('notifications.loadErrorTitle')}
+              message={errorMessage || t('notifications.loadErrorDesc')}
               onRetry={fetchNotifications}
             />
           ) : filteredNotifications.length === 0 ? (
             <EmptyState
               icon={<Bell className="w-10 h-10 text-[var(--text-muted)] opacity-50" />}
-              title="Bildirim Bulunmuyor"
-              description="Seçilen filtre kriterlerine uygun herhangi bir bildirim mevcut değil."
+              title={t('notifications.emptyTitle')}
+              description={t('notifications.emptyDesc')}
             />
           ) : (
             filteredNotifications.map((notification) => (
@@ -196,7 +210,7 @@ export const NotificationsModal: React.FC = () => {
         {isAuthenticated && (
           <div className="p-3 sm:p-4 border-t border-[var(--border-color)] bg-[var(--bg-tertiary)]/50 flex items-center justify-between">
             <span className="text-xs text-[var(--text-muted)] font-medium">
-              {filteredNotifications.length} bildirim listeleniyor
+              {t('notifications.notificationsListed', { count: filteredNotifications.length })}
             </span>
             <button
               type="button"
@@ -204,7 +218,7 @@ export const NotificationsModal: React.FC = () => {
               onClick={handleViewAll}
               className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent-color)] hover:underline cursor-pointer"
             >
-              <span>Tam Sayfada Aç</span>
+              <span>{t('notifications.openInFullPage')}</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
           </div>

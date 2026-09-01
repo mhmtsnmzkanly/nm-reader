@@ -2,6 +2,7 @@ import {
   ApiResponse,
   AuthPayload,
   BlogSummary,
+  ChapterDetail,
   ChapterReader,
   ChapterSummary,
   ChapterUnlockRow,
@@ -11,6 +12,7 @@ import {
   ContentType,
   FeatureEntitlement,
   FeatureProduct,
+  FollowingUserItem,
   Genre,
   HomeData,
   LibraryItem,
@@ -22,6 +24,7 @@ import {
   SeriesUnlockRow,
   ShopPackage,
   Tag,
+  User,
   UserProfile,
   UserPreferences,
   UserSession,
@@ -83,21 +86,52 @@ export interface IContentService {
 }
 
 export interface IBlogService {
+  // Kamuya açık blog listeleme (Sıralama ve etiket filtreli)
   getBlogs(
     page?: number,
     per_page?: number,
     sort?: 'latest' | 'popular',
     tag?: string
   ): Promise<ApiResponse<BlogSummary[]>>;
+
+  // Tekil blog detayı
   getBlogBySlug(slug: string): Promise<ApiResponse<BlogSummary>>;
-  getUserBlogs(page?: number, per_page?: number): Promise<ApiResponse<BlogSummary[]>>;
-  createBlog(title: string, body: string, tags?: string[], excerpt?: string): Promise<ApiResponse<BlogSummary>>;
-  toggleLikeBlog(slug: string): Promise<ApiResponse<{ liked: boolean; likes: number }>>;
+
+  // İlgili blog yazıları
   getRelatedBlogs(slug: string, limit?: number): Promise<ApiResponse<BlogSummary[]>>;
+
+  // Blog oylama (+1, -1, 0)
   voteBlog(
     slug: string,
     vote: -1 | 0 | 1
-  ): Promise<ApiResponse<{ vote: number; upvote_count: number; downvote_count: number }>>;
+  ): Promise<ApiResponse<{ vote: number; upvote_count: number; downvote_count: number; likes: number }>>;
+
+  // Görsel yükleme (Backend { path, url } döner)
+  uploadBlogImage(formData: FormData): Promise<ApiResponse<{ path: string; url: string }>>;
+
+  // YAZAR YÖNETİMİ (Kullanıcının kendi yazıları)
+  getUserBlogs(page?: number, per_page?: number): Promise<ApiResponse<BlogSummary[]>>;
+  getMyBlog(id: string): Promise<ApiResponse<BlogSummary>>;
+  createBlog(
+    title: string,
+    body: string,
+    tags?: string[],
+    excerpt?: string,
+    cover_image?: string,
+    status?: 'draft' | 'pending'
+  ): Promise<ApiResponse<BlogSummary>>;
+  updateBlog(
+    id: string,
+    payload: {
+      title?: string;
+      body?: string;
+      tags?: string[];
+      excerpt?: string;
+      cover_image?: string;
+      status?: 'draft' | 'pending';
+    }
+  ): Promise<ApiResponse<BlogSummary>>;
+  deleteBlog(id: string): Promise<ApiResponse<{ deleted: boolean }>>;
 }
 
 export interface ICommentService {
@@ -128,19 +162,26 @@ export interface ICommentService {
 
 export interface IAuthService {
   login(
-    email: string,
+    identity: string,
     password: string,
-    remember: boolean
+    remember?: boolean
   ): Promise<ApiResponse<AuthPayload>>;
   register(
     username: string,
     email: string,
     password: string
-  ): Promise<ApiResponse<{ id: string; username: string; email: string }>>;
+  ): Promise<ApiResponse<{ id: string; username: string; email: string; email_verified?: boolean }>>;
   refresh(): Promise<ApiResponse<AuthPayload>>;
   logout(): Promise<ApiResponse<{ logged_out: boolean }>>;
   getSessions(): Promise<ApiResponse<UserSession[]>>;
   revokeSession(sessionId: string): Promise<ApiResponse<{ revoked: boolean }>>;
+  revokeOtherSessions(): Promise<ApiResponse<{ revoked_count: number }>>;
+
+  // Yeni E-posta & Şifre İşlemleri
+  forgotPassword(email: string): Promise<ApiResponse<{ message: string }>>;
+  resetPassword(token: string, password: string): Promise<ApiResponse<{ id: string; message: string }>>;
+  verifyEmail(token: string): Promise<ApiResponse<{ id: string; email_verified: boolean }>>;
+  resendVerificationEmail(): Promise<ApiResponse<{ message: string }>>;
 }
 
 export interface IUserService {
@@ -167,6 +208,7 @@ export interface IUserService {
     slug: string
   ): Promise<ApiResponse<{ in_library: boolean }>>;
   getFollows(page?: number, per_page?: number): Promise<ApiResponse<ContentSummary[]>>;
+  getFollowingUsers(page?: number, per_page?: number): Promise<ApiResponse<FollowingUserItem[]>>;
   getHistory(page?: number, per_page?: number): Promise<ApiResponse<ReadingHistoryItem[]>>;
   recordHistory(data: {
     contentSlug: string;
@@ -210,3 +252,23 @@ export interface IWalletService {
   purchaseChapter(chapterId: string): Promise<ApiResponse<{ unlocked: boolean; transaction_id: number; balance: number }>>;
   purchaseAdFree(): Promise<ApiResponse<{ purchased: boolean; expires_at: string }>>;
 }
+
+export type ReportTargetType = 'series' | 'chapter' | 'blog' | 'comment';
+
+export interface IReportService {
+  createReport(payload: {
+    target_type: ReportTargetType;
+    target_id: string;
+    reason: string;
+    description?: string;
+  }): Promise<ApiResponse<{ id: number; status: string }>>;
+}
+
+export type {
+  User,
+  ContentSummary,
+  ContentDetail,
+  ChapterSummary,
+  ChapterDetail,
+  ChapterReader,
+};

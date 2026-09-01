@@ -14,10 +14,10 @@ export const WalletBalance: React.FC<WalletBalanceProps> = ({
   wallet,
   onOpenTopUp,
 }) => {
-  const { formatDate, t } = usePreferences();
-  const balance = wallet?.balance_coin ?? wallet?.balance ?? 180;
-  const purchased = wallet?.total_coin_purchased ?? 450;
-  const spent = wallet?.total_coin_spent ?? 270;
+  const { formatDate, t, lang } = usePreferences();
+  const balance = wallet?.balance_coin ?? wallet?.balance ?? 0;
+  const purchased = wallet?.total_coin_purchased ?? 0;
+  const spent = wallet?.total_coin_spent ?? 0;
   const lastUpdated = wallet?.updated_at
     ? formatDate(wallet.updated_at, {
         day: 'numeric',
@@ -26,7 +26,9 @@ export const WalletBalance: React.FC<WalletBalanceProps> = ({
         hour: '2-digit',
         minute: '2-digit',
       })
-    : t('time.today');
+    : '-';
+
+  const locale = lang === 'en' ? 'en-US' : 'tr-TR';
 
   return (
     <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] p-6 sm:p-7 shadow-xl flex flex-col gap-6 relative overflow-hidden transition-colors duration-300">
@@ -40,12 +42,12 @@ export const WalletBalance: React.FC<WalletBalanceProps> = ({
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-muted)] font-semibold font-mono">
-              Mevcut Coin Bakiyeniz
+              {t('walletBalance.currentCoinBalance')}
             </span>
             <div className="text-3xl sm:text-4xl font-serif font-bold text-[var(--text-primary)] tracking-tight flex items-baseline gap-2">
-              <span>{balance.toLocaleString('tr-TR')}</span>
+              <span>{balance.toLocaleString(locale)}</span>
               <span className="text-sm sm:text-base font-sans text-[var(--accent-color)] font-medium">
-                Coin
+                {t('common.coin')}
               </span>
             </div>
           </div>
@@ -58,20 +60,20 @@ export const WalletBalance: React.FC<WalletBalanceProps> = ({
               variant="gold"
               size="md"
               onClick={onOpenTopUp}
-              className="gap-2 flex-1 md:flex-initial bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold shadow-md shadow-[var(--accent-color)]/20"
+              className="gap-2 flex-1 md:flex-initial bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold shadow-md shadow-[var(--accent-color)]/20 cursor-pointer"
             >
               <Plus className="w-4 h-4 text-white" />
-              <span>Hızlı Coin Yükle</span>
+              <span>{t('walletBalance.quickTopUp')}</span>
             </Button>
           ) : (
             <Link to="/shop" className="flex-1 md:flex-initial">
               <Button
                 variant="gold"
                 size="md"
-                className="w-full gap-2 bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold shadow-md shadow-[var(--accent-color)]/20"
+                className="w-full gap-2 bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold shadow-md shadow-[var(--accent-color)]/20 cursor-pointer"
               >
                 <Plus className="w-4 h-4 text-white" />
-                <span>Coin Yükle</span>
+                <span>{t('walletBalance.topUp')}</span>
               </Button>
             </Link>
           )}
@@ -80,10 +82,10 @@ export const WalletBalance: React.FC<WalletBalanceProps> = ({
             <Button
               variant="outline"
               size="md"
-              className="w-full gap-2 border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)]"
+              className="w-full gap-2 border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>Paketler</span>
+              <span>{t('walletBalance.packages')}</span>
             </Button>
           </Link>
         </div>
@@ -94,10 +96,10 @@ export const WalletBalance: React.FC<WalletBalanceProps> = ({
         <div className="p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-between gap-3">
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase font-mono tracking-wider text-[var(--text-muted)]">
-              Toplam Yüklenen
+              {t('walletBalance.totalPurchased')}
             </span>
             <span className="text-base font-mono font-bold text-emerald-500">
-              +{purchased.toLocaleString('tr-TR')} Coin
+              +{purchased.toLocaleString(locale)} {t('common.coins')}
             </span>
           </div>
           <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
@@ -108,10 +110,10 @@ export const WalletBalance: React.FC<WalletBalanceProps> = ({
         <div className="p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-between gap-3">
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase font-mono tracking-wider text-[var(--text-muted)]">
-              Toplam Harcanan
+              {t('walletBalance.totalSpent')}
             </span>
             <span className="text-base font-mono font-bold text-[var(--text-primary)]">
-              -{spent.toLocaleString('tr-TR')} Coin
+              -{spent.toLocaleString(locale)} {t('common.coins')}
             </span>
           </div>
           <div className="p-2 rounded-lg bg-[var(--accent-light)] text-[var(--accent-color)]">
@@ -122,7 +124,7 @@ export const WalletBalance: React.FC<WalletBalanceProps> = ({
         <div className="p-3.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-between gap-3">
           <div className="flex flex-col gap-0.5">
             <span className="text-[10px] uppercase font-mono tracking-wider text-[var(--text-muted)]">
-              Son Güncelleme
+              {t('walletBalance.lastUpdated')}
             </span>
             <span className="text-xs font-mono font-semibold text-[var(--text-secondary)] truncate">
               {lastUpdated}

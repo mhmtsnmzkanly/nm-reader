@@ -4,8 +4,10 @@ import { contentService } from '../services';
 import { ContentSummary, PaginationMeta } from '../types/api';
 import { ContentCard } from '../components/content/ContentCard';
 import { Pagination } from '../components/feedback/Pagination';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 export const GenreResultsPage: React.FC = () => {
+  const { t } = usePreferences();
   const { slug = '' } = useParams<{ slug: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -42,10 +44,10 @@ export const GenreResultsPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8 transition-colors duration-300">
       <div className="border-b border-[var(--border-color)] pb-6">
         <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--accent-color)] font-bold">
-          Tür Filtresi
+          {t('genre.filterBadge')}
         </span>
         <h1 className="font-serif text-3xl font-bold text-[var(--text-primary)] capitalize">
-          #{slug} <span className="italic text-[var(--accent-color)]">Koleksiyonu</span>
+          {t('genre.resultsHeader', { slug })}
         </h1>
       </div>
 
@@ -57,7 +59,7 @@ export const GenreResultsPage: React.FC = () => {
         </div>
       ) : contents.length === 0 ? (
         <div className="p-12 text-center text-[var(--text-muted)] font-mono text-xs border border-dashed border-[var(--border-color)] rounded-2xl">
-          Bu tür altında kayıtlı içerik bulunamadı.
+          {t('genre.noContentFound')}
         </div>
       ) : (
         <>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookOpen, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import { ReadingSummary } from '../../types/api';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type ReadingSummaryCardProps = {
   reading?: ReadingSummary;
@@ -11,6 +12,7 @@ export const ReadingSummaryCard: React.FC<ReadingSummaryCardProps> = ({
   reading = { chapters_read: 0, completed_series: 0, ongoing_series: 0 },
   className = '',
 }) => {
+  const { t } = usePreferences();
   const totalSeries = (reading.completed_series || 0) + (reading.ongoing_series || 0);
   const completionRate =
     totalSeries > 0 ? Math.round(((reading.completed_series || 0) / totalSeries) * 100) : 0;
@@ -26,17 +28,17 @@ export const ReadingSummaryCard: React.FC<ReadingSummaryCardProps> = ({
           </div>
           <div>
             <h3 className="font-serif text-base font-bold text-[var(--text-primary)]">
-              Okuma Özeti
+              {t('profile.readingSummaryTitle')}
             </h3>
             <p className="text-xs text-[var(--text-muted)]">
-              Okuma alışkanlıkları ve seri tamamlama durumu
+              {t('profile.readingSummarySubtitle')}
             </p>
           </div>
         </div>
 
         {totalSeries > 0 && (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-[var(--bg-tertiary)] border border-[var(--border-color)] rounded-full text-xs font-mono text-[var(--text-secondary)]">
-            <span>Tamamlama Oranı:</span>
+            <span>{t('profile.completionRate')}:</span>
             <span className="font-bold text-[var(--accent-color)]">%{completionRate}</span>
           </div>
         )}
@@ -49,10 +51,10 @@ export const ReadingSummaryCard: React.FC<ReadingSummaryCardProps> = ({
           </div>
           <div className="flex flex-col">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-              Okunan Bölümler
+              {t('profile.chaptersRead')}
             </span>
             <span className="font-serif text-xl font-bold text-[var(--text-primary)]">
-              {reading.chapters_read.toLocaleString('tr-TR')}
+              {reading.chapters_read.toLocaleString()}
             </span>
           </div>
         </div>
@@ -63,10 +65,10 @@ export const ReadingSummaryCard: React.FC<ReadingSummaryCardProps> = ({
           </div>
           <div className="flex flex-col">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-              Biten Seriler
+              {t('profile.completedSeries')}
             </span>
             <span className="font-serif text-xl font-bold text-[var(--text-primary)]">
-              {reading.completed_series} Seri
+              {reading.completed_series} {t('common.seriesCount')}
             </span>
           </div>
         </div>
@@ -77,10 +79,10 @@ export const ReadingSummaryCard: React.FC<ReadingSummaryCardProps> = ({
           </div>
           <div className="flex flex-col">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-              Devam Edenler
+              {t('profile.ongoingSeries')}
             </span>
             <span className="font-serif text-xl font-bold text-[var(--text-primary)]">
-              {reading.ongoing_series} Seri
+              {reading.ongoing_series} {t('common.seriesCount')}
             </span>
           </div>
         </div>

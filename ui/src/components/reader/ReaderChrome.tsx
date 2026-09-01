@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Settings, Bookmark, BookmarkCheck } from 'lucide-react';
 import { Chapter } from '../../types/api';
 import { chapterUrl } from '../../utils/chapter';
+import { usePreferences } from '../../contexts/PreferencesContext';
+import { ReportButton } from '../feedback/ReportButton';
 
 type ReaderHeaderProps = {
   chapter: Chapter;
@@ -30,6 +32,7 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
   isVisible = true,
 }) => {
   const navigate = useNavigate();
+  const { t } = usePreferences();
 
   const prevChap = chapter.navigation?.previous;
   const nextChap = chapter.navigation?.next;
@@ -80,7 +83,7 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
           <button
             onClick={handleBack}
             aria-label="Back to series"
-            title="Seriye Dön"
+            title={t('reader.backToSeries')}
             className="p-1.5 sm:p-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-all shrink-0 cursor-pointer active:scale-95"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -91,7 +94,7 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
               {chapter.series?.title || 'SERIES'}
             </span>
             <span className="text-xs sm:text-sm font-serif font-bold text-[var(--text-primary)] truncate">
-              BÖLÜM {chapterNum}{chapterTitleStr}
+              {t('chapters.chapterNumber', { number: chapterNum })}{chapterTitleStr}
             </span>
           </div>
         </div>
@@ -102,11 +105,11 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
             disabled={!prevChap}
             onClick={handlePrev}
             aria-label="Previous chapter"
-            title="Önceki Bölüm"
+            title={t('reader.prevChapter')}
             className="p-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card)] disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1 active:scale-95 text-xs font-medium"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden md:inline">Önceki</span>
+            <span className="hidden md:inline">{t('reader.prev')}</span>
           </button>
 
           {/* Chapter & Progress Badge */}
@@ -135,20 +138,28 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
             disabled={!nextChap}
             onClick={handleNext}
             aria-label="Next chapter"
-            title="Sonraki Bölüm"
+            title={t('reader.nextChapter')}
             className="p-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-[var(--accent-light)] text-[var(--accent-color)] hover:bg-[var(--accent-color)] hover:text-white disabled:opacity-30 disabled:bg-transparent disabled:text-[var(--text-muted)] disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1 active:scale-95 text-xs font-medium border border-[var(--accent-border)]"
           >
-            <span className="hidden md:inline">Sonraki</span>
+            <span className="hidden md:inline">{t('reader.next')}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Right: Settings & Bookmark */}
+        {/* Right: Settings, Report & Bookmark */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <ReportButton
+            targetType="chapter"
+            targetId={chapter.id}
+            targetTitle={`Bölüm ${chapter.chapter_number}`}
+            variant="icon"
+            className="p-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-amber-500 hover:border-amber-500/40"
+          />
+
           <button
             onClick={onOpenSettings}
             aria-label="Reader Settings"
-            title="Okuma Ayarları"
+            title={t('reader.settings')}
             className="p-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-all cursor-pointer active:scale-95"
           >
             <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -156,8 +167,8 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
 
           <button
             onClick={onToggleBookmark}
-            aria-label={bookmarked ? 'Remove Bookmark' : 'Add Bookmark'}
-            title={bookmarked ? 'Yer İfadesini Kaldır' : 'Yer İletişimine Ekle'}
+            aria-label={bookmarked ? t('reader.removeBookmark') : t('reader.addBookmark')}
+            title={bookmarked ? t('reader.removeBookmark') : t('reader.addBookmark')}
             className={`p-2 rounded-xl border transition-all cursor-pointer active:scale-95 ${
               bookmarked
                 ? 'bg-[var(--accent-light)] border-[var(--accent-color)] text-[var(--accent-color)] shadow-[0_0_12px_var(--accent-light)]'

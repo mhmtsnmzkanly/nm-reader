@@ -1,0 +1,6 @@
+{
+  "name": "nm-reader",
+  "description": "A modern reader for serialized manga, manhua, manhwa, webtoons, light novels, and web novels.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

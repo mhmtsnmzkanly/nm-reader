@@ -5,6 +5,7 @@ import { Dialog } from '../ui/Dialog';
 import { FormField } from '../ui/FormField';
 import { Button } from '../ui/Button';
 import { Avatar } from './Avatar';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type ProfileEditModalProps = {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   user,
   onSave,
 }) => {
+  const { t } = usePreferences();
   const [displayName, setDisplayName] = useState(user.display_name || user.username || '');
   const [bio, setBio] = useState(user.bio || '');
   const [avatarUrl, setAvatarUrl] = useState(user.avatar || user.profile_image || '');
@@ -38,7 +40,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        setError('Görsel boyutu 2MB üzerinde olamaz.');
+        setError(t('profile.imageSizeError'));
         return;
       }
       setError(null);
@@ -66,14 +68,14 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       });
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Profil güncellenirken bir hata oluştu.');
+      setError(err instanceof Error ? err.message : t('profile.updateError'));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} title="Profili Düzenle" maxWidth="md">
+    <Dialog isOpen={isOpen} onClose={onClose} title={t('profile.editProfileTitle')} maxWidth="md">
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {error && (
           <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-500 text-xs flex items-center gap-2">
@@ -85,7 +87,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         {/* Avatar Section & Preview */}
         <div className="p-4 bg-[var(--bg-tertiary)] rounded-2xl border border-[var(--border-color)] flex flex-col gap-4">
           <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
-            Profil Resmi (Avatar)
+            {t('profile.avatarLabel')}
           </span>
 
           <div className="flex items-center gap-4">
@@ -101,7 +103,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--accent-color)] text-xs font-mono font-semibold text-[var(--text-primary)] hover:text-[var(--accent-color)] transition-all cursor-pointer shadow-xs active:scale-95 text-center"
               >
                 <ImageIcon className="w-4 h-4 text-[var(--accent-color)]" />
-                <span>Görsel Yükle</span>
+                <span>{t('profile.uploadImage')}</span>
               </label>
               <input
                 id="avatar-upload"
@@ -111,7 +113,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
                 className="hidden"
               />
               <span className="text-[10px] text-[var(--text-muted)]">
-                PNG, JPG veya WEBP (Maks. 2MB)
+                PNG, JPG, WEBP ({t('profile.maxSize', { size: '2MB' })})
               </span>
             </div>
           </div>
@@ -119,7 +121,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
           {/* Preset Avatar Selection */}
           <div className="flex flex-col gap-2 pt-2 border-t border-[var(--border-color)]/50">
             <span className="text-[10px] font-mono text-[var(--text-muted)]">
-              veya hazır avatarlardan seçin:
+              {t('profile.choosePresetAvatar')}:
             </span>
             <div className="flex items-center gap-2 overflow-x-auto py-1">
               {AVATAR_PRESETS.map((preset, idx) => (
@@ -150,12 +152,12 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         </div>
 
         {/* Display Name */}
-        <FormField label="Görünen İsim" hint="Diğer kullanıcıların profilinizde göreceği isim">
+        <FormField label={t('profile.displayNameLabel')} hint={t('profile.displayNameHint')}>
           <input
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Örn: Deniz Yılmaz"
+            placeholder={t('profile.displayNamePlaceholder')}
             maxLength={50}
             required
             className="w-full px-4 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] focus:border-[var(--accent-color)] rounded-xl text-sm text-[var(--text-primary)] outline-none transition-colors"
@@ -163,11 +165,11 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
         </FormField>
 
         {/* Bio */}
-        <FormField label="Hakkımda / Biyografi" hint="Kendinizi ve okuma zevklerinizi tanıtın">
+        <FormField label={t('profile.bioLabel')} hint={t('profile.bioHint')}>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder="Manga ve çizgi roman okumayı seven bir okuyucu..."
+            placeholder={t('profile.bioPlaceholder')}
             rows={3}
             maxLength={300}
             className="w-full px-4 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] focus:border-[var(--accent-color)] rounded-xl text-sm text-[var(--text-primary)] outline-none transition-colors resize-none"
@@ -182,7 +184,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             onClick={onClose}
             disabled={isLoading}
           >
-            İptal
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -190,7 +192,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             isLoading={isLoading}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Kaydet</span>
+            <span>{t('common.save')}</span>
           </Button>
         </div>
       </form>

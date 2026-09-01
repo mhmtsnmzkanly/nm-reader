@@ -5,23 +5,23 @@ import {
   Sparkles,
   Zap,
   ShieldCheck,
-  Check,
   ArrowRight,
   Wallet,
-  Clock,
-  HelpCircle,
 } from 'lucide-react';
 import { walletService } from '../services';
 import { ShopPackage, WalletData } from '../types/api';
 import { Button } from '../components/ui/Button';
 import { TopUpModal } from '../components/wallet/TopUpModal';
+import { AdFreeCard } from '../components/shop/AdFreeCard';
+import { usePreferences } from '../contexts/PreferencesContext';
 
 export const ShopPage: React.FC = () => {
+  const { t } = usePreferences();
   const [packages, setPackages] = useState<ShopPackage[]>([]);
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
-  const [selectedPkgId, setSelectedPkgId] = useState<string | null>(null);
+  const [, setSelectedPkgId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -43,8 +43,8 @@ export const ShopPage: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  const handleBuyClick = (pkgId: string) => {
-    setSelectedPkgId(pkgId);
+  const handleBuyClick = (pkgId: string | number) => {
+    setSelectedPkgId(String(pkgId));
     setIsTopUpOpen(true);
   };
 
@@ -55,18 +55,18 @@ export const ShopPage: React.FC = () => {
   const perks = [
     {
       icon: Zap,
-      title: 'Anında Kilit Açma',
-      desc: 'Satın aldığınız coinlerle favori webtoon ve manga bölümlerine beklemeden erişin.',
+      title: t('shop.instantDeliveryTitle'),
+      desc: t('shop.instantDeliveryDesc'),
     },
     {
       icon: ShieldCheck,
-      title: 'Sınırsız ve Güvenli Erişim',
-      desc: 'Kilidini açtığınız tüm bölümler hesabınıza kalıcı olarak tanımlanır.',
+      title: t('shop.unlimitedAccessTitle'),
+      desc: t('shop.unlimitedAccessDesc'),
     },
     {
       icon: Sparkles,
-      title: 'İçerik Üreticilerine Destek',
-      desc: 'Her coin harcamanız, kaliteli çeviri ve orijinal içerik üretimini destekler.',
+      title: t('shop.supportCreatorsTitle'),
+      desc: t('shop.supportCreatorsDesc'),
     },
   ];
 
@@ -77,14 +77,14 @@ export const ShopPage: React.FC = () => {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--accent-color)] font-mono font-bold">
-              Mağaza & Coin Merkezi
+              {t('shop.shopAndCoinCenter')}
             </span>
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[var(--text-primary)]">
-            Coin & Bakiye <span className="italic text-[var(--accent-color)]">Paketleri</span>
+            {t('shop.coinPackages')}
           </h1>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)] font-light max-w-xl leading-relaxed">
-            Kilitli bölümleri anında açmak, yeni serileri keşfetmek ve platformu desteklemek için en uygun paketi seçin.
+            {t('shop.shopHeroDesc')}
           </p>
         </div>
 
@@ -96,11 +96,11 @@ export const ShopPage: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] uppercase font-mono tracking-wider text-[var(--text-muted)]">
-                Mevcut Bakiye
+                {t('wallet.balance')}
               </span>
               <div className="flex items-center gap-1.5 font-serif font-bold text-lg text-[var(--accent-color)]">
                 <Coins className="w-4 h-4 fill-current" />
-                <span>{wallet?.balance_coin ?? 180} Coin</span>
+                <span>{wallet?.balance_coin ?? 0} {t('common.coins')}</span>
               </div>
             </div>
           </div>
@@ -109,20 +109,26 @@ export const ShopPage: React.FC = () => {
             to="/wallet"
             className="text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--accent-color)] flex items-center gap-1 transition-colors"
           >
-            <span>Cüzdan</span>
+            <span>{t('shop.walletBtn')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>
 
+      {/* Ad-Free Feature Entitlement Promotion Card */}
+      <AdFreeCard
+        onPurchased={loadData}
+        onOpenTopUp={() => setIsTopUpOpen(true)}
+      />
+
       {/* Packages Grid */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-            Mevcut <span className="italic text-[var(--accent-color)]">Paketler</span>
+            {t('shop.coinPackages')}
           </h2>
           <span className="text-xs font-mono text-[var(--text-muted)]">
-            Güvenli & Anında Yükleme
+            {t('shop.safeInstantLoading')}
           </span>
         </div>
 
@@ -151,7 +157,7 @@ export const ShopPage: React.FC = () => {
                   {isPopular && (
                     <div className="absolute top-0 right-0 bg-[var(--accent-color)] text-white text-[10px] font-mono font-bold uppercase tracking-wider px-3.5 py-1 rounded-bl-xl shadow-sm flex items-center gap-1">
                       <Sparkles className="w-3 h-3 fill-current" />
-                      <span>{pkg.badge || 'En Popüler'}</span>
+                      <span>{pkg.badge || t('shop.popularBadge')}</span>
                     </div>
                   )}
 
@@ -167,14 +173,14 @@ export const ShopPage: React.FC = () => {
                         <span>{totalCoins}</span>
                       </div>
                       <span className="text-xs font-mono text-[var(--text-muted)] uppercase">
-                        Coin
+                        {t('common.coins')}
                       </span>
                     </div>
 
                     {pkg.bonus_coin > 0 && (
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono text-xs font-semibold w-fit">
                         <Zap className="w-3.5 h-3.5 fill-current" />
-                        <span>+{pkg.bonus_coin} Bonus Coin Hediye</span>
+                        <span>{t('shop.bonusCoinsCount', { count: pkg.bonus_coin })}</span>
                       </div>
                     )}
                   </div>
@@ -182,7 +188,7 @@ export const ShopPage: React.FC = () => {
                   {/* Pricing and Action */}
                   <div className="flex flex-col gap-3 pt-5 border-t border-[var(--border-color)]">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono text-[var(--text-muted)]">Fiyat</span>
+                      <span className="text-xs font-mono text-[var(--text-muted)]">{t('common.type')}</span>
                       <span className="text-2xl font-serif text-[var(--text-primary)] font-bold">
                         {pkg.display_price}
                       </span>
@@ -200,7 +206,7 @@ export const ShopPage: React.FC = () => {
                       }`}
                     >
                       <Coins className="w-4 h-4" />
-                      <span>Hemen Satın Al</span>
+                      <span>{t('shop.buyNow')}</span>
                     </Button>
                   </div>
                 </div>
@@ -247,4 +253,3 @@ export const ShopPage: React.FC = () => {
     </div>
   );
 };
-

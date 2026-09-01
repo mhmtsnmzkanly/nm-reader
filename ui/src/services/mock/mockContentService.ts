@@ -100,6 +100,8 @@ export class MockContentService implements IContentService {
     const chapterList = mockChapters[slug] || [];
     const convertedChapters = chapterList.map((ch) => ({
       ...ch,
+      is_adult: ch.is_adult ?? found.is_adult ?? false,
+      is_members_only: ch.is_members_only ?? found.is_members_only ?? false,
       number: ch.number ?? Number(ch.chapter_number || 1),
       published_at: ch.published_at ?? ch.created_at ?? '2026-08-12T10:00:00Z',
     }));
@@ -174,7 +176,7 @@ export class MockContentService implements IContentService {
         type: isText ? 'text' : 'image',
         created_at: new Date().toISOString(),
         body: isText
-          ? `Güneş dağların ardında gözden kaybolmuştu bile.\n\nYavaşça eski ahşap kapıyı açtı.\n\nİçeride onu bekleyen bir şeyler vardı.\n\nRüzgar, yaprakları hışırdatırken sessizlik derinleşti.`
+          ? `# Bölüm ${chapterNumber}\n\nGüneş dağların ardında gözden kaybolmuştu bile.\n\nYavaşça **eski ahşap kapıyı** açtı.\n\n> "İçeride onu bekleyen bir şeyler vardı."\n\nRüzgar, yaprakları *sessizce* hışırdatırken karanlık derinleşti.`
           : null,
         pages: isText
           ? []
@@ -197,12 +199,19 @@ export class MockContentService implements IContentService {
       };
     }
 
-    const reader = normalizeChapter(ch, {
-      id: ch.content_id,
-      title: seriesTitle,
-      slug: slug,
-      type: type,
-    });
+    const reader = normalizeChapter(
+      {
+        ...ch,
+        is_adult: ch.is_adult ?? detail?.is_adult ?? false,
+        is_members_only: ch.is_members_only ?? detail?.is_members_only ?? false,
+      },
+      {
+        id: ch.content_id,
+        title: seriesTitle,
+        slug: slug,
+        type: type,
+      }
+    );
     return makeSuccess(reader);
   }
 
@@ -383,14 +392,25 @@ export class MockContentService implements IContentService {
     }
     const query = q.toLowerCase();
     const results = mockContentSummaries
-      .filter((c) => c.title.toLowerCase().includes(query))
-      .map((c) => ({
-        id: c.id,
-        title: c.title,
-        slug: c.slug,
-        type: c.type,
-        cover_image: c.cover_image,
-      }));
+      .filter((c) => {
+        const authorName = typeof c.author === 'string' ? c.author : c.author?.name || '';
+        return c.title.toLowerCase().includes(query) || authorName.toLowerCase().includes(query);
+      })
+      .slice(0, 8)
+      .map((c) => {
+        const authorName = typeof c.author === 'string' ? c.author : c.author?.name || null;
+        return {
+          id: c.id,
+          title: c.title,
+          slug: c.slug,
+          type: c.type,
+          cover_image: c.cover_image || c.cover || null,
+          rating_avg: c.rating_avg,
+          chapter_count: c.chapter_count,
+          status: c.status,
+          author: authorName,
+        };
+      });
     return makeSuccess(results);
   }
 
@@ -557,9 +577,11 @@ export class MockContentService implements IContentService {
       }
     }
 
+    const parentContent = mockContentSummaries.find((c) => c.id === targetChapter?.content_id);
     mockChapterUnlocks.unshift({
       id: Date.now(),
       content_id: targetChapter?.content_id || 'a1b2c3',
+      content_title: parentContent?.title || 'Solo Leveling',
       chapter_id: chapterId,
       chapter_number: targetChapter?.chapter_number || '1',
       chapter_title: targetChapter?.title || null,

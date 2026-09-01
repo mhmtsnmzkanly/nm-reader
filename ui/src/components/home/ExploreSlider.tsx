@@ -111,18 +111,18 @@ export const ExploreSlider: React.FC<ExploreSliderProps> = ({ items }) => {
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-3">
-            <Link to={`/${currentItem.type}/${currentItem.slug}`}>
-              <Button variant="primary" size="lg" className="gap-2 shadow-lg shadow-indigo-600/20">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 sm:gap-3 pt-3">
+            <Link to={`/${currentItem.type}/${currentItem.slug}`} className="flex-shrink-0">
+              <Button variant="primary" size="md" className="gap-2 shadow-lg shadow-indigo-600/20 whitespace-nowrap">
                 <Play className="w-4 h-4 fill-current" />
-                {t('common.readNow')}
+                <span>{t('common.readNow')}</span>
               </Button>
             </Link>
 
-            <Link to={`/${currentItem.type}/${currentItem.slug}`}>
-              <Button variant="secondary" size="lg" className="gap-2 bg-white/10 hover:bg-white/20 border-white/10 text-white">
+            <Link to={`/${currentItem.type}/${currentItem.slug}`} className="flex-shrink-0">
+              <Button variant="secondary" size="md" className="gap-2 bg-white/10 hover:bg-white/20 border-white/10 text-white whitespace-nowrap">
                 <Info className="w-4 h-4" />
-                {t('common.details')}
+                <span>{t('common.details')}</span>
               </Button>
             </Link>
           </div>

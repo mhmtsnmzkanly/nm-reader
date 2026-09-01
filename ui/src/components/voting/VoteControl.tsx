@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Star, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { usePreferences } from '../../contexts/PreferencesContext';
 
 type VoteControlProps = {
   contentId: string;
@@ -10,11 +11,12 @@ type VoteControlProps = {
 };
 
 export const VoteControl: React.FC<VoteControlProps> = ({
-  initialRating = 4.8,
-  initialVotes = { up: 124, down: 5 },
+  initialRating = 0,
+  initialVotes = { up: 0, down: 0 },
   onRate,
   onVote,
 }) => {
+  const { t } = usePreferences();
   const [userRating, setUserRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [votes, setVotes] = useState(initialVotes);
@@ -60,7 +62,11 @@ export const VoteControl: React.FC<VoteControlProps> = ({
           ))}
         </div>
         <span className="text-xs font-mono font-bold text-[var(--accent-color)]">
-          {userRating ? `${userRating}.0 Verdin` : `${(initialRating ?? 0).toFixed(1)} Puan`}
+          {userRating
+            ? t('content.userRatingScore', { score: userRating })
+            : initialRating > 0
+            ? t('content.ratingScore', { score: initialRating.toFixed(1) })
+            : t('content.notRatedYet')}
         </span>
       </div>
 

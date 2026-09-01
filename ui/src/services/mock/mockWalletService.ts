@@ -243,6 +243,7 @@ export class MockWalletService implements IWalletService {
     mockChapterUnlocks.unshift({
       id: Date.now(),
       content_id: targetChapter?.content_id || 'a1b2c3',
+      content_title: targetChapter?.series?.title || 'Solo Leveling',
       chapter_id: chapterId,
       chapter_number: targetChapter?.chapter_number || '1',
       chapter_title: targetChapter?.title || null,
@@ -335,12 +336,16 @@ export class MockWalletService implements IWalletService {
     mockEntitlements.unshift({
       id: Date.now(),
       feature_key: 'ad_free',
+      name: 'Reklamsız Deneyim (Ad-Free)',
+      description: 'Tüm webtoon, manga ve roman sayfalarında 30 gün boyunca reklamsız okuma deneyimi.',
       source_type: 'shop',
       source_id: 'ad_free',
       transaction_id: txId,
       starts_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
       expires_at: expires,
       created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      is_active: true,
+      badge: 'AKTİF',
     });
 
     return makeSuccess({ purchased: true, expires_at: expires });

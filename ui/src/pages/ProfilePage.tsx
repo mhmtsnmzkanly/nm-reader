@@ -7,12 +7,14 @@ import {
   FileText,
   Settings,
   Sparkles,
-  BookOpen,
   MessageSquare,
   Compass,
+  Users,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { userService } from '../services';
+import { usePreferences } from '../contexts/PreferencesContext';
+import { userService, walletService } from '../services';
 import {
   UserProfile,
   ContentSummary,
@@ -25,18 +27,22 @@ import { ReadingSummaryCard } from '../components/profile/ReadingSummaryCard';
 import { RecentlyReadList } from '../components/profile/RecentlyReadList';
 import { ProfileLibraryGrid } from '../components/profile/ProfileLibraryGrid';
 import { ProfileActivityList } from '../components/profile/ProfileActivityList';
+import { FollowingUsersList } from '../components/profile/FollowingUsersList';
+import { SessionManager } from '../components/account/SessionManager';
 import { ProfileEditModal } from '../components/profile/ProfileEditModal';
 import { LoginPrompt } from '../components/feedback/LoginPrompt';
 import { Skeleton } from '../components/feedback/Skeleton';
 
 export const ProfilePage: React.FC = () => {
   const { user, isAuthenticated, isLoading: isAuthLoading, refreshProfile, openAuthModal } = useAuth();
+  const { t } = usePreferences();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [libraryItems, setLibraryItems] = useState<ContentSummary[]>([]);
   const [historyItems, setHistoryItems] = useState<ReadingHistoryItem[]>([]);
   const [activityItems, setActivityItems] = useState<UserActivityItem[]>([]);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
@@ -48,10 +54,11 @@ export const ProfilePage: React.FC = () => {
     const loadProfileData = async () => {
       setIsLoadingData(true);
       try {
-        const [followsRes, historyRes, publicRes] = await Promise.all([
+        const [followsRes, historyRes, publicRes, walletRes] = await Promise.all([
           userService.getFollows(1, 20),
           userService.getHistory(1, 20),
           user?.username ? userService.getPublicProfile(user.username) : Promise.resolve(null),
+          walletService.getWallet(),
         ]);
 
         if (followsRes.status === 'success') {
@@ -62,6 +69,9 @@ export const ProfilePage: React.FC = () => {
         }
         if (publicRes && publicRes.status === 'success' && publicRes.data.activities) {
           setActivityItems(publicRes.data.activities);
+        }
+        if (walletRes.status === 'success' && walletRes.data) {
+          setWalletBalance(walletRes.data.balance_coin ?? walletRes.data.balance ?? 0);
         }
       } catch (err) {
         console.error('Error loading profile data:', err);
@@ -90,9 +100,9 @@ export const ProfilePage: React.FC = () => {
     return (
       <div className="max-w-md mx-auto my-12 px-4">
         <LoginPrompt
-          title="Profilinizi Görüntüleyin"
-          description="Okuma geçmişinizi, kütüphanenizi ve profil tercihlerinizi yönetmek için lütfen oturum açın."
-          actionText="Giriş Yap / Kayıt Ol"
+          title={t('profile.loginPromptTitle')}
+          description={t('profile.loginPromptDesc')}
+          actionText={t('auth.loginTitle')}
           onAction={() => openAuthModal('login')}
         />
       </div>
@@ -104,15 +114,17 @@ export const ProfilePage: React.FC = () => {
     if (res.status === 'success') {
       await refreshProfile();
     } else {
-      throw new Error(res.error?.message || 'Profil güncellenemedi.');
+      throw new Error(res.error?.message || t('profile.updateError'));
     }
   };
 
   const tabs: { key: ProfileTab; label: string; count?: number }[] = [
-    { key: 'overview', label: 'Genel Bakış' },
-    { key: 'history', label: 'Son Okunanlar', count: historyItems.length },
-    { key: 'library', label: 'Kütüphane', count: libraryItems.length },
-    { key: 'activity', label: 'Aktiviteler', count: activityItems.length },
+    { key: 'overview', label: t('profile.tabsOverview') },
+    { key: 'library', label: t('profile.tabsLibrary'), count: libraryItems.length },
+    { key: 'history', label: t('profile.recentReadsTitle'), count: historyItems.length },
+    { key: 'following', label: t('following.title') },
+    { key: 'sessions', label: t('sessions.title') },
+    { key: 'activity', label: t('profile.tabsActivity'), count: activityItems.length },
   ];
 
   return (
@@ -135,9 +147,11 @@ export const ProfilePage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-bold font-serif text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors">
-              Cüzdanım
+              {t('navigation.wallet')}
             </span>
-            <span className="text-[10px] font-mono text-[var(--text-muted)]">180 Coin</span>
+            <span className="text-[10px] font-mono text-[var(--text-muted)]">
+              {walletBalance !== null ? `${walletBalance} ${t('common.coins')}` : t('navigation.wallet')}
+            </span>
           </div>
         </Link>
 
@@ -150,10 +164,10 @@ export const ProfilePage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-bold font-serif text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors">
-              Kütüphane
+              {t('navigation.library')}
             </span>
             <span className="text-[10px] font-mono text-[var(--text-muted)]">
-              {libraryItems.length} Seri
+              {t('common.seriesCount', { count: libraryItems.length })}
             </span>
           </div>
         </Link>
@@ -167,10 +181,10 @@ export const ProfilePage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-bold font-serif text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors">
-              Okuma Geçmişi
+              {t('navigation.history')}
             </span>
             <span className="text-[10px] font-mono text-[var(--text-muted)]">
-              {historyItems.length} Bölüm
+              {t('common.chaptersCount', { count: historyItems.length })}
             </span>
           </div>
         </Link>
@@ -184,9 +198,9 @@ export const ProfilePage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-bold font-serif text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors">
-              Bloglarım
+              {t('navigation.myBlogs')}
             </span>
-            <span className="text-[10px] font-mono text-[var(--text-muted)]">Yazılar</span>
+            <span className="text-[10px] font-mono text-[var(--text-muted)]">{t('blog.title')}</span>
           </div>
         </Link>
 
@@ -199,9 +213,9 @@ export const ProfilePage: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-xs font-bold font-serif text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors">
-              Tercihler
+              {t('navigation.preferences')}
             </span>
-            <span className="text-[10px] font-mono text-[var(--text-muted)]">Ayarlar</span>
+            <span className="text-[10px] font-mono text-[var(--text-muted)]">{t('preferences.title')}</span>
           </div>
         </Link>
       </div>
@@ -255,7 +269,7 @@ export const ProfilePage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <History className="w-4 h-4 text-[var(--accent-color)]" />
                     <h2 className="font-serif text-lg font-bold text-[var(--text-primary)]">
-                      Kaldığın Yerden Devam Et
+                      {t('profile.continueReadingTitle')}
                     </h2>
                   </div>
                   {historyItems.length > 0 && (
@@ -264,7 +278,7 @@ export const ProfilePage: React.FC = () => {
                       onClick={() => setActiveTab('history')}
                       className="text-xs font-mono text-[var(--accent-color)] hover:underline cursor-pointer"
                     >
-                      Tümünü Gör ({historyItems.length}) →
+                      {t('common.seeAllWithCount', { count: historyItems.length })}
                     </button>
                   )}
                 </div>
@@ -278,7 +292,7 @@ export const ProfilePage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Bookmark className="w-4 h-4 text-[var(--accent-color)]" />
                     <h2 className="font-serif text-lg font-bold text-[var(--text-primary)]">
-                      Kütüphanenizdeki Seriler
+                      {t('profile.librarySeriesTitle')}
                     </h2>
                   </div>
                   {libraryItems.length > 0 && (
@@ -287,7 +301,7 @@ export const ProfilePage: React.FC = () => {
                       onClick={() => setActiveTab('library')}
                       className="text-xs font-mono text-[var(--accent-color)] hover:underline cursor-pointer"
                     >
-                      Tümünü Gör ({libraryItems.length}) →
+                      {t('common.seeAllWithCount', { count: libraryItems.length })}
                     </button>
                   )}
                 </div>
@@ -301,7 +315,7 @@ export const ProfilePage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-[var(--accent-color)]" />
                     <h2 className="font-serif text-lg font-bold text-[var(--text-primary)]">
-                      Son Aktiviteleriniz
+                      {t('profile.recentActivitiesTitle')}
                     </h2>
                   </div>
                   {activityItems.length > 0 && (
@@ -310,7 +324,7 @@ export const ProfilePage: React.FC = () => {
                       onClick={() => setActiveTab('activity')}
                       className="text-xs font-mono text-[var(--accent-color)] hover:underline cursor-pointer"
                     >
-                      Tümünü Gör ({activityItems.length}) →
+                      {t('common.seeAllWithCount', { count: activityItems.length })}
                     </button>
                   )}
                 </div>
@@ -326,10 +340,10 @@ export const ProfilePage: React.FC = () => {
               <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
                 <div>
                   <h2 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-                    Okuma Geçmişi
+                    {t('history.title')}
                   </h2>
                   <p className="text-xs text-[var(--text-muted)]">
-                    Okuduğunuz tüm seriler ve son kaldığınız bölümler
+                    {t('profile.historySubtitle')}
                   </p>
                 </div>
                 <Link
@@ -337,7 +351,7 @@ export const ProfilePage: React.FC = () => {
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] hover:border-[var(--accent-color)] text-xs font-mono font-semibold text-[var(--text-primary)] hover:text-[var(--accent-color)] transition-all"
                 >
                   <Compass className="w-3.5 h-3.5" />
-                  <span>Yeni İçerik Keşfet</span>
+                  <span>{t('common.exploreNew')}</span>
                 </Link>
               </div>
 
@@ -351,10 +365,10 @@ export const ProfilePage: React.FC = () => {
               <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
                 <div>
                   <h2 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-                    Takip Edilen Seriler
+                    {t('profile.followedSeriesTitle')}
                   </h2>
                   <p className="text-xs text-[var(--text-muted)]">
-                    Kütüphanenize kaydettiğiniz tüm seriler ({libraryItems.length})
+                    {t('library.title')} ({libraryItems.length})
                   </p>
                 </div>
                 <Link
@@ -362,7 +376,7 @@ export const ProfilePage: React.FC = () => {
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] hover:border-[var(--accent-color)] text-xs font-mono font-semibold text-[var(--text-primary)] hover:text-[var(--accent-color)] transition-all"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[var(--accent-color)]" />
-                  <span>Daha Fazla Seri Bul</span>
+                  <span>{t('common.findMoreSeries')}</span>
                 </Link>
               </div>
 
@@ -370,15 +384,25 @@ export const ProfilePage: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 4: ACTIVITY */}
+          {/* TAB 4: FOLLOWING */}
+          {activeTab === 'following' && (
+            <FollowingUsersList />
+          )}
+
+          {/* TAB 5: SESSIONS */}
+          {activeTab === 'sessions' && (
+            <SessionManager />
+          )}
+
+          {/* TAB 6: ACTIVITY */}
           {activeTab === 'activity' && (
             <div className="flex flex-col gap-6">
               <div className="border-b border-[var(--border-color)] pb-4">
                 <h2 className="font-serif text-xl font-bold text-[var(--text-primary)]">
-                  Topluluk Aktiviteleri
+                  {t('profile.communityActivitiesTitle')}
                 </h2>
                 <p className="text-xs text-[var(--text-muted)]">
-                  Bölümlere ve serilere yazdığınız yorumlar ve incelemeler
+                  {t('profile.communityActivitiesSubtitle')}
                 </p>
               </div>
 
