@@ -40,7 +40,31 @@ final class WebController
         private readonly I18nService $i18n,
         private readonly CacheService $cache,
         private readonly \Monolog\Logger $errorLogger,
+        private readonly ?\App\Services\QueueService $queueService = null,
     ) {}
+
+    /**
+     * Public background virtual cron / queue trigger endpoint.
+     * Throttled to at most once every 30 seconds.
+     */
+    public function queueTick(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $throttleKey = 'queue:virtual_cron:tick';
+        if ($this->cache->get($throttleKey) !== null) {
+            return $response->withStatus(204);
+        }
+
+        // Set lock for 30 seconds
+        $this->cache->set($throttleKey, time(), 30);
+
+        if ($this->queueService !== null) {
+            try {
+                $this->queueService->runOnce(10);
+            } catch (\Throwable) {}
+        }
+
+        return $response->withStatus(204);
+    }
 
     /**
      * Endpoint for frontend JS error logging.

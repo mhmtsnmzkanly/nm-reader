@@ -187,7 +187,8 @@ $builder->addDefinitions([
         $c->get(BlogRepository::class),
         $c->get(I18nService::class),
         $c->get(CacheService::class),
-        $c->get('logger.error')
+        $c->get('logger.error'),
+        $c->get(QueueService::class)
     ),
 ]);
 

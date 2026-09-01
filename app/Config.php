@@ -270,6 +270,7 @@ final class Config
             $group->get("/search/suggest", [ContentController::class, "suggest"]);
             $group->get("/i18n/{lang:[a-z]{2}}", [WebController::class, "i18nJson"]);
             $group->post("/log/error", [WebController::class, "logError"]);
+            $group->map(["GET", "POST"], "/queue/tick", [WebController::class, "queueTick"]);
             $group->post("/user/activity", [UserInteractionController::class, "trackActivity"])->add(new AuthMiddleware(true, $authorization));
             
             $group->get("/chapter/{chapterId:[a-z0-9]{6}}/comments", [UserInteractionController::class, "listChapterComments"]);

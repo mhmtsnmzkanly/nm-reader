@@ -44,8 +44,8 @@ final class QueueService
         $jobs = $stmt->fetchAll();
 
         foreach ($jobs as $job) {
-            $id = (int) $job['id'];
-            $type = (string) $job['job_type'];
+            $id = (int) ($job['id'] ?? 0);
+            $type = (string) ($job['job_type'] ?? ($job['type'] ?? ''));
             $payload = json_decode((string) ($job['payload'] ?? '{}'), true);
             if (!is_array($payload)) {
                 $payload = [];

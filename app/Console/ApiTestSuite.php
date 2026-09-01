@@ -126,6 +126,8 @@ final class ApiTestSuite
                         'chapter_number' => '1',
                         'created_at' => '2026-08-14 12:00:00',
                         'data' => '{"body":[{"page":1,"url":"chapter.1_01.webp"},{"page":2,"url":"chapter.1_02.webp"}],"translator_note":"Test çevirmen notu"}',
+                        'job_type' => 'notify_new_chapter',
+                        'payload' => '{"content_id":"c123","chapter_id":"ch1234","chapter_number":"1","series_title":"Solo Leveling"}',
                         'total' => 10,
                         'username' => 'testuser',
                         'email' => 'test@example.com',
@@ -472,6 +474,9 @@ final class ApiTestSuite
 
         // 42. GET /api/v1/profile/{person}
         $this->assertResponse('GET /api/v1/profile/testuser', $this->request('GET', '/api/v1/profile/testuser'), 200, 'GET /api/v1/profile/{person}');
+
+        // 42a. POST /api/v1/queue/tick (Virtual Cron / Background Queue Trigger)
+        $this->assertResponse('POST /api/v1/queue/tick (204)', $this->request('POST', '/api/v1/queue/tick'), 204, 'POST /api/v1/queue/tick');
     }
 
     private function testAuthAndSessionEndpoints(): void
