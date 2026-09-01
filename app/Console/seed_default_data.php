@@ -64,6 +64,23 @@ try {
         ['Shoujo', 'shoujo', '{"icon": "bi-flower1"}']
     ];
 
+    $tags = [
+        ['Overpowered MC', 'overpowered-mc', '{"icon": "bi-lightning-charge"}'],
+        ['Reincarnation', 'reincarnation', '{"icon": "bi-arrow-repeat"}'],
+        ['System', 'system', '{"icon": "bi-cpu"}'],
+        ['Level Up', 'level-up', '{"icon": "bi-graph-up-arrow"}'],
+        ['Dungeon', 'dungeon', '{"icon": "bi-door-closed"}'],
+        ['Monsters', 'monsters', '{"icon": "bi-bug"}'],
+        ['Magic', 'magic', '{"icon": "bi-stars"}'],
+        ['Cultivation', 'cultivation', '{"icon": "bi-yin-yang"}'],
+        ['Martial Arts', 'martial-arts-tag', '{"icon": "bi-person-arms-up"}'],
+        ['Time Travel', 'time-travel', '{"icon": "bi-hourglass-split"}'],
+        ['Revenge', 'revenge', '{"icon": "bi-shield-shaded"}'],
+        ['Survival', 'survival', '{"icon": "bi-heart-pulse"}'],
+        ['Video Games', 'video-games', '{"icon": "bi-controller"}'],
+        ['Virtual Reality', 'virtual-reality', '{"icon": "bi-headset-vr"}']
+    ];
+
     $stmtTaxonomy = $pdo->prepare("INSERT INTO taxonomies (type, name, slug, ui_config) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name=VALUES(name), ui_config=VALUES(ui_config)");
     foreach ($genres as $g) {
         $stmtTaxonomy->execute(['genre', $g[0], $g[1], $g[2]]);
