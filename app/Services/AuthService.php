@@ -141,7 +141,9 @@ final class AuthService
             throw new \DomainException('auth.invalid_credentials');
         }
 
-        session_regenerate_id(true);
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
         $_SESSION['user_id'] = (string) $user['id'];
         $_SESSION['username'] = (string) $user['username'];
         $roles = $this->authorization->normalizeRoles($this->resolveRoles((string) $user['id']));
@@ -185,10 +187,13 @@ final class AuthService
             $this->userTokens->createToken('refresh', $tokenHash, $expiresAt, (string) $user['id'], null, $sessionKey);
         }
 
-        $this->clearFailedLogins($email, $ip);
-        $this->recordLoginEvent($email, (string) $user['id'], $ip, $userAgent, true, null);
+        $userEmail = (string) ($user['email'] ?? $identity);
+        $this->clearFailedLogins($userEmail, $ip);
+        $this->recordLoginEvent($userEmail, (string) $user['id'], $ip, $userAgent, true, null);
 
-        session_write_close();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
 
         $token = bin2hex(random_bytes(32));
         $tokenExpiry = date('Y-m-d H:i:s', time() + (365 * 24 * 60 * 60)); // 1 year for mobile
