@@ -181,12 +181,15 @@ export const ResetPasswordPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* New Password */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+            <label htmlFor="reset_new_password" className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
               {t('auth.newPassword')}
             </label>
             <div className="relative">
               <input
+                id="reset_new_password"
+                name="new_password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -205,12 +208,15 @@ export const ResetPasswordPage: React.FC = () => {
 
           {/* Confirm Password */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+            <label htmlFor="reset_confirm_password" className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
               {t('auth.confirmPassword')}
             </label>
             <div className="relative">
               <input
+                id="reset_confirm_password"
+                name="confirm_password"
                 type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"

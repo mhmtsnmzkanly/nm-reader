@@ -101,6 +101,13 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 
     if (isset($_SESSION['csrf_token'])) {
         $response = $response->withHeader('X-CSRF-Token', (string) $_SESSION['csrf_token']);
+        $isHttps = ($request->getUri()->getScheme() === 'https' || strtolower(trim($request->getHeaderLine('X-Forwarded-Proto'))) === 'https');
+        $csrfCookie = sprintf(
+            'csrf_token=%s; Path=/; SameSite=Lax%s',
+            urlencode((string) $_SESSION['csrf_token']),
+            $isHttps ? '; Secure' : ''
+        );
+        $response = $response->withAddedHeader('Set-Cookie', $csrfCookie);
     }
     
     if ($newRefreshToken) {
@@ -117,7 +124,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             $rememberSecure ? '; Secure' : ''
         );
 
-        $response = $response->withHeader('Set-Cookie', $cookie);
+        $response = $response->withAddedHeader('Set-Cookie', $cookie);
     } elseif ($invalidToken) {
         $rememberSameSite = (string) ($settings['app']['remember_cookie_same_site'] ?? 'Lax');
         $rememberSecure = (bool) ($settings['app']['remember_cookie_secure'] ?? ($request->getUri()->getScheme() === 'https'));
@@ -127,7 +134,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             $rememberSecure ? '; Secure' : ''
         );
 
-        $response = $response->withHeader('Set-Cookie', $cookie);
+        $response = $response->withAddedHeader('Set-Cookie', $cookie);
     }
     
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -268,30 +275,6 @@ if (!$isInstallRoute) {
     $app->add(\App\Middleware\ApiAuthMiddleware::class);
 }
 $app->add(\App\Middleware\RequestIdMiddleware::class);
-
-// Background FastCGI Queue Runner (Dispatches pending jobs after client connection is closed)
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute): ResponseInterface {
-    $response = $handler->handle($request);
-
-    if ($isInstallRoute || $request->getMethod() === 'OPTIONS') {
-        return $response;
-    }
-
-    if (function_exists('fastcgi_finish_request')) {
-        try {
-            $cache = $container->get(\App\Services\CacheService::class);
-            $throttleKey = 'queue:fastcgi_bg_tick';
-            if ($cache->get($throttleKey) === null) {
-                $cache->set($throttleKey, time(), 30);
-                fastcgi_finish_request();
-                $queue = $container->get(\App\Services\QueueService::class);
-                $queue->runOnce(5);
-            }
-        } catch (\Throwable) {}
-    }
-
-    return $response;
-});
 
 // Error Handling
 $errorMiddleware = $app->addErrorMiddleware((bool) ($settings['app']['debug'] ?? false), true, true);

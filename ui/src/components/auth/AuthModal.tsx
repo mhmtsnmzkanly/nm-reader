@@ -205,11 +205,14 @@ export const AuthModal: React.FC = () => {
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+              <label htmlFor="login_identity" className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                 {t('auth.emailOrUsername')}
               </label>
               <input
+                id="login_identity"
+                name="identity"
                 type="text"
+                autoComplete="username"
                 value={loginIdentity}
                 onChange={(e) => setLoginIdentity(e.target.value)}
                 placeholder={t('auth.emailPlaceholder')}
@@ -220,7 +223,7 @@ export const AuthModal: React.FC = () => {
 
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                <label htmlFor="login_password" className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                   {t('auth.password')}
                 </label>
                 <button
@@ -237,7 +240,10 @@ export const AuthModal: React.FC = () => {
                 </button>
               </div>
               <input
+                id="login_password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
                 placeholder="••••••••"
@@ -289,11 +295,14 @@ export const AuthModal: React.FC = () => {
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+              <label htmlFor="reg_username" className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                 {t('auth.username')}
               </label>
               <input
+                id="reg_username"
+                name="username"
                 type="text"
+                autoComplete="username"
                 value={regUsername}
                 onChange={(e) => setRegUsername(e.target.value)}
                 placeholder={t('auth.usernamePlaceholder')}
@@ -303,11 +312,14 @@ export const AuthModal: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+              <label htmlFor="reg_email" className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                 {t('auth.email')}
               </label>
               <input
+                id="reg_email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 value={regEmail}
                 onChange={(e) => setRegEmail(e.target.value)}
                 placeholder={t('auth.emailPlaceholder')}
@@ -317,11 +329,14 @@ export const AuthModal: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+              <label htmlFor="reg_password" className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                 {t('auth.password')}
               </label>
               <input
+                id="reg_password"
+                name="password"
                 type="password"
+                autoComplete="new-password"
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
                 placeholder="••••••••"
@@ -377,12 +392,15 @@ export const AuthModal: React.FC = () => {
                 )}
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                  <label htmlFor="forgot_email" className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                     {t('auth.email')}
                   </label>
                   <div className="relative">
                     <input
+                      id="forgot_email"
+                      name="email"
                       type="email"
+                      autoComplete="email"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
                       placeholder={t('auth.emailPlaceholder')}
