@@ -1,18 +1,30 @@
 <!doctype html>
-<html lang="en">
+<html lang="tr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>nm-reader</title>
-    <meta name="description" content="A modern reader for serialized manga, manhua, manhwa, webtoons, light novels, and web novels." />
-    <meta property="og:title" content="nm-reader" />
-    <meta property="og:description" content="A modern reader for serialized manga, manhua, manhwa, webtoons, light novels, and web novels." />
+    <!-- SEO:TITLE -->
+    <title>NM-Reader — Novel & Manga Okuma Platformu</title>
+    <!-- SEO:META -->
+    <meta name="description" content="En popüler manga, manhwa, manhua ve web novelleri Türkçe oku." />
+    <!-- SEO:CANONICAL -->
+    <!-- SEO:OG -->
+    <meta property="og:site_name" content="NM-Reader" />
     <meta property="og:type" content="website" />
+    <!-- SEO:TWITTER -->
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- SEO:JSONLD -->
+    <!-- CONTEXT_JSON -->
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="bg-[#09090b] text-[#f4f4f5] antialiased min-h-screen">
+    <div id="root">
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#09090b;color:#f4f4f5;font-family:sans-serif;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border:3px solid #3f3f46;border-top-color:#eab308;border-radius:50%;animation:nmr-spin 0.8s linear infinite;"></div>
+          <style>@keyframes nmr-spin{to{transform:rotate(360deg)}}</style>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

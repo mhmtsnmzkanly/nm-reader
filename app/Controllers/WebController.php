@@ -1491,7 +1491,7 @@ final class WebController
                 ],
                 'jsonLd' => $finalJsonLd
             ];
-            $layoutContent = $seoService->renderShell($seoData);
+            $layoutContent = $seoService->renderShell($seoData, $contextJson);
         } else {
             $seoService = new \App\Services\SeoService($basePath);
             $layoutContent = $seoService->renderShell([
@@ -1499,7 +1499,7 @@ final class WebController
                 'description' => $seoDescription,
                 'canonical' => $seoCanonical,
                 'robots' => $seoRobots,
-            ]);
+            ], $contextJson);
         }
 
         $cacheControl = $authContext["is_logged_in"]

@@ -255,12 +255,15 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
           return merged;
         });
       } else if (res.status === 'error') {
+        // Unauthenticated guests use localStorage preferences without setting isError
+        if (res.error?.code === 'HTTP_401' || res.error?.code === 'UNAUTHORIZED' || res.error?.code?.includes('401')) {
+          return;
+        }
         setIsError(true);
         setErrorMessage(res.error?.message || 'Ayarlar yüklenemedi.');
       }
     } catch (err: any) {
-      setIsError(true);
-      setErrorMessage(err?.message || 'Bağlantı hatası oluştu.');
+      // Ignore network errors for preferences on first load
     } finally {
       setIsLoading(false);
     }

@@ -30,7 +30,7 @@ class SeoService
      *   jsonLd?: array|object|null
      * } $seo
      */
-    public function renderShell(array $seo = []): string
+    public function renderShell(array $seo = [], ?string $contextJson = null): string
     {
         $appHtmlPath = $this->basePath . '/public/app.html';
         if (!file_exists($appHtmlPath)) {
@@ -148,11 +148,17 @@ class SeoService
                 $jsonLdTag = "<script type=\"application/ld+json\">\n{$jsonLdString}\n</script>";
             }
         }
-        if (str_contains($html, '<!-- SEO:JSONLD -->')) {
-            $html = str_replace('<!-- SEO:JSONLD -->', $jsonLdTag, $html);
+        // 8. Inject Application Context (window.__NMR_CONTEXT)
+        if ($contextJson !== null && $contextJson !== '') {
+            $contextTag = "<script>window.__NMR_CONTEXT = {$contextJson};</script>";
+            if (str_contains($html, '<!-- CONTEXT_JSON -->')) {
+                $html = str_replace('<!-- CONTEXT_JSON -->', $contextTag, $html);
+            } else if (str_contains($html, '</head>')) {
+                $html = str_replace('</head>', "  {$contextTag}\n  </head>", $html);
+            }
         }
 
-        // 8. Clean up any leftover SEO comment placeholders
+        // 9. Clean up any leftover SEO comment placeholders
         $html = preg_replace('/<!--\s*SEO:[A-Z_]+\s*-->\s*/', '', $html);
 
         return $html;
