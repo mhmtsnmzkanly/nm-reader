@@ -69,7 +69,7 @@ export class ApiUserService implements IUserService {
   }
 
   async getFollowingUsers(page = 1, per_page = 20): Promise<ApiResponse<FollowingUserItem[]>> {
-    return api.get<FollowingUserItem[]>('/user/following-users', { page, per_page });
+    return api.get<FollowingUserItem[]>('/user/follows/users', { page, per_page });
   }
 
   async getHistory(page = 1, per_page = 20): Promise<ApiResponse<ReadingHistoryItem[]>> {
@@ -116,7 +116,7 @@ export class ApiUserService implements IUserService {
     username: string
   ): Promise<ApiResponse<{ is_following: boolean; followers_count: number }>> {
     return api.post<{ is_following: boolean; followers_count: number }>(
-      `/profile/${username}/follow`
+      `/user/follows/${username}`
     );
   }
 }

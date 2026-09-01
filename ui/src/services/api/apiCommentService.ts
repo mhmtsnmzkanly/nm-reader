@@ -9,12 +9,18 @@ export class ApiCommentService implements ICommentService {
     page = 1,
     cursor?: string
   ): Promise<ApiResponse<Comment[]>> {
-    return api.get<Comment[]>('/comments', {
-      target_type: targetType,
-      target_id: idOrSlug,
-      page,
-      cursor,
-    });
+    let endpoint = `/comments`;
+    if (targetType === 'chapter') {
+      endpoint = `/chapter/${idOrSlug}/comments`;
+    } else if (targetType === 'blog') {
+      endpoint = `/blogs/${idOrSlug}/comments`;
+    } else if (targetType === 'content') {
+      const parts = idOrSlug.split('/');
+      const type = parts.length > 1 ? parts[0] : 'manga';
+      const slug = parts.length > 1 ? parts[1] : parts[0];
+      endpoint = `/content/${type}/${slug}/comments`;
+    }
+    return api.get<Comment[]>(endpoint, { page, cursor });
   }
 
   async postComment(
@@ -23,12 +29,18 @@ export class ApiCommentService implements ICommentService {
     body: string,
     parent_id?: number | null
   ): Promise<ApiResponse<{ comment_id: number }>> {
-    return api.post<{ comment_id: number }>('/comments', {
-      target_type: targetType,
-      target_id: idOrSlug,
-      body,
-      parent_id,
-    });
+    let endpoint = `/comments`;
+    if (targetType === 'chapter') {
+      endpoint = `/chapter/${idOrSlug}/comments`;
+    } else if (targetType === 'blog') {
+      endpoint = `/blogs/${idOrSlug}/comments`;
+    } else if (targetType === 'content') {
+      const parts = idOrSlug.split('/');
+      const type = parts.length > 1 ? parts[0] : 'manga';
+      const slug = parts.length > 1 ? parts[1] : parts[0];
+      endpoint = `/content/${type}/${slug}/comments`;
+    }
+    return api.post<{ comment_id: number }>(endpoint, { body, parent_id });
   }
 
   async voteComment(

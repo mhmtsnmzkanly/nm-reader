@@ -49,7 +49,7 @@ export class ApiWalletService implements IWalletService {
   }
 
   async getShopFeatures(): Promise<ApiResponse<FeatureProduct[]>> {
-    return api.get<FeatureProduct[]>('/shop/features');
+    return api.get<FeatureProduct[]>('/user/features');
   }
 
   async purchasePackage(
