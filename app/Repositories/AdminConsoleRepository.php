@@ -833,11 +833,13 @@ final class AdminConsoleRepository
         if ($roleId !== '') {
             $stmt = $this->pdo->prepare('
                 UPDATE users 
-                SET roles = IF(roles IS NULL OR roles = "", :role_id, CONCAT(roles, ",", :role_id)) 
-                WHERE id = :user_id AND NOT FIND_IN_SET(:role_id, IFNULL(roles, "")) > 0
+                SET roles = IF(roles IS NULL OR roles = "", :role_id, CONCAT(roles, ",", :role_id2)) 
+                WHERE id = :user_id AND NOT FIND_IN_SET(:role_id3, IFNULL(roles, "")) > 0
             ');
             $stmt->execute([
                 'role_id' => $roleId,
+                'role_id2' => $roleId,
+                'role_id3' => $roleId,
                 'user_id' => $userId,
             ]);
             return $stmt->rowCount() > 0;
