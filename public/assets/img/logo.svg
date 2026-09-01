@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+  <!-- Icon Bookmark / Book -->
+  <defs>
+    <linearGradient id="nmr-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#ef4444" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(10, 8)">
+    <rect width="44" height="44" rx="12" fill="url(#nmr-grad)" />
+    <path d="M14 13H30C31.1 13 32 13.9 32 15V33L22 28L12 33V15C12 13.9 12.9 13 14 13Z" fill="#ffffff" />
+    <path d="M16 18H28M16 22H24" stroke="url(#nmr-grad)" stroke-width="2" stroke-linecap="round" />
+  </g>
+  <!-- Text Brand -->
+  <text x="66" y="38" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="24" letter-spacing="-0.5" fill="#f4f4f5">NM<tspan fill="#f59e0b">READER</tspan></text>
+</svg>

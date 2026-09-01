@@ -53,6 +53,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const fetchProfile = async () => {
+    if (typeof window !== 'undefined' && window.__NMR_CONTEXT?.auth && !window.__NMR_CONTEXT.auth.is_logged_in) {
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const res = await userService.getProfile();

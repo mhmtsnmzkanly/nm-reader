@@ -887,6 +887,16 @@
     loadComments() { loadCommentsData(); showToast('Yorum listesi yenilendi'); },
     loadLogs() { loadLogsData(); showToast('Loglar yenilendi'); },
 
+    openCreateSeriesModal() { window.location.href = '/admin#content'; },
+    openEditSeriesModal(e, el) { window.location.href = '/admin#content'; },
+    openChaptersDrawer(e, el) { window.location.href = '/admin#content'; },
+    filterSeries(e, el) { /* Live search */ },
+    filterUsers(e, el) { /* Live search */ },
+    openEditUserModal(e, el) { window.location.href = '/admin#users'; },
+    openCreatePackageModal() { window.location.href = '/admin#shop'; },
+    openEditPackageModal(e, el) { window.location.href = '/admin#shop'; },
+    deletePackage(e, el) { window.location.href = '/admin#shop'; },
+
     async deleteSeries(e, el) {
       const id = el.dataset.id;
       if (!confirm(`Bu içeriği (ID: ${id}) silmek istediğinize emin misiniz?`)) return;

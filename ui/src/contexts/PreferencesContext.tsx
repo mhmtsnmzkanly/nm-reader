@@ -239,6 +239,10 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchRemotePreferences = useCallback(async () => {
+    if (typeof window !== 'undefined' && window.__NMR_CONTEXT?.auth && !window.__NMR_CONTEXT.auth.is_logged_in) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setIsError(false);
     setErrorMessage(null);
