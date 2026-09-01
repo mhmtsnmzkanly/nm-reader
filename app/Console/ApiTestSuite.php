@@ -125,7 +125,7 @@ final class ApiTestSuite
                         'type' => 'manga',
                         'chapter_number' => '1',
                         'created_at' => '2026-08-14 12:00:00',
-                        'data' => 'chapter.1_01.webp|chapter.1_02.webp',
+                        'data' => '{"body":[{"page":1,"url":"chapter.1_01.webp"},{"page":2,"url":"chapter.1_02.webp"}],"translator_note":"Test çevirmen notu"}',
                         'total' => 10,
                         'username' => 'testuser',
                         'email' => 'test@example.com',

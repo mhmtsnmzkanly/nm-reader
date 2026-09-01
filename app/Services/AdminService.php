@@ -331,12 +331,21 @@ final class AdminService
         $this->pdo->beginTransaction();
 
         try {
+            $translatorNote = isset($payload['translator_note']) && is_string($payload['translator_note'])
+                ? trim($payload['translator_note'])
+                : null;
+
             if ($chapterType === 'text') {
                 $body = trim((string) ($payload['body'] ?? ''));
                 if ($body === '') {
                     throw new \InvalidArgumentException('body is required for text chapters');
                 }
-                $dataVal = $this->scanner->assertSafe($body, 'novel_chapter');
+                $safeBody = $this->scanner->assertSafe($body, 'novel_chapter');
+                $dataObj = [
+                    'body' => $safeBody,
+                    'translator_note' => $translatorNote !== '' ? $translatorNote : null,
+                ];
+                $dataVal = json_encode($dataObj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             } else {
                 $pages = $payload['pages'] ?? null;
                 if (!is_array($pages) || count($pages) === 0) {
@@ -344,27 +353,33 @@ final class AdminService
                 }
 
                 $validPages = [];
-                foreach (array_values($pages) as $page) {
+                foreach (array_values($pages) as $idx => $page) {
                     $imagePath = is_array($page)
-                        ? trim((string) ($page['image_path'] ?? ''))
+                        ? trim((string) ($page['url'] ?? ($page['image_path'] ?? '')))
                         : trim((string) $page);
                     if ($imagePath === '') {
                         throw new \InvalidArgumentException('pages contains empty image path');
                     }
-                    $validPages[] = $imagePath;
+                    $validPages[] = [
+                        'page' => $idx + 1,
+                        'url' => $imagePath,
+                    ];
                 }
-                $dataVal = implode('|', $validPages);
+                $dataObj = [
+                    'body' => $validPages,
+                    'translator_note' => $translatorNote !== '' ? $translatorNote : null,
+                ];
+                $dataVal = json_encode($dataObj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             }
 
-            $hasNumberCol = true;
             $publishedAt = !empty($payload['published_at']) ? date('Y-m-d H:i:s', strtotime((string)$payload['published_at'])) : date('Y-m-d H:i:s');
             $priceAmount = max(0, (int)($payload['price_amount'] ?? 0));
             $isFreeAfter = !empty($payload['is_free_after']) ? date('Y-m-d H:i:s', strtotime((string)$payload['is_free_after'])) : null;
             $isMembersOnly = !empty($payload['is_members_only']) ? 1 : 0;
 
             $stmt = $this->pdo->prepare(
-                'INSERT INTO chapters (id, content_id, `number`, chapter_number, title, type, is_members_only, `text`, `image`, `data`, price_amount, published_at, is_free_after, created_by, created_at)
-                 VALUES (:cid, :content_id, :number, :chapter_number, :title, :type, :is_members_only, :text, :image, :data, :price_amount, :published_at, :is_free_after, :created_by, NOW())'
+                'INSERT INTO chapters (id, content_id, `number`, chapter_number, title, type, is_members_only, `data`, price_amount, published_at, is_free_after, created_by, created_at)
+                 VALUES (:cid, :content_id, :number, :chapter_number, :title, :type, :is_members_only, :data, :price_amount, :published_at, :is_free_after, :created_by, NOW())'
             );
             $stmt->execute([
                 'cid' => $chapterId,
@@ -374,8 +389,6 @@ final class AdminService
                 'title' => $title,
                 'type' => $chapterType,
                 'is_members_only' => $isMembersOnly,
-                'text' => $chapterType === 'text' ? $dataVal : null,
-                'image' => $chapterType === 'image' ? $dataVal : null,
                 'data' => $dataVal,
                 'price_amount' => $priceAmount,
                 'published_at' => $publishedAt,
@@ -484,15 +497,17 @@ final class AdminService
         $chapter['chapter_number'] = ChapterNumber::normalize($chapter['chapter_number'] ?? '');
 
         $type = strtolower((string) ($chapter['type'] ?? 'text'));
+        $contentData = $this->chapters->findChapterContent($chapterId);
+        $chapter['translator_note'] = $contentData['translator_note'] ?? null;
+
         if ($type === 'text') {
-            $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
+            $chapter['body'] = (string) ($contentData['body'] ?? '');
             $chapter['pages'] = [];
         } else {
-            $pages = $this->chapters->findChapterPages($chapterId);
             $chapter['body'] = null;
             $chapter['pages'] = array_values(array_filter(array_map(
                 static fn (array $row): string => trim((string) ($row['image_path'] ?? '')),
-                $pages
+                $contentData['pages'] ?? []
             ), static fn (string $path): bool => $path !== ''));
         }
 
@@ -581,25 +596,46 @@ final class AdminService
         $stmt->execute(['id' => $chapterId]);
         $current = $stmt->fetch();
 
-        $body = '';
-        $pages = [];
+        $existingContent = $this->chapters->findChapterContent($chapterId);
+        $translatorNote = array_key_exists('translator_note', $payload)
+            ? (is_string($payload['translator_note']) && trim($payload['translator_note']) !== '' ? trim($payload['translator_note']) : null)
+            : ($existingContent['translator_note'] ?? null);
+
         if ($type === 'text') {
             $body = array_key_exists('body', $payload)
                 ? trim((string) $payload['body'])
-                : trim((string) ($this->chapters->findChapterText($chapterId) ?? ''));
+                : trim((string) ($existingContent['body'] ?? ''));
             if ($body === '') {
                 throw new \InvalidArgumentException('body is required for text chapters');
             }
-            $dataVal = $this->scanner->assertSafe($body, 'novel_chapter');
+            $safeBody = $this->scanner->assertSafe($body, 'novel_chapter');
+            $dataVal = json_encode([
+                'body' => $safeBody,
+                'translator_note' => $translatorNote,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         } else {
-            $pages = $this->normalizePagesPayload($payload['pages'] ?? null);
-            if (count($pages) === 0) {
-                $pages = $this->normalizePagesPayload($this->chapters->findChapterPages($chapterId));
+            $rawPages = $this->normalizePagesPayload($payload['pages'] ?? null);
+            if (count($rawPages) === 0) {
+                $rawPages = array_values(array_filter(array_map(
+                    static fn (array $row): string => trim((string) ($row['image_path'] ?? '')),
+                    $existingContent['pages'] ?? []
+                ), static fn (string $path): bool => $path !== ''));
             }
-            if (count($pages) === 0) {
+            if (count($rawPages) === 0) {
                 throw new \InvalidArgumentException('pages is required for image chapters');
             }
-            $dataVal = implode('|', $pages);
+
+            $validPages = [];
+            foreach (array_values($rawPages) as $idx => $page) {
+                $validPages[] = [
+                    'page' => $idx + 1,
+                    'url' => $page,
+                ];
+            }
+            $dataVal = json_encode([
+                'body' => $validPages,
+                'translator_note' => $translatorNote,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
         $priceAmount = array_key_exists('price_amount', $payload) ? max(0, (int) $payload['price_amount']) : (int) ($current['price_amount'] ?? 0);

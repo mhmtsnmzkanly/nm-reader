@@ -573,16 +573,25 @@ final class SeriesService
 
         $access = $this->wallets->chapterAccess($contentId, $chapterId, $userId);
 
+        $contentData = $this->chapters->findChapterContent($chapterId);
+        $chapter['translator_note'] = $contentData['translator_note'] ?? null;
+
         if (($access['granted'] ?? false) === true) {
             if ($chapter['type'] === 'text') {
-                $chapter['body'] = $this->chapters->findChapterText($chapterId) ?? '';
+                $chapter['body'] = (string) ($contentData['body'] ?? '');
                 $chapter['pages'] = [];
             } else {
                 $chapter['body'] = null;
-                $rawPages = $this->chapters->findChapterPages($chapterId);
+                $rawPages = $contentData['pages'] ?? [];
                 $chapter['pages'] = array_map(function (array $page) use ($chapterId, $userId): array {
-                    $url = $this->media->generateChapterPageUrl($chapterId, (int) ($page['page_order'] ?? 1), (string) ($page['image_path'] ?? ''), $userId);
+                    $rawPath = (string) ($page['image_path'] ?? '');
+                    if (str_starts_with($rawPath, 'http://') || str_starts_with($rawPath, 'https://')) {
+                        $url = $rawPath;
+                    } else {
+                        $url = $this->media->generateChapterPageUrl($chapterId, (int) ($page['page_order'] ?? 1), $rawPath, $userId);
+                    }
                     return [
+                        'page'       => (int) ($page['page_order'] ?? 1),
                         'page_order' => (int) ($page['page_order'] ?? 1),
                         'url'        => $url,
                         'image_path' => $url,

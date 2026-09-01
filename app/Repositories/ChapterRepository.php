@@ -189,31 +189,92 @@ final class ChapterRepository
         return $chapter === false ? null : $chapter;
     }
 
-    public function findChapterText(string $chapterId): ?string
+    /**
+     * Resolves structured chapter content (body, pages, translator_note) from the JSON data column.
+     *
+     * @param string $chapterId
+     * @return array{type:string,body:?string,pages:array<int,array{page_order:int,image_path:string}>,translator_note:?string}
+     */
+    public function findChapterContent(string $chapterId): array
     {
-        $stmt = $this->pdo->prepare('SELECT COALESCE(`text`, `data`) AS `data` FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT `type`, `data` FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
         $stmt->execute(['chapter_id' => $chapterId]);
         $row = $stmt->fetch();
 
-        return $row === false ? null : (string) $row['data'];
+        if ($row === false || empty($row['data'])) {
+            return [
+                'type' => 'image',
+                'body' => null,
+                'pages' => [],
+                'translator_note' => null,
+            ];
+        }
+
+        $type = (string) ($row['type'] ?? 'image');
+        $raw = (string) $row['data'];
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [
+                'type' => $type,
+                'body' => null,
+                'pages' => [],
+                'translator_note' => null,
+            ];
+        }
+
+        $translatorNote = isset($decoded['translator_note']) && is_string($decoded['translator_note'])
+            ? trim($decoded['translator_note'])
+            : null;
+
+        if ($type === 'text') {
+            return [
+                'type' => 'text',
+                'body' => (string) ($decoded['body'] ?? ''),
+                'pages' => [],
+                'translator_note' => $translatorNote !== '' ? $translatorNote : null,
+            ];
+        }
+
+        // Image type: body contains list of page objects
+        $body = $decoded['body'] ?? [];
+        $pages = [];
+        if (is_array($body)) {
+            foreach (array_values($body) as $idx => $item) {
+                $order = is_array($item) ? (int) ($item['page'] ?? ($item['page_order'] ?? ($idx + 1))) : ($idx + 1);
+                $path = is_array($item) ? (string) ($item['url'] ?? ($item['image_path'] ?? '')) : (string) $item;
+                if ($path !== '') {
+                    $pages[] = [
+                        'page_order' => $order,
+                        'image_path' => $path,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'type' => 'image',
+            'body' => null,
+            'pages' => $pages,
+            'translator_note' => $translatorNote !== '' ? $translatorNote : null,
+        ];
+    }
+
+    public function findChapterText(string $chapterId): ?string
+    {
+        $content = $this->findChapterContent($chapterId);
+        return $content['type'] === 'text' ? (string) ($content['body'] ?? '') : null;
     }
 
     public function findChapterPages(string $chapterId): array
     {
-        $stmt = $this->pdo->prepare('SELECT COALESCE(`image`, `data`) AS `data` FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1');
-        $stmt->execute(['chapter_id' => $chapterId]);
-        $row = $stmt->fetch();
-        
-        if ($row === false || empty($row['data'])) {
-            return [];
-        }
-        
-        $paths = explode('|', $row['data']);
-        $result = [];
-        foreach ($paths as $index => $path) {
-            $result[] = ['image_path' => $path, 'page_order' => $index + 1];
-        }
-        return $result;
+        $content = $this->findChapterContent($chapterId);
+        return $content['pages'] ?? [];
+    }
+
+    public function findChapterTranslatorNote(string $chapterId): ?string
+    {
+        $content = $this->findChapterContent($chapterId);
+        return $content['translator_note'] ?? null;
     }
 
     /**
