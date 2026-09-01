@@ -135,7 +135,7 @@ final class AdminConsoleRepository
                 c.id,
                 c.title,
                 c.slug,
-                cm.alternative_titles,
+                c.alternative_titles,
                 c.type,
                 c.status,
                 c.is_adult,
