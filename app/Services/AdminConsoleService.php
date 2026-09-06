@@ -18,7 +18,7 @@ final class AdminConsoleService
         'APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'APP_TIMEZONE', 'CORS_ALLOWED_ORIGINS',
         'SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL', 'SESSION_COOKIE_SECURE',
         'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE',
-        'SITE_ADDRESS', 'ENFORCE_HTTPS',
+        'TRUSTED_PROXIES',
         'RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY',
         'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY',
     ];
@@ -615,7 +615,7 @@ final class AdminConsoleService
             }
             
             $this->repo->createModerationAction($moderatorId, 'system', 'config', 'env_update', json_encode(['diff' => $diff]));
-            if (isset($safePayload['SITE_ADDRESS']) || isset($safePayload['APP_URL'])) {
+            if (isset($safePayload['APP_URL'])) {
                 $this->cache->delete('robots_txt');
                 $this->cache->delete('sitemap_xml');
             }

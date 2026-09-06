@@ -376,8 +376,8 @@ $panelUrlEscaped = htmlspecialchars($panelUrl ?? '/panel');
                             window.location.href = '<?= $panelUrlEscaped ?>';
                         }, 500);
                     } else {
-                        const message = (result && result.error && result.error.message) 
-                            ? result.error.message 
+                        const message = (result && result.error && result.error.message)
+                            ? result.error.message
                             : 'Giriş başarısız. Lütfen bilgilerinizi kontrol ediniz.';
                         errorAlert.innerText = message;
                         errorAlert.style.display = 'block';

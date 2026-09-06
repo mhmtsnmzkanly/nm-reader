@@ -774,7 +774,7 @@ final class WebController
         try {
             if (is_writable($basePath . '/public') || (is_file($staticFile) && is_writable($staticFile))) {
                 if (@file_put_contents($staticFile, $payload) !== false) {
-                    @chmod($staticFile, 0666);
+                    @chmod($staticFile, 0644);
                 }
             }
         } catch (\Throwable) {

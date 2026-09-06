@@ -80,7 +80,8 @@ $builder->addDefinitions([
 
     CacheService::class => DI\autowire(CacheService::class)
         ->constructorParameter('cachePath', $settings['cache']['path'])
-        ->constructorParameter('defaultTtl', (int) $settings['cache']['default_ttl']),
+        ->constructorParameter('defaultTtl', (int) $settings['cache']['default_ttl'])
+        ->constructorParameter('publicPath', $settings['app']['base_path'] . '/public'),
 
     'logger.error' => static function () use ($settings): Logger {
         $logger = new Logger('error');
@@ -163,7 +164,8 @@ $builder->addDefinitions([
     SiteConfigService::class => DI\autowire(SiteConfigService::class),
     WalletService::class => DI\autowire(WalletService::class),
     \App\Services\WebhookService::class => DI\autowire(\App\Services\WebhookService::class),
-    \App\Middleware\MaintenanceMiddleware::class => DI\autowire(\App\Middleware\MaintenanceMiddleware::class),
+    \App\Middleware\MaintenanceMiddleware::class => DI\autowire(\App\Middleware\MaintenanceMiddleware::class)
+        ->constructorParameter('trustedProxies', $settings['app']['trusted_proxies'] ?? []),
     \App\Services\MediaService::class => DI\autowire(\App\Services\MediaService::class)
         ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/storage/media/')
         ->constructorParameter('appSecret', (string) ($settings['app']['media_secret'] ?? '')),

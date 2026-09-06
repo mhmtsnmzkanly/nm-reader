@@ -159,9 +159,6 @@ APP_URL=http://localhost:8080
 APP_TIMEZONE=UTC
 CORS_ALLOWED_ORIGINS=http://localhost:8080,http://localhost:3000
 
-# Site Address
-SITE_ADDRESS=http://localhost:8080
-
 # Session & Tokens
 SESSION_LIFETIME=7200
 REFRESH_TOKEN_DAYS=30
@@ -172,7 +169,8 @@ REMEMBER_COOKIE_SECURE=false
 REMEMBER_COOKIE_SAME_SITE=Lax
 
 # Security
-ENFORCE_HTTPS=false
+# Comma-separated reverse proxy IPs/CIDRs allowed to provide forwarded client IP headers.
+TRUSTED_PROXIES=
 MEDIA_SECRET={$mediaSecret}
 
 # Integrations

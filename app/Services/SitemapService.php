@@ -228,7 +228,7 @@ final class SitemapService
             $writeResult = @file_put_contents($staticFile, $xmlContent);
             if ($writeResult !== false) {
                 $diskWritten = true;
-                @chmod($staticFile, 0666);
+                @chmod($staticFile, 0644);
                 $output[] = 'Statik Dosya: ' . $staticFile . ' (diske yazıldı)';
             }
         } catch (\Throwable) {
@@ -239,7 +239,7 @@ final class SitemapService
             if ($fileExisted) {
                 $output[] = 'UYARI: ' . $staticFile . ' dosyası mevcut ancak PHP (web sunucusu) için yazılabilir değil!';
                 $output[] = 'Caddy/Nginx bu eski statik dosyayı doğrudan sunmaya devam edebilir.';
-                $output[] = 'Çözüm: Dosyayı silin (`rm public/sitemap.xml`) veya yazma yetkisi verin (`chmod 666 public/sitemap.xml`). Dosya silindiğinde sitemap PHP üzerinden dinamik/önbellekli sunulur.';
+                $output[] = 'Çözüm: Dosyayı silin (`rm public/sitemap.xml`) veya web sunucusu kullanıcısına yazma yetkisi verin. Dosya silindiğinde sitemap PHP üzerinden dinamik/önbellekli sunulur.';
             } else {
                 $output[] = 'BİLGİ: public klasörüne yazma izni olmadığı için statik dosya oluşturulmadı.';
                 $output[] = 'Sitemap uygulama önbelleğinde (storage/cache) hazır ve /sitemap.xml dinamik rotası üzerinden sunuluyor.';

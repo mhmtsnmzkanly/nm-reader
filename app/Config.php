@@ -77,6 +77,12 @@ final class Config
                     'trim',
                     explode(',', (string) self::env("CORS_ALLOWED_ORIGINS", (string) self::env("APP_URL", "http://localhost:8080")))
                 ))),
+                // Only these proxy addresses may supply client IP forwarding headers.
+                // Empty by default so direct clients cannot spoof the maintenance whitelist.
+                "trusted_proxies" => array_values(array_filter(array_map(
+                    'trim',
+                    explode(',', (string) self::env("TRUSTED_PROXIES", ""))
+                ))),
                 "timezone" => (string) self::env("APP_TIMEZONE", "UTC"),
             ],
             "database" => [
@@ -107,8 +113,6 @@ final class Config
     public static function getSystemConfig(): array
     {
         return [
-            "enforce_https" => (bool) self::env("ENFORCE_HTTPS", false),
-            "site_address" => (string) self::env("SITE_ADDRESS", "https://example.com"),
             "integrations" => [
                 "resend_api_key" => (string) self::env("RESEND_API_KEY", ""),
                 "google_analytics_id" => (string) self::env("GOOGLE_ANALYTICS_ID", ""),

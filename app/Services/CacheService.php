@@ -27,7 +27,8 @@ final class CacheService
      */
     public function __construct(
         private readonly string $cachePath,
-        private readonly int $defaultTtl = 300
+        private readonly int $defaultTtl = 300,
+        private readonly ?string $publicPath = null
     ) {
         if (!is_dir($this->cachePath)) {
             mkdir($this->cachePath, 0775, true);
@@ -80,6 +81,14 @@ final class CacheService
             $this->track('sys_cache_delete', 1, 86400 * 365);
         }
         $this->unregisterKey($key);
+
+        // Static SEO fallbacks are served before PHP by common web servers.
+        // Remove them together with their cache entries so invalidation cannot
+        // leave stale robots.txt or sitemap.xml files on disk.
+        if ($this->publicPath !== null && in_array($key, ['robots_txt', 'sitemap_xml'], true)) {
+            $staticName = $key === 'robots_txt' ? 'robots.txt' : 'sitemap.xml';
+            @unlink(rtrim($this->publicPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $staticName);
+        }
     }
 
     /**

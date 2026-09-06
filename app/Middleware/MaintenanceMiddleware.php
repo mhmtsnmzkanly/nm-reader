@@ -16,7 +16,8 @@ final class MaintenanceMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly SiteConfigService $siteConfig,
-        private readonly ?AuthorizationService $authorization = null
+        private readonly ?AuthorizationService $authorization = null,
+        private readonly array $trustedProxies = []
     ) {
     }
 
@@ -117,11 +118,6 @@ final class MaintenanceMiddleware implements MiddlewareInterface
 
     private function isAdminUser(ServerRequestInterface $request): bool
     {
-        // 1. Session check
-        if (!empty($_SESSION['is_admin'])) {
-            return true;
-        }
-
         $userId = $_SESSION['user_id'] ?? null;
         $roles = is_array($_SESSION['roles'] ?? null) ? $_SESSION['roles'] : [];
         $permissions = is_array($_SESSION['permissions'] ?? null) ? $_SESSION['permissions'] : [];
@@ -147,26 +143,78 @@ final class MaintenanceMiddleware implements MiddlewareInterface
 
     private function resolveClientIp(ServerRequestInterface $request): string
     {
+        $serverParams = $request->getServerParams();
+        $remoteAddress = trim((string) ($serverParams['REMOTE_ADDR'] ?? ''));
+        if ($remoteAddress === '') {
+            $remoteAddress = '127.0.0.1';
+        }
+
+        // Forwarded headers are only trustworthy when the direct peer is a
+        // configured reverse proxy. Otherwise use the socket peer address.
+        if (!$this->isTrustedProxy($remoteAddress)) {
+            return $remoteAddress;
+        }
+
         $cfIp = trim($request->getHeaderLine('CF-Connecting-IP'));
-        if ($cfIp !== '') {
+        if ($cfIp !== '' && filter_var($cfIp, FILTER_VALIDATE_IP) !== false) {
             return $cfIp;
         }
 
         $xff = trim($request->getHeaderLine('X-Forwarded-For'));
         if ($xff !== '') {
             $parts = explode(',', $xff);
-            return trim($parts[0]);
+            $forwardedIp = trim((string) ($parts[0] ?? ''));
+            if (filter_var($forwardedIp, FILTER_VALIDATE_IP) !== false) {
+                return $forwardedIp;
+            }
         }
 
-        $serverParams = $request->getServerParams();
-        if (!empty($serverParams['HTTP_CF_CONNECTING_IP'])) {
-            return trim((string) $serverParams['HTTP_CF_CONNECTING_IP']);
-        }
-        if (!empty($serverParams['HTTP_X_FORWARDED_FOR'])) {
-            $parts = explode(',', (string) $serverParams['HTTP_X_FORWARDED_FOR']);
-            return trim($parts[0]);
+        return $remoteAddress;
+    }
+
+    private function isTrustedProxy(string $address): bool
+    {
+        foreach ($this->trustedProxies as $entry) {
+            $entry = trim((string) $entry);
+            if ($entry === $address) {
+                return true;
+            }
+
+            if (!str_contains($entry, '/')) {
+                continue;
+            }
+
+            [$network, $prefix] = array_pad(explode('/', $entry, 2), 2, null);
+            $addressBytes = filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6) !== false
+                ? inet_pton($address)
+                : false;
+            $networkBytes = is_string($network)
+                ? inet_pton($network)
+                : false;
+            $prefixLength = is_numeric($prefix) ? (int) $prefix : -1;
+            $maxPrefix = is_string($networkBytes) ? strlen($networkBytes) * 8 : -1;
+
+            if ($addressBytes === false || $networkBytes === false
+                || strlen($addressBytes) !== strlen($networkBytes)
+                || $prefixLength < 0 || $prefixLength > $maxPrefix) {
+                continue;
+            }
+
+            $fullBytes = intdiv($prefixLength, 8);
+            $remainingBits = $prefixLength % 8;
+            if ($fullBytes > 0 && substr($addressBytes, 0, $fullBytes) !== substr($networkBytes, 0, $fullBytes)) {
+                continue;
+            }
+            if ($remainingBits > 0) {
+                $mask = (0xFF << (8 - $remainingBits)) & 0xFF;
+                if ((ord($addressBytes[$fullBytes]) & $mask) !== (ord($networkBytes[$fullBytes]) & $mask)) {
+                    continue;
+                }
+            }
+
+            return true;
         }
 
-        return (string) ($serverParams['REMOTE_ADDR'] ?? '127.0.0.1');
+        return false;
     }
 }
