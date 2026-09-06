@@ -615,6 +615,10 @@ final class AdminConsoleService
             }
             
             $this->repo->createModerationAction($moderatorId, 'system', 'config', 'env_update', json_encode(['diff' => $diff]));
+            if (isset($safePayload['SITE_ADDRESS']) || isset($safePayload['APP_URL'])) {
+                $this->cache->delete('robots_txt');
+                $this->cache->delete('sitemap_xml');
+            }
             @unlink($backupPath);
         } catch (\Throwable $e) {
             copy($backupPath, $path);

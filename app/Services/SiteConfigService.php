@@ -225,6 +225,10 @@ final class SiteConfigService
         }
 
         $this->cache->delete(self::CACHE_KEY);
+        if (isset($payload['site_address'])) {
+            $this->cache->delete('robots_txt');
+            $this->cache->delete('sitemap_xml');
+        }
         self::$memoryCache = null;
         return $this->all();
     }

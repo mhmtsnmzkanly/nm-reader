@@ -737,11 +737,22 @@ final class WebController
 
     /**
      * Generates and returns the robots.txt file.
+     *
+     * Cached in storage/cache for 24 hours and optionally persisted to public/robots.txt if writable.
      */
     public function robotsTxt(
         ServerRequestInterface $request,
         ResponseInterface $response,
     ): ResponseInterface {
+        $cached = $this->cache->get('robots_txt');
+        if (is_string($cached) && $cached !== '') {
+            $response->getBody()->write($cached);
+            return $response->withHeader(
+                "Content-Type",
+                "text/plain; charset=utf-8",
+            );
+        }
+
         $base = $this->absoluteUrl($request, "");
         $payload =
             "User-agent: *\n" .
@@ -753,6 +764,22 @@ final class WebController
             "Disallow: /chat\n" .
             "Disallow: /uploads/\n" .
             "Sitemap: {$base}/sitemap.xml\n";
+
+        // Cache for 24 hours (86400s)
+        $this->cache->set('robots_txt', $payload, 86400);
+
+        // Save to static file on disk if public directory or file is writable
+        $basePath = (string) ($this->settings["app"]["base_path"] ?? dirname(__DIR__, 2));
+        $staticFile = $basePath . '/public/robots.txt';
+        try {
+            if (is_writable($basePath . '/public') || (is_file($staticFile) && is_writable($staticFile))) {
+                if (@file_put_contents($staticFile, $payload) !== false) {
+                    @chmod($staticFile, 0666);
+                }
+            }
+        } catch (\Throwable) {
+            // Ignored - storage/cache is primary fallback
+        }
 
         $response->getBody()->write($payload);
         return $response->withHeader(

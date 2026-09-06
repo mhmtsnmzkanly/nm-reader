@@ -25,6 +25,7 @@
 
 # Public Assets
 /public/sitemap.xml
+/public/robots.txt
 /public/assets/css/site.css.bak
 
 # PHP, System & IDE
