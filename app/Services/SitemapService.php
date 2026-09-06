@@ -218,22 +218,39 @@ final class SitemapService
         $basePath = (string) ($this->settings["app"]["base_path"] ?? dirname(__DIR__, 2));
         $staticFile = $basePath . '/public/sitemap.xml';
 
-        $saved = false;
+        $output = ['SUCCESS: Sitemap başarıyla oluşturuldu ve önbelleğe alındı.'];
+        $output[] = 'Boyut: ' . number_format(strlen($xmlContent) / 1024, 2) . ' KB';
+
+        $fileExisted = is_file($staticFile);
+        $diskWritten = false;
+
         try {
-            if (is_writable($basePath . '/public') || (is_file($staticFile) && is_writable($staticFile))) {
-                $saved = (@file_put_contents($staticFile, $xmlContent) !== false);
+            $writeResult = @file_put_contents($staticFile, $xmlContent);
+            if ($writeResult !== false) {
+                $diskWritten = true;
+                @chmod($staticFile, 0666);
+                $output[] = 'Statik Dosya: ' . $staticFile . ' (diske yazıldı)';
             }
         } catch (\Throwable) {
-            $saved = false;
+            $diskWritten = false;
+        }
+
+        if (!$diskWritten) {
+            if ($fileExisted) {
+                $output[] = 'UYARI: ' . $staticFile . ' dosyası mevcut ancak PHP (web sunucusu) için yazılabilir değil!';
+                $output[] = 'Caddy/Nginx bu eski statik dosyayı doğrudan sunmaya devam edebilir.';
+                $output[] = 'Çözüm: Dosyayı silin (`rm public/sitemap.xml`) veya yazma yetkisi verin (`chmod 666 public/sitemap.xml`). Dosya silindiğinde sitemap PHP üzerinden dinamik/önbellekli sunulur.';
+            } else {
+                $output[] = 'BİLGİ: public klasörüne yazma izni olmadığı için statik dosya oluşturulmadı.';
+                $output[] = 'Sitemap uygulama önbelleğinde (storage/cache) hazır ve /sitemap.xml dinamik rotası üzerinden sunuluyor.';
+            }
         }
 
         return [
             'success' => true,
-            'output' => [
-                'SUCCESS: Sitemap başarıyla güncellendi.',
-                'Dosya: ' . $staticFile . ($saved ? ' (diske yazıldı)' : ' (önbelleğe alındı)'),
-                'Boyut: ' . number_format(strlen($xmlContent) / 1024, 2) . ' KB',
-            ],
+            'disk_written' => $diskWritten,
+            'stale_file_warning' => (!$diskWritten && $fileExisted),
+            'output' => $output,
         ];
     }
 
