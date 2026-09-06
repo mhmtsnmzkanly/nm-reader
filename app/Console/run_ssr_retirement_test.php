@@ -15,6 +15,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 use App\Services\SeoService;
+use App\Services\MediaService;
 
 $basePath = dirname(__DIR__, 2);
 $seoService = new SeoService($basePath);
@@ -173,6 +174,19 @@ assertCheck($safeUrl === '', 'Protected chapter tokens sanitized to empty string
 $publicMediaInput = 'https://nmreader.com/media/public/cover.sololeveling.webp';
 $safePublicUrl = $seoService->sanitizeMediaUrl($publicMediaInput);
 assertCheck($safePublicUrl === $publicMediaInput, 'Public media URLs preserved correctly');
+
+$unconfiguredMedia = new MediaService($basePath . '/storage/media/', '');
+assertCheck(
+    $unconfiguredMedia->getPublicMediaUrl('cover.webp') === '/media/public/cover.webp',
+    'Public media remains available without a signing secret'
+);
+$protectedMediaFailedClosed = false;
+try {
+    $unconfiguredMedia->generateChapterPageUrl('ch1234', 1, 'chapter.page.webp', 'usr12345');
+} catch (RuntimeException $exception) {
+    $protectedMediaFailedClosed = str_contains($exception->getMessage(), 'MEDIA_SECRET');
+}
+assertCheck($protectedMediaFailedClosed, 'Protected media fails closed without a signing secret');
 
 // -----------------------------------------------------------------
 // 4. Verification Summary

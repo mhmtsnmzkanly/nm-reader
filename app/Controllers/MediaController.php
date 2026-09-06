@@ -54,6 +54,14 @@ final class MediaController
      */
     public function serveChapterMedia(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
+        if (!$this->mediaService->isSigningConfigured()) {
+            return ResponseHelper::error(
+                503,
+                'Protected media is temporarily unavailable.',
+                'media.signing_unavailable'
+            );
+        }
+
         $token = (string) ($args['token'] ?? '');
         $data = $this->mediaService->verifyChapterToken($token);
 

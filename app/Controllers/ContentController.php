@@ -112,6 +112,11 @@ final class ContentController
             $chapter = $this->chapterService->getByTypeSlugAndNumber($type, $slug, $num, $ip, is_string($userId) ? $userId : null);
             if (!$chapter) return ResponseHelper::error(404, 'Chapter not found');
             return ResponseHelper::success($chapter);
+        } catch (\RuntimeException $e) {
+            if (str_contains($e->getMessage(), 'MEDIA_SECRET')) {
+                return ResponseHelper::error(503, 'Protected media is temporarily unavailable.', 'media.signing_unavailable');
+            }
+            throw $e;
         } catch (\DomainException $e) { return ResponseHelper::error(400, $e->getMessage()); }
     }
 

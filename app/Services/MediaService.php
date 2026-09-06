@@ -26,11 +26,14 @@ final class MediaService
         private readonly string $baseUploadDir = __DIR__ . '/../../storage/media/',
         ?string $appSecret = null
     ) {
-        $secret = trim((string) ($appSecret ?? ''));
-        if (strlen($secret) < 32) {
-            throw new RuntimeException('MEDIA_SECRET must be configured with at least 32 characters.');
-        }
-        $this->appSecret = $secret;
+        // Do not take unrelated public routes down when protected-media
+        // signing is not configured. Signing operations still fail closed.
+        $this->appSecret = trim((string) ($appSecret ?? ''));
+    }
+
+    public function isSigningConfigured(): bool
+    {
+        return strlen($this->appSecret) >= 32;
     }
 
     /**
@@ -46,6 +49,7 @@ final class MediaService
      */
     public function generateChapterPageUrl(string $chapterId, int $pageOrder, string $rawPath, ?string $userId = null, int $ttl = self::DEFAULT_CHAPTER_TTL): string
     {
+        $secret = $this->signingSecret();
         $filename = basename(trim($rawPath));
         if ($filename === '' || $filename === '.' || $filename === '..') {
             throw new InvalidArgumentException('Invalid chapter page filename');
@@ -56,13 +60,13 @@ final class MediaService
             'p'   => $pageOrder,
             'f'   => $filename,
             'uid' => $userId,
-            'sid' => $userId === null ? $this->currentSessionFingerprint() : null,
+            'sid' => $userId === null ? $this->currentSessionFingerprint($secret) : null,
             'exp' => time() + $ttl,
         ];
 
         $payloadJson = (string) json_encode($payload, JSON_UNESCAPED_SLASHES);
         $payloadBase64 = rtrim(strtr(base64_encode($payloadJson), '+/', '-_'), '=');
-        $signature = hash_hmac('sha256', $payloadBase64, $this->appSecret);
+        $signature = hash_hmac('sha256', $payloadBase64, $secret);
 
         $token = self::CHAPTER_TOKEN_PREFIX . $payloadBase64 . '.' . $signature;
 
@@ -77,6 +81,7 @@ final class MediaService
      */
     public function verifyChapterToken(string $token): ?array
     {
+        $secret = $this->signingSecret();
         if (!str_starts_with($token, self::CHAPTER_TOKEN_PREFIX)) {
             return null;
         }
@@ -88,7 +93,7 @@ final class MediaService
         }
 
         [$payloadBase64, $signature] = $parts;
-        $expectedSignature = hash_hmac('sha256', $payloadBase64, $this->appSecret);
+        $expectedSignature = hash_hmac('sha256', $payloadBase64, $secret);
 
         if (!hash_equals($expectedSignature, $signature)) {
             return null;
@@ -157,14 +162,23 @@ final class MediaService
             && hash_equals($tokenSession, $currentSession);
     }
 
-    private function currentSessionFingerprint(): ?string
+    private function currentSessionFingerprint(?string $secret = null): ?string
     {
         $sessionId = session_id();
         if ($sessionId === '') {
             return null;
         }
 
-        return hash_hmac('sha256', $sessionId, $this->appSecret);
+        return hash_hmac('sha256', $sessionId, $secret ?? $this->signingSecret());
+    }
+
+    private function signingSecret(): string
+    {
+        if (!$this->isSigningConfigured()) {
+            throw new RuntimeException('MEDIA_SECRET must be configured with at least 32 characters.');
+        }
+
+        return $this->appSecret;
     }
 
     /**
