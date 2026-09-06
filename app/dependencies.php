@@ -171,6 +171,14 @@ $builder->addDefinitions([
         ->constructorParameter('basePath', $settings['app']['base_path']),
     \App\Services\ContentSecurityScanner::class => DI\autowire(\App\Services\ContentSecurityScanner::class)
         ->constructorParameter('logger', DI\get('logger.error')),
+    \App\Services\SitemapService::class => static fn (\Psr\Container\ContainerInterface $c) => new \App\Services\SitemapService(
+        $c->get(SiteConfigService::class),
+        $c->get(SeriesService::class),
+        $c->get(SeriesRepository::class),
+        $c->get(BlogRepository::class),
+        $c->get(CacheService::class),
+        $settings
+    ),
 
     AuthController::class => DI\autowire(AuthController::class),
     BlogController::class => DI\autowire(BlogController::class),
@@ -192,7 +200,8 @@ $builder->addDefinitions([
         $c->get(BlogRepository::class),
         $c->get(I18nService::class),
         $c->get(CacheService::class),
-        $c->get('logger.error')
+        $c->get('logger.error'),
+        $c->get(\App\Services\SitemapService::class)
     ),
 ]);
 

@@ -8,9 +8,7 @@ declare(strict_types=1);
  * Usage: php app/Console/generate_sitemap.php
  */
 
-use App\Controllers\WebController;
-use Slim\Psr7\Factory\ResponseFactory;
-use Slim\Psr7\Factory\ServerRequestFactory;
+use App\Services\SitemapService;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
@@ -25,31 +23,17 @@ if (file_exists($basePath . '/.env')) {
 $settings = \App\Config::getSettings();
 $container = require __DIR__ . '/../dependencies.php';
 
-/** @var WebController $web */
-$web = $container->get(WebController::class);
+/** @var SitemapService $sitemapService */
+$sitemapService = $container->get(SitemapService::class);
 
-echo "--- Sitemap Generator ---
-";
+echo "--- Sitemap Generator ---\n";
 
 try {
-    $requestFactory = new ServerRequestFactory();
-    $request = $requestFactory->createServerRequest('GET', '/sitemap.xml');
-    
-    $responseFactory = new ResponseFactory();
-    $response = $responseFactory->createResponse();
-
-    $response = $web->sitemapXml($request, $response);
-    
-    $xmlContent = (string) $response->getBody();
-    $filePath = $basePath . '/public/sitemap.xml';
-    
-    file_put_contents($filePath, $xmlContent);
-    
-    echo "SUCCESS: Sitemap saved to $filePath
-";
-    echo "Size: " . number_format(strlen($xmlContent) / 1024, 2) . " KB
-";
+    $result = $sitemapService->generateAndSave();
+    foreach ($result['output'] ?? [] as $line) {
+        echo $line . "\n";
+    }
 } catch (\Throwable $e) {
-    echo "ERROR: " . $e->getMessage() . "
-";
+    echo "ERROR: " . $e->getMessage() . "\n";
+    exit(1);
 }

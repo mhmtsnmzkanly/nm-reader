@@ -28,7 +28,9 @@ final class AdminConsoleService
         private readonly CacheService $cache,
         private readonly RetentionService $retention,
         private readonly AnalyticsAggregationService $aggregation,
-        private readonly SlugService $slugger
+        private readonly SlugService $slugger,
+        private readonly SitemapService $sitemapService,
+        private readonly SeriesService $seriesService
     ) {
     }
 
@@ -646,131 +648,123 @@ final class AdminConsoleService
     {
         $this->ensureRootUser($moderatorId);
         $scriptPath = dirname(__DIR__, 2) . '/app/Console/system_backup.php';
-        if (!file_exists($scriptPath)) {
-            throw new \RuntimeException('Backup script not found');
-        }
-
-        $output = [];
-        $returnVar = 0;
-        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
-
-        if ($moderatorId !== null) {
-            $this->repo->createModerationAction($moderatorId, 'system', 'backup', 'trigger', 'Manual backup triggered');
-        }
-
-        return ['success' => $returnVar === 0, 'output' => $output];
+        return $this->runCliScript($scriptPath, '', $moderatorId, 'backup', 'Manual backup triggered');
     }
 
     public function triggerSitemap(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
-        $this->cache->delete('sitemap_xml');
-        $scriptPath = dirname(__DIR__, 2) . '/app/Console/generate_sitemap.php';
-        if (!file_exists($scriptPath)) {
-            throw new \RuntimeException('Sitemap script not found');
-        }
-
-        $output = [];
-        $returnVar = 0;
-        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
+        $result = $this->sitemapService->generateAndSave();
 
         if ($moderatorId !== null) {
             $this->repo->createModerationAction($moderatorId, 'system', 'sitemap', 'trigger', 'Manual sitemap generation triggered');
         }
 
-        return ['success' => $returnVar === 0, 'output' => $output];
+        return $result;
     }
 
     public function triggerCacheWarmup(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
-        $scriptPath = dirname(__DIR__, 2) . '/app/Console/cache_warmer.php';
-        if (!file_exists($scriptPath)) {
-            throw new \RuntimeException('Cache warmer script not found');
-        }
+        $output = ['--- Cache Warmer ---'];
 
-        $output = [];
-        $returnVar = 0;
-        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
+        try {
+            $output[] = '[1/2] Warming Homepage data...';
+            $this->seriesService->home(1, 20);
+            $output[] = 'SUCCESS: Homepage warmed.';
+
+            $output[] = '[2/2] Warming Type listings...';
+            $types = ['manga', 'novel', 'webtoon', 'manhwa', 'manhua', 'light-novel', 'web-novel'];
+            foreach ($types as $type) {
+                $this->seriesService->byType($type, 1, 20);
+                $output[] = " - $type: OK";
+            }
+            $output[] = '--- Cache Warmup Completed ---';
+            $success = true;
+        } catch (\Throwable $e) {
+            $output[] = 'ERROR: ' . $e->getMessage();
+            $success = false;
+        }
 
         if ($moderatorId !== null) {
             $this->repo->createModerationAction($moderatorId, 'system', 'cache_warmup', 'trigger', 'Manual cache warmup triggered');
         }
 
-        return ['success' => $returnVar === 0, 'output' => $output];
+        return ['success' => $success, 'output' => $output];
     }
 
     public function triggerAnalytics(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
-        $scriptPath = dirname(__DIR__, 2) . '/app/Console/analytics_aggregate.php';
-        if (!file_exists($scriptPath)) {
-            throw new \RuntimeException('Analytics script not found');
-        }
+        $output = ['--- Analytics Aggregation ---'];
 
-        $output = [];
-        $returnVar = 0;
-        exec("php " . escapeshellarg($scriptPath) . " --days=30", $output, $returnVar);
+        try {
+            $this->aggregation->aggregateAll(30);
+            $this->cache->set('system_last_analytics_run', (string)time(), 86400 * 7);
+            $this->cache->delete(self::CACHE_KEY_KPI);
+            $output[] = 'SUCCESS: 30-day analytics aggregated successfully.';
+            $success = true;
+        } catch (\Throwable $e) {
+            $output[] = 'ERROR: ' . $e->getMessage();
+            $success = false;
+        }
 
         if ($moderatorId !== null) {
             $this->repo->createModerationAction($moderatorId, 'system', 'analytics', 'trigger', 'Manual analytics aggregation triggered');
         }
 
-        return ['success' => $returnVar === 0, 'output' => $output];
+        return ['success' => $success, 'output' => $output];
     }
 
     public function triggerApiTests(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
         $scriptPath = dirname(__DIR__, 2) . '/app/Console/ApiTestSuite.php';
-        if (!file_exists($scriptPath)) {
-            throw new \RuntimeException('API test suite script not found');
-        }
-
-        $output = [];
-        $returnVar = 0;
-        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
-
-        if ($moderatorId !== null) {
-            $this->repo->createModerationAction($moderatorId, 'system', 'api_tests', 'trigger', 'Manual API test suite execution triggered');
-        }
-
-        return ['success' => $returnVar === 0, 'output' => $output];
+        return $this->runCliScript($scriptPath, '', $moderatorId, 'api_tests', 'Manual API test suite execution triggered');
     }
 
     public function triggerOpenApi(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
         $scriptPath = dirname(__DIR__, 2) . '/app/Console/generate_openapi.php';
-        if (!file_exists($scriptPath)) {
-            throw new \RuntimeException('OpenAPI generator script not found');
-        }
-
-        $output = [];
-        $returnVar = 0;
-        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
-
-        if ($moderatorId !== null) {
-            $this->repo->createModerationAction($moderatorId, 'system', 'openapi', 'trigger', 'Manual OpenAPI spec generation triggered');
-        }
-
-        return ['success' => $returnVar === 0, 'output' => $output];
+        return $this->runCliScript($scriptPath, '', $moderatorId, 'openapi', 'Manual OpenAPI spec generation triggered');
     }
 
     public function triggerSeedData(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
         $scriptPath = dirname(__DIR__, 2) . '/app/Console/seed_default_data.php';
+        return $this->runCliScript($scriptPath, '', $moderatorId, 'seed_data', 'Default data seeding triggered');
+    }
+
+    private function runCliScript(
+        string $scriptPath,
+        string $args = '',
+        ?string $moderatorId = null,
+        ?string $actionTarget = null,
+        ?string $actionReason = null
+    ): array {
         if (!file_exists($scriptPath)) {
-            throw new \RuntimeException('Seed default data script not found');
+            throw new \RuntimeException('CLI script not found: ' . basename($scriptPath));
         }
 
+        if (!\function_exists('exec')) {
+            return [
+                'success' => false,
+                'output' => [
+                    'ERROR: PHP exec() fonksiyonu sunucuda devre disi birakilmistir (disable_functions).',
+                    'Bu islem sadece sunucu terminalinde (CLI) calistirilabilir: php ' . basename($scriptPath) . ($args !== '' ? ' ' . $args : ''),
+                ],
+            ];
+        }
+
+        $command = 'php ' . escapeshellarg($scriptPath) . ($args !== '' ? ' ' . $args : '');
         $output = [];
         $returnVar = 0;
-        exec("php " . escapeshellarg($scriptPath), $output, $returnVar);
+        @exec($command, $output, $returnVar);
 
-        if ($moderatorId !== null) {
-            $this->repo->createModerationAction($moderatorId, 'system', 'seed_data', 'trigger', 'Default data seeding triggered');
+        if ($moderatorId !== null && $actionTarget !== null) {
+            $this->repo->createModerationAction($moderatorId, 'system', $actionTarget, 'trigger', $actionReason ?? 'CLI script triggered');
         }
 
         return ['success' => $returnVar === 0, 'output' => $output];
