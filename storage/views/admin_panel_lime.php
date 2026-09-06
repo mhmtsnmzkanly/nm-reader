@@ -874,7 +874,8 @@
               </div>
               <div class="col-12">
                 <label class="form-label fw-semibold">Şifre Sıfırlama E-Posta Konusu</label>
-                <input type="text" class="form-control" data-model="config.password_reset_subject" maxlength="255" placeholder="Şifre Sıfırlama Talebi - {{site_name}}">
+                <input type="text" class="form-control" data-model="config.password_reset_subject" maxlength="255" placeholder="Şifre Sıfırlama Talebi">
+                <div class="small text-secondary mt-1">Kullanılabilir değişkenler: <code>{{site_name}}</code>, <code>{{username}}</code></div>
               </div>
               <div class="col-12">
                 <label class="form-label fw-semibold">Şifre Sıfırlama HTML Şablonu</label>
@@ -883,7 +884,8 @@
               </div>
               <div class="col-12">
                 <label class="form-label fw-semibold">E-Posta Doğrulama Konusu</label>
-                <input type="text" class="form-control" data-model="config.email_verification_subject" maxlength="255" placeholder="E-posta Adresinizi Doğrulayın - {{site_name}}">
+                <input type="text" class="form-control" data-model="config.email_verification_subject" maxlength="255" placeholder="E-posta Adresinizi Doğrulayın">
+                <div class="small text-secondary mt-1">Kullanılabilir değişkenler: <code>{{site_name}}</code>, <code>{{username}}</code></div>
               </div>
               <div class="col-12">
                 <label class="form-label fw-semibold">E-Posta Doğrulama HTML Şablonu</label>
