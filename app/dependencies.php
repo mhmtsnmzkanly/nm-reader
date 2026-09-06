@@ -9,7 +9,11 @@ use App\Controllers\AuthController;
 use App\Controllers\BlogController;
 use App\Controllers\InstallController;
 use App\Controllers\UserController;
-use App\Controllers\WebController;
+use App\Controllers\ContentPageController;
+use App\Controllers\BlogPageController;
+use App\Controllers\AccountPageController;
+use App\Controllers\AdminShellController;
+use App\Controllers\SystemPageController;
 use App\Repositories\BlogRepository;
 use App\Repositories\AdminConsoleRepository;
 use App\Repositories\ChapterRepository;
@@ -45,8 +49,13 @@ use App\Services\UserActivityService;
 use App\Services\UserService;
 use App\Services\QueueService;
 use App\Services\MetricsService;
+use App\Services\MeService;
 use App\Services\RetentionService;
 use App\Services\WalletService;
+use App\Services\WebContextBuilder;
+use App\Services\WebUrlService;
+use App\Services\WebPageRenderer;
+use App\Services\TaxonomyFormatter;
 use App\Middleware\I18nMiddleware;
 use App\Middleware\RequestIdMiddleware;
 use DI\ContainerBuilder;
@@ -154,6 +163,13 @@ $builder->addDefinitions([
     AdminService::class => DI\autowire(AdminService::class),
     AdminConsoleService::class => DI\autowire(AdminConsoleService::class),
     UserService::class => DI\autowire(UserService::class),
+    MeService::class => DI\autowire(MeService::class),
+    WebContextBuilder::class => DI\autowire(WebContextBuilder::class)
+        ->constructorParameter('errorLogger', DI\get('logger.error')),
+    WebUrlService::class => DI\autowire(WebUrlService::class),
+    WebPageRenderer::class => DI\autowire(WebPageRenderer::class)
+        ->constructorParameter('seoService', DI\get(\App\Services\SeoService::class)),
+    TaxonomyFormatter::class => DI\autowire(TaxonomyFormatter::class),
     UserActivityService::class => DI\autowire(UserActivityService::class),
     SlugService::class => DI\autowire(SlugService::class),
     UploadService::class => DI\autowire(UploadService::class),
@@ -190,21 +206,16 @@ $builder->addDefinitions([
     UserController::class => DI\autowire(UserController::class),
     AdminPanelController::class => DI\autowire(AdminPanelController::class),
     InstallController::class => static fn () => new InstallController($settings),
-    WebController::class => static fn (\Psr\Container\ContainerInterface $c) => new WebController(
-        $settings, 
-        $c->get(SiteConfigService::class),
-        $c->get(AuthorizationService::class),
-        $c->get(SeriesService::class),
-        $c->get(UserService::class),
-        $c->get(SeriesRepository::class),
-        $c->get(ChapterRepository::class),
-        $c->get(UserRepository::class),
-        $c->get(BlogRepository::class),
-        $c->get(I18nService::class),
-        $c->get(CacheService::class),
-        $c->get('logger.error'),
-        $c->get(\App\Services\SitemapService::class)
-    ),
+    // Web routes are split by responsibility; shared bootstrap and shell
+    // rendering are provided by WebContextBuilder/WebPageRenderer.
+    ContentPageController::class => DI\autowire(ContentPageController::class),
+    BlogPageController::class => DI\autowire(BlogPageController::class),
+    AccountPageController::class => DI\autowire(AccountPageController::class),
+    AdminShellController::class => DI\autowire(AdminShellController::class)
+        ->constructorParameter('settings', $settings),
+    SystemPageController::class => DI\autowire(SystemPageController::class)
+        ->constructorParameter('settings', $settings)
+        ->constructorParameter('errorLogger', DI\get('logger.error')),
 ]);
 
 return $builder->build();

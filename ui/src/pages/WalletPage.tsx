@@ -26,11 +26,13 @@ import { UnlockedChaptersList } from '../components/wallet/UnlockedChaptersList'
 import { FeatureEntitlementsList } from '../components/wallet/FeatureEntitlementsList';
 import { TopUpModal } from '../components/wallet/TopUpModal';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useMe } from '../contexts/MeContext';
 
 type WalletSubTab = 'transactions' | 'series_unlocks' | 'chapter_unlocks' | 'entitlements';
 
 export const WalletPage: React.FC = () => {
   const { t } = usePreferences();
+  const { me } = useMe();
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,11 +67,15 @@ export const WalletPage: React.FC = () => {
 
   // Load wallet data
   const loadWallet = useCallback(async () => {
+    if (me?.wallet) {
+      setWallet(me.wallet);
+      return;
+    }
     const wRes = await walletService.getWallet();
     if (wRes.status === 'success' && wRes.data) {
       setWallet(wRes.data);
     }
-  }, []);
+  }, [me?.wallet]);
 
   // Load transactions
   const loadTransactions = useCallback(async () => {

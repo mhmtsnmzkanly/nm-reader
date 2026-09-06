@@ -125,7 +125,7 @@ The objective is to establish:
 ---
 
 ### 2.10 Error Response Structure (P2 - MEDIUM)
-- **SSR Behavior:** HTML error pages (`error.php`).
+- **SSR Behavior:** Errors use the React app shell with `noindex,nofollow` metadata.
 - **API Behavior:** Standard JSON error envelope:
   ```json
   {

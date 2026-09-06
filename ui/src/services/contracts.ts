@@ -8,6 +8,7 @@ import {
   ChapterUnlockRow,
   Comment,
   ContentDetail,
+  ContentOverview,
   ContentSummary,
   ContentType,
   FeatureEntitlement,
@@ -16,6 +17,7 @@ import {
   Genre,
   HomeData,
   LibraryItem,
+  MeData,
   NotificationItem,
   PublicProfileData,
   ReadingHistoryItem,
@@ -40,6 +42,7 @@ export interface IContentService {
     per_page?: number
   ): Promise<ApiResponse<ContentSummary[]>>;
   getContentDetail(type: ContentType, slug: string): Promise<ApiResponse<ContentDetail>>;
+  getContentOverview(type: ContentType, slug: string): Promise<ApiResponse<ContentOverview>>;
   getChapters(
     type: ContentType,
     slug: string,
@@ -185,6 +188,7 @@ export interface IAuthService {
 }
 
 export interface IUserService {
+  getMe(): Promise<ApiResponse<MeData>>;
   getProfile(): Promise<ApiResponse<UserProfile>>;
   updateProfile(data: Partial<UserProfile>): Promise<ApiResponse<UserProfile>>;
   getPublicProfile(person: string): Promise<ApiResponse<PublicProfileData>>;

@@ -17,7 +17,7 @@ import { usePreferences } from '../../contexts/PreferencesContext';
 import { useNotifications } from '../../contexts/NotificationsContext';
 
 export const AccountMenu: React.FC = () => {
-  const { user, isAuthenticated, logout, openAuthModal } = useAuth();
+  const { user, roles, permissions, isAuthenticated, logout, openAuthModal } = useAuth();
   const { unreadCount } = useNotifications();
   const { lang, setLanguage, t } = usePreferences();
   const [isOpen, setIsOpen] = useState(false);
@@ -153,9 +153,8 @@ export const AccountMenu: React.FC = () => {
             </Link>
 
             {/* Admin / Moderator Panel Link */}
-            {(user.roles?.some((r) => ['admin', 'moderator', 'editor', 'superadmin'].includes(r.toLowerCase())) ||
-              user.permissions?.includes('access_panel') ||
-              user.username === 'admin') && (
+            {(roles.some((r) => ['root', 'admin', 'moderator', 'editor', 'superadmin'].includes(r.toLowerCase())) ||
+              permissions.includes('admin.panel.access')) && (
               <a
                 href="/panel"
                 onClick={() => setIsOpen(false)}

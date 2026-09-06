@@ -4,6 +4,7 @@ import {
   ChapterReader,
   ChapterSummary,
   ContentDetail,
+  ContentOverview,
   ContentSummary,
   ContentType,
   Genre,
@@ -29,6 +30,10 @@ export class ApiContentService implements IContentService {
 
   async getContentDetail(type: ContentType, slug: string): Promise<ApiResponse<ContentDetail>> {
     return api.get<ContentDetail>(`/content/${type}/${slug}`);
+  }
+
+  async getContentOverview(type: ContentType, slug: string): Promise<ApiResponse<ContentOverview>> {
+    return api.get<ContentOverview>(`/content/${type}/${slug}/overview`);
   }
 
   async getChapters(

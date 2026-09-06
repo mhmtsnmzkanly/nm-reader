@@ -11,6 +11,22 @@ final class SiteConfigService
     private const CACHE_KEY = 'site_config:all:v2';
     private const CACHE_TTL = 600;
 
+    /** @var list<string> Settings safe to embed in public HTML/application context. */
+    private const PUBLIC_KEYS = [
+        'site_name',
+        'site_slogan',
+        'site_abbreviation',
+        'site_description',
+        'default_language',
+        'footer_text',
+        'default_theme',
+        'site_logo',
+        'logo_url',
+        'favicon_url',
+        'default_profile_image',
+        'default_content_cover_image',
+    ];
+
     private static ?array $memoryCache = null;
 
     /**
@@ -72,6 +88,9 @@ final class SiteConfigService
 
         $cached = $this->cache->get(self::CACHE_KEY);
         if (is_array($cached)) {
+            // Older cache entries may contain rows that are no longer part of
+            // the supported schema. Never return those entries to callers.
+            $cached = array_intersect_key($cached, self::DEFINITIONS);
             self::$memoryCache = $cached;
             return $cached;
         }
@@ -87,6 +106,11 @@ final class SiteConfigService
                             continue;
                         }
                         $key = (string) $row['key'];
+                        // Unknown rows must never be exposed through the
+                        // settings payload (they may contain future secrets).
+                        if (!isset(self::DEFINITIONS[$key])) {
+                            continue;
+                        }
                         $type = (string) ($row['type'] ?? (self::DEFINITIONS[$key]['type'] ?? 'string'));
                         $raw = $row['value'] ?? null;
                         $settings[$key] = $this->castValueByType($key, $type, $raw);
@@ -100,6 +124,18 @@ final class SiteConfigService
         $this->cache->set(self::CACHE_KEY, $settings, self::CACHE_TTL);
         self::$memoryCache = $settings;
         return $settings;
+    }
+
+    /**
+     * Returns only settings safe for public HTML/application bootstrap.
+     * Operational and mail settings remain server-side and are available to
+     * authenticated administrators through the admin configuration API.
+     *
+     * @return array<string, mixed>
+     */
+    public function public(): array
+    {
+        return array_intersect_key($this->all(), array_flip(self::PUBLIC_KEYS));
     }
 
     /**

@@ -18,6 +18,7 @@ $endpoints = [
     ['GET', '/content/type/{type}', 'Browse Series by Content Type', 'Content', false],
     ['GET', '/content/{type}/chapters', 'Latest Chapters by Type', 'Content', false],
     ['GET', '/content/{type}/{slug}', 'Series Detail by Type and Slug', 'Content', false],
+    ['GET', '/content/{type}/{slug}/overview', 'Series Detail Bundle (Content, Chapters, Related)', 'Content', false],
     ['GET', '/content/{type}/{slug}/chapters', 'List Chapters of Series', 'Content', false],
     ['GET', '/latest-chapters', 'Global Latest Chapters Feed', 'Content', false],
     ['GET', '/shop/packages', 'Coin Packages Catalogue', 'Shop', false],
@@ -27,6 +28,7 @@ $endpoints = [
     ['GET', '/genre/{slug}', 'Series Filtered by Genre', 'Taxonomy', false],
     ['GET', '/tag/{slug}', 'Series Filtered by Tag', 'Taxonomy', false],
     ['GET', '/content/{type}/{slug}/chapter/{chapterNumber}', 'Reader Chapter Content', 'Reader', false],
+    ['GET', '/me', 'Authenticated Startup User Bundle', 'User', true],
 
     // 2. Comments & Interaction
     ['GET', '/chapter/{chapterId}/comments', 'List Chapter Comments', 'Comments', false],

@@ -146,7 +146,10 @@ final class AuthService
         }
         $_SESSION['user_id'] = (string) $user['id'];
         $_SESSION['username'] = (string) $user['username'];
-        $roles = $this->authorization->normalizeRoles($this->resolveRoles((string) $user['id']));
+        $roles = $this->authorization->normalizeRolesForUser(
+            $this->resolveRoles((string) $user['id']),
+            (string) $user['id'],
+        );
         $permissions = $this->authorization->resolveEffectivePermissions(
             $roles,
             [],
@@ -282,7 +285,10 @@ final class AuthService
             throw $e;
         }
 
-        $roles = $this->authorization->normalizeRoles($this->resolveRoles((string) $row['user_id']));
+        $roles = $this->authorization->normalizeRolesForUser(
+            $this->resolveRoles((string) $row['user_id']),
+            (string) $row['user_id'],
+        );
         $permissions = $this->authorization->resolveEffectivePermissions(
             $roles,
             [],

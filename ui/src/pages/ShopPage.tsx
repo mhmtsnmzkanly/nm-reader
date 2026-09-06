@@ -14,9 +14,11 @@ import { Button } from '../components/ui/Button';
 import { TopUpModal } from '../components/wallet/TopUpModal';
 import { AdFreeCard } from '../components/shop/AdFreeCard';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { useMe } from '../contexts/MeContext';
 
 export const ShopPage: React.FC = () => {
   const { t } = usePreferences();
+  const { me } = useMe();
   const [packages, setPackages] = useState<ShopPackage[]>([]);
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +29,7 @@ export const ShopPage: React.FC = () => {
     setIsLoading(true);
     const [pkgRes, walletRes] = await Promise.all([
       walletService.getShopPackages(),
-      walletService.getWallet(),
+      me?.wallet ? Promise.resolve({ status: 'success' as const, data: me.wallet, meta: {}, error: null }) : walletService.getWallet(),
     ]);
 
     if (pkgRes.status === 'success' && pkgRes.data) {
@@ -37,7 +39,7 @@ export const ShopPage: React.FC = () => {
       setWallet(walletRes.data);
     }
     setIsLoading(false);
-  }, []);
+  }, [me?.wallet]);
 
   useEffect(() => {
     loadData();

@@ -5,29 +5,37 @@ import { ChapterSummary, ContentType } from '../types/api';
 import { ChapterRow } from '../components/content/ChapterRow';
 import { usePreferences } from '../contexts/PreferencesContext';
 
+function getBootstrapChapterList(type: string, slug: string): { title: string; chapters: ChapterSummary[] } | null {
+  if (typeof window === 'undefined') return null;
+  const page = window.__NMR_CONTEXT?.current_page;
+  const pageData = page?.data;
+  if (page?.route !== 'content' || pageData?.type !== type || pageData?.slug !== slug) return null;
+  if (!pageData.content || !Array.isArray(pageData.chapters)) return null;
+  return {
+    title: pageData.content.title,
+    chapters: pageData.chapters as ChapterSummary[],
+  };
+}
+
 export const ChapterListPage: React.FC = () => {
   const { t } = usePreferences();
   const { type = 'manga', slug = '' } = useParams<{ type: string; slug: string }>();
-  const [contentTitle, setContentTitle] = useState<string>('');
-  const [chapters, setChapters] = useState<ChapterSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [bootstrapData] = useState(() => getBootstrapChapterList(type, slug));
+  const [contentTitle, setContentTitle] = useState<string>(bootstrapData?.title || '');
+  const [chapters, setChapters] = useState<ChapterSummary[]>(bootstrapData?.chapters || []);
+  const [isLoading, setIsLoading] = useState(bootstrapData === null);
 
   useEffect(() => {
     if (!slug) return;
 
     const fetchChapters = async () => {
+      if (bootstrapData !== null) return;
       setIsLoading(true);
       try {
-        const [chapRes, detailRes] = await Promise.all([
-          contentService.getChapters(type as ContentType, slug),
-          contentService.getContentDetail(type as ContentType, slug),
-        ]);
-
-        if (chapRes.status === 'success') {
-          setChapters(chapRes.data);
-        }
-        if (detailRes.status === 'success' && detailRes.data) {
-          setContentTitle(detailRes.data.title);
+        const overviewRes = await contentService.getContentOverview(type as ContentType, slug);
+        if (overviewRes.status === 'success') {
+          setChapters(overviewRes.data.chapters as ChapterSummary[]);
+          setContentTitle(overviewRes.data.content.title);
         }
       } catch {
         // ignore
@@ -37,7 +45,7 @@ export const ChapterListPage: React.FC = () => {
     };
 
     fetchChapters();
-  }, [type, slug]);
+  }, [bootstrapData, type, slug]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6 transition-colors duration-300">

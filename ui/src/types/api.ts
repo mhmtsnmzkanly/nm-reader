@@ -357,6 +357,12 @@ export type HomeData = {
   latest_blogs: HomeBlogItem[];
 };
 
+export type ContentOverview = {
+  content: ContentDetail;
+  chapters: ContentDetailChapter[];
+  related: ContentSummary[];
+};
+
 export type SearchSuggestItem = {
   id: string;
   title: string;
@@ -621,6 +627,22 @@ export type WalletData = {
   total_coin_purchased: number;
   total_coin_spent: number;
   updated_at: string;
+};
+
+export type MeData = {
+  is_logged_in?: boolean;
+  user_id?: string;
+  username?: string | null;
+  roles?: string[];
+  permissions?: string[];
+  csrf_token?: string | null;
+  profile: UserProfile;
+  preferences: UserPreferences;
+  wallet: WalletData;
+  notifications: {
+    items: NotificationItem[];
+    meta: PaginationMeta | Record<string, unknown>;
+  };
 };
 
 export type WalletTransactionType =

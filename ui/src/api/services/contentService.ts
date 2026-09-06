@@ -4,6 +4,7 @@ import type {
   ChapterReader,
   ChapterSummary,
   ContentDetail,
+  ContentOverview,
   ContentSummary,
   ContentType,
   Genre,
@@ -33,6 +34,10 @@ export class ApiContentService implements IContentService {
 
   public getContentDetail(type: ContentType, slug: string): Promise<ApiResponse<ContentDetail>> {
     return apiClient.get<ContentDetail>(`/content/${type}/${slug}`);
+  }
+
+  public getContentOverview(type: ContentType, slug: string): Promise<ApiResponse<ContentOverview>> {
+    return apiClient.get<ContentOverview>(`/content/${type}/${slug}/overview`);
   }
 
   public getChapters(

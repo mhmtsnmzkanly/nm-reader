@@ -8,6 +8,7 @@ use App\Helpers\ResponseHelper;
 use App\Helpers\CursorPagination;
 use App\Services\UserService;
 use App\Services\WalletService;
+use App\Services\MeService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -24,9 +25,39 @@ final class UserController
 {
     public function __construct(
         private readonly UserService $users,
-        private readonly WalletService $wallets
+        private readonly WalletService $wallets,
+        private readonly MeService $meService,
     )
     {
+    }
+
+    /**
+     * Retrieves the authenticated user's startup bundle in one request.
+     */
+    public function me(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $userId = (string) $request->getAttribute('user_id');
+            $query = $request->getQueryParams();
+            $page = max(1, (int) ($query['notifications_page'] ?? 1));
+            $perPage = max(1, min(50, (int) ($query['notifications_per_page'] ?? 20)));
+
+            $snapshot = $this->meService->snapshot($userId, $page, $perPage);
+            $roles = $request->getAttribute('roles');
+            $permissions = $request->getAttribute('permissions');
+            $snapshot = array_merge([
+                'is_logged_in' => true,
+                'user_id' => $userId,
+                'username' => $snapshot['profile']['username'] ?? null,
+                'roles' => is_array($roles) ? array_values($roles) : [],
+                'permissions' => is_array($permissions) ? array_values($permissions) : [],
+                'csrf_token' => $_SESSION['csrf_token'] ?? null,
+            ], $snapshot);
+
+            return ResponseHelper::success($snapshot);
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
     }
 
     /**

@@ -17,7 +17,7 @@ Browser / Crawler Request
 PHP Router (`Config.php`)
           │
           ▼
-`WebController` (Aggregates domain data)
+Split page controllers (Aggregate route-specific domain data)
           │
           ▼
 `SeoService` (Sanitizes & generates title, meta, OG, Twitter, JSON-LD)

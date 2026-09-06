@@ -336,7 +336,7 @@ $errorMiddleware->setDefaultErrorHandler(
         }
 
         try {
-            $webController = $container->get(\App\Controllers\WebController::class);
+            $webController = $container->get(\App\Controllers\SystemPageController::class);
             $responseFactory = new \Slim\Psr7\Factory\ResponseFactory();
             $response = $responseFactory->createResponse($statusCode);
             return $webController->renderError($request, $response, $statusCode, $message);

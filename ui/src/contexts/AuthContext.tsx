@@ -1,11 +1,14 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { UserProfile } from '../types/api';
-import { authService, userService } from '../services';
+import { authService } from '../services';
+import { useMe } from './MeContext';
 
 type AuthModalTab = 'login' | 'register' | 'forgot-password';
 
 type AuthContextType = {
   user: UserProfile | null;
+  roles: string[];
+  permissions: string[];
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, pass: string, remember: boolean) => Promise<boolean>;
@@ -24,8 +27,10 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { me, isLoading, refreshMe } = useMe();
+  const user = me?.profile ?? null;
+  const roles = me?.roles ?? [];
+  const permissions = me?.permissions ?? [];
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalTab, setAuthModalTab] = useState<AuthModalTab>('login');
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState<boolean>(false);
@@ -48,34 +53,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const fetchProfile = async () => {
-    if (typeof window !== 'undefined' && window.__NMR_CONTEXT?.auth && !window.__NMR_CONTEXT.auth.is_logged_in) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const res = await userService.getProfile();
-      if (res.status === 'success') {
-        setUser(res.data);
-      } else {
-        setUser(null);
-      }
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
+    await refreshMe();
   };
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
 
   const login = async (email: string, pass: string, remember: boolean) => {
     const res = await authService.login(email, pass, remember);
     if (res.status === 'success') {
-      await fetchProfile();
+      await refreshMe();
       return true;
     }
     return false;
@@ -88,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await authService.logout();
-    await fetchProfile();
+    await refreshMe();
   };
 
   const isAuthenticated = !!user && !user.is_guest;
@@ -97,6 +81,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider
       value={{
         user,
+        roles,
+        permissions,
         isAuthenticated,
         isLoading,
         login,

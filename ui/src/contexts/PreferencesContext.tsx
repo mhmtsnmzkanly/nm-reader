@@ -8,6 +8,7 @@ import {
 } from '../types/api';
 import { AppLanguage, AppTheme } from '../types/domain';
 import { userService } from '../services';
+import { useMe } from './MeContext';
 import { getTranslation } from '../i18n';
 import { formatRelativeTime as utilFormatRelativeTime, formatDate as utilFormatDate } from '../utils/formatDate';
 
@@ -232,50 +233,32 @@ function getInitialPrefs(): UserPreferences {
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
 export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { me, isLoading: isMeLoading, refreshMe } = useMe();
   const [preferences, setPreferences] = useState<UserPreferences>(getInitialPrefs);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(isMeLoading);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchRemotePreferences = useCallback(async () => {
-    if (typeof window !== 'undefined' && window.__NMR_CONTEXT?.auth && !window.__NMR_CONTEXT.auth.is_logged_in) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
+  useEffect(() => {
+    setIsLoading(isMeLoading);
+    if (!me?.preferences) return;
+    setPreferences((prev) => {
+      const merged = mergePrefsWithDefaults({ ...prev, ...me.preferences });
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      } catch {
+        // ignore localStorage quota error
+      }
+      return merged;
+    });
+  }, [isMeLoading, me]);
+
+  const reloadPreferences = useCallback(async () => {
     setIsError(false);
     setErrorMessage(null);
-    try {
-      const res = await userService.getPreferences();
-      if (res.status === 'success' && res.data) {
-        setPreferences((prev) => {
-          const merged = mergePrefsWithDefaults({ ...prev, ...res.data });
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-          } catch (e) {
-            // ignore localStorage quota error
-          }
-          return merged;
-        });
-      } else if (res.status === 'error') {
-        // Unauthenticated guests use localStorage preferences without setting isError
-        if (res.error?.code === 401 || res.error?.key === 'UNAUTHORIZED') {
-          return;
-        }
-        setIsError(true);
-        setErrorMessage(res.error?.message || 'Ayarlar yüklenemedi.');
-      }
-    } catch (err: any) {
-      // Ignore network errors for preferences on first load
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRemotePreferences();
-  }, [fetchRemotePreferences]);
+    await refreshMe();
+  }, [refreshMe]);
 
   // Sync theme & accent with HTML root attributes and system theme detection
   useEffect(() => {
@@ -495,7 +478,7 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         updatePreferences,
         resetToDefaults,
         applyPreset,
-        reloadPreferences: fetchRemotePreferences,
+        reloadPreferences,
       }}
     >
       {children}

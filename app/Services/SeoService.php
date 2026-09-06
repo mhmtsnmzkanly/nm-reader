@@ -25,7 +25,7 @@ class SeoService
      *   description?: string,
      *   canonical?: string,
      *   robots?: string,
-     *   og?: array{title?: string, description?: string, image?: string, url?: string, type?: string, site_name?: string},
+     *   og?: array{title?: string, description?: string, image?: string, image_alt?: string, url?: string, type?: string, site_name?: string},
      *   twitter?: array{title?: string, description?: string, image?: string, card?: string},
      *   jsonLd?: array|object|null
      * } $seo
@@ -88,6 +88,7 @@ class SeoService
         $ogType = $this->sanitizeText($og['type'] ?? 'website');
         $ogImage = $this->sanitizeMediaUrl($og['image'] ?? '');
         $ogSiteName = $this->sanitizeText($og['site_name'] ?? 'NM-Reader');
+        $ogImageAlt = $this->sanitizeText($og['image_alt'] ?? $ogTitle);
 
         if (!empty($ogTitle)) {
             $ogTags[] = '<meta property="og:title" content="' . htmlspecialchars($ogTitle, ENT_QUOTES, 'UTF-8') . '" />';
@@ -100,6 +101,9 @@ class SeoService
         }
         if (!empty($ogImage)) {
             $ogTags[] = '<meta property="og:image" content="' . htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8') . '" />';
+            if ($ogImageAlt !== '') {
+                $ogTags[] = '<meta property="og:image:alt" content="' . htmlspecialchars($ogImageAlt, ENT_QUOTES, 'UTF-8') . '" />';
+            }
         }
         if (!empty($ogType)) {
             $ogTags[] = '<meta property="og:type" content="' . htmlspecialchars($ogType, ENT_QUOTES, 'UTF-8') . '" />';
@@ -111,6 +115,12 @@ class SeoService
         $ogTagBlock = !empty($ogTags) ? implode("\n    ", $ogTags) : '';
         if (str_contains($html, '<!-- SEO:OG -->')) {
             $html = str_replace('<!-- SEO:OG -->', $ogTagBlock, $html);
+        }
+
+        // Hint the browser to fetch the primary social/hero image early.
+        if ($ogImage !== '' && str_contains($html, '</head>')) {
+            $preload = '<link rel="preload" as="image" href="' . htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8') . '" fetchpriority="high" />';
+            $html = str_replace('</head>', "  {$preload}\n  </head>", $html);
         }
 
         // 6. Inject Twitter Card Tags

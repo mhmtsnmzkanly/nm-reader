@@ -5,6 +5,7 @@ import {
   ContentType,
   FollowingUserItem,
   LibraryItem,
+  MeData,
   NotificationItem,
   PublicProfileData,
   ReadingHistoryItem,
@@ -14,6 +15,10 @@ import {
 import { IUserService } from '../contracts';
 
 export class ApiUserService implements IUserService {
+  async getMe(): Promise<ApiResponse<MeData>> {
+    return api.get<MeData>('/me');
+  }
+
   async getProfile(): Promise<ApiResponse<UserProfile>> {
     return api.get<UserProfile>('/user/profile');
   }

@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePreferences } from '../contexts/PreferencesContext';
-import { userService, walletService } from '../services';
+import { useMe } from '../contexts/MeContext';
+import { userService } from '../services';
 import {
   UserProfile,
   ContentSummary,
@@ -36,13 +37,14 @@ import { Skeleton } from '../components/feedback/Skeleton';
 export const ProfilePage: React.FC = () => {
   const { user, isAuthenticated, isLoading: isAuthLoading, refreshProfile, openAuthModal } = useAuth();
   const { t } = usePreferences();
+  const { me } = useMe();
 
   const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [libraryItems, setLibraryItems] = useState<ContentSummary[]>([]);
   const [historyItems, setHistoryItems] = useState<ReadingHistoryItem[]>([]);
   const [activityItems, setActivityItems] = useState<UserActivityItem[]>([]);
-  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number | null>(me?.wallet?.balance_coin ?? me?.wallet?.balance ?? null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
@@ -54,11 +56,10 @@ export const ProfilePage: React.FC = () => {
     const loadProfileData = async () => {
       setIsLoadingData(true);
       try {
-        const [followsRes, historyRes, publicRes, walletRes] = await Promise.all([
+        const [followsRes, historyRes, publicRes] = await Promise.all([
           userService.getFollows(1, 20),
           userService.getHistory(1, 20),
           user?.username ? userService.getPublicProfile(user.username) : Promise.resolve(null),
-          walletService.getWallet(),
         ]);
 
         if (followsRes.status === 'success') {
@@ -70,9 +71,6 @@ export const ProfilePage: React.FC = () => {
         if (publicRes && publicRes.status === 'success' && publicRes.data.activities) {
           setActivityItems(publicRes.data.activities);
         }
-        if (walletRes.status === 'success' && walletRes.data) {
-          setWalletBalance(walletRes.data.balance_coin ?? walletRes.data.balance ?? 0);
-        }
       } catch (err) {
         console.error('Error loading profile data:', err);
       } finally {
@@ -82,6 +80,10 @@ export const ProfilePage: React.FC = () => {
 
     loadProfileData();
   }, [isAuthenticated, user?.username]);
+
+  useEffect(() => {
+    setWalletBalance(me?.wallet?.balance_coin ?? me?.wallet?.balance ?? null);
+  }, [me?.wallet]);
 
   if (isAuthLoading) {
     return (

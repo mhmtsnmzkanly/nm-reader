@@ -293,7 +293,19 @@ final class ApiTestSuite
         // 3. GET /api/v1/content/{type}/{slug}
         $this->assertResponse('GET /api/v1/content/manga/solo-leveling', $this->request('GET', '/api/v1/content/manga/solo-leveling'), 200, 'GET /api/v1/content/{type}/{slug}');
 
-        // 4. GET /api/v1/content/{type}/{slug}/chapters
+        // 4. GET /api/v1/content/{type}/{slug}/overview
+        $overview = $this->assertResponse('GET /api/v1/content/manga/solo-leveling/overview', $this->request('GET', '/api/v1/content/manga/solo-leveling/overview'), 200, 'GET /api/v1/content/{type}/{slug}/overview');
+        $overviewData = $overview['data'] ?? null;
+        if (is_array($overviewData) && isset($overviewData['content'], $overviewData['chapters'], $overviewData['related'])) {
+            $this->passCount++;
+            echo "  [PASS] Content overview bundle contains detail, chapters and related data\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'Content overview bundle is missing detail, chapters or related data';
+            echo "  [FAIL] Content overview bundle is missing detail, chapters or related data\n";
+        }
+
+        // 5. GET /api/v1/content/{type}/{slug}/chapters
         $json = $this->assertResponse('GET /api/v1/content/manga/solo-leveling/chapters', $this->request('GET', '/api/v1/content/manga/solo-leveling/chapters'), 200, 'GET /api/v1/content/{type}/{slug}/chapters');
         $this->assertPagination('chaptersByType', $json);
 
@@ -540,6 +552,19 @@ final class ApiTestSuite
     private function testUserProtectedEndpoints(): void
     {
         echo "\n9. Testing User Protected Endpoints...\n";
+
+        // 49. GET /api/v1/me
+        $this->assertResponse('GET /api/v1/me (Guest -> 401)', $this->request('GET', '/api/v1/me'), 401, 'GET /api/v1/me');
+        $me = $this->assertResponse('GET /api/v1/me (Configured user)', $this->request('GET', '/api/v1/me', [], null, 'usr12345'), 200, 'GET /api/v1/me');
+        $meData = $me['data'] ?? null;
+        if (is_array($meData) && isset($meData['profile'], $meData['preferences'], $meData['wallet'], $meData['notifications'])) {
+            $this->passCount++;
+            echo "  [PASS] /me bundle contains profile, preferences, wallet and notifications\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = '/me bundle is missing one or more startup datasets';
+            echo "  [FAIL] /me bundle is missing one or more startup datasets\n";
+        }
 
         // 49. GET /api/v1/user/profile
         $this->assertResponse('GET /api/v1/user/profile (Guest -> 401)', $this->request('GET', '/api/v1/user/profile'), 401, 'GET /api/v1/user/profile');

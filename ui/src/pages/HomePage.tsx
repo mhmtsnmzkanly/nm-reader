@@ -11,10 +11,26 @@ import { ErrorState } from '../components/feedback/ErrorState';
 import { EmptyState } from '../components/feedback/EmptyState';
 import { usePreferences } from '../contexts/PreferencesContext';
 
+function getBootstrapHomeData(): HomeData | null {
+  if (typeof window === 'undefined') return null;
+  const context = window.__NMR_CONTEXT;
+  if (context?.current_page?.route !== 'home') return null;
+  const data = context.current_page.data?.home;
+  if (!data || typeof data !== 'object') return null;
+
+  // Keep the fallback API path available if an older shell or malformed
+  // bootstrap payload is served during a rolling deployment.
+  if (!Array.isArray(data.explore) || !Array.isArray(data.recent_chapters)) return null;
+  if (!Array.isArray(data.recently_added) || !Array.isArray(data.popular_blogs)) return null;
+  if (!Array.isArray(data.latest_blogs)) return null;
+  return data;
+}
+
 export const HomePage: React.FC = () => {
   const { t } = usePreferences();
-  const [homeData, setHomeData] = useState<HomeData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [bootstrapHomeData] = useState<HomeData | null>(getBootstrapHomeData);
+  const [homeData, setHomeData] = useState<HomeData | null>(bootstrapHomeData);
+  const [isLoading, setIsLoading] = useState(bootstrapHomeData === null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchHomeData = useCallback(async () => {
@@ -33,8 +49,9 @@ export const HomePage: React.FC = () => {
   }, [t]);
 
   useEffect(() => {
+    if (bootstrapHomeData !== null) return;
     fetchHomeData();
-  }, [fetchHomeData]);
+  }, [bootstrapHomeData, fetchHomeData]);
 
   if (isLoading) {
     return (
@@ -123,4 +140,3 @@ export const HomePage: React.FC = () => {
     </div>
   );
 };
-

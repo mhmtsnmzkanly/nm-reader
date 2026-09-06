@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { NotificationItem, NotificationPayloadData } from '../types/api';
 import { userService } from '../services';
 import { useAuth } from './AuthContext';
+import { useMe } from './MeContext';
 
 export type NotificationCategory = 'all' | 'unread' | 'chapters' | 'social' | 'system';
 
@@ -62,8 +63,9 @@ const NotificationsContext = createContext<NotificationsContextType | undefined>
 
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  const { me, isLoading: isMeLoading } = useMe();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(isMeLoading);
   const [isError, setIsError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<NotificationCategory>('all');
@@ -102,8 +104,19 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [isAuthenticated]);
 
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    if (isMeLoading) {
+      setIsLoading(true);
+      return;
+    }
+    if (!isAuthenticated || !me) {
+      setNotifications([]);
+      setIsLoading(false);
+      setIsError(false);
+      return;
+    }
+    setNotifications(me.notifications.items);
+    setIsLoading(false);
+  }, [isAuthenticated, isMeLoading, me]);
 
   const markAsRead = async (id: number) => {
     setNotifications((prev) =>

@@ -166,6 +166,12 @@ class LocaleRegressionSuite
 
         $resMedia = $this->request('GET', '/media/public/nonexistent_test.jpg');
         $this->assert('GET /media/public/* returns 404 without locale redirect', $resMedia->getStatusCode() === 404);
+
+        $resChat = $this->request('GET', '/chat');
+        $this->assert('GET /chat is retired with 404', $resChat->getStatusCode() === 404);
+
+        $resMobile = $this->request('GET', '/mobile');
+        $this->assert('GET /mobile is retired with 404', $resMobile->getStatusCode() === 404);
         echo "\n";
     }
 

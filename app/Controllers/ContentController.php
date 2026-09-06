@@ -88,6 +88,41 @@ final class ContentController
         }
     }
 
+    /**
+     * Returns the public content detail bundle used by the detail page.
+     * User-specific comments and wallet data intentionally remain separate.
+     */
+    public function contentOverview(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $type = (string) $args['type'];
+            $slug = (string) $args['slug'];
+            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+            $userId = is_string($userId) ? $userId : null;
+
+            $content = $this->seriesService->contentDetailByType($type, $slug, $ip, $userId);
+            if ($content === null) {
+                return ResponseHelper::error(404, 'Content not found');
+            }
+
+            $chapters = $this->seriesService->chaptersByType($type, $slug, 1, 100, $userId);
+            $related = array_values(array_filter(
+                $this->seriesService->byType($type, 1, 6, $userId),
+                static fn (array $item): bool => (string) ($item['slug'] ?? '') !== $slug,
+            ));
+
+            return ResponseHelper::success([
+                'content' => $content,
+                'chapters' => $chapters,
+                'related' => array_slice($related, 0, 3),
+            ]);
+        } catch (\DomainException $e) {
+            $code = str_contains($e->getMessage(), 'MEMBERS_ONLY_REQUIRED') ? 401 : 400;
+            return ResponseHelper::error($code, $e->getMessage());
+        }
+    }
+
     // --- CHAPTERS ---
 
     public function chaptersByType(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

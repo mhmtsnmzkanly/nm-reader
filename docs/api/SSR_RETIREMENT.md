@@ -13,7 +13,7 @@
 Prior to the React migration, NM-Reader rendered public HTML pages entirely on the server using PHP templates located in `storage/views/`:
 
 ```
-User Request ──> PHP Router ──> WebController ──> storage/views/{template}.php ──> layout_main.php ──> HTML
+User Request ──> PHP Router ──> Page Controller ──> WebPageRenderer ──> app.html ──> HTML
 ```
 
 ### Limitations of the Legacy Public SSR Model
@@ -34,10 +34,10 @@ Browser / Crawler
 PHP Entrypoint (`public/index.php`)
         │
         ▼
-`WebController` (Prepares SEO presentation data)
+Split page controllers (Prepares route-specific data)
         │
         ▼
-`SeoService` (Injects title, description, canonical, OG, Twitter, JSON-LD into `public/app.html`)
+`WebPageRenderer` + `SeoService` (Injects title, description, canonical, OG, Twitter, JSON-LD)
         │
         ▼
 Crawler-Ready HTML Document Response
@@ -64,7 +64,7 @@ All public-facing PHP views and template rendering logic have been **permanently
 
 ## 4. Unified Admin Panel
 
-The management console is available only at `/panel` and `/panel/*`. `WebController::adminPanelLime()` serves the unified `storage/views/admin_panel_lime.php` shell, which consumes the `/api/v1/admin/*` API.
+The management console is available only at `/panel` and `/panel/*`. `AdminShellController` serves the unified `storage/views/admin_panel_lime.php` shell, which consumes the `/api/v1/admin/*` API.
 
 ### Rationale:
 - The shell requires an authenticated admin session.
@@ -77,16 +77,16 @@ The management console is available only at `/panel` and `/panel/*`. `WebControl
 
 | Route Pattern | Handler | Output Mechanism | Client Routing |
 |:---|:---|:---|:---|
-| `/` | `WebController::home` | `app.html` + WebSite JSON-LD | `HomePage` |
-| `/{type:manga\|novel...}` | `WebController::listing` | `app.html` + Breadcrumb | `BrowsePage` |
-| `/{type}/{slug}` | `WebController::content` | `app.html` + CreativeWorkSeries | `ContentDetailPage` |
-| `/{type}/{slug}/chapter/{num}` | `WebController::chapter` | `app.html` + Chapter SEO | `ReaderPage` |
-| `/blogs` | `WebController::blog` | `app.html` + Blog Directory | `BlogListPage` |
-| `/blogs/{slug}` | `WebController::blog` | `app.html` + BlogPosting JSON-LD | `BlogDetailPage` |
-| `/search` | `WebController::search` | `app.html` + noindex, follow | `SearchPage` |
-| `/profile` | `WebController::profile` | `app.html` + noindex, nofollow | `ProfilePage` |
-| `/profile/{person}` | `WebController::profile` | `app.html` + Public Creator | `PublicProfilePage` |
-| `/panel`, `/panel/*` | `WebController::adminPanelLime` | `storage/views/admin_panel_lime.php` | Built-in client router |
+| `/` | `ContentPageController::home` | `app.html` + WebSite JSON-LD | `HomePage` |
+| `/{type:manga\|novel...}` | `ContentPageController::listing` | `app.html` + Breadcrumb | `BrowsePage` |
+| `/{type}/{slug}` | `ContentPageController::content` | `app.html` + CreativeWorkSeries | `ContentDetailPage` |
+| `/{type}/{slug}/chapter/{num}` | `ContentPageController::chapter` | `app.html` + Chapter SEO | `ReaderPage` |
+| `/blogs` | `BlogPageController::blog` | `app.html` + Blog Directory | `BlogListPage` |
+| `/blogs/{slug}` | `BlogPageController::blog` | `app.html` + BlogPosting JSON-LD | `BlogDetailPage` |
+| `/search` | `ContentPageController::search` | `app.html` + noindex, follow | `SearchPage` |
+| `/profile` | `AccountPageController::profile` | `app.html` + noindex, nofollow | `ProfilePage` |
+| `/profile/{person}` | `AccountPageController::profile` | `app.html` + Public Creator | `PublicProfilePage` |
+| `/panel`, `/panel/*` | `AdminShellController::index` | `storage/views/admin_panel_lime.php` | Built-in client router |
 | `/api/v1/*` | `ApiController` | JSON API Envelope | N/A (Data Transport) |
 | `/media/*` | `MediaController` | Binary Media Stream | N/A (Media Engine) |
 
@@ -137,7 +137,11 @@ Media endpoints (`/media/public/*` and `/media/chapter/*`) are fully independent
 - ❌ `storage/views/layout_adminlte.php` (removed)
 - ❌ `public/assets/js/admin-bundle.js` (removed)
 - ✅ `storage/views/install.php` (Installer fallback view)
-- ✅ `storage/views/error.php` (Error fallback view)
+- ❌ `storage/views/error.php` (Errors now use the React app shell)
+
+The obsolete `/chat` and `/mobile` web routes are retired as well. The React
+application has no chat/mobile page, and no mobile shell is shipped in
+`public/mobile/`.
 
 ---
 

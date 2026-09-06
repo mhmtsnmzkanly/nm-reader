@@ -4,13 +4,14 @@ import { ChevronDown, Coins, Bell, Sun, Moon, Compass, Layers, Tag } from 'lucid
 import { useAuth } from '../../contexts/AuthContext';
 import { usePreferences } from '../../contexts/PreferencesContext';
 import { useNotifications } from '../../contexts/NotificationsContext';
+import { useMe } from '../../contexts/MeContext';
 import { SearchCombobox } from './SearchCombobox';
 import { AccountMenu } from './AccountMenu';
 import { ContentType } from '../../types/api';
-import { walletService } from '../../services';
 
 export const Header: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const { me } = useMe();
   const { unreadCount, openNotificationsModal } = useNotifications();
   const { t, theme, setTheme } = usePreferences();
   const location = useLocation();
@@ -18,22 +19,12 @@ export const Header: React.FC = () => {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !me?.wallet) {
       setWalletBalance(null);
       return;
     }
-    const fetchBalance = async () => {
-      try {
-        const res = await walletService.getWallet();
-        if (res.status === 'success' && res.data) {
-          setWalletBalance(res.data.balance_coin ?? res.data.balance ?? 0);
-        }
-      } catch {
-        // ignore
-      }
-    };
-    fetchBalance();
-  }, [isAuthenticated, location.pathname]);
+    setWalletBalance(me.wallet.balance_coin ?? me.wallet.balance ?? 0);
+  }, [isAuthenticated, me?.wallet]);
 
   // Close browse dropdown on route change
   useEffect(() => {

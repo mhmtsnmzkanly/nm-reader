@@ -105,6 +105,17 @@ final class I18nService
         return $this->dictionaries[$locale];
     }
 
+    /** Returns a requested dictionary, falling back to the configured/default English locale. */
+    public function getDictionaryWithFallback(string $locale): array
+    {
+        $dictionary = $this->getDictionary($locale);
+        if ($dictionary !== [] || $locale === $this->defaultLang) {
+            return $dictionary;
+        }
+        $dictionary = $this->getDictionary($this->defaultLang);
+        return $dictionary !== [] ? $dictionary : $this->getDictionary('en');
+    }
+
     public function getSupportedLanguages(): array
     {
         return $this->supportedLangs;

@@ -9,6 +9,7 @@ import { MobileNav } from './components/navigation/MobileNav';
 import { AuthModal } from './components/auth/AuthModal';
 import { NotificationsModal } from './components/notifications/NotificationsModal';
 import { EmailVerificationBanner } from './components/common/EmailVerificationBanner';
+import { MeProvider } from './contexts/MeContext';
 
 // Route-level chunks keep the initial app shell small.
 const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
@@ -42,10 +43,11 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then((module) => 
 
 export function App() {
   return (
-    <PreferencesProvider>
-      <AuthProvider>
-        <NotificationsProvider>
-          <Router>
+    <MeProvider>
+      <PreferencesProvider>
+        <AuthProvider>
+          <NotificationsProvider>
+            <Router>
             <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans transition-colors duration-300 selection:bg-[var(--accent-color)] selection:text-white">
               <Header />
               <EmailVerificationBanner />
@@ -96,10 +98,11 @@ export function App() {
               <AuthModal />
               <NotificationsModal />
             </div>
-          </Router>
-        </NotificationsProvider>
-      </AuthProvider>
-    </PreferencesProvider>
+            </Router>
+          </NotificationsProvider>
+        </AuthProvider>
+      </PreferencesProvider>
+    </MeProvider>
   );
 }
 

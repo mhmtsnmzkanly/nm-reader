@@ -82,6 +82,24 @@ final class AuthorizationService
     }
 
     /**
+     * Normalizes roles and marks the configured ROOT_USER explicitly.
+     *
+     * Root is represented as a role in client context and request attributes;
+     * permission resolution still provides the absolute bypass for this user.
+     *
+     * @param array<int, string> $roles
+     * @return array<int, string>
+     */
+    public function normalizeRolesForUser(array $roles, ?string $userId): array
+    {
+        if ($userId !== null && $userId !== '' && $this->rootUserId !== null && $userId === $this->rootUserId) {
+            $roles[] = 'root';
+        }
+
+        return $this->normalizeRoles($roles);
+    }
+
+    /**
      * Identifies the primary (highest priority) role from a list.
      *
      * @param array<int, string> $roles

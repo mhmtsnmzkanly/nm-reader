@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShieldCheck, Coins, ArrowRight, Sparkles, Lock, BookOpen, MessageSquare, Star } from 'lucide-react';
-import { contentService, commentService, walletService, userService } from '../services';
+import { contentService, commentService, userService } from '../services';
 import {
   ContentDetail,
   ContentDetailChapter,
+  ContentOverview,
   ContentType,
   Comment,
   ContentSummary,
@@ -23,18 +24,32 @@ import { EmptyState } from '../components/feedback/EmptyState';
 import { Button } from '../components/ui/Button';
 import { usePreferences } from '../contexts/PreferencesContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useMe } from '../contexts/MeContext';
 import { AdultGateModal, isAdultConfirmed } from '../components/content/AdultGateModal';
 import { MembersOnlyLock } from '../components/content/MembersOnlyLock';
+
+function getBootstrapContentOverview(type: string, slug: string): ContentOverview | null {
+  if (typeof window === 'undefined') return null;
+  const page = window.__NMR_CONTEXT?.current_page;
+  const pageData = page?.data;
+  if (page?.route !== 'content' || pageData?.type !== type || pageData?.slug !== slug) return null;
+  const content = pageData.content;
+  if (!content || typeof content !== 'object') return null;
+  if (!Array.isArray(pageData.chapters) || !Array.isArray(pageData.related)) return null;
+  return { content, chapters: pageData.chapters, related: pageData.related };
+}
 
 export const ContentDetailPage: React.FC = () => {
   const { t } = usePreferences();
   const { user } = useAuth();
+  const { me, isLoading: isMeLoading, refreshMe } = useMe();
   const { type = 'manga', slug = '' } = useParams<{ type: string; slug: string }>();
   const navigate = useNavigate();
 
   const [content, setContent] = useState<ContentDetail | null>(null);
   const [chapters, setChapters] = useState<ContentDetailChapter[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [relatedContent, setRelatedContent] = useState<ContentSummary[]>([]);
   const [walletBalance, setWalletBalance] = useState<number>(0);
 
@@ -58,23 +73,22 @@ export const ContentDetailPage: React.FC = () => {
     if (!slug) return;
     setIsLoading(true);
     setError(null);
+    setComments([]);
+    setCommentsLoaded(false);
 
     try {
-      const [detailRes, chapRes, commRes, walletRes, typeRes] = await Promise.all([
-        contentService.getContentDetail(type as ContentType, slug),
-        contentService.getChapters(type as ContentType, slug, 1, 100),
-        commentService.getComments('content', slug),
-        walletService.getWallet(),
-        contentService.getContentByType(type as ContentType, 1, 6),
-      ]);
+      const bootstrapOverview = getBootstrapContentOverview(type, slug);
+      const overviewRes = bootstrapOverview
+        ? { status: 'success' as const, data: bootstrapOverview, meta: {}, error: null }
+        : await contentService.getContentOverview(type as ContentType, slug);
 
-      if (detailRes.status === 'error') {
-        setError(detailRes.error.message || t('content.notFoundTitle'));
+      if (overviewRes.status === 'error') {
+        setError(overviewRes.error.message || t('content.notFoundTitle'));
         setIsLoading(false);
         return;
       }
 
-      const detailData = detailRes.data;
+      const detailData = overviewRes.data.content;
       setContent(detailData);
 
       // Set user follow & library state
@@ -84,43 +98,39 @@ export const ContentDetailPage: React.FC = () => {
       setIsInLibrary(detailData.user_state?.is_in_library ?? false);
 
       // Chapters
-      if (chapRes.status === 'success') {
-        const mappedChapters: ContentDetailChapter[] = chapRes.data.map((c) => ({
+      const mappedChapters: ContentDetailChapter[] = overviewRes.data.chapters.map((c) => ({
           ...c,
           number: Number(c.chapter_number || 1),
           published_at: c.created_at || (c as any).published_at || '',
           price_coin: c.price_coin ?? (c.access?.chapter_unlock_price || 0),
-        }));
-        setChapters(mappedChapters);
-      } else if (detailData.chapters) {
-        setChapters(detailData.chapters);
-      }
+      }));
+      setChapters(mappedChapters);
 
-      // Comments
-      if (commRes.status === 'success') {
-        setComments(commRes.data);
-      }
-
-      // Wallet
-      if (walletRes.status === 'success') {
-        setWalletBalance(walletRes.data.balance_coin);
-      }
+      setWalletBalance(me?.wallet?.balance_coin ?? me?.wallet?.balance ?? 0);
 
       // Related Content
-      if (typeRes.status === 'success') {
-        setRelatedContent(typeRes.data.filter((c) => c.slug !== slug).slice(0, 3));
-      }
+      setRelatedContent(overviewRes.data.related.filter((c) => c.slug !== slug).slice(0, 3));
     } catch {
       setError(t('content.networkError'));
     } finally {
       setIsLoading(false);
     }
-  }, [type, slug, t]);
+  }, [type, slug, t, user, me?.wallet]);
+
+  const loadComments = useCallback(async () => {
+    if (commentsLoaded || !slug) return;
+    const response = await commentService.getComments('content', slug);
+    if (response.status === 'success') {
+      setComments(response.data);
+      setCommentsLoaded(true);
+    }
+  }, [commentsLoaded, slug]);
 
   useEffect(() => {
+    if (isMeLoading) return;
     loadData();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [loadData]);
+  }, [isMeLoading, loadData]);
 
   // User Actions
   const handleToggleFollow = async () => {
@@ -153,6 +163,7 @@ export const ContentDetailPage: React.FC = () => {
       const res = await contentService.unlockSeries(type as ContentType, slug);
       if (res.status === 'success') {
         // Refresh detail & wallet
+        await refreshMe();
         await loadData();
         return true;
       }
@@ -161,6 +172,7 @@ export const ContentDetailPage: React.FC = () => {
       const res = await contentService.unlockChapter(chapterId);
       if (res.status === 'success') {
         // Refresh detail & wallet
+        await refreshMe();
         await loadData();
         return true;
       }
@@ -311,7 +323,10 @@ export const ContentDetailPage: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setActiveTab('comments')}
+                onClick={() => {
+                  setActiveTab('comments');
+                  void loadComments();
+                }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-serif text-sm sm:text-base font-bold transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === 'comments'
                     ? 'bg-[var(--accent-color)] text-white shadow-md'

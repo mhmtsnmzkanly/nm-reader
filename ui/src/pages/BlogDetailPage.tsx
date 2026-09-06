@@ -8,6 +8,15 @@ import { RelatedBlogs } from '../components/blog/RelatedBlogs';
 import { ReportButton } from '../components/feedback/ReportButton';
 import { usePreferences } from '../contexts/PreferencesContext';
 
+function getBootstrapBlog(slug: string): BlogSummary | null {
+  if (typeof window === 'undefined') return null;
+  const page = window.__NMR_CONTEXT?.current_page;
+  const pageData = page?.data;
+  if (page?.route !== 'blog' || pageData?.slug !== slug) return null;
+  const blog = pageData.blog;
+  return blog && typeof blog === 'object' ? blog : null;
+}
+
 export const BlogDetailPage: React.FC = () => {
   const { formatDate, t } = usePreferences();
   const { slug = '' } = useParams<{ slug: string }>();
@@ -19,7 +28,10 @@ export const BlogDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchBlogDetail = async () => {
       setIsLoading(true);
-      const res = await blogService.getBlogBySlug(slug);
+      const bootstrapBlog = getBootstrapBlog(slug);
+      const res = bootstrapBlog
+        ? { status: 'success' as const, data: bootstrapBlog, meta: {}, error: null }
+        : await blogService.getBlogBySlug(slug);
       if (res.status === 'success') {
         setBlog(res.data);
         const [commRes, relRes] = await Promise.all([

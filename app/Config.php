@@ -11,7 +11,11 @@ use App\Controllers\AuthController;
 use App\Controllers\BlogController;
 use App\Controllers\InstallController;
 use App\Controllers\UserController;
-use App\Controllers\WebController;
+use App\Controllers\ContentPageController;
+use App\Controllers\BlogPageController;
+use App\Controllers\AccountPageController;
+use App\Controllers\AdminShellController;
+use App\Controllers\SystemPageController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use App\Middleware\PermissionMiddleware;
@@ -202,49 +206,47 @@ final class Config
     private static function registerWebRoutes(App $app, string $typePattern): void
     {
         $addWebRoutes = function (RouteCollectorProxy $group, bool $includeHome = true) use ($typePattern): void {
-            if ($includeHome) $group->get("", [WebController::class, "home"]);
-            $group->get("/browse", [WebController::class, "listing"]);
-            $group->get("/browse/{type:" . $typePattern . "}", [WebController::class, "listing"]);
-            $group->get("/genres", [WebController::class, "listing"]);
-            $group->get("/tags", [WebController::class, "listing"]);
-            $group->get("/library", [WebController::class, "home"]);
-            $group->get("/history", [WebController::class, "home"]);
-            $group->get("/wallet", [WebController::class, "home"]);
-            $group->get("/shop", [WebController::class, "home"]);
-            $group->get("/preferences", [WebController::class, "home"]);
-            $group->get("/notifications", [WebController::class, "home"]);
-            $group->get("/blogs", [WebController::class, "blog"]);
-            $group->get("/blogs/new", [WebController::class, "home"]);
-            $group->get("/my-blogs", [WebController::class, "home"]);
-            $group->get("/blog/{slug}", [WebController::class, "blog"]);
-            $group->get("/blogs/{slug}", [WebController::class, "blog"]);
-            $group->get("/chat", [WebController::class, "chat"]);
-            $group->get("/search", [WebController::class, "search"]);
-            $group->get("/genre/{slug}", [WebController::class, "genre"]);
-            $group->get("/tag/{slug}", [WebController::class, "tag"]);
-            $group->get("/{type:" . $typePattern . "}", [WebController::class, "listing"]);
-            $group->get("/{type:" . $typePattern . "}/{slug}/chapter/{chapterNumber}", [WebController::class, "chapter"]);
-            $group->get("/{type:" . $typePattern . "}/{slug}/chapters", [WebController::class, "content"]);
-            $group->get("/{type:" . $typePattern . "}/{slug}", [WebController::class, "content"]);
-            $group->get("/login", [WebController::class, "login"]);
-            $group->get("/register", [WebController::class, "login"]);
-            $group->get("/me", [WebController::class, "profile"]);
-            $group->get("/profile", [WebController::class, "profile"]);
-            $group->get("/profile/{person:[A-Za-z0-9_]+}", [WebController::class, "profile"]);
-            $group->get("/u/{person:[A-Za-z0-9_]+}", [WebController::class, "profile"]);
+            if ($includeHome) $group->get("", [ContentPageController::class, "home"]);
+            $group->get("/browse", [ContentPageController::class, "listing"]);
+            $group->get("/browse/{type:" . $typePattern . "}", [ContentPageController::class, "listing"]);
+            $group->get("/genres", [ContentPageController::class, "listing"]);
+            $group->get("/tags", [ContentPageController::class, "listing"]);
+            $group->get("/library", [ContentPageController::class, "home"]);
+            $group->get("/history", [ContentPageController::class, "home"]);
+            $group->get("/wallet", [ContentPageController::class, "home"]);
+            $group->get("/shop", [ContentPageController::class, "home"]);
+            $group->get("/preferences", [ContentPageController::class, "home"]);
+            $group->get("/notifications", [ContentPageController::class, "home"]);
+            $group->get("/blogs", [BlogPageController::class, "blog"]);
+            $group->get("/blogs/new", [ContentPageController::class, "home"]);
+            $group->get("/my-blogs", [ContentPageController::class, "home"]);
+            $group->get("/blog/{slug}", [BlogPageController::class, "blog"]);
+            $group->get("/blogs/{slug}", [BlogPageController::class, "blog"]);
+            $group->get("/search", [ContentPageController::class, "search"]);
+            $group->get("/genre/{slug}", [ContentPageController::class, "genre"]);
+            $group->get("/tag/{slug}", [ContentPageController::class, "tag"]);
+            $group->get("/{type:" . $typePattern . "}", [ContentPageController::class, "listing"]);
+            $group->get("/{type:" . $typePattern . "}/{slug}/chapter/{chapterNumber}", [ContentPageController::class, "chapter"]);
+            $group->get("/{type:" . $typePattern . "}/{slug}/chapters", [ContentPageController::class, "content"]);
+            $group->get("/{type:" . $typePattern . "}/{slug}", [ContentPageController::class, "content"]);
+            $group->get("/login", [AccountPageController::class, "login"]);
+            $group->get("/register", [AccountPageController::class, "login"]);
+            $group->get("/me", [AccountPageController::class, "profile"]);
+            $group->get("/profile", [AccountPageController::class, "profile"]);
+            $group->get("/profile/{person:[A-Za-z0-9_]+}", [AccountPageController::class, "profile"]);
+            $group->get("/u/{person:[A-Za-z0-9_]+}", [AccountPageController::class, "profile"]);
             // Unified Lime-CSR Admin Console Shell
-            $group->get("/panel", [WebController::class, "adminPanelLime"]);
-            $group->get("/panel/{section:.*}", [WebController::class, "adminPanelLime"]);
+            $group->get("/panel", [AdminShellController::class, "index"]);
+            $group->get("/panel/{section:.*}", [AdminShellController::class, "index"]);
         };
-        $app->get("/robots.txt", [WebController::class, "robotsTxt"]);
-        $app->get("/sitemap.xml", [WebController::class, "sitemapXml"]);
-        $app->get("/mobile[/{path:.*}]", [WebController::class, "mobile"]);
+        $app->get("/robots.txt", [SystemPageController::class, "robotsTxt"]);
+        $app->get("/sitemap.xml", [SystemPageController::class, "sitemapXml"]);
         $app->get("/media/public/{filename:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "servePublicMedia"]);
         $app->get("/media/chapter/{token:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "serveChapterMedia"]);
         $app->get("/logout", [AuthController::class, "logout"]);
 
         // Public Web Routes (Direct Clean URLs without locale prefix)
-        $app->get("/", [WebController::class, "home"]);
+        $app->get("/", [ContentPageController::class, "home"]);
         $addWebRoutes($app, false);
 
         // Legacy /tr and /en URL Migration (301 Permanent Redirect to canonical URLs)
@@ -284,6 +286,7 @@ final class Config
             $group->get("/tags", [ContentController::class, "tags"]);
             $group->get("/content/type/{type:" . $typePattern . "}", [ContentController::class, "byType"]);
             $group->get("/content/{type:" . $typePattern . "}/chapters", [ContentController::class, "latestChaptersByType"]);
+            $group->get("/content/{type:" . $typePattern . "}/{slug}/overview", [ContentController::class, "contentOverview"]);
             $group->get("/content/{type:" . $typePattern . "}/{slug}", [ContentController::class, "contentByType"]);
             $group->get("/content/{type:" . $typePattern . "}/{slug}/chapters", [ContentController::class, "chaptersByType"]);
             $group->get("/genre/{slug}", [ContentController::class, "genre"]);
@@ -301,8 +304,8 @@ final class Config
             $group->get("/content/{type:".$typePattern."}/{slug}/chapter/{chapterNumber}", [ContentController::class, "chapterDetail"]);
             $group->get("/search", [ContentController::class, "search"]);
             $group->get("/search/suggest", [ContentController::class, "suggest"]);
-            $group->get("/i18n/{lang:[a-z]{2}}", [WebController::class, "i18nJson"]);
-            $group->post("/log/error", [WebController::class, "logError"]);
+            $group->get("/i18n/{lang:[a-z]{2}}", [SystemPageController::class, "i18nJson"]);
+            $group->post("/log/error", [SystemPageController::class, "logError"]);
             $group->post("/user/activity", [UserInteractionController::class, "trackActivity"])->add(new AuthMiddleware(true, $authorization));
             
             $group->get("/chapter/{chapterId:[a-z0-9]{6}}/comments", [UserInteractionController::class, "listChapterComments"]);
@@ -334,6 +337,7 @@ final class Config
             $group->map(["GET", "POST"], "/auth/logout", [AuthController::class, "logout"]);
 
             $group->group("", function (RouteCollectorProxy $secure) use ($typePattern, $users): void {
+                $secure->get("/me", [UserController::class, "me"]);
                 $secure->post("/content/{type:" . $typePattern . "}/{slug}/follow", [ContentController::class, "followByType"]);
                 $secure->delete("/content/{type:" . $typePattern . "}/{slug}/follow", [ContentController::class, "unfollowByType"]);
                 $secure->post("/content/{type:" . $typePattern . "}/{slug}/rate", [UserInteractionController::class, "rateByType"]);

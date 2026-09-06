@@ -602,13 +602,13 @@ All standard API endpoints return JSON conforming to the following envelopes:
 ### 2.10 Utility & Frontend Support API
 
 #### `GET /api/v1/i18n/{lang}`
-- **Action:** `WebController::i18nJson`
+- **Action:** `SystemPageController::i18nJson`
 - **Auth:** None (Public)
 - **Path Params:** `lang` (`tr|en`)
 - **Response Data (`raw object`):** `{"hash": string, "lang": string, "data": { ... }}`
 
 #### `POST /api/v1/log/error`
-- **Action:** `WebController::logError`
+- **Action:** `SystemPageController::logError`
 - **Auth:** None (Public)
 - **Request Body:** `{"message": string, "url"?: string, "stack"?: string, "context"?: object}`
 - **Response Data:** `{"logged": true}`

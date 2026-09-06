@@ -31,7 +31,7 @@ final class WalletService
         $row = $this->wallets->getWallet($userId);
 
         return [
-            'user_id' => (string) $row['user_id'],
+            'user_id' => (string) ($row['user_id'] ?? $userId),
             'balance_coin' => (int) ($row['balance_coin'] ?? 0),
             'total_coin_purchased' => (int) ($row['total_coin_purchased'] ?? 0),
             'total_coin_spent' => (int) ($row['total_coin_spent'] ?? 0),

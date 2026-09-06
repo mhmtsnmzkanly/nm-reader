@@ -50,17 +50,17 @@ GET / (302 → /tr)               → GET / (200 OK — React App Shell)
 
 | Route | Handler | Purpose |
 |:---|:---|:---|
-| `/` | `WebController::home` | Homepage React App Shell |
-| `/browse` | `WebController::listing` | Catalog & Content Directory |
-| `/search` | `WebController::search` | Search & Filtering |
-| `/genres` / `/genre/{slug}` | `WebController::genre` | Taxonomy / Genres |
-| `/tags` / `/tag/{slug}` | `WebController::tag` | Taxonomy / Tags |
-| `/{type}/{slug}` | `WebController::content` | Series Details & Metadata |
-| `/{type}/{slug}/chapter/{number}` | `WebController::chapter` | Reader Experience |
-| `/blogs` / `/blogs/{slug}` | `WebController::blog` | Community Blogs |
-| `/profile` / `/me` / `/u/{username}` | `WebController::profile` | User Profiles |
-| `/wallet` / `/shop` | `WebController::home` | Wallet & Monetization |
-| `/preferences` / `/notifications` | `WebController::home` | User Preferences & Feed |
+| `/` | `ContentPageController::home` | Homepage React App Shell |
+| `/browse` | `ContentPageController::listing` | Catalog & Content Directory |
+| `/search` | `ContentPageController::search` | Search & Filtering |
+| `/genres` / `/genre/{slug}` | `ContentPageController::genre` | Taxonomy / Genres |
+| `/tags` / `/tag/{slug}` | `ContentPageController::tag` | Taxonomy / Tags |
+| `/{type}/{slug}` | `ContentPageController::content` | Series Details & Metadata |
+| `/{type}/{slug}/chapter/{number}` | `ContentPageController::chapter` | Reader Experience |
+| `/blogs` / `/blogs/{slug}` | `BlogPageController::blog` | Community Blogs |
+| `/profile` / `/me` / `/u/{username}` | `AccountPageController::profile` | User Profiles |
+| `/wallet` / `/shop` | `ContentPageController::home` | Wallet & Monetization |
+| `/preferences` / `/notifications` | `ContentPageController::home` | User Preferences & Feed |
 
 ### Protected Routes (No Locale Routing)
 
