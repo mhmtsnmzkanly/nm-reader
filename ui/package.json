@@ -7,7 +7,7 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "node scripts/clean-build.mjs",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test:client": "tsx scripts/test-client.ts",

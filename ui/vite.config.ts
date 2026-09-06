@@ -7,6 +7,7 @@ import { defineConfig } from "vite";
 export default defineConfig(() => {
   const outputDir = path.resolve(__dirname, "../public");
   const manifestPath = path.join(outputDir, "assets/build-manifest.json");
+  const latestPath = path.join(outputDir, "latest.txt");
 
   const manifestFiles = (raw: string): Set<string> => {
     const files = new Set<string>();
@@ -19,51 +20,29 @@ export default defineConfig(() => {
     return files;
   };
 
-  const cleanupStaleBuildAssets = {
-    name: "cleanup-stale-build-assets",
+  const writeLatestBuildInventory = {
+    name: "write-latest-build-inventory",
     closeBundle() {
-      if (!fs.existsSync(manifestPath)) return;
-
-      let currentBuildFiles: Set<string>;
-      try {
-        currentBuildFiles = manifestFiles(fs.readFileSync(manifestPath, "utf8"));
-      } catch {
-        return;
+      if (!fs.existsSync(manifestPath)) {
+        throw new Error(`Vite manifest was not created: ${manifestPath}`);
       }
 
-      const currentBuildDirectories = new Set(
-        [...currentBuildFiles].map((relativeFile) => path.dirname(relativeFile))
-      );
+      const currentBuildFiles = manifestFiles(fs.readFileSync(manifestPath, "utf8"));
+      currentBuildFiles.add("app.html");
+      currentBuildFiles.add("assets/build-manifest.json");
+      currentBuildFiles.add("latest.txt");
 
-      // Vite creates one eight-character hash directory per generated asset.
-      // Prune only those recognized directories, and only after a valid new
-      // manifest exists, so unrelated public files are never touched.
-      for (const assetType of ["js", "css", "fonts", "images"]) {
-        const assetRoot = path.join(outputDir, "assets", assetType);
-        if (!fs.existsSync(assetRoot)) continue;
+      const inventory = [...currentBuildFiles]
+        .map((relativeFile) => relativeFile.replaceAll("\\", "/"))
+        .filter((relativeFile) => {
+          return relativeFile !== ""
+            && !path.isAbsolute(relativeFile)
+            && !relativeFile.split("/").includes("..");
+        })
+        .sort((left, right) => left.localeCompare(right));
 
-        for (const entry of fs.readdirSync(assetRoot, { withFileTypes: true })) {
-          if (!entry.isDirectory() || !/^[A-Za-z0-9_-]{8}$/.test(entry.name)) continue;
-
-          const relativeDirectory = `assets/${assetType}/${entry.name}`;
-          if (currentBuildDirectories.has(relativeDirectory)) continue;
-
-          const staleDirectory = path.join(assetRoot, entry.name);
-          if (path.dirname(staleDirectory) !== assetRoot) continue;
-          fs.rmSync(staleDirectory, { recursive: true, force: true });
-        }
-
-        // Remove assets produced by the project's former flat naming scheme;
-        // admin bundles and other hand-maintained files do not match this form.
-        for (const entry of fs.readdirSync(assetRoot, { withFileTypes: true })) {
-          if (!entry.isFile()) continue;
-          if (!/^(?:app|react|vendor)-[A-Za-z0-9_-]{8}\.(?:js|css)$/.test(entry.name)) continue;
-
-          const staleFile = path.join(assetRoot, entry.name);
-          if (path.dirname(staleFile) !== assetRoot) continue;
-          fs.rmSync(staleFile);
-        }
-      }
+      fs.writeFileSync(latestPath, `${inventory.join("\n")}\n`, "utf8");
+      console.log(`latest.txt generated with ${inventory.length} build files.`);
     },
   };
 
@@ -73,7 +52,7 @@ export default defineConfig(() => {
     : path.resolve(__dirname, "index.html");
 
   return {
-    plugins: [react(), tailwindcss(), cleanupStaleBuildAssets],
+    plugins: [react(), tailwindcss(), writeLatestBuildInventory],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
@@ -87,8 +66,8 @@ export default defineConfig(() => {
         input: inputHtml,
         output: {
           // --- 1. DOSYA ADLANDIRMA VE KLASÖRLEME ---
-          entryFileNames: "assets/js/[hash]/[name].js",
-          chunkFileNames: "assets/js/[hash]/[name].js",
+          entryFileNames: "assets/js/[name]-[hash].js",
+          chunkFileNames: "assets/js/[name]-[hash].js",
 
           // Statik varlıkları türlerine göre ayrı alt klasörlere yerleştirme:
           assetFileNames: (assetInfo) => {
@@ -100,16 +79,16 @@ export default defineConfig(() => {
             }
 
             if (/\.(woff|woff2|eot|ttf|otf)$/i.test(name)) {
-              return "assets/fonts/[hash]/[name][extname]";
+              return "assets/fonts/[name]-[hash][extname]";
             }
 
             if (/\.(png|jpe?g|svg|gif|webp|ico)$/i.test(name)) {
-              return "assets/images/[hash]/[name][extname]";
+              return "assets/images/[name]-[hash][extname]";
             }
             if (/\.css$/i.test(name)) {
-              return "assets/css/[hash]/[name][extname]";
+              return "assets/css/[name]-[hash][extname]";
             }
-            return "assets/[hash]/[name][extname]";
+            return "assets/[name]-[hash][extname]";
           },
 
           // --- 2. CHUNK BÖLME (MANUAL CHUNKS) ---
