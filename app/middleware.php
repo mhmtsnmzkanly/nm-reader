@@ -20,6 +20,13 @@ $container = $app->getContainer();
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $isInstallRoute = str_contains($requestUri, 'install-63e4qq3');
 
+// Maintenance Mode Middleware (Runs inside Session & Auth scope so admin sessions are recognized)
+if (!$isInstallRoute) {
+    $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
+        return $container->get(\App\Middleware\MaintenanceMiddleware::class)->process($request, $handler);
+    });
+}
+
 // Session and Auth Middleware
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $settings, $isInstallRoute): ResponseInterface {
     $path = (string) $request->getUri()->getPath();
@@ -281,14 +288,6 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 
 // Bearer Token & Request ID
 if (!$isInstallRoute) {
-    $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
-        $path = (string) $request->getUri()->getPath();
-        if ($path === '/health' || $path === '/health/live') {
-            return $handler->handle($request);
-        }
-
-        return $container->get(\App\Middleware\MaintenanceMiddleware::class)->process($request, $handler);
-    });
     $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
         $path = (string) $request->getUri()->getPath();
         if ($path === '/health' || $path === '/health/live') {
