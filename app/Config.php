@@ -107,16 +107,8 @@ final class Config
     public static function getSystemConfig(): array
     {
         return [
-            "site_name" => (string) self::env("SITE_NAME", "NovelMangaReader"),
-            "site_abbreviation" => (string) self::env("SITE_ABBREVIATION", "NMR"),
-            "site_logo" => (string) self::env("SITE_LOGO", "/assets/img/logo.svg"),
-            "site_description" => (string) self::env("SITE_DESCRIPTION", "Read manga and novels for free."),
             "enforce_https" => (bool) self::env("ENFORCE_HTTPS", false),
             "site_address" => (string) self::env("SITE_ADDRESS", "https://example.com"),
-            "default_language" => (string) self::env("DEFAULT_LANGUAGE", "tr"),
-            "default_theme" => (string) self::env("DEFAULT_THEME", "dark"),
-            "default_profile_image" => (string) self::env("DEFAULT_PROFILE_IMAGE", "/assets/img/default-profile.png"),
-            "default_content_cover_image" => (string) self::env("DEFAULT_CONTENT_COVER_IMAGE", "/assets/img/covers/placeholder.svg"),
             "integrations" => [
                 "resend_api_key" => (string) self::env("RESEND_API_KEY", ""),
                 "google_analytics_id" => (string) self::env("GOOGLE_ANALYTICS_ID", ""),

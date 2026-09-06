@@ -159,18 +159,8 @@ APP_URL=http://localhost:8080
 APP_TIMEZONE=UTC
 CORS_ALLOWED_ORIGINS=http://localhost:8080,http://localhost:3000
 
-# Site Identity
-SITE_NAME=NovelMangaReader
-SITE_ABBREVIATION=NMR
-SITE_DESCRIPTION="Read manga, manhwa, webtoon and novels for free on NovelMangaReader."
-SITE_LOGO=/assets/img/logo.svg
+# Site Address
 SITE_ADDRESS=http://localhost:8080
-
-# Default User Experience
-DEFAULT_LANGUAGE=tr
-DEFAULT_THEME=dark
-DEFAULT_PROFILE_IMAGE=/assets/img/default-profile.png
-DEFAULT_CONTENT_COVER_IMAGE=/assets/img/covers/placeholder.svg
 
 # Session & Tokens
 SESSION_LIFETIME=7200

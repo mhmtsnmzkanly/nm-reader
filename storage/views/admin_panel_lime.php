@@ -707,49 +707,72 @@
     <div class="container-fluid d-flex justify-content-between align-items-center">
       <div>
         <h3 class="mb-0 fw-bold fs-4">Site Yapılandırması</h3>
-        <p class="text-secondary small mb-0">Genel site ayarları, tema ve güvenlik parametreleri</p>
+        <p class="text-secondary small mb-0">Genel site ayarları, tema, güvenlik ve e-posta parametreleri</p>
       </div>
-      <div class="d-flex flex-wrap gap-2"><button class="btn btn-sm btn-outline-info" data-on-click="openWebhooks"><i class="bi bi-broadcast me-1"></i>Webhooklar</button><button class="btn btn-sm btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-file-earmark-code me-1"></i>.env</button><button class="btn btn-sm btn-primary" data-on-click="saveConfig"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet</button></div>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-sm btn-outline-info" data-on-click="openWebhooks"><i class="bi bi-broadcast me-1"></i>Webhooklar</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-file-earmark-code me-1"></i>.env</button>
+        <button type="button" class="btn btn-sm btn-primary" data-on-click="saveConfig"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet</button>
+      </div>
     </div>
   </div>
 
   <div class="app-content p-4">
     <div class="container-fluid">
-      <div class="card border-0 shadow-sm rounded-3">
-        <div class="card-body p-4">
-          <form data-on-submit="saveConfig">
+      <form data-on-submit="saveConfig">
+        <!-- 1. GENEL SİTE KİMLİĞİ -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+          <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center">
+            <i class="bi bi-globe2 text-primary fs-5 me-2"></i>
+            <h5 class="mb-0 fw-semibold">Genel Site Kimliği</h5>
+          </div>
+          <div class="card-body p-4">
             <div class="row g-3">
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <label class="form-label fw-semibold">Site Adı</label>
-                <input type="text" class="form-control" data-model="config.site_name">
+                <input type="text" class="form-control" data-model="config.site_name" maxlength="120" placeholder="NM Reader">
               </div>
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <label class="form-label fw-semibold">Site Kısaltması (Abbreviation)</label>
-                <input type="text" class="form-control" data-model="config.site_abbreviation">
+                <input type="text" class="form-control" data-model="config.site_abbreviation" maxlength="20" placeholder="NMR">
               </div>
-              <div class="col-md-12">
-                <label class="form-label fw-semibold">Site Sloganı</label>
-                <input type="text" class="form-control" data-model="config.site_slogan">
-              </div>
-              <div class="col-md-12">
-                <label class="form-label fw-semibold">Site Açıklaması (Meta Description)</label>
-                <textarea class="form-control" rows="3" data-model="config.site_description"></textarea>
-              </div>
-              <div class="col-md-6"><label class="form-label fw-semibold">Site adresi</label><input type="text" class="form-control" data-model="config.site_address"></div>
-              <div class="col-md-6"><label class="form-label fw-semibold">Footer metni</label><input type="text" class="form-control" data-model="config.footer_text"></div>
-              <div class="col-md-6"><label class="form-label fw-semibold">Logo URL</label><input type="text" class="form-control" data-model="config.site_logo"></div>
-              <div class="col-md-6"><label class="form-label fw-semibold">Favicon URL</label><input type="text" class="form-control" data-model="config.favicon_url"></div>
-              <div class="col-md-6">
+              <div class="col-md-4">
                 <label class="form-label fw-semibold">Varsayılan Dil</label>
                 <select class="form-select" data-model="config.default_language">
                   <option value="tr">Türkçe (tr)</option>
                   <option value="en">English (en)</option>
                 </select>
               </div>
-              <div class="col-md-6"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" data-model="config.maintenance_mode" id="panel-maintenance-mode"><label class="form-check-label fw-semibold" for="panel-maintenance-mode">Bakım modu</label></div></div>
-              <div class="col-md-6"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" data-model="config.enforce_https" id="panel-enforce-https"><label class="form-check-label fw-semibold" for="panel-enforce-https">HTTPS zorunlu</label></div></div>
-              <div class="col-12"><label class="form-label fw-semibold">Bakım modu IP beyaz listesi</label><textarea class="form-control" rows="3" data-model="config.maintenance_whitelist_text" placeholder="Her satıra bir IP adresi"></textarea></div>
               <div class="col-md-6">
+                <label class="form-label fw-semibold">Site Sloganı</label>
+                <input type="text" class="form-control" data-model="config.site_slogan" maxlength="255" placeholder="En İyi Çevrimiçi Manga ve Novel Okuyucusu">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Site Adresi (URL)</label>
+                <input type="text" class="form-control" data-model="config.site_address" maxlength="255" placeholder="https://example.com">
+                <div class="form-text text-secondary">Boş bırakılırsa gelen istek adresi otomatik algılanır.</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Site Açıklaması (Meta Description)</label>
+                <textarea class="form-control" rows="2" data-model="config.site_description" maxlength="1000" placeholder="Arama motorları için meta açıklama metni..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Altbilgi (Footer) Metni</label>
+                <input type="text" class="form-control" data-model="config.footer_text" maxlength="500" placeholder="© 2026 NM Reader. Tüm hakları saklıdır.">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. GÖRÜNÜM VE MEDYALAR -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+          <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center">
+            <i class="bi bi-palette text-success fs-5 me-2"></i>
+            <h5 class="mb-0 fw-semibold">Görünüm ve Medyalar</h5>
+          </div>
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <div class="col-md-4">
                 <label class="form-label fw-semibold">Varsayılan Tema</label>
                 <select class="form-select" data-model="config.default_theme">
                   <option value="default">Default</option>
@@ -761,10 +784,122 @@
                   <option value="glass">Glass</option>
                 </select>
               </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Site Logo URL</label>
+                <input type="text" class="form-control" data-model="config.site_logo" maxlength="255" placeholder="/assets/img/logo.svg">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Favicon URL</label>
+                <input type="text" class="form-control" data-model="config.favicon_url" maxlength="255" placeholder="/favicon.ico">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Varsayılan Profil Resmi</label>
+                <input type="text" class="form-control" data-model="config.default_profile_image" maxlength="255" placeholder="/assets/img/default-profile.png">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Varsayılan İçerik Kapak Resmi</label>
+                <input type="text" class="form-control" data-model="config.default_content_cover_image" maxlength="255" placeholder="/assets/img/covers/placeholder.svg">
+              </div>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+
+        <!-- 3. GÜVENLİK VE BAKIM MODU -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+          <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center">
+            <i class="bi bi-shield-lock text-warning fs-5 me-2"></i>
+            <h5 class="mb-0 fw-semibold">Güvenlik ve Bakım Modu</h5>
+          </div>
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-check form-switch p-3 border rounded-3 bg-body-tertiary">
+                  <input class="form-check-input ms-0 me-2" type="checkbox" data-model="config.maintenance_mode" id="panel-maintenance-mode">
+                  <label class="form-check-label fw-semibold" for="panel-maintenance-mode">Bakım Modu Aktif</label>
+                  <div class="small text-secondary mt-1">Site ziyaretçilere kapatılır, sadece yöneticiler ve izinli IP'ler erişebilir.</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check form-switch p-3 border rounded-3 bg-body-tertiary">
+                  <input class="form-check-input ms-0 me-2" type="checkbox" data-model="config.enforce_https" id="panel-enforce-https">
+                  <label class="form-check-label fw-semibold" for="panel-enforce-https">HTTPS Zorunlu</label>
+                  <div class="small text-secondary mt-1">HTTP üzerinden gelen istekler güvenli HTTPS protokolüne yönlendirilir.</div>
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Bakım Modu IP Beyaz Listesi</label>
+                <textarea class="form-control font-monospace" rows="3" data-model="config.maintenance_whitelist_text" placeholder="127.0.0.1&#10;::1"></textarea>
+                <div class="form-text text-secondary">Her satıra bir IP adresi girin veya virgülle ayırın.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. E-POSTA VE BİLDİRİMLER -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+          <div class="card-header bg-transparent py-3 border-bottom d-flex align-items-center">
+            <i class="bi bi-envelope-at text-info fs-5 me-2"></i>
+            <h5 class="mb-0 fw-semibold">E-Posta ve Bildirimler</h5>
+          </div>
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="form-check form-switch p-3 border rounded-3 bg-body-tertiary h-100">
+                  <input class="form-check-input ms-0 me-2" type="checkbox" data-model="config.mail_enabled" id="panel-mail-enabled">
+                  <label class="form-check-label fw-semibold" for="panel-mail-enabled">E-Posta Sistemi Aktif</label>
+                  <div class="small text-secondary mt-1">Sistem genelinde e-posta gönderimini açar veya tamamen devre dışı bırakır.</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check form-switch p-3 border rounded-3 bg-body-tertiary h-100">
+                  <input class="form-check-input ms-0 me-2" type="checkbox" data-model="config.mail_send_on_register" id="panel-mail-register">
+                  <label class="form-check-label fw-semibold" for="panel-mail-register">Kayıtta E-Posta Gönder</label>
+                  <div class="small text-secondary mt-1">Yeni kayıt olan kullanıcılara hoş geldin veya doğrulama postası iletir.</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check form-switch p-3 border rounded-3 bg-body-tertiary h-100">
+                  <input class="form-check-input ms-0 me-2" type="checkbox" data-model="config.email_verification_required" id="panel-email-verify-req">
+                  <label class="form-check-label fw-semibold" for="panel-email-verify-req">E-Posta Doğrulama Zorunlu</label>
+                  <div class="small text-secondary mt-1">Kullanıcıların oturum açabilmesi için e-posta doğrulaması şart koşulur.</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Gönderici Adı (From Name)</label>
+                <input type="text" class="form-control" data-model="config.mail_from_name" maxlength="120" placeholder="NM Reader">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Gönderici E-Posta Adresi (From Address)</label>
+                <input type="email" class="form-control" data-model="config.mail_from_address" maxlength="150" placeholder="noreply@nmreader.com">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Şifre Sıfırlama E-Posta Konusu</label>
+                <input type="text" class="form-control" data-model="config.password_reset_subject" maxlength="255" placeholder="Şifre Sıfırlama Talebi - {{site_name}}">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Şifre Sıfırlama HTML Şablonu</label>
+                <textarea class="form-control font-monospace small" rows="5" data-model="config.password_reset_body" placeholder="HTML şablon içeriği..."></textarea>
+                <div class="small text-secondary mt-1">Kullanılabilir değişkenler: <code>{{username}}</code>, <code>{{site_name}}</code>, <code>{{action_url}}</code>, <code>{{expires_in}}</code></div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">E-Posta Doğrulama Konusu</label>
+                <input type="text" class="form-control" data-model="config.email_verification_subject" maxlength="255" placeholder="E-posta Adresinizi Doğrulayın - {{site_name}}">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">E-Posta Doğrulama HTML Şablonu</label>
+                <textarea class="form-control font-monospace small" rows="5" data-model="config.email_verification_body" placeholder="HTML şablon içeriği..."></textarea>
+                <div class="small text-secondary mt-1">Kullanılabilir değişkenler: <code>{{username}}</code>, <code>{{site_name}}</code>, <code>{{action_url}}</code>, <code>{{expires_in}}</code></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mb-4">
+          <button type="button" class="btn btn-outline-info" data-on-click="openWebhooks"><i class="bi bi-broadcast me-1"></i>Webhooklar</button>
+          <button type="button" class="btn btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-file-earmark-code me-1"></i>.env</button>
+          <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet</button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
@@ -844,14 +979,36 @@
     queueJobsList: [],
     queueMeta: { page: 1, total_pages: 1, total: 0 },
     systemHealth: {},
-    config: window.__NMR_CONTEXT?.site_config || {
-      site_name: 'NMR',
-      site_abbreviation: 'NMR',
-      site_slogan: 'Manga & Novel Reader',
-      site_description: 'Fast manga reader',
-      default_language: 'tr',
-      default_theme: 'dark'
-    }
+    config: (() => {
+      const initial = window.__NMR_CONTEXT?.site_config || {};
+      return {
+        site_name: 'NM Reader',
+        site_abbreviation: 'NMR',
+        site_slogan: 'En İyi Çevrimiçi Manga ve Novel Okuyucusu',
+        site_description: 'Read manga, manhwa, webtoon and novels.',
+        site_address: '',
+        default_language: 'tr',
+        footer_text: '© 2026 NM Reader. Tüm hakları saklıdır.',
+        default_theme: 'dark',
+        site_logo: '/assets/img/logo.svg',
+        favicon_url: '/favicon.ico',
+        default_profile_image: '/assets/img/default-profile.png',
+        default_content_cover_image: '/assets/img/covers/placeholder.svg',
+        maintenance_mode: false,
+        maintenance_whitelist_text: Array.isArray(initial.maintenance_whitelist_ips) ? initial.maintenance_whitelist_ips.join('\n') : '127.0.0.1\n::1',
+        enforce_https: false,
+        mail_enabled: true,
+        mail_send_on_register: true,
+        email_verification_required: false,
+        mail_from_name: 'NM Reader',
+        mail_from_address: 'noreply@nmreader.com',
+        password_reset_subject: 'Şifre Sıfırlama Talebi - {{site_name}}',
+        password_reset_body: '',
+        email_verification_subject: 'E-posta Adresinizi Doğrulayın - {{site_name}}',
+        email_verification_body: '',
+        ...initial
+      };
+    })()
   });
 
   const csrfToken = window.__NMR_CONTEXT?.auth?.csrf_token || '';
@@ -2338,7 +2495,17 @@
         const payload = { ...store.get('config') };
         payload.maintenance_whitelist_ips = String(payload.maintenance_whitelist_text || '').split(/\r?\n|,/).map(value => value.trim()).filter(Boolean);
         delete payload.maintenance_whitelist_text;
-        await api('/config/site', { method: 'POST', body: payload });
+        if (payload.site_logo) {
+          payload.logo_url = payload.site_logo;
+        }
+        const res = await api('/config/site', { method: 'POST', body: payload });
+        if (res?.data) {
+          const updated = res.data;
+          updated.maintenance_whitelist_text = Array.isArray(updated.maintenance_whitelist_ips)
+            ? updated.maintenance_whitelist_ips.join('\n')
+            : '';
+          store.set('config', updated);
+        }
         showToast('Site ayarları başarıyla kaydedildi!');
       } catch (err) { showToast(err.message, 'danger'); }
     }
