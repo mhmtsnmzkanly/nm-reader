@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Repositories\BlogRepository;
+use App\Repositories\ChapterRepository;
 use App\Repositories\SeriesRepository;
+use App\Repositories\UserRepository;
 use App\Services\AuthorizationService;
 use App\Services\SiteConfigService;
 use App\Services\SeriesService;
@@ -36,35 +38,13 @@ final class WebController
         private readonly SeriesService $seriesService,
         private readonly UserService $userService,
         private readonly SeriesRepository $seriesRepository,
+        private readonly ChapterRepository $chapterRepository,
+        private readonly UserRepository $userRepository,
         private readonly BlogRepository $blogRepository,
         private readonly I18nService $i18n,
         private readonly CacheService $cache,
         private readonly \Monolog\Logger $errorLogger,
-        private readonly ?\App\Services\QueueService $queueService = null,
     ) {}
-
-    /**
-     * Public background virtual cron / queue trigger endpoint.
-     * Throttled to at most once every 30 seconds.
-     */
-    public function queueTick(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $throttleKey = 'queue:virtual_cron:tick';
-        if ($this->cache->get($throttleKey) !== null) {
-            return $response->withStatus(204);
-        }
-
-        // Set lock for 30 seconds
-        $this->cache->set($throttleKey, time(), 30);
-
-        if ($this->queueService !== null) {
-            try {
-                $this->queueService->runOnce(10);
-            } catch (\Throwable) {}
-        }
-
-        return $response->withStatus(204);
-    }
 
     /**
      * Endpoint for frontend JS error logging.
@@ -128,15 +108,12 @@ final class WebController
         ResponseInterface $response,
     ): ResponseInterface {
         $siteName = $this->siteConfig->siteName();
-        $homeData = $this->seriesService->home(1, 20);
 
         return $this->render(
             $request,
             $response,
             "home.php",
-            [
-                "home_data" => $homeData,
-            ],
+            [],
             [],
             "Home - " . $siteName,
             "container",
@@ -172,18 +149,17 @@ final class WebController
     ): ResponseInterface {
         $type = (string) ($args["type"] ?? "");
         $slug = (string) ($args["slug"] ?? "");
-        $ip = (string) ($request->getServerParams()["REMOTE_ADDR"] ?? "unknown");
         $userId = isset($_SESSION['user_id']) ? (string) $_SESSION['user_id'] : null;
 
-        $content = $this->seriesService->contentDetailByType($type, $slug, $ip, $userId);
+        $dbType = $this->seriesService->toDbType($type);
+        $content = $this->seriesRepository->findContentByTypeAndSlug($dbType, $slug, $userId);
         if ($content === null) {
             return $response->withStatus(404);
         }
-        $dbType = str_replace("-", "_", strtolower($type));
-        $startChapterNumber = $this->seriesRepository->findFirstChapterNumberByTypeAndSlug(
-            $dbType,
-            $slug,
-        );
+
+        if ((bool) ($content['is_members_only'] ?? false) && $userId === null) {
+            throw new \DomainException('MEMBERS_ONLY_REQUIRED: Bu içerik yalnızca kayıtlı üyelere özeldir.');
+        }
 
         $title = (string) ($content["title"] ?? "Content");
         $description = $this->truncateDescription(
@@ -231,8 +207,9 @@ final class WebController
             ];
         }
 
-        if (is_array($content['series_genres'] ?? null)) {
-            $jsonLd["genre"] = array_column($content['series_genres'], 'name');
+        $genreNames = $this->taxonomyNames((string) ($content['series_genres_raw'] ?? ''));
+        if ($genreNames !== []) {
+            $jsonLd["genre"] = $genreNames;
         }
 
         if ($releaseYear !== "" && $releaseYear !== "0") {
@@ -276,11 +253,6 @@ final class WebController
             $response,
             "content.php",
             [
-                "type" => $type,
-                "slug" => $slug,
-                "start_chapter_number" => $startChapterNumber,
-                "ssr_data" => $content,
-                "chapters" => $this->seriesService->chaptersByType($type, $slug, 1, 200, $userId),
                 "breadcrumbs" => $breadcrumbs,
             ],
             [],
@@ -305,16 +277,11 @@ final class WebController
         $type = (string) ($args["type"] ?? "");
         $slug = (string) ($args["slug"] ?? "");
         $chapterNumber = (string) ($args["chapterNumber"] ?? "");
-        $ip =
-            (string) ($request->getServerParams()["REMOTE_ADDR"] ?? "unknown");
-
-        $userId = isset($_SESSION["user_id"]) ? (string) $_SESSION["user_id"] : null;
-        $chapter = $this->seriesService->chapterDetailByTypeSlugAndNumber(
-            $type,
+        $dbType = $this->seriesService->toDbType($type);
+        $chapter = $this->chapterRepository->findByTypeSlugAndChapterNumber(
+            $dbType,
             $slug,
             $chapterNumber,
-            $ip,
-            $userId,
         );
 
         if ($chapter === null) {
@@ -324,15 +291,6 @@ final class WebController
         $seriesTitle = (string) ($chapter["series_title"] ?? "");
         $seoTitle = $seriesTitle . " - Bolum " . $chapterNumber;
         $siteName = $this->siteConfig->siteName();
-
-        $nextNum = $chapter["adjacent_chapters"]["next"] ?? null;
-        if ($nextNum !== null) {
-            $nextUrl = $this->absoluteUrl(
-                $request,
-                sprintf("/%s/%s/chapter/%s", $type, $slug, rawurlencode((string)$nextNum))
-            );
-            $response = $response->withHeader("Link", "<{$nextUrl}>; rel=prefetch; as=document");
-        }
 
         $langCode = $this->i18n->resolveLocale($request);
         $lang = $this->i18n->getDictionary($langCode);
@@ -352,7 +310,6 @@ final class WebController
             $response,
             "chapter.php",
             [
-                "chapter" => $chapter,
                 "breadcrumbs" => $breadcrumbs,
             ],
             [],
@@ -409,55 +366,36 @@ final class WebController
         }
 
         // Target user
+        $currentUsername = isset($_SESSION['username']) ? (string) $_SESSION['username'] : '';
+        if ($userId !== '' && $currentUsername === '') {
+            $me = $this->userRepository->findById($userId);
+            $currentUsername = (string) ($me['username'] ?? '');
+        }
         $target = $person !== "" ? $person : null;
         if ($target === null && $userId !== "") {
-            $me = $this->userService->profile($userId);
-            $target = (string) ($me["username"] ?? "");
+            $target = $currentUsername;
         }
 
         if ($target === null || $target === "") {
             return $response->withStatus(404);
         }
 
-        $profile = $this->userService->publicProfile($target);
+        $profile = $this->userRepository->findPublicByPerson($target);
         if ($profile === null) {
             return $response->withStatus(404);
         }
 
-        $isMe = false;
-        $history = [];
-        $library = [];
-        $preferences = [];
+        $isMe = $currentUsername !== '' && strcasecmp($currentUsername, $target) === 0;
 
-        if ($userId !== "") {
-            $me = $this->userService->profile($userId);
-            if (
-                $me !== null &&
-                strtolower((string) $me["username"]) === strtolower($target)
-            ) {
-                $isMe = true;
-                $history = $this->userService->history($userId, 1, 50);
-                $library = $this->seriesService->followedContents($userId, 1, 100);
-                $preferences = $this->userService->preferences($userId);
-            }
-        }
-
-        $username = (string) ($profile["user"]["username"] ?? "User");
-        $bio = (string) ($profile["user"]["bio"] ?? "");
+        $username = (string) ($profile["username"] ?? "User");
+        $bio = (string) ($profile["bio"] ?? "");
         $siteName = $this->siteConfig->siteName();
 
         return $this->render(
             $request,
             $response,
             "profile.php",
-            [
-                "person" => $target,
-                "isMe" => $isMe,
-                "profile" => $profile,
-                "history" => $history,
-                "library" => $library,
-                "preferences" => $preferences,
-            ],
+            [],
             [],
             "$username - Profile",
             "container",
@@ -489,11 +427,13 @@ final class WebController
             "robots" => "index,follow",
         ];
 
-        $ssrData = null;
+        $post = null;
         if ($slug !== "") {
             $post = $this->blogRepository->findApprovedBySlug($slug);
+            if ($post === null) {
+                return $response->withStatus(404);
+            }
             if ($post !== null) {
-                $ssrData = $post;
                 $postTitle = (string) ($post["title"] ?? "Blog");
                 $postDescription = $this->truncateDescription(
                     (string) ($post["body"] ?? ""),
@@ -519,10 +459,6 @@ final class WebController
                     "description" => $seo["description"],
                 ];
             }
-        } else {
-            $ssrData = [
-                'blog_list' => $this->blogRepository->listApproved(1, 20)
-            ];
         }
 
         $langCode = $this->i18n->resolveLocale($request);
@@ -532,7 +468,7 @@ final class WebController
         };
 
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'blog', [
-            'title' => ($slug !== "" && $ssrData) ? ($ssrData['title'] ?? '') : ''
+            'title' => ($slug !== "" && $post) ? ($post['title'] ?? '') : ''
         ]);
 
         return $this->render(
@@ -540,8 +476,6 @@ final class WebController
             $response,
             "blog.php",
             [
-                "slug" => $slug,
-                "ssr_data" => $ssrData,
                 "breadcrumbs" => $breadcrumbs,
             ],
             [],
@@ -583,36 +517,15 @@ final class WebController
         $params = $request->getQueryParams();
         
         $query = trim((string) ($params["q"] ?? ""));
-        $genres = array_filter(explode(',', (string) ($params["genres"] ?? "")));
-        $tags = array_filter(explode(',', (string) ($params["tags"] ?? "")));
-        $status = (string) ($params["status"] ?? "");
-        $sort = (string) ($params["sort"] ?? "");
-
-        $filters = [
-            "genres" => $genres,
-            "tags" => $tags,
-            "status" => $status,
-            "sort" => $sort
-        ];
-
         $title = $query !== ""
                 ? sprintf("Arama: %s - %s", $query, $siteName)
                 : "Arama - " . $siteName;
         
-        $results = $this->seriesService->search($query, 1, 50, $filters);
-
         return $this->render(
             $request,
             $response,
             "search.php",
-            [
-                "q" => $query,
-                "results" => $results,
-                "active_genres" => $genres,
-                "active_tags" => $tags,
-                "active_status" => $status,
-                "active_sort" => $sort
-            ],
+            [],
             [],
             "Search - " . $siteName,
             "container",
@@ -638,9 +551,6 @@ final class WebController
         $siteName = $this->siteConfig->siteName();
         $type = (string) ($args["type"] ?? "");
         $display = $type !== "" ? ucwords(str_replace("-", " ", $type)) : "Tum";
-        $items = $type !== "" ? $this->seriesService->byType($type, 1, 50) : $this->seriesService->search("", 1, 50);
-        $latest = $type !== "" ? $this->seriesService->latestChaptersByType($type, 1, 12) : $this->seriesService->latestChapters(1, 12);
-
         return $this->render(
             $request,
             $response,
@@ -649,8 +559,6 @@ final class WebController
                 "list_type" => "category",
                 "value" => $type,
                 "page_heading" => $display,
-                "items" => $items,
-                "latest_items" => $latest,
             ],
             [],
             "Browse - " . $siteName,
@@ -681,8 +589,6 @@ final class WebController
         $urlHelper = function(string $path) {
             return "/" . ltrim($path, "/");
         };
-        $items = $this->seriesService->byGenre($slug, 1, 50);
-
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'genre', [
             'name' => $display
         ]);
@@ -695,7 +601,6 @@ final class WebController
                 "list_type" => "genre",
                 "value" => $slug,
                 "page_heading" => $display,
-                "items" => $items,
                 "breadcrumbs" => $breadcrumbs,
             ],
             [],
@@ -726,8 +631,6 @@ final class WebController
         $urlHelper = function(string $path) {
             return "/" . ltrim($path, "/");
         };
-        $items = $this->seriesService->byTag($slug, 1, 50);
-
         $breadcrumbs = BreadcrumbHelper::generate($langCode, $lang, $urlHelper, 'tag', [
             'name' => $display
         ]);
@@ -740,7 +643,6 @@ final class WebController
                 "list_type" => "tag",
                 "value" => $slug,
                 "page_heading" => $display,
-                "items" => $items,
                 "breadcrumbs" => $breadcrumbs,
             ],
             [],
@@ -832,194 +734,6 @@ final class WebController
             ->withHeader("Expires", "0");
     }
 
-    public function adminDashboard(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_dashboard.php",
-            [],
-            "Admin Dashboard - " . $this->siteConfig->siteName(),
-        );
-    }
-
-    public function adminContent(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        $siteName = $this->siteConfig->siteName();
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_content.php",
-            [],
-            "Content Management - " . $siteName,
-        );
-    }
-
-    public function adminBlogs(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_blogs.php",
-            [],
-            "Blogs - Admin",
-        );
-    }
-
-    public function adminComments(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_comments.php",
-            [],
-            "Comments - Admin",
-        );
-    }
-
-    public function adminUsers(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_users.php",
-            [],
-            "Users - Admin",
-        );
-    }
-
-    public function adminOps(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_ops.php",
-            [],
-            "System Ops - Admin",
-        );
-    }
-
-    public function adminConfig(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_config.php",
-            [],
-            "System Config - Admin",
-        );
-    }
-
-    public function adminMonetization(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_monetization.php",
-            [],
-            "Monetization - Admin",
-        );
-    }
-
-    public function adminUploads(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_uploads.php",
-            [],
-            "System Uploads - Admin",
-        );
-    }
-
-    public function adminLogs(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_logs.php",
-            [],
-            "Logs - Admin",
-        );
-    }
-
-    public function adminTutorial(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-    ): ResponseInterface {
-        if (!$this->canAccessAdminPanel()) {
-            return $response->withHeader("Location", "/")->withStatus(302);
-        }
-
-        return $this->renderAdmin(
-            $request,
-            $response,
-            "admin_tutorial.php",
-            [],
-            "Admin Tutorial",
-        );
-    }
-
     /**
      * Generates and returns the robots.txt file.
      */
@@ -1032,7 +746,7 @@ final class WebController
             "User-agent: *\n" .
             "Allow: /\n" .
             "Disallow: /api/\n" .
-            "Disallow: /admin\n" .
+            "Disallow: /panel\n" .
             "Disallow: /login\n" .
             "Disallow: /logout\n" .
             "Disallow: /chat\n" .
@@ -1314,44 +1028,9 @@ final class WebController
         $siteName = $this->siteConfig->siteName();
         $title = $title ?? $siteName;
         $basePath = (string) $this->settings["app"]["base_path"];
-        $templatePath = $basePath . "/storage/views/" . $template;
-        $layoutPath = $basePath . "/storage/views/layout_main.php";
 
         $userId = $_SESSION["user_id"] ?? null;
         $langCode = $this->i18n->resolveLocale($request, $userId ? (string)$userId : null);
-
-        $defaultLang = $this->i18n->getDefaultLanguage();
-        $defaultTheme = $this->siteConfig->defaultTheme();
-        $prefs = $userId
-            ? $this->userService->preferences((string)$userId)
-            : ["theme" => $defaultTheme, "lang" => $defaultLang, "reader" => []];
-
-        $theme = $prefs["theme"] ?? "dark";
-        
-        // ETag Generation: Create a hash based on inputs that affect the final HTML
-        // This includes template name, context data, user state, language, and theme.
-        $etagInput = [
-            'template' => $template,
-            'context' => $context,
-            'user_id' => $userId,
-            'lang' => $langCode,
-            'theme' => $theme,
-            'seo' => $seo,
-            'title' => $title,
-            'app_version' => '1.1.0' // Incremented on UI changes
-        ];
-        $etag = md5((string) json_encode($etagInput));
-
-        // Check for If-None-Match header
-        $noneMatch = $request->getHeaderLine('If-None-Match');
-        if ($noneMatch === '"' . $etag . '"') {
-            return $response->withStatus(304);
-        }
-
-        // Clean public render without URL locale redirect
-
-        // Load language for SSR
-        $lang = $this->i18n->getDictionary($langCode);
         $username = $_SESSION["username"] ?? null;
         if ($userId !== null && $username === null) {
             $profile = $this->userService->profile((string) $userId);
@@ -1369,39 +1048,33 @@ final class WebController
             "roles" => $_SESSION["roles"] ?? [],
             "permissions" => $_SESSION["permissions"] ?? [],
             "csrf_token" => $_SESSION["csrf_token"] ?? null,
-            "preferences" => $prefs,
         ];
-        
-        // Clean canonical URL helper — no locale prefix
-        $url = fn(string $path) => '/' . ltrim($path, '/');
-        $footerGenres = $this->seriesService->series_genres(1, 20);
-        $footerTags = $this->seriesService->series_tags(1, 20);
-        
-        // Add popular content and latest chapters for footer
-        $footerPopular = $this->seriesService->footerPopular(5);
-        $footerLatestChapters = $this->seriesService->latestChapters(1, 4);
+
+        $siteConfig = $this->siteConfig->all();
 
         $contextJson = (string) json_encode(
-            array_merge($context, [
+            [
                 "auth" => $authContext,
                 "lang_code" => $langCode,
-                "site_config" => $this->siteConfig->all(),
-            ]),
+                "site_config" => $siteConfig,
+            ],
             JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES,
         );
 
-        $fullContext = array_merge($context, [
-            "auth" => $authContext, 
-            "lang" => $lang, 
-            "langCode" => $langCode,
-            "url" => $url,
-            "footerGenres" => $footerGenres,
-            "footerTags" => $footerTags,
-            "footerPopular" => $footerPopular,
-            "footerLatestChapters" => $footerLatestChapters,
-            "contextJson" => $contextJson,
-            "templateName" => $template,
-        ]);
+        $etagInput = [
+            'template' => $template,
+            'context' => $context,
+            'auth' => $authContext,
+            'lang' => $langCode,
+            'seo' => $seo,
+            'title' => $title,
+            'app_version' => '1.1.0',
+        ];
+        $etag = md5((string) json_encode($etagInput));
+
+        if ($request->getHeaderLine('If-None-Match') === '"' . $etag . '"') {
+            return $response->withStatus(304);
+        }
 
         $seoDefaults = [
             "title" => $title,
@@ -1419,29 +1092,18 @@ final class WebController
         $seoDescription = $this->truncateDescription(
             (string) ($seo["description"] ?: $this->siteConfig->siteDescription())
         );
-        $seoKeywords = (string) $seo["keywords"];
         $seoRobots = (string) $seo["robots"];
         $seoType = (string) $seo["type"];
         $seoCanonical = (string) $seo["canonical"];
         $seoImage = $this->toAbsoluteAssetUrl((string) ($seo["image"] ?: $this->siteConfig->defaultContentCoverImage()), $request);
         $seoSiteName = $this->siteConfig->siteName();
-        $seoLocale = $langCode === "tr" ? "tr_TR" : "en_US";
-
-        $jsonLd = null;
-        if (is_array($seo["json_ld"])) {
-            $jsonLd = json_encode($seo["json_ld"], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        }
-
-        $__t = fn(string $key, array $params = []) => $this->i18n->translate($langCode, $key, $params);
-        $fullContext['__t'] = $__t;
-        $fullContext['siteConfig'] = $this->siteConfig->all();
-
         // Render via React App Shell (app.html) if available
         $appHtmlPath = $basePath . "/public/app.html";
         if (is_file($appHtmlPath)) {
             $seoService = new \App\Services\SeoService($basePath);
             // Build merged JSON-LD graph if breadcrumbs exist
             $jsonLdPayload = [];
+            $breadcrumbs = $context['breadcrumbs'] ?? [];
             if (!empty($seo['json_ld']) && is_array($seo['json_ld'])) {
                 $jsonLdPayload[] = $seo['json_ld'];
             }
@@ -1471,12 +1133,12 @@ final class WebController
             }
 
             $seoData = [
-                'title' => $title,
+                'title' => $seoTitle,
                 'description' => $seoDescription,
                 'canonical' => $seoCanonical,
                 'robots' => $seoRobots,
                 'og' => [
-                    'title' => $seo['og_title'] ?? $title,
+                    'title' => $seo['og_title'] ?? $seoTitle,
                     'description' => $seo['og_description'] ?? $seoDescription,
                     'image' => $seoImage,
                     'url' => $seoCanonical,
@@ -1484,7 +1146,7 @@ final class WebController
                     'site_name' => $seoSiteName
                 ],
                 'twitter' => [
-                    'title' => $seo['twitter_title'] ?? ($seo['og_title'] ?? $title),
+                    'title' => $seo['twitter_title'] ?? ($seo['og_title'] ?? $seoTitle),
                     'description' => $seo['twitter_description'] ?? ($seo['og_description'] ?? $seoDescription),
                     'image' => $seo['twitter_image'] ?? $seoImage,
                     'card' => 'summary_large_image'
@@ -1531,98 +1193,26 @@ final class WebController
         return [];
     }
 
-    private function renderAdmin(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        string $template,
-        array $scripts = [],
-        string $title = "Admin Dashboard",
-    ): ResponseInterface {
-        $basePath = (string) $this->settings["app"]["base_path"];
-        $templatePath = $basePath . "/storage/views/" . $template;
-        $layoutPath = $basePath . "/storage/views/layout_adminlte.php";
-
-        if (!is_file($templatePath) || !is_file($layoutPath)) {
-            $response->getBody()->write("Template not found");
-            return $response->withStatus(404);
+    /**
+     * Extracts taxonomy display names from the repository's compact aggregate.
+     *
+     * @return list<string>
+     */
+    private function taxonomyNames(string $raw): array
+    {
+        if ($raw === '') {
+            return [];
         }
 
-        $userId = $_SESSION["user_id"] ?? null;
-        $langCode = $this->i18n->resolveLocale($request, $userId ? (string)$userId : null);
-        $defaultLang = $this->i18n->getDefaultLanguage();
+        $names = [];
+        foreach (explode('||', $raw) as $item) {
+            $name = trim((string) (explode('::', $item, 2)[0] ?? ''));
+            if ($name !== '') {
+                $names[] = $name;
+            }
+        }
 
-        $lang = $this->i18n->getDictionary($langCode);
-        $langHash = md5((string) json_encode($lang, JSON_UNESCAPED_UNICODE));
-
-        $authContext = [
-            "is_logged_in" => isset($_SESSION["user_id"]),
-            "is_admin" => $this->canAccessAdminPanel(),
-            "user_id" => $userId,
-            "username" => $_SESSION["username"] ?? null,
-            "roles" => $this->effectiveRoles(),
-            "permissions" => $this->effectivePermissions(),
-            "csrf_token" => $_SESSION["csrf_token"] ?? null,
-        ];
-
-        // Clean canonical URL helper — no locale prefix
-        $url = fn(string $path) => '/' . ltrim($path, '/');
-
-        $contextJson = (string) json_encode(
-            [
-                "auth" => $authContext,
-                "lang_code" => $langCode,
-                "lang_hash" => $langHash,
-                "default_lang" => $defaultLang,
-                "supported_langs" => $this->i18n->getSupportedLanguages(),
-                "site_config" => $this->siteConfig->all(),
-            ],
-            JSON_HEX_TAG |
-                JSON_HEX_AMP |
-                JSON_HEX_APOS |
-                JSON_HEX_QUOT |
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES,
-        );
-        $adminUsername = (string) ($authContext["username"] ?? "admin");
-        $siteConfig = $this->siteConfig->all();
-        $__t = fn(string $key, array $params = []) => $this->i18n->translate($langCode, $key, $params);
-
-        ob_start();
-        extract([
-            "url" => $url,
-            "__t" => $__t,
-            "adminUsername" => $adminUsername,
-            "contextJson" => $contextJson,
-            "siteConfig" => $siteConfig,
-            "authContext" => $authContext,
-        ], EXTR_SKIP);
-        include $templatePath;
-        $content = (string) ob_get_clean();
-
-        ob_start();
-        extract([
-            "url" => $url,
-            "__t" => $__t,
-            "adminUsername" => $adminUsername,
-            "contextJson" => $contextJson,
-            "content" => $content,
-            "title" => $title,
-            "scripts" => $scripts,
-            "siteConfig" => $siteConfig,
-            "authContext" => $authContext,
-        ], EXTR_SKIP);
-        include $layoutPath;
-        $layoutContent = (string) ob_get_clean();
-
-        $response->getBody()->write($layoutContent);
-        return $response
-            ->withHeader("Content-Type", "text/html; charset=utf-8")
-            ->withHeader(
-                "Cache-Control",
-                "no-store, no-cache, must-revalidate, max-age=0",
-            )
-            ->withHeader("Pragma", "no-cache")
-            ->withHeader("Expires", "0");
+        return array_values(array_unique($names));
     }
 
     private function effectiveRoles(): array

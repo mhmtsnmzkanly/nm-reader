@@ -1,0 +1,1 @@
+import{u as r,r as a}from"../QbDTDCEN/react.js";import{d as s}from"../B7LIOUM_/app.js";import"../Ikz9uRL_/lucide.js";const c=()=>{const{openAuthModal:e,isAuthenticated:o}=s(),t=r();return a.useEffect(()=>{o?t("/"):(e("login"),t("/",{replace:!0}))},[o,t,e]),null};export{c as LoginPage};

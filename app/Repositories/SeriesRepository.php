@@ -47,7 +47,7 @@ final class SeriesRepository
                     c.author,
                     c.artist
                 FROM series c
-                WHERE c.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))' . $membersOnlyCondition . '
                 ORDER BY c.rating_count DESC, c.rating_avg DESC, c.chapter_count DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -83,7 +83,7 @@ final class SeriesRepository
                     MAX(ch.created_at) as last_chapter_at
                 FROM series c
                 INNER JOIN chapters ch ON ch.content_id = c.id
-                WHERE c.deleted_at IS NULL AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
                 GROUP BY c.id
                 ORDER BY last_chapter_at DESC
                 LIMIT :limit';
@@ -117,7 +117,7 @@ final class SeriesRepository
                     c.author,
                     c.artist
                 FROM series c
-                WHERE c.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))' . $membersOnlyCondition . '
                 ORDER BY c.created_at DESC
                 LIMIT :limit';
 
@@ -163,7 +163,7 @@ final class SeriesRepository
                 LEFT JOIN taxonomies g ON g.id = stmg.taxonomy_id AND g.type = "genre"
                 LEFT JOIN series_taxonomy_map stmt ON stmt.content_id = c.id
                 LEFT JOIN taxonomies t ON t.id = stmt.taxonomy_id AND t.type = "tag"
-                WHERE c.slug = :slug AND c.deleted_at IS NULL
+                WHERE c.slug = :slug AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
                 GROUP BY c.id
                 LIMIT 1';
 
@@ -208,7 +208,7 @@ final class SeriesRepository
                 LEFT JOIN series_taxonomy_map stmt ON stmt.content_id = c.id
                 LEFT JOIN taxonomies t ON t.id = stmt.taxonomy_id AND t.type = "tag"
                 LEFT JOIN user_series_follows ucf ON ucf.content_id = c.id AND ucf.user_id = :user_id
-                WHERE c.type = :type AND c.slug = :slug AND c.deleted_at IS NULL
+                WHERE c.type = :type AND c.slug = :slug AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
                 GROUP BY c.id
                 LIMIT 1';
 
@@ -238,7 +238,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.slug = :slug AND c.deleted_at IS NULL
+                WHERE c.slug = :slug AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
                 ORDER BY ch.chapter_number DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -266,7 +266,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.type = :type AND c.deleted_at IS NULL AND c.slug = :slug
+                WHERE c.type = :type AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND c.slug = :slug
                 ORDER BY ch.chapter_number DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -289,7 +289,7 @@ final class SeriesRepository
             'SELECT ch.chapter_number
              FROM chapters ch
              INNER JOIN series c ON c.id = ch.content_id
-             WHERE c.type = :type AND c.deleted_at IS NULL AND c.slug = :slug
+             WHERE c.type = :type AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND c.slug = :slug
              ORDER BY CAST(ch.chapter_number AS DECIMAL(10,2)) ASC, ch.id ASC
              LIMIT 1'
         );
@@ -325,7 +325,7 @@ final class SeriesRepository
                     c.author,
                     c.artist
                 FROM series c
-                WHERE c.type = :type AND c.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.type = :type AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))' . $membersOnlyCondition . '
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -363,7 +363,7 @@ final class SeriesRepository
                 FROM series c
                 INNER JOIN series_taxonomy_map stm ON stm.content_id = c.id
                 INNER JOIN taxonomies g ON g.id = stm.taxonomy_id AND g.type = "genre"
-                WHERE g.slug = :slug AND c.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE g.slug = :slug AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))' . $membersOnlyCondition . '
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -401,7 +401,7 @@ final class SeriesRepository
                 FROM series c
                 INNER JOIN series_taxonomy_map stm ON stm.content_id = c.id
                 INNER JOIN taxonomies t ON t.id = stm.taxonomy_id AND t.type = "tag"
-                WHERE t.slug = :slug AND c.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE t.slug = :slug AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))' . $membersOnlyCondition . '
                 ORDER BY c.rating_count DESC, c.created_at DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -427,7 +427,9 @@ final class SeriesRepository
                     type, 
                     cover_image 
                 FROM series 
-                WHERE title LIKE :q OR slug LIKE :q 
+                WHERE (title LIKE :q OR slug LIKE :q)
+                  AND deleted_at IS NULL
+                  AND (lifecycle_status = "published" OR (lifecycle_status = "scheduled" AND scheduled_at <= NOW()))
                 ORDER BY rating_count DESC 
                 LIMIT :limit';
 
@@ -454,7 +456,7 @@ final class SeriesRepository
         $offset = max(0, ($page - 1) * $perPage);
         
         $params = [];
-        $where = ['c.deleted_at IS NULL'];
+        $where = ['c.deleted_at IS NULL', '(c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))'];
         if (!$includeMembersOnly) {
             $where[] = 'c.is_members_only = 0';
         }
@@ -712,6 +714,8 @@ final class SeriesRepository
                 FROM user_series_follows ucf
                 INNER JOIN series c ON c.id = ucf.content_id
                 WHERE ucf.user_id = :user_id
+                  AND c.deleted_at IS NULL
+                  AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
                 ORDER BY c.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
@@ -778,7 +782,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.deleted_at IS NULL AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY ch.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
@@ -806,7 +810,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.type = :type AND c.deleted_at IS NULL AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.type = :type AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
                 ORDER BY ch.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
@@ -845,6 +849,7 @@ final class SeriesRepository
         $sql = 'SELECT type, slug, created_at
                 FROM series
                 WHERE deleted_at IS NULL
+                  AND (lifecycle_status = "published" OR (lifecycle_status = "scheduled" AND scheduled_at <= NOW()))
                 ORDER BY created_at DESC
                 LIMIT :limit';
         $stmt = $this->pdo->prepare($sql);
@@ -865,7 +870,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE ch.deleted_at IS NULL AND c.deleted_at IS NULL
+                WHERE ch.deleted_at IS NULL AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
                 ORDER BY ch.created_at DESC
                 LIMIT :limit';
         $stmt = $this->pdo->prepare($sql);

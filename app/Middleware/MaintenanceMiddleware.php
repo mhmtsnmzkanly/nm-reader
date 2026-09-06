@@ -20,14 +20,20 @@ final class MaintenanceMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        $path = $request->getUri()->getPath();
+        if ($path === '/health' || $path === '/health/live') {
+            return $handler->handle($request);
+        }
+
         if (!$this->siteConfig->isMaintenanceMode()) {
             return $handler->handle($request);
         }
 
-        $path = $request->getUri()->getPath();
-
         // Always allow admin panel and admin API access during maintenance
-        if (str_starts_with($path, '/admin') || str_starts_with($path, '/api/v1/admin') || str_starts_with($path, '/api/v1/auth/login')) {
+        if (str_starts_with($path, '/panel')
+            || str_starts_with($path, '/api/v1/admin')
+            || str_starts_with($path, '/api/v1/auth/login')
+        ) {
             return $handler->handle($request);
         }
 

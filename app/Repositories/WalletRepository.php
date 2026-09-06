@@ -177,6 +177,67 @@ final class WalletRepository
         return (int) $stmt->fetchColumn();
     }
 
+    public function adminTransactionSummary(): array
+    {
+        $sql = 'SELECT
+            (SELECT COALESCE(SUM(balance_coin), 0) FROM user_wallets) AS circulating_coin,
+            COALESCE(SUM(CASE WHEN wt.coin_delta > 0 THEN wt.coin_delta ELSE 0 END), 0) AS credited_coin,
+            COALESCE(ABS(SUM(CASE WHEN wt.coin_delta < 0 THEN wt.coin_delta ELSE 0 END)), 0) AS spent_coin,
+            COALESCE(SUM(CASE WHEN wt.type = "refund" THEN wt.coin_delta ELSE 0 END), 0) AS refunded_coin,
+            COUNT(*) AS transaction_count
+            FROM wallet_transactions wt
+            WHERE wt.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
+        $row = $this->pdo->query($sql)->fetch();
+        return $row ?: [];
+    }
+
+    public function listAdminTransactions(int $page, int $perPage, string $query = '', ?string $type = null, string $sort = 'newest'): array
+    {
+        $where = [];
+        $params = [];
+        if ($query !== '') {
+            $where[] = '(wt.user_id LIKE :query OR u.username LIKE :query OR wt.description LIKE :query OR wt.reference_id LIKE :query)';
+            $params['query'] = '%' . $query . '%';
+        }
+        if ($type !== null && $type !== '') {
+            $where[] = 'wt.type = :type';
+            $params['type'] = $type;
+        }
+        $whereSql = $where === [] ? '' : 'WHERE ' . implode(' AND ', $where);
+        $orderSql = $sort === 'oldest' ? 'wt.id ASC' : ($sort === 'amount_desc' ? 'ABS(wt.coin_delta) DESC, wt.id DESC' : 'wt.id DESC');
+        $count = $this->pdo->prepare("SELECT COUNT(*) FROM wallet_transactions wt INNER JOIN users u ON u.id = wt.user_id $whereSql");
+        $count->execute($params);
+        $stmt = $this->pdo->prepare("SELECT wt.id, wt.user_id, u.username, wt.type, wt.coin_delta, wt.balance_after, wt.reference_type, wt.reference_id, wt.description, wt.metadata, wt.created_by, wt.created_at,
+            (SELECT COALESCE(SUM(r.coin_delta), 0) FROM wallet_transactions r WHERE r.type = 'refund' AND r.reference_type = 'wallet_transaction' AND r.reference_id = CAST(wt.id AS CHAR)) AS refunded_coin
+            FROM wallet_transactions wt INNER JOIN users u ON u.id = wt.user_id $whereSql ORDER BY $orderSql LIMIT :limit OFFSET :offset");
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', max(0, ($page - 1) * $perPage), PDO::PARAM_INT);
+        $stmt->execute();
+        return ['items' => $stmt->fetchAll(), 'total' => (int)$count->fetchColumn()];
+    }
+
+    public function transactionForUpdate(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT id, user_id, type, coin_delta, reference_type, reference_id, description FROM wallet_transactions WHERE id = :id FOR UPDATE');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function refundedCoinForTransaction(int $id): int
+    {
+        $stmt = $this->pdo->prepare('SELECT COALESCE(SUM(coin_delta), 0) FROM wallet_transactions WHERE type = "refund" AND reference_type = "wallet_transaction" AND reference_id = :id');
+        $stmt->execute(['id' => (string)$id]);
+        return (int)$stmt->fetchColumn();
+    }
+
+    public function revokeUnlockByTransactionId(int $transactionId): void
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM user_unlocks WHERE transaction_id = :id');
+        $stmt->execute(['id' => $transactionId]);
+    }
+
     public function listPackages(int $page, int $perPage, bool $activeOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);

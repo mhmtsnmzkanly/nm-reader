@@ -111,8 +111,11 @@ export class ApiContentService implements IContentService {
     });
   }
 
-  public toggleFollow(type: ContentType, slug: string): Promise<ApiResponse<{ followed: boolean }>> {
-    return apiClient.post<{ followed: boolean }>(`/content/${type}/${slug}/follow`);
+  public toggleFollow(type: ContentType, slug: string, currentlyFollowed = false): Promise<ApiResponse<{ followed: boolean }>> {
+    const endpoint = `/content/${type}/${slug}/follow`;
+    return currentlyFollowed
+      ? apiClient.delete<{ followed: boolean }>(endpoint)
+      : apiClient.post<{ followed: boolean }>(endpoint);
   }
 
   public rateContent(

@@ -35,6 +35,26 @@ export class ApiAuthService implements IAuthService {
   public revokeSession(sessionId: string): Promise<ApiResponse<{ revoked: boolean }>> {
     return apiClient.delete<{ revoked: boolean }>(`/auth/sessions/${sessionId}`);
   }
+
+  public revokeOtherSessions(): Promise<ApiResponse<{ revoked_count: number }>> {
+    return apiClient.post<{ revoked_count: number }>('/auth/sessions/revoke-others');
+  }
+
+  public forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
+    return apiClient.post<{ message: string }>('/auth/forgot-password', { email }, { skipCsrf: true });
+  }
+
+  public resetPassword(token: string, password: string): Promise<ApiResponse<{ id: string; message: string }>> {
+    return apiClient.post<{ id: string; message: string }>('/auth/reset-password', { token, password }, { skipCsrf: true });
+  }
+
+  public verifyEmail(token: string): Promise<ApiResponse<{ id: string; email_verified: boolean }>> {
+    return apiClient.post<{ id: string; email_verified: boolean }>('/auth/verify-email', { token }, { skipCsrf: true });
+  }
+
+  public resendVerificationEmail(): Promise<ApiResponse<{ message: string }>> {
+    return apiClient.post<{ message: string }>('/auth/verify-email/resend');
+  }
 }
 
 export const authService = new ApiAuthService();

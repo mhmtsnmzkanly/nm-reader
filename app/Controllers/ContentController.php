@@ -187,7 +187,13 @@ final class ContentController
     {
         [$page, $perPage] = $this->pagination($request);
         $result = $this->wallets->packages($page, $perPage, true);
-        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
+        return ResponseHelper::paginate(
+            $result['items'],
+            $page,
+            $perPage,
+            $result['meta']['total'] ?? null,
+            ['checkout_available' => false]
+        );
     }
 
     public function shopFeatures(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

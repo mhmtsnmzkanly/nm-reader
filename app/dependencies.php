@@ -110,6 +110,8 @@ $builder->addDefinitions([
         ->constructorParameter('logPath', $settings['app']['base_path'] . '/storage/logs'),
 
     RequestIdMiddleware::class => DI\autowire(RequestIdMiddleware::class),
+    \App\Middleware\CorsMiddleware::class => DI\autowire(\App\Middleware\CorsMiddleware::class)
+        ->constructorParameter('allowedOrigins', $settings['app']['cors_allowed_origins'] ?? []),
     \App\Middleware\ApiAuthMiddleware::class => DI\autowire(\App\Middleware\ApiAuthMiddleware::class),
     \App\Middleware\SecurityHeadersMiddleware::class => DI\autowire(\App\Middleware\SecurityHeadersMiddleware::class),
     \App\Middleware\RequireVerifiedEmailMiddleware::class => DI\autowire(\App\Middleware\RequireVerifiedEmailMiddleware::class),
@@ -163,7 +165,8 @@ $builder->addDefinitions([
     \App\Services\WebhookService::class => DI\autowire(\App\Services\WebhookService::class),
     \App\Middleware\MaintenanceMiddleware::class => DI\autowire(\App\Middleware\MaintenanceMiddleware::class),
     \App\Services\MediaService::class => DI\autowire(\App\Services\MediaService::class)
-        ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/storage/media/'),
+        ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/storage/media/')
+        ->constructorParameter('appSecret', (string) ($settings['app']['media_secret'] ?? '')),
     \App\Services\SeoService::class => DI\autowire(\App\Services\SeoService::class)
         ->constructorParameter('basePath', $settings['app']['base_path']),
     \App\Services\ContentSecurityScanner::class => DI\autowire(\App\Services\ContentSecurityScanner::class)
@@ -184,11 +187,12 @@ $builder->addDefinitions([
         $c->get(SeriesService::class),
         $c->get(UserService::class),
         $c->get(SeriesRepository::class),
+        $c->get(ChapterRepository::class),
+        $c->get(UserRepository::class),
         $c->get(BlogRepository::class),
         $c->get(I18nService::class),
         $c->get(CacheService::class),
-        $c->get('logger.error'),
-        $c->get(QueueService::class)
+        $c->get('logger.error')
     ),
 ]);
 

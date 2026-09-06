@@ -20,16 +20,13 @@ $container = $app->getContainer();
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $isInstallRoute = str_contains($requestUri, 'install-63e4qq3');
 
-// CORS must be early in the stack to handle preflight OPTIONS
-$app->add(\App\Middleware\CorsMiddleware::class);
-$app->add(\App\Middleware\SecurityHeadersMiddleware::class);
-
 // Session and Auth Middleware
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $settings, $isInstallRoute): ResponseInterface {
     $path = (string) $request->getUri()->getPath();
     $isStaticPublicRoute = str_starts_with($path, '/media/public/')
         || str_starts_with($path, '/api/v1/media/public/')
         || $path === '/health'
+        || $path === '/health/live'
         || $path === '/robots.txt'
         || $path === '/sitemap.xml'
         || $request->getMethod() === 'OPTIONS';
@@ -147,6 +144,11 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 // HTTPS Enforcement
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute): ResponseInterface {
     if ($isInstallRoute) return $handler->handle($request);
+
+    $path = (string) $request->getUri()->getPath();
+    if ($path === '/health' || $path === '/health/live') {
+        return $handler->handle($request);
+    }
     
     try {
         $siteConfig = $container->get(\App\Services\SiteConfigService::class);
@@ -173,7 +175,14 @@ $app->addBodyParsingMiddleware();
 
 // I18n Middleware (Depends on DB) - SKIP if installing
 if (!$isInstallRoute) {
-    $app->add(App\Middleware\I18nMiddleware::class);
+    $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
+        $path = (string) $request->getUri()->getPath();
+        if ($path === '/health' || $path === '/health/live') {
+            return $handler->handle($request);
+        }
+
+        return $container->get(App\Middleware\I18nMiddleware::class)->process($request, $handler);
+    });
 }
 
 $app->addRoutingMiddleware();
@@ -210,7 +219,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     if ($isInstallRoute) return $response;
 
     $path = (string) $request->getUri()->getPath();
-    if (str_starts_with($path, '/media/public/') || str_starts_with($path, '/api/v1/media/public/') || $path === '/health' || $path === '/robots.txt') {
+    if (str_starts_with($path, '/media/public/') || str_starts_with($path, '/api/v1/media/public/') || $path === '/health' || $path === '/health/live' || $path === '/robots.txt') {
         return $response;
     }
 
@@ -272,7 +281,22 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 
 // Bearer Token & Request ID
 if (!$isInstallRoute) {
-    $app->add(\App\Middleware\ApiAuthMiddleware::class);
+    $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
+        $path = (string) $request->getUri()->getPath();
+        if ($path === '/health' || $path === '/health/live') {
+            return $handler->handle($request);
+        }
+
+        return $container->get(\App\Middleware\MaintenanceMiddleware::class)->process($request, $handler);
+    });
+    $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container): ResponseInterface {
+        $path = (string) $request->getUri()->getPath();
+        if ($path === '/health' || $path === '/health/live') {
+            return $handler->handle($request);
+        }
+
+        return $container->get(\App\Middleware\ApiAuthMiddleware::class)->process($request, $handler);
+    });
 }
 $app->add(\App\Middleware\RequestIdMiddleware::class);
 
@@ -322,3 +346,8 @@ $errorMiddleware->setDefaultErrorHandler(
         }
     }
 );
+
+// Slim executes the last-added middleware first. Keep security/CORS outside the
+// error handler so preflights short-circuit and error responses retain headers.
+$app->add(\App\Middleware\SecurityHeadersMiddleware::class);
+$app->add(\App\Middleware\CorsMiddleware::class);

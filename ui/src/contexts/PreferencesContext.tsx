@@ -260,7 +260,7 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
         });
       } else if (res.status === 'error') {
         // Unauthenticated guests use localStorage preferences without setting isError
-        if (res.error?.code === 'HTTP_401' || res.error?.code === 'UNAUTHORIZED' || res.error?.code?.includes('401')) {
+        if (res.error?.code === 401 || res.error?.key === 'UNAUTHORIZED') {
           return;
         }
         setIsError(true);

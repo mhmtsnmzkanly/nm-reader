@@ -72,7 +72,10 @@ export const PublicProfilePage: React.FC = () => {
 
     setIsFollowLoading(true);
     try {
-      const res = await userService.toggleFollowUser(username);
+      const res = await userService.toggleFollowUser(
+        username,
+        Boolean(profileData.user_state?.is_following)
+      );
       if (res.status === 'success') {
         const { is_following, followers_count } = res.data;
         setProfileData((prev) => {

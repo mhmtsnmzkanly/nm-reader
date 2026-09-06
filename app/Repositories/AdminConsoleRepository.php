@@ -125,10 +125,37 @@ final class AdminConsoleRepository
      *
      * @return array ['items' => [...], 'total' => int]
      */
-    public function listContents(int $page, int $perPage): array
+    public function listContents(int $page, int $perPage, string $query = '', ?string $status = null, ?string $type = null, ?string $lifecycle = null, string $sort = 'newest'): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $total = $this->count('SELECT COUNT(*) FROM series');
+        $where = ['c.deleted_at IS NULL'];
+        $params = [];
+        if ($query !== '') {
+            $where[] = '(c.title LIKE :query OR c.slug LIKE :query OR c.alternative_titles LIKE :query)';
+            $params['query'] = '%' . $query . '%';
+        }
+        if ($status !== null && in_array($status, ['ongoing', 'completed', 'hiatus', 'dropped'], true)) {
+            $where[] = 'c.status = :status';
+            $params['status'] = $status;
+        }
+        if ($type !== null && in_array($type, ['manga', 'manhua', 'manhwa', 'webtoon', 'novel', 'light-novel', 'web-novel'], true)) {
+            $where[] = 'REPLACE(c.type, "_", "-") = :type';
+            $params['type'] = $type;
+        }
+        if ($lifecycle !== null && in_array($lifecycle, ['draft', 'scheduled', 'published', 'archived'], true)) {
+            $where[] = 'c.lifecycle_status = :lifecycle';
+            $params['lifecycle'] = $lifecycle;
+        }
+        $whereClause = implode(' AND ', $where);
+        $orderBy = match ($sort) {
+            'oldest' => 'c.created_at ASC',
+            'title' => 'c.title ASC',
+            'updated' => 'c.updated_at DESC',
+            default => 'c.created_at DESC',
+        };
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM series c WHERE ' . $whereClause);
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
 
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -138,6 +165,10 @@ final class AdminConsoleRepository
                 c.alternative_titles,
                 c.type,
                 c.status,
+                c.lifecycle_status,
+                c.scheduled_at,
+                c.published_at,
+                c.archived_at,
                 c.is_adult,
                 c.is_members_only,
                 c.cover_image,
@@ -154,10 +185,11 @@ final class AdminConsoleRepository
                 (SELECT GROUP_CONCAT(stm.taxonomy_id) FROM series_taxonomy_map stm INNER JOIN taxonomies t ON t.id = stm.taxonomy_id WHERE stm.content_id = c.id AND t.type = "genre") as genre_ids,
                 (SELECT GROUP_CONCAT(stm.taxonomy_id) FROM series_taxonomy_map stm INNER JOIN taxonomies t ON t.id = stm.taxonomy_id WHERE stm.content_id = c.id AND t.type = "tag") as tag_ids
              FROM series c
-             WHERE c.deleted_at IS NULL
-             ORDER BY c.created_at DESC
+             WHERE ' . $whereClause . '
+             ORDER BY ' . $orderBy . '
              LIMIT :limit OFFSET :offset'
         );
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -173,10 +205,33 @@ final class AdminConsoleRepository
      *
      * @return array ['items' => [...], 'total' => int]
      */
-    public function listUsers(int $page, int $perPage): array
+    public function listUsers(int $page, int $perPage, string $query = '', ?string $accountStatus = null, ?string $role = null, string $sort = 'newest'): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $total = $this->count('SELECT COUNT(*) FROM users');
+        $where = [];
+        $params = [];
+        if ($query !== '') {
+            $where[] = '(u.username LIKE :query OR u.email LIKE :query)';
+            $params['query'] = '%' . $query . '%';
+        }
+        if (in_array($accountStatus, ['active', 'banned'], true)) {
+            $exists = 'EXISTS (SELECT 1 FROM admin_actions ban_filter WHERE ban_filter.target_type = "user" AND ban_filter.action = "ban" AND (ban_filter.target_id = u.id OR ban_filter.target_id = u.username))';
+            $where[] = $accountStatus === 'banned' ? $exists : 'NOT ' . $exists;
+        }
+        $roleId = (string) ((\App\Config::getSettings()['rbac']['id_map'][$role] ?? ''));
+        if ($roleId !== '') {
+            $where[] = 'FIND_IN_SET(:role_id, IFNULL(u.roles, "")) > 0';
+            $params['role_id'] = $roleId;
+        }
+        $whereClause = $where ? ' WHERE ' . implode(' AND ', $where) : '';
+        $orderBy = match ($sort) {
+            'oldest' => 'u.created_at ASC',
+            'username' => 'u.username ASC',
+            default => 'u.created_at DESC',
+        };
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM users u' . $whereClause);
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
 
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -197,10 +252,11 @@ final class AdminConsoleRepository
                 (SELECT COUNT(*) FROM blogs b WHERE b.user_id = u.id) AS blog_count,
                 (SELECT COUNT(*) FROM user_series_follows f WHERE f.user_id = u.id) AS follow_count,
                 (SELECT COALESCE(SUM(duration_seconds), 0) FROM user_activity ua WHERE ua.user_id = u.id) AS total_seconds
-             FROM users u
-             ORDER BY u.created_at DESC
+             FROM users u' . $whereClause . '
+             ORDER BY ' . $orderBy . '
              LIMIT :limit OFFSET :offset'
         );
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -344,10 +400,23 @@ final class AdminConsoleRepository
     /**
      * Lists jobs currently in the Job Queue.
      */
-    public function listQueueJobs(int $page, int $perPage): array
+    public function listQueueJobs(int $page, int $perPage, ?string $status = null, string $query = ''): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $total = $this->count('SELECT COUNT(*) FROM system_jobs');
+        $where = [];
+        $params = [];
+        if ($status !== null && in_array($status, ['pending', 'processing', 'done', 'failed', 'cancelled'], true)) {
+            $where[] = 'status = :status';
+            $params['status'] = $status;
+        }
+        if ($query !== '') {
+            $where[] = '(job_type LIKE :query OR last_error LIKE :query)';
+            $params['query'] = '%' . $query . '%';
+        }
+        $whereSql = $where === [] ? '' : ' WHERE ' . implode(' AND ', $where);
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM system_jobs' . $whereSql);
+        $count->execute($params);
+        $total = (int)$count->fetchColumn();
 
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -359,10 +428,11 @@ final class AdminConsoleRepository
                 available_at,
                 created_at,
                 updated_at
-             FROM system_jobs
+             FROM system_jobs' . $whereSql . '
              ORDER BY id DESC
              LIMIT :limit OFFSET :offset'
         );
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -373,13 +443,55 @@ final class AdminConsoleRepository
         ];
     }
 
+    public function retryQueueJob(int $id): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE system_jobs SET status = "pending", attempts = 0, last_error = NULL, available_at = NOW(), updated_at = NOW() WHERE id = :id AND status IN ("failed", "cancelled")');
+        $stmt->execute(['id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function cancelQueueJob(int $id): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE system_jobs SET status = "cancelled", updated_at = NOW() WHERE id = :id AND status = "pending"');
+        $stmt->execute(['id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function systemHealthSnapshot(): array
+    {
+        $queue = ['pending' => 0, 'processing' => 0, 'done' => 0, 'failed' => 0, 'cancelled' => 0];
+        foreach ($this->pdo->query('SELECT status, COUNT(*) AS total FROM system_jobs GROUP BY status')->fetchAll() as $row) {
+            $queue[(string)$row['status']] = (int)$row['total'];
+        }
+        $latestMigration = $this->pdo->query('SELECT version, applied_at FROM schema_migrations ORDER BY applied_at DESC, version DESC LIMIT 1')->fetch() ?: null;
+        return [
+            'database' => ['ok' => $this->pdo->query('SELECT 1')->fetchColumn() !== false, 'version' => (string)$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION)],
+            'queue' => $queue,
+            'latest_migration' => $latestMigration,
+        ];
+    }
+
     /**
      * Retrieves HTTP audit logs for monitoring system activity.
      */
-    public function listAuditLogs(int $page, int $perPage): array
+    public function listAuditLogs(int $page, int $perPage, string $query = '', ?string $method = null, ?string $statusGroup = null, ?string $userId = null, ?string $dateFrom = null, ?string $dateTo = null, string $sort = 'newest'): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $total = $this->count('SELECT COUNT(*) FROM system_audit_logs');
+        $where = [];
+        $params = [];
+        if ($query !== '') { $where[] = '(al.path LIKE :query OR al.user_agent LIKE :query OR u.username LIKE :query)'; $params['query'] = '%' . $query . '%'; }
+        if ($method !== null && in_array($method, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], true)) { $where[] = 'al.method = :method'; $params['method'] = $method; }
+        if ($statusGroup === '2xx') $where[] = 'al.status_code BETWEEN 200 AND 299';
+        elseif ($statusGroup === '4xx') $where[] = 'al.status_code BETWEEN 400 AND 499';
+        elseif ($statusGroup === '5xx') $where[] = 'al.status_code >= 500';
+        if ($userId !== null && $userId !== '') { $where[] = 'al.user_id = :user_id'; $params['user_id'] = $userId; }
+        if ($dateFrom !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) { $where[] = 'al.created_at >= :date_from'; $params['date_from'] = $dateFrom . ' 00:00:00'; }
+        if ($dateTo !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) { $where[] = 'al.created_at < DATE_ADD(:date_to, INTERVAL 1 DAY)'; $params['date_to'] = $dateTo . ' 00:00:00'; }
+        $whereSql = $where === [] ? '' : ' WHERE ' . implode(' AND ', $where);
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM system_audit_logs al LEFT JOIN users u ON u.id = al.user_id' . $whereSql);
+        $count->execute($params);
+        $total = (int)$count->fetchColumn();
+        $orderSql = $sort === 'oldest' ? 'al.id ASC' : ($sort === 'slowest' ? 'al.duration_ms DESC, al.id DESC' : 'al.id DESC');
 
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -390,13 +502,16 @@ final class AdminConsoleRepository
                 al.path,
                 al.status_code,
                 al.ip_hash,
+                al.user_agent,
                 al.duration_ms,
                 al.created_at
              FROM system_audit_logs al
              LEFT JOIN users u ON u.id = al.user_id
-             ORDER BY al.id DESC
+             ' . $whereSql . '
+             ORDER BY ' . $orderSql . '
              LIMIT :limit OFFSET :offset'
         );
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -442,10 +557,24 @@ final class AdminConsoleRepository
     /**
      * Lists all comments with their context (Blog title or Series title).
      */
-    public function listComments(int $page, int $perPage): array
+    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest'): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $total = $this->count('SELECT COUNT(*) FROM comments');
+        $where = ['c.deleted_at IS NULL'];
+        $params = [];
+        if ($query !== '') {
+            $where[] = '(c.body LIKE :query OR u.username LIKE :query)';
+            $params['query'] = '%' . $query . '%';
+        }
+        if ($targetType !== null && in_array($targetType, ['series', 'chapter', 'blog'], true)) {
+            $where[] = 'c.target_type = :target_type';
+            $params['target_type'] = $targetType;
+        }
+        $whereClause = implode(' AND ', $where);
+        $orderBy = $sort === 'oldest' ? 'c.created_at ASC' : 'c.created_at DESC';
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM comments c INNER JOIN users u ON u.id = c.user_id WHERE ' . $whereClause);
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
 
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -471,9 +600,11 @@ final class AdminConsoleRepository
              LEFT JOIN series s ON (c.target_type = "series" AND s.id = c.target_id)
              LEFT JOIN series s2 ON (c.target_type = "chapter" AND s2.id = ch.content_id)
              LEFT JOIN blogs b ON (c.target_type = "blog" AND b.id = c.target_id)
-             ORDER BY c.created_at DESC
+             WHERE ' . $whereClause . '
+             ORDER BY ' . $orderBy . '
              LIMIT :limit OFFSET :offset'
         );
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -603,22 +734,39 @@ final class AdminConsoleRepository
     /**
      * Lists all system uploads with pagination.
      */
-    public function listUploads(int $page, int $perPage): array
+    public function listUploads(int $page, int $perPage, string $query = '', ?string $mime = null, bool $orphansOnly = false): array
     {
-        $offset = ($page - 1) * $perPage;
+        $offset = max(0, ($page - 1) * $perPage);
+        $referenceSql = '(EXISTS (SELECT 1 FROM series s WHERE s.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM blogs b WHERE b.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM users profile WHERE profile.profile_image = u.file_path OR profile.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM chapters ch WHERE CAST(ch.data AS CHAR) LIKE CONCAT("%", u.file_path, "%")))';
+        $where = [];
+        $params = [];
+        if ($query !== '') {
+            $where[] = '(u.original_name LIKE :query OR u.image_id LIKE :query OR u.file_path LIKE :query OR us.username LIKE :query)';
+            $params['query'] = '%' . $query . '%';
+        }
+        if ($mime !== null && $mime !== '') {
+            $where[] = 'u.mime_type = :mime';
+            $params['mime'] = $mime;
+        }
+        if ($orphansOnly) $where[] = 'NOT ' . $referenceSql;
+        $whereSql = $where === [] ? '' : ' WHERE ' . implode(' AND ', $where);
         $stmt = $this->pdo->prepare(
-            'SELECT u.*, us.username 
+            'SELECT u.*, us.username, ' . $referenceSql . ' AS is_referenced
              FROM system_uploads u
              LEFT JOIN users us ON u.user_id = us.id
+             ' . $whereSql . '
              ORDER BY u.created_at DESC 
              LIMIT :limit OFFSET :offset'
         );
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value);
         $stmt->bindValue(':limit', $perPage, \PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
         $stmt->execute();
         $items = $stmt->fetchAll();
 
-        $total = (int)$this->pdo->query('SELECT COUNT(*) FROM system_uploads')->fetchColumn();
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM system_uploads u LEFT JOIN users us ON u.user_id = us.id' . $whereSql);
+        $count->execute($params);
+        $total = (int)$count->fetchColumn();
 
         return [
             'items' => $items,
@@ -629,6 +777,26 @@ final class AdminConsoleRepository
                 'total_pages' => ceil($total / $perPage)
             ]
         ];
+    }
+
+    public function uploadStats(): array
+    {
+        $row = $this->pdo->query('SELECT COUNT(*) AS total_files, COALESCE(SUM(file_size), 0) AS total_bytes, COALESCE(AVG(file_size), 0) AS average_bytes, SUM(mime_type = "image/jpeg") AS jpeg_files, SUM(mime_type = "image/png") AS png_files, SUM(mime_type = "image/webp") AS webp_files, SUM(mime_type = "image/gif") AS gif_files FROM system_uploads')->fetch();
+        return $row ?: [];
+    }
+
+    public function uploadById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM system_uploads WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function updateUploadFileSize(int $id, int $size): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE system_uploads SET file_size = :size WHERE id = :id');
+        $stmt->execute(['id' => $id, 'size' => $size]);
     }
 
     /**
@@ -652,27 +820,90 @@ final class AdminConsoleRepository
     /**
      * Creates a new genre.
      */
-    public function createGenre(string $name): array
+    public function createGenre(string $name, string $slug): array
     {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
-        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug) VALUES ("genre", :name, :slug)');
+        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug, sort_order) SELECT "genre", :name, :slug, COALESCE(MAX(sort_order), -1) + 1 FROM taxonomies WHERE type = "genre"');
         $stmt->execute(['name' => $name, 'slug' => $slug]);
         $id = (int)$this->pdo->lastInsertId();
 
-        return ['id' => $id, 'name' => $name, 'slug' => $slug];
+        return ['id' => $id, 'type' => 'genre', 'name' => $name, 'slug' => $slug, 'sort_order' => $this->taxonomySortOrder($id)];
     }
 
     /**
      * Creates a new tag.
      */
-    public function createTag(string $name): array
+    public function createTag(string $name, string $slug): array
     {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $name), '-'));
-        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug) VALUES ("tag", :name, :slug)');
+        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug, sort_order) SELECT "tag", :name, :slug, COALESCE(MAX(sort_order), -1) + 1 FROM taxonomies WHERE type = "tag"');
         $stmt->execute(['name' => $name, 'slug' => $slug]);
         $id = (int)$this->pdo->lastInsertId();
 
-        return ['id' => $id, 'name' => $name, 'slug' => $slug];
+        return ['id' => $id, 'type' => 'tag', 'name' => $name, 'slug' => $slug, 'sort_order' => $this->taxonomySortOrder($id)];
+    }
+
+    public function taxonomyById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT t.id, t.type, t.name, t.slug, t.ui_config, t.sort_order, COUNT(stm.content_id) AS usage_count FROM taxonomies t LEFT JOIN series_taxonomy_map stm ON stm.taxonomy_id = t.id WHERE t.id = :id GROUP BY t.id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function updateTaxonomy(int $id, string $name, string $slug): ?array
+    {
+        $stmt = $this->pdo->prepare('UPDATE taxonomies SET name = :name, slug = :slug WHERE id = :id');
+        $stmt->execute(['id' => $id, 'name' => $name, 'slug' => $slug]);
+        return $this->taxonomyById($id);
+    }
+
+    public function deleteTaxonomy(int $id): bool
+    {
+        $stmt = $this->pdo->prepare('DELETE t FROM taxonomies t LEFT JOIN series_taxonomy_map stm ON stm.taxonomy_id = t.id WHERE t.id = :id AND stm.taxonomy_id IS NULL');
+        $stmt->execute(['id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function mergeTaxonomies(int $sourceId, int $targetId): array
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $source = $this->taxonomyById($sourceId);
+            $target = $this->taxonomyById($targetId);
+            if (!$source || !$target || $source['type'] !== $target['type']) {
+                throw new \InvalidArgumentException('Taxonomies must exist and have the same type');
+            }
+            $stmt = $this->pdo->prepare('INSERT IGNORE INTO series_taxonomy_map (content_id, taxonomy_id) SELECT content_id, :target_id FROM series_taxonomy_map WHERE taxonomy_id = :source_id');
+            $stmt->execute(['target_id' => $targetId, 'source_id' => $sourceId]);
+            $this->pdo->prepare('DELETE FROM series_taxonomy_map WHERE taxonomy_id = :id')->execute(['id' => $sourceId]);
+            $this->pdo->prepare('DELETE FROM taxonomies WHERE id = :id')->execute(['id' => $sourceId]);
+            $this->pdo->commit();
+            return $this->taxonomyById($targetId) ?? $target;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function reorderTaxonomies(array $items): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE taxonomies SET sort_order = :sort_order WHERE id = :id');
+        $this->pdo->beginTransaction();
+        try {
+            foreach ($items as $item) {
+                $stmt->execute(['id' => (int)$item['id'], 'sort_order' => (int)$item['sort_order']]);
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private function taxonomySortOrder(int $id): int
+    {
+        $stmt = $this->pdo->prepare('SELECT sort_order FROM taxonomies WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        return (int)$stmt->fetchColumn();
     }
 
     /**
@@ -703,7 +934,7 @@ final class AdminConsoleRepository
      */
     public function listAllGenres(): array
     {
-        $stmt = $this->pdo->query('SELECT id, name, slug, ui_config FROM taxonomies WHERE type = "genre" ORDER BY name ASC');
+        $stmt = $this->pdo->query('SELECT t.id, t.type, t.name, t.slug, t.ui_config, t.sort_order, COUNT(stm.content_id) AS usage_count FROM taxonomies t LEFT JOIN series_taxonomy_map stm ON stm.taxonomy_id = t.id WHERE t.type = "genre" GROUP BY t.id ORDER BY t.sort_order ASC, t.name ASC');
         return $stmt->fetchAll();
     }
 
@@ -712,7 +943,7 @@ final class AdminConsoleRepository
      */
     public function listAllTags(): array
     {
-        $stmt = $this->pdo->query('SELECT id, name, slug, ui_config FROM taxonomies WHERE type = "tag" ORDER BY name ASC');
+        $stmt = $this->pdo->query('SELECT t.id, t.type, t.name, t.slug, t.ui_config, t.sort_order, COUNT(stm.content_id) AS usage_count FROM taxonomies t LEFT JOIN series_taxonomy_map stm ON stm.taxonomy_id = t.id WHERE t.type = "tag" GROUP BY t.id ORDER BY t.sort_order ASC, t.name ASC');
         return $stmt->fetchAll();
     }
 
@@ -723,10 +954,19 @@ final class AdminConsoleRepository
     {
         $config = \App\Config::getSettings()['rbac'] ?? [];
         $idMap = (array) ($config['id_map'] ?? []);
+        $overrides = $this->rolePermissionOverrides();
         $result = [];
 
         foreach ($config['roles'] ?? [] as $slug => $role) {
             $perms = (array) ($role['permissions'] ?? []);
+            foreach ($overrides[$slug] ?? [] as $permission => $effect) {
+                if ($effect === 'grant' && !in_array($permission, $perms, true)) {
+                    $perms[] = $permission;
+                } elseif ($effect === 'revoke') {
+                    $perms = array_values(array_filter($perms, static fn(string $value): bool => $value !== $permission));
+                }
+            }
+            sort($perms);
             $result[] = [
                 'id' => (int) ($idMap[$slug] ?? 0),
                 'slug' => $slug,
@@ -801,27 +1041,64 @@ final class AdminConsoleRepository
 
     public function permissionExistsByCode(string $permissionCode): bool
     {
-        return true;
+        foreach ($this->getAllSystemPermissions() as $permissions) {
+            if (array_key_exists($permissionCode, $permissions)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function roleHasPermission(string $roleSlug, string $permissionCode): bool
     {
-        $config = \App\Config::getSettings()['rbac'] ?? [];
-        $role = $config['roles'][$roleSlug] ?? null;
-        if (!$role) return false;
-
-        return in_array($permissionCode, (array)($role['permissions'] ?? []), true);
+        foreach ($this->listRolesWithPermissions() as $role) {
+            if (($role['slug'] ?? '') !== $roleSlug) continue;
+            return in_array($permissionCode, explode(',', (string) ($role['permissions'] ?? '')), true);
+        }
+        return false;
     }
 
     public function assignPermissionToRole(string $roleSlug, string $permissionCode, string $moderatorId): void
     {
-        // Permissions are static in App\Config.
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO rbac_role_permission_overrides (role_slug, permission_code, effect, updated_by)
+             VALUES (:role, :permission, "grant", :updated_by)
+             ON DUPLICATE KEY UPDATE effect = "grant", updated_by = VALUES(updated_by), updated_at = NOW()'
+        );
+        $stmt->execute(['role' => $roleSlug, 'permission' => $permissionCode, 'updated_by' => $moderatorId]);
+        $this->createModerationAction($moderatorId, 'role', $roleSlug, 'grant_permission', $permissionCode);
     }
 
     public function revokePermissionFromRole(string $roleSlug, string $permissionCode, string $moderatorId): bool
     {
-        // Permissions are static in App\Config.
-        return false;
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO rbac_role_permission_overrides (role_slug, permission_code, effect, updated_by)
+             VALUES (:role, :permission, "revoke", :updated_by)
+             ON DUPLICATE KEY UPDATE effect = "revoke", updated_by = VALUES(updated_by), updated_at = NOW()'
+        );
+        $result = $stmt->execute(['role' => $roleSlug, 'permission' => $permissionCode, 'updated_by' => $moderatorId]);
+        if ($result) {
+            $this->createModerationAction($moderatorId, 'role', $roleSlug, 'revoke_permission', $permissionCode);
+        }
+        return $result;
+    }
+
+    /** @return array<string, array<string, string>> */
+    private function rolePermissionOverrides(): array
+    {
+        try {
+            $rows = $this->pdo->query(
+                'SELECT role_slug, permission_code, effect FROM rbac_role_permission_overrides'
+            )->fetchAll();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(string) $row['role_slug']][(string) $row['permission_code']] = (string) $row['effect'];
+        }
+        return $result;
     }
 
     public function assignRoleToUser(string $userId, string $roleSlug): bool
@@ -848,10 +1125,29 @@ final class AdminConsoleRepository
         return false;
     }
 
-    public function listBlogs(int $page, int $perPage): array
+    public function listBlogs(int $page, int $perPage, string $query = '', ?string $status = null, string $sort = 'newest'): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $total = $this->count('SELECT COUNT(*) FROM blogs');
+        $where = [];
+        $params = [];
+        if ($status === 'deleted') {
+            $where[] = 'b.deleted_at IS NOT NULL';
+        } else {
+            $where[] = 'b.deleted_at IS NULL';
+            if ($status !== null && in_array($status, ['draft', 'pending', 'published', 'rejected', 'hidden'], true)) {
+                $where[] = 'b.status = :status';
+                $params['status'] = $status;
+            }
+        }
+        if ($query !== '') {
+            $where[] = '(b.title LIKE :query OR b.slug LIKE :query OR u.username LIKE :query)';
+            $params['query'] = '%' . $query . '%';
+        }
+        $whereClause = implode(' AND ', $where);
+        $orderBy = $sort === 'oldest' ? 'b.created_at ASC' : 'b.created_at DESC';
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM blogs b INNER JOIN users u ON u.id = b.user_id WHERE ' . $whereClause);
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
 
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -860,14 +1156,17 @@ final class AdminConsoleRepository
                 u.username,
                 b.title,
                 b.slug,
+                b.status,
                 b.approved,
                 b.created_at,
                 b.approved_at
              FROM blogs b
              INNER JOIN users u ON u.id = b.user_id
-             ORDER BY b.created_at DESC
+             WHERE ' . $whereClause . '
+             ORDER BY ' . $orderBy . '
              LIMIT :limit OFFSET :offset'
         );
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -1328,42 +1627,42 @@ final class AdminConsoleRepository
     public function getAllSystemPermissions(): array
     {
         return [
-            'Content' => [
-                'admin.content.view' => 'İçerikleri Görüntüleme',
+            'Panel & Metrics' => [
+                'admin.panel.access' => 'Yönetim paneline ve listeleme uçlarına erişme',
+                'admin.metrics.view' => 'Dashboard ve analitik metriklerini görüntüleme',
+            ],
+            'Content & Chapters' => [
                 'admin.content.create' => 'Yeni Seri/İçerik Ekleme',
                 'admin.content.update' => 'İçerik Bilgilerini Düzenleme',
-                'admin.content.delete' => 'İçerik Silme (Soft-Delete)',
+                'admin.chapter.create' => 'Bölüm Yükleme (Resim/Metin)',
             ],
-            'Chapters' => [
-                'admin.chapters.view' => 'Bölüm Listesi ve Detayını Görme',
-                'admin.chapters.create' => 'Bölüm Yükleme (Resim/Metin)',
-                'admin.chapters.update' => 'Bölüm Düzenleme ve Fiyatlandırma',
-                'admin.chapters.delete' => 'Bölüm Silme',
-                'admin.chapters.bulk' => 'Toplu Bölüm İşlemleri',
-            ],
-            'Blogs' => [
-                'admin.blogs.view' => 'Blogları Listeleme',
-                'admin.blogs.approve' => 'Blog Onaylama / Reddetme',
-                'admin.blogs.delete' => 'Blog Silme',
-            ],
-            'Comments' => [
-                'admin.comments.view' => 'Yorumları Listeleme',
-                'admin.comments.delete' => 'Yorum Silme / Moderasyon',
+            'Moderation' => [
+                'admin.blog.hide' => 'Blog Onaylama, Gizleme ve Silme',
+                'admin.comment.delete' => 'Yorum Silme / Moderasyon',
+                'admin.logs.view' => 'Sistem, Güvenlik ve Moderasyon Loglarını İnceleme',
+                'admin.reports.view' => 'Rapor ve şikâyetleri görüntüleme',
+                'admin.reports.manage' => 'Rapor ve şikâyet durumlarını yönetme',
             ],
             'Users & RBAC' => [
-                'admin.users.view' => 'Kullanıcıları Listeleme',
-                'admin.users.update' => 'Kullanıcı Rolü & Bilgilerini Güncelleme',
-                'admin.roles.manage' => 'Yetki ve Rol Matrisini Yönetme',
-                'admin.team.manage' => 'Seri Ekip Atamalarını Yönetme',
+                'admin.users.manage' => 'Kullanıcı Bilgisi, Rolü ve Yasak Durumunu Güncelleme',
+                'admin.permissions.grant' => 'Role izin atama',
+                'admin.permissions.revoke' => 'Rolden izin kaldırma',
+                'admin.roles.assign' => 'Kullanıcıya rol atama',
             ],
             'Monetization' => [
-                'admin.monetization.view' => 'Cüzdan ve Satışları Görme',
-                'admin.monetization.edit' => 'Paket Oluşturma ve Bakiye Müdahalesi',
+                'admin.wallet.view' => 'Cüzdan ve işlemleri görüntüleme',
+                'admin.wallet.manage' => 'Bakiye ve paket müdahalesi',
+                'admin.shop.manage' => 'Mağaza paketleri ve fiyatlandırmayı yönetme',
+                'admin.finance.refund' => 'Finansal iade işlemi yapma',
+                'admin.finance.view' => 'Finans işlem defterini ve özetini görüntüleme',
             ],
             'Operations & Settings' => [
-                'admin.settings.manage' => 'Site Kimliği ve Sistem Ayarlarını Değiştirme',
-                'admin.ops.trigger' => 'Önbellek, Yedek ve Kuyruk Tetikleme',
-                'admin.logs.view' => 'Sistem ve Güvenlik Loglarını İnceleme',
+                'admin.jobs.run' => 'Önbellek, yedek, sitemap, kuyruk ve bakım işleri çalıştırma',
+                'admin.settings.modify' => 'Site ayarları, webhook ve ortam yapılandırmasını değiştirme',
+                'admin.health.view' => 'Sistem sağlık durumunu görüntüleme',
+                'admin.uploads.view' => 'Medya kütüphanesini görüntüleme',
+                'admin.uploads.delete' => 'Medya kayıtlarını ve dosyalarını silme',
+                'admin.uploads.optimize' => 'Medya dosyalarını optimize etme',
             ],
         ];
     }

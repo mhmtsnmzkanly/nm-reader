@@ -155,6 +155,7 @@ final class AuthService
         $_SESSION['roles'] = $roles;
         $_SESSION['permissions'] = $permissions;
         $_SESSION['is_admin'] = in_array('admin.panel.access', $permissions, true);
+        unset($_SESSION['admin_reauthenticated_at'], $_SESSION['admin_reauthenticated_user_id']);
 
         if (!isset($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
@@ -195,10 +196,15 @@ final class AuthService
             session_write_close();
         }
 
-        $token = bin2hex(random_bytes(32));
-        $tokenExpiry = date('Y-m-d H:i:s', time() + (365 * 24 * 60 * 60)); // 1 year for mobile
-        $stmt = $this->pdo->prepare('UPDATE users SET api_token = :token, api_token_expires_at = :expires WHERE id = :id');
-        $stmt->execute(['token' => $token, 'expires' => $tokenExpiry, 'id' => $user['id']]);
+        $token = null;
+        $clientType = strtolower(trim((string) ($payload['client_type'] ?? 'browser')));
+        if (in_array($clientType, ['mobile', 'api'], true)) {
+            $token = bin2hex(random_bytes(32));
+            $tokenHash = hash('sha256', $token);
+            $tokenExpiry = date('Y-m-d H:i:s', time() + (30 * 24 * 60 * 60));
+            $stmt = $this->pdo->prepare('UPDATE users SET api_token = :token, api_token_expires_at = :expires WHERE id = :id');
+            $stmt->execute(['token' => $tokenHash, 'expires' => $tokenExpiry, 'id' => $user['id']]);
+        }
 
         return [
             'id' => (string) $user['id'],
@@ -473,6 +479,28 @@ final class AuthService
                 // Ignore audit errors here
             }
         }
+    }
+
+    public function revokeOtherSessions(string $userId, string $currentSessionKey): int
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT session_key FROM user_sessions
+             WHERE user_id = :user_id AND session_key <> :current_session AND revoked_at IS NULL'
+        );
+        $stmt->execute(['user_id' => $userId, 'current_session' => $currentSessionKey]);
+        $sessionKeys = array_map('strval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+
+        if ($sessionKeys === []) return 0;
+
+        $update = $this->pdo->prepare(
+            'UPDATE user_sessions SET revoked_at = NOW()
+             WHERE user_id = :user_id AND session_key <> :current_session AND revoked_at IS NULL'
+        );
+        $update->execute(['user_id' => $userId, 'current_session' => $currentSessionKey]);
+        foreach ($sessionKeys as $sessionKey) {
+            $this->userTokens->revokeTokensBySessionKey($sessionKey);
+        }
+        return $update->rowCount();
     }
 
     private function resolveRoles(string $userId): array

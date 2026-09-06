@@ -102,6 +102,14 @@ final class UserRepository
         return $row === false ? null : $row;
     }
 
+    public function passwordHashForId(string $id): ?string
+    {
+        $stmt = $this->pdo->prepare('SELECT password_hash FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        $hash = $stmt->fetchColumn();
+        return $hash === false ? null : (string)$hash;
+    }
+
     public function markEmailVerified(string $userId): void
     {
         $stmt = $this->pdo->prepare('UPDATE users SET email_verified_at = NOW() WHERE id = :id');
@@ -151,17 +159,25 @@ final class UserRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $sql = 'SELECT 
-                    ucr.chapter_id,
-                    ucr.read_at,
+                    h.id,
+                    h.chapter_id,
+                    h.content_id,
+                    h.progress_pct AS progress,
+                    h.is_completed,
+                    h.last_read_at AS read_at,
                     c.chapter_number,
                     c.title AS chapter_title,
-                    ct.slug AS content_slug,
-                    ct.title AS content_title
-                FROM user_chapters_reads ucr
-                INNER JOIN chapters c ON c.id = ucr.chapter_id
-                INNER JOIN series ct ON ct.id = c.content_id
-                WHERE ucr.user_id = :user_id
-                ORDER BY ucr.read_at DESC
+                    s.slug AS content_slug,
+                    s.title AS content_title,
+                    s.type AS content_type,
+                    s.cover_image AS content_cover_image,
+                    s.status AS content_status,
+                    s.rating_avg AS content_rating
+                FROM user_reading_history h
+                INNER JOIN chapters c ON c.id = h.chapter_id
+                INNER JOIN series s ON s.id = h.content_id
+                WHERE h.user_id = :user_id
+                ORDER BY h.last_read_at DESC
                 LIMIT :limit OFFSET :offset';
 
         $stmt = $this->pdo->prepare($sql);
@@ -171,6 +187,109 @@ final class UserRepository
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    public function recordHistory(string $userId, string $chapterId, int $progress): void
+    {
+        $chapterStmt = $this->pdo->prepare(
+            'SELECT id, content_id, COALESCE(number, CAST(chapter_number AS DECIMAL(8,2)), 0.00) AS chapter_number
+             FROM chapters WHERE id = :chapter_id AND deleted_at IS NULL LIMIT 1'
+        );
+        $chapterStmt->execute(['chapter_id' => $chapterId]);
+        $chapter = $chapterStmt->fetch();
+        if ($chapter === false) {
+            throw new \DomainException('Chapter not found');
+        }
+
+        $progress = max(0, min(100, $progress));
+        $completed = $progress >= 100 ? 1 : 0;
+        $this->pdo->beginTransaction();
+        try {
+            $this->pdo->prepare(
+                'INSERT INTO user_reading_history
+                    (user_id, content_id, chapter_id, chapter_number, progress_pct, is_completed, last_read_at)
+                 VALUES (:user_id, :content_id, :chapter_id, :chapter_number, :progress, :completed, NOW())
+                 ON DUPLICATE KEY UPDATE progress_pct = GREATEST(progress_pct, VALUES(progress_pct)),
+                    is_completed = GREATEST(is_completed, VALUES(is_completed)),
+                    chapter_number = VALUES(chapter_number), last_read_at = NOW()'
+            )->execute([
+                'user_id' => $userId,
+                'content_id' => $chapter['content_id'],
+                'chapter_id' => $chapterId,
+                'chapter_number' => $chapter['chapter_number'],
+                'progress' => $progress,
+                'completed' => $completed,
+            ]);
+            $this->pdo->prepare(
+                'INSERT INTO user_chapters_reads (user_id, chapter_id, content_id, read_at)
+                 VALUES (:user_id, :chapter_id, :content_id, NOW())
+                 ON DUPLICATE KEY UPDATE read_at = NOW(), content_id = VALUES(content_id)'
+            )->execute(['user_id' => $userId, 'chapter_id' => $chapterId, 'content_id' => $chapter['content_id']]);
+            $this->pdo->prepare(
+                'INSERT INTO user_reading_progress (user_id, series_id, last_chapter_id, updated_at)
+                 VALUES (:user_id, :series_id, :chapter_id, NOW())
+                 ON DUPLICATE KEY UPDATE last_chapter_id = VALUES(last_chapter_id), updated_at = NOW()'
+            )->execute(['user_id' => $userId, 'series_id' => $chapter['content_id'], 'chapter_id' => $chapterId]);
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function deleteHistory(string $userId, string $historyId): bool
+    {
+        $lookup = ctype_digit($historyId)
+            ? 'SELECT id, chapter_id, content_id FROM user_reading_history WHERE user_id = :user_id AND id = :history_id LIMIT 1'
+            : 'SELECT id, chapter_id, content_id FROM user_reading_history WHERE user_id = :user_id AND chapter_id = :history_id LIMIT 1';
+        $stmt = $this->pdo->prepare($lookup);
+        $stmt->execute(['user_id' => $userId, 'history_id' => $historyId]);
+        $row = $stmt->fetch();
+        if ($row === false) return false;
+
+        $this->pdo->beginTransaction();
+        try {
+            $this->pdo->prepare('DELETE FROM user_reading_history WHERE user_id = :user_id AND id = :id')
+                ->execute(['user_id' => $userId, 'id' => $row['id']]);
+            $this->pdo->prepare('DELETE FROM user_chapters_reads WHERE user_id = :user_id AND chapter_id = :chapter_id')
+                ->execute(['user_id' => $userId, 'chapter_id' => $row['chapter_id']]);
+
+            $latest = $this->pdo->prepare(
+                'SELECT chapter_id FROM user_reading_history
+                 WHERE user_id = :user_id AND content_id = :content_id
+                 ORDER BY last_read_at DESC LIMIT 1'
+            );
+            $latest->execute(['user_id' => $userId, 'content_id' => $row['content_id']]);
+            $latestChapter = $latest->fetchColumn();
+            if ($latestChapter === false) {
+                $this->pdo->prepare('DELETE FROM user_reading_progress WHERE user_id = :user_id AND series_id = :content_id')
+                    ->execute(['user_id' => $userId, 'content_id' => $row['content_id']]);
+            } else {
+                $this->pdo->prepare(
+                    'UPDATE user_reading_progress SET last_chapter_id = :chapter_id, updated_at = NOW()
+                     WHERE user_id = :user_id AND series_id = :content_id'
+                )->execute(['chapter_id' => $latestChapter, 'user_id' => $userId, 'content_id' => $row['content_id']]);
+            }
+            $this->pdo->commit();
+            return true;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function clearHistory(string $userId): void
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $this->pdo->prepare('DELETE FROM user_reading_history WHERE user_id = :user_id')->execute(['user_id' => $userId]);
+            $this->pdo->prepare('DELETE FROM user_chapters_reads WHERE user_id = :user_id')->execute(['user_id' => $userId]);
+            $this->pdo->prepare('DELETE FROM user_reading_progress WHERE user_id = :user_id')->execute(['user_id' => $userId]);
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     /**
@@ -428,6 +547,24 @@ final class UserRepository
         $stmt->execute(['user_id' => $userId]);
     }
 
+    public function markNotificationRead(string $userId, int $notificationId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE user_notifications
+             SET is_read = 1, read_at = COALESCE(read_at, NOW())
+             WHERE id = :id AND user_id = :user_id'
+        );
+        $stmt->execute(['id' => $notificationId, 'user_id' => $userId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function deleteNotification(string $userId, int $notificationId): bool
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM user_notifications WHERE id = :id AND user_id = :user_id');
+        $stmt->execute(['id' => $notificationId, 'user_id' => $userId]);
+        return $stmt->rowCount() > 0;
+    }
+
     /**
      * Lists users that the current user is following.
      */
@@ -440,7 +577,9 @@ final class UserRepository
                     u.bio,
                     u.profile_image,
                     u.cover_image,
-                    u.created_at
+                    u.created_at,
+                    1 AS is_following,
+                    (SELECT COUNT(*) FROM user_follows fc WHERE fc.followed_id = u.id) AS followers_count
                 FROM user_follows f
                 INNER JOIN users u ON u.id = f.followed_id
                 WHERE f.follower_id = :user_id
@@ -486,6 +625,13 @@ final class UserRepository
             'follower_id' => $followerId,
             'followed_id' => $followingId,
         ]);
+    }
+
+    public function countFollowers(string $userId): int
+    {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM user_follows WHERE followed_id = :user_id');
+        $stmt->execute(['user_id' => $userId]);
+        return (int) $stmt->fetchColumn();
     }
 
     /**

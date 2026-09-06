@@ -44,7 +44,8 @@ export const FollowingUsersList: React.FC = () => {
 
   const handleToggleFollow = async (username: string) => {
     setTogglingUsername(username);
-    const res = await userService.toggleFollowUser(username);
+    const current = users.find((user) => user.username.toLowerCase() === username.toLowerCase());
+    const res = await userService.toggleFollowUser(username, current?.is_following ?? true);
     if (res.status === 'success' && res.data) {
       setUsers((prev) =>
         prev.map((u) => {

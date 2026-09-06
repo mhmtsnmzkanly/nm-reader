@@ -1,8 +1,10 @@
 # NM-Reader Final Integration Audit & Release Readiness Report
 
+> **Historical report:** This captures the 2026-08-14 audit and is not a statement about the current worktree. Re-run the project verification commands before release.
+
 **Version:** 1.0.0  
 **Audit Date:** 2026-08-14  
-**Audit Scope:** End-to-end audit across Architecture, API V1 Freeze, Client Services, Authentication, CSRF, Reader Access, Media Delivery, SEO Injection, React CSR Shell, Admin SSR, Security, and Automated Test Matrices.  
+**Audit Scope:** End-to-end audit across Architecture, API V1 Freeze, Client Services, Authentication, CSRF, Reader Access, Media Delivery, SEO Injection, React CSR Shell, Admin Panel, Security, and Automated Test Matrices.
 **Final Status:** **RELEASE READY**
 
 ---
@@ -41,7 +43,7 @@ The NM-Reader platform has achieved a decoupled, high-performance hybrid archite
 - **Public Web:** React 19 CSR single-page application served via server-side SEO-injected `public/app.html`.
 - **Backend API:** 94 canonical, frozen REST API endpoints under `/api/v1/*` returning unified JSON envelopes.
 - **Media Engine:** Isolated delivery differentiating immutable `/media/public/*` and temporary HMAC signed `/media/chapter/t_*`.
-- **Admin Console:** Native server-rendered PHP dashboard (`/admin/*`) utilizing AdminLTE and session RBAC middleware.
+- **Admin Console:** Unified client-rendered management shell at `/panel`, backed by permission-protected `/api/v1/admin/*` endpoints. Legacy `/admin/*` browser routes were removed.
 
 ---
 
@@ -58,8 +60,8 @@ The NM-Reader platform has achieved a decoupled, high-performance hybrid archite
 
 - **Architecture:** 3-tier client layer in `ui/src/api/` (`client.ts`, domain services, types, errors, config).
 - **Transport:** Native `fetch` with `credentials: "include"`.
-- **Provider Compatibility:** `ui/src/services/index.ts` cleanly provides real API services while supporting optional `VITE_USE_MOCK=true` fallback during development.
-- **Unit Verification:** 25/25 PASS in `ui/scripts/test-client.ts`.
+- **Provider:** `ui/src/services/provider.ts` always instantiates the real API services; the production UI has no mock/fixture switch.
+- **Unit Verification:** 40/40 PASS in `ui/scripts/test-client.ts`.
 
 ---
 
@@ -115,10 +117,10 @@ The NM-Reader platform has achieved a decoupled, high-performance hybrid archite
 
 ---
 
-## 10. Admin Management Console (SSR)
+## 10. Admin Management Console
 
-- **Execution:** Server-Side Rendered via `AdminPanelController` and `storage/views/admin_*.php` + `layout_adminlte.php`.
-- **Security:** Strict `AdminMiddleware` RBAC verification.
+- **Execution:** `WebController::adminPanelLime()` serves `storage/views/admin_panel_lime.php`; its client-side sections consume `/api/v1/admin/*`.
+- **Security:** Session access is checked before the shell is served, and API operations enforce endpoint-specific RBAC permissions.
 - **Independence:** Decoupled from the public React SPA build.
 
 ---
@@ -137,7 +139,7 @@ The NM-Reader platform has achieved a decoupled, high-performance hybrid archite
 | **User** | `/profile`, `/me` | React CSR (`ProfilePage`) | Authenticated | `noindex, nofollow` |
 | **User** | `/profile/{person}`, `/u/{name}` | React CSR (`PublicProfile`) | Public | `index, follow` |
 | **User** | `/library`, `/history`, `/wallet` | React CSR | Authenticated | `noindex, nofollow` |
-| **Admin** | `/admin/*` | PHP SSR (`AdminLTE`) | Admin RBAC | `noindex, nofollow` |
+| **Admin** | `/panel`, `/panel/*` | Lime client-rendered panel | Admin RBAC | `noindex, nofollow` |
 | **API** | `/api/v1/*` | JSON Controller | Session/API | Standard Envelope |
 | **Media** | `/media/public/*`, `/media/chapter/*`| Binary Stream | Public / Token | Cache / No-Store |
 

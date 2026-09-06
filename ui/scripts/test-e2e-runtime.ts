@@ -19,11 +19,9 @@ import {
   commentService,
   userService,
   walletService,
-} from '../src/api/services';
-import { apiClient } from '../src/api/client';
-import { getCsrfToken, setCsrfToken, clearCsrfToken } from '../src/api/auth';
+} from '../src/services/provider';
+import { getCsrfToken } from '../src/services/apiClient';
 import { resolveMediaUrl } from '../src/api/media';
-import { ApiClientError } from '../src/api/errors';
 
 let totalTests = 0;
 let passedTests = 0;
@@ -49,17 +47,15 @@ async function runE2EVerification() {
   console.log('==============================================================\n');
 
   const originalFetch = globalThis.fetch;
+  const originalWindow = globalThis.window;
+  globalThis.window = {
+    __NMR_CONTEXT: { auth: {} },
+  } as unknown as Window & typeof globalThis;
 
   try {
     // -----------------------------------------------------------------
-    // 1. Mock Fallback Audit
-    // -----------------------------------------------------------------
-    console.log('1. Auditing Service Provider Default Mode (Real API vs Mock)...');
-    const isMock = typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_USE_MOCK === 'true';
-    assert(isMock === false, 'Mock fallback is DISABLED by default (Real API active)');
-
-    // -----------------------------------------------------------------
-    // Setup Mock Backend Engine simulating PHP /api/v1 Router
+    // Setup isolated API test double simulating the PHP /api/v1 router.
+    // This exists only in the verification process and is never bundled into UI.
     // -----------------------------------------------------------------
     let serverSession: { userId: string | null; role: string; csrfToken: string; balance: number } = {
       userId: null,
@@ -271,8 +267,8 @@ async function runE2EVerification() {
         );
       }
 
-      if (urlStr.includes('/user/activity')) {
-        serverHistory.push({ slug: 'solo-leveling', progress: 1.0, chapter: '1' });
+      if (urlStr.includes('/user/history') && method === 'POST') {
+        serverHistory.push({ slug: body.contentSlug, progress: body.progress, chapter: body.chapterNumber });
         return new Response(
           JSON.stringify({ status: 'success', data: { tracked: true }, meta: {}, error: null }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -295,7 +291,7 @@ async function runE2EVerification() {
         }
       }
 
-      if (urlStr.includes('/content/manga/solo-leveling/comments')) {
+      if (urlStr.includes('/content/manga/solo-leveling/comments') && method === 'GET') {
         return new Response(
           JSON.stringify({
             status: 'success',
@@ -371,16 +367,16 @@ async function runE2EVerification() {
           status: 'error',
           data: null,
           meta: {},
-          error: { code: 404, key: 'NOT_FOUND', message: 'Route not found' },
+          error: { code: 404, key: 'NOT_FOUND', message: `Route not found: ${method} ${urlStr}` },
         }),
         { status: 404, headers: { 'Content-Type': 'application/json' } }
       );
     };
 
     // -----------------------------------------------------------------
-    // 2. Discovery & Content Routes
+    // 1. Discovery & Content Routes
     // -----------------------------------------------------------------
-    console.log('\n2. Testing Public Discovery & Content Routes...');
+    console.log('\n1. Testing Public Discovery & Content Routes...');
     const homeRes = await contentService.getHome(1, 20);
     assert(homeRes.status === 'success', 'GET /home returns status: success');
     assert(homeRes.data.explore.length > 0, 'Explore carousel contains content items');
@@ -396,7 +392,7 @@ async function runE2EVerification() {
     // -----------------------------------------------------------------
     // 3. Auth, Login & Session Restore
     // -----------------------------------------------------------------
-    console.log('\n3. Testing Auth, Login, Session Restore & CSRF Token Injection...');
+    console.log('\n2. Testing Auth, Login, Session Restore & CSRF Token Injection...');
     const loginRes = await authService.login('shadow@monarch.com', 'Password123', true);
     assert(loginRes.status === 'success', 'POST /auth/login returns status: success');
     assert(loginRes.data.username === 'sungjinwoo', 'User profile authenticated');
@@ -409,7 +405,7 @@ async function runE2EVerification() {
     // -----------------------------------------------------------------
     // 4. Reader, Media Resolution & Premium Chapter Unlock
     // -----------------------------------------------------------------
-    console.log('\n4. Testing Reader Stream, Media Token Resolution & Premium Unlock...');
+    console.log('\n3. Testing Reader Stream, Media Token Resolution & Premium Unlock...');
     const readerRes = await contentService.getChapterReader('manga', 'solo-leveling', '1');
     assert(readerRes.status === 'success', 'GET Chapter Reader loads chapter pages');
 
@@ -426,31 +422,36 @@ async function runE2EVerification() {
     // -----------------------------------------------------------------
     // 5. Reading History & Activity Tracking
     // -----------------------------------------------------------------
-    console.log('\n5. Testing Reading Progress & Activity Tracking...');
+    console.log('\n4. Testing Reading Progress & Activity Tracking...');
     const activityRes = await userService.recordHistory({
       contentSlug: 'solo-leveling',
+      chapterId: 'ch0001',
       chapterNumber: 1,
-      progress: 1.0,
+      progress: 10,
     });
-    assert(activityRes.status === 'success', 'POST /user/activity records user reading telemetry');
+    assert(activityRes.status === 'success', 'POST /user/history records reading progress');
     assert(serverHistory.length === 1, 'Server recorded reading progress');
 
     // -----------------------------------------------------------------
     // 6. User Library & Follows Flow
     // -----------------------------------------------------------------
-    console.log('\n6. Testing Library Follow / Unfollow Flow...');
+    console.log('\n5. Testing Library Follow / Unfollow Flow...');
     const followRes1 = await userService.toggleLibrary('manga', 'solo-leveling');
     assert(followRes1.status === 'success' && followRes1.data.in_library === true, 'Added series to library');
 
-    const followRes2 = await userService.toggleLibrary('manga', 'solo-leveling');
+    const followRes2 = await userService.toggleLibrary('manga', 'solo-leveling', true);
     assert(followRes2.status === 'success' && followRes2.data.in_library === false, 'Removed series from library');
 
     // -----------------------------------------------------------------
     // 7. Comments & Voting Flow
     // -----------------------------------------------------------------
-    console.log('\n7. Testing Comment Thread & Interaction Flow...');
+    console.log('\n6. Testing Comment Thread & Interaction Flow...');
     const commentListRes = await commentService.getComments('content', 'solo-leveling');
-    assert(commentListRes.status === 'success', 'GET content comments thread');
+    assert(
+      commentListRes.status === 'success',
+      'GET content comments thread',
+      JSON.stringify(commentListRes)
+    );
 
     const newCommentRes = await commentService.postComment('content', 'solo-leveling', 'Great series!');
     assert(newCommentRes.status === 'success', 'POST new comment with CSRF validation');
@@ -459,7 +460,7 @@ async function runE2EVerification() {
     // -----------------------------------------------------------------
     // 8. Wallet, Transactions & Shop
     // -----------------------------------------------------------------
-    console.log('\n8. Testing Wallet & Transaction Ledger...');
+    console.log('\n7. Testing Wallet & Transaction Ledger...');
     const walletRes = await walletService.getWallet();
     assert(walletRes.status === 'success', 'GET user wallet balance');
 
@@ -469,7 +470,7 @@ async function runE2EVerification() {
     // -----------------------------------------------------------------
     // 9. Blog Creation & Voting Flow
     // -----------------------------------------------------------------
-    console.log('\n9. Testing Blog Publishing & Upvote Flow...');
+    console.log('\n8. Testing Blog Publishing & Upvote Flow...');
     const createBlogRes = await blogService.createBlog('Solo Leveling Review', 'An epic journey from E to S rank');
     assert(createBlogRes.status === 'success', 'POST /blogs creates new blog post');
 
@@ -477,15 +478,15 @@ async function runE2EVerification() {
     assert(voteBlogRes.status === 'success', 'POST /blogs/{slug}/vote submits upvote');
 
     // -----------------------------------------------------------------
-    // 10. Logout & Session Invalidation
+    // 9. Logout & Session Invalidation
     // -----------------------------------------------------------------
-    console.log('\n10. Testing Logout & Cleanup...');
+    console.log('\n9. Testing Logout & Cleanup...');
     const logoutRes = await authService.logout();
     assert(logoutRes.status === 'success', 'POST /auth/logout terminates server session');
 
-    clearCsrfToken();
   } finally {
     globalThis.fetch = originalFetch;
+    globalThis.window = originalWindow;
   }
 
   console.log('\n==============================================================');

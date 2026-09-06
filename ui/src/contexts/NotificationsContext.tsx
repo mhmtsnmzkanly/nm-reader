@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { NotificationItem, NotificationPayloadData } from '../types/api';
 import { userService } from '../services';
 import { useAuth } from './AuthContext';
-import { scenarioManager } from '../mocks/scenarios';
 
 export type NotificationCategory = 'all' | 'unread' | 'chapters' | 'social' | 'system';
 
@@ -104,10 +103,6 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     fetchNotifications();
-    const unsub = scenarioManager.subscribe(() => {
-      fetchNotifications();
-    });
-    return unsub;
   }, [fetchNotifications]);
 
   const markAsRead = async (id: number) => {

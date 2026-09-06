@@ -32,7 +32,8 @@ final class AdminService
         'webtoon' => 'webtoon',
     ];
 
-    private const ALLOWED_STATUSES = ['ongoing', 'completed', 'hiatus'];
+    private const ALLOWED_STATUSES = ['ongoing', 'completed', 'hiatus', 'dropped'];
+    private const ALLOWED_LIFECYCLE_STATUSES = ['draft', 'scheduled', 'published', 'archived'];
     private const ALLOWED_CHAPTER_TYPES = ['text', 'image'];
 
     public function __construct(
@@ -105,12 +106,22 @@ final class AdminService
         $id = $this->entityIds->generateContentId();
         $isAdult = !empty($payload['is_adult']) ? 1 : 0;
         $isMembersOnly = !empty($payload['is_members_only']) ? 1 : 0;
+        $lifecycleStatus = strtolower(trim((string) ($payload['lifecycle_status'] ?? 'published')));
+        if (!in_array($lifecycleStatus, self::ALLOWED_LIFECYCLE_STATUSES, true)) {
+            throw new \InvalidArgumentException('Invalid lifecycle_status');
+        }
+        $scheduledAt = $this->normalizeDateTime($payload['scheduled_at'] ?? null);
+        if ($lifecycleStatus === 'scheduled' && $scheduledAt === null) {
+            throw new \InvalidArgumentException('scheduled_at is required for scheduled content');
+        }
+        $publishedAt = $lifecycleStatus === 'published' ? date('Y-m-d H:i:s') : null;
+        $archivedAt = $lifecycleStatus === 'archived' ? date('Y-m-d H:i:s') : null;
 
         $sql = 'INSERT INTO series (
-                    id, title, slug, description, type, status, is_adult, is_members_only, cover_image,
+                    id, title, slug, description, type, status, lifecycle_status, scheduled_at, published_at, archived_at, is_adult, is_members_only, cover_image,
                     rating_avg, rating_count, chapter_count, comment_count, created_at
                 ) VALUES (
-                    :id, :title, :slug, :description, :type, :status, :is_adult, :is_members_only, :cover_image,
+                    :id, :title, :slug, :description, :type, :status, :lifecycle_status, :scheduled_at, :published_at, :archived_at, :is_adult, :is_members_only, :cover_image,
                     0, 0, 0, 0, NOW()
                 )';
 
@@ -122,12 +133,17 @@ final class AdminService
             'description' => $description,
             'type' => $dbType,
             'status' => $status,
+            'lifecycle_status' => $lifecycleStatus,
+            'scheduled_at' => $scheduledAt,
+            'published_at' => $publishedAt,
+            'archived_at' => $archivedAt,
             'is_adult' => $isAdult,
             'is_members_only' => $isMembersOnly,
             'cover_image' => $coverImage,
         ]);
 
         $this->upsertContentMetadata($id, $author, $artist, $alternativeTitles, $country, $releaseYear);
+        $this->recordSeriesRevision($id, $moderatorId, 'create');
 
         if ($moderatorId !== null) {
             $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'create', "New series created: $title");
@@ -141,6 +157,8 @@ final class AdminService
             'slug' => $slug,
             'type' => $dbType,
             'status' => $status,
+            'lifecycle_status' => $lifecycleStatus,
+            'scheduled_at' => $scheduledAt,
             'is_adult' => (bool) $isAdult,
             'is_members_only' => (bool) $isMembersOnly,
             'url_path' => '/' . str_replace('_', '-', $dbType) . '/' . $slug,
@@ -172,7 +190,7 @@ final class AdminService
         $releaseYear = isset($payload['release_year']) ? $this->sanitizeYear((string) $payload['release_year']) : null;
 
         // Fetch current to check existence and for cache clearing
-        $stmt = $this->pdo->prepare('SELECT title, description, status, cover_image, slug, type FROM series WHERE id = :id');
+        $stmt = $this->pdo->prepare('SELECT * FROM series WHERE id = :id');
         $stmt->execute(['id' => $id]);
         $current = $stmt->fetch();
 
@@ -210,9 +228,28 @@ final class AdminService
             $updates[] = 'is_members_only = :is_members_only';
             $params['is_members_only'] = !empty($payload['is_members_only']) ? 1 : 0;
         }
+        if (isset($payload['lifecycle_status'])) {
+            $lifecycleStatus = strtolower(trim((string) $payload['lifecycle_status']));
+            if (!in_array($lifecycleStatus, self::ALLOWED_LIFECYCLE_STATUSES, true)) {
+                throw new \InvalidArgumentException('Invalid lifecycle_status');
+            }
+            $scheduledAt = $this->normalizeDateTime($payload['scheduled_at'] ?? null);
+            if ($lifecycleStatus === 'scheduled' && $scheduledAt === null) {
+                throw new \InvalidArgumentException('scheduled_at is required for scheduled content');
+            }
+            $updates[] = 'lifecycle_status = :lifecycle_status';
+            $updates[] = 'scheduled_at = :scheduled_at';
+            $updates[] = 'published_at = CASE WHEN :lifecycle_status_published = "published" THEN COALESCE(published_at, NOW()) ELSE published_at END';
+            $updates[] = 'archived_at = CASE WHEN :lifecycle_status_archived = "archived" THEN NOW() ELSE NULL END';
+            $params['lifecycle_status'] = $lifecycleStatus;
+            $params['lifecycle_status_published'] = $lifecycleStatus;
+            $params['lifecycle_status_archived'] = $lifecycleStatus;
+            $params['scheduled_at'] = $scheduledAt;
+        }
 
         $this->pdo->beginTransaction();
         try {
+            $this->recordSeriesRevision($id, $moderatorId, 'before_update', $current);
             if (!empty($updates)) {
                 $sql = 'UPDATE series SET ' . implode(', ', $updates) . ' WHERE id = :id';
                 $this->pdo->prepare($sql)->execute($params);
@@ -232,6 +269,114 @@ final class AdminService
 
         $this->clearContentCaches((string) $current['slug'], (string) $current['type']);
         $this->invalidateListingCaches();
+    }
+
+    public function changeContentLifecycle(string $id, string $action, ?string $scheduledAt, ?string $moderatorId): array
+    {
+        $current = $this->contentSnapshot($id);
+        if ($current === null) throw new \DomainException('Content not found');
+
+        $target = match ($action) {
+            'draft' => 'draft',
+            'schedule' => 'scheduled',
+            'publish' => 'published',
+            'archive' => 'archived',
+            'restore' => 'draft',
+            default => throw new \InvalidArgumentException('Invalid lifecycle action'),
+        };
+        $normalizedSchedule = $this->normalizeDateTime($scheduledAt);
+        if ($target === 'scheduled' && $normalizedSchedule === null) {
+            throw new \InvalidArgumentException('scheduled_at is required');
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $this->recordSeriesRevision($id, $moderatorId, 'before_' . $action, $current);
+            $stmt = $this->pdo->prepare(
+                'UPDATE series SET lifecycle_status = :status, scheduled_at = :scheduled_at,
+                    published_at = CASE WHEN :publish = 1 THEN NOW() ELSE published_at END,
+                    archived_at = CASE WHEN :archive = 1 THEN NOW() ELSE NULL END
+                 WHERE id = :id'
+            );
+            $stmt->execute([
+                'status' => $target,
+                'scheduled_at' => $target === 'scheduled' ? $normalizedSchedule : null,
+                'publish' => $target === 'published' ? 1 : 0,
+                'archive' => $target === 'archived' ? 1 : 0,
+                'id' => $id,
+            ]);
+            if ($moderatorId !== null) {
+                $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'lifecycle_' . $action, 'Lifecycle changed to ' . $target);
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
+        $this->clearContentCaches((string) $current['slug'], (string) $current['type']);
+        $this->invalidateListingCaches();
+        return ['id' => $id, 'lifecycle_status' => $target, 'scheduled_at' => $target === 'scheduled' ? $normalizedSchedule : null];
+    }
+
+    public function contentPreview(string $id): array
+    {
+        $content = $this->contentSnapshot($id);
+        if ($content === null) throw new \DomainException('Content not found');
+        $content['url_path'] = '/' . str_replace('_', '-', (string) $content['type']) . '/' . $content['slug'];
+        return $content;
+    }
+
+    public function contentRevisions(string $id, int $limit = 50): array
+    {
+        if ($this->contentSnapshot($id) === null) throw new \DomainException('Content not found');
+        $stmt = $this->pdo->prepare(
+            'SELECT r.id, r.action, r.snapshot_json, r.created_at, r.moderator_user_id, u.username AS moderator_username
+             FROM series_revisions r LEFT JOIN users u ON u.id = r.moderator_user_id
+             WHERE r.series_id = :id ORDER BY r.id DESC LIMIT :limit'
+        );
+        $stmt->bindValue(':id', $id);
+        $stmt->bindValue(':limit', max(1, min(100, $limit)), PDO::PARAM_INT);
+        $stmt->execute();
+        return array_map(static function (array $row): array {
+            $row['snapshot'] = json_decode((string) $row['snapshot_json'], true) ?: [];
+            unset($row['snapshot_json']);
+            return $row;
+        }, $stmt->fetchAll());
+    }
+
+    private function contentSnapshot(string $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM series WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        return $row === false ? null : $row;
+    }
+
+    private function recordSeriesRevision(string $id, ?string $moderatorId, string $action, ?array $snapshot = null): void
+    {
+        $snapshot ??= $this->contentSnapshot($id);
+        if ($snapshot === null) return;
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO series_revisions (series_id, moderator_user_id, action, snapshot_json)
+             VALUES (:series_id, :moderator_id, :action, :snapshot)'
+        );
+        $stmt->execute([
+            'series_id' => $id,
+            'moderator_id' => $moderatorId,
+            'action' => $action,
+            'snapshot' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        ]);
+    }
+
+    private function normalizeDateTime(mixed $value): ?string
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') return null;
+        try {
+            return (new \DateTimeImmutable($value))->format('Y-m-d H:i:s');
+        } catch (\Throwable) {
+            throw new \InvalidArgumentException('Invalid date/time');
+        }
     }
 
     private function upsertContentMetadata(string $contentId, ?string $author, ?string $artist, ?string $alternativeTitles, ?string $country, ?int $releaseYear): void

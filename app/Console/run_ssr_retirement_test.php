@@ -7,7 +7,7 @@ declare(strict_types=1);
  * Validates:
  * 1. Public routes cleanly serve the React App Shell (app.html) with SEO injection.
  * 2. Legacy public SSR view files are completely retired.
- * 3. Admin SSR views are preserved and intact.
+ * 3. The legacy admin SSR views are retired in favor of the unified panel.
  * 4. Robots indexing policies on public vs private routes.
  * 5. Media & API boundary isolation and zero token leakage.
  */
@@ -43,7 +43,7 @@ echo "      NM-READER — SSR RETIREMENT VERIFICATION SUITE           \n";
 echo "==============================================================\n\n";
 
 // -----------------------------------------------------------------
-// 1. Storage / Views Directory Audit (Admin Preserved, Public Retired)
+// 1. Storage / Views Directory Audit (Legacy SSR Retired)
 // -----------------------------------------------------------------
 echo "1. Auditing storage/views Directory Structure...\n";
 $viewsDir = $basePath . '/storage/views';
@@ -67,8 +67,8 @@ foreach ($retiredPublicViews as $view) {
     assertCheck(!file_exists($viewsDir . '/' . $view), "Legacy public view '{$view}' is retired");
 }
 
-// Required Admin SSR views that MUST exist in storage/views
-$requiredAdminViews = [
+// Retired legacy admin views that must NOT exist in storage/views
+$retiredAdminViews = [
     'admin_dashboard.php',
     'admin_content.php',
     'admin_blogs.php',
@@ -83,9 +83,11 @@ $requiredAdminViews = [
     'layout_adminlte.php'
 ];
 
-foreach ($requiredAdminViews as $adminView) {
-    assertCheck(file_exists($viewsDir . '/' . $adminView), "Admin SSR view '{$adminView}' is preserved");
+foreach ($retiredAdminViews as $adminView) {
+    assertCheck(!file_exists($viewsDir . '/' . $adminView), "Legacy admin view '{$adminView}' is retired");
 }
+
+assertCheck(file_exists($viewsDir . '/admin_panel_lime.php'), "Unified '/panel' view is present");
 
 // -----------------------------------------------------------------
 // 2. React App Shell Delivery & SEO Injection

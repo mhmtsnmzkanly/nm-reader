@@ -242,9 +242,10 @@ final class CacheService
             @unlink($indexFile);
         }
 
-        $fastrouteCache = $dir . '/fastroute_cache.php';
-        if (is_file($fastrouteCache)) {
-            @unlink($fastrouteCache);
+        foreach (glob($dir . '/fastroute_cache*.php') ?: [] as $fastrouteCache) {
+            if (is_file($fastrouteCache)) {
+                @unlink($fastrouteCache);
+            }
         }
 
         return $deleted;

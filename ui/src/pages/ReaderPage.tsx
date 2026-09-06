@@ -32,7 +32,7 @@ export const ChapterReader: React.FC = () => {
   const number = params.chapterNumber || params.number || '1';
 
   const { readerSettings, t } = usePreferences();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -62,17 +62,6 @@ export const ChapterReader: React.FC = () => {
         }
       });
 
-      // Record reading history for this chapter
-      userService.recordHistory({
-        contentSlug: slug,
-        contentType: type as ContentType,
-        chapterId: data.id,
-        chapterNumber: data.chapter_number || number,
-        chapterTitle: data.title,
-        page: 1,
-        totalPages: data.pages?.length || 20,
-        progress: 10,
-      });
     } catch (err: any) {
       setError(err?.message || t('reader.errorTitle'));
     } finally {
@@ -137,6 +126,35 @@ export const ChapterReader: React.FC = () => {
     setProgress(pageProg);
   }, [currentPageIndex, readerSettings.layout, chapter]);
 
+  const lastSavedProgress = React.useRef<Record<string, number>>({});
+
+  // Persist real reader progress after scrolling/page navigation settles.
+  useEffect(() => {
+    if (!isAuthenticated || !chapter || chapter.access?.granted !== true) return;
+
+    const roundedProgress = Math.min(100, Math.max(0, Math.round(progress)));
+    const lastSaved = lastSavedProgress.current[chapter.id] ?? -1;
+    if (roundedProgress <= 0 || (roundedProgress < 100 && Math.abs(roundedProgress - lastSaved) < 5)) return;
+
+    const timer = window.setTimeout(async () => {
+      const result = await userService.recordHistory({
+        contentSlug: slug,
+        contentType: type as ContentType,
+        chapterId: chapter.id,
+        chapterNumber: chapter.chapter_number || number,
+        chapterTitle: chapter.title,
+        page: currentPageIndex + 1,
+        totalPages: chapter.pages?.length || 1,
+        progress: roundedProgress,
+      });
+      if (result.status === 'success') {
+        lastSavedProgress.current[chapter.id] = roundedProgress;
+      }
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [chapter, currentPageIndex, isAuthenticated, number, progress, slug, type]);
+
   // Handle unlock action
   const handleUnlock = async () => {
     if (!chapter) return;
@@ -154,7 +172,7 @@ export const ChapterReader: React.FC = () => {
   const handleToggleBookmark = async () => {
     setBookmarked((prev) => !prev);
     try {
-      await contentService.toggleFollow(type as ContentType, slug);
+      await contentService.toggleFollow(type as ContentType, slug, bookmarked);
     } catch (err) {
       // Revert if error
       setBookmarked((prev) => !prev);

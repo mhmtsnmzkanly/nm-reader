@@ -1,5 +1,7 @@
 # NM-Reader Public SSR Retirement Specification
 
+> **Historical migration record:** References to the 94-route freeze describe the original baseline. `app/Config.php` is the runtime route authority; `docs/api/openapi.json` is a generated reference for the documented subset.
+
 **Version:** 1.0.0  
 **Status:** CANONICAL SPECIFICATION  
 **Scope:** Architectural declaration and verification of the full retirement of legacy public Server-Side Rendered (SSR) views in favor of the React Client-Side Rendered (CSR) App Shell with server-side SEO injection.
@@ -60,14 +62,14 @@ All public-facing PHP views and template rendering logic have been **permanently
 
 ---
 
-## 4. Admin SSR Architecture (Preserved Exception)
+## 4. Unified Admin Panel
 
-The management console ([`/admin/*`](file:///home/duldul/Belgeler/nm-reader/app/Controllers/AdminPanelController.php)) **remains on Server-Side Rendering (SSR)**.
+The management console is available only at `/panel` and `/panel/*`. `WebController::adminPanelLime()` serves the unified `storage/views/admin_panel_lime.php` shell, which consumes the `/api/v1/admin/*` API.
 
 ### Rationale:
-- Admin panel security relies directly on server session RBAC middleware and CSRF enforcement.
-- Admin UI does not require public indexing or search engine crawling.
-- Preserves the battle-tested AdminLTE template and operations console without introducing unnecessary frontend complexity.
+- The shell requires an authenticated admin session.
+- Each admin API operation retains its RBAC and CSRF enforcement.
+- The legacy `/admin/*` browser routes, per-page templates, shared layout, and bundle have been removed.
 
 ---
 
@@ -84,7 +86,7 @@ The management console ([`/admin/*`](file:///home/duldul/Belgeler/nm-reader/app/
 | `/search` | `WebController::search` | `app.html` + noindex, follow | `SearchPage` |
 | `/profile` | `WebController::profile` | `app.html` + noindex, nofollow | `ProfilePage` |
 | `/profile/{person}` | `WebController::profile` | `app.html` + Public Creator | `PublicProfilePage` |
-| `/admin/*` | `AdminPanelController` | `storage/views/admin_*.php` + `layout_adminlte.php` | N/A (Server SSR) |
+| `/panel`, `/panel/*` | `WebController::adminPanelLime` | `storage/views/admin_panel_lime.php` | Built-in client router |
 | `/api/v1/*` | `ApiController` | JSON API Envelope | N/A (Data Transport) |
 | `/media/*` | `MediaController` | Binary Media Stream | N/A (Media Engine) |
 
@@ -129,19 +131,11 @@ Media endpoints (`/media/public/*` and `/media/chapter/*`) are fully independent
 - ❌ `storage/views/layout_main.php`
 - ❌ `storage/views/partials_modals.php`
 
-### Preserved Admin Views:
-- ✅ `storage/views/admin_dashboard.php`
-- ✅ `storage/views/admin_content.php`
-- ✅ `storage/views/admin_blogs.php`
-- ✅ `storage/views/admin_comments.php`
-- ✅ `storage/views/admin_users.php`
-- ✅ `storage/views/admin_ops.php`
-- ✅ `storage/views/admin_monetization.php`
-- ✅ `storage/views/admin_config.php`
-- ✅ `storage/views/admin_uploads.php`
-- ✅ `storage/views/admin_logs.php`
-- ✅ `storage/views/admin_tutorial.php`
-- ✅ `storage/views/layout_adminlte.php`
+### Admin Views:
+- ✅ `storage/views/admin_panel_lime.php` (unified panel)
+- ❌ Legacy `storage/views/admin_*.php` per-page templates (removed)
+- ❌ `storage/views/layout_adminlte.php` (removed)
+- ❌ `public/assets/js/admin-bundle.js` (removed)
 - ✅ `storage/views/install.php` (Installer fallback view)
 - ✅ `storage/views/error.php` (Error fallback view)
 
@@ -152,7 +146,7 @@ Media endpoints (`/media/public/*` and `/media/chapter/*`) are fully independent
 Automated verification is executed via:
 
 ```bash
-# Verify SSR retirement & view structure (44 checks)
+# Verify SSR retirement & view structure
 composer test:ssr
 
 # Verify SEO injection & JSON-LD (32 checks)

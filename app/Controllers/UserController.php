@@ -89,6 +89,39 @@ final class UserController
         return ResponseHelper::paginate($items, $page, $perPage);
     }
 
+    public function recordHistory(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = $request->getParsedBody();
+            $this->users->recordHistory(
+                (string) $request->getAttribute('user_id'),
+                is_array($payload) ? $payload : []
+            );
+            return ResponseHelper::success(['recorded' => true]);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        }
+    }
+
+    public function deleteHistory(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $deleted = $this->users->deleteHistory(
+            (string) $request->getAttribute('user_id'),
+            (string) ($args['historyId'] ?? '')
+        );
+        return $deleted
+            ? ResponseHelper::success(['deleted' => true])
+            : ResponseHelper::error(404, 'History entry not found');
+    }
+
+    public function clearHistory(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $this->users->clearHistory((string) $request->getAttribute('user_id'));
+        return ResponseHelper::success(['cleared' => true]);
+    }
+
     /**
      * Fetches current site/reader preferences.
      */
@@ -191,8 +224,27 @@ final class UserController
     public function markNotificationsRead(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $userId = (string) $request->getAttribute('user_id');
-        $this->users->markNotificationsRead($userId);
-        return ResponseHelper::success(['updated' => true]);
+        $body = $request->getParsedBody();
+        $requestedId = is_array($body) ? ($body['id'] ?? 'all') : 'all';
+        $notificationId = is_numeric($requestedId) ? (int) $requestedId : null;
+        $marked = $this->users->markNotificationsRead($userId, $notificationId);
+
+        if ($notificationId !== null && !$marked) {
+            return ResponseHelper::error(404, 'Notification not found');
+        }
+
+        return ResponseHelper::success(['updated' => true, 'marked' => true]);
+    }
+
+    public function deleteNotification(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $deleted = $this->users->deleteNotification(
+            (string) $request->getAttribute('user_id'),
+            (int) ($args['notificationId'] ?? 0)
+        );
+        return $deleted
+            ? ResponseHelper::success(['deleted' => true])
+            : ResponseHelper::error(404, 'Notification not found');
     }
 
     /**
@@ -236,8 +288,7 @@ final class UserController
         try {
             $userId = (string) $request->getAttribute('user_id');
             $person = (string) $args['person'];
-            $this->users->followUser($userId, $person);
-            return ResponseHelper::success(['followed' => true]);
+            return ResponseHelper::success($this->users->followUser($userId, $person));
         } catch (\InvalidArgumentException $exception) {
             return ResponseHelper::error(400, $exception->getMessage());
         } catch (\DomainException $exception) {
@@ -255,8 +306,7 @@ final class UserController
         try {
             $userId = (string) $request->getAttribute('user_id');
             $person = (string) $args['person'];
-            $this->users->unfollowUser($userId, $person);
-            return ResponseHelper::success(['followed' => false]);
+            return ResponseHelper::success($this->users->unfollowUser($userId, $person));
         } catch (\InvalidArgumentException $exception) {
             return ResponseHelper::error(400, $exception->getMessage());
         } catch (\DomainException $exception) {
@@ -272,6 +322,19 @@ final class UserController
         } catch (\DomainException $exception) {
             return ResponseHelper::error(404, $exception->getMessage());
         }
+    }
+
+    /**
+     * Coin crediting requires a verified payment-provider callback. Until one is
+     * configured, fail explicitly instead of exposing a route that could mint coins.
+     */
+    public function purchasePackage(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        return ResponseHelper::error(
+            503,
+            'Checkout is not configured. Please contact the site administrator.',
+            'PAYMENT_PROVIDER_NOT_CONFIGURED'
+        );
     }
 
     public function walletTransactions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

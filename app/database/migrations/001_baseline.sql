@@ -1,0 +1,2 @@
+-- Baseline marker for databases originally installed from app/database/schema.sql.
+-- The destructive install schema is intentionally not repeated in migrations.

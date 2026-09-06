@@ -182,12 +182,11 @@ export class HttpClient {
   ): Promise<ApiResponse<T>> {
     try {
       const refreshedToken = await withRefreshLock(async () => {
-        // Exchange session token via POST /api/v1/auth/refresh without CSRF
-        const refreshRes = await this.post<{ csrf_token: string }>(
-          '/auth/refresh',
-          {},
-          { skipCsrf: true, skipAuthRetry: true }
-        );
+        // Fetch a fresh CSRF token without rotating the long-lived refresh token.
+        const refreshRes = await this.get<{ csrf_token: string }>('/auth/csrf', {
+          skipCsrf: true,
+          skipAuthRetry: true,
+        });
         return (refreshRes as ApiSuccess<{ csrf_token: string }>).data?.csrf_token || null;
       });
 

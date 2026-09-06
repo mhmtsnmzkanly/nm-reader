@@ -91,7 +91,13 @@ final class ReportRepository
                         ELSE NULL
                     END) AS target_title,
                     ch.chapter_number,
-                    c.body AS comment_body
+                    c.body AS comment_body,
+                    (CASE
+                        WHEN r.target_type = "series" THEN CONCAT("/", s.type, "/", s.slug)
+                        WHEN r.target_type = "chapter" THEN CONCAT("/", s2.type, "/", s2.slug, "/chapter/", ch.chapter_number)
+                        WHEN r.target_type = "blog" THEN CONCAT("/blogs/", b.slug)
+                        ELSE NULL
+                    END) AS target_url
                 FROM reports r
                 INNER JOIN users u ON u.id = r.user_id
                 LEFT JOIN users ru ON ru.id = r.reviewed_by
@@ -166,7 +172,13 @@ final class ReportRepository
                         ELSE NULL
                     END) AS target_title,
                     ch.chapter_number,
-                    SUBSTRING(c.body, 1, 120) AS comment_snippet
+                    SUBSTRING(c.body, 1, 120) AS comment_snippet,
+                    (CASE
+                        WHEN r.target_type = "series" THEN CONCAT("/", s.type, "/", s.slug)
+                        WHEN r.target_type = "chapter" THEN CONCAT("/", s2.type, "/", s2.slug, "/chapter/", ch.chapter_number)
+                        WHEN r.target_type = "blog" THEN CONCAT("/blogs/", b.slug)
+                        ELSE NULL
+                    END) AS target_url
                 FROM reports r
                 INNER JOIN users u ON u.id = r.user_id
                 LEFT JOIN users ru ON ru.id = r.reviewed_by

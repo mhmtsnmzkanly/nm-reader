@@ -53,10 +53,10 @@ export class ApiWalletService implements IWalletService {
   }
 
   public purchasePackage(
-    _packageId: number
+    packageId: number
   ): Promise<ApiResponse<{ purchased: boolean; balance: number; package: ShopPackage }>> {
     return apiClient.post<{ purchased: boolean; balance: number; package: ShopPackage }>(
-      '/user/wallet'
+      `/shop/packages/${packageId}/purchase`
     );
   }
 

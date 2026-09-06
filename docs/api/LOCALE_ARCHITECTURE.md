@@ -25,7 +25,7 @@ GET / (302 → /tr)               → GET / (200 OK — React App Shell)
 | `WebController::render()` | `$urlLang` route-argument extraction |
 | `WebController::render()` | URL-to-DB language sync block (writing URL lang to user preferences) |
 | `WebController::render()` | Locale-prefixed `$url` helper (`/tr/browse` → `/browse`) |
-| `WebController::renderAdmin()` | Locale-prefixed `$url` helper for admin panel |
+| Legacy admin SSR renderer | `WebController::renderAdmin()` and `/admin/*` views |
 | `WebController::sitemapXml()` | Unused `$supportedLangs` variable |
 | `App.tsx` | All `/:lang(tr|en)/*` prefixed React Router routes |
 
@@ -68,7 +68,7 @@ GET / (302 → /tr)               → GET / (200 OK — React App Shell)
 |:---|:---|:---|
 | `/api/v1/*` | **NONE** | Frozen API contract |
 | `/media/*` | **NONE** | Frozen media contract |
-| `/admin/*` | **NONE** | Admin panel |
+| `/panel` / `/panel/*` | **NONE** | Unified admin panel |
 
 ### Legacy URL Migration (301 Permanent Redirects)
 
@@ -81,6 +81,7 @@ GET /tr/manga/x  → 301 → /manga/x
 
 GET /tr/api/v1/* → 404  (no migration for invalid paths)
 GET /tr/admin/*  → 404  (no migration for invalid paths)
+GET /tr/panel/*  → 404  (no migration for protected paths)
 GET /tr/media/*  → 404  (no migration for invalid paths)
 ```
 
@@ -143,7 +144,7 @@ Priority order (URL segment detection **removed**):
 
 - **API Error Localization**: `App\Middleware\I18nMiddleware` resolves the user's preferred language via `I18nService` and localizes error message strings using `storage/lang/tr.php` and `storage/lang/en.php`.
 - **API Dictionaries**: `GET /api/v1/i18n/{lang}` remains available as part of the frozen API v1 contract. Used by the React frontend to load server-side translation strings.
-- **Admin Panel**: Admin routes (`/admin/*`) remain isolated under `App\Middleware\PermissionMiddleware` with their own independent rendering. Admin locale follows the same I18nService resolution (no URL-based locale).
+- **Admin Panel**: The browser UI is served only from `/panel` and `/panel/*`. It consumes the permission-protected `/api/v1/admin/*` endpoints; the removed `/admin/*` browser routes are not aliases or redirects.
 
 ---
 

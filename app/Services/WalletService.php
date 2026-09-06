@@ -53,6 +53,54 @@ final class WalletService
         ];
     }
 
+    public function adminFinance(int $page, int $perPage, string $query = '', ?string $type = null, string $sort = 'newest'): array
+    {
+        $result = $this->wallets->listAdminTransactions($page, $perPage, trim($query), $type, $sort);
+        return [
+            'items' => $result['items'],
+            'summary' => $this->wallets->adminTransactionSummary(),
+            'meta' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total' => $result['total'],
+                'total_pages' => max(1, (int)ceil($result['total'] / $perPage)),
+            ],
+        ];
+    }
+
+    public function refundTransaction(int $transactionId, string $reason, string $moderatorId): array
+    {
+        $reason = trim($reason);
+        if ($reason === '') throw new \InvalidArgumentException('reason is required');
+        $pdo = $this->wallets->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $original = $this->wallets->transactionForUpdate($transactionId);
+            if (!$original) throw new \DomainException('Transaction not found');
+            $eligible = ['chapter_unlock', 'series_unlock', 'feature_unlock', 'manual_debit'];
+            if (!in_array((string)$original['type'], $eligible, true) || (int)$original['coin_delta'] >= 0) {
+                throw new \DomainException('Only debit or unlock transactions can be refunded');
+            }
+            $amount = abs((int)$original['coin_delta']);
+            if ($this->wallets->refundedCoinForTransaction($transactionId) >= $amount) {
+                throw new \DomainException('Transaction is already refunded');
+            }
+            $userId = (string)$original['user_id'];
+            $wallet = $this->wallets->getWalletForUpdate($userId);
+            $newBalance = (int)$wallet['balance_coin'] + $amount;
+            $newSpent = max(0, (int)$wallet['total_coin_spent'] - $amount);
+            $this->wallets->updateWalletBalances($userId, $newBalance, (int)$wallet['total_coin_purchased'], $newSpent);
+            $refundId = $this->wallets->createTransaction($userId, 'refund', $amount, $newBalance, 'wallet_transaction', (string)$transactionId, $reason, ['original_type' => $original['type']], $moderatorId);
+            $this->wallets->revokeUnlockByTransactionId($transactionId);
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
+        $this->recordAdminAction($moderatorId, 'user', (string)$original['user_id'], 'refund', "Transaction $transactionId refunded: $reason");
+        return ['refund_transaction_id' => $refundId, 'original_transaction_id' => $transactionId, 'refunded_coin' => $amount, 'wallet' => $this->wallet((string)$original['user_id'])];
+    }
+
     public function packages(int $page, int $perPage, bool $activeOnly = true): array
     {
         $items = $this->wallets->listPackages($page, $perPage, $activeOnly);

@@ -66,9 +66,8 @@ final class AuthMiddleware implements MiddlewareInterface
         }
 
         $roles = $request->getAttribute('roles') ?? (is_array($_SESSION['roles'] ?? null) ? $_SESSION['roles'] : []);
-        $permissions = $request->getAttribute('permissions') ?? (is_array($_SESSION['permissions'] ?? null) ? $_SESSION['permissions'] : []);
         $normalizedRoles = $this->authorization->normalizeRoles($roles);
-        $effectivePermissions = !empty($permissions) ? $permissions : $this->authorization->resolveEffectivePermissions($normalizedRoles, [], (string) $userId);
+        $effectivePermissions = $this->authorization->resolveEffectivePermissions($normalizedRoles, [], (string) $userId);
         $isAdmin = in_array('admin.panel.access', $effectivePermissions, true) || $this->authorization->highestRole($normalizedRoles) === 'admin';
 
         // Synchronize session if session is active

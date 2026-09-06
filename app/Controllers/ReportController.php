@@ -61,7 +61,8 @@ final class ReportController
                 $result['items'],
                 $page,
                 $perPage,
-                ['counts' => $result['counts'], 'total' => $result['meta']['total']]
+                $result['meta']['total'],
+                ['counts' => $result['counts']]
             );
         } catch (InvalidArgumentException $e) {
             return ResponseHelper::error(400, $e->getMessage());

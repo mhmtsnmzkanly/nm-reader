@@ -36,7 +36,11 @@ final class RequireVerifiedEmailMiddleware implements MiddlewareInterface
 
         $user = $this->users->findById($userId);
         if ($user === null || empty($user['email_verified_at'])) {
-            return ResponseHelper::error(403, 'EMAIL_VERIFICATION_REQUIRED: Bu işlemi gerçekleştirmek için lütfen e-posta adresinizi doğrulayın.');
+            return ResponseHelper::error(
+                403,
+                'Bu işlemi gerçekleştirmek için lütfen e-posta adresinizi doğrulayın.',
+                'EMAIL_VERIFICATION_REQUIRED'
+            );
         }
 
         return $handler->handle($request);

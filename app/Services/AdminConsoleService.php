@@ -13,12 +13,23 @@ final class AdminConsoleService
 {
     private const CACHE_KEY_KPI = 'admin_kpi_summary';
     private const CACHE_TTL_KPI = 10;
+    private const ENV_MASK = '********';
+    private const ENV_EDITABLE_KEYS = [
+        'APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'APP_TIMEZONE', 'CORS_ALLOWED_ORIGINS',
+        'SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL', 'SESSION_COOKIE_SECURE',
+        'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE',
+        'SITE_NAME', 'SITE_ABBREVIATION', 'SITE_DESCRIPTION', 'SITE_LOGO', 'SITE_ADDRESS',
+        'DEFAULT_LANGUAGE', 'DEFAULT_THEME', 'DEFAULT_PROFILE_IMAGE', 'DEFAULT_CONTENT_COVER_IMAGE',
+        'ENFORCE_HTTPS', 'RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY',
+        'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY',
+    ];
 
     public function __construct(
         private readonly AdminConsoleRepository $repo,
         private readonly CacheService $cache,
         private readonly RetentionService $retention,
-        private readonly AnalyticsAggregationService $aggregation
+        private readonly AnalyticsAggregationService $aggregation,
+        private readonly SlugService $slugger
     ) {
     }
 
@@ -67,9 +78,9 @@ final class AdminConsoleService
     /**
      * Retrieves audit logs with optional filtering.
      */
-    public function listAuditLogs(int $page, int $perPage): array
+    public function listAuditLogs(int $page, int $perPage, string $query = '', ?string $method = null, ?string $statusGroup = null, ?string $userId = null, ?string $dateFrom = null, ?string $dateTo = null, string $sort = 'newest'): array
     {
-        $result = $this->repo->listAuditLogs($page, $perPage);
+        $result = $this->repo->listAuditLogs($page, $perPage, trim($query), $method, $statusGroup, $userId, $dateFrom, $dateTo, $sort);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['username']);
 
         return $this->withMeta($items, $result['total'], $page, $perPage);
@@ -87,9 +98,9 @@ final class AdminConsoleService
     /**
      * Paginated list of users for management.
      */
-    public function listUsers(int $page, int $perPage): array
+    public function listUsers(int $page, int $perPage, string $query = '', ?string $status = null, ?string $role = null, string $sort = 'newest'): array
     {
-        $result = $this->repo->listUsers($page, $perPage);
+        $result = $this->repo->listUsers($page, $perPage, $query, $status, $role, $sort);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['username', 'bio']);
 
         return $this->withMeta($items, $result['total'], $page, $perPage);
@@ -104,9 +115,9 @@ final class AdminConsoleService
     /**
      * Paginated list of content (series) for management.
      */
-    public function listContents(int $page, int $perPage): array
+    public function listContents(int $page, int $perPage, string $query = '', ?string $status = null, ?string $type = null, ?string $lifecycle = null, string $sort = 'newest'): array
     {
-        $result = $this->repo->listContents($page, $perPage);
+        $result = $this->repo->listContents($page, $perPage, $query, $status, $type, $lifecycle, $sort);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['title']);
 
         return $this->withMeta($items, $result['total'], $page, $perPage);
@@ -115,10 +126,40 @@ final class AdminConsoleService
     /**
      * Lists jobs in the system queue.
      */
-    public function listQueueJobs(int $page, int $perPage): array
+    public function listQueueJobs(int $page, int $perPage, ?string $status = null, string $query = ''): array
     {
-        $result = $this->repo->listQueueJobs($page, $perPage);
+        $result = $this->repo->listQueueJobs($page, $perPage, $status, trim($query));
         return $this->withMeta($result['items'], $result['total'], $page, $perPage);
+    }
+
+    public function retryQueueJob(int $id, string $moderatorId): void
+    {
+        if (!$this->repo->retryQueueJob($id)) throw new \DomainException('Only failed or cancelled jobs can be retried');
+        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'trigger', 'Queue job retried');
+    }
+
+    public function cancelQueueJob(int $id, string $moderatorId): void
+    {
+        if (!$this->repo->cancelQueueJob($id)) throw new \DomainException('Only pending jobs can be cancelled');
+        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'trigger', 'Queue job cancelled');
+    }
+
+    public function systemHealth(): array
+    {
+        $snapshot = $this->repo->systemHealthSnapshot();
+        $base = dirname(__DIR__, 2);
+        $paths = [$base . '/storage', $base . '/storage/logs', $base . '/storage/cache'];
+        $snapshot['runtime'] = ['php_version' => PHP_VERSION, 'memory_limit' => ini_get('memory_limit'), 'memory_usage_bytes' => memory_get_usage(true)];
+        $snapshot['storage'] = [
+            'ok' => array_reduce($paths, static fn(bool $ok, string $path): bool => $ok && is_dir($path) && is_writable($path), true),
+            'free_bytes' => (int)(disk_free_space($base) ?: 0),
+            'total_bytes' => (int)(disk_total_space($base) ?: 0),
+        ];
+        $backupDir = $base . '/storage/backups';
+        $backups = is_dir($backupDir) ? array_values(array_filter(glob($backupDir . '/*') ?: [], 'is_file')) : [];
+        usort($backups, static fn(string $a, string $b): int => (filemtime($b) ?: 0) <=> (filemtime($a) ?: 0));
+        $snapshot['backup'] = $backups === [] ? null : ['file' => basename($backups[0]), 'created_at' => gmdate('Y-m-d H:i:s', filemtime($backups[0]) ?: time()), 'size_bytes' => (int)(filesize($backups[0]) ?: 0)];
+        return $snapshot;
     }
 
     /**
@@ -155,9 +196,11 @@ final class AdminConsoleService
     /**
      * Lists all system uploads with pagination.
      */
-    public function listUploads(int $page, int $perPage): array
+    public function listUploads(int $page, int $perPage, string $query = '', ?string $mime = null, bool $orphansOnly = false): array
     {
-        return $this->repo->listUploads($page, $perPage);
+        $result = $this->repo->listUploads($page, $perPage, trim($query), $mime, $orphansOnly);
+        $result['stats'] = $this->repo->uploadStats();
+        return $result;
     }
 
     /**
@@ -185,6 +228,51 @@ final class AdminConsoleService
         }
     }
 
+    public function deleteUploads(array $ids, string $moderatorId): array
+    {
+        $deleted = 0;
+        foreach (array_values(array_unique(array_map('intval', $ids))) as $id) {
+            if ($id <= 0) continue;
+            $before = $this->repo->uploadById($id);
+            if (!$before) continue;
+            $this->deleteUpload($id, $moderatorId);
+            $deleted++;
+        }
+        return ['deleted' => $deleted];
+    }
+
+    public function optimizeUpload(int $id, string $moderatorId): array
+    {
+        $upload = $this->repo->uploadById($id);
+        if (!$upload) throw new \InvalidArgumentException('Upload not found');
+        $mime = (string)$upload['mime_type'];
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true) || !function_exists('imagecreatefromstring')) {
+            throw new \DomainException('This image type cannot be optimized on this server');
+        }
+        $path = dirname(__DIR__, 2) . '/storage/media/' . basename((string)$upload['file_path']);
+        if (!is_file($path)) throw new \DomainException('Physical file not found');
+        $raw = file_get_contents($path);
+        $image = $raw === false ? false : @imagecreatefromstring($raw);
+        if ($image === false) throw new \DomainException('Image data is invalid');
+        $temporary = tempnam(dirname($path), 'opt_');
+        if ($temporary === false) { imagedestroy($image); throw new \RuntimeException('Temporary file could not be created'); }
+        if (in_array($mime, ['image/png', 'image/webp'], true)) { imagealphablending($image, false); imagesavealpha($image, true); }
+        $saved = match ($mime) { 'image/jpeg' => imagejpeg($image, $temporary, 82), 'image/png' => imagepng($image, $temporary, 8), 'image/webp' => imagewebp($image, $temporary, 78), default => false };
+        imagedestroy($image);
+        if (!$saved) { @unlink($temporary); throw new \RuntimeException('Optimized image could not be written'); }
+        $oldSize = (int)(filesize($path) ?: 0);
+        $newSize = (int)(filesize($temporary) ?: 0);
+        if ($newSize > 0 && ($oldSize === 0 || $newSize < $oldSize)) {
+            if (!rename($temporary, $path)) { @unlink($temporary); throw new \RuntimeException('Optimized image could not replace original'); }
+            $this->repo->updateUploadFileSize($id, $newSize);
+        } else {
+            @unlink($temporary);
+            $newSize = $oldSize;
+        }
+        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'update', "Upload optimized: $oldSize -> $newSize bytes");
+        return ['id' => $id, 'old_size' => $oldSize, 'new_size' => $newSize, 'saved_bytes' => max(0, $oldSize - $newSize)];
+    }
+
     /**
      * Updates user details and moderation status.
      */
@@ -209,9 +297,9 @@ final class AdminConsoleService
     /**
      * Lists social comments for moderation.
      */
-    public function listComments(int $page, int $perPage): array
+    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest'): array
     {
-        $result = $this->repo->listComments($page, $perPage);
+        $result = $this->repo->listComments($page, $perPage, $query, $targetType, $sort);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['body', 'username', 'content_title', 'blog_title']);
 
         return $this->withMeta($items, $result['total'], $page, $perPage);
@@ -299,6 +387,11 @@ final class AdminConsoleService
         return $this->withMeta($items, count($items), 1, count($items));
     }
 
+    public function listRolesWithPermissions(): array
+    {
+        return $this->repo->listRolesWithPermissions();
+    }
+
     /**
      * Lists RBAC assignments.
      */
@@ -308,9 +401,9 @@ final class AdminConsoleService
         return $this->withMeta($result['items'], $result['total'], $page, $perPage);
     }
 
-    public function listBlogs(int $page, int $perPage): array
+    public function listBlogs(int $page, int $perPage, string $query = '', ?string $status = null, string $sort = 'newest'): array
     {
-        $result = $this->repo->listBlogs($page, $perPage);
+        $result = $this->repo->listBlogs($page, $perPage, $query, $status, $sort);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['title', 'username']);
         return $this->withMeta($items, $result['total'], $page, $perPage);
     }
@@ -335,6 +428,8 @@ final class AdminConsoleService
         $role = (string)($payload['role'] ?? '');
         $perm = (string)($payload['permission'] ?? '');
         if ($role === '' || $perm === '') throw new \InvalidArgumentException('role and permission are required');
+        if (!$this->repo->roleExistsBySlug($role)) throw new \InvalidArgumentException('Unknown role');
+        if (!$this->repo->permissionExistsByCode($perm)) throw new \InvalidArgumentException('Unknown permission');
         
         $this->repo->assignPermissionToRole($role, $perm, $moderatorId);
         return true;
@@ -345,6 +440,11 @@ final class AdminConsoleService
         $role = (string)($payload['role'] ?? '');
         $perm = (string)($payload['permission'] ?? '');
         if ($role === '' || $perm === '') throw new \InvalidArgumentException('role and permission are required');
+        if (!$this->repo->roleExistsBySlug($role)) throw new \InvalidArgumentException('Unknown role');
+        if (!$this->repo->permissionExistsByCode($perm)) throw new \InvalidArgumentException('Unknown permission');
+        if ($role === 'admin' && $perm === 'admin.panel.access') {
+            throw new \InvalidArgumentException('Administrator panel access cannot be revoked');
+        }
 
         return $this->repo->revokePermissionFromRole($role, $perm, $moderatorId);
     }
@@ -363,7 +463,7 @@ final class AdminConsoleService
         $name = trim($name);
         if ($name === '') throw new \InvalidArgumentException('Name is required');
         
-        $genre = $this->repo->createGenre($name);
+        $genre = $this->repo->createGenre($name, $this->taxonomySlug($name));
         $this->repo->createModerationAction($moderatorId, 'system', (string)$genre['id'], 'create_genre', "New genre created: $name");
         
         return $genre;
@@ -374,7 +474,7 @@ final class AdminConsoleService
         $name = trim($name);
         if ($name === '') throw new \InvalidArgumentException('Name is required');
 
-        $tag = $this->repo->createTag($name);
+        $tag = $this->repo->createTag($name, $this->taxonomySlug($name));
         $this->repo->createModerationAction($moderatorId, 'system', (string)$tag['id'], 'create_tag', "New tag created: $name");
 
         return $tag;
@@ -396,6 +496,56 @@ final class AdminConsoleService
         return $this->repo->listAllTags();
     }
 
+    public function updateTaxonomy(int $id, array $payload, string $moderatorId): array
+    {
+        $existing = $this->repo->taxonomyById($id);
+        if (!$existing) throw new \InvalidArgumentException('Taxonomy not found');
+        $name = trim((string)($payload['name'] ?? ''));
+        if ($name === '') throw new \InvalidArgumentException('Name is required');
+        $updated = $this->repo->updateTaxonomy($id, $name, $this->taxonomySlug($name));
+        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'update_taxonomy', "Taxonomy renamed: {$existing['name']} -> $name");
+        return $updated ?? [];
+    }
+
+    public function deleteTaxonomy(int $id, string $moderatorId): void
+    {
+        $existing = $this->repo->taxonomyById($id);
+        if (!$existing) throw new \InvalidArgumentException('Taxonomy not found');
+        if ((int)$existing['usage_count'] > 0) throw new \InvalidArgumentException('Used taxonomy must be merged before deletion');
+        if (!$this->repo->deleteTaxonomy($id)) throw new \RuntimeException('Taxonomy could not be deleted');
+        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'delete', "Taxonomy deleted: {$existing['name']}");
+    }
+
+    public function mergeTaxonomies(array $payload, string $moderatorId): array
+    {
+        $sourceId = (int)($payload['source_id'] ?? 0);
+        $targetId = (int)($payload['target_id'] ?? 0);
+        if ($sourceId <= 0 || $targetId <= 0 || $sourceId === $targetId) throw new \InvalidArgumentException('Valid, different source_id and target_id are required');
+        $merged = $this->repo->mergeTaxonomies($sourceId, $targetId);
+        $this->repo->createModerationAction($moderatorId, 'system', (string)$targetId, 'update_taxonomy', "Taxonomy $sourceId merged into $targetId");
+        return $merged;
+    }
+
+    public function reorderTaxonomies(array $payload, string $moderatorId): void
+    {
+        $items = (array)($payload['items'] ?? []);
+        if ($items === []) throw new \InvalidArgumentException('items is required');
+        $normalized = [];
+        foreach ($items as $item) {
+            if (!is_array($item) || (int)($item['id'] ?? 0) <= 0) throw new \InvalidArgumentException('Each item must contain a valid id');
+            $normalized[] = ['id' => (int)$item['id'], 'sort_order' => max(0, (int)($item['sort_order'] ?? 0))];
+        }
+        $this->repo->reorderTaxonomies($normalized);
+        $this->repo->createModerationAction($moderatorId, 'system', 'taxonomy-order', 'update_taxonomy', 'Taxonomy order updated');
+    }
+
+    private function taxonomySlug(string $name): string
+    {
+        $slug = $this->slugger->normalize($name);
+        if ($slug === '') throw new \InvalidArgumentException('Name must contain slug-compatible characters');
+        return substr($slug, 0, 50);
+    }
+
     public function cleanupRetention(int $days): array
     {
         return $this->retention->cleanup($days);
@@ -404,19 +554,9 @@ final class AdminConsoleService
     public function readEnv(string $moderatorId): array
     {
         $this->ensureRootUser($moderatorId);
-        $path = dirname(__DIR__, 2) . '/.env';
-        if (!file_exists($path)) return [];
-
-        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        $data = [];
-        foreach ($lines as $line) {
-            if (str_starts_with(trim($line), '#')) continue;
-            $parts = explode('=', $line, 2);
-            if (count($parts) === 2) {
-                $key = trim($parts[0]);
-                $val = trim($parts[1], " \"'");
-                $data[$key] = $val;
-            }
+        $data = array_intersect_key($this->readEnvFile(), array_flip(self::ENV_EDITABLE_KEYS));
+        foreach ($data as $key => $value) {
+            if ($this->isSensitiveEnvKey($key) && $value !== '') $data[$key] = self::ENV_MASK;
         }
         return $data;
     }
@@ -431,14 +571,25 @@ final class AdminConsoleService
             throw new \RuntimeException('.env file not found');
         }
 
-        // Fetch current for diff logging and merge
-        $current = $this->readEnv($moderatorId);
-        $merged = array_merge($current, $payload);
+        $current = $this->readEnvFile();
+        $safePayload = [];
+        foreach ($payload as $key => $value) {
+            $key = strtoupper(trim((string)$key));
+            if (!in_array($key, self::ENV_EDITABLE_KEYS, true) || !is_scalar($value)) continue;
+            $value = (string)$value;
+            if ($value === self::ENV_MASK && $this->isSensitiveEnvKey($key)) continue;
+            if (str_contains($value, "\n") || str_contains($value, "\r") || str_contains($value, "\0")) {
+                throw new \InvalidArgumentException("Invalid environment value for $key");
+            }
+            $safePayload[$key] = $value;
+        }
+        if ($safePayload === []) throw new \InvalidArgumentException('No editable environment keys supplied');
+        $merged = array_merge($current, $safePayload);
         $diff = [];
-        foreach ($payload as $k => $v) {
+        foreach ($safePayload as $k => $v) {
             $old = $current[$k] ?? '';
             if ($old !== (string)$v) {
-                $diff[$k] = ['before' => $old, 'after' => $v];
+                $diff[$k] = $this->isSensitiveEnvKey($k) ? ['changed' => true] : ['before' => $old, 'after' => $v];
             }
         }
 
@@ -468,6 +619,28 @@ final class AdminConsoleService
             copy($backupPath, $path);
             throw $e;
         }
+    }
+
+    private function readEnvFile(): array
+    {
+        $path = dirname(__DIR__, 2) . '/.env';
+        if (!file_exists($path)) return [];
+        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+        $data = [];
+        foreach ($lines as $line) {
+            if (str_starts_with(trim($line), '#')) continue;
+            $parts = explode('=', $line, 2);
+            if (count($parts) !== 2) continue;
+            $key = strtoupper(trim($parts[0]));
+            if (!preg_match('/^[A-Z][A-Z0-9_]*$/', $key)) continue;
+            $data[$key] = trim($parts[1], " \"'");
+        }
+        return $data;
+    }
+
+    private function isSensitiveEnvKey(string $key): bool
+    {
+        return preg_match('/(?:PASSWORD|SECRET|TOKEN|API_KEY)$/', $key) === 1;
     }
 
     public function triggerBackup(?string $moderatorId = null): array

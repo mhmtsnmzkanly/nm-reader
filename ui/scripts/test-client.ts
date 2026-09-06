@@ -7,7 +7,6 @@ import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { TextReader } from '../src/components/reader/TextReader';
 import { Chapter } from '../src/types/api';
-import { mockChapters } from '../src/mocks/fixtures';
 
 let passedTests = 0;
 let totalTests = 0;
@@ -332,31 +331,47 @@ Kaçış örneği: \\*bu yıldızlar italik değildir\\* ve \\[bu parantezler li
     );
   }
 
-  // Test 11: Real Mock Novel Chapter in Fixtures
-  console.log('\n--- Suite 11: Mock Novel Chapter Integration ---');
+  // Test 11: Rich novel chapter integration
+  console.log('\n--- Suite 11: Rich Novel Chapter Integration ---');
   {
-    const shadowSlaveChapters = mockChapters['shadow-slave-chronicles'];
-    assert(Array.isArray(shadowSlaveChapters) && shadowSlaveChapters.length > 0, 'Shadow Slave mock chapters exist');
-
-    const ch12 = shadowSlaveChapters.find((c) => c.chapter_number === '12');
-    assert(!!ch12, 'Chapter 12 exists in mock data');
-    assert(typeof ch12?.body === 'string' && ch12.body.length > 500, 'Chapter 12 has rich novel markdown body');
-
-    const mockReaderChapter: Chapter = {
-      id: ch12!.id,
-      content_id: ch12!.content_id,
-      series: { id: 'f6g7h8', title: 'Shadow Slave Chronicles', slug: 'shadow-slave-chronicles', type: 'web-novel' },
+    const richReaderChapter: Chapter = {
+      id: 'ch_rich_markdown',
+      content_id: 'novel_rich_markdown',
+      series: { id: 'series_rich_markdown', title: 'Test Novel', slug: 'test-novel', type: 'web-novel' },
       chapter_number: '12',
-      title: ch12!.title,
+      title: 'Bölüm XII — Küllerin Altındaki Şehir',
       type: 'text',
-      created_at: ch12!.created_at || new Date().toISOString(),
-      body: ch12!.body,
+      created_at: new Date().toISOString(),
+      body: `# Bölüm XII — Küllerin Altındaki Şehir
+
+## Kuzey Kapısı ve Unutulmuş Geçit
+
+Şehrin taş duvarları sabah sisi içinde kaybolurken keşif heyeti sessizce kuzey kapısına yaklaştı.
+
+### Kadim Yazıtlar ve Gizli Hazırlık
+
+Kapının üzerindeki işaretler \`Aether Gate\` adını taşıyordu. Ayrıntılar [Eski Krallık Arşivi](https://example.com/archive) içinde kayıtlıydı.
+
+> “Bu geçit yalnızca doğru sözü söyleyenlere açılır.” — Muhafız Valerius
+
+### Keşif Heyeti ve Durum Tablosu
+
+| Görevli | Unvan | Durum |
+| --- | --- | --- |
+| Arin | Gölge Gezgini | Hazır |
+| Lyra | Işık Muhafızı | Hazır |
+
+\`\`\`text
+SİSTEM KAYDI 17-B
+Geçit kararlı. Enerji seviyesi yeterli.
+\`\`\`
+`,
       pages: [],
       navigation: { previous: '11', next: '13' },
       access: { granted: true, locked: false, price_coin: 0 },
     };
 
-    const fullHtml = renderTextReader(mockReaderChapter);
+    const fullHtml = renderTextReader(richReaderChapter);
     assert(fullHtml.includes('id="novel-text-reader"'), 'TextReader renders novel article');
     assert(fullHtml.includes('Bölüm XII — Küllerin Altındaki Şehir'), 'Chapter heading renders');
     assert(fullHtml.includes('Kuzey Kapısı ve Unutulmuş Geçit'), 'H2 subhead renders');

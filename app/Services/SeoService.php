@@ -148,6 +148,12 @@ class SeoService
                 $jsonLdTag = "<script type=\"application/ld+json\">\n{$jsonLdString}\n</script>";
             }
         }
+        if (str_contains($html, '<!-- SEO:JSONLD -->')) {
+            $html = str_replace('<!-- SEO:JSONLD -->', $jsonLdTag, $html);
+        } elseif ($jsonLdTag !== '' && str_contains($html, '</head>')) {
+            $html = str_replace('</head>', "  {$jsonLdTag}\n  </head>", $html);
+        }
+
         // 8. Inject Application Context (window.__NMR_CONTEXT)
         if ($contextJson !== null && $contextJson !== '') {
             $contextTag = "<script>window.__NMR_CONTEXT = {$contextJson};</script>";

@@ -76,7 +76,43 @@ final class UserService
      */
     public function history(string $userId, int $page, int $perPage): array
     {
-        return $this->users->getHistory($userId, $page, $perPage);
+        return array_map(static function (array $row): array {
+            return $row + [
+                'content' => [
+                    'id' => (string) ($row['content_id'] ?? ''),
+                    'type' => str_replace('_', '-', (string) ($row['content_type'] ?? 'manga')),
+                    'slug' => (string) ($row['content_slug'] ?? ''),
+                    'title' => (string) ($row['content_title'] ?? ''),
+                    'cover' => (string) ($row['content_cover_image'] ?? ''),
+                    'status' => (string) ($row['content_status'] ?? ''),
+                    'rating' => (float) ($row['content_rating'] ?? 0),
+                ],
+                'chapter' => [
+                    'id' => (string) ($row['chapter_id'] ?? ''),
+                    'number' => (string) ($row['chapter_number'] ?? ''),
+                    'title' => $row['chapter_title'] ?? null,
+                ],
+            ];
+        }, $this->users->getHistory($userId, $page, $perPage));
+    }
+
+    public function recordHistory(string $userId, array $payload): void
+    {
+        $chapterId = trim((string) ($payload['chapterId'] ?? $payload['chapter_id'] ?? ''));
+        if (!preg_match('/^[a-z0-9]{6}$/', $chapterId)) {
+            throw new \InvalidArgumentException('Valid chapterId is required');
+        }
+        $this->users->recordHistory($userId, $chapterId, (int) ($payload['progress'] ?? 0));
+    }
+
+    public function deleteHistory(string $userId, string $historyId): bool
+    {
+        return $this->users->deleteHistory($userId, $historyId);
+    }
+
+    public function clearHistory(string $userId): void
+    {
+        $this->users->clearHistory($userId);
     }
 
     /**
@@ -404,9 +440,18 @@ final class UserService
      *
      * @param string $userId
      */
-    public function markNotificationsRead(string $userId): void
+    public function markNotificationsRead(string $userId, ?int $notificationId = null): bool
     {
+        if ($notificationId !== null) {
+            return $this->users->markNotificationRead($userId, $notificationId);
+        }
         $this->users->markNotificationsRead($userId);
+        return true;
+    }
+
+    public function deleteNotification(string $userId, int $notificationId): bool
+    {
+        return $this->users->deleteNotification($userId, $notificationId);
     }
 
 
@@ -432,7 +477,7 @@ final class UserService
      * @throws \DomainException If target user not found.
      * @throws \InvalidArgumentException If trying to follow self.
      */
-    public function followUser(string $userId, string $person): void
+    public function followUser(string $userId, string $person): array
     {
         $target = $this->users->findPublicByPerson($person);
         if ($target === null) {
@@ -448,6 +493,12 @@ final class UserService
         if ($created) {
             $this->users->upsertUserFollowNotification($targetId, $userId);
         }
+
+        return [
+            'followed' => true,
+            'is_following' => true,
+            'followers_count' => $this->users->countFollowers($targetId),
+        ];
     }
 
     /**
@@ -458,7 +509,7 @@ final class UserService
      * @throws \DomainException If target user not found.
      * @throws \InvalidArgumentException If trying to unfollow self.
      */
-    public function unfollowUser(string $userId, string $person): void
+    public function unfollowUser(string $userId, string $person): array
     {
         $target = $this->users->findPublicByPerson($person);
         if ($target === null) {
@@ -472,5 +523,11 @@ final class UserService
 
         $this->users->unfollowUser($userId, $targetId);
         $this->users->removeUserFollowNotification($targetId, $userId);
+
+        return [
+            'followed' => false,
+            'is_following' => false,
+            'followers_count' => $this->users->countFollowers($targetId),
+        ];
     }
 }

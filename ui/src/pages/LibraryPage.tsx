@@ -69,7 +69,7 @@ export const LibraryPage: React.FC = () => {
     if (!itemToRemove) return;
     setIsRemoving(true);
     try {
-      const res = await userService.removeFromLibrary(itemToRemove.id);
+      const res = await userService.removeFromLibrary(itemToRemove.content.slug, itemToRemove.content.type);
       if (res.status === 'success') {
         setItemToRemove(null);
         await fetchLibrary();
@@ -94,7 +94,7 @@ export const LibraryPage: React.FC = () => {
     );
 
     try {
-      await contentService.toggleFollow(item.content.type as ContentType, slug);
+      await contentService.toggleFollow(item.content.type as ContentType, slug, item.user_state.is_following);
     } catch (err) {
       console.error('Follow toggle error:', err);
       // Revert on failure

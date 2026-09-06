@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { UserProfile } from '../types/api';
-import { ScenarioType } from '../types/domain';
 import { authService, userService } from '../services';
-import { scenarioManager } from '../mocks/scenarios';
 
 type AuthModalTab = 'login' | 'register' | 'forgot-password';
 
@@ -10,8 +8,6 @@ type AuthContextType = {
   user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  scenario: ScenarioType;
-  setScenario: (sc: ScenarioType) => void;
   login: (email: string, pass: string, remember: boolean) => Promise<boolean>;
   register: (uname: string, email: string, pass: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -30,7 +26,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [scenario, setScenarioState] = useState<ScenarioType>(scenarioManager.getScenario());
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalTab, setAuthModalTab] = useState<AuthModalTab>('login');
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState<boolean>(false);
@@ -75,16 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     fetchProfile();
-    const unsub = scenarioManager.subscribe((newSc) => {
-      setScenarioState(newSc);
-      fetchProfile();
-    });
-    return unsub;
   }, []);
-
-  const setScenario = (sc: ScenarioType) => {
-    scenarioManager.setScenario(sc);
-  };
 
   const login = async (email: string, pass: string, remember: boolean) => {
     const res = await authService.login(email, pass, remember);
@@ -113,8 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isAuthenticated,
         isLoading,
-        scenario,
-        setScenario,
         login,
         register,
         logout,

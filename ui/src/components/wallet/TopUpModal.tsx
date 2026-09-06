@@ -21,19 +21,24 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
   const [selectedPkg, setSelectedPkg] = useState<ShopPackage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [checkoutAvailable, setCheckoutAvailable] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
       setSuccessMessage(null);
+      setPurchaseError(null);
       return;
     }
 
     const loadPackages = async () => {
       setIsLoading(true);
+      setCheckoutAvailable(false);
       const res = await walletService.getShopPackages();
       if (res.status === 'success' && res.data) {
         setPackages(res.data);
+        setCheckoutAvailable(res.meta?.checkout_available !== false);
         const featured = res.data.find((p) => p.is_featured) || res.data[0];
         setSelectedPkg(featured || null);
       }
@@ -49,6 +54,7 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
     if (!selectedPkg) return;
 
     setIsPurchasing(true);
+    setPurchaseError(null);
     try {
       const res = await walletService.purchasePackage(selectedPkg.id);
       if (res.status === 'success' && res.data) {
@@ -58,9 +64,11 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
           onSuccess(res.data.balance, selectedPkg);
           onClose();
         }, 1200);
+      } else {
+        setPurchaseError(res.error?.message || t('common.checkoutUnavailable'));
       }
     } catch {
-      // ignore
+      setPurchaseError(t('common.checkoutUnavailable'));
     } finally {
       setIsPurchasing(false);
     }
@@ -196,11 +204,13 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
                   variant="gold"
                   size="lg"
                   fullWidth
-                  disabled={isPurchasing}
+                  disabled={isPurchasing || !checkoutAvailable}
                   onClick={handlePurchase}
                   className="gap-2 bg-[var(--accent-color)] text-white hover:opacity-90 font-semibold shadow-lg shadow-[var(--accent-color)]/25 py-3 cursor-pointer"
                 >
-                  {isPurchasing ? (
+                  {!checkoutAvailable ? (
+                    <span>{t('common.checkoutUnavailable')}</span>
+                  ) : isPurchasing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
                       <span>{t('topUpModal.processing')}</span>
@@ -219,9 +229,15 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
                   )}
                 </Button>
 
+                {purchaseError && (
+                  <p role="alert" className="text-xs text-red-400 text-center">
+                    {purchaseError}
+                  </p>
+                )}
+
                 <div className="flex items-center justify-center gap-1.5 text-[10px] text-[var(--text-muted)] font-mono">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>{t('topUpModal.sslSecure')}</span>
+                  <span>{t('topUpModal.paymentProviderRequired')}</span>
                 </div>
               </div>
             )}

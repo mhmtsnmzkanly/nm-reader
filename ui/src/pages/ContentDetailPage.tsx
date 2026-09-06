@@ -125,12 +125,12 @@ export const ContentDetailPage: React.FC = () => {
   // User Actions
   const handleToggleFollow = async () => {
     setIsFollowing((prev) => !prev);
-    await contentService.toggleFollow(type as ContentType, slug);
+    await contentService.toggleFollow(type as ContentType, slug, isFollowing);
   };
 
   const handleToggleLibrary = async () => {
     setIsInLibrary((prev) => !prev);
-    await userService.toggleLibrary(type as ContentType, slug);
+    await userService.toggleLibrary(type as ContentType, slug, isInLibrary);
   };
 
   // Unlock Chapter Click

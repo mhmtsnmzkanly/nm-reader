@@ -220,7 +220,7 @@ Media errors adhere to the standard API error envelope:
 
 - A user cannot delete or overwrite another user's uploads.
 - Upload records in `system_uploads` track `user_id`, `image_id`, `original_name`, `mime_type`, `file_size`, and `file_path`.
-- Admin deletion of uploads (`DELETE /api/v1/admin/uploads/{id}`) requires `admin.panel.access` and logs an audit trail.
+- Admin upload listing requires `admin.uploads.view`; deletion requires `admin.uploads.delete` plus recent password reauthentication and logs an audit trail. Bulk deletion and image optimization use the dedicated `/api/v1/admin/uploads/bulk-delete` and `/api/v1/admin/uploads/{id}/optimize` endpoints.
 
 ---
 

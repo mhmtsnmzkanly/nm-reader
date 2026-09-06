@@ -33,8 +33,7 @@ export const tr = {
     "warning": "Uyarı",
     "info": "Bilgi",
     "confirm": "Onayla",
-    "prototypeNote": "Prototip Modu — Tüm veriler mock servis katmanından sağlanmaktadır.",
-    "checkoutUnavailable": "Prototipte ödeme kapalıdır",
+    "checkoutUnavailable": "Ödeme altyapısı henüz yapılandırılmadı",
     "totalItems": "Toplam {count} Eser",
     "readNow": "Hemen Oku",
     "details": "Detaylar",
@@ -314,7 +313,6 @@ export const tr = {
     "usernamePlaceholder": "kullaniciadi",
     "emailPlaceholder": "ornek@eposta.com",
     "rememberMe": "Beni Hatırla",
-    "securityCheck": "Güvenlik Doğrulaması (Mock Turnstile)",
     "noAccount": "Hesabınız yok mu? Kayıt Olun",
     "hasAccount": "Zaten hesabınız var mı? Giriş Yapın",
     "registerNotice": "Kayıt başarılı! Lütfen giriş yapın.",
@@ -717,7 +715,6 @@ export const tr = {
     "bonusBadge": "+%{percent} BONUS",
     "topUpModalTitle": "Coin Yükle",
     "topUpModalDesc": "Hesabınıza bakiye yüklemek için bir ödeme yöntemi seçin.",
-    "mockPaymentNotice": "Prototip Modu — Kartınızdan gerçek çekim yapılmaz.",
     "loadCoinsSuccess": "Coinler başarıyla hesabınıza tanımlandı!"
   },
   "blog": {
@@ -859,7 +856,8 @@ export const tr = {
     "amountToPay": "Ödenecek Tutar:",
     "processing": "İşlem Yapılıyor...",
     "loadCoinsCta": "₺{price} ile {total} Coin Yükle",
-    "sslSecure": "Güvenli 256-Bit SSL Şifreli Ödeme Altyapısı"
+    "sslSecure": "Güvenli 256-Bit SSL Şifreli Ödeme Altyapısı",
+    "paymentProviderRequired": "Ödeme sağlayıcısı yapılandırıldığında satın alma açılır"
   },
   "walletBalance": {
     "currentCoinBalance": "Mevcut Coin Bakiyeniz",
@@ -917,7 +915,6 @@ export const tr = {
     "loginRequiredMessage": "Bu özelliği kullanabilmek ve takibe alabilmek için giriş yapmalısınız.",
     "loginAction": "Giriş Yap",
     "registerAction": "Kayıt Ol",
-    "devScenarioTitle": "Geliştirici Test Senaryoları",
     "backHome": "Ana Sayfaya Dön",
     "browseCatalog": "Kataloğa Göz At",
     "emptyDefaultMessage": "Bu bölümde henüz görüntülenecek herhangi bir içerik bulunmuyor.",

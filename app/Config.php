@@ -15,6 +15,7 @@ use App\Controllers\WebController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use App\Middleware\PermissionMiddleware;
+use App\Middleware\CriticalActionMiddleware;
 use App\Middleware\RateLimitKeyedMiddleware;
 use App\Middleware\RateLimitMiddleware;
 use App\Middleware\RestrictedActionMiddleware;
@@ -59,10 +60,23 @@ final class Config
                 "root_user" => (string) self::env("ROOT_USER", "usr00001"),
                 "session_name" => "nm_reader_session",
                 "session_path" => $basePath . "/storage/sessions",
-                "session_same_site" => "Lax",
-                "session_cookie_secure" => true,
+                "session_same_site" => (string) self::env("SESSION_COOKIE_SAME_SITE", "Lax"),
+                "session_cookie_secure" => (bool) self::env(
+                    "SESSION_COOKIE_SECURE",
+                    str_starts_with(strtolower((string) self::env("APP_URL", "http://localhost:8080")), "https://")
+                ),
+                "remember_cookie_same_site" => (string) self::env("REMEMBER_COOKIE_SAME_SITE", "Lax"),
+                "remember_cookie_secure" => (bool) self::env(
+                    "REMEMBER_COOKIE_SECURE",
+                    str_starts_with(strtolower((string) self::env("APP_URL", "http://localhost:8080")), "https://")
+                ),
                 "session_lifetime_seconds" => (int) self::env("SESSION_LIFETIME", 7200),
                 "refresh_token_days" => (int) self::env("REFRESH_TOKEN_DAYS", 30),
+                "media_secret" => (string) self::env("MEDIA_SECRET", self::env("APP_SECRET", "")),
+                "cors_allowed_origins" => array_values(array_filter(array_map(
+                    'trim',
+                    explode(',', (string) self::env("CORS_ALLOWED_ORIGINS", (string) self::env("APP_URL", "http://localhost:8080")))
+                ))),
                 "timezone" => (string) self::env("APP_TIMEZONE", "UTC"),
             ],
             "database" => [
@@ -125,7 +139,9 @@ final class Config
                         "admin.chapter.create", "admin.blog.hide", "admin.comment.delete", "admin.logs.view",
                         "admin.metrics.view", "admin.jobs.run", "admin.settings.modify", "admin.permissions.grant",
                         "admin.permissions.revoke", "admin.roles.assign", "admin.wallet.manage", "admin.wallet.view",
-                        "admin.shop.manage", "admin.finance.refund",
+                        "admin.shop.manage", "admin.finance.refund", "admin.finance.view",
+                        "admin.reports.view", "admin.reports.manage", "admin.uploads.view",
+                        "admin.uploads.delete", "admin.uploads.optimize", "admin.health.view",
                     ],
                 ],
                 "moderator" => [
@@ -133,6 +149,7 @@ final class Config
                     "permissions" => [
                         "admin.panel.access", "admin.blog.hide", "admin.comment.delete", "admin.content.create",
                         "admin.content.update", "admin.chapter.create", "admin.metrics.view", "admin.wallet.view",
+                        "admin.reports.view", "admin.reports.manage", "admin.uploads.view",
                     ],
                 ],
                 "editor" => [
@@ -149,6 +166,34 @@ final class Config
 
     public static function registerRoutes(App $app): void
     {
+        $app->get('/health/live', fn ($request, $response) => $response->withStatus(204));
+        $app->get('/health', function ($request, $response) use ($app) {
+            $settings = self::getSettings();
+            $checks = ['database' => false, 'storage' => false];
+
+            try {
+                $checks['database'] = $app->getContainer()->get(\PDO::class)->query('SELECT 1') !== false;
+            } catch (\Throwable) {
+                $checks['database'] = false;
+            }
+
+            $storagePaths = [
+                (string) $settings['app']['session_path'],
+                (string) $settings['cache']['path'],
+                (string) $settings['app']['base_path'] . '/storage/logs',
+            ];
+            $checks['storage'] = array_all(
+                $storagePaths,
+                static fn (string $path): bool => is_dir($path) && is_writable($path)
+            );
+            $healthy = !in_array(false, $checks, true);
+
+            return \App\Helpers\ResponseHelper::json([
+                'status' => $healthy ? 'healthy' : 'unhealthy',
+                'checks' => $checks,
+            ], $healthy ? 200 : 503);
+        });
+
         $app->get("/install-63e4qq3", [InstallController::class, "index"]);
         $app->post("/install-63e4qq3", [InstallController::class, "process"]);
         if (!file_exists(dirname(__DIR__) . "/.env")) return;
@@ -191,18 +236,6 @@ final class Config
             $group->get("/profile", [WebController::class, "profile"]);
             $group->get("/profile/{person:[A-Za-z0-9_]+}", [WebController::class, "profile"]);
             $group->get("/u/{person:[A-Za-z0-9_]+}", [WebController::class, "profile"]);
-            $group->get("/admin", [WebController::class, "adminDashboard"]);
-            $group->get("/admin/content", [WebController::class, "adminContent"]);
-            $group->get("/admin/blogs", [WebController::class, "adminBlogs"]);
-            $group->get("/admin/comments", [WebController::class, "adminComments"]);
-            $group->get("/admin/users", [WebController::class, "adminUsers"]);
-            $group->get("/admin/ops", [WebController::class, "adminOps"]);
-            $group->get("/admin/monetization", [WebController::class, "adminMonetization"]);
-            $group->get("/admin/config", [WebController::class, "adminConfig"]);
-            $group->get("/admin/uploads", [WebController::class, "adminUploads"]);
-            $group->get("/admin/logs", [WebController::class, "adminLogs"]);
-            $group->get("/admin/tutorial", [WebController::class, "adminTutorial"]);
-
             // Unified Lime-CSR Admin Console Shell
             $group->get("/panel", [WebController::class, "adminPanelLime"]);
             $group->get("/panel/{section:.*}", [WebController::class, "adminPanelLime"]);
@@ -224,7 +257,7 @@ final class Config
         });
         $app->get("/{lang:tr|en}/{path:.*}", function ($req, $res, array $args) {
             $path = (string) ($args["path"] ?? "");
-            if (str_starts_with($path, "api") || str_starts_with($path, "admin") || str_starts_with($path, "media")) {
+            if (str_starts_with($path, "api") || str_starts_with($path, "admin") || str_starts_with($path, "panel") || str_starts_with($path, "media")) {
                 $payload = json_encode([
                     "status" => "error",
                     "error" => [
@@ -274,7 +307,6 @@ final class Config
             $group->get("/search/suggest", [ContentController::class, "suggest"]);
             $group->get("/i18n/{lang:[a-z]{2}}", [WebController::class, "i18nJson"]);
             $group->post("/log/error", [WebController::class, "logError"]);
-            $group->map(["GET", "POST"], "/queue/tick", [WebController::class, "queueTick"]);
             $group->post("/user/activity", [UserInteractionController::class, "trackActivity"])->add(new AuthMiddleware(true, $authorization));
             
             $group->get("/chapter/{chapterId:[a-z0-9]{6}}/comments", [UserInteractionController::class, "listChapterComments"]);
@@ -302,6 +334,7 @@ final class Config
                 ->add(new RateLimitMiddleware($cache, "resend_verify_email", 5, 300))
                 ->add(new AuthMiddleware(true, $authorization));
             $group->post("/auth/refresh", [AuthController::class, "refresh"])->add(new RateLimitMiddleware($cache, "refresh", 20, 60));
+            $group->get("/auth/csrf", [AuthController::class, "csrf"])->add(new RateLimitMiddleware($cache, "csrf", 60, 60));
             $group->map(["GET", "POST"], "/auth/logout", [AuthController::class, "logout"]);
 
             $group->group("", function (RouteCollectorProxy $secure) use ($typePattern, $users): void {
@@ -314,11 +347,15 @@ final class Config
                 $secure->post("/user/profile", [UserController::class, "updateProfile"]);
                 $secure->get("/user/profile", [UserController::class, "profile"]);
                 $secure->get("/user/history", [UserController::class, "history"]);
+                $secure->post("/user/history", [UserController::class, "recordHistory"]);
+                $secure->delete("/user/history", [UserController::class, "clearHistory"]);
+                $secure->delete("/user/history/{historyId:[A-Za-z0-9]+}", [UserController::class, "deleteHistory"]);
                 $secure->get("/user/preferences", [UserController::class, "preferences"]);
                 $secure->put("/user/preferences", [UserController::class, "updatePreferences"]);
                 $secure->get("/user/follows", [ContentController::class, "followed"]);
                 $secure->get("/user/wallet", [UserController::class, "wallet"]);
                 $secure->get("/user/wallet/transactions", [UserController::class, "walletTransactions"]);
+                $secure->post("/shop/packages/{packageId:[0-9]+}/purchase", [UserController::class, "purchasePackage"]);
                 $secure->get("/user/features", [UserController::class, "featureStatus"]);
                 $secure->get("/user/features/entitlements", [UserController::class, "featureEntitlements"]);
                 $secure->post("/user/features/ad-free/purchase", [UserController::class, "purchaseAdFree"]);
@@ -337,13 +374,18 @@ final class Config
                 $secure->post("/blogs/{slug}/comments/{commentId:[0-9]+}/vote", [UserInteractionController::class, "voteBlogComment"])->add(new RestrictedActionMiddleware($users, "voting"));
                 $secure->get("/auth/sessions", [AuthController::class, "sessions"]);
                 $secure->delete("/auth/sessions/{sessionKey:[a-z0-9]+}", [AuthController::class, "revokeSession"]);
+                $secure->post("/auth/sessions/revoke-others", [AuthController::class, "revokeOtherSessions"]);
                 $secure->get("/user/notifications", [UserController::class, "notifications"]);
                 $secure->post("/user/notifications/read", [UserController::class, "markNotificationsRead"]);
+                $secure->delete("/user/notifications/{notificationId:[0-9]+}", [UserController::class, "deleteNotification"]);
                 $secure->get("/user/follows/users", [UserController::class, "followedUsers"]);
                 $secure->post("/user/follows/{person:[A-Za-z0-9_]+}", [UserController::class, "follow"]);
                 $secure->delete("/user/follows/{person:[A-Za-z0-9_]+}", [UserController::class, "unfollow"]);
                 $secure->post("/reports", [\App\Controllers\ReportController::class, "create"])->add(new RestrictedActionMiddleware($users, "reporting"));
-            })->add(new CsrfMiddleware())->add(new AuthMiddleware($authorization));
+            })
+                ->add(\App\Middleware\RequireVerifiedEmailMiddleware::class)
+                ->add(new CsrfMiddleware())
+                ->add(new AuthMiddleware($authorization));
         });
     }
 
@@ -356,6 +398,7 @@ final class Config
 
         $app->group("/api/v1/admin", function (RouteCollectorProxy $group) use ($typePattern, $perm, $cache): void {
             $group->get("/overview", [AdminPanelController::class, "overview"])->add($perm(["admin.panel.access"]));
+            $group->post("/auth/reauth", [AdminPanelController::class, "reauthenticate"])->add($perm(["admin.panel.access"]));
             $group->get("/series", [AdminPanelController::class, "listSeries"])->add($perm(["admin.panel.access"]));
             $group->get("/contents", [AdminPanelController::class, "listSeries"])->add($perm(["admin.panel.access"]));
             $group->get("/content", [AdminPanelController::class, "listSeries"])->add($perm(["admin.panel.access"]));
@@ -363,40 +406,46 @@ final class Config
             $group->get("/tags", [AdminPanelController::class, "listTags"])->add($perm(["admin.panel.access"]));
             $group->get("/users", [AdminPanelController::class, "listUsers"])->add($perm(["admin.panel.access"]));
             $group->get("/users/options", [AdminPanelController::class, "userOptions"])->add($perm(["admin.wallet.view"]));
-            $group->get("/uploads", [AdminPanelController::class, "uploads"])->add($perm(["admin.panel.access"]));
-            $group->delete("/uploads/{id:[0-9]+}", [AdminPanelController::class, "deleteUpload"])->add($perm(["admin.panel.access"]));
+            $group->get("/uploads", [AdminPanelController::class, "uploads"])->add($perm(["admin.uploads.view"]));
+            $group->delete("/uploads/{id:[0-9]+}", [AdminPanelController::class, "deleteUpload"])->add(new CriticalActionMiddleware())->add($perm(["admin.uploads.delete"]));
+            $group->post("/uploads/bulk-delete", [AdminPanelController::class, "deleteUploads"])->add(new CriticalActionMiddleware())->add($perm(["admin.uploads.delete"]));
+            $group->post("/uploads/{id:[0-9]+}/optimize", [AdminPanelController::class, "optimizeUpload"])->add($perm(["admin.uploads.optimize"]));
             $group->get("/blogs", [AdminPanelController::class, "blogs"])->add($perm(["admin.panel.access"]));
             $group->get("/blogs/pending", [BlogController::class, "pending"])->add($perm(["admin.panel.access"]));
             $group->get("/comments", [AdminPanelController::class, "comments"])->add($perm(["admin.panel.access"]));
-            $group->delete("/comments/{id:[0-9]+}", [AdminPanelController::class, "deleteComment"])->add($perm(["admin.comment.delete"]));
-            $group->put("/users/{id}", [AdminPanelController::class, "updateUser"])->add($perm(["admin.users.manage"]));
+            $group->delete("/comments/{id:[0-9]+}", [AdminPanelController::class, "deleteComment"])->add(new CriticalActionMiddleware())->add($perm(["admin.comment.delete"]));
+            $group->put("/users/{id}", [AdminPanelController::class, "updateUser"])->add(new CriticalActionMiddleware())->add($perm(["admin.users.manage"]));
             $group->get("/rbac/roles", [AdminPanelController::class, "rbacRoles"])->add($perm(["admin.panel.access"]));
             $group->get("/rbac/assignments", [AdminPanelController::class, "rbacAssignments"])->add($perm(["admin.panel.access"]));
-            $group->post("/rbac/permissions/assign", [AdminPanelController::class, "assignPermissionToRole"])->add($perm(["admin.permissions.grant"]));
+            $group->post("/rbac/permissions/assign", [AdminPanelController::class, "assignPermissionToRole"])->add(new CriticalActionMiddleware())->add($perm(["admin.permissions.grant"]));
+            $group->delete("/rbac/permissions", [AdminPanelController::class, "revokePermissionFromRole"])->add(new CriticalActionMiddleware())->add($perm(["admin.permissions.revoke"]));
             $group->get("/queue/jobs", [AdminPanelController::class, "queueJobs"])->add($perm(["admin.panel.access"]));
+            $group->get("/system/health", [AdminPanelController::class, "systemHealth"])->add($perm(["admin.health.view"]));
+            $group->post("/queue/jobs/{id:[0-9]+}/retry", [AdminPanelController::class, "retryQueueJob"])->add($perm(["admin.jobs.run"]));
+            $group->post("/queue/jobs/{id:[0-9]+}/cancel", [AdminPanelController::class, "cancelQueueJob"])->add($perm(["admin.jobs.run"]));
             $group->post("/queue/run-once", [AdminPanelController::class, "runQueueOnce"])->add($perm(["admin.jobs.run"]));
             $group->post("/retention/cleanup", [AdminPanelController::class, "cleanupRetention"])->add($perm(["admin.jobs.run"]));
-            $group->post("/maintenance/backup", [AdminPanelController::class, "triggerBackup"])->add($perm(["admin.jobs.run"]));
+            $group->post("/maintenance/backup", [AdminPanelController::class, "triggerBackup"])->add(new CriticalActionMiddleware())->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/sitemap", [AdminPanelController::class, "triggerSitemap"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/warmup", [AdminPanelController::class, "triggerCacheWarmup"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/analytics", [AdminPanelController::class, "triggerAnalytics"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/api-tests", [AdminPanelController::class, "triggerApiTests"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/openapi", [AdminPanelController::class, "triggerOpenApi"])->add($perm(["admin.jobs.run"]));
-            $group->post("/maintenance/seed-data", [AdminPanelController::class, "triggerSeedData"])->add($perm(["admin.jobs.run"]));
+            $group->post("/maintenance/seed-data", [AdminPanelController::class, "triggerSeedData"])->add(new CriticalActionMiddleware())->add($perm(["admin.jobs.run"]));
             $group->get("/shop/packages", [AdminPanelController::class, "shopPackages"])->add($perm(["admin.shop.manage"]));
             $group->post("/shop/packages", [AdminPanelController::class, "createShopPackage"])->add($perm(["admin.shop.manage"]));
             $group->put("/shop/packages/{id:[0-9]+}", [AdminPanelController::class, "updateShopPackage"])->add($perm(["admin.shop.manage"]));
-            $group->post("/wallets/{userId:[a-z0-9]{8}}/grant-package", [AdminPanelController::class, "grantShopPackage"])->add($perm(["admin.wallet.manage"]));
-            $group->post("/wallets/{userId:[a-z0-9]{8}}/credit", [AdminPanelController::class, "creditWallet"])->add($perm(["admin.wallet.manage"]));
-            $group->post("/wallets/{userId:[a-z0-9]{8}}/debit", [AdminPanelController::class, "debitWallet"])->add($perm(["admin.wallet.manage"]));
+            $group->post("/wallets/{userId:[a-z0-9]{8}}/grant-package", [AdminPanelController::class, "grantShopPackage"])->add(new CriticalActionMiddleware())->add($perm(["admin.wallet.manage"]));
+            $group->post("/wallets/{userId:[a-z0-9]{8}}/credit", [AdminPanelController::class, "creditWallet"])->add(new CriticalActionMiddleware())->add($perm(["admin.wallet.manage"]));
+            $group->post("/wallets/{userId:[a-z0-9]{8}}/debit", [AdminPanelController::class, "debitWallet"])->add(new CriticalActionMiddleware())->add($perm(["admin.wallet.manage"]));
             $group->get("/wallets/{userId:[a-z0-9]{8}}", [AdminPanelController::class, "walletSummary"])->add($perm(["admin.wallet.view"]));
             $group->get("/wallets/{userId:[a-z0-9]{8}}/transactions", [AdminPanelController::class, "walletTransactions"])->add($perm(["admin.wallet.view"]));
             $group->put("/series/{id:[a-z0-9]{6}}/pricing", [AdminPanelController::class, "updateSeriesPricing"])->add($perm(["admin.shop.manage"]));
             $group->put("/chapters/{id:[a-z0-9]{6}}/pricing", [AdminPanelController::class, "updateChapterPricing"])->add($perm(["admin.shop.manage"]));
             $group->get("/features", [AdminPanelController::class, "featureProducts"])->add($perm(["admin.shop.manage"]));
             $group->put("/features/ad-free", [AdminPanelController::class, "configureAdFree"])->add($perm(["admin.shop.manage"]));
-            $group->get("/maintenance/env", [AdminPanelController::class, "getEnvConfig"])->add($perm(["admin.panel.access"]));
-            $group->post("/maintenance/env", [AdminPanelController::class, "saveEnvConfig"])->add($perm(["admin.panel.access"]));
+            $group->get("/maintenance/env", [AdminPanelController::class, "getEnvConfig"])->add($perm(["admin.settings.modify"]));
+            $group->post("/maintenance/env", [AdminPanelController::class, "saveEnvConfig"])->add(new CriticalActionMiddleware())->add($perm(["admin.settings.modify"]));
             $group->get("/audit-logs", [AdminPanelController::class, "auditLogs"])->add($perm(["admin.logs.view"]));
             $group->get("/login-events", [AdminPanelController::class, "loginEvents"])->add($perm(["admin.logs.view"]));
             $group->get("/moderation-actions", [AdminPanelController::class, "moderationActions"])->add($perm(["admin.logs.view"]));
@@ -413,37 +462,46 @@ final class Config
             $group->post("/content", [AdminPanelController::class, "createContent"])->add($perm(["admin.content.create"]));
             $group->post("/upload-images", [AdminPanelController::class, "uploadImages"])->add($perm(["admin.content.create"]));
             $group->put("/content/{id}", [AdminPanelController::class, "updateContent"])->add($perm(["admin.content.update"]));
+            $group->post("/content/{id}/lifecycle", [AdminPanelController::class, "changeContentLifecycle"])->add($perm(["admin.content.update"]));
+            $group->get("/content/{id}/preview", [AdminPanelController::class, "contentPreview"])->add($perm(["admin.panel.access"]));
+            $group->get("/content/{id}/revisions", [AdminPanelController::class, "contentRevisions"])->add($perm(["admin.panel.access"]));
             $group->put("/contents/{id}/taxonomy", [AdminPanelController::class, "updateTaxonomy"])->add($perm(["admin.content.update"]));
             $group->post("/content/{id}/chapters", [AdminPanelController::class, "createChapterByContentId"])->add($perm(["admin.chapter.create"]));
             $group->post("/content/{type:" . $typePattern . "}/{slug}/chapters", [AdminPanelController::class, "createChapter"])->add($perm(["admin.chapter.create"]));
             $group->get("/content/{id}/chapters", [AdminPanelController::class, "listChapters"])->add($perm(["admin.panel.access"]));
             $group->get("/chapters/{id}", [AdminPanelController::class, "getChapter"])->add($perm(["admin.panel.access"]));
             $group->put("/chapters/{id}", [AdminPanelController::class, "updateChapter"])->add($perm(["admin.content.update"]));
-            $group->delete("/chapters/{id}", [AdminPanelController::class, "deleteChapter"])->add($perm(["admin.content.update"]));
+            $group->delete("/chapters/{id}", [AdminPanelController::class, "deleteChapter"])->add(new CriticalActionMiddleware())->add($perm(["admin.content.update"]));
             $group->post("/chapters/bulk", [AdminPanelController::class, "bulkChapters"])->add($perm(["admin.content.update"]));
             $group->get("/series/{id:[a-z0-9]{6}}/team", [AdminPanelController::class, "listSeriesTeam"])->add($perm(["admin.panel.access"]));
             $group->post("/series/{id:[a-z0-9]{6}}/team", [AdminPanelController::class, "assignSeriesTeam"])->add($perm(["admin.content.update"]));
             $group->delete("/series/team/{assignmentId:[0-9]+}", [AdminPanelController::class, "removeSeriesTeam"])->add($perm(["admin.content.update"]));
             $group->get("/rbac/matrix", [AdminPanelController::class, "permissionMatrix"])->add($perm(["admin.panel.access"]));
-            $group->get("/config/site", [AdminPanelController::class, "getSiteConfig"])->add($perm(["admin.panel.access"]));
-            $group->post("/config/site", [AdminPanelController::class, "updateSiteConfig"])->add($perm(["admin.panel.access"]));
-            $group->get("/webhooks", [AdminPanelController::class, "listWebhooks"])->add($perm(["admin.panel.access"]));
-            $group->post("/webhooks", [AdminPanelController::class, "createWebhook"])->add($perm(["admin.panel.access"]));
-            $group->put("/webhooks/{id:[0-9]+}", [AdminPanelController::class, "updateWebhook"])->add($perm(["admin.panel.access"]));
-            $group->delete("/webhooks/{id:[0-9]+}", [AdminPanelController::class, "deleteWebhook"])->add($perm(["admin.panel.access"]));
-            $group->post("/webhooks/{id:[0-9]+}/test", [AdminPanelController::class, "testWebhook"])->add($perm(["admin.panel.access"]));
-            $group->get("/reports", [\App\Controllers\ReportController::class, "list"])->add($perm(["admin.panel.access"]));
-            $group->get("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "show"])->add($perm(["admin.panel.access"]));
-            $group->patch("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "update"])->add($perm(["admin.panel.access"]));
-            $group->put("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "update"])->add($perm(["admin.panel.access"]));
+            $group->get("/config/site", [AdminPanelController::class, "getSiteConfig"])->add($perm(["admin.settings.modify"]));
+            $group->post("/config/site", [AdminPanelController::class, "updateSiteConfig"])->add($perm(["admin.settings.modify"]));
+            $group->get("/webhooks", [AdminPanelController::class, "listWebhooks"])->add($perm(["admin.settings.modify"]));
+            $group->post("/webhooks", [AdminPanelController::class, "createWebhook"])->add($perm(["admin.settings.modify"]));
+            $group->put("/webhooks/{id:[0-9]+}", [AdminPanelController::class, "updateWebhook"])->add($perm(["admin.settings.modify"]));
+            $group->delete("/webhooks/{id:[0-9]+}", [AdminPanelController::class, "deleteWebhook"])->add(new CriticalActionMiddleware())->add($perm(["admin.settings.modify"]));
+            $group->post("/webhooks/{id:[0-9]+}/test", [AdminPanelController::class, "testWebhook"])->add($perm(["admin.settings.modify"]));
+            $group->get("/reports", [\App\Controllers\ReportController::class, "list"])->add($perm(["admin.reports.view"]));
+            $group->get("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "show"])->add($perm(["admin.reports.view"]));
+            $group->patch("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "update"])->add($perm(["admin.reports.manage"]));
+            $group->put("/reports/{id:[0-9]+}", [\App\Controllers\ReportController::class, "update"])->add($perm(["admin.reports.manage"]));
             $group->get("/analytics/monetization", [AdminPanelController::class, "monetizationAnalytics"])->add($perm(["admin.metrics.view"]));
+            $group->get("/finance/transactions", [AdminPanelController::class, "financeTransactions"])->add($perm(["admin.finance.view"]));
+            $group->post("/finance/transactions/{id:[0-9]+}/refund", [AdminPanelController::class, "refundFinanceTransaction"])->add(new CriticalActionMiddleware())->add($perm(["admin.finance.refund"]));
             $group->get("/analytics/search-insights", [AdminPanelController::class, "searchInsights"])->add($perm(["admin.metrics.view"]));
             $group->get("/analytics/funnel/{id:[a-z0-9]{6}}", [AdminPanelController::class, "seriesReadingFunnel"])->add($perm(["admin.metrics.view"]));
             $group->post("/series_genres", [AdminPanelController::class, "createGenre"])->add($perm(["admin.content.create"]));
             $group->post("/series_tags", [AdminPanelController::class, "createTag"])->add($perm(["admin.content.create"]));
+            $group->put("/taxonomies/{id:[0-9]+}", [AdminPanelController::class, "editTaxonomy"])->add($perm(["admin.content.update"]));
+            $group->delete("/taxonomies/{id:[0-9]+}", [AdminPanelController::class, "deleteTaxonomyItem"])->add(new CriticalActionMiddleware())->add($perm(["admin.content.update"]));
+            $group->post("/taxonomies/merge", [AdminPanelController::class, "mergeTaxonomies"])->add(new CriticalActionMiddleware())->add($perm(["admin.content.update"]));
+            $group->put("/taxonomies/order", [AdminPanelController::class, "reorderTaxonomies"])->add($perm(["admin.content.update"]));
             $group->post("/blogs/{id}/approve", [BlogController::class, "approve"])->add($perm(["admin.blog.hide"]));
             $group->post("/blogs/{id}/hide", [AdminPanelController::class, "hideBlog"])->add($perm(["admin.blog.hide"]));
-            $group->delete("/blogs/{id}", [AdminPanelController::class, "deleteBlog"])->add($perm(["admin.blog.hide"]));
+            $group->delete("/blogs/{id}", [AdminPanelController::class, "deleteBlog"])->add(new CriticalActionMiddleware())->add($perm(["admin.blog.hide"]));
         })->add(new RateLimitMiddleware($cache, "admin_api", 120, 300))->add(new CsrfMiddleware())->add(new AuthMiddleware($authorization));
     }
 }

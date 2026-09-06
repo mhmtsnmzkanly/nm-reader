@@ -79,9 +79,9 @@ class MockPdoStatement extends PDOStatement
 }
 
 /**
- * Comprehensive Automated API Test Suite for NM-Reader P2 Freeze.
+ * Automated API route and contract test suite for NM-Reader.
  *
- * Covers 94 Endpoints (51 Public/User + 43 Admin),
+ * Covers public, authenticated and admin route signatures,
  * Error Envelopes, Pagination Contracts, Auth/Guest flows,
  * Media token isolation, and Reader access control.
  */
@@ -165,13 +165,15 @@ final class ApiTestSuite
         };
 
         $GLOBALS['TESTING_MOCK_PDO'] = $mockPdo;
+        $_ENV['MEDIA_SECRET'] = str_repeat('a', 64);
+        $_ENV['CORS_ALLOWED_ORIGINS'] = 'http://localhost:8080';
         $this->app = require $baseDir . '/app/app.php';
     }
 
     public function run(): void
     {
         echo "==============================================================\n";
-        echo "       NM-READER — P2 API TEST SUITE (94 ENDPOINTS)          \n";
+        echo "          NM-READER — API CONTRACT TEST SUITE               \n";
         echo "==============================================================\n\n";
 
         $this->testPublicAndDiscoveryEndpoints();
@@ -190,7 +192,7 @@ final class ApiTestSuite
 
         echo "\n==============================================================\n";
         echo sprintf("TOTAL TESTS: %d | PASSED: %d | FAILED: %d\n", $this->passCount + $this->failCount, $this->passCount, $this->failCount);
-        echo sprintf("ENDPOINT COVERAGE: %d / 94 Endpoints Covered\n", count($this->coveredEndpoints));
+        echo sprintf("DISTINCT ROUTE SIGNATURES EXERCISED: %d\n", count($this->coveredEndpoints));
         echo "==============================================================\n";
 
         if ($this->failCount > 0) {
@@ -200,7 +202,7 @@ final class ApiTestSuite
             }
             exit(1);
         } else {
-            echo "\n>>> ALL 94 ENDPOINTS & CONTRACT ASSERTIONS PASSED (100% GREEN) <<<\n";
+            echo "\n>>> ALL EXERCISED ROUTES & CONTRACT ASSERTIONS PASSED <<<\n";
             exit(0);
         }
     }
@@ -236,7 +238,13 @@ final class ApiTestSuite
         return $this->app->handle($req);
     }
 
-    private function assertResponse(string $testName, ResponseInterface $res, int $expectedStatus, ?string $endpointKey = null): array
+    private function assertResponse(
+        string $testName,
+        ResponseInterface $res,
+        int $expectedStatus,
+        ?string $endpointKey = null,
+        bool $requiresEnvelope = true
+    ): array
     {
         $status = $res->getStatusCode();
         $raw = (string) $res->getBody();
@@ -247,7 +255,7 @@ final class ApiTestSuite
         }
 
         $passed = ($status === $expectedStatus);
-        if ($passed && is_array($json) && $endpointKey !== 'GET /api/v1/i18n/{lang}') {
+        if ($passed && $requiresEnvelope && is_array($json) && $endpointKey !== 'GET /api/v1/i18n/{lang}') {
             if (!array_key_exists('status', $json) || !array_key_exists('error', $json)) {
                 $passed = false;
                 $testName .= ' (Missing standard status/error envelope keys)';
@@ -270,7 +278,10 @@ final class ApiTestSuite
     private function testPublicAndDiscoveryEndpoints(): void
     {
         echo "1. Testing Public & Discovery Endpoints...\n";
-        
+
+        $this->assertResponse('GET /health/live', $this->request('GET', '/health/live'), 204, 'GET /health/live');
+        $this->assertResponse('GET /health readiness', $this->request('GET', '/health'), 200, 'GET /health', false);
+
         // 1. GET /api/v1/home
         $json = $this->assertResponse('GET /api/v1/home', $this->request('GET', '/api/v1/home'), 200, 'GET /api/v1/home');
         $this->assertPagination('home', $json);
@@ -297,6 +308,14 @@ final class ApiTestSuite
         // 7. GET /api/v1/shop/packages
         $json = $this->assertResponse('GET /api/v1/shop/packages', $this->request('GET', '/api/v1/shop/packages'), 200, 'GET /api/v1/shop/packages');
         $this->assertPagination('shopPackages', $json);
+        if (($json['meta']['checkout_available'] ?? null) === false) {
+            $this->passCount++;
+            echo "  [PASS] Shop catalogue explicitly reports checkout availability\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'Shop catalogue is missing checkout_available=false';
+            echo "  [FAIL] Shop catalogue is missing checkout_available=false\n";
+        }
 
         // 8. GET /api/v1/shop/features
         $this->assertResponse('GET /api/v1/shop/features', $this->request('GET', '/api/v1/shop/features'), 200, 'GET /api/v1/shop/features');
@@ -475,8 +494,6 @@ final class ApiTestSuite
         // 42. GET /api/v1/profile/{person}
         $this->assertResponse('GET /api/v1/profile/testuser', $this->request('GET', '/api/v1/profile/testuser'), 200, 'GET /api/v1/profile/{person}');
 
-        // 42a. POST /api/v1/queue/tick (Virtual Cron / Background Queue Trigger)
-        $this->assertResponse('POST /api/v1/queue/tick (204)', $this->request('POST', '/api/v1/queue/tick'), 204, 'POST /api/v1/queue/tick');
     }
 
     private function testAuthAndSessionEndpoints(): void
@@ -506,6 +523,8 @@ final class ApiTestSuite
         // 45. POST /api/v1/auth/refresh
         $this->assertResponse('POST /api/v1/auth/refresh (empty -> 400)', $this->request('POST', '/api/v1/auth/refresh', [], []), 400, 'POST /api/v1/auth/refresh');
 
+        $this->assertResponse('GET /api/v1/auth/csrf', $this->request('GET', '/api/v1/auth/csrf'), 200, 'GET /api/v1/auth/csrf');
+
         // 46. POST /api/v1/auth/logout
         $this->assertResponse('POST /api/v1/auth/logout', $this->request('POST', '/api/v1/auth/logout'), 200, 'POST /api/v1/auth/logout');
 
@@ -514,6 +533,8 @@ final class ApiTestSuite
 
         // 48. DELETE /api/v1/auth/sessions/{sessionKey}
         $this->assertResponse('DELETE /api/v1/auth/sessions/sess123 (Guest -> 401)', $this->request('DELETE', '/api/v1/auth/sessions/sess123'), 401, 'DELETE /api/v1/auth/sessions/{sessionKey}');
+
+        $this->assertResponse('POST /api/v1/auth/sessions/revoke-others (Guest -> 401)', $this->request('POST', '/api/v1/auth/sessions/revoke-others'), 401, 'POST /api/v1/auth/sessions/revoke-others');
     }
 
     private function testUserProtectedEndpoints(): void
@@ -528,6 +549,9 @@ final class ApiTestSuite
 
         // 51. GET /api/v1/user/history
         $this->assertResponse('GET /api/v1/user/history (Guest -> 401)', $this->request('GET', '/api/v1/user/history'), 401, 'GET /api/v1/user/history');
+        $this->assertResponse('POST /api/v1/user/history (Guest -> 401)', $this->request('POST', '/api/v1/user/history'), 401, 'POST /api/v1/user/history');
+        $this->assertResponse('DELETE /api/v1/user/history/1 (Guest -> 401)', $this->request('DELETE', '/api/v1/user/history/1'), 401, 'DELETE /api/v1/user/history/{historyId}');
+        $this->assertResponse('DELETE /api/v1/user/history (Guest -> 401)', $this->request('DELETE', '/api/v1/user/history'), 401, 'DELETE /api/v1/user/history');
 
         // 52. GET /api/v1/user/preferences
         $this->assertResponse('GET /api/v1/user/preferences (Guest -> 401)', $this->request('GET', '/api/v1/user/preferences'), 401, 'GET /api/v1/user/preferences');
@@ -540,6 +564,20 @@ final class ApiTestSuite
 
         // 55. GET /api/v1/user/wallet/transactions
         $this->assertResponse('GET /api/v1/user/wallet/transactions (Guest -> 401)', $this->request('GET', '/api/v1/user/wallet/transactions'), 401, 'GET /api/v1/user/wallet/transactions');
+        $this->assertResponse('POST /api/v1/shop/packages/1/purchase (Guest -> 401)', $this->request('POST', '/api/v1/shop/packages/1/purchase'), 401, 'POST /api/v1/shop/packages/{packageId}/purchase');
+        $checkout = $this->assertResponse(
+            'POST /api/v1/shop/packages/1/purchase (Configured user -> explicit unavailable)',
+            $this->request('POST', '/api/v1/shop/packages/1/purchase', ['X-CSRF-Token' => 'test_token_123'], null, 'usr12345'),
+            503
+        );
+        if (($checkout['error']['key'] ?? null) === 'PAYMENT_PROVIDER_NOT_CONFIGURED') {
+            $this->passCount++;
+            echo "  [PASS] Checkout failure exposes a stable machine-readable error key\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'Checkout unavailable response has the wrong error key';
+            echo "  [FAIL] Checkout unavailable response has the wrong error key\n";
+        }
 
         // 56. GET /api/v1/user/features
         $this->assertResponse('GET /api/v1/user/features (Guest -> 401)', $this->request('GET', '/api/v1/user/features'), 401, 'GET /api/v1/user/features');
@@ -567,6 +605,7 @@ final class ApiTestSuite
 
         // 64. POST /api/v1/user/notifications/read
         $this->assertResponse('POST /api/v1/user/notifications/read (Guest -> 401)', $this->request('POST', '/api/v1/user/notifications/read'), 401, 'POST /api/v1/user/notifications/read');
+        $this->assertResponse('DELETE /api/v1/user/notifications/1 (Guest -> 401)', $this->request('DELETE', '/api/v1/user/notifications/1'), 401, 'DELETE /api/v1/user/notifications/{notificationId}');
 
         // 64a. POST /api/v1/reports
         $this->assertResponse('POST /api/v1/reports (Guest -> 401)', $this->request('POST', '/api/v1/reports', [], ['target_type' => 'blog', 'target_id' => 'b1', 'reason' => 'spam']), 401, 'POST /api/v1/reports');
@@ -585,10 +624,11 @@ final class ApiTestSuite
 
     private function testAdminEndpoints(): void
     {
-        echo "\n11. Testing 46 Admin Endpoints (RBAC Protection & Signature)...\n";
+        echo "\n11. Testing Admin Endpoints (RBAC Protection & Signature)...\n";
 
         $adminRoutes = [
             ['GET', '/api/v1/admin/overview', 'GET /api/v1/admin/overview'],
+            ['POST', '/api/v1/admin/auth/reauth', 'POST /api/v1/admin/auth/reauth'],
             ['GET', '/api/v1/admin/series', 'GET /api/v1/admin/series'],
             ['GET', '/api/v1/admin/genres', 'GET /api/v1/admin/genres'],
             ['GET', '/api/v1/admin/tags', 'GET /api/v1/admin/tags'],
@@ -596,6 +636,8 @@ final class ApiTestSuite
             ['GET', '/api/v1/admin/users/options', 'GET /api/v1/admin/users/options'],
             ['GET', '/api/v1/admin/uploads', 'GET /api/v1/admin/uploads'],
             ['DELETE', '/api/v1/admin/uploads/1', 'DELETE /api/v1/admin/uploads/{id}'],
+            ['POST', '/api/v1/admin/uploads/bulk-delete', 'POST /api/v1/admin/uploads/bulk-delete'],
+            ['POST', '/api/v1/admin/uploads/1/optimize', 'POST /api/v1/admin/uploads/{id}/optimize'],
             ['GET', '/api/v1/admin/blogs', 'GET /api/v1/admin/blogs'],
             ['GET', '/api/v1/admin/blogs/pending', 'GET /api/v1/admin/blogs/pending'],
             ['GET', '/api/v1/admin/comments', 'GET /api/v1/admin/comments'],
@@ -604,7 +646,11 @@ final class ApiTestSuite
             ['GET', '/api/v1/admin/rbac/roles', 'GET /api/v1/admin/rbac/roles'],
             ['GET', '/api/v1/admin/rbac/assignments', 'GET /api/v1/admin/rbac/assignments'],
             ['POST', '/api/v1/admin/rbac/permissions/assign', 'POST /api/v1/admin/rbac/permissions/assign'],
+            ['DELETE', '/api/v1/admin/rbac/permissions', 'DELETE /api/v1/admin/rbac/permissions'],
             ['GET', '/api/v1/admin/queue/jobs', 'GET /api/v1/admin/queue/jobs'],
+            ['GET', '/api/v1/admin/system/health', 'GET /api/v1/admin/system/health'],
+            ['POST', '/api/v1/admin/queue/jobs/1/retry', 'POST /api/v1/admin/queue/jobs/{id}/retry'],
+            ['POST', '/api/v1/admin/queue/jobs/1/cancel', 'POST /api/v1/admin/queue/jobs/{id}/cancel'],
             ['POST', '/api/v1/admin/queue/run-once', 'POST /api/v1/admin/queue/run-once'],
             ['POST', '/api/v1/admin/retention/cleanup', 'POST /api/v1/admin/retention/cleanup'],
             ['POST', '/api/v1/admin/maintenance/backup', 'POST /api/v1/admin/maintenance/backup'],
@@ -651,6 +697,15 @@ final class ApiTestSuite
             ['PATCH', '/api/v1/admin/reports/1', 'PATCH /api/v1/admin/reports/{id:[0-9]+}'],
             ['PUT', '/api/v1/admin/reports/1', 'PUT /api/v1/admin/reports/{id:[0-9]+}'],
             ['GET', '/api/v1/admin/analytics/monetization', 'GET /api/v1/admin/analytics/monetization'],
+            ['GET', '/api/v1/admin/finance/transactions', 'GET /api/v1/admin/finance/transactions'],
+            ['POST', '/api/v1/admin/finance/transactions/1/refund', 'POST /api/v1/admin/finance/transactions/{id}/refund'],
+            ['POST', '/api/v1/admin/content/c12345/lifecycle', 'POST /api/v1/admin/content/{id}/lifecycle'],
+            ['GET', '/api/v1/admin/content/c12345/preview', 'GET /api/v1/admin/content/{id}/preview'],
+            ['GET', '/api/v1/admin/content/c12345/revisions', 'GET /api/v1/admin/content/{id}/revisions'],
+            ['PUT', '/api/v1/admin/taxonomies/1', 'PUT /api/v1/admin/taxonomies/{id}'],
+            ['DELETE', '/api/v1/admin/taxonomies/1', 'DELETE /api/v1/admin/taxonomies/{id}'],
+            ['POST', '/api/v1/admin/taxonomies/merge', 'POST /api/v1/admin/taxonomies/merge'],
+            ['PUT', '/api/v1/admin/taxonomies/order', 'PUT /api/v1/admin/taxonomies/order'],
             ['GET', '/api/v1/admin/analytics/search-insights', 'GET /api/v1/admin/analytics/search-insights'],
             ['GET', '/api/v1/admin/analytics/funnel/c12345', 'GET /api/v1/admin/analytics/funnel/{id}'],
         ];
@@ -675,6 +730,30 @@ final class ApiTestSuite
             $this->failCount++;
             $this->failures[] = 'Error response envelope is missing required standard keys';
             echo "  [FAIL] Error response envelope is missing required standard keys: " . substr($raw, 0, 150) . "\n";
+        }
+
+        $corsError = $this->request('GET', '/api/v1/does-not-exist', ['Origin' => 'http://localhost:8080']);
+        if ($corsError->getStatusCode() === 404
+            && $corsError->getHeaderLine('Access-Control-Allow-Origin') === 'http://localhost:8080'
+        ) {
+            $this->passCount++;
+            echo "  [PASS] Allowed-origin CORS headers are retained on error responses\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'CORS headers missing from an error response';
+            echo "  [FAIL] CORS headers missing from an error response\n";
+        }
+
+        $blockedOrigin = $this->request('GET', '/api/v1/home', ['Origin' => 'https://untrusted.example']);
+        if ($blockedOrigin->getStatusCode() === 403
+            && $blockedOrigin->getHeaderLine('Access-Control-Allow-Origin') === ''
+        ) {
+            $this->passCount++;
+            echo "  [PASS] Unknown cross-origin requests are rejected without credential headers\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'Unknown CORS origin was not safely rejected';
+            echo "  [FAIL] Unknown CORS origin was not safely rejected\n";
         }
     }
 

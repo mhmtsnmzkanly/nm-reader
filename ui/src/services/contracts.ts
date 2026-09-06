@@ -70,7 +70,7 @@ export interface IContentService {
     filters?: SearchFilters
   ): Promise<ApiResponse<ContentSummary[]>>;
   searchSuggest(q: string): Promise<ApiResponse<SearchSuggestItem[]>>;
-  toggleFollow(type: ContentType, slug: string): Promise<ApiResponse<{ followed: boolean }>>;
+  toggleFollow(type: ContentType, slug: string, currentlyFollowed?: boolean): Promise<ApiResponse<{ followed: boolean }>>;
   rateContent(
     type: ContentType,
     slug: string,
@@ -199,13 +199,15 @@ export interface IUserService {
   addToLibrary(
     contentIdOrSlug: string,
     type?: ContentType
-  ): Promise<ApiResponse<{ added: boolean; item: LibraryItem }>>;
+  ): Promise<ApiResponse<{ added: boolean; item?: LibraryItem }>>;
   removeFromLibrary(
-    idOrSlug: string
+    idOrSlug: string,
+    type?: ContentType
   ): Promise<ApiResponse<{ removed: boolean }>>;
   toggleLibrary(
     type: ContentType,
-    slug: string
+    slug: string,
+    currentlyInLibrary?: boolean
   ): Promise<ApiResponse<{ in_library: boolean }>>;
   getFollows(page?: number, per_page?: number): Promise<ApiResponse<ContentSummary[]>>;
   getFollowingUsers(page?: number, per_page?: number): Promise<ApiResponse<FollowingUserItem[]>>;
@@ -228,7 +230,7 @@ export interface IUserService {
   ): Promise<ApiResponse<NotificationItem[]>>;
   markNotificationsRead(id?: number | 'all'): Promise<ApiResponse<{ marked: boolean }>>;
   deleteNotification(id: number): Promise<ApiResponse<{ deleted: boolean }>>;
-  toggleFollowUser(username: string): Promise<ApiResponse<{ is_following: boolean; followers_count: number }>>;
+  toggleFollowUser(username: string, currentlyFollowing: boolean): Promise<ApiResponse<{ is_following: boolean; followers_count: number }>>;
 }
 
 export interface IWalletService {

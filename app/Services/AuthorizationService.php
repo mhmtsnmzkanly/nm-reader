@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use PDO;
+
 /**
  * Service for handling Role-Based Access Control (RBAC).
  *
@@ -31,7 +33,7 @@ final class AuthorizationService
      */
     private ?string $rootUserId = null;
 
-    public function __construct()
+    public function __construct(private readonly ?PDO $pdo = null)
     {
         $this->rootUserId = $_ENV['ROOT_USER'] ?? getenv('ROOT_USER') ?: null;
         $config = \App\Config::getSettings()['rbac'] ?? [];
@@ -103,6 +105,7 @@ final class AuthorizationService
      */
     public function resolveEffectivePermissions(array $roles, array $grantedPermissions = [], ?string $userId = null): array
     {
+        $permissionsByRole = $this->rolePermissionsWithOverrides();
         // Absolute Superuser (Root) Bypass
         if ($userId !== null && $this->rootUserId !== null && $userId === $this->rootUserId) {
             // Collect all unique permissions defined in RBAC config
@@ -130,7 +133,7 @@ final class AuthorizationService
 
         // Add baseline permissions from every assigned role.
         foreach ($normalizedRoles as $role) {
-            foreach ($this->roleBasePermissions[$role] ?? [] as $permission) {
+            foreach ($permissionsByRole[$role] ?? [] as $permission) {
                 if (!in_array($permission, $effective, true)) {
                     $effective[] = $permission;
                 }
@@ -150,5 +153,43 @@ final class AuthorizationService
     private function priority(string $role): int
     {
         return (int) ($this->rolePriority[$role] ?? 0);
+    }
+
+    private function rolePermissionsWithOverrides(): array
+    {
+        $permissionsByRole = $this->roleBasePermissions;
+        if ($this->pdo === null) {
+            return $permissionsByRole;
+        }
+
+        try {
+            $rows = $this->pdo->query(
+                'SELECT role_slug, permission_code, effect FROM rbac_role_permission_overrides'
+            )->fetchAll();
+        } catch (\Throwable) {
+            return $permissionsByRole;
+        }
+
+        foreach ($rows as $row) {
+            $role = (string) ($row['role_slug'] ?? '');
+            $permission = (string) ($row['permission_code'] ?? '');
+            if ($role === '' || $permission === '' || !array_key_exists($role, $permissionsByRole)) {
+                continue;
+            }
+
+            $permissions = $permissionsByRole[$role];
+            if (($row['effect'] ?? '') === 'grant') {
+                if (!in_array($permission, $permissions, true)) {
+                    $permissions[] = $permission;
+                }
+            } else {
+                $permissions = array_values(array_filter(
+                    $permissions,
+                    static fn(string $value): bool => $value !== $permission
+                ));
+            }
+            $permissionsByRole[$role] = $permissions;
+        }
+        return $permissionsByRole;
     }
 }

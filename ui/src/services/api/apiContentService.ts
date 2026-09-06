@@ -24,7 +24,7 @@ export class ApiContentService implements IContentService {
     page = 1,
     per_page = 20
   ): Promise<ApiResponse<ContentSummary[]>> {
-    return api.get<ContentSummary[]>(`/${type}`, { page, per_page });
+    return api.get<ContentSummary[]>(`/content/type/${type}`, { page, per_page });
   }
 
   async getContentDetail(type: ContentType, slug: string): Promise<ApiResponse<ContentDetail>> {
@@ -87,9 +87,13 @@ export class ApiContentService implements IContentService {
 
   async toggleFollow(
     type: ContentType,
-    slug: string
+    slug: string,
+    currentlyFollowed = false
   ): Promise<ApiResponse<{ followed: boolean }>> {
-    return api.post<{ followed: boolean }>(`/content/${type}/${slug}/follow`);
+    const endpoint = `/content/${type}/${slug}/follow`;
+    return currentlyFollowed
+      ? api.delete<{ followed: boolean }>(endpoint)
+      : api.post<{ followed: boolean }>(endpoint);
   }
 
   async rateContent(

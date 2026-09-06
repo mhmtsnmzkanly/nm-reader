@@ -33,10 +33,12 @@ final class ApiAuthMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        $token = substr($authHeader, 7);
+        $token = trim(substr($authHeader, 7));
         if ($token === '') {
             return $handler->handle($request);
         }
+
+        $tokenHash = hash('sha256', $token);
 
         try {
             $stmt = $this->pdo->prepare('
@@ -46,7 +48,7 @@ final class ApiAuthMiddleware implements MiddlewareInterface
                   AND (api_token_expires_at IS NULL OR api_token_expires_at > NOW())
                 LIMIT 1
             ');
-            $stmt->execute(['token' => $token]);
+            $stmt->execute(['token' => $tokenHash]);
             $user = $stmt->fetch();
 
             if ($user) {

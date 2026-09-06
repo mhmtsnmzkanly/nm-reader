@@ -80,6 +80,7 @@ final class ChapterRepository
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
                 WHERE ch.chapter_number = :chapter_number AND ch.deleted_at IS NULL AND c.deleted_at IS NULL
+                  AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
                 ORDER BY ch.id DESC
                 LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
@@ -102,6 +103,7 @@ final class ChapterRepository
              INNER JOIN series c ON c.id = ch.content_id
              WHERE CAST(ch.chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
                AND ch.deleted_at IS NULL AND c.deleted_at IS NULL
+               AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
              ORDER BY ch.id DESC
              LIMIT 1'
         );
@@ -137,6 +139,7 @@ final class ChapterRepository
                   AND ch.chapter_number = :chapter_number
                   AND ch.deleted_at IS NULL
                   AND c.deleted_at IS NULL
+                  AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
                 LIMIT 1';
 
         $stmt = $this->pdo->prepare($sql);
@@ -176,6 +179,7 @@ final class ChapterRepository
                AND CAST(ch.chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
                AND ch.deleted_at IS NULL
                AND c.deleted_at IS NULL
+               AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
              ORDER BY ch.id ASC
              LIMIT 1'
         );
@@ -257,6 +261,28 @@ final class ChapterRepository
             'pages' => $pages,
             'translator_note' => $translatorNote !== '' ? $translatorNote : null,
         ];
+    }
+
+    /**
+     * Confirms that an image filename and page order belong to a live chapter.
+     */
+    public function ownsMediaPage(string $chapterId, int $pageOrder, string $filename): bool
+    {
+        $content = $this->findChapterContent($chapterId);
+        if (($content['type'] ?? '') !== 'image') {
+            return false;
+        }
+
+        $expectedFilename = basename($filename);
+        foreach ($content['pages'] ?? [] as $page) {
+            if ((int) ($page['page_order'] ?? 0) === $pageOrder
+                && hash_equals($expectedFilename, basename((string) ($page['image_path'] ?? '')))
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function findChapterText(string $chapterId): ?string
@@ -384,7 +410,8 @@ final class ChapterRepository
     }
 
     /**
-     * Marks a chapter as read and updates global reading progress for the user.
+     * Records that a chapter was opened without falsely marking it complete.
+     * Explicit progress updates are handled by UserRepository::recordHistory().
      */
     public function markRead(string $userId, string $chapterId): void
     {
@@ -410,12 +437,12 @@ final class ChapterRepository
                  ON DUPLICATE KEY UPDATE last_chapter_id = VALUES(last_chapter_id), updated_at = NOW()'
             )->execute(['user_id' => $userId, 'series_id' => $contentId, 'chapter_id' => $chapterId]);
 
-            // 4. Sync to unified user_reading_history
+            // 4. Create history on first open, preserving any progress already saved.
             try {
                 $this->pdo->prepare(
                     'INSERT INTO user_reading_history (user_id, content_id, chapter_id, chapter_number, progress_pct, is_completed, last_read_at)
-                     VALUES (:user_id, :content_id, :chapter_id, :chapter_number, 100, 1, NOW())
-                     ON DUPLICATE KEY UPDATE chapter_number = VALUES(chapter_number), progress_pct = 100, is_completed = 1, read_count = read_count + 1, last_read_at = NOW()'
+                     VALUES (:user_id, :content_id, :chapter_id, :chapter_number, 0, 0, NOW())
+                     ON DUPLICATE KEY UPDATE chapter_number = VALUES(chapter_number), read_count = read_count + 1, last_read_at = NOW()'
                 )->execute([
                     'user_id' => $userId,
                     'content_id' => $contentId,

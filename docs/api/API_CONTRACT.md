@@ -1,5 +1,7 @@
 # NM-Reader Canonical API v1 Contract Specification
 
+> **Archived baseline:** This pre-freeze document is retained for history and may omit later routes. `app/Config.php` is the runtime route authority; `docs/api/openapi.json` is a generated reference for the documented subset.
+
 **Version:** 1.0.0-draft  
 **Status:** PROPOSED (Pre-Freeze)  
 **Date:** 2026-08-14  

@@ -26,7 +26,11 @@ final class MediaService
         private readonly string $baseUploadDir = __DIR__ . '/../../storage/media/',
         ?string $appSecret = null
     ) {
-        $this->appSecret = $appSecret ?: (string) ($_ENV['APP_SECRET'] ?? ($_ENV['MEDIA_SECRET'] ?? 'nm_reader_media_secret_key_v1_auth'));
+        $secret = trim((string) ($appSecret ?? ''));
+        if (strlen($secret) < 32) {
+            throw new RuntimeException('MEDIA_SECRET must be configured with at least 32 characters.');
+        }
+        $this->appSecret = $secret;
     }
 
     /**
@@ -52,6 +56,7 @@ final class MediaService
             'p'   => $pageOrder,
             'f'   => $filename,
             'uid' => $userId,
+            'sid' => $userId === null ? $this->currentSessionFingerprint() : null,
             'exp' => time() + $ttl,
         ];
 
@@ -68,7 +73,7 @@ final class MediaService
      * Verifies and decodes a chapter media temporary token.
      *
      * @param string $token
-     * @return array{cid: string, p: int, f: string, uid: ?string, exp: int}|null
+     * @return array{cid: string, p: int, f: string, uid: ?string, sid: ?string, exp: int}|null
      */
     public function verifyChapterToken(string $token): ?array
     {
@@ -107,17 +112,59 @@ final class MediaService
             return null;
         }
 
-        if ((int) $data['exp'] < time()) {
+        $chapterId = (string) $data['cid'];
+        $pageOrder = (int) $data['p'];
+        $filename = (string) $data['f'];
+        $userId = isset($data['uid']) && is_string($data['uid']) && $data['uid'] !== '' ? $data['uid'] : null;
+        $sessionFingerprint = isset($data['sid']) && is_string($data['sid']) && $data['sid'] !== '' ? $data['sid'] : null;
+
+        if ((int) $data['exp'] < time()
+            || !preg_match('/^[a-z0-9]{6}$/', $chapterId)
+            || $pageOrder < 1
+            || !$this->isChapterMedia($filename)
+            || ($userId === null && $sessionFingerprint === null)
+        ) {
             return null; // Expired
         }
 
         return [
-            'cid' => (string) $data['cid'],
-            'p'   => (int) $data['p'],
-            'f'   => (string) $data['f'],
-            'uid' => isset($data['uid']) && is_string($data['uid']) ? $data['uid'] : null,
+            'cid' => $chapterId,
+            'p'   => $pageOrder,
+            'f'   => $filename,
+            'uid' => $userId,
+            'sid' => $sessionFingerprint,
             'exp' => (int) $data['exp'],
         ];
+    }
+
+    /**
+     * Ensures a signed URL can only be used by the user or guest session it was issued to.
+     *
+     * @param array{uid: ?string, sid: ?string} $tokenData
+     */
+    public function isTokenAudienceValid(array $tokenData, ?string $currentUserId): bool
+    {
+        $tokenUserId = $tokenData['uid'] ?? null;
+        if (is_string($tokenUserId) && $tokenUserId !== '') {
+            return $currentUserId !== null && hash_equals($tokenUserId, $currentUserId);
+        }
+
+        $tokenSession = $tokenData['sid'] ?? null;
+        $currentSession = $this->currentSessionFingerprint();
+        return is_string($tokenSession)
+            && $tokenSession !== ''
+            && $currentSession !== null
+            && hash_equals($tokenSession, $currentSession);
+    }
+
+    private function currentSessionFingerprint(): ?string
+    {
+        $sessionId = session_id();
+        if ($sessionId === '') {
+            return null;
+        }
+
+        return hash_hmac('sha256', $sessionId, $this->appSecret);
     }
 
     /**

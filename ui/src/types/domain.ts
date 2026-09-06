@@ -18,16 +18,6 @@ export type AppTheme =
 
 export type AppLanguage = 'tr' | 'en';
 
-export type ScenarioType =
-  | 'normal_authenticated'
-  | 'normal_guest'
-  | 'session_expired'
-  | 'insufficient_coins'
-  | 'network_error'
-  | 'empty_data'
-  | 'forbidden_commenting'
-  | 'maintenance';
-
 export type ReaderSettingsState = UserPreferences['reader'];
 
 export type ProfileTab = 'overview' | 'library' | 'history' | 'following' | 'sessions' | 'activity';

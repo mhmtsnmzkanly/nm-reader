@@ -16,6 +16,4 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $app = require __DIR__ . '/../app/app.php';
 
-$app->map(['GET'], '/health', fn ($request, $response) => $response->withStatus(204));
-
 $app->run();

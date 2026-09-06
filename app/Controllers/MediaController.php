@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\ResponseHelper;
+use App\Repositories\ChapterRepository;
 use App\Services\MediaService;
 use finfo;
 use Psr\Http\Message\ResponseInterface;
@@ -23,7 +24,8 @@ use Slim\Psr7\Stream;
 final class MediaController
 {
     public function __construct(
-        private readonly MediaService $mediaService
+        private readonly MediaService $mediaService,
+        private readonly ChapterRepository $chapters
     ) {
     }
 
@@ -59,6 +61,14 @@ final class MediaController
             return ResponseHelper::error(403, 'Invalid or expired chapter media token');
         }
 
+        $currentUserId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
+        $currentUserId = is_string($currentUserId) && $currentUserId !== '' ? $currentUserId : null;
+        if (!$this->mediaService->isTokenAudienceValid($data, $currentUserId)
+            || !$this->chapters->ownsMediaPage($data['cid'], $data['p'], $data['f'])
+        ) {
+            return ResponseHelper::error(403, 'Chapter media access denied');
+        }
+
         $filePath = $this->mediaService->resolveFile($data['f']);
         if ($filePath === null) {
             return ResponseHelper::error(404, 'Chapter page not found');
@@ -86,7 +96,7 @@ final class MediaController
             $expiresAt = gmdate('D, d M Y H:i:s T', time() + $publicTtl);
         } else {
             $chapterTtl = max(60, ($tokenExp ?? (time() + 7200)) - time());
-            $cacheControl = sprintf('private, max-age=%d, immutable', $chapterTtl);
+            $cacheControl = 'private, no-store';
             $expiresAt = gmdate('D, d M Y H:i:s T', $tokenExp ?? (time() + $chapterTtl));
         }
 

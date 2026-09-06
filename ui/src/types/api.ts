@@ -457,8 +457,8 @@ export type AuthPayload = {
   email: string;
   email_verified?: boolean;
   csrf_token: string;
-  refresh_token: string | null;
-  api_token: string;
+  refresh_token?: string | null;
+  api_token?: string | null;
   roles: string[];
   permissions: string[];
 };

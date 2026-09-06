@@ -54,13 +54,12 @@ final class RateLimitKeyedMiddleware implements MiddlewareInterface
         $hash = hash('sha256', $suffix);
         $key = sprintf('rate_%s_%s', $this->bucket, $hash);
 
-        $current = (int) $this->cache->get($key, 0);
-        if ($current >= $this->limit) {
+        $current = $this->cache->increment($key, 1, $this->windowSeconds);
+        if ($current > $this->limit) {
             $this->cache->increment(sprintf('sys_rate_limit_blocked_%s', $this->bucket), 1, 86400 * 365);
             return ResponseHelper::error(429, 'Too many requests');
         }
 
-        $this->cache->set($key, $current + 1, $this->windowSeconds);
         $this->cache->increment(sprintf('sys_rate_limit_allowed_%s', $this->bucket), 1, 86400 * 365);
 
         return $handler->handle($request);

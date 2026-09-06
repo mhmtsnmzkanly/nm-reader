@@ -33,8 +33,7 @@ export const en = {
     "warning": "Warning",
     "info": "Info",
     "confirm": "Confirm",
-    "prototypeNote": "Prototype Mode — All data is powered by mock service layer.",
-    "checkoutUnavailable": "Checkout unavailable in prototype mode",
+    "checkoutUnavailable": "Payment infrastructure is not configured yet",
     "totalItems": "Total {count} Items",
     "readNow": "Read Now",
     "details": "Details",
@@ -314,7 +313,6 @@ export const en = {
     "usernamePlaceholder": "username",
     "emailPlaceholder": "user@example.com",
     "rememberMe": "Remember Me",
-    "securityCheck": "Security Verification (Mock Turnstile)",
     "noAccount": "Don't have an account? Sign Up",
     "hasAccount": "Already have an account? Log In",
     "registerNotice": "Registration successful! Please log in.",
@@ -717,7 +715,6 @@ export const en = {
     "bonusBadge": "+%{percent} BONUS",
     "topUpModalTitle": "Top Up Coins",
     "topUpModalDesc": "Select a payment method to recharge your account balance.",
-    "mockPaymentNotice": "Prototype Mode — No actual charges will be made to your card.",
     "loadCoinsSuccess": "Coins successfully added to your account!"
   },
   "blog": {
@@ -859,7 +856,8 @@ export const en = {
     "amountToPay": "Total Amount:",
     "processing": "Processing...",
     "loadCoinsCta": "Top up {total} Coins for ₺{price}",
-    "sslSecure": "Secure 256-Bit SSL Encrypted Payment Infrastructure"
+    "sslSecure": "Secure 256-Bit SSL Encrypted Payment Infrastructure",
+    "paymentProviderRequired": "Checkout becomes available after a payment provider is configured"
   },
   "walletBalance": {
     "currentCoinBalance": "Your Coin Balance",
@@ -917,7 +915,6 @@ export const en = {
     "loginRequiredMessage": "You must log in to access this feature and bookmark series.",
     "loginAction": "Log In",
     "registerAction": "Sign Up",
-    "devScenarioTitle": "Developer Test Scenarios",
     "backHome": "Back to Home",
     "browseCatalog": "Browse Catalog",
     "emptyDefaultMessage": "There is currently no content available in this section.",

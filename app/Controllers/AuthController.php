@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Config;
 use App\Helpers\ResponseHelper;
 use App\Services\AuthService;
 use App\Services\SiteConfigService;
@@ -90,6 +91,30 @@ final class AuthController
         return "{$scheme}://{$host}{$portStr}";
     }
 
+    private function rememberCookie(ServerRequestInterface $request, string $value, int $expires): string
+    {
+        $settings = Config::getSettings()['app'];
+        $sameSite = ucfirst(strtolower((string) ($settings['remember_cookie_same_site'] ?? 'Lax')));
+        if (!in_array($sameSite, ['Lax', 'Strict', 'None'], true)) {
+            $sameSite = 'Lax';
+        }
+        $forwardedProto = strtolower(trim($request->getHeaderLine('X-Forwarded-Proto')));
+        $secure = (bool) ($settings['remember_cookie_secure'] ?? false)
+            || $request->getUri()->getScheme() === 'https'
+            || $forwardedProto === 'https';
+        if ($sameSite === 'None') {
+            $secure = true;
+        }
+
+        return sprintf(
+            'nm_remember=%s; Expires=%s; Path=/; HttpOnly; SameSite=%s%s',
+            $value,
+            gmdate('D, d M Y H:i:s T', $expires),
+            $sameSite,
+            $secure ? '; Secure' : ''
+        );
+    }
+
     /**
      * Handles user registration.
      */
@@ -125,15 +150,17 @@ final class AuthController
             
             $user = $this->authService->login($payload, $ip, $ua);
 
-            $res = ResponseHelper::success($user);
-            if (!empty($user['refresh_token'])) {
-                $expires = time() + (30 * 24 * 60 * 60);
-                $isSecure = ($request->getUri()->getScheme() === 'https') || $this->siteConfig->enforceHttps();
-                $res = $res->withHeader(
-                    'Set-Cookie',
-                    "nm_remember={$user['refresh_token']}; Expires=" . gmdate('D, d M Y H:i:s T', $expires) . "; Path=/; HttpOnly; SameSite=Lax" . ($isSecure ? '; Secure' : '')
-                );
+            $clientType = strtolower(trim((string) ($payload['client_type'] ?? 'browser')));
+            $refreshToken = (string) ($user['refresh_token'] ?? '');
+            $cookie = null;
+            if ($clientType === 'browser' && $refreshToken !== '') {
+                $days = (int) (Config::getSettings()['app']['refresh_token_days'] ?? 30);
+                $cookie = $this->rememberCookie($request, $refreshToken, time() + ($days * 86400));
+                unset($user['refresh_token']);
             }
+
+            $res = ResponseHelper::success($user);
+            if ($cookie !== null) $res = $res->withHeader('Set-Cookie', $cookie);
             return $res;
         } catch (\InvalidArgumentException $exception) {
             return ResponseHelper::error(400, $exception->getMessage());
@@ -151,20 +178,49 @@ final class AuthController
     {
         try {
             $payload = (array) $request->getParsedBody();
+            $clientType = strtolower(trim((string) ($payload['client_type'] ?? 'browser')));
             $refreshToken = trim((string) ($payload['refresh_token'] ?? ''));
+            if ($refreshToken === '') {
+                $refreshToken = trim((string) ($request->getCookieParams()['nm_remember'] ?? ''));
+            }
             $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
             $ua = (string) ($request->getHeaderLine('User-Agent') ?: 'unknown');
             $user = $this->authService->refresh($refreshToken, $ip, $ua);
+
+            $_SESSION['user_id'] = (string) $user['id'];
+            $_SESSION['username'] = (string) $user['username'];
+            $_SESSION['roles'] = $user['roles'];
+            $_SESSION['permissions'] = $user['permissions'];
+            $_SESSION['is_admin'] = in_array('admin.panel.access', $user['permissions'], true);
+            $_SESSION['session_key'] = (string) $user['session_key'];
             if (!isset($_SESSION['csrf_token'])) {
                 $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
             }
             $user['csrf_token'] = (string) $_SESSION['csrf_token'];
-            return ResponseHelper::success($user);
+
+            $newRefreshToken = (string) ($user['refresh_token'] ?? '');
+            $cookie = null;
+            if ($clientType === 'browser' && $newRefreshToken !== '') {
+                $days = (int) (Config::getSettings()['app']['refresh_token_days'] ?? 30);
+                $cookie = $this->rememberCookie($request, $newRefreshToken, time() + ($days * 86400));
+                unset($user['refresh_token']);
+            }
+
+            $res = ResponseHelper::success($user);
+            return $cookie === null ? $res : $res->withHeader('Set-Cookie', $cookie);
         } catch (\InvalidArgumentException $exception) {
             return ResponseHelper::error(400, $exception->getMessage());
         } catch (\DomainException $exception) {
             return ResponseHelper::error(401, $exception->getMessage());
         }
+    }
+
+    public function csrf(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(24));
+        }
+        return ResponseHelper::success(['csrf_token' => (string) $_SESSION['csrf_token']]);
     }
 
     /**
@@ -275,11 +331,23 @@ final class AuthController
         }
 
         $res = ResponseHelper::success(['logged_out' => true]);
-        $isSecure = ($request->getUri()->getScheme() === 'https') || $this->siteConfig->enforceHttps();
-        $secureSuffix = $isSecure ? '; Secure' : '';
-        
-        $res = $res->withAddedHeader('Set-Cookie', 'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax' . $secureSuffix)
-                   ->withAddedHeader('Set-Cookie', session_name() . '=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=Lax' . $secureSuffix);
+        $expiredRememberCookie = $this->rememberCookie($request, '', 0);
+        $sessionSettings = Config::getSettings()['app'];
+        $sessionSameSite = ucfirst(strtolower((string) ($sessionSettings['session_same_site'] ?? 'Lax')));
+        if (!in_array($sessionSameSite, ['Lax', 'Strict', 'None'], true)) $sessionSameSite = 'Lax';
+        $isSecure = (bool) ($sessionSettings['session_cookie_secure'] ?? false)
+            || $request->getUri()->getScheme() === 'https'
+            || strtolower(trim($request->getHeaderLine('X-Forwarded-Proto'))) === 'https';
+        if ($sessionSameSite === 'None') $isSecure = true;
+        $sessionCookie = sprintf(
+            '%s=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=%s%s',
+            session_name(),
+            $sessionSameSite,
+            $isSecure ? '; Secure' : ''
+        );
+
+        $res = $res->withAddedHeader('Set-Cookie', $expiredRememberCookie)
+                   ->withAddedHeader('Set-Cookie', $sessionCookie);
 
         if ($request->getMethod() === 'GET') {
             return $res->withStatus(302)->withHeader('Location', '/');
@@ -310,5 +378,18 @@ final class AuthController
 
         $this->authService->revokeSession($userId, $sessionKey);
         return ResponseHelper::success(['revoked' => true]);
+    }
+
+    public function revokeOtherSessions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $userId = (string) $request->getAttribute('user_id');
+        $currentSessionKey = (string) ($_SESSION['session_key'] ?? '');
+        if ($currentSessionKey === '') {
+            return ResponseHelper::error(409, 'Current session could not be identified');
+        }
+
+        return ResponseHelper::success([
+            'revoked_count' => $this->authService->revokeOtherSessions($userId, $currentSessionKey),
+        ]);
     }
 }

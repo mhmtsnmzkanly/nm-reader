@@ -13,6 +13,10 @@ use App\Services\MetricsService;
 use App\Services\RetentionService;
 use App\Services\UploadService;
 use App\Services\WebhookService;
+use App\Services\SystemLogService;
+use App\Services\AnalyticsAggregationService;
+use App\Services\WalletService;
+use App\Repositories\UserRepository;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -34,7 +38,8 @@ final class AdminPanelController
         private readonly AnalyticsAggregationService $aggregation,
         private readonly WalletService $wallets,
         private readonly WebhookService $webhooks,
-        private readonly \App\Repositories\AdminConsoleRepository $adminConsoleRepo
+        private readonly \App\Repositories\AdminConsoleRepository $adminConsoleRepo,
+        private readonly UserRepository $users
     ) {
     }
 
@@ -44,11 +49,35 @@ final class AdminPanelController
         return ResponseHelper::success($this->console->overview());
     }
 
+    public function reauthenticate(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array)$request->getParsedBody();
+        $userId = (string)$request->getAttribute('user_id');
+        $hash = $this->users->passwordHashForId($userId);
+        if ($hash === null || !password_verify((string)($payload['password'] ?? ''), $hash)) {
+            $this->console->createModerationAction($userId, 'security', $userId, 'auth_fail', 'Critical action reauthentication failed');
+            return ResponseHelper::error(401, 'Parola doğrulanamadı.');
+        }
+        $_SESSION['admin_reauthenticated_at'] = time();
+        $_SESSION['admin_reauthenticated_user_id'] = $userId;
+        $this->console->createModerationAction($userId, 'security', $userId, 'update', 'Critical action reauthentication succeeded');
+        return ResponseHelper::success(['valid_for_seconds' => 300]);
+    }
+
     // --- CONTENT & CHAPTERS ---
     public function listSeries(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listContents($page, $perPage);
+        $query = $request->getQueryParams();
+        $result = $this->console->listContents(
+            $page,
+            $perPage,
+            trim((string) ($query['q'] ?? '')),
+            isset($query['status']) ? (string) $query['status'] : null,
+            isset($query['type']) ? (string) $query['type'] : null,
+            isset($query['lifecycle']) ? (string) $query['lifecycle'] : null,
+            (string) ($query['sort'] ?? 'newest')
+        );
         return ResponseHelper::paginate($result['items'], $page, $perPage, $result['total'] ?? null);
     }
 
@@ -65,6 +94,42 @@ final class AdminPanelController
         $modId = (string) $request->getAttribute('user_id');
         $this->adminService->updateContent((string)$args['id'], $payload, $modId);
         return ResponseHelper::success();
+    }
+
+    public function changeContentLifecycle(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            return ResponseHelper::success($this->adminService->changeContentLifecycle(
+                (string) $args['id'],
+                (string) ($payload['action'] ?? ''),
+                isset($payload['scheduled_at']) ? (string) $payload['scheduled_at'] : null,
+                (string) $request->getAttribute('user_id')
+            ));
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
+    public function contentPreview(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            return ResponseHelper::success($this->adminService->contentPreview((string) $args['id']));
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
+    }
+
+    public function contentRevisions(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $limit = (int) ($request->getQueryParams()['limit'] ?? 50);
+            return ResponseHelper::success($this->adminService->contentRevisions((string) $args['id'], $limit));
+        } catch (\DomainException $exception) {
+            return ResponseHelper::error(404, $exception->getMessage());
+        }
     }
 
     public function listChapters(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -112,7 +177,15 @@ final class AdminPanelController
     public function listUsers(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listUsers($page, $perPage);
+        $query = $request->getQueryParams();
+        $result = $this->console->listUsers(
+            $page,
+            $perPage,
+            trim((string) ($query['q'] ?? '')),
+            isset($query['status']) ? (string) $query['status'] : null,
+            isset($query['role']) ? (string) $query['role'] : null,
+            (string) ($query['sort'] ?? 'newest')
+        );
         return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
@@ -143,10 +216,26 @@ final class AdminPanelController
 
     public function assignPermissionToRole(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $payload = (array) $request->getParsedBody();
-        $modId = (string) $request->getAttribute('user_id');
-        $this->console->assignPermissionToRole($payload, $modId);
-        return ResponseHelper::success(['assigned' => true]);
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            $this->console->assignPermissionToRole($payload, $modId);
+            return ResponseHelper::success(['assigned' => true]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        }
+    }
+
+    public function revokePermissionFromRole(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = (array) $request->getParsedBody();
+            $modId = (string) $request->getAttribute('user_id');
+            $revoked = $this->console->revokePermissionFromRole($payload, $modId);
+            return ResponseHelper::success(['revoked' => $revoked]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        }
     }
 
     public function createModerationAction(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -161,7 +250,14 @@ final class AdminPanelController
     public function blogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listBlogs($page, $perPage);
+        $query = $request->getQueryParams();
+        $result = $this->console->listBlogs(
+            $page,
+            $perPage,
+            trim((string) ($query['q'] ?? '')),
+            isset($query['status']) ? (string) $query['status'] : null,
+            (string) ($query['sort'] ?? 'newest')
+        );
         return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
@@ -182,7 +278,14 @@ final class AdminPanelController
     public function comments(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listComments($page, $perPage);
+        $query = $request->getQueryParams();
+        $result = $this->console->listComments(
+            $page,
+            $perPage,
+            trim((string) ($query['q'] ?? '')),
+            isset($query['target_type']) ? (string) $query['target_type'] : null,
+            (string) ($query['sort'] ?? 'newest')
+        );
         return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
@@ -197,7 +300,8 @@ final class AdminPanelController
     public function auditLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listAuditLogs($page, $perPage);
+        $q = $request->getQueryParams();
+        $result = $this->console->listAuditLogs($page, $perPage, (string)($q['q'] ?? ''), isset($q['method']) ? (string)$q['method'] : null, isset($q['status']) ? (string)$q['status'] : null, isset($q['user_id']) ? (string)$q['user_id'] : null, isset($q['date_from']) ? (string)$q['date_from'] : null, isset($q['date_to']) ? (string)$q['date_to'] : null, (string)($q['sort'] ?? 'newest'));
         return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
 
@@ -271,11 +375,50 @@ final class AdminPanelController
         return ResponseHelper::created($this->console->createTag((string) ($payload['name'] ?? ''), $modId));
     }
 
+    public function editTaxonomy(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            return ResponseHelper::success($this->console->updateTaxonomy((int)$args['id'], (array)$request->getParsedBody(), (string)$request->getAttribute('user_id')));
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(422, $e->getMessage());
+        }
+    }
+
+    public function deleteTaxonomyItem(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $this->console->deleteTaxonomy((int)$args['id'], (string)$request->getAttribute('user_id'));
+            return ResponseHelper::success();
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(422, $e->getMessage());
+        }
+    }
+
+    public function mergeTaxonomies(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            return ResponseHelper::success($this->console->mergeTaxonomies((array)$request->getParsedBody(), (string)$request->getAttribute('user_id')));
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(422, $e->getMessage());
+        }
+    }
+
+    public function reorderTaxonomies(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $this->console->reorderTaxonomies((array)$request->getParsedBody(), (string)$request->getAttribute('user_id'));
+            return ResponseHelper::success();
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(422, $e->getMessage());
+        }
+    }
+
     public function uploads(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listUploads($page, $perPage);
-        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
+        $query = $request->getQueryParams();
+        $result = $this->console->listUploads($page, $perPage, (string)($query['q'] ?? ''), isset($query['mime']) ? (string)$query['mime'] : null, filter_var($query['orphans'] ?? false, FILTER_VALIDATE_BOOL));
+        return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null, ['stats' => $result['stats'] ?? []]);
     }
 
     public function deleteUpload(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -283,6 +426,18 @@ final class AdminPanelController
         $modId = (string) $request->getAttribute('user_id');
         $this->console->deleteUpload((int)$args['id'], $modId);
         return ResponseHelper::success();
+    }
+
+    public function deleteUploads(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array)$request->getParsedBody();
+        return ResponseHelper::success($this->console->deleteUploads((array)($payload['ids'] ?? []), (string)$request->getAttribute('user_id')));
+    }
+
+    public function optimizeUpload(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try { return ResponseHelper::success($this->console->optimizeUpload((int)$args['id'], (string)$request->getAttribute('user_id'))); }
+        catch (\InvalidArgumentException|\DomainException $e) { return ResponseHelper::error(422, $e->getMessage()); }
     }
 
     public function uploadImages(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -319,8 +474,30 @@ final class AdminPanelController
     public function queueJobs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         [$page, $perPage] = $this->pagination($request);
-        $result = $this->console->listQueueJobs($page, $perPage);
+        $query = $request->getQueryParams();
+        $result = $this->console->listQueueJobs($page, $perPage, isset($query['status']) ? (string)$query['status'] : null, (string)($query['q'] ?? ''));
         return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
+    }
+
+    public function systemHealth(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->systemHealth());
+    }
+
+    public function retryQueueJob(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $this->console->retryQueueJob((int)$args['id'], (string)$request->getAttribute('user_id'));
+            return ResponseHelper::success();
+        } catch (\DomainException $e) { return ResponseHelper::error(409, $e->getMessage()); }
+    }
+
+    public function cancelQueueJob(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $this->console->cancelQueueJob((int)$args['id'], (string)$request->getAttribute('user_id'));
+            return ResponseHelper::success();
+        } catch (\DomainException $e) { return ResponseHelper::error(409, $e->getMessage()); }
     }
 
     public function runQueueOnce(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -347,6 +524,8 @@ final class AdminPanelController
             return ResponseHelper::success($this->console->triggerBackup($modId));
         } catch (\DomainException $e) {
             return ResponseHelper::error(403, $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(422, $e->getMessage());
         }
     }
 
@@ -429,6 +608,8 @@ final class AdminPanelController
             return ResponseHelper::success(['saved' => true]);
         } catch (\DomainException $e) {
             return ResponseHelper::error(403, $e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(422, $e->getMessage());
         }
     }
 
@@ -732,6 +913,23 @@ final class AdminPanelController
         $q = $request->getQueryParams();
         $days = (int) ($q['days'] ?? 30);
         return ResponseHelper::success($this->metricsService->monetizationAnalytics($days));
+    }
+
+    public function financeTransactions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        [$page, $perPage] = $this->pagination($request);
+        $q = $request->getQueryParams();
+        return ResponseHelper::success($this->wallets->adminFinance($page, $perPage, (string)($q['q'] ?? ''), isset($q['type']) ? (string)$q['type'] : null, (string)($q['sort'] ?? 'newest')));
+    }
+
+    public function refundFinanceTransaction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = (array)$request->getParsedBody();
+            return ResponseHelper::success($this->wallets->refundTransaction((int)$args['id'], (string)($payload['reason'] ?? ''), (string)$request->getAttribute('user_id')));
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            return ResponseHelper::error(422, $e->getMessage());
+        }
     }
 
     public function searchInsights(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

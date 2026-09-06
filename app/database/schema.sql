@@ -24,7 +24,7 @@ CREATE TABLE `users` (
   `profile_image` varchar(255) DEFAULT NULL,
   `cover_image` varchar(255) DEFAULT NULL,
   `roles` varchar(255) DEFAULT '4',
-  `api_token` varchar(64) DEFAULT NULL,
+  `api_token` varchar(64) DEFAULT NULL COMMENT 'SHA-256 hex digest; raw token is never stored',
   `api_token_expires_at` datetime DEFAULT NULL,
   `settings` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`settings`)),
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -44,6 +44,10 @@ CREATE TABLE `series` (
   `is_adult` tinyint(1) NOT NULL DEFAULT 0,
   `is_members_only` tinyint(1) NOT NULL DEFAULT 0,
   `status` enum('ongoing','completed','hiatus','dropped') NOT NULL DEFAULT 'ongoing',
+  `lifecycle_status` enum('draft','scheduled','published','archived') NOT NULL DEFAULT 'published',
+  `scheduled_at` datetime DEFAULT NULL,
+  `published_at` datetime DEFAULT NULL,
+  `archived_at` datetime DEFAULT NULL,
   `cover_image` varchar(255) DEFAULT NULL,
   `accent_color` varchar(7) DEFAULT '#2a2a2a',
   `description` text DEFAULT NULL,
@@ -62,7 +66,23 @@ CREATE TABLE `series` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`),
   KEY `idx_series_deleted` (`deleted_at`),
+  KEY `idx_series_lifecycle_schedule` (`lifecycle_status`,`scheduled_at`),
   FULLTEXT KEY `ft_series_search` (`title`,`slug`,`description`,`author`,`artist`,`alternative_titles`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS `series_revisions`;
+CREATE TABLE `series_revisions` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `series_id` char(6) NOT NULL,
+  `moderator_user_id` char(8) DEFAULT NULL,
+  `action` varchar(32) NOT NULL,
+  `snapshot_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`snapshot_json`)),
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_series_revisions_series_created` (`series_id`,`created_at`),
+  KEY `idx_series_revisions_moderator` (`moderator_user_id`),
+  CONSTRAINT `fk_series_revisions_series` FOREIGN KEY (`series_id`) REFERENCES `series` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_series_revisions_moderator` FOREIGN KEY (`moderator_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -76,10 +96,12 @@ CREATE TABLE `taxonomies` (
   `name` varchar(50) NOT NULL,
   `slug` varchar(50) NOT NULL,
   `ui_config` varchar(255) DEFAULT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_taxonomy_type_slug` (`type`,`slug`),
-  KEY `idx_taxonomy_type` (`type`)
+  KEY `idx_taxonomy_type` (`type`),
+  KEY `idx_taxonomy_type_order` (`type`,`sort_order`,`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `series_taxonomy_map`;
@@ -239,8 +261,8 @@ CREATE TABLE `user_reading_history` (
   `content_id` char(6) NOT NULL,
   `chapter_id` char(6) NOT NULL,
   `chapter_number` decimal(8,2) NOT NULL DEFAULT 0.00,
-  `progress_pct` tinyint unsigned NOT NULL DEFAULT 100,
-  `is_completed` tinyint(1) NOT NULL DEFAULT 1,
+  `progress_pct` tinyint unsigned NOT NULL DEFAULT 0,
+  `is_completed` tinyint(1) NOT NULL DEFAULT 0,
   `read_count` smallint unsigned NOT NULL DEFAULT 1,
   `last_read_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
@@ -817,6 +839,19 @@ CREATE TABLE `system_settings` (
   KEY `idx_settings_group` (`group`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `rbac_role_permission_overrides`;
+CREATE TABLE `rbac_role_permission_overrides` (
+  `role_slug` varchar(32) NOT NULL,
+  `permission_code` varchar(96) NOT NULL,
+  `effect` enum('grant','revoke') NOT NULL,
+  `updated_by` char(8) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`role_slug`,`permission_code`),
+  KEY `idx_rbac_overrides_updated_by` (`updated_by`),
+  CONSTRAINT `fk_rbac_overrides_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO `system_settings` (`group`, `key`, `type`, `value`) VALUES
 ('general', 'site_name', 'string', 'NM Reader'),
 ('general', 'site_slogan', 'string', 'En İyi Çevrimiçi Manga ve Novel Okuyucusu'),
@@ -850,7 +885,7 @@ CREATE TABLE `system_jobs` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `job_type` varchar(64) NOT NULL,
   `payload` longtext DEFAULT NULL,
-  `status` enum('pending','processing','done','failed') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','processing','done','failed','cancelled') NOT NULL DEFAULT 'pending',
   `attempts` int(11) NOT NULL DEFAULT 0,
   `available_at` datetime NOT NULL DEFAULT current_timestamp(),
   `last_error` varchar(500) DEFAULT NULL,
@@ -859,6 +894,23 @@ CREATE TABLE `system_jobs` (
   PRIMARY KEY (`id`),
   KEY `idx_system_jobs_status_available` (`status`,`available_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `schema_migrations` (
+  `version` varchar(191) NOT NULL,
+  `checksum` char(64) NOT NULL,
+  `applied_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `schema_migrations` (`version`, `checksum`)
+VALUES
+('001_baseline', 'installed_from_schema'),
+('002_reading_history_progress_defaults', 'installed_from_schema'),
+('003_hash_existing_api_tokens', 'installed_from_schema'),
+('004_rbac_role_permission_overrides', 'installed_from_schema'),
+('005_series_lifecycle_and_revisions', 'installed_from_schema'),
+('006_taxonomy_order', 'installed_from_schema'),
+('007_queue_cancellation', 'installed_from_schema');
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

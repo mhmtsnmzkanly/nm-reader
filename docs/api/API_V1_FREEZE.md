@@ -1,5 +1,7 @@
 # NM-READER — API V1 CANONICAL FREEZE SPECIFICATION
 
+> **Archived baseline:** This document preserves the original 94-route freeze. `app/Config.php` is the runtime route authority; `docs/api/openapi.json` is a generated reference for the documented subset.
+
 **Document Version:** 1.0.0  
 **Freeze Status:** FULLY FROZEN (LOCKED FOR PRODUCTION / CSR INTEGRATION)  
 **Date:** 2026-08-14  

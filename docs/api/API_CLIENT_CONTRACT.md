@@ -205,11 +205,11 @@ resolveMediaUrl('https://cdn.example.com/pic.jpg'); // Preserved
 
 ---
 
-## 12. Mock vs Real Service Boundary
+## 12. Real Service Boundary
 
 - All new domain services implement the exact same interfaces (`IContentService`, `IAuthService`, `IBlogService`, `ICommentService`, `IUserService`, `IWalletService`) defined in [`ui/src/services/contracts.ts`](file:///home/duldul/Belgeler/nm-reader/ui/src/services/contracts.ts).
-- Mock services in `ui/src/services/mock/` remain intact during A12.
-- In future stages, switching between Mock and Real API is a 1-line provider switch in `ui/src/services/index.ts`.
+- `ui/src/services/provider.ts` instantiates only the API-backed implementations.
+- Production source contains no runtime mock selector, fixture provider, or `VITE_USE_MOCK` branch. Test doubles are isolated to verification scripts and are never bundled.
 
 ---
 

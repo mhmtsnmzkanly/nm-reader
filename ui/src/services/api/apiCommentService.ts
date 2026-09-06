@@ -31,14 +31,14 @@ export class ApiCommentService implements ICommentService {
   ): Promise<ApiResponse<{ comment_id: number }>> {
     let endpoint = `/comments`;
     if (targetType === 'chapter') {
-      endpoint = `/chapter/${idOrSlug}/comments`;
+      endpoint = `/chapter/${idOrSlug}/comment`;
     } else if (targetType === 'blog') {
       endpoint = `/blogs/${idOrSlug}/comments`;
     } else if (targetType === 'content') {
       const parts = idOrSlug.split('/');
       const type = parts.length > 1 ? parts[0] : 'manga';
       const slug = parts.length > 1 ? parts[1] : parts[0];
-      endpoint = `/content/${type}/${slug}/comments`;
+      endpoint = `/content/${type}/${slug}/comment`;
     }
     return api.post<{ comment_id: number }>(endpoint, { body, parent_id });
   }

@@ -25,29 +25,55 @@ export class ApiBlogService implements IBlogService {
     });
   }
 
+  public getMyBlog(id: string): Promise<ApiResponse<BlogSummary>> {
+    return apiClient.get<BlogSummary>(`/user/blogs/${id}`);
+  }
+
   public createBlog(
     title: string,
     body: string,
     tags?: string[],
-    excerpt?: string
+    excerpt?: string,
+    cover_image?: string,
+    status?: 'draft' | 'pending'
   ): Promise<ApiResponse<BlogSummary>> {
     return apiClient.post<BlogSummary>('/blogs', {
       title,
       body,
       tags,
       excerpt,
+      cover_image,
+      status,
     });
   }
 
-  public uploadBlogImage(formData: FormData): Promise<ApiResponse<{ url: string }>> {
-    return apiClient.post<{ url: string }>('/blogs/image', formData);
+  public updateBlog(
+    id: string,
+    payload: {
+      title?: string;
+      body?: string;
+      tags?: string[];
+      excerpt?: string;
+      cover_image?: string;
+      status?: 'draft' | 'pending';
+    }
+  ): Promise<ApiResponse<BlogSummary>> {
+    return apiClient.put<BlogSummary>(`/blogs/${id}`, payload);
+  }
+
+  public deleteBlog(id: string): Promise<ApiResponse<{ deleted: boolean }>> {
+    return apiClient.delete<{ deleted: boolean }>(`/blogs/${id}`);
+  }
+
+  public uploadBlogImage(formData: FormData): Promise<ApiResponse<{ path: string; url: string }>> {
+    return apiClient.post<{ path: string; url: string }>('/blogs/image', formData);
   }
 
   public voteBlog(
     slug: string,
     vote: -1 | 0 | 1
-  ): Promise<ApiResponse<{ vote: number; upvote_count: number; downvote_count: number }>> {
-    return apiClient.post<{ vote: number; upvote_count: number; downvote_count: number }>(
+  ): Promise<ApiResponse<{ vote: number; upvote_count: number; downvote_count: number; likes: number }>> {
+    return apiClient.post<{ vote: number; upvote_count: number; downvote_count: number; likes: number }>(
       `/blogs/${slug}/vote`,
       { vote }
     );
@@ -60,8 +86,8 @@ export class ApiBlogService implements IBlogService {
   }
 
   public getRelatedBlogs(slug: string, limit = 4): Promise<ApiResponse<BlogSummary[]>> {
-    return apiClient.get<BlogSummary[]>('/blogs', {
-      params: { related_to: slug, per_page: limit },
+    return apiClient.get<BlogSummary[]>(`/blogs/${slug}/related`, {
+      params: { limit },
     });
   }
 }

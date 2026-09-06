@@ -8,9 +8,9 @@ declare(strict_types=1);
  * Verifies that:
  * 1. URL-based locale routing is completely removed from backend.
  * 2. Public canonical URLs (/, /browse, /search, /blogs, etc.) serve 200 OK without redirects.
- * 3. /admin, /api/v1/*, and /media/* are completely untouched by locale routing.
+ * 3. /panel, /api/v1/*, and /media/* are completely untouched by locale routing.
  * 4. Legacy /tr/* and /en/* URLs permanently redirect (301) to clean canonical paths.
- * 5. Invalid /tr/api, /tr/admin, /tr/media paths return 404 (no 301).
+ * 5. Invalid locale-prefixed API, admin, panel, and media paths return 404 (no 301).
  * 6. SEO canonical and JSON-LD URLs contain zero /tr or /en prefixes.
  * 7. Protected chapter media tokens never leak into HTML.
  * 8. Language preferences and translation dictionaries function properly.
@@ -81,6 +81,7 @@ class LocaleRegressionSuite
         };
 
         $GLOBALS['TESTING_MOCK_PDO'] = $mockPdo;
+        $_ENV['MEDIA_SECRET'] = str_repeat('b', 64);
 
         $this->app = require dirname(__DIR__) . '/app.php';
     }
@@ -146,10 +147,13 @@ class LocaleRegressionSuite
 
     private function testAdminAndApiIsolation(): void
     {
-        echo "2. Testing /admin, /api/v1/*, /media/* Isolation from Locale...\n";
+        echo "2. Testing /panel, /api/v1/*, /media/* Isolation from Locale...\n";
 
         $resAdmin = $this->request('GET', '/admin');
-        $this->assert('GET /admin does not redirect to /tr/admin', $resAdmin->getStatusCode() === 200 || ($resAdmin->getStatusCode() === 302 && $resAdmin->getHeaderLine('Location') === '/'));
+        $this->assert('GET /admin is retired with 404', $resAdmin->getStatusCode() === 404);
+
+        $resAdminSection = $this->request('GET', '/admin/content');
+        $this->assert('GET /admin/content is retired with 404', $resAdminSection->getStatusCode() === 404);
 
         $resPanel = $this->request('GET', '/panel');
         $this->assert('GET /panel does not redirect to /tr/panel', $resPanel->getStatusCode() === 200 || ($resPanel->getStatusCode() === 302 && $resPanel->getHeaderLine('Location') === '/'));
@@ -189,6 +193,9 @@ class LocaleRegressionSuite
 
         $resTrAdmin = $this->request('GET', '/tr/admin');
         $this->assert('GET /tr/admin returns 404 (no 301 for invalid admin path)', $resTrAdmin->getStatusCode() === 404, 'Status was: ' . $resTrAdmin->getStatusCode());
+
+        $resTrPanel = $this->request('GET', '/tr/panel');
+        $this->assert('GET /tr/panel returns 404 (no 301 for protected panel path)', $resTrPanel->getStatusCode() === 404, 'Status was: ' . $resTrPanel->getStatusCode());
 
         $resTrMedia = $this->request('GET', '/tr/media/public/cover.jpg');
         $this->assert('GET /tr/media/public/* returns 404 (no 301 for invalid media path)', $resTrMedia->getStatusCode() === 404, 'Status was: ' . $resTrMedia->getStatusCode());
