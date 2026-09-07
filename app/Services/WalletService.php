@@ -790,7 +790,9 @@ final class WalletService
     {
         return match (strtolower(trim($typeSegment))) {
             'light-novel' => 'light_novel',
+            'light_novel' => 'light_novel',
             'web-novel' => 'web_novel',
+            'web_novel' => 'web_novel',
             'novel' => 'novel',
             'manga' => 'manga',
             'manhua' => 'manhua',

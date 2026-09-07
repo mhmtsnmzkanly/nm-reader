@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 960" role="img" aria-labelledby="title desc">
+  <title id="title">Kapak görseli yok</title>
+  <desc id="desc">İçerik için varsayılan kapak görseli</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f2937"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="page" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f9fafb"/>
+      <stop offset="1" stop-color="#d1d5db"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="960" fill="url(#background)"/>
+  <circle cx="500" cy="150" r="180" fill="#374151" opacity=".45"/>
+  <g transform="translate(170 230) rotate(-8 150 210)">
+    <path d="M24 20h260v390H24z" fill="url(#page)"/>
+    <path d="M24 20h28v390H24z" fill="#9ca3af"/>
+    <path d="M58 78h180M58 106h140M58 134h165" stroke="#9ca3af" stroke-width="10" stroke-linecap="round" opacity=".8"/>
+    <path d="M58 220h170M58 248h130M58 276h150" stroke="#9ca3af" stroke-width="8" stroke-linecap="round" opacity=".65"/>
+    <path d="M58 344h110" stroke="#6b7280" stroke-width="12" stroke-linecap="round"/>
+  </g>
+  <text x="320" y="735" text-anchor="middle" fill="#f9fafb" font-family="system-ui, sans-serif" font-size="34" font-weight="700">NM Reader</text>
+  <text x="320" y="780" text-anchor="middle" fill="#9ca3af" font-family="system-ui, sans-serif" font-size="22">Kapak görseli yok</text>
+</svg>

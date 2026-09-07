@@ -117,8 +117,13 @@ class SeoService
             $html = str_replace('<!-- SEO:OG -->', $ogTagBlock, $html);
         }
 
-        // Hint the browser to fetch the primary social/hero image early.
-        if ($ogImage !== '' && str_contains($html, '</head>')) {
+        // Hint the browser to fetch a real primary social/hero image early.
+        // The configured placeholder is only a fallback and is not guaranteed
+        // to be rendered above the fold, so preloading it creates a needless
+        // browser warning and competes with the application bundle.
+        $ogImagePath = (string) (parse_url($ogImage, PHP_URL_PATH) ?: $ogImage);
+        $isPlaceholderImage = str_ends_with($ogImagePath, '/assets/img/covers/placeholder.svg');
+        if ($ogImage !== '' && !$isPlaceholderImage && str_contains($html, '</head>')) {
             $preload = '<link rel="preload" as="image" href="' . htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8') . '" fetchpriority="high" />';
             $html = str_replace('</head>', "  {$preload}\n  </head>", $html);
         }

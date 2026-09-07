@@ -257,7 +257,9 @@ final class Config
         $app->post($installPath . '/validate-root', [InstallController::class, "validateRoot"])->add(new CsrfMiddleware());
         $app->post($installPath . '/complete', [InstallController::class, "complete"])->add(new CsrfMiddleware());
         if (!file_exists(dirname(__DIR__) . "/.env")) return;
-        $typePattern = "light-novel|web-novel|novel|manga|manhua|manhwa|webtoon";
+        // Accept both the canonical hyphenated URL segments and the legacy
+        // underscore variants stored in older links/bookmarks.
+        $typePattern = "light-novel|light_novel|web-novel|web_novel|novel|manga|manhua|manhwa|webtoon";
         self::registerWebRoutes($app, $typePattern);
         self::registerApiRoutes($app, $typePattern);
         self::registerAdminRoutes($app, $typePattern);

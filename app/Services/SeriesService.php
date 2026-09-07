@@ -25,7 +25,9 @@ final class SeriesService
 {
     private const TYPE_SEGMENT_TO_DB = [
         'light-novel' => 'light_novel',
+        'light_novel' => 'light_novel',
         'web-novel' => 'web_novel',
+        'web_novel' => 'web_novel',
         'novel' => 'novel',
         'manga' => 'manga',
         'manhua' => 'manhua',
