@@ -245,6 +245,18 @@
               <p class="mb-0">Site Yapılandırması</p>
             </a>
           </li>
+          <li class="nav-item" data-requires-permission="admin.settings.modify">
+            <a href="/panel/webhook" class="nav-link rounded" data-route="webhook">
+              <i class="nav-icon bi bi-broadcast me-2 text-info"></i>
+              <p class="mb-0">Webhook Yönetimi</p>
+            </a>
+          </li>
+          <li class="nav-item" data-requires-permission="admin.settings.modify">
+            <a href="/panel/config-env" class="nav-link rounded" data-route="config-env">
+              <i class="nav-icon bi bi-file-earmark-code me-2 text-secondary"></i>
+              <p class="mb-0">Ortam Değişkenleri (.env)</p>
+            </a>
+          </li>
           <li class="nav-item">
             <a href="#help" class="nav-link rounded" data-route="help"><i class="nav-icon bi bi-question-circle me-2 text-info"></i><p class="mb-0">Yardım & Kullanım</p></a>
           </li>
@@ -401,9 +413,9 @@
         <button class="btn btn-sm btn-outline-primary" data-on-click="openTaxonomyManager" data-requires-permission="admin.content.create">
           <i class="bi bi-tags me-1"></i> Tür & Etiketler
         </button>
-        <button class="btn btn-sm btn-primary" data-on-click="openCreateSeriesModal" data-requires-permission="admin.content.create">
+        <a class="btn btn-sm btn-primary" href="/panel/series/new" data-panel-link data-requires-permission="admin.content.create">
           <i class="bi bi-plus-lg me-1"></i> Yeni Seri Ekle
-        </button>
+        </a>
         <button class="btn btn-sm btn-outline-secondary" data-on-click="loadSeries">
           <i class="bi bi-arrow-clockwise me-1"></i> Yenile
         </button>
@@ -807,11 +819,7 @@
         <h3 class="mb-0 fw-bold fs-4">Site Yapılandırması</h3>
         <p class="text-secondary small mb-0">Genel site ayarları, tema, güvenlik ve e-posta parametreleri</p>
       </div>
-      <div class="d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-sm btn-outline-info" data-on-click="openWebhooks"><i class="bi bi-broadcast me-1"></i>Webhooklar</button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-file-earmark-code me-1"></i>Ortam (.env)</button>
-        <button type="button" class="btn btn-sm btn-primary" data-on-click="saveConfig"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet</button>
-      </div>
+      <button type="button" class="btn btn-sm btn-primary" data-on-click="saveConfig"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet</button>
     </div>
   </div>
 
@@ -844,11 +852,6 @@
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Site Sloganı</label>
                 <input type="text" class="form-control" data-model="config.site_slogan" maxlength="255" placeholder="En İyi Çevrimiçi Manga ve Novel Okuyucusu">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Site Adresi (URL)</label>
-                <input type="text" class="form-control" data-model="config.site_address" maxlength="255" placeholder="https://example.com">
-                <div class="form-text text-secondary">Boş bırakılırsa gelen istek adresi otomatik algılanır.</div>
               </div>
               <div class="col-12">
                 <label class="form-label fw-semibold">Site Açıklaması (Meta Description)</label>
@@ -923,13 +926,6 @@
                   <div class="small text-secondary mt-1">Site ziyaretçilere kapatılır, sadece yöneticiler ve izinli IP'ler erişebilir.</div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="form-check form-switch p-3 border rounded-3 bg-body-tertiary">
-                  <input class="form-check-input ms-0 me-2" type="checkbox" data-model="config.enforce_https" id="panel-enforce-https">
-                  <label class="form-check-label fw-semibold" for="panel-enforce-https">HTTPS Zorunlu</label>
-                  <div class="small text-secondary mt-1">HTTP üzerinden gelen istekler güvenli HTTPS protokolüne yönlendirilir.</div>
-                </div>
-              </div>
               <div class="col-12">
                 <label class="form-label fw-semibold">Bakım Modu IP Beyaz Listesi</label>
                 <textarea class="form-control font-monospace" rows="3" data-model="config.maintenance_whitelist_text" placeholder="127.0.0.1&#10;::1"></textarea>
@@ -1000,22 +996,63 @@
           </div>
         </div>
 
-        <div class="card border-0 shadow-sm rounded-3 mb-4" data-requires-permission="admin.settings.modify">
-          <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-            <div>
-              <h6 class="mb-1"><i class="bi bi-file-earmark-code text-secondary me-2"></i>Ortam değişkenleri (.env)</h6>
-              <p class="small text-secondary mb-0">Uygulama ve entegrasyon ortam ayarları ayrı bir modal üzerinden düzenlenir. Bu işlem yalnızca <code>ROOT_USER</code> için açıktır.</p>
-            </div>
-            <button type="button" class="btn btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-pencil-square me-1"></i>.env Düzenle</button>
-          </div>
-        </div>
         <div class="d-flex justify-content-end gap-2 mb-4">
-          <button type="button" class="btn btn-outline-info" data-on-click="openWebhooks"><i class="bi bi-broadcast me-1"></i>Webhooklar</button>
           <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet</button>
         </div>
       </form>
     </div>
   </div>
+</template>
+
+<!-- Route-based detail/editor views. Long forms and inspection screens use a
+     real URL so they are shareable, refresh-safe, and not constrained by a
+     viewport-sized modal. -->
+<template id="tpl-panel-report-detail">
+  <div class="app-content-header py-3 px-4 bg-body border-bottom">
+    <div class="container-fluid d-flex justify-content-between align-items-center gap-3">
+      <div>
+        <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small" id="panel-report-breadcrumb"></ol></nav>
+        <h3 class="mb-0 fw-bold fs-4">Rapor detayı</h3>
+        <p class="text-secondary small mb-0">Raporu inceleyin ve moderasyon kararını kaydedin.</p>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary text-nowrap" href="/panel/reports" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
+    </div>
+  </div>
+  <div class="app-content p-4"><div class="container-fluid"><div id="panel-report-detail-page"><div class="text-secondary">Rapor yükleniyor...</div></div></div></div>
+</template>
+
+<template id="tpl-panel-series-editor">
+  <div class="app-content-header py-3 px-4 bg-body border-bottom">
+    <div class="container-fluid d-flex justify-content-between align-items-center gap-3">
+      <div>
+        <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small" id="panel-series-breadcrumb"></ol></nav>
+        <h3 class="mb-0 fw-bold fs-4" id="panel-series-editor-title">Yeni seri</h3>
+        <p class="text-secondary small mb-0">Seri bilgilerini ve sınıflandırmasını yönetin.</p>
+      </div>
+      <a class="btn btn-sm btn-outline-secondary text-nowrap" href="/panel/series" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
+    </div>
+  </div>
+  <div class="app-content p-4"><div class="container-fluid"><form id="panel-series-editor-form" class="card border-0 shadow-sm"><div class="card-body p-4" id="panel-series-editor-fields"><div class="text-secondary">Form yükleniyor...</div></div><div class="card-footer bg-transparent d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="/panel/series" data-panel-link>İptal</a><button type="submit" class="btn btn-primary" id="panel-series-editor-submit">Kaydet</button></div></form></div></div>
+</template>
+
+<template id="tpl-panel-webhook">
+  <div class="app-content-header py-3 px-4 bg-body border-bottom">
+    <div class="container-fluid d-flex justify-content-between align-items-center gap-3">
+      <div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel/config" data-panel-link>Site Yapılandırması</a></li><li class="breadcrumb-item active" aria-current="page">Webhooklar</li></ol></nav><h3 class="mb-0 fw-bold fs-4">Webhook Yönetimi</h3><p class="text-secondary small mb-0">Olay bildirimlerini yönetin ve bağlantıları test edin.</p></div>
+      <a class="btn btn-sm btn-outline-secondary text-nowrap" href="/panel/config" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
+    </div>
+  </div>
+  <div class="app-content p-4"><div class="container-fluid"><div id="panel-webhook-page"><div class="text-secondary">Webhooklar yükleniyor...</div></div></div></div>
+</template>
+
+<template id="tpl-panel-config-env">
+  <div class="app-content-header py-3 px-4 bg-body border-bottom">
+    <div class="container-fluid d-flex justify-content-between align-items-center gap-3">
+      <div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel/config" data-panel-link>Site Yapılandırması</a></li><li class="breadcrumb-item active" aria-current="page">Ortam değişkenleri</li></ol></nav><h3 class="mb-0 fw-bold fs-4">Ortam Değişkenleri (.env)</h3><p class="text-secondary small mb-0">Uygulama, adres, güvenlik ve entegrasyon değişkenleri.</p></div>
+      <a class="btn btn-sm btn-outline-secondary text-nowrap" href="/panel/config" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
+    </div>
+  </div>
+  <div class="app-content p-4"><div class="container-fluid"><div id="panel-config-env-page"><div class="text-secondary">Ortam değişkenleri yükleniyor...</div></div></div></div>
 </template>
 
 <!-- ========================================================================= -->
@@ -1139,7 +1176,6 @@
         site_abbreviation: 'NMR',
         site_slogan: 'En İyi Çevrimiçi Manga ve Novel Okuyucusu',
         site_description: 'Read manga, manhwa, webtoon and novels.',
-        site_address: '',
         default_language: 'tr',
         footer_text: '© 2026 NM Reader. Tüm hakları saklıdır.',
         default_theme: 'dark',
@@ -1150,7 +1186,6 @@
         default_content_cover_image: '/assets/img/covers/placeholder.svg',
         maintenance_mode: false,
         maintenance_whitelist_text: Array.isArray(initial.maintenance_whitelist_ips) ? initial.maintenance_whitelist_ips.join('\n') : '127.0.0.1\n::1',
-        enforce_https: false,
         mail_enabled: true,
         mail_send_on_register: true,
         email_verification_required: false,
@@ -1314,7 +1349,7 @@
       const lifecycle = item.lifecycle_status || 'published';
       const lifecycleAction = lifecycle === 'archived' ? 'restore' : (lifecycle === 'published' ? 'archive' : 'publish');
       const lifecycleIcon = lifecycle === 'archived' ? 'arrow-counterclockwise' : (lifecycle === 'published' ? 'archive' : 'send-check');
-      return `<tr><td class="text-secondary small">${escapeHtml(item.id)}</td><td><span class="badge bg-info-subtle text-info border border-info-subtle text-uppercase">${escapeHtml(item.type)}</span></td><td class="fw-bold">${escapeHtml(item.title)}</td><td class="text-secondary">${escapeHtml(item.slug)}</td><td><span class="badge bg-light text-dark border me-1">${escapeHtml(item.status)}</span><span class="badge ${lifecycleClass[lifecycle] || 'bg-light text-dark'}">${lifecycleLabel[lifecycle] || lifecycle}</span>${item.scheduled_at ? `<small class="d-block text-secondary mt-1">${escapeHtml(item.scheduled_at)}</small>` : ''}</td><td class="text-end text-nowrap"><button class="btn btn-xs btn-outline-primary me-1" data-on-click="openChaptersDrawer" data-id="${escapeHtml(item.id)}"><i class="bi bi-collection me-1"></i>Bölümler</button><button class="btn btn-xs btn-outline-info me-1" data-on-click="previewSeries" data-id="${escapeHtml(item.id)}" title="Önizle"><i class="bi bi-eye"></i></button><button class="btn btn-xs btn-outline-dark me-1" data-on-click="viewSeriesRevisions" data-id="${escapeHtml(item.id)}" title="Revizyonlar"><i class="bi bi-clock-history"></i></button>${hasPermission('admin.content.update') ? `<button class="btn btn-xs btn-outline-warning me-1" data-on-click="changeSeriesLifecycle" data-id="${escapeHtml(item.id)}" data-action="${lifecycleAction}" title="${lifecycleAction}"><i class="bi bi-${lifecycleIcon}"></i></button><button class="btn btn-xs btn-outline-secondary" data-on-click="openEditSeriesModal" data-id="${escapeHtml(item.id)}"><i class="bi bi-pencil"></i></button>` : ''}</td></tr>`;
+      return `<tr><td class="text-secondary small">${escapeHtml(item.id)}</td><td><span class="badge bg-info-subtle text-info border border-info-subtle text-uppercase">${escapeHtml(item.type)}</span></td><td class="fw-bold">${escapeHtml(item.title)}</td><td class="text-secondary">${escapeHtml(item.slug)}</td><td><span class="badge bg-light text-dark border me-1">${escapeHtml(item.status)}</span><span class="badge ${lifecycleClass[lifecycle] || 'bg-light text-dark'}">${lifecycleLabel[lifecycle] || lifecycle}</span>${item.scheduled_at ? `<small class="d-block text-secondary mt-1">${escapeHtml(item.scheduled_at)}</small>` : ''}</td><td class="text-end text-nowrap"><button class="btn btn-xs btn-outline-primary me-1" data-on-click="openChaptersDrawer" data-id="${escapeHtml(item.id)}"><i class="bi bi-collection me-1"></i>Bölümler</button><button class="btn btn-xs btn-outline-info me-1" data-on-click="previewSeries" data-id="${escapeHtml(item.id)}" title="Önizle"><i class="bi bi-eye"></i></button><button class="btn btn-xs btn-outline-dark me-1" data-on-click="viewSeriesRevisions" data-id="${escapeHtml(item.id)}" title="Revizyonlar"><i class="bi bi-clock-history"></i></button>${hasPermission('admin.content.update') ? `<button class="btn btn-xs btn-outline-warning me-1" data-on-click="changeSeriesLifecycle" data-id="${escapeHtml(item.id)}" data-action="${lifecycleAction}" title="${lifecycleAction}"><i class="bi bi-${lifecycleIcon}"></i></button><a class="btn btn-xs btn-outline-secondary" href="/panel/series/${encodeURIComponent(item.id)}/edit" data-panel-link title="Düzenle"><i class="bi bi-pencil"></i></a>` : ''}</td></tr>`;
     }).join(''), 6);
     renderPager('panel-series-pager', store.get('seriesMeta'), 'previousSeriesPage', 'nextSeriesPage');
   }
@@ -1349,7 +1384,7 @@
       const target = report.target_url
         ? `<a href="${safeLocalUrl(report.target_url)}" target="_blank" rel="noopener">${escapeHtml(report.target_title || report.target_id)}</a>`
         : escapeHtml(report.target_title || report.comment_snippet || report.target_id);
-      return `<tr><td>${Number(report.id)}</td><td><strong>@${escapeHtml(report.reporter_username)}</strong></td><td><span class="badge bg-light text-dark border me-1">${escapeHtml(report.target_type)}</span>${target}</td><td>${escapeHtml(report.reason)}</td><td><span class="badge ${status[1]}">${status[0]}</span></td><td class="small text-secondary">${escapeHtml(report.created_at)}</td><td class="text-end"><button class="btn btn-xs btn-outline-primary" data-on-click="openReport" data-id="${Number(report.id)}"><i class="bi bi-search me-1"></i>İncele</button></td></tr>`;
+      return `<tr><td>${Number(report.id)}</td><td><strong>@${escapeHtml(report.reporter_username)}</strong></td><td><span class="badge bg-light text-dark border me-1">${escapeHtml(report.target_type)}</span>${target}</td><td>${escapeHtml(report.reason)}</td><td><span class="badge ${status[1]}">${status[0]}</span></td><td class="small text-secondary">${escapeHtml(report.created_at)}</td><td class="text-end"><a class="btn btn-xs btn-outline-primary" href="/panel/reports/${Number(report.id)}" data-panel-link><i class="bi bi-search me-1"></i>İncele</a></td></tr>`;
     }).join(''), 7);
     const meta = store.get('reportsMeta') || {};
     const counts = meta.counts || {};
@@ -2094,13 +2129,46 @@
   async function openEnvDialog() {
     const response = await api('/maintenance/env');
     const values = response?.data || {};
-    const textValue = Object.entries(values).map(([key, value]) => `${key}=${value}`).join('\n');
-    openDialog('.env Değişkenleri', `<div class="alert alert-warning small">Bu alan yalnızca root yönetici içindir. Kaydetme sırasında mevcut değerler girilen değerlerle birleştirilir ve yedek alınır.</div><textarea class="form-control font-monospace" name="env_text" rows="22">${escapeHtml(textValue)}</textarea>`, async formData => {
+    const envGroups = [
+      { title: 'Uygulama ve Adres', icon: 'bi-gear', keys: ['APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'SITE_ADDRESS', 'APP_TIMEZONE'] },
+      { title: 'Oturum ve Kimlik Doğrulama', icon: 'bi-shield-lock', keys: ['SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'SESSION_COOKIE_SECURE', 'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS'] },
+      { title: 'Cache, CORS ve Proxy', icon: 'bi-hdd-network', keys: ['CACHE_TTL', 'CORS_ALLOWED_ORIGINS', 'TRUSTED_PROXIES'] },
+      { title: 'Entegrasyonlar', icon: 'bi-plug', keys: ['RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY'] }
+    ];
+    const editableKeys = envGroups.flatMap(group => group.keys);
+    const booleanKeys = new Set(['APP_DEBUG', 'SESSION_COOKIE_SECURE', 'REMEMBER_COOKIE_SECURE', 'ENFORCE_HTTPS']);
+    const sensitiveKeys = new Set(editableKeys.filter(key => /(?:PASSWORD|SECRET|TOKEN|KEY)$/.test(key)));
+    const labels = {
+      APP_NAME: 'Uygulama adı', APP_ENV: 'Çalışma ortamı', APP_DEBUG: 'Debug modu', APP_URL: 'Uygulama URL', SITE_ADDRESS: 'Site adresi',
+      APP_TIMEZONE: 'Saat dilimi', CORS_ALLOWED_ORIGINS: 'CORS izinli adresler', SESSION_LIFETIME: 'Oturum süresi (sn)',
+      REFRESH_TOKEN_DAYS: 'Refresh token süresi (gün)', CACHE_TTL: 'Cache süresi (sn)',
+      SESSION_COOKIE_SECURE: 'Oturum çerezi Secure', SESSION_COOKIE_SAME_SITE: 'Oturum çerezi SameSite', ENFORCE_HTTPS: 'HTTPS zorunlu',
+      REMEMBER_COOKIE_SECURE: 'Remember çerezi Secure', REMEMBER_COOKIE_SAME_SITE: 'Remember çerezi SameSite',
+      TRUSTED_PROXIES: 'Güvenilen proxy adresleri', RESEND_API_KEY: 'Resend API anahtarı',
+      GOOGLE_ANALYTICS_ID: 'Google Analytics ID', GOOGLE_RECAPTCHA_SITE_KEY: 'reCAPTCHA site anahtarı',
+      GOOGLE_RECAPTCHA_SECRET_KEY: 'reCAPTCHA gizli anahtarı', CLOUDFLARE_TURNSTILE_SITE_KEY: 'Turnstile site anahtarı',
+      CLOUDFLARE_TURNSTILE_SECRET_KEY: 'Turnstile gizli anahtarı'
+    };
+    const renderField = key => {
+      const value = values[key] ?? '';
+      const label = labels[key] || key;
+      if (booleanKeys.has(key)) {
+        const checked = String(value).toLowerCase() === 'true' || String(value) === '1';
+        return `<div class="col-md-6"><div class="form-check form-switch border rounded-3 p-3"><input class="form-check-input ms-0 me-2" type="checkbox" id="env-${key}" name="${key}" data-env-key="${key}" data-env-type="boolean" value="true" ${checked ? 'checked' : ''}><label class="form-check-label fw-semibold" for="env-${key}">${escapeHtml(label)} <code>${key}</code></label></div></div>`;
+      }
+      const inputType = sensitiveKeys.has(key) ? 'password' : (key === 'APP_URL' || key === 'SITE_ADDRESS' ? 'url' : 'text');
+      const safeValue = sensitiveKeys.has(key) && value === '********' ? '********' : String(value);
+      const placeholder = sensitiveKeys.has(key) ? 'Değiştirmek istemiyorsanız boş bırakın' : '';
+      return `<div class="col-md-6"><label class="form-label fw-semibold" for="env-${key}">${escapeHtml(label)} <code>${key}</code></label><input type="${inputType}" class="form-control${sensitiveKeys.has(key) ? ' font-monospace' : ''}" id="env-${key}" name="${key}" data-env-key="${key}" value="${escapeHtml(safeValue)}" placeholder="${escapeHtml(placeholder)}" autocomplete="off"></div>`;
+    };
+    const groupedFields = envGroups.map(group => `<section class="mb-4 last-child-mb-0"><h6 class="border-bottom pb-2 mb-3"><i class="bi ${group.icon} text-secondary me-2"></i>${escapeHtml(group.title)}</h6><div class="row g-3">${group.keys.map(renderField).join('')}</div></section>`).join('');
+    openDialog('Ortam Değişkenleri (.env)', `<div class="alert alert-warning small">Bu alan yalnızca root yönetici içindir. Hassas değerler maskeli gösterilir; değiştirmek istemediğiniz gizli alanları boş bırakabilirsiniz. Kaydetme sırasında mevcut değerler korunur ve yedek alınır.</div>${groupedFields}`, async (formData, form) => {
       const payload = {};
-      String(formData.get('env_text') || '').split('\n').forEach(line => {
-        const separator = line.indexOf('=');
-        if (separator <= 0 || line.trim().startsWith('#')) return;
-        payload[line.slice(0, separator).trim()] = line.slice(separator + 1).trim();
+      form.querySelectorAll('[data-env-key]').forEach(input => {
+        const key = input.dataset.envKey;
+        const value = input.dataset.envType === 'boolean' ? (input.checked ? 'true' : 'false') : input.value;
+        if (sensitiveKeys.has(key) && (value === '' || value === '********')) return;
+        payload[key] = value;
       });
       await api('/maintenance/env', { method: 'POST', body: payload });
       closeDialog();
@@ -2116,6 +2184,118 @@
     const rows = items.map(item => `<tr>${columns.map(column => `<td class="text-break">${escapeHtml(typeof item[column] === 'object' ? JSON.stringify(item[column]) : item[column])}</td>`).join('')}</tr>`).join('') || `<tr><td class="text-center text-secondary">Kayıt bulunamadı</td></tr>`;
     const overlay = openDialog('Log Görüntüleyici', `<div class="table-responsive" style="max-height:70vh"><table class="table table-sm table-hover font-monospace"><thead class="table-dark position-sticky top-0"><tr>${heading}</tr></thead><tbody>${rows}</tbody></table></div>`, async () => {}, 'modal-xl');
     overlay.querySelector('button[type="submit"]')?.remove();
+  }
+
+  function panelNavigate(path) {
+    if (!path) return;
+    history.pushState({}, '', path);
+    navigate();
+  }
+
+  function envPageMarkup(values) {
+    const groups = [
+      { title: 'Uygulama ve Adres', keys: ['APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'SITE_ADDRESS', 'APP_TIMEZONE'] },
+      { title: 'Oturum ve Güvenlik', keys: ['SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'SESSION_COOKIE_SECURE', 'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS'] },
+      { title: 'Cache, CORS ve Proxy', keys: ['CACHE_TTL', 'CORS_ALLOWED_ORIGINS', 'TRUSTED_PROXIES'] },
+      { title: 'Entegrasyonlar', keys: ['RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY'] }
+    ];
+    const booleans = new Set(['APP_DEBUG', 'SESSION_COOKIE_SECURE', 'REMEMBER_COOKIE_SECURE', 'ENFORCE_HTTPS']);
+    const sensitive = key => /(?:PASSWORD|SECRET|TOKEN|KEY)$/.test(key);
+    const labels = { APP_NAME: 'Uygulama adı', APP_ENV: 'Çalışma ortamı', APP_DEBUG: 'Debug modu', APP_URL: 'Uygulama URL', SITE_ADDRESS: 'Site adresi', APP_TIMEZONE: 'Saat dilimi', SESSION_LIFETIME: 'Oturum süresi (sn)', REFRESH_TOKEN_DAYS: 'Refresh token süresi (gün)', CACHE_TTL: 'Cache süresi (sn)', SESSION_COOKIE_SECURE: 'Oturum çerezi Secure', SESSION_COOKIE_SAME_SITE: 'Oturum çerezi SameSite', ENFORCE_HTTPS: 'HTTPS zorunlu', REMEMBER_COOKIE_SECURE: 'Remember çerezi Secure', REMEMBER_COOKIE_SAME_SITE: 'Remember çerezi SameSite', CORS_ALLOWED_ORIGINS: 'CORS izinli adresler', TRUSTED_PROXIES: 'Güvenilen proxy adresleri', RESEND_API_KEY: 'Resend API anahtarı', GOOGLE_ANALYTICS_ID: 'Google Analytics ID', GOOGLE_RECAPTCHA_SITE_KEY: 'reCAPTCHA site anahtarı', GOOGLE_RECAPTCHA_SECRET_KEY: 'reCAPTCHA gizli anahtarı', CLOUDFLARE_TURNSTILE_SITE_KEY: 'Turnstile site anahtarı', CLOUDFLARE_TURNSTILE_SECRET_KEY: 'Turnstile gizli anahtarı' };
+    const field = key => {
+      const value = values[key] ?? '';
+      const label = labels[key] || key;
+      if (booleans.has(key)) {
+        const checked = ['true', '1', 'yes', 'on'].includes(String(value).toLowerCase());
+        return `<div class="col-md-6"><div class="form-check form-switch border rounded-3 p-3"><input class="form-check-input ms-0 me-2" type="checkbox" id="route-env-${key}" data-env-key="${key}" data-env-type="boolean" ${checked ? 'checked' : ''}><label class="form-check-label fw-semibold" for="route-env-${key}">${escapeHtml(label)} <code>${key}</code></label></div></div>`;
+      }
+      const isSecret = sensitive(key);
+      const type = isSecret ? 'password' : (key === 'APP_URL' || key === 'SITE_ADDRESS' ? 'url' : 'text');
+      return `<div class="col-md-6"><label class="form-label fw-semibold" for="route-env-${key}">${escapeHtml(label)} <code>${key}</code></label><input class="form-control${isSecret ? ' font-monospace' : ''}" type="${type}" id="route-env-${key}" data-env-key="${key}" value="${escapeHtml(String(value))}" placeholder="${isSecret ? 'Değiştirmek istemiyorsanız boş bırakın' : ''}" autocomplete="off"></div>`;
+    };
+    return `<div class="alert alert-warning small">Bu sayfa yalnızca root yönetici içindir. Hassas değerler maskeli gösterilir ve boş bırakılırsa korunur.</div><form id="panel-config-env-form"><div class="card-body p-0">${groups.map(group => `<section class="mb-4"><h6 class="border-bottom pb-2 mb-3">${escapeHtml(group.title)}</h6><div class="row g-3">${group.keys.map(field).join('')}</div></section>`).join('')}</div><div class="d-flex justify-content-end gap-2"><a href="/panel/config" data-panel-link class="btn btn-outline-secondary">İptal</a><button class="btn btn-primary" type="submit">Kaydet</button></div></form>`;
+  }
+
+  async function loadEnvPage() {
+    const target = document.getElementById('panel-config-env-page');
+    if (!target) return;
+    try {
+      const response = await api('/maintenance/env');
+      target.innerHTML = envPageMarkup(response?.data || {});
+      const form = target.querySelector('#panel-config-env-form');
+      form?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const payload = {};
+        form.querySelectorAll('[data-env-key]').forEach(input => {
+          const key = input.dataset.envKey;
+          const value = input.dataset.envType === 'boolean' ? (input.checked ? 'true' : 'false') : input.value;
+          if (/(?:PASSWORD|SECRET|TOKEN|KEY)$/.test(key) && (value === '' || value === '********')) return;
+          payload[key] = value;
+        });
+        try { await api('/maintenance/env', { method: 'POST', body: payload }); showToast('.env kaydedildi'); panelNavigate('/panel/config-env'); }
+        catch (error) { showToast(error.message, 'danger'); }
+      });
+    } catch (error) { target.innerHTML = `<div class="alert alert-danger">${escapeHtml(error.message)}</div>`; }
+  }
+
+  async function loadWebhookPage() {
+    const target = document.getElementById('panel-webhook-page');
+    if (!target) return;
+    try {
+      const response = await api('/webhooks');
+      const items = responseItems(response);
+      const rows = items.map(item => `<tr><td>${escapeHtml(item.platform)}</td><td>${escapeHtml(item.event)}</td><td class="text-break">${escapeHtml(item.webhook_url)}</td><td>${Number(item.is_active) === 1 ? 'Aktif' : 'Pasif'}</td><td class="text-end text-nowrap"><button type="button" class="btn btn-xs btn-outline-info me-1" data-test-webhook="${item.id}">Test</button><button type="button" class="btn btn-xs btn-outline-danger" data-delete-webhook="${item.id}">Sil</button></td></tr>`).join('') || '<tr><td colspan="5" class="text-center text-secondary py-4">Webhook bulunamadı</td></tr>';
+      target.innerHTML = `<form id="panel-webhook-form" class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-3"><div class="col-md-3"><label class="form-label">Platform</label><select class="form-select" name="platform"><option value="discord">Discord</option><option value="telegram">Telegram</option><option value="custom">Özel HTTP</option></select></div><div class="col-md-3"><label class="form-label">Olay</label><select class="form-select" name="event"><option value="chapter_published">Bölüm yayınlandı</option><option value="blog_approved">Blog onaylandı</option><option value="series_created">Seri oluşturuldu</option></select></div><div class="col-md-6"><label class="form-label">Webhook URL</label><input type="url" class="form-control" name="webhook_url" placeholder="https://..." required></div></div></div><div class="card-footer bg-transparent text-end"><button class="btn btn-primary" type="submit">Webhook ekle</button></div></form><div class="card border-0 shadow-sm"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Platform</th><th>Olay</th><th>URL</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+      target.querySelector('#panel-webhook-form')?.addEventListener('submit', async event => { event.preventDefault(); try { await api('/webhooks', { method: 'POST', body: Object.fromEntries(new FormData(event.currentTarget).entries()) }); showToast('Webhook oluşturuldu'); await loadWebhookPage(); } catch (error) { showToast(error.message, 'danger'); } });
+      target.onclick = async event => {
+        const test = event.target.closest('[data-test-webhook]');
+        const remove = event.target.closest('[data-delete-webhook]');
+        try {
+          if (test) { const result = await api(`/webhooks/${test.dataset.testWebhook}/test`, { method: 'POST' }); showToast(result?.data?.success === false ? 'Webhook testi başarısız' : 'Webhook testi tamamlandı', result?.data?.success === false ? 'danger' : 'success'); }
+          if (remove && confirm('Webhook silinsin mi?')) { await api(`/webhooks/${remove.dataset.deleteWebhook}`, { method: 'DELETE' }); showToast('Webhook silindi'); await loadWebhookPage(); }
+        } catch (error) { showToast(error.message, 'danger'); }
+      };
+    } catch (error) { target.innerHTML = `<div class="alert alert-danger">${escapeHtml(error.message)}</div>`; }
+  }
+
+  async function loadReportDetailPage(id) {
+    const target = document.getElementById('panel-report-detail-page');
+    if (!target) return;
+    try {
+      const response = await api(`/reports/${encodeURIComponent(id)}`);
+      const report = response?.data || {};
+      const crumb = document.getElementById('panel-report-breadcrumb');
+      if (crumb) crumb.innerHTML = `<li class="breadcrumb-item"><a href="/panel" data-panel-link>Panel</a></li><li class="breadcrumb-item"><a href="/panel/reports" data-panel-link>Raporlar</a></li><li class="breadcrumb-item active">#${Number(report.id || id)}</li>`;
+      const targetLink = report.target_url ? `<a class="btn btn-sm btn-outline-primary" href="${safeLocalUrl(report.target_url)}" target="_blank" rel="noopener">Hedefi aç</a>` : '<span class="text-secondary">Hedef bağlantısı yok</span>';
+      target.innerHTML = `<form id="panel-report-detail-form" class="card border-0 shadow-sm"><div class="card-body p-4"><div class="row g-4"><div class="col-md-4"><small class="text-secondary d-block">Bildiren</small><strong>@${escapeHtml(report.reporter_username)}</strong></div><div class="col-md-4"><small class="text-secondary d-block">Hedef</small><span>${escapeHtml(report.target_type)} / ${escapeHtml(report.target_title || report.target_id)}</span></div><div class="col-md-4"><small class="text-secondary d-block">Neden</small><span>${escapeHtml(report.reason)}</span></div><div class="col-12"><small class="text-secondary d-block">Açıklama</small><div class="border rounded p-3 bg-body-tertiary">${escapeHtml(report.description || report.comment_body || 'Açıklama yok')}</div></div><div class="col-12">${targetLink}</div><div class="col-md-4"><label class="form-label">Durum</label><select class="form-select" name="status"><option value="pending" ${report.status === 'pending' ? 'selected' : ''}>Bekleyen</option><option value="reviewing" ${report.status === 'reviewing' ? 'selected' : ''}>İncelenen</option><option value="resolved" ${report.status === 'resolved' ? 'selected' : ''}>Çözüldü</option><option value="rejected" ${report.status === 'rejected' ? 'selected' : ''}>Reddedildi</option></select></div><div class="col-12"><label class="form-label">Moderatör notu</label><textarea class="form-control" name="admin_note" rows="6" maxlength="2000">${escapeHtml(report.admin_note)}</textarea></div></div></div><div class="card-footer bg-transparent d-flex justify-content-end"><button class="btn btn-primary" type="submit">Kaydet</button></div></form>`;
+      const form = target.querySelector('#panel-report-detail-form');
+      if (!hasPermission('admin.reports.manage')) { form.querySelectorAll('select, textarea').forEach(input => { input.disabled = true; }); form.querySelector('button[type="submit"]')?.remove(); }
+      form.addEventListener('submit', async event => { event.preventDefault(); try { await api(`/reports/${encodeURIComponent(id)}`, { method: 'PUT', body: Object.fromEntries(new FormData(form).entries()) }); showToast('Rapor güncellendi'); panelNavigate('/panel/reports'); } catch (error) { showToast(error.message, 'danger'); } });
+    } catch (error) { target.innerHTML = `<div class="alert alert-danger">${escapeHtml(error.message)}</div>`; }
+  }
+
+  async function loadSeriesEditorPage(mode, id = null) {
+    const target = document.getElementById('panel-series-editor-fields');
+    const form = document.getElementById('panel-series-editor-form');
+    if (!target || !form) return;
+    try {
+      let content = {};
+      if (id) {
+        let found = (store.get('allSeriesList') || []).find(item => String(item.id) === String(id));
+        if (!found) found = responseItems(await api(`/series?q=${encodeURIComponent(id)}&per_page=100`)).find(item => String(item.id) === String(id));
+        if (!found) throw new Error('İçerik bulunamadı');
+        content = found;
+      }
+      const { genres, tags } = await loadTaxonomies();
+      document.getElementById('panel-series-editor-title').textContent = mode === 'edit' ? 'Seriyi düzenle' : 'Yeni seri oluştur';
+      const crumb = document.getElementById('panel-series-breadcrumb');
+      if (crumb) crumb.innerHTML = `<li class="breadcrumb-item"><a href="/panel" data-panel-link>Panel</a></li><li class="breadcrumb-item"><a href="/panel/series" data-panel-link>İçerikler</a></li><li class="breadcrumb-item active">${mode === 'edit' ? 'Düzenle' : 'Yeni'}</li>`;
+      target.innerHTML = contentForm(content, genres, tags);
+      bindTaxonomyButtons(form);
+      const uploadedPaths = [];
+      form.querySelector('[name="cover_file"]')?.addEventListener('change', async event => { try { const paths = await uploadImages(event.target.files, 'series_cover'); uploadedPaths.push(...paths); if (paths[0]) form.querySelector('[name="cover_image"]').value = paths[0]; showToast('Kapak görseli yüklendi'); } catch (error) { showToast(error.message, 'danger'); } });
+      form.addEventListener('submit', async event => { event.preventDefault(); try { const data = new FormData(form); const selectedGenres = selectedValues(data, 'genres'); const selectedTags = selectedValues(data, 'tags'); const payload = Object.fromEntries(data.entries()); delete payload.genres; delete payload.tags; delete payload.cover_file; payload.is_adult = form.elements.is_adult.checked ? 1 : 0; payload.is_members_only = form.elements.is_members_only.checked ? 1 : 0; const response = mode === 'edit' ? await api(`/content/${encodeURIComponent(id)}`, { method: 'PUT', body: payload }) : await api('/content', { method: 'POST', body: payload }); const contentId = id || response?.data?.id; if (contentId) await api(`/contents/${encodeURIComponent(contentId)}/taxonomy`, { method: 'PUT', body: { genres: selectedGenres, tags: selectedTags } }); showToast(mode === 'edit' ? 'İçerik güncellendi' : 'İçerik oluşturuldu'); panelNavigate('/panel/series'); } catch (error) { showToast(error.message, 'danger'); } });
+    } catch (error) { target.innerHTML = `<div class="alert alert-danger">${escapeHtml(error.message)}</div>`; }
   }
 
   function openModerationActionDialog() {
@@ -2870,6 +3050,9 @@
         const payload = { ...store.get('config') };
         payload.maintenance_whitelist_ips = String(payload.maintenance_whitelist_text || '').split(/\r?\n|,/).map(value => value.trim()).filter(Boolean);
         delete payload.maintenance_whitelist_text;
+        // These values are managed in the root-only .env editor.
+        delete payload.site_address;
+        delete payload.enforce_https;
         const res = await api('/config/site', { method: 'POST', body: payload });
         if (res?.data) {
           const updated = res.data;
@@ -2893,30 +3076,47 @@
     uploads: ['admin.uploads.view'],
     ops: ['admin.health.view'],
     logs: ['admin.logs.view'],
-    config: ['admin.settings.modify']
+    config: ['admin.settings.modify'],
+    webhook: ['admin.settings.modify'],
+    'config-env': ['admin.settings.modify'],
+    'report-detail': ['admin.reports.view'],
+    'series-new': ['admin.content.create'],
+    'series-edit': ['admin.content.update']
   };
 
-  const validPanelRoutes = ['dashboard', 'series', 'users', 'blogs', 'comments', 'reports', 'monetization', 'finance', 'ops', 'logs', 'uploads', 'config', 'help'];
+  const validPanelRoutes = ['dashboard', 'series', 'users', 'blogs', 'comments', 'reports', 'monetization', 'finance', 'ops', 'logs', 'uploads', 'config', 'webhook', 'config-env', 'help'];
 
   function panelRoutePath(route) {
     return route === 'dashboard' ? '/panel' : `/panel/${route}`;
   }
 
-  function navigate(forcedRoute = null) {
-    const pathPart = decodeURIComponent(window.location.pathname.replace(/^\/panel\/?/, '')).split('/')[0];
-    const hashPart = (window.location.hash || '').replace(/^#/, '');
-    const candidate = forcedRoute || pathPart || hashPart || 'dashboard';
-    const requestedRoute = validPanelRoutes.includes(candidate) ? candidate : 'dashboard';
+  function resolvePanelRoute() {
+    const path = decodeURIComponent(window.location.pathname.replace(/^\/panel\/?/, ''));
+    const parts = path.split('/').filter(Boolean);
+    const hash = (window.location.hash || '').replace(/^#/, '');
+    if (parts.length === 0 && hash) parts.push(hash);
+    const section = parts[0] || 'dashboard';
+    if (section === 'reports' && /^\d+$/.test(parts[1] || '')) return { route: 'report-detail', section: 'reports', id: parts[1], path: `/panel/reports/${parts[1]}` };
+    if (section === 'series' && parts[1] === 'new') return { route: 'series-new', section: 'series', path: '/panel/series/new' };
+    if (section === 'series' && parts[1] && parts[2] === 'edit') return { route: 'series-edit', section: 'series', id: parts[1], path: `/panel/series/${parts[1]}/edit` };
+    if (validPanelRoutes.includes(section)) return { route: section, section, path: panelRoutePath(section) };
+    return { route: 'dashboard', section: 'dashboard', path: '/panel' };
+  }
+
+  function navigate() {
+    const resolved = resolvePanelRoute();
+    const requestedRoute = resolved.route;
     const required = routePermissions[requestedRoute] || [];
     const route = required.length === 0 || hasPermission(...required) ? requestedRoute : 'dashboard';
+    const routePath = route === requestedRoute ? resolved.path : '/panel';
 
-    if (window.location.pathname !== panelRoutePath(route) || window.location.hash) {
-      history.replaceState({ route }, '', panelRoutePath(route));
+    if (window.location.pathname !== routePath || window.location.hash) {
+      history.replaceState({ route }, '', routePath);
     }
 
     // Update active nav link
     document.querySelectorAll('#panel-sidebar-nav a').forEach(a => {
-      if (a.getAttribute('data-route') === route) {
+      if (a.getAttribute('data-route') === resolved.section) {
         a.classList.add('active-nav-link');
       } else {
         a.classList.remove('active-nav-link');
@@ -2932,13 +3132,14 @@
       logAutoRefreshTimer = null;
     }
 
-    currentCleanup = mount(`panel-${route}`, {
+    const templateRoute = route === 'series-new' || route === 'series-edit' ? 'series-editor' : route;
+    currentCleanup = mount(`panel-${templateRoute}`, {
       target,
       store,
       handlers
     });
     applyPermissionVisibility(target);
-    renderRouteTables(route);
+    renderRouteTables(resolved.section);
 
     // Fetch view-specific data
     if (route === 'dashboard') loadDashboardData();
@@ -2953,6 +3154,11 @@
     else if (route === 'logs') loadLogsData();
     else if (route === 'uploads') loadUploadsData();
     else if (route === 'config') loadConfigData();
+    else if (route === 'report-detail') loadReportDetailPage(resolved.id);
+    else if (route === 'series-new') loadSeriesEditorPage('new');
+    else if (route === 'series-edit') loadSeriesEditorPage('edit', resolved.id);
+    else if (route === 'webhook') loadWebhookPage();
+    else if (route === 'config-env') loadEnvPage();
   }
 
   applyPermissionVisibility(document);
@@ -2962,9 +3168,14 @@
     link.addEventListener('click', event => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      history.pushState({ route }, '', panelRoutePath(route));
-      navigate(route);
+      panelNavigate(panelRoutePath(route));
     });
+  });
+  document.addEventListener('click', event => {
+    const link = event.target instanceof Element ? event.target.closest('a[data-panel-link]') : null;
+    if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    panelNavigate(link.getAttribute('href'));
   });
   window.addEventListener('popstate', () => navigate());
   window.addEventListener('hashchange', () => navigate());

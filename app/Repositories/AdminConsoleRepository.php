@@ -131,7 +131,7 @@ final class AdminConsoleRepository
         $where = ['c.deleted_at IS NULL'];
         $params = [];
         if ($query !== '') {
-            $where[] = '(c.title LIKE :query OR c.slug LIKE :query OR c.alternative_titles LIKE :query)';
+            $where[] = '(c.id LIKE :query OR c.title LIKE :query OR c.slug LIKE :query OR c.alternative_titles LIKE :query)';
             $params['query'] = '%' . $query . '%';
         }
         if ($status !== null && in_array($status, ['ongoing', 'completed', 'hiatus', 'dropped'], true)) {

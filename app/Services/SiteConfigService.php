@@ -195,11 +195,20 @@ final class SiteConfigService
 
     public function enforceHttps(): bool
     {
+        $envValue = $_ENV['ENFORCE_HTTPS'] ?? ($_SERVER['ENFORCE_HTTPS'] ?? getenv('ENFORCE_HTTPS'));
+        if ($envValue !== false && $envValue !== null && $envValue !== '') {
+            $normalized = strtolower(trim((string) $envValue));
+            return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
+        }
         return (bool) $this->get('enforce_https', self::DEFINITIONS['enforce_https']['default']);
     }
 
     public function siteAddress(): string
     {
+        $envValue = $_ENV['SITE_ADDRESS'] ?? ($_SERVER['SITE_ADDRESS'] ?? getenv('SITE_ADDRESS'));
+        if (is_string($envValue) && trim($envValue) !== '') {
+            return trim($envValue);
+        }
         return (string) $this->get('site_address', self::DEFINITIONS['site_address']['default']);
     }
 

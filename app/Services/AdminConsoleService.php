@@ -15,9 +15,9 @@ final class AdminConsoleService
     private const CACHE_TTL_KPI = 10;
     private const ENV_MASK = '********';
     private const ENV_EDITABLE_KEYS = [
-        'APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'APP_TIMEZONE', 'CORS_ALLOWED_ORIGINS',
+        'APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'SITE_ADDRESS', 'APP_TIMEZONE', 'CORS_ALLOWED_ORIGINS',
         'SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL', 'SESSION_COOKIE_SECURE',
-        'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE',
+        'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS',
         'TRUSTED_PROXIES',
         'RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY',
         'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY',
@@ -697,7 +697,10 @@ final class AdminConsoleService
 
     private function isSensitiveEnvKey(string $key): bool
     {
-        return preg_match('/(?:PASSWORD|SECRET|TOKEN|API_KEY)$/', $key) === 1;
+        // Integration credentials commonly use suffixes such as
+        // SECRET_KEY, SITE_KEY and API_KEY. Never write their values to the
+        // moderation/audit history.
+        return preg_match('/(?:PASSWORD|SECRET|TOKEN|KEY)$/', strtoupper($key)) === 1;
     }
 
     public function triggerBackup(?string $moderatorId = null): array
