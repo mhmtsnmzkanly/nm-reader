@@ -2384,7 +2384,7 @@
   }
 
   const actionPermissions = {
-    taxonomy: ['admin.content.create'], ownership: ['admin.panel.access'], rbac: ['admin.panel.access'], chapters: ['admin.panel.access'], preview: ['admin.panel.access'], revisions: ['admin.panel.access'], team: ['admin.panel.access'], user-edit: ['admin.users.manage'], wallet: ['admin.wallet.view'], package-new: ['admin.shop.manage'], package-edit: ['admin.shop.manage'], ad-free: ['admin.shop.manage'], pricing: ['admin.shop.manage'], moderation: ['admin.logs.view'], log-viewer: ['admin.logs.view'], audit-log: ['admin.logs.view']
+    taxonomy: ['admin.content.create'], ownership: ['admin.panel.access'], rbac: ['admin.panel.access'], chapters: ['admin.panel.access'], preview: ['admin.panel.access'], revisions: ['admin.panel.access'], team: ['admin.panel.access'], 'user-edit': ['admin.users.manage'], wallet: ['admin.wallet.view'], 'package-new': ['admin.shop.manage'], 'package-edit': ['admin.shop.manage'], 'ad-free': ['admin.shop.manage'], pricing: ['admin.shop.manage'], moderation: ['admin.logs.view'], 'log-viewer': ['admin.logs.view'], 'audit-log': ['admin.logs.view']
   };
 
   const actionParents = {
