@@ -159,7 +159,7 @@
               <small class="opacity-75">System Administrator</small>
             </li>
             <li class="user-footer p-2 d-flex justify-content-between">
-              <a href="/panel#config" class="btn btn-sm btn-outline-secondary" data-requires-permission="admin.settings.modify"><i class="bi bi-gear me-1"></i> Ayarlar</a>
+              <a href="/panel/config" class="btn btn-sm btn-outline-secondary" data-panel-link data-requires-permission="admin.settings.modify"><i class="bi bi-gear me-1"></i> Ayarlar</a>
               <a href="/logout" class="btn btn-sm btn-danger"><i class="bi bi-box-arrow-right me-1"></i> <?= $__t('logout') ?></a>
             </li>
           </ul>
@@ -180,13 +180,13 @@
       <nav>
         <ul class="nav sidebar-menu flex-column gap-1 px-2" id="panel-sidebar-nav" data-lte-toggle="treeview" role="menu" data-accordion="false">
           <li class="nav-item">
-            <a href="#dashboard" class="nav-link rounded" data-route="dashboard">
+            <a href="/panel" class="nav-link rounded" data-route="dashboard">
               <i class="nav-icon bi bi-grid-1x2-fill me-2 text-info"></i>
               <p class="mb-0">Genel Bakış (Dashboard)</p>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#help" class="nav-link rounded" data-route="help"><i class="nav-icon bi bi-question-circle me-2 text-info"></i><p class="mb-0">Yardım & Kullanım</p></a>
+            <a href="/panel/help" class="nav-link rounded" data-route="help"><i class="nav-icon bi bi-question-circle me-2 text-info"></i><p class="mb-0">Yardım & Kullanım</p></a>
           </li>
           <li class="nav-item">
             <a href="#" class="nav-link rounded" data-lte-toggle="treeview" role="button" aria-expanded="false">
@@ -195,7 +195,7 @@
             </a>
             <ul class="nav nav-treeview flex-column gap-1">
               <li class="nav-item">
-                <a href="#series" class="nav-link rounded" data-route="series">
+                <a href="/panel/series" class="nav-link rounded" data-route="series">
                   <i class="nav-icon bi bi-journal-richtext me-2 text-primary"></i>
                   <p class="mb-0">İçerik & Bölümler</p>
                 </a>
@@ -207,19 +207,19 @@
                 </a>
               </li>
               <li class="nav-item">
-                <a href="#blogs" class="nav-link rounded" data-route="blogs">
+                <a href="/panel/blogs" class="nav-link rounded" data-route="blogs">
                   <i class="nav-icon bi bi-newspaper me-2 text-warning"></i>
                   <p class="mb-0">Blog Moderasyonu</p>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="#comments" class="nav-link rounded" data-route="comments">
+                <a href="/panel/comments" class="nav-link rounded" data-route="comments">
                   <i class="nav-icon bi bi-chat-square-quote-fill me-2 text-danger"></i>
                   <p class="mb-0">Yorum Moderasyonu</p>
                 </a>
               </li>
               <li class="nav-item" data-requires-permission="admin.reports.view">
-                <a href="#reports" class="nav-link rounded" data-route="reports">
+                <a href="/panel/reports" class="nav-link rounded" data-route="reports">
                   <i class="nav-icon bi bi-flag-fill me-2 text-danger"></i>
                   <p class="mb-0">Raporlar & Şikâyetler</p>
                 </a>
@@ -233,7 +233,7 @@
             </a>
             <ul class="nav nav-treeview flex-column gap-1">
               <li class="nav-item">
-                <a href="#users" class="nav-link rounded" data-route="users">
+                <a href="/panel/users" class="nav-link rounded" data-route="users">
                   <i class="nav-icon bi bi-person-vcard-fill me-2 text-success"></i>
                   <p class="mb-0">Kullanıcılar & Roller</p>
                 </a>
@@ -247,13 +247,13 @@
             </a>
             <ul class="nav nav-treeview flex-column gap-1">
               <li class="nav-item" data-requires-permission="admin.shop.manage">
-                <a href="#monetization" class="nav-link rounded" data-route="monetization">
+                <a href="/panel/monetization" class="nav-link rounded" data-route="monetization">
                   <i class="nav-icon bi bi-coin me-2 text-warning"></i>
                   <p class="mb-0">Para Kazanma & Mağaza</p>
                 </a>
               </li>
               <li class="nav-item" data-requires-permission="admin.finance.view">
-                <a href="#finance" class="nav-link rounded" data-route="finance">
+                <a href="/panel/finance" class="nav-link rounded" data-route="finance">
                   <i class="nav-icon bi bi-receipt-cutoff me-2 text-success"></i>
                   <p class="mb-0">Finans & İşlemler</p>
                 </a>
@@ -267,19 +267,19 @@
             </a>
             <ul class="nav nav-treeview flex-column gap-1">
               <li class="nav-item" data-requires-permission="admin.health.view">
-                <a href="#ops" class="nav-link rounded" data-route="ops">
+                <a href="/panel/ops" class="nav-link rounded" data-route="ops">
                   <i class="nav-icon bi bi-hdd-stack-fill me-2 text-info"></i>
                   <p class="mb-0">Kuyruk & Sistem Bakımı</p>
                 </a>
               </li>
               <li class="nav-item" data-requires-permission="admin.logs.view">
-                <a href="#logs" class="nav-link rounded" data-route="logs">
+                <a href="/panel/logs" class="nav-link rounded" data-route="logs">
                   <i class="nav-icon bi bi-terminal-fill me-2 text-secondary"></i>
                   <p class="mb-0">Sistem Logları & Güvenlik</p>
                 </a>
               </li>
               <li class="nav-item" data-requires-permission="admin.uploads.view">
-                <a href="#uploads" class="nav-link rounded" data-route="uploads">
+                <a href="/panel/uploads" class="nav-link rounded" data-route="uploads">
                   <i class="nav-icon bi bi-images me-2 text-primary"></i>
                   <p class="mb-0">System Uploads</p>
                 </a>
@@ -293,7 +293,7 @@
             </a>
             <ul class="nav nav-treeview flex-column gap-1">
               <li class="nav-item" data-requires-permission="admin.settings.modify">
-                <a href="#config" class="nav-link rounded" data-route="config">
+                <a href="/panel/config" class="nav-link rounded" data-route="config">
                   <i class="nav-icon bi bi-sliders me-2 text-light"></i>
                   <p class="mb-0">Site Yapılandırması</p>
                 </a>
@@ -425,11 +425,11 @@
               <h5 class="card-title fw-bold mb-0"><i class="bi bi-activity text-info me-2"></i>Hızlı İşlemler</h5>
             </div>
             <div class="card-body px-4 d-flex flex-column gap-2">
-              <a href="#series" class="btn btn-outline-primary text-start"><i class="bi bi-plus-circle me-2"></i> Yeni İçerik Ekle</a>
-              <a href="#users" class="btn btn-outline-success text-start"><i class="bi bi-shield-check me-2"></i> Rolleri Yönet</a>
-              <a href="#ops" class="btn btn-outline-warning text-start" data-requires-permission="admin.jobs.run"><i class="bi bi-play-circle me-2"></i> Kuyruğu Çalıştır</a>
-              <a href="#logs" class="btn btn-outline-secondary text-start" data-requires-permission="admin.logs.view"><i class="bi bi-terminal me-2"></i> Denetim Loglarını İncele</a>
-              <a href="#config" class="btn btn-outline-dark text-start" data-requires-permission="admin.settings.modify"><i class="bi bi-sliders me-2"></i> Site Ayarlarını Düzenle</a>
+              <a href="/panel/series/new" class="btn btn-outline-primary text-start" data-panel-link><i class="bi bi-plus-circle me-2"></i> Yeni İçerik Ekle</a>
+              <a href="/panel/users" class="btn btn-outline-success text-start" data-panel-link><i class="bi bi-shield-check me-2"></i> Rolleri Yönet</a>
+              <a href="/panel/ops" class="btn btn-outline-warning text-start" data-panel-link data-requires-permission="admin.jobs.run"><i class="bi bi-play-circle me-2"></i> Kuyruğu Çalıştır</a>
+              <a href="/panel/logs" class="btn btn-outline-secondary text-start" data-panel-link data-requires-permission="admin.logs.view"><i class="bi bi-terminal me-2"></i> Denetim Loglarını İncele</a>
+              <a href="/panel/config" class="btn btn-outline-dark text-start" data-panel-link data-requires-permission="admin.settings.modify"><i class="bi bi-sliders me-2"></i> Site Ayarlarını Düzenle</a>
             </div>
           </div>
         </div>
@@ -3239,15 +3239,19 @@
   }
 
   applyPermissionVisibility(document);
+  const panelSidebarNav = document.getElementById('panel-sidebar-nav');
   document.querySelectorAll('#panel-sidebar-nav a[data-route]').forEach(link => {
     const route = link.dataset.route;
     link.href = panelRoutePath(route);
-    link.addEventListener('click', event => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      event.preventDefault();
-      panelNavigate(panelRoutePath(route));
-    });
   });
+  panelSidebarNav?.addEventListener('click', event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const link = target?.closest('#panel-sidebar-nav a[data-route]');
+    if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+    panelNavigate(panelRoutePath(link.dataset.route || 'dashboard'));
+  }, true);
   document.addEventListener('click', event => {
     const link = event.target instanceof Element ? event.target.closest('a[data-panel-link]') : null;
     if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
