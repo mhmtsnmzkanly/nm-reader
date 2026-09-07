@@ -3,6 +3,10 @@ DirectoryIndex index.php
 
 RewriteEngine On
 
+# These HTML shells are controller-owned templates. They must not bypass PHP
+# placeholder replacement when requested directly.
+RewriteRule ^(?:admin|install|maintenance)\.html$ - [F,END]
+
 # Let Apache serve existing assets and other public files directly.
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

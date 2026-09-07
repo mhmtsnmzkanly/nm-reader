@@ -1,17 +1,9 @@
-<?php
-/** @var string $siteName */
-/** @var string $siteLogo */
-/** @var string $panelUrl */
-
-$siteNameEscaped = htmlspecialchars($siteName ?? 'NM Reader');
-$panelUrlEscaped = htmlspecialchars($panelUrl ?? '/panel');
-?>
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bakım Modu — <?= $siteNameEscaped ?></title>
+    <title>Bakım Modu — %%NMR_SITE_NAME%%</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -238,7 +230,7 @@ $panelUrlEscaped = htmlspecialchars($panelUrl ?? '/panel');
     <div class="card">
         <div class="icon">🛠️</div>
         <h1>Sistem Bakımda</h1>
-        <p><?= $siteNameEscaped ?> şu anda planlı bakım ve altyapı güncellemesi nedeniyle geçici olarak hizmet dışıdır. Lütfen kısa süre sonra tekrar deneyiniz.</p>
+        <p>%%NMR_SITE_NAME%% şu anda planlı bakım ve altyapı güncellemesi nedeniyle geçici olarak hizmet dışıdır. Lütfen kısa süre sonra tekrar deneyiniz.</p>
         <div>
             <button type="button" id="btnOpenLogin" class="btn-action">
                 <span>🔐</span>
@@ -246,7 +238,7 @@ $panelUrlEscaped = htmlspecialchars($panelUrl ?? '/panel');
             </button>
         </div>
         <div class="footer">
-            © <?= date('Y') ?> <?= $siteNameEscaped ?> · Tüm hakları saklıdır.
+            © %%NMR_YEAR%% %%NMR_SITE_NAME%% · Tüm hakları saklıdır.
         </div>
     </div>
 
@@ -373,7 +365,7 @@ $panelUrlEscaped = htmlspecialchars($panelUrl ?? '/panel');
                         submitBtn.innerText = 'Giriş Başarılı! Yönlendiriliyor...';
                         submitBtn.style.background = '#10b981';
                         setTimeout(function() {
-                            window.location.href = '<?= $panelUrlEscaped ?>';
+                            window.location.href = '%%NMR_PANEL_URL%%';
                         }, 500);
                     } else {
                         const message = (result && result.error && result.error.message)

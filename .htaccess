@@ -5,6 +5,7 @@ RewriteEngine On
 # The project root is not intended to be web-readable. Keep application code,
 # dependencies, data, and repository metadata behind the public entrypoint.
 RewriteRule ^(?:app|config|storage|vendor|docs|ui|\.git)(?:/|$) - [F,END]
+RewriteRule ^(?:admin|install|maintenance)\.html$ - [F,END]
 RewriteRule ^(?:\.env(?:\..*)?|composer\.(?:json|lock)|package(?:-lock)?\.json|vite\.config\..*|tsconfig\..*)$ - [F,END]
 RewriteRule ^(?:\.htaccess|\.htpasswd)$ - [F,END]
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use Dotenv\Dotenv;
 use App\Controllers\AdminPanelController;
 use App\Controllers\ContentController;
 use App\Controllers\UserInteractionController;
@@ -33,11 +34,61 @@ use App\Repositories\UserRepository;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
+use Slim\Factory\AppFactory;
 use Slim\Routing\RouteCollectorProxy;
 
 final class Config
 {
     private static ?array $cachedSettings = null;
+
+    /**
+     * Boots and configures the Slim application.
+     *
+     * Keeping application creation here makes Config.php the single runtime
+     * authority for environment loading, dependency wiring and route setup.
+     */
+    public static function createApp(): App
+    {
+        $basePath = dirname(__DIR__);
+
+        if (is_file($basePath . '/.env')) {
+            Dotenv::createUnsafeImmutable($basePath)->load();
+        }
+
+        $settings = self::getSettings();
+        date_default_timezone_set((string) $settings['app']['timezone']);
+
+        $container = require __DIR__ . '/dependencies.php';
+        AppFactory::setContainer($container);
+
+        $app = AppFactory::create();
+
+        // Enable FastRoute precompiled route caching in production.
+        if (!(bool) ($settings['app']['debug'] ?? false)) {
+            $cachePath = (string) ($settings['cache']['path'] ?? ($basePath . '/storage/cache'));
+            $routeSources = [__FILE__, $basePath . '/public/index.php'];
+            $routeSignature = hash_init('sha256');
+            foreach ($routeSources as $routeSource) {
+                hash_update_file($routeSignature, $routeSource);
+            }
+            $routeHash = substr(hash_final($routeSignature), 0, 16);
+            $cacheFile = $cachePath . '/fastroute_cache_' . $routeHash . '.php';
+
+            // Route caches are generated and recoverable. Remove obsolete
+            // signatures so deployments cannot keep stale route tables.
+            foreach (glob($cachePath . '/fastroute_cache*.php') ?: [] as $oldCacheFile) {
+                if ($oldCacheFile !== $cacheFile && is_file($oldCacheFile)) {
+                    @unlink($oldCacheFile);
+                }
+            }
+            $app->getRouteCollector()->setCacheFile($cacheFile);
+        }
+
+        require __DIR__ . '/middleware.php';
+        self::registerRoutes($app);
+
+        return $app;
+    }
 
     private static function env(string $key, mixed $default = null): mixed
     {

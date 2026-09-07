@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Helpers\ResponseHelper;
 use App\Services\EntityIdService;
+use App\Services\HtmlTemplateService;
 use PDO;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -18,7 +19,10 @@ final class InstallController
 {
     private string $basePath;
 
-    public function __construct(private readonly array $settings)
+    public function __construct(
+        private readonly array $settings,
+        private readonly HtmlTemplateService $templates,
+    )
     {
         $this->basePath = (string)($this->settings['app']['base_path'] ?? dirname(__DIR__, 2));
     }
@@ -37,17 +41,12 @@ final class InstallController
             return $response->withHeader('Location', '/')->withStatus(302);
         }
 
-        $templatePath = $this->basePath . '/storage/views/install.php';
-        if (!file_exists($templatePath)) {
-            $response->getBody()->write("Installation template missing.");
+        $content = $this->templates->render('install.html');
+        if ($content === null) {
+            $response->getBody()->write('Installation template missing.');
             return $response->withStatus(500);
         }
-
-        ob_start();
-        include $templatePath;
-        $content = ob_get_clean();
-
-        $response->getBody()->write($content ?: '');
+        $response->getBody()->write($content);
         return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
     }
 

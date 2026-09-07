@@ -167,7 +167,7 @@ final class ApiTestSuite
         $GLOBALS['TESTING_MOCK_PDO'] = $mockPdo;
         $_ENV['MEDIA_SECRET'] = str_repeat('a', 64);
         $_ENV['CORS_ALLOWED_ORIGINS'] = 'http://localhost:8080';
-        $this->app = require $baseDir . '/app/app.php';
+        $this->app = \App\Config::createApp();
     }
 
     public function run(): void

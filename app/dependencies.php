@@ -55,6 +55,7 @@ use App\Services\WalletService;
 use App\Services\WebContextBuilder;
 use App\Services\WebUrlService;
 use App\Services\WebPageRenderer;
+use App\Services\HtmlTemplateService;
 use App\Services\TaxonomyFormatter;
 use App\Middleware\I18nMiddleware;
 use App\Middleware\RequestIdMiddleware;
@@ -169,6 +170,8 @@ $builder->addDefinitions([
     WebUrlService::class => DI\autowire(WebUrlService::class),
     WebPageRenderer::class => DI\autowire(WebPageRenderer::class)
         ->constructorParameter('seoService', DI\get(\App\Services\SeoService::class)),
+    HtmlTemplateService::class => DI\autowire(HtmlTemplateService::class)
+        ->constructorParameter('basePath', $settings['app']['base_path']),
     TaxonomyFormatter::class => DI\autowire(TaxonomyFormatter::class),
     UserActivityService::class => DI\autowire(UserActivityService::class),
     SlugService::class => DI\autowire(SlugService::class),
@@ -205,7 +208,8 @@ $builder->addDefinitions([
     UserInteractionController::class => DI\autowire(UserInteractionController::class),
     UserController::class => DI\autowire(UserController::class),
     AdminPanelController::class => DI\autowire(AdminPanelController::class),
-    InstallController::class => static fn () => new InstallController($settings),
+    InstallController::class => DI\autowire(InstallController::class)
+        ->constructorParameter('settings', $settings),
     // Web routes are split by responsibility; shared bootstrap and shell
     // rendering are provided by WebContextBuilder/WebPageRenderer.
     ContentPageController::class => DI\autowire(ContentPageController::class),

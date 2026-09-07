@@ -64,7 +64,7 @@ All public-facing PHP views and template rendering logic have been **permanently
 
 ## 4. Unified Admin Panel
 
-The management console is available only at `/panel` and `/panel/*`. `AdminShellController` serves the unified `storage/views/admin_panel_lime.php` shell, which consumes the `/api/v1/admin/*` API.
+The management console is available only at `/panel` and `/panel/*`. `AdminShellController` reads the unified `public/admin.html` shell, which consumes the `/api/v1/admin/*` API.
 
 ### Rationale:
 - The shell requires an authenticated admin session.
@@ -86,7 +86,7 @@ The management console is available only at `/panel` and `/panel/*`. `AdminShell
 | `/search` | `ContentPageController::search` | `app.html` + noindex, follow | `SearchPage` |
 | `/profile` | `AccountPageController::profile` | `app.html` + noindex, nofollow | `ProfilePage` |
 | `/profile/{person}` | `AccountPageController::profile` | `app.html` + Public Creator | `PublicProfilePage` |
-| `/panel`, `/panel/*` | `AdminShellController::index` | `storage/views/admin_panel_lime.php` | Built-in client router |
+| `/panel`, `/panel/*` | `AdminShellController::index` | `public/admin.html` | Built-in client router |
 | `/api/v1/*` | `ApiController` | JSON API Envelope | N/A (Data Transport) |
 | `/media/*` | `MediaController` | Binary Media Stream | N/A (Media Engine) |
 
@@ -132,11 +132,11 @@ Media endpoints (`/media/public/*` and `/media/chapter/*`) are fully independent
 - ❌ `storage/views/partials_modals.php`
 
 ### Admin Views:
-- ✅ `storage/views/admin_panel_lime.php` (unified panel)
+- ✅ `public/admin.html` (unified panel shell)
 - ❌ Legacy `storage/views/admin_*.php` per-page templates (removed)
 - ❌ `storage/views/layout_adminlte.php` (removed)
 - ❌ `public/assets/js/admin-bundle.js` (removed)
-- ✅ `storage/views/install.php` (Installer fallback view)
+- ✅ `public/install.html` (Installer fallback shell)
 - ❌ `storage/views/error.php` (Errors now use the React app shell)
 
 The obsolete `/chat` and `/mobile` web routes are retired as well. The React

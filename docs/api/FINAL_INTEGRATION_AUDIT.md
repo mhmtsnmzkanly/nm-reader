@@ -119,7 +119,7 @@ The NM-Reader platform has achieved a decoupled, high-performance hybrid archite
 
 ## 10. Admin Management Console
 
-- **Execution:** `AdminShellController::index()` serves `storage/views/admin_panel_lime.php`; its client-side sections consume `/api/v1/admin/*`.
+- **Execution:** `AdminShellController::index()` reads `public/admin.html` as an HTML shell; its client-side sections consume `/api/v1/admin/*`.
 - **Security:** Session access is checked before the shell is served, and API operations enforce endpoint-specific RBAC permissions.
 - **Independence:** Decoupled from the public React SPA build.
 

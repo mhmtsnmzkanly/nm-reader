@@ -7,6 +7,7 @@ namespace App\Middleware;
 use App\Helpers\ResponseHelper;
 use App\Services\AuthorizationService;
 use App\Services\SiteConfigService;
+use App\Services\HtmlTemplateService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -16,6 +17,7 @@ final class MaintenanceMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly SiteConfigService $siteConfig,
+        private readonly HtmlTemplateService $templates,
         private readonly ?AuthorizationService $authorization = null,
         private readonly array $trustedProxies = []
     ) {
@@ -82,7 +84,7 @@ final class MaintenanceMiddleware implements MiddlewareInterface
             );
         }
 
-        // 6. Return 503 HTML for web requests (rendered via storage/views/maintenance.php)
+        // 6. Return 503 HTML for web requests (read from the public HTML shell)
         $response = new \Slim\Psr7\Response(503);
         $html = $this->renderMaintenancePage();
         $response->getBody()->write($html);
@@ -91,17 +93,14 @@ final class MaintenanceMiddleware implements MiddlewareInterface
 
     private function renderMaintenancePage(): string
     {
-        $viewPath = dirname(__DIR__, 2) . '/storage/views/maintenance.php';
         $siteName = $this->siteConfig->siteName();
-        $siteLogo = $this->siteConfig->siteLogo();
-        $panelUrl = '/panel';
-
-        if (is_file($viewPath)) {
-            ob_start();
-            (static function () use ($viewPath, $siteName, $siteLogo, $panelUrl): void {
-                include $viewPath;
-            })();
-            return (string) ob_get_clean();
+        $html = $this->templates->render('maintenance.html', [
+            'site_name' => htmlspecialchars($siteName ?: 'NM Reader', ENT_QUOTES, 'UTF-8'),
+            'panel_url' => htmlspecialchars('/panel', ENT_QUOTES, 'UTF-8'),
+            'year' => (string) date('Y'),
+        ]);
+        if ($html !== null) {
+            return $html;
         }
 
         $siteNameEscaped = htmlspecialchars($siteName);

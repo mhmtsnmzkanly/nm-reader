@@ -83,7 +83,7 @@ class LocaleRegressionSuite
         $GLOBALS['TESTING_MOCK_PDO'] = $mockPdo;
         $_ENV['MEDIA_SECRET'] = str_repeat('b', 64);
 
-        $this->app = require dirname(__DIR__) . '/app.php';
+        $this->app = \App\Config::createApp();
     }
 
     public function run(): int

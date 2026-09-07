@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Services\I18nService;
 use App\Services\SiteConfigService;
 use App\Services\WebContextBuilder;
+use App\Services\HtmlTemplateService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -18,6 +19,7 @@ final class AdminShellController
         private readonly SiteConfigService $siteConfig,
         private readonly I18nService $i18n,
         private readonly WebContextBuilder $webContext,
+        private readonly HtmlTemplateService $templates,
     ) {}
 
     public function index(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -25,12 +27,7 @@ final class AdminShellController
         if (!$this->webContext->canAccessAdminPanel()) {
             return $response->withHeader('Location', '/')->withStatus(302);
         }
-        $basePath = (string) $this->settings['app']['base_path'];
-        $templatePath = $basePath . '/storage/views/admin_panel_lime.php';
-        if (!is_file($templatePath)) {
-            $response->getBody()->write('Panel Template not found');
-            return $response->withStatus(404);
-        }
+        $siteConfig = $this->siteConfig->public();
         $userId = $_SESSION['user_id'] ?? null;
         $langCode = $this->i18n->resolveLocale($request, $userId ? (string) $userId : null);
         $lang = $this->i18n->getDictionary($langCode);
@@ -41,21 +38,21 @@ final class AdminShellController
             'lang_hash' => md5((string) json_encode($lang, JSON_UNESCAPED_UNICODE)),
             'default_lang' => $this->i18n->getDefaultLanguage(),
             'supported_langs' => $this->i18n->getSupportedLanguages(),
-            'site_config' => $this->siteConfig->public(),
+            'site_config' => $siteConfig,
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        $url = static fn (string $path): string => '/' . ltrim($path, '/');
-        $__t = fn (string $key, array $params = []): string => $this->i18n->translate($langCode, $key, $params);
-        ob_start();
-        extract([
-            'url' => $url,
-            '__t' => $__t,
-            'adminUsername' => (string) ($authContext['username'] ?? 'admin'),
-            'contextJson' => $contextJson,
-            'siteConfig' => $this->siteConfig->public(),
-            'authContext' => $authContext,
-        ], EXTR_SKIP);
-        include $templatePath;
-        $html = (string) ob_get_clean();
+        $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+        $html = $this->templates->render('admin.html', [
+            'context_json' => $contextJson !== '' ? $contextJson : '{}',
+            'site_name' => $escape((string) (($siteConfig['site_name'] ?? null) ?: 'Main Site')),
+            'admin_username' => $escape((string) ($authContext['username'] ?? 'Administrator')),
+            'logout_label' => $escape($this->i18n->translate($langCode, 'logout')),
+            'site_abbreviation' => $escape((string) (($siteConfig['site_abbreviation'] ?? null) ?: 'NMR')),
+            'next_year' => (string) (((int) date('Y')) + 1),
+        ]);
+        if ($html === null) {
+            $response->getBody()->write('Panel Template not found');
+            return $response->withStatus(404);
+        }
         $response->getBody()->write($html);
         return $response
             ->withHeader('Content-Type', 'text/html; charset=utf-8')

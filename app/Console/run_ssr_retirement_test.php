@@ -44,11 +44,11 @@ echo "      NM-READER — SSR RETIREMENT VERIFICATION SUITE           \n";
 echo "==============================================================\n\n";
 
 // -----------------------------------------------------------------
-// 1. Storage / Views Directory Audit (Legacy SSR Retired)
+// 1. HTML shell directory audit (legacy PHP SSR retired)
 // -----------------------------------------------------------------
-echo "1. Auditing storage/views Directory Structure...\n";
+echo "1. Auditing public HTML shell files...\n";
 $viewsDir = $basePath . '/storage/views';
-$existingViews = array_diff(scandir($viewsDir) ?: [], ['.', '..']);
+$publicDir = $basePath . '/public';
 
 // Retired Public views that must NOT exist in storage/views
 $retiredPublicViews = [
@@ -88,7 +88,10 @@ foreach ($retiredAdminViews as $adminView) {
     assertCheck(!file_exists($viewsDir . '/' . $adminView), "Legacy admin view '{$adminView}' is retired");
 }
 
-assertCheck(file_exists($viewsDir . '/admin_panel_lime.php'), "Unified '/panel' view is present");
+assertCheck(!file_exists($viewsDir . '/admin_panel_lime.php'), "PHP admin shell is retired from storage/views");
+assertCheck(file_exists($publicDir . '/admin.html'), "Unified '/panel' HTML shell is present");
+assertCheck(file_exists($publicDir . '/install.html'), "Installer HTML shell is present");
+assertCheck(file_exists($publicDir . '/maintenance.html'), "Maintenance HTML shell is present");
 
 // -----------------------------------------------------------------
 // 2. React App Shell Delivery & SEO Injection
