@@ -185,11 +185,11 @@ final class ReportService
         $this->reports->updateStatus($id, $status, $sanitizedNote, $reviewedBy);
 
         $this->adminConsole->createModerationAction(
-            moderatorId: $reviewedBy,
-            targetType: 'report',
-            targetId: (string) $id,
-            action: 'review',
-            details: sprintf('Report #%d status updated to "%s". Note: %s', $id, $status, $sanitizedNote ?? 'None')
+            $reviewedBy,
+            'report',
+            (string) $id,
+            'review',
+            sprintf('Report #%d status updated to "%s". Note: %s', $id, $status, $sanitizedNote ?? 'None')
         );
 
         return [
