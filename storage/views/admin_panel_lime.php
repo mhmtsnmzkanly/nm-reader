@@ -21,6 +21,12 @@
     .lime-spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: lime-spin .75s linear infinite; }
     @keyframes lime-spin { to { transform: rotate(360deg); } }
     .active-nav-link { background-color: rgba(255,255,255,0.15) !important; color: #fff !important; font-weight: 600; }
+    /* Keep grouped navigation usable even when the optional AdminLTE JS bundle
+       is unavailable. AdminLTE uses the same menu-open state. */
+    #panel-sidebar-nav > .nav-item > .nav-treeview { display: none; }
+    #panel-sidebar-nav > .nav-item.menu-open > .nav-treeview { display: block; }
+    #panel-sidebar-nav .nav-arrow { transition: transform .2s ease-in-out; }
+    #panel-sidebar-nav > .nav-item.menu-open > .nav-link .nav-arrow { transform: translateY(-50%) rotate(90deg); }
     .cursor-pointer { cursor: pointer; }
     .upload-reference-list { max-height: 6rem; overflow-y: auto; min-width: 12rem; }
 
@@ -172,7 +178,7 @@
     </div>
     <div class="sidebar-wrapper py-2">
       <nav>
-        <ul class="nav sidebar-menu flex-column gap-1 px-2" id="panel-sidebar-nav">
+        <ul class="nav sidebar-menu flex-column gap-1 px-2" id="panel-sidebar-nav" data-lte-toggle="treeview" role="menu" data-accordion="false">
           <li class="nav-item">
             <a href="#dashboard" class="nav-link rounded" data-route="dashboard">
               <i class="nav-icon bi bi-grid-1x2-fill me-2 text-info"></i>
@@ -180,85 +186,131 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="#series" class="nav-link rounded" data-route="series">
-              <i class="nav-icon bi bi-journal-richtext me-2 text-primary"></i>
-              <p class="mb-0">İçerik & Bölümler</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#users" class="nav-link rounded" data-route="users">
-              <i class="nav-icon bi bi-people-fill me-2 text-success"></i>
-              <p class="mb-0">Kullanıcılar & Roller</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#blogs" class="nav-link rounded" data-route="blogs">
-              <i class="nav-icon bi bi-newspaper me-2 text-warning"></i>
-              <p class="mb-0">Blog Moderasyonu</p>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#comments" class="nav-link rounded" data-route="comments">
-              <i class="nav-icon bi bi-chat-square-quote-fill me-2 text-danger"></i>
-              <p class="mb-0">Yorum Moderasyonu</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.reports.view">
-            <a href="#reports" class="nav-link rounded" data-route="reports">
-              <i class="nav-icon bi bi-flag-fill me-2 text-danger"></i>
-              <p class="mb-0">Raporlar & Şikâyetler</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.shop.manage">
-            <a href="#monetization" class="nav-link rounded" data-route="monetization">
-              <i class="nav-icon bi bi-coin me-2 text-warning"></i>
-              <p class="mb-0">Para Kazanma & Mağaza</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.finance.view">
-            <a href="#finance" class="nav-link rounded" data-route="finance">
-              <i class="nav-icon bi bi-receipt-cutoff me-2 text-success"></i>
-              <p class="mb-0">Finans & İşlemler</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.health.view">
-            <a href="#ops" class="nav-link rounded" data-route="ops">
-              <i class="nav-icon bi bi-cpu-fill me-2 text-info"></i>
-              <p class="mb-0">Kuyruk & Sistem Bakımı</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.logs.view">
-            <a href="#logs" class="nav-link rounded" data-route="logs">
-              <i class="nav-icon bi bi-terminal-fill me-2 text-secondary"></i>
-              <p class="mb-0">Sistem Logları & Güvenlik</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.uploads.view">
-            <a href="#uploads" class="nav-link rounded" data-route="uploads">
-              <i class="nav-icon bi bi-images me-2 text-primary"></i>
-              <p class="mb-0">System Uploads</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.settings.modify">
-            <a href="#config" class="nav-link rounded" data-route="config">
-              <i class="nav-icon bi bi-sliders me-2 text-light"></i>
-              <p class="mb-0">Site Yapılandırması</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.settings.modify">
-            <a href="/panel/webhook" class="nav-link rounded" data-route="webhook">
-              <i class="nav-icon bi bi-broadcast me-2 text-info"></i>
-              <p class="mb-0">Webhook Yönetimi</p>
-            </a>
-          </li>
-          <li class="nav-item" data-requires-permission="admin.settings.modify">
-            <a href="/panel/config-env" class="nav-link rounded" data-route="config-env">
-              <i class="nav-icon bi bi-file-earmark-code me-2 text-secondary"></i>
-              <p class="mb-0">Ortam Değişkenleri (.env)</p>
-            </a>
-          </li>
-          <li class="nav-item">
             <a href="#help" class="nav-link rounded" data-route="help"><i class="nav-icon bi bi-question-circle me-2 text-info"></i><p class="mb-0">Yardım & Kullanım</p></a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link rounded" data-lte-toggle="treeview" role="button" aria-expanded="false">
+              <i class="nav-icon bi bi-journal-bookmark-fill me-2 text-primary"></i>
+              <p class="mb-0">İçerik <i class="nav-arrow bi bi-chevron-right"></i></p>
+            </a>
+            <ul class="nav nav-treeview flex-column gap-1">
+              <li class="nav-item">
+                <a href="#series" class="nav-link rounded" data-route="series">
+                  <i class="nav-icon bi bi-journal-richtext me-2 text-primary"></i>
+                  <p class="mb-0">İçerik & Bölümler</p>
+                </a>
+              </li>
+              <li class="nav-item" data-requires-permission="admin.content.create">
+                <a href="/panel/taxonomies" class="nav-link rounded" data-route="taxonomies">
+                  <i class="nav-icon bi bi-tags me-2 text-primary"></i>
+                  <p class="mb-0">Tür & Etiketler</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="#blogs" class="nav-link rounded" data-route="blogs">
+                  <i class="nav-icon bi bi-newspaper me-2 text-warning"></i>
+                  <p class="mb-0">Blog Moderasyonu</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="#comments" class="nav-link rounded" data-route="comments">
+                  <i class="nav-icon bi bi-chat-square-quote-fill me-2 text-danger"></i>
+                  <p class="mb-0">Yorum Moderasyonu</p>
+                </a>
+              </li>
+              <li class="nav-item" data-requires-permission="admin.reports.view">
+                <a href="#reports" class="nav-link rounded" data-route="reports">
+                  <i class="nav-icon bi bi-flag-fill me-2 text-danger"></i>
+                  <p class="mb-0">Raporlar & Şikâyetler</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link rounded" data-lte-toggle="treeview" role="button" aria-expanded="false">
+              <i class="nav-icon bi bi-people-fill me-2 text-success"></i>
+              <p class="mb-0">Kullanıcı ve Yetki <i class="nav-arrow bi bi-chevron-right"></i></p>
+            </a>
+            <ul class="nav nav-treeview flex-column gap-1">
+              <li class="nav-item">
+                <a href="#users" class="nav-link rounded" data-route="users">
+                  <i class="nav-icon bi bi-person-vcard-fill me-2 text-success"></i>
+                  <p class="mb-0">Kullanıcılar & Roller</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link rounded" data-lte-toggle="treeview" role="button" aria-expanded="false">
+              <i class="nav-icon bi bi-shop me-2 text-warning"></i>
+              <p class="mb-0">Mağaza ve Finans <i class="nav-arrow bi bi-chevron-right"></i></p>
+            </a>
+            <ul class="nav nav-treeview flex-column gap-1">
+              <li class="nav-item" data-requires-permission="admin.shop.manage">
+                <a href="#monetization" class="nav-link rounded" data-route="monetization">
+                  <i class="nav-icon bi bi-coin me-2 text-warning"></i>
+                  <p class="mb-0">Para Kazanma & Mağaza</p>
+                </a>
+              </li>
+              <li class="nav-item" data-requires-permission="admin.finance.view">
+                <a href="#finance" class="nav-link rounded" data-route="finance">
+                  <i class="nav-icon bi bi-receipt-cutoff me-2 text-success"></i>
+                  <p class="mb-0">Finans & İşlemler</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link rounded" data-lte-toggle="treeview" role="button" aria-expanded="false">
+              <i class="nav-icon bi bi-cpu-fill me-2 text-info"></i>
+              <p class="mb-0">Sistem <i class="nav-arrow bi bi-chevron-right"></i></p>
+            </a>
+            <ul class="nav nav-treeview flex-column gap-1">
+              <li class="nav-item" data-requires-permission="admin.health.view">
+                <a href="#ops" class="nav-link rounded" data-route="ops">
+                  <i class="nav-icon bi bi-hdd-stack-fill me-2 text-info"></i>
+                  <p class="mb-0">Kuyruk & Sistem Bakımı</p>
+                </a>
+              </li>
+              <li class="nav-item" data-requires-permission="admin.logs.view">
+                <a href="#logs" class="nav-link rounded" data-route="logs">
+                  <i class="nav-icon bi bi-terminal-fill me-2 text-secondary"></i>
+                  <p class="mb-0">Sistem Logları & Güvenlik</p>
+                </a>
+              </li>
+              <li class="nav-item" data-requires-permission="admin.uploads.view">
+                <a href="#uploads" class="nav-link rounded" data-route="uploads">
+                  <i class="nav-icon bi bi-images me-2 text-primary"></i>
+                  <p class="mb-0">System Uploads</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link rounded" data-lte-toggle="treeview" role="button" aria-expanded="false">
+              <i class="nav-icon bi bi-sliders me-2 text-light"></i>
+              <p class="mb-0">Yapılandırma <i class="nav-arrow bi bi-chevron-right"></i></p>
+            </a>
+            <ul class="nav nav-treeview flex-column gap-1">
+              <li class="nav-item" data-requires-permission="admin.settings.modify">
+                <a href="#config" class="nav-link rounded" data-route="config">
+                  <i class="nav-icon bi bi-sliders me-2 text-light"></i>
+                  <p class="mb-0">Site Yapılandırması</p>
+                </a>
+              </li>
+              <li class="nav-item" data-requires-permission="admin.settings.modify">
+                <a href="/panel/webhook" class="nav-link rounded" data-route="webhook">
+                  <i class="nav-icon bi bi-broadcast me-2 text-info"></i>
+                  <p class="mb-0">Webhook Yönetimi</p>
+                </a>
+              </li>
+              <li class="nav-item" data-requires-permission="admin.settings.modify">
+                <a href="/panel/config-env" class="nav-link rounded" data-route="config-env">
+                  <i class="nav-icon bi bi-file-earmark-code me-2 text-secondary"></i>
+                  <p class="mb-0">Ortam Değişkenleri (.env)</p>
+                </a>
+              </li>
+            </ul>
           </li>
         </ul>
       </nav>
@@ -410,9 +462,6 @@
         <p class="text-secondary small mb-0">Manga, Novel, Webtoon serileri ve bölümlerini yönetin</p>
       </div>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-primary" data-on-click="openTaxonomyManager" data-requires-permission="admin.content.create">
-          <i class="bi bi-tags me-1"></i> Tür & Etiketler
-        </button>
         <a class="btn btn-sm btn-primary" href="/panel/series/new" data-panel-link data-requires-permission="admin.content.create">
           <i class="bi bi-plus-lg me-1"></i> Yeni Seri Ekle
         </a>
@@ -1009,13 +1058,13 @@
      viewport-sized modal. -->
 <template id="tpl-panel-report-detail">
   <div class="app-content-header py-3 px-4 bg-body border-bottom">
-    <div class="container-fluid d-flex justify-content-between align-items-center gap-3">
+    <div class="container-fluid d-flex flex-wrap align-items-center gap-3">
+      <a class="btn btn-outline-secondary btn-lg text-nowrap" href="/panel/reports" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
       <div>
         <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small" id="panel-report-breadcrumb"></ol></nav>
         <h3 class="mb-0 fw-bold fs-4">Rapor detayı</h3>
         <p class="text-secondary small mb-0">Raporu inceleyin ve moderasyon kararını kaydedin.</p>
       </div>
-      <a class="btn btn-sm btn-outline-secondary text-nowrap" href="/panel/reports" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
     </div>
   </div>
   <div class="app-content p-4"><div class="container-fluid"><div id="panel-report-detail-page"><div class="text-secondary">Rapor yükleniyor...</div></div></div></div>
@@ -1023,13 +1072,13 @@
 
 <template id="tpl-panel-series-editor">
   <div class="app-content-header py-3 px-4 bg-body border-bottom">
-    <div class="container-fluid d-flex justify-content-between align-items-center gap-3">
+    <div class="container-fluid d-flex flex-wrap align-items-center gap-3">
+      <a class="btn btn-outline-secondary btn-lg text-nowrap" href="/panel/series" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
       <div>
         <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small" id="panel-series-breadcrumb"></ol></nav>
         <h3 class="mb-0 fw-bold fs-4" id="panel-series-editor-title">Yeni seri</h3>
         <p class="text-secondary small mb-0">Seri bilgilerini ve sınıflandırmasını yönetin.</p>
       </div>
-      <a class="btn btn-sm btn-outline-secondary text-nowrap" href="/panel/series" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
     </div>
   </div>
   <div class="app-content p-4"><div class="container-fluid"><form id="panel-series-editor-form" class="card border-0 shadow-sm"><div class="card-body p-4" id="panel-series-editor-fields"><div class="text-secondary">Form yükleniyor...</div></div><div class="card-footer bg-transparent d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="/panel/series" data-panel-link>İptal</a><button type="submit" class="btn btn-primary" id="panel-series-editor-submit">Kaydet</button></div></form></div></div>
@@ -1037,9 +1086,9 @@
 
 <template id="tpl-panel-webhook">
   <div class="app-content-header py-3 px-4 bg-body border-bottom">
-    <div class="container-fluid d-flex justify-content-between align-items-center gap-3">
+    <div class="container-fluid d-flex flex-wrap align-items-center gap-3">
+      <a class="btn btn-outline-secondary btn-lg text-nowrap" href="/panel/config" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
       <div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel/config" data-panel-link>Site Yapılandırması</a></li><li class="breadcrumb-item active" aria-current="page">Webhooklar</li></ol></nav><h3 class="mb-0 fw-bold fs-4">Webhook Yönetimi</h3><p class="text-secondary small mb-0">Olay bildirimlerini yönetin ve bağlantıları test edin.</p></div>
-      <a class="btn btn-sm btn-outline-secondary text-nowrap" href="/panel/config" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
     </div>
   </div>
   <div class="app-content p-4"><div class="container-fluid"><div id="panel-webhook-page"><div class="text-secondary">Webhooklar yükleniyor...</div></div></div></div>
@@ -1047,12 +1096,16 @@
 
 <template id="tpl-panel-config-env">
   <div class="app-content-header py-3 px-4 bg-body border-bottom">
-    <div class="container-fluid d-flex justify-content-between align-items-center gap-3">
+    <div class="container-fluid d-flex flex-wrap align-items-center gap-3">
+      <a class="btn btn-outline-secondary btn-lg text-nowrap" href="/panel/config" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
       <div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel/config" data-panel-link>Site Yapılandırması</a></li><li class="breadcrumb-item active" aria-current="page">Ortam değişkenleri</li></ol></nav><h3 class="mb-0 fw-bold fs-4">Ortam Değişkenleri (.env)</h3><p class="text-secondary small mb-0">Uygulama, adres, güvenlik ve entegrasyon değişkenleri.</p></div>
-      <a class="btn btn-sm btn-outline-secondary text-nowrap" href="/panel/config" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
     </div>
   </div>
   <div class="app-content p-4"><div class="container-fluid"><div id="panel-config-env-page"><div class="text-secondary">Ortam değişkenleri yükleniyor...</div></div></div></div>
+</template>
+
+<template id="tpl-panel-action">
+  <div id="panel-action-page"></div>
 </template>
 
 <!-- ========================================================================= -->
@@ -1071,6 +1124,7 @@
     const body = document.body;
     const sidebarToggle = document.querySelector('[data-lte-toggle="sidebar"]');
     const sidebarOverlay = document.querySelector('.sidebar-overlay');
+    const sidebarNav = document.querySelector('#panel-sidebar-nav');
 
     sidebarToggle?.addEventListener('click', event => {
       event.preventDefault();
@@ -1082,6 +1136,21 @@
       }, 0);
     });
     sidebarOverlay?.addEventListener('click', () => body.classList.remove('sidebar-open'));
+
+    // Keep treeview toggles deterministic even if a CDN-provided AdminLTE
+    // handler is also registered. Capturing and stopping this event prevents
+    // duplicate toggles while preserving the same menu-open state AdminLTE uses.
+    sidebarNav?.addEventListener('click', event => {
+      const target = event.target instanceof Element ? event.target : null;
+      const toggle = target?.closest('#panel-sidebar-nav > .nav-item > a[data-lte-toggle="treeview"]');
+      if (!toggle) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const item = toggle.closest('.nav-item');
+      if (!item) return;
+      const isOpen = item.classList.toggle('menu-open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }, true);
 
     document.addEventListener('click', event => {
       if (window.bootstrap?.Dropdown) return;
@@ -1474,6 +1543,8 @@
 
   let dialogPreviousFocus = null;
   let dialogCleanup = null;
+  let pageDialogMode = false;
+  let pageDialogParent = '/panel';
 
   function closeDialog() {
     const dialog = document.getElementById('panel-dialog');
@@ -1483,6 +1554,9 @@
       dialogCleanup = null;
       return;
     }
+    const navigateBack = pageDialogMode;
+    const parentPath = pageDialogParent;
+    pageDialogMode = false;
     const cleanup = dialogCleanup;
     dialogCleanup = null;
     dialog.remove();
@@ -1494,16 +1568,25 @@
     if (typeof cleanup === 'function') {
       Promise.resolve(cleanup()).catch(error => showToast(error.message || 'Geçici yüklemeler temizlenemedi.', 'danger'));
     }
+    if (navigateBack) panelNavigate(parentPath);
   }
 
   function openDialog(title, body, onSubmit, size = 'modal-lg') {
-    closeDialog();
+    if (pageDialogMode) document.getElementById('panel-dialog')?.remove();
+    else closeDialog();
     dialogPreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const overlay = document.createElement('div');
     overlay.id = 'panel-dialog';
-    overlay.className = 'modal-backdrop-custom p-3';
+    overlay.className = pageDialogMode ? 'panel-dialog-page' : 'modal-backdrop-custom p-3';
     overlay.tabIndex = -1;
-    overlay.innerHTML = `
+    overlay.innerHTML = pageDialogMode ? `
+      <div class="app-content-header py-3 px-4 bg-body border-bottom">
+        <div class="container-fluid d-flex flex-wrap align-items-center gap-3">
+          <a class="btn btn-outline-secondary btn-lg text-nowrap" href="${escapeHtml(pageDialogParent)}" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a>
+          <div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel" data-panel-link>Panel</a></li><li class="breadcrumb-item active">${escapeHtml(title)}</li></ol></nav><h3 class="mb-0 fw-bold fs-4">${escapeHtml(title)}</h3></div>
+        </div>
+      </div>
+      <div class="app-content p-4"><div class="container-fluid"><div class="card border-0 shadow-sm"><form id="panel-dialog-form"><div class="card-body p-4">${body}</div><div class="card-footer bg-transparent d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="${escapeHtml(pageDialogParent)}" data-panel-link>İptal</a><button type="submit" class="btn btn-primary">Kaydet</button></div></form></div></div></div>` : `
       <div class="modal-dialog ${size} m-0 w-100" role="dialog" aria-modal="true" aria-labelledby="panel-dialog-title">
         <div class="modal-content shadow-lg">
           <form id="panel-dialog-form">
@@ -1556,8 +1639,10 @@
         if (submit) submit.disabled = false;
       }
     });
-    document.body.appendChild(overlay);
-    document.body.classList.add('panel-dialog-open');
+    const pageTarget = pageDialogMode ? document.getElementById('panel-action-page') : null;
+    if (pageTarget) pageTarget.appendChild(overlay);
+    else document.body.appendChild(overlay);
+    if (!pageDialogMode) document.body.classList.add('panel-dialog-open');
     applyPermissionVisibility(overlay);
     overlay.querySelector('input:not([type="hidden"]), select, textarea')?.focus();
     return overlay;
@@ -2298,6 +2383,60 @@
     } catch (error) { target.innerHTML = `<div class="alert alert-danger">${escapeHtml(error.message)}</div>`; }
   }
 
+  const actionPermissions = {
+    taxonomy: ['admin.content.create'], ownership: ['admin.panel.access'], rbac: ['admin.panel.access'], chapters: ['admin.panel.access'], preview: ['admin.panel.access'], revisions: ['admin.panel.access'], team: ['admin.panel.access'], user-edit: ['admin.users.manage'], wallet: ['admin.wallet.view'], package-new: ['admin.shop.manage'], package-edit: ['admin.shop.manage'], ad-free: ['admin.shop.manage'], pricing: ['admin.shop.manage'], moderation: ['admin.logs.view'], log-viewer: ['admin.logs.view'], audit-log: ['admin.logs.view']
+  };
+
+  const actionParents = {
+    taxonomy: '/panel', ownership: '/panel/users', rbac: '/panel/users', chapters: '/panel/series', preview: '/panel/series', revisions: '/panel/series', team: '/panel/series', 'user-edit': '/panel/users', wallet: '/panel/users', 'package-new': '/panel/monetization', 'package-edit': '/panel/monetization', 'ad-free': '/panel/monetization', pricing: '/panel/monetization', moderation: '/panel/logs', 'log-viewer': '/panel/logs', 'audit-log': '/panel/logs'
+  };
+
+  async function loadPanelActionPage(action, id = null) {
+    pageDialogMode = true;
+    pageDialogParent = actionParents[action] || '/panel';
+    try {
+      if (action === 'taxonomy') await openTaxonomyDialog();
+      else if (action === 'ownership') await openOwnershipMatrix();
+      else if (action === 'rbac') await openRbacDialog();
+      else if (action === 'chapters') await openChaptersDialog(id);
+      else if (action === 'preview') await openSeriesPreview(id);
+      else if (action === 'revisions') await openSeriesRevisions(id);
+      else if (action === 'team') {
+        let content = (store.get('allSeriesList') || []).find(item => String(item.id) === String(id));
+        if (!content) content = responseItems(await api(`/series?q=${encodeURIComponent(id)}&per_page=100`)).find(item => String(item.id) === String(id));
+        if (!content) throw new Error('İçerik bulunamadı');
+        await openTeamDialog(content);
+      } else if (action === 'user-edit') {
+        if (!(store.get('allUsersList') || []).some(item => String(item.id) === String(id))) {
+          const found = responseItems(await api(`/users?q=${encodeURIComponent(id)}&per_page=100`)).find(item => String(item.id) === String(id));
+          if (found) store.set('allUsersList', [found]);
+        }
+        await openUserEditor(id);
+      }
+      else if (action === 'wallet') await openWalletDialog(id);
+      else if (action === 'package-new') await openPackageEditor();
+      else if (action === 'package-edit') {
+        let item = (store.get('packagesList') || []).find(packageItem => String(packageItem.id) === String(id));
+        if (!item) item = responseItems(await api('/shop/packages?per_page=100')).find(packageItem => String(packageItem.id) === String(id));
+        if (!item) throw new Error('Paket bulunamadı');
+        await openPackageEditor(item);
+      } else if (action === 'ad-free') await openAdFreeDialog();
+      else if (action === 'pricing') openPricingDialog();
+      else if (action === 'moderation') openModerationActionDialog();
+      else if (action === 'log-viewer') await openLogDialog({ 'login-events': 'login-events', error: 'logs/error', errors: 'logs/error', 'moderation-actions': 'moderation-actions', moderation: 'moderation-actions' }[id] || id);
+      else if (action === 'audit-log') {
+        let item = (store.get('logsList') || []).find(log => String(log.id) === String(id));
+        if (!item) item = responseItems(await api('/audit-logs?per_page=100')).find(log => String(log.id) === String(id));
+        if (!item) throw new Error('Denetim kaydı bulunamadı');
+        openDialog(`Denetim Kaydı #${item.id}`, `<pre class="bg-dark text-light rounded p-3 mb-0 text-wrap">${escapeHtml(JSON.stringify(item, null, 2))}</pre>`, async () => {});
+        document.querySelector('#panel-dialog button[type="submit"]')?.remove();
+      }
+    } catch (error) {
+      const target = document.getElementById('panel-action-page');
+      if (target) target.innerHTML = `<div class="p-4"><a class="btn btn-outline-secondary btn-lg" href="${escapeHtml(pageDialogParent)}" data-panel-link><i class="bi bi-arrow-left me-1"></i>Geri dön</a><div class="alert alert-danger mt-4">${escapeHtml(error.message)}</div></div>`;
+    }
+  }
+
   function openModerationActionDialog() {
     openDialog(
       'Yeni Moderasyon Kaydı',
@@ -2347,7 +2486,8 @@
   }
 
   async function openChaptersDialog(contentId, page = 1) {
-    const content = (store.get('allSeriesList') || []).find(item => String(item.id) === String(contentId));
+    let content = (store.get('allSeriesList') || []).find(item => String(item.id) === String(contentId));
+    if (!content) content = responseItems(await api(`/series?q=${encodeURIComponent(contentId)}&per_page=100`)).find(item => String(item.id) === String(contentId));
     if (!content) throw new Error('İçerik bulunamadı');
     const response = await api(`/content/${content.id}/chapters?page=${Math.max(1, Number(page))}&per_page=25`);
     const chapters = responseItems(response);
@@ -2726,10 +2866,7 @@
     previousLogsPage() { const page = Number(store.get('logsMeta')?.page || 1); if (page > 1) loadLogsData(page - 1); },
     nextLogsPage() { const meta = store.get('logsMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadLogsData(Number(meta.page) + 1); },
     viewAuditLog(e, el) {
-      const item = (store.get('logsList') || []).find(log => String(log.id) === String(el.dataset.id));
-      if (!item) return;
-      const overlay = openDialog(`Denetim Kaydı #${item.id}`, `<pre class="bg-dark text-light rounded p-3 mb-0 text-wrap">${escapeHtml(JSON.stringify(item, null, 2))}</pre>`, async () => {}, 'modal-lg');
-      overlay.querySelector('button[type="submit"]')?.remove();
+      panelNavigate(`/panel/action/audit-log/${encodeURIComponent(el.dataset.id)}`);
     },
     exportLogsCsv() {
       const columns = ['id', 'method', 'path', 'status_code', 'user_id', 'username', 'duration_ms', 'created_at', 'user_agent'];
@@ -2760,82 +2897,16 @@
     },
 
     async openCreateSeriesModal() {
-      try {
-        const { genres, tags } = await loadTaxonomies();
-        const uploadedPaths = [];
-        const overlay = openDialog('Yeni İçerik', contentForm({}, genres, tags), async (formData, form) => {
-        const selectedGenres = selectedValues(formData, 'genres');
-        const selectedTags = selectedValues(formData, 'tags');
-        const payload = Object.fromEntries(formData.entries());
-        delete payload.genres;
-        delete payload.tags;
-        delete payload.cover_file;
-        payload.is_adult = form.elements.is_adult.checked ? 1 : 0;
-        payload.is_members_only = form.elements.is_members_only.checked ? 1 : 0;
-        const response = await api('/content', { method: 'POST', body: payload });
-        if (response?.data?.id) {
-          await api(`/contents/${response.data.id}/taxonomy`, { method: 'PUT', body: { genres: selectedGenres, tags: selectedTags } });
-        }
-        closeDialog();
-        showToast('İçerik oluşturuldu');
-        loadSeriesData();
-        });
-        bindTaxonomyButtons(overlay);
-        overlay.querySelector('[name="cover_file"]').addEventListener('change', async event => {
-          try {
-            const paths = await uploadImages(event.target.files, 'series_cover');
-            uploadedPaths.push(...paths);
-            if (paths[0]) overlay.querySelector('[name="cover_image"]').value = paths[0];
-            showToast('Kapak görseli yüklendi');
-          } catch (error) { showToast(error.message, 'danger'); }
-        });
-        dialogCleanup = async () => {
-          if (uploadedPaths.length > 0) await api('/uploads/cleanup', { method: 'POST', body: { paths: uploadedPaths } });
-        };
-      } catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate('/panel/series/new');
     },
     async openEditSeriesModal(e, el) {
-      const content = (store.get('allSeriesList') || []).find(item => String(item.id) === String(el.dataset.id));
-      if (!content) return showToast('İçerik bulunamadı', 'danger');
-      try {
-        const { genres, tags } = await loadTaxonomies();
-        const uploadedPaths = [];
-        const overlay = openDialog('İçeriği Düzenle', contentForm(content, genres, tags), async (formData, form) => {
-        const selectedGenres = selectedValues(formData, 'genres');
-        const selectedTags = selectedValues(formData, 'tags');
-        const payload = Object.fromEntries(formData.entries());
-        delete payload.genres;
-        delete payload.tags;
-        delete payload.cover_file;
-        payload.is_adult = form.elements.is_adult.checked ? 1 : 0;
-        payload.is_members_only = form.elements.is_members_only.checked ? 1 : 0;
-        await api(`/content/${content.id}`, { method: 'PUT', body: payload });
-        await api(`/contents/${content.id}/taxonomy`, { method: 'PUT', body: { genres: selectedGenres, tags: selectedTags } });
-        closeDialog();
-        showToast('İçerik güncellendi');
-        loadSeriesData();
-        });
-        bindTaxonomyButtons(overlay);
-        overlay.querySelector('[name="cover_file"]').addEventListener('change', async event => {
-          try {
-            const paths = await uploadImages(event.target.files, 'series_cover');
-            uploadedPaths.push(...paths);
-            if (paths[0]) overlay.querySelector('[name="cover_image"]').value = paths[0];
-            showToast('Kapak görseli yüklendi');
-          } catch (error) { showToast(error.message, 'danger'); }
-        });
-        dialogCleanup = async () => {
-          if (uploadedPaths.length > 0) await api('/uploads/cleanup', { method: 'POST', body: { paths: uploadedPaths } });
-        };
-      } catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate(`/panel/series/${encodeURIComponent(el.dataset.id)}/edit`);
     },
     async previewSeries(e, el) {
-      try { await openSeriesPreview(el.dataset.id); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate(`/panel/action/preview/${encodeURIComponent(el.dataset.id)}`);
     },
     async viewSeriesRevisions(e, el) {
-      try { await openSeriesRevisions(el.dataset.id); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate(`/panel/action/revisions/${encodeURIComponent(el.dataset.id)}`);
     },
     async changeSeriesLifecycle(e, el) {
       const action = el.dataset.action;
@@ -2847,16 +2918,13 @@
       } catch (error) { showToast(error.message, 'danger'); }
     },
     async openChaptersDrawer(e, el) {
-      try { await openChaptersDialog(el.dataset.id); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate(`/panel/action/chapters/${encodeURIComponent(el.dataset.id)}`);
     },
     async openTaxonomyManager() {
-      try { await openTaxonomyDialog(); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate('/panel/taxonomies');
     },
     async openOwnershipMatrix() {
-      try { await openOwnershipMatrix(); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate('/panel/action/ownership');
     },
     filterSeries() { scheduleReload('series', () => loadSeriesData(1)); },
     filterUsers() { scheduleReload('users', () => loadUsersData(1)); },
@@ -2881,32 +2949,27 @@
       if (page < Number(meta.total_pages || 1)) loadReportsData(page + 1);
     },
     async openReport(e, el) {
-      try { await openReportDialog(el.dataset.id); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate(`/panel/reports/${encodeURIComponent(el.dataset.id)}`);
     },
     async openEditUserModal(e, el) {
-      try { await openUserEditor(el.dataset.id); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate(`/panel/action/user-edit/${encodeURIComponent(el.dataset.id)}`);
     },
     async openRbacMatrix() {
-      try { await openRbacDialog(); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate('/panel/action/rbac');
     },
     async openWalletModal(e, el) {
-      try { await openWalletDialog(el.dataset.id); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate(`/panel/action/wallet/${encodeURIComponent(el.dataset.id)}`);
     },
-    openCreatePackageModal() { openPackageEditor(); },
+    openCreatePackageModal() { panelNavigate('/panel/action/package-new'); },
     openEditPackageModal(e, el) {
       const item = (store.get('packagesList') || []).find(packageItem => String(packageItem.id) === String(el.dataset.id));
       if (!item) return showToast('Paket bulunamadı', 'danger');
-      openPackageEditor(item);
+      panelNavigate(`/panel/action/package-edit/${encodeURIComponent(item.id)}`);
     },
     async openAdFreeModal() {
-      try { await openAdFreeDialog(); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate('/panel/action/ad-free');
     },
-    openPricingModal() { openPricingDialog(); },
+    openPricingModal() { panelNavigate('/panel/action/pricing'); },
     filterFinance() { scheduleReload('finance', () => loadFinanceData(1)); },
     previousFinancePage() { const page = Number(store.get('financeMeta')?.page || 1); if (page > 1) loadFinanceData(page - 1); },
     nextFinancePage() { const meta = store.get('financeMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadFinanceData(Number(meta.page) + 1); },
@@ -3028,20 +3091,18 @@
     },
 
     async openLogViewer(e, el) {
-      try { await openLogDialog(el.dataset.log); }
-      catch (error) { showToast(error.message, 'danger'); }
+      const slug = String(el.dataset.log || '').replace(/^logs\//, '').replace(/[^a-z0-9_-]/gi, '-');
+      panelNavigate(`/panel/action/log-viewer/${encodeURIComponent(slug || 'login-events')}`);
     },
 
-    openModerationAction() { openModerationActionDialog(); },
+    openModerationAction() { panelNavigate('/panel/action/moderation'); },
 
     async openWebhooks() {
-      try { await openWebhooksDialog(); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate('/panel/webhook');
     },
 
     async openEnvEditor() {
-      try { await openEnvDialog(); }
-      catch (error) { showToast(error.message, 'danger'); }
+      panelNavigate('/panel/config-env');
     },
 
     async saveConfig(e) {
@@ -3084,7 +3145,7 @@
     'series-edit': ['admin.content.update']
   };
 
-  const validPanelRoutes = ['dashboard', 'series', 'users', 'blogs', 'comments', 'reports', 'monetization', 'finance', 'ops', 'logs', 'uploads', 'config', 'webhook', 'config-env', 'help'];
+  const validPanelRoutes = ['dashboard', 'series', 'taxonomies', 'users', 'blogs', 'comments', 'reports', 'monetization', 'finance', 'ops', 'logs', 'uploads', 'config', 'webhook', 'config-env', 'help'];
 
   function panelRoutePath(route) {
     return route === 'dashboard' ? '/panel' : `/panel/${route}`;
@@ -3096,6 +3157,12 @@
     const hash = (window.location.hash || '').replace(/^#/, '');
     if (parts.length === 0 && hash) parts.push(hash);
     const section = parts[0] || 'dashboard';
+    if (section === 'taxonomies') return { route: 'action', section: 'taxonomies', action: 'taxonomy', id: null, path: '/panel/taxonomies' };
+    if (section === 'action' && parts[1]) {
+      const action = parts[1];
+      const sectionMap = { taxonomy: 'series', ownership: 'users', rbac: 'users', chapters: 'series', preview: 'series', revisions: 'series', team: 'series', 'user-edit': 'users', wallet: 'users', 'package-new': 'monetization', 'package-edit': 'monetization', 'ad-free': 'monetization', pricing: 'monetization', moderation: 'logs', 'log-viewer': 'logs', 'audit-log': 'logs' };
+      if (Object.prototype.hasOwnProperty.call(actionPermissions, action)) return { route: 'action', section: sectionMap[action] || 'dashboard', action, id: parts[2] || null, path: `/panel/action/${parts.slice(1).join('/')}` };
+    }
     if (section === 'reports' && /^\d+$/.test(parts[1] || '')) return { route: 'report-detail', section: 'reports', id: parts[1], path: `/panel/reports/${parts[1]}` };
     if (section === 'series' && parts[1] === 'new') return { route: 'series-new', section: 'series', path: '/panel/series/new' };
     if (section === 'series' && parts[1] && parts[2] === 'edit') return { route: 'series-edit', section: 'series', id: parts[1], path: `/panel/series/${parts[1]}/edit` };
@@ -3106,22 +3173,30 @@
   function navigate() {
     const resolved = resolvePanelRoute();
     const requestedRoute = resolved.route;
-    const required = routePermissions[requestedRoute] || [];
+    const required = requestedRoute === 'action' ? (actionPermissions[resolved.action] || []) : (routePermissions[requestedRoute] || []);
     const route = required.length === 0 || hasPermission(...required) ? requestedRoute : 'dashboard';
     const routePath = route === requestedRoute ? resolved.path : '/panel';
+    if (route !== 'action') pageDialogMode = false;
 
     if (window.location.pathname !== routePath || window.location.hash) {
       history.replaceState({ route }, '', routePath);
     }
 
     // Update active nav link
+    let activeNavLink = null;
     document.querySelectorAll('#panel-sidebar-nav a').forEach(a => {
       if (a.getAttribute('data-route') === resolved.section) {
         a.classList.add('active-nav-link');
+        activeNavLink = a;
       } else {
         a.classList.remove('active-nav-link');
       }
     });
+    const activeNavGroup = activeNavLink?.closest('.nav-treeview')?.closest('.nav-item');
+    if (activeNavGroup) {
+      activeNavGroup.classList.add('menu-open');
+      activeNavGroup.querySelector(':scope > .nav-link[data-lte-toggle="treeview"]')?.setAttribute('aria-expanded', 'true');
+    }
 
     if (currentCleanup) {
       currentCleanup();
@@ -3132,7 +3207,7 @@
       logAutoRefreshTimer = null;
     }
 
-    const templateRoute = route === 'series-new' || route === 'series-edit' ? 'series-editor' : route;
+    const templateRoute = route === 'series-new' || route === 'series-edit' ? 'series-editor' : (route === 'action' ? 'action' : route);
     currentCleanup = mount(`panel-${templateRoute}`, {
       target,
       store,
@@ -3159,6 +3234,7 @@
     else if (route === 'series-edit') loadSeriesEditorPage('edit', resolved.id);
     else if (route === 'webhook') loadWebhookPage();
     else if (route === 'config-env') loadEnvPage();
+    else if (route === 'action') loadPanelActionPage(resolved.action, resolved.id);
   }
 
   applyPermissionVisibility(document);

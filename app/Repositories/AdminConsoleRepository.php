@@ -211,7 +211,7 @@ final class AdminConsoleRepository
         $where = [];
         $params = [];
         if ($query !== '') {
-            $where[] = '(u.username LIKE :query OR u.email LIKE :query)';
+            $where[] = '(u.id LIKE :query OR u.username LIKE :query OR u.email LIKE :query)';
             $params['query'] = '%' . $query . '%';
         }
         if (in_array($accountStatus, ['active', 'banned'], true)) {
