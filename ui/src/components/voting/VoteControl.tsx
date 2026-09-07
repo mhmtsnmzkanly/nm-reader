@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Star, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { toSafeNumber } from '../../utils/number';
 
 type VoteControlProps = {
   contentId: string;
@@ -21,6 +22,7 @@ export const VoteControl: React.FC<VoteControlProps> = ({
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [votes, setVotes] = useState(initialVotes);
   const [votedDirection, setVotedDirection] = useState<'up' | 'down' | null>(null);
+  const safeInitialRating = toSafeNumber(initialRating);
 
   const handleStarClick = (score: number) => {
     setUserRating(score);
@@ -53,7 +55,7 @@ export const VoteControl: React.FC<VoteControlProps> = ({
             >
               <Star
                 className={`w-5 h-5 ${
-                  (hoverRating || userRating || Math.round(initialRating)) >= star
+                  (hoverRating || userRating || Math.round(safeInitialRating)) >= star
                     ? 'text-[var(--accent-color)] fill-current'
                     : 'text-[var(--border-color)]'
                 }`}
@@ -64,8 +66,8 @@ export const VoteControl: React.FC<VoteControlProps> = ({
         <span className="text-xs font-mono font-bold text-[var(--accent-color)]">
           {userRating
             ? t('content.userRatingScore', { score: userRating })
-            : initialRating > 0
-            ? t('content.ratingScore', { score: initialRating.toFixed(1) })
+            : safeInitialRating > 0
+            ? t('content.ratingScore', { score: safeInitialRating.toFixed(1) })
             : t('content.notRatedYet')}
         </span>
       </div>

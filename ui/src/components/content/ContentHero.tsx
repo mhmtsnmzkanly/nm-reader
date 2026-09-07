@@ -20,6 +20,7 @@ import { Button } from '../ui/Button';
 import { ReportButton } from '../feedback/ReportButton';
 import { ImageLightboxModal } from '../ui/ImageLightboxModal';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { toSafeNumber } from '../../utils/number';
 
 type ContentHeroProps = {
   content: ContentDetail;
@@ -66,12 +67,13 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
   const coverUrl = content.cover || content.cover_image;
   const bannerUrl = content.banner || coverUrl;
 
-  const ratingAvg =
+  const ratingValue =
     typeof content.rating === 'object' && content.rating !== null
       ? content.rating.average
       : typeof content.rating === 'number'
       ? content.rating
       : content.rating_avg ?? content.rating_average ?? 0;
+  const ratingAvg = toSafeNumber(ratingValue);
 
   // Determine first chapter vs last read chapter
   const sortedByNum = [...chapters].sort(

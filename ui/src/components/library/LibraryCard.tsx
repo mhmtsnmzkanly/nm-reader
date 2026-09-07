@@ -5,6 +5,7 @@ import { LibraryItem } from '../../types/api';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { toSafeNumber } from '../../utils/number';
 
 type LibraryCardProps = {
   item: LibraryItem;
@@ -23,6 +24,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   const hasStarted = user_state.last_read_chapter_number != null;
   const nextChapterNum = user_state.last_read_chapter_number || 1;
   const isCompleted = progress >= 100;
+  const rating = toSafeNumber(content.rating);
 
   const formattedDate = formatDate(added_at);
 
@@ -107,7 +109,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
         <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-xs font-mono z-10">
           <div className="flex items-center gap-1 bg-[var(--bg-card)]/90 backdrop-blur-md px-2 py-0.5 rounded-md border border-[var(--border-color)] text-amber-500">
             <Star className="w-3 h-3 fill-amber-500" />
-            <span className="font-bold text-[var(--text-primary)]">{(content.rating ?? 0).toFixed(1)}</span>
+            <span className="font-bold text-[var(--text-primary)]">{rating.toFixed(1)}</span>
           </div>
 
           {hasStarted && (

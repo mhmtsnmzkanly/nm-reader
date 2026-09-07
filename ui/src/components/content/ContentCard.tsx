@@ -4,6 +4,7 @@ import { Star, Eye, Lock } from 'lucide-react';
 import { ContentSummary } from '../../types/api';
 import { Badge } from '../ui/Badge';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { toSafeNumber } from '../../utils/number';
 
 type ContentCardProps = {
   content: ContentSummary;
@@ -12,8 +13,8 @@ type ContentCardProps = {
 
 export const ContentCard: React.FC<ContentCardProps> = ({ content, rank }) => {
   const { t } = usePreferences();
-  const rating = content.rating_avg ?? (content as any).rating_average ?? 0;
-  const views = (content as any).total_views ?? (content.rating_count ? content.rating_count * 12 : 0);
+  const rating = toSafeNumber(content.rating_avg ?? (content as any).rating_average ?? 0);
+  const views = toSafeNumber((content as any).total_views ?? (content.rating_count ? content.rating_count * 12 : 0));
   const latestChap = (content as any).latest_chapter ?? content.chapter_count;
   const contentTypeLabel = (content as any).content_type ?? content.type ?? 'manga';
 
@@ -83,11 +84,11 @@ export const ContentCard: React.FC<ContentCardProps> = ({ content, rank }) => {
         <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[11px] text-[var(--text-primary)] font-mono z-10">
           <div className="flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md px-2 py-0.5 rounded border border-[var(--border-color)]">
             <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-            <span>{(typeof rating === 'number' && !isNaN(rating) ? rating : 0).toFixed(1)}</span>
+            <span>{rating.toFixed(1)}</span>
           </div>
           <div className="flex items-center gap-1 bg-[var(--bg-card)]/80 backdrop-blur-md px-2 py-0.5 rounded border border-[var(--border-color)] text-[var(--text-secondary)]">
             <Eye className="w-3 h-3" />
-            <span>{((typeof views === 'number' && !isNaN(views) ? views : 0) / 1000).toFixed(0)}k</span>
+            <span>{(views / 1000).toFixed(0)}k</span>
           </div>
         </div>
       </Link>

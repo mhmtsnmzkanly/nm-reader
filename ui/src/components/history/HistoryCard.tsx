@@ -5,6 +5,7 @@ import { ReadingHistoryItem } from '../../types/api';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { toSafeNumber } from '../../utils/number';
 
 type HistoryCardProps = {
   item: ReadingHistoryItem;
@@ -17,7 +18,7 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ item, onRemove }) => {
   const contentType = item.content?.type || item.content_type || 'manga';
   const contentTitle = item.content?.title || item.content_title || t('common.untitledSeries');
   const coverImage = item.content?.cover || item.content_cover_image || item.series?.cover;
-  const rating = item.content?.rating;
+  const rating = toSafeNumber(item.content?.rating);
 
   const chapNum = item.chapter?.number ?? item.chapter_number ?? 1;
   const chapTitle = item.chapter?.title ?? item.chapter_title;

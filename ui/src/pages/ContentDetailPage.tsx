@@ -27,6 +27,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useMe } from '../contexts/MeContext';
 import { AdultGateModal, isAdultConfirmed } from '../components/content/AdultGateModal';
 import { MembersOnlyLock } from '../components/content/MembersOnlyLock';
+import { toSafeNumber } from '../utils/number';
 
 function getBootstrapContentOverview(type: string, slug: string): ContentOverview | null {
   if (typeof window === 'undefined') return null;
@@ -260,12 +261,13 @@ export const ContentDetailPage: React.FC = () => {
     );
   }
 
-  const initialScore =
+  const initialScoreValue =
     typeof content.rating === 'object' && content.rating !== null
       ? content.rating.average
       : typeof content.rating === 'number'
       ? content.rating
       : content.rating_avg ?? content.rating_average ?? 0;
+  const initialScore = toSafeNumber(initialScoreValue);
 
   const genresList = content.genres || content.series_genres || [];
   const tagsList = content.tags || content.series_tags || [];

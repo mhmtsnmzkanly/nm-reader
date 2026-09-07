@@ -5,6 +5,7 @@ import { ExploreItem } from '../../types/api';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { toSafeNumber } from '../../utils/number';
 
 type ExploreSliderProps = {
   items: ExploreItem[];
@@ -44,7 +45,7 @@ export const ExploreSlider: React.FC<ExploreSliderProps> = ({ items }) => {
   const typeLabel = (currentItem.type || 'manga').toUpperCase();
   const coverImg = currentItem.cover || currentItem.cover_image || '';
   const bgImg = currentItem.background || coverImg;
-  const ratingVal = currentItem.rating ?? currentItem.rating_avg ?? 0;
+  const ratingVal = toSafeNumber(currentItem.rating ?? currentItem.rating_avg ?? 0);
   const summaryText = currentItem.summary || currentItem.description || '';
 
   return (

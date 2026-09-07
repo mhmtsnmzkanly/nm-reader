@@ -2,6 +2,7 @@ import React from 'react';
 import { User, Palette, Calendar, Globe, Star, Eye, BookOpen, Layers } from 'lucide-react';
 import { ContentDetail } from '../../types/api';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { toSafeNumber } from '../../utils/number';
 
 type ContentMetadataProps = {
   content: ContentDetail;
@@ -25,22 +26,25 @@ export const ContentMetadata: React.FC<ContentMetadataProps> = ({ content, chapt
       ? content.artist
       : null;
 
-  const ratingAvg =
+  const ratingValue =
     typeof content.rating === 'object' && content.rating !== null
       ? content.rating.average
       : typeof content.rating === 'number'
       ? content.rating
       : content.rating_avg ?? content.rating_average ?? 0;
+  const ratingAvg = toSafeNumber(ratingValue);
 
-  const ratingCount =
+  const ratingCountValue =
     typeof content.rating === 'object' && content.rating !== null
       ? content.rating.count
       : content.rating_count ?? 0;
+  const ratingCount = toSafeNumber(ratingCountValue);
 
-  const viewCount =
+  const viewCountValue =
     content.views ??
     content.total_views ??
     (content.rating_count ? content.rating_count * 28 : 12400);
+  const viewCount = toSafeNumber(viewCountValue);
 
   const statusLabel =
     content.status?.toLowerCase() === 'completed'
