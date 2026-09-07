@@ -50,18 +50,23 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      overflow-x: hidden;
-      overflow-y: auto;
+      overflow: hidden;
+      box-sizing: border-box;
       padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
       background-color: rgba(0, 0, 0, 0.55);
     }
     .modal-backdrop-custom .modal-dialog {
+      box-sizing: border-box;
       width: 100%;
       max-width: min(100%, var(--bs-modal-width, 500px));
       max-height: calc(100dvh - 2rem);
+      min-width: 0;
+      overflow: hidden;
       margin: auto !important;
     }
     .modal-backdrop-custom .modal-content {
+      width: 100%;
+      min-width: 0;
       max-height: calc(100dvh - 2rem);
       overflow: hidden;
       opacity: 1;
@@ -74,9 +79,25 @@
       display: flex;
       flex-direction: column;
     }
+    .modal-backdrop-custom .modal-header,
+    .modal-backdrop-custom .modal-footer {
+      flex-shrink: 0;
+      min-width: 0;
+    }
+    .modal-backdrop-custom .modal-title {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
     .modal-backdrop-custom .modal-body {
       min-height: 0;
-      overflow: auto;
+      min-width: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overflow-wrap: anywhere;
+    }
+    .modal-backdrop-custom .modal-body .table-responsive {
+      max-width: 100%;
+      overflow-x: auto;
     }
     @media (max-width: 575.98px) {
       .modal-backdrop-custom {

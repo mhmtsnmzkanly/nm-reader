@@ -8,12 +8,14 @@ import { useMe } from '../../contexts/MeContext';
 import { SearchCombobox } from './SearchCombobox';
 import { AccountMenu } from './AccountMenu';
 import { ContentType } from '../../types/api';
+import { useSiteConfig } from '../../contexts/SiteConfigContext';
 
 export const Header: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const { me } = useMe();
   const { unreadCount, openNotificationsModal } = useNotifications();
   const { t, theme, setTheme } = usePreferences();
+  const { site_name: siteName, site_logo: siteLogo } = useSiteConfig();
   const location = useLocation();
   const [isBrowseOpen, setIsBrowseOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -57,18 +59,16 @@ export const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-2.5 sm:px-6 h-16 flex items-center justify-between gap-1.5 sm:gap-4">
         {/* Brand Wordmark */}
         <div className="flex items-center gap-2 sm:gap-8 min-w-0">
-          <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 group shrink-0">
-            <div className="w-8 h-8 rounded bg-[var(--accent-color)] text-white flex items-center justify-center font-bold text-sm tracking-wider uppercase shadow-lg shadow-[var(--accent-color)]/20 group-hover:scale-105 transition-all">
-              NM
-            </div>
-            <div className="hidden xs:flex items-baseline">
-              <span className="font-light tracking-[0.15em] text-xs sm:text-sm uppercase text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors">
-                NM-READER
-              </span>
-              <span className="font-serif italic text-[var(--accent-color)] text-[10px] sm:text-xs ml-1 font-normal">
-                lumiere
-              </span>
-            </div>
+          <Link to="/" aria-label={siteName} className="flex items-center gap-1.5 sm:gap-2.5 group shrink-0">
+            <img
+              src={siteLogo}
+              alt={siteName}
+              className="h-9 w-auto max-w-[180px] object-contain transition-transform group-hover:scale-105"
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = '/assets/img/logo-header.svg';
+              }}
+            />
           </Link>
 
           {/* Desktop Navigation */}

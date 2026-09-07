@@ -38,6 +38,9 @@ final class WebPageRenderer
             'context' => $context,
             'auth' => $authContext,
             'lang' => $langCode,
+            // Public site settings are embedded in the HTML bootstrap. A
+            // settings change must therefore produce a new representation.
+            'site_config' => $contextPayload['site_config'] ?? [],
             'seo' => $seo,
             'title' => $title,
             'app_version' => '1.1.0',

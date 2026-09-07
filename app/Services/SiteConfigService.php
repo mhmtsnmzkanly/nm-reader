@@ -46,8 +46,8 @@ final class SiteConfigService
 
         // Appearance Group
         'default_theme' => ['group' => 'appearance', 'type' => 'string', 'default' => 'dark', 'allowed' => ['default', 'dark', 'royal', 'bootstrap', 'material', 'apple', 'glass']],
-        'site_logo' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/logo.svg', 'max' => 255],
-        'logo_url' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/logo.svg', 'max' => 255],
+        'site_logo' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/logo-header.svg', 'max' => 255],
+        'logo_url' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/logo-footer.svg', 'max' => 255],
         'favicon_url' => ['group' => 'appearance', 'type' => 'string', 'default' => '/favicon.ico', 'max' => 255],
         'default_profile_image' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/default-profile.png', 'max' => 255],
         'default_content_cover_image' => ['group' => 'appearance', 'type' => 'string', 'default' => '/assets/img/covers/placeholder.svg', 'max' => 255],
