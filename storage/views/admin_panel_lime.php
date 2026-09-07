@@ -3184,8 +3184,9 @@
 
     // Update active nav link
     let activeNavLink = null;
-    document.querySelectorAll('#panel-sidebar-nav a').forEach(a => {
-      if (a.getAttribute('data-route') === resolved.section) {
+    const activeSection = route === 'action' ? resolved.section : route;
+    document.querySelectorAll('#panel-sidebar-nav a[data-route]').forEach(a => {
+      if (a.getAttribute('data-route') === activeSection) {
         a.classList.add('active-nav-link');
         activeNavLink = a;
       } else {

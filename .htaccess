@@ -1,0 +1,22 @@
+Options -MultiViews -Indexes
+
+RewriteEngine On
+
+# The project root is not intended to be web-readable. Keep application code,
+# dependencies, data, and repository metadata behind the public entrypoint.
+RewriteRule ^(?:app|config|storage|vendor|docs|ui|\.git)(?:/|$) - [F,END]
+RewriteRule ^(?:\.env(?:\..*)?|composer\.(?:json|lock)|package(?:-lock)?\.json|vite\.config\..*|tsconfig\..*)$ - [F,END]
+RewriteRule ^(?:\.htaccess|\.htpasswd)$ - [F,END]
+
+# Do not expose duplicate URLs such as /public/index.php. Internal rewrites
+# below use [END], so this rule does not block the intended target.
+RewriteRule ^public(?:/|$) - [F,END]
+
+# When the host points at the project root, expose only files that physically
+# exist in public/ while keeping their clean, root-relative URLs (/assets/...).
+RewriteCond %{DOCUMENT_ROOT}/public/$1 -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/public/$1 -d
+RewriteRule ^(.+)$ public/$1 [END]
+
+# Slim front controller for every dynamic web, panel, and API request.
+RewriteRule ^ public/index.php [END]

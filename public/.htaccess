@@ -1,0 +1,12 @@
+Options -MultiViews -Indexes
+DirectoryIndex index.php
+
+RewriteEngine On
+
+# Let Apache serve existing assets and other public files directly.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [END]
+
+# All clean URLs are handled by Slim's single entrypoint.
+RewriteRule ^ index.php [QSA,END]
