@@ -396,7 +396,7 @@ final class ChapterRepository
             'SELECT 1
              FROM chapters
              WHERE content_id = :content_id
-               AND chapter_number = :chapter_number
+               AND CAST(chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
                AND deleted_at IS NULL
                AND id <> :exclude_id
              LIMIT 1'

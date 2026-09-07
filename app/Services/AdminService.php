@@ -470,6 +470,9 @@ final class AdminService
 
         $title = trim((string) ($payload['title'] ?? ''));
         $title = $title === '' ? null : Validator::sanitizeText($title);
+        if ($title !== null && mb_strlen($title) > 200) {
+            throw new \InvalidArgumentException('title must be 200 characters or fewer');
+        }
         $chapterId = $this->entityIds->generateChapterId();
         $contentId = (string) $content['id'];
 
@@ -479,6 +482,9 @@ final class AdminService
             $translatorNote = isset($payload['translator_note']) && is_string($payload['translator_note'])
                 ? trim($payload['translator_note'])
                 : null;
+            if ($translatorNote !== null && mb_strlen($translatorNote) > 2000) {
+                throw new \InvalidArgumentException('translator_note must be 2000 characters or fewer');
+            }
 
             if ($chapterType === 'text') {
                 $body = trim((string) ($payload['body'] ?? ''));
@@ -505,6 +511,7 @@ final class AdminService
                     if ($imagePath === '') {
                         throw new \InvalidArgumentException('pages contains empty image path');
                     }
+                    $this->assertValidChapterPagePath($imagePath);
                     $validPages[] = [
                         'page' => $idx + 1,
                         'url' => $imagePath,
@@ -726,6 +733,9 @@ final class AdminService
 
         $title = trim((string) ($payload['title'] ?? ''));
         $title = $title === '' ? null : Validator::sanitizeText($title);
+        if ($title !== null && mb_strlen($title) > 200) {
+            throw new \InvalidArgumentException('title must be 200 characters or fewer');
+        }
         $type = strtolower(trim((string) ($payload['type'] ?? 'text')));
         if (!in_array($type, self::ALLOWED_CHAPTER_TYPES, true)) {
             throw new \InvalidArgumentException('Invalid chapter type');
@@ -737,7 +747,7 @@ final class AdminService
         }
 
         // Fetch current to calculate diff
-        $stmt = $this->pdo->prepare('SELECT chapter_number, title, type, `data`, price_amount, published_at, is_free_after FROM chapters WHERE id = :id');
+        $stmt = $this->pdo->prepare('SELECT chapter_number, title, type, `data`, is_members_only, price_amount, price_last_update, published_at, is_free_after FROM chapters WHERE id = :id');
         $stmt->execute(['id' => $chapterId]);
         $current = $stmt->fetch();
 
@@ -745,6 +755,9 @@ final class AdminService
         $translatorNote = array_key_exists('translator_note', $payload)
             ? (is_string($payload['translator_note']) && trim($payload['translator_note']) !== '' ? trim($payload['translator_note']) : null)
             : ($existingContent['translator_note'] ?? null);
+        if ($translatorNote !== null && mb_strlen($translatorNote) > 2000) {
+            throw new \InvalidArgumentException('translator_note must be 2000 characters or fewer');
+        }
 
         if ($type === 'text') {
             $body = array_key_exists('body', $payload)
@@ -772,6 +785,7 @@ final class AdminService
 
             $validPages = [];
             foreach (array_values($rawPages) as $idx => $page) {
+                $this->assertValidChapterPagePath($page);
                 $validPages[] = [
                     'page' => $idx + 1,
                     'url' => $page,
@@ -827,6 +841,9 @@ final class AdminService
                 'free' => $isFreeAfter,
                 'id' => $chapterId
             ];
+            if ((int) ($current['price_amount'] ?? 0) !== $priceAmount) {
+                $updateFields[] = '`price_last_update` = NOW()';
+            }
             if ($isMembersOnly !== null) {
                 $updateFields[] = '`is_members_only` = :is_members_only';
                 $params['is_members_only'] = $isMembersOnly;
@@ -1023,6 +1040,28 @@ final class AdminService
         }
 
         return $pages;
+    }
+
+    private function assertValidChapterPagePath(string $path): void
+    {
+        if (mb_strlen($path) > 255 || preg_match('/[\x00-\x1F\x7F]/', $path)) {
+            throw new \InvalidArgumentException('Invalid chapter page path');
+        }
+
+        $isSafeLocal = str_starts_with($path, '/')
+            && !str_starts_with($path, '//')
+            && !str_contains($path, '..');
+        // Older chapter records may contain a basename (for example
+        // `chapter.1_01.webp`) instead of the newer `/media/public/...` URL.
+        // Keep those safe relative paths editable while rejecting traversal or
+        // scheme-like values.
+        $isSafeRelative = preg_match('/^[A-Za-z0-9][A-Za-z0-9._\/-]*$/', $path) === 1
+            && !str_contains($path, '..');
+        $scheme = strtolower((string) parse_url($path, PHP_URL_SCHEME));
+        $isRemote = in_array($scheme, ['http', 'https'], true);
+        if (!$isSafeLocal && !$isSafeRelative && !$isRemote) {
+            throw new \InvalidArgumentException('Chapter page paths must be local or http(s) URLs');
+        }
     }
 
     private function invalidateListingCaches(): void

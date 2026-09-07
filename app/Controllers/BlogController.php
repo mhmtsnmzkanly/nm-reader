@@ -235,7 +235,8 @@ final class BlogController
 
             $dto = new UploadDto($userId, $file, 'blogs');
             $path = $this->uploadService->handleImageUpload($dto);
-            $publicUrl = '/media/public/' . ltrim($path, '/');
+            // UploadService already returns the canonical public path.
+            $publicUrl = str_starts_with($path, '/') ? $path : '/' . ltrim($path, '/');
 
             return ResponseHelper::success([
                 'path' => $path,

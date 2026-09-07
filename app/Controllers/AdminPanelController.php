@@ -428,6 +428,14 @@ final class AdminPanelController
         return ResponseHelper::success();
     }
 
+    public function cleanupUploads(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $payload = (array) $request->getParsedBody();
+        $paths = is_array($payload['paths'] ?? null) ? $payload['paths'] : [];
+        $userId = (string) $request->getAttribute('user_id');
+        return ResponseHelper::success($this->console->cleanupUnreferencedUploads($paths, $userId));
+    }
+
     public function deleteUploads(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $payload = (array)$request->getParsedBody();
@@ -838,6 +846,11 @@ final class AdminPanelController
             'roles' => $roles,
             'permissions' => $permissions,
         ]);
+    }
+
+    public function ownershipCapabilities(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->console->ownershipCapabilities());
     }
 
     // --- SITE SETTINGS ---

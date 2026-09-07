@@ -205,6 +205,32 @@ final class AdminConsoleService
     }
 
     /**
+     * Returns the capability map alongside recent user-created entity owners.
+     */
+    public function ownershipCapabilities(): array
+    {
+        return [
+            'capabilities' => [
+                ['entity_type' => 'content', 'entity_label' => 'İçerik', 'action' => 'Oluşturma', 'permission' => 'admin.content.create', 'scope' => 'role'],
+                ['entity_type' => 'content', 'entity_label' => 'İçerik', 'action' => 'Düzenleme / metadata', 'permission' => 'admin.content.update', 'scope' => 'role'],
+                ['entity_type' => 'content', 'entity_label' => 'Yayın yaşam döngüsü', 'permission' => 'admin.content.update', 'action' => 'Taslak / yayın / arşiv', 'scope' => 'role'],
+                ['entity_type' => 'chapter', 'entity_label' => 'Bölüm', 'action' => 'Oluşturma', 'permission' => 'admin.chapter.create', 'scope' => 'role'],
+                ['entity_type' => 'chapter', 'entity_label' => 'Bölüm', 'action' => 'Düzenleme / silme', 'permission' => 'admin.content.update', 'scope' => 'role'],
+                ['entity_type' => 'chapter', 'entity_label' => 'Bölüm fiyatı', 'action' => 'Fiyatlandırma', 'permission' => 'admin.shop.manage', 'scope' => 'role'],
+                ['entity_type' => 'blog', 'entity_label' => 'Blog', 'action' => 'Oluşturma / kendi kaydını düzenleme', 'permission' => null, 'scope' => 'owner'],
+                ['entity_type' => 'blog', 'entity_label' => 'Blog', 'action' => 'Gizleme / silme', 'permission' => 'admin.blog.hide', 'scope' => 'role'],
+                ['entity_type' => 'comment', 'entity_label' => 'Yorum', 'action' => 'Oluşturma / kendi kaydı', 'permission' => null, 'scope' => 'owner'],
+                ['entity_type' => 'comment', 'entity_label' => 'Yorum', 'action' => 'Silme', 'permission' => 'admin.comment.delete', 'scope' => 'role'],
+                ['entity_type' => 'image_upload', 'entity_label' => 'Görsel yükleme', 'action' => 'Blog / profil görseli yükleme', 'permission' => null, 'scope' => 'authenticated'],
+                ['entity_type' => 'image_upload', 'entity_label' => 'Görsel yükleme', 'action' => 'Yükleme', 'permission' => 'admin.content.create veya admin.content.update veya admin.chapter.create', 'scope' => 'role_any'],
+                ['entity_type' => 'image_upload', 'entity_label' => 'Görsel yükleme', 'action' => 'Silme', 'permission' => 'admin.uploads.delete', 'scope' => 'role'],
+                ['entity_type' => 'image_upload', 'entity_label' => 'Görsel yükleme', 'action' => 'Optimize etme', 'permission' => 'admin.uploads.optimize', 'scope' => 'role'],
+            ],
+            'records' => $this->repo->listCreatedEntityOwnership(150),
+        ];
+    }
+
+    /**
      * Deletes a specific upload entry.
      */
     public function deleteUpload(int $id, string $moderatorId): void
@@ -237,6 +263,32 @@ final class AdminConsoleService
             $before = $this->repo->uploadById($id);
             if (!$before) continue;
             $this->deleteUpload($id, $moderatorId);
+            $deleted++;
+        }
+        return ['deleted' => $deleted];
+    }
+
+    /**
+     * Removes unreferenced uploads created by the current user during an
+     * abandoned form submission. Referenced files are never removed.
+     *
+     * @param array<int, string> $paths
+     */
+    public function cleanupUnreferencedUploads(array $paths, string $userId): array
+    {
+        $ids = $this->repo->unreferencedUploadIdsByPaths($paths, $userId);
+        $deleted = 0;
+        foreach ($ids as $id) {
+            $info = $this->repo->deleteUpload((int) $id);
+            if (!$info) continue;
+            $filePath = (string) ($info['file_path'] ?? '');
+            if ($filePath !== '') {
+                $basePath = dirname(__DIR__, 2);
+                $cleanName = basename($filePath);
+                foreach ([$basePath . '/storage/media/' . $cleanName, $basePath . '/public' . $filePath] as $diskPath) {
+                    if (is_file($diskPath)) @unlink($diskPath);
+                }
+            }
             $deleted++;
         }
         return ['deleted' => $deleted];

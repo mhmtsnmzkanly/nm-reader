@@ -19,6 +19,7 @@ use App\Controllers\SystemPageController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use App\Middleware\PermissionMiddleware;
+use App\Middleware\AnyPermissionMiddleware;
 use App\Middleware\CriticalActionMiddleware;
 use App\Middleware\RateLimitKeyedMiddleware;
 use App\Middleware\RateLimitMiddleware;
@@ -395,8 +396,9 @@ final class Config
         $cache = $container->get(CacheService::class);
         $authorization = $container->get(AuthorizationService::class);
         $perm = static fn(array $p): PermissionMiddleware => new PermissionMiddleware($p);
+        $anyPerm = static fn(array $p): AnyPermissionMiddleware => new AnyPermissionMiddleware($p);
 
-        $app->group("/api/v1/admin", function (RouteCollectorProxy $group) use ($typePattern, $perm, $cache): void {
+        $app->group("/api/v1/admin", function (RouteCollectorProxy $group) use ($typePattern, $perm, $anyPerm, $cache): void {
             $group->get("/overview", [AdminPanelController::class, "overview"])->add($perm(["admin.panel.access"]));
             $group->post("/auth/reauth", [AdminPanelController::class, "reauthenticate"])->add($perm(["admin.panel.access"]));
             $group->get("/series", [AdminPanelController::class, "listSeries"])->add($perm(["admin.panel.access"]));
@@ -407,6 +409,7 @@ final class Config
             $group->get("/users", [AdminPanelController::class, "listUsers"])->add($perm(["admin.panel.access"]));
             $group->get("/users/options", [AdminPanelController::class, "userOptions"])->add($perm(["admin.wallet.view"]));
             $group->get("/uploads", [AdminPanelController::class, "uploads"])->add($perm(["admin.uploads.view"]));
+            $group->post("/uploads/cleanup", [AdminPanelController::class, "cleanupUploads"])->add($anyPerm(["admin.content.create", "admin.content.update", "admin.chapter.create"]));
             $group->delete("/uploads/{id:[0-9]+}", [AdminPanelController::class, "deleteUpload"])->add(new CriticalActionMiddleware())->add($perm(["admin.uploads.delete"]));
             $group->post("/uploads/bulk-delete", [AdminPanelController::class, "deleteUploads"])->add(new CriticalActionMiddleware())->add($perm(["admin.uploads.delete"]));
             $group->post("/uploads/{id:[0-9]+}/optimize", [AdminPanelController::class, "optimizeUpload"])->add($perm(["admin.uploads.optimize"]));
@@ -460,7 +463,7 @@ final class Config
             $group->get("/dashboard", [AdminPanelController::class, "metricsSnapshot"])->add($perm(["admin.metrics.view"]));
             $group->get("/metrics/insights", [AdminPanelController::class, "metricsInsights"])->add($perm(["admin.metrics.view"]));
             $group->post("/content", [AdminPanelController::class, "createContent"])->add($perm(["admin.content.create"]));
-            $group->post("/upload-images", [AdminPanelController::class, "uploadImages"])->add($perm(["admin.content.create"]));
+            $group->post("/upload-images", [AdminPanelController::class, "uploadImages"])->add($anyPerm(["admin.content.create", "admin.content.update", "admin.chapter.create"]));
             $group->put("/content/{id}", [AdminPanelController::class, "updateContent"])->add($perm(["admin.content.update"]));
             $group->post("/content/{id}/lifecycle", [AdminPanelController::class, "changeContentLifecycle"])->add($perm(["admin.content.update"]));
             $group->get("/content/{id}/preview", [AdminPanelController::class, "contentPreview"])->add($perm(["admin.panel.access"]));
@@ -477,6 +480,7 @@ final class Config
             $group->post("/series/{id:[a-z0-9]{6}}/team", [AdminPanelController::class, "assignSeriesTeam"])->add($perm(["admin.content.update"]));
             $group->delete("/series/team/{assignmentId:[0-9]+}", [AdminPanelController::class, "removeSeriesTeam"])->add($perm(["admin.content.update"]));
             $group->get("/rbac/matrix", [AdminPanelController::class, "permissionMatrix"])->add($perm(["admin.panel.access"]));
+            $group->get("/rbac/ownership", [AdminPanelController::class, "ownershipCapabilities"])->add($perm(["admin.panel.access"]));
             $group->get("/config/site", [AdminPanelController::class, "getSiteConfig"])->add($perm(["admin.settings.modify"]));
             $group->post("/config/site", [AdminPanelController::class, "updateSiteConfig"])->add($perm(["admin.settings.modify"]));
             $group->get("/webhooks", [AdminPanelController::class, "listWebhooks"])->add($perm(["admin.settings.modify"]));

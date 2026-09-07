@@ -13,7 +13,6 @@
   
   <!-- AdminLTE Theme -->
   <link rel="stylesheet" href="/assets/css/adminlte.css">
-  <link rel="stylesheet" href="/assets/css/admin-custom.css">
 
   <style>
     [data-show][hidden] { display: none !important; }
@@ -23,7 +22,80 @@
     @keyframes lime-spin { to { transform: rotate(360deg); } }
     .active-nav-link { background-color: rgba(255,255,255,0.15) !important; color: #fff !important; font-weight: 600; }
     .cursor-pointer { cursor: pointer; }
-    .modal-backdrop-custom { position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 1050; display: flex; align-items: center; justify-content: center; }
+    .upload-reference-list { max-height: 6rem; overflow-y: auto; min-width: 12rem; }
+
+    /* AdminLTE's responsive layout expects the sidebar overlay to be present in
+       the app wrapper. Keep the overlay above the page, but below the sidebar. */
+    .sidebar-overlay { display: none; }
+    @media (max-width: 991.98px) {
+      .sidebar-expand-lg.sidebar-open .sidebar-overlay {
+        display: block;
+        position: absolute;
+        inset: 0;
+        z-index: 1037;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.2);
+      }
+    }
+
+    /* The panel dialogs are created dynamically and therefore do not use
+       Bootstrap's .modal container. Give them a safe, scrollable layout. */
+    body.panel-dialog-open { overflow: hidden; }
+    .modal-backdrop-custom {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+      background-color: rgba(0, 0, 0, 0.55);
+    }
+    .modal-backdrop-custom .modal-dialog {
+      width: 100%;
+      max-width: min(100%, var(--bs-modal-width, 500px));
+      max-height: calc(100dvh - 2rem);
+      margin: auto !important;
+    }
+    .modal-backdrop-custom .modal-content {
+      max-height: calc(100dvh - 2rem);
+      overflow: hidden;
+      opacity: 1;
+      color: var(--bs-body-color, #212529);
+      background-color: var(--bs-body-bg, #fff);
+      background-clip: padding-box;
+    }
+    .modal-backdrop-custom form {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-backdrop-custom .modal-body {
+      min-height: 0;
+      overflow: auto;
+    }
+    @media (max-width: 575.98px) {
+      .modal-backdrop-custom {
+        align-items: stretch;
+        padding: max(.5rem, env(safe-area-inset-top)) max(.5rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) max(.5rem, env(safe-area-inset-left));
+      }
+      .modal-backdrop-custom .modal-dialog,
+      .modal-backdrop-custom .modal-content {
+        max-height: calc(100dvh - 1rem);
+      }
+      .modal-backdrop-custom .modal-header,
+      .modal-backdrop-custom .modal-body,
+      .modal-backdrop-custom .modal-footer {
+        padding: .75rem;
+      }
+      .modal-backdrop-custom .modal-footer > .btn {
+        flex: 1 1 auto;
+      }
+    }
   </style>
 
   <script>window.__NMR_CONTEXT = <?= $contextJson ?? "{}" ?>;</script>
@@ -143,7 +215,7 @@
           <li class="nav-item" data-requires-permission="admin.uploads.view">
             <a href="#uploads" class="nav-link rounded" data-route="uploads">
               <i class="nav-icon bi bi-images me-2 text-primary"></i>
-              <p class="mb-0">Yüklenen Dosyalar</p>
+              <p class="mb-0">System Uploads</p>
             </a>
           </li>
           <li class="nav-item" data-requires-permission="admin.settings.modify">
@@ -159,6 +231,10 @@
       </nav>
     </div>
   </aside>
+
+  <!-- AdminLTE creates this overlay dynamically; keeping it in the shell also makes
+       the mobile sidebar usable when the optional AdminLTE bundle is unavailable. -->
+  <div class="sidebar-overlay" aria-hidden="true"></div>
 
   <!-- Main Content Target -->
   <main id="panel-app" class="app-main"></main>
@@ -367,6 +443,7 @@
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-sm btn-outline-primary" data-on-click="openRbacMatrix"><i class="bi bi-shield-lock me-1"></i>Yetki Matrisi</button>
+        <button class="btn btn-sm btn-outline-info" data-on-click="openOwnershipMatrix"><i class="bi bi-diagram-3 me-1"></i>İçerik Yetki Özeti</button>
         <button class="btn btn-sm btn-outline-secondary" data-on-click="loadUsers"><i class="bi bi-arrow-clockwise me-1"></i> Yenile</button>
       </div>
     </div>
@@ -685,8 +762,8 @@
 
 <!-- 9. UPLOADS VIEW -->
 <template id="tpl-panel-uploads">
-  <div class="app-content-header py-3 px-4 bg-body border-bottom"><div class="container-fluid d-flex justify-content-between align-items-center"><div><h3 class="mb-0 fw-bold fs-4">Medya Kütüphanesi</h3><p class="text-secondary small mb-0">Önizleme, kullanım kontrolü, optimizasyon ve toplu temizlik</p></div><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-danger" data-on-click="bulkDeleteUploads" data-requires-permission="admin.uploads.delete"><i class="bi bi-trash me-1"></i>Seçilenleri Sil</button><button class="btn btn-sm btn-outline-secondary" data-on-click="loadUploads"><i class="bi bi-arrow-clockwise me-1"></i>Yenile</button></div></div></div>
-  <div class="app-content p-4"><div class="container-fluid"><div class="row g-3 mb-3"><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Dosya</small><div class="fs-4 fw-bold" id="panel-upload-count">0</div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Toplam Boyut</small><div class="fs-4 fw-bold" id="panel-upload-size">0 MB</div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Dağılım</small><div class="fw-semibold" id="panel-upload-types">-</div></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-header bg-transparent"><div class="row g-2"><div class="col-md-6"><input id="panel-uploads-search" class="form-control form-control-sm" placeholder="Dosya, görsel ID veya kullanıcı ara" data-on-input="filterUploads"></div><div class="col-md-3"><select id="panel-uploads-mime" class="form-select form-select-sm" data-on-change="filterUploads"><option value="">Tüm türler</option><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option><option value="image/gif">GIF</option></select></div><div class="col-md-3"><label class="form-check mt-1"><input id="panel-uploads-orphans" class="form-check-input" type="checkbox" data-on-change="filterUploads"><span class="form-check-label">Yalnız yetim dosyalar</span></label></div></div></div><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th><input type="checkbox" data-on-change="toggleAllUploads"></th><th>Önizleme</th><th>Dosya</th><th>Tür</th><th>Boyut</th><th>Kullanım</th><th>Yükleyen</th><th>Tarih</th><th></th></tr></thead><tbody id="panel-uploads-list"></tbody></table></div><div class="card-footer bg-transparent" id="panel-uploads-pager"></div></div></div></div>
+  <div class="app-content-header py-3 px-4 bg-body border-bottom"><div class="container-fluid d-flex justify-content-between align-items-center"><div><h3 class="mb-0 fw-bold fs-4">System Uploads</h3><p class="text-secondary small mb-0">Görsel önizleme, teknik bilgiler, çoklu bağlantı takibi ve orphan temizliği</p></div><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-danger" data-on-click="bulkDeleteUploads" data-requires-permission="admin.uploads.delete"><i class="bi bi-trash me-1"></i>Seçilenleri Sil</button><button class="btn btn-sm btn-outline-secondary" data-on-click="loadUploads"><i class="bi bi-arrow-clockwise me-1"></i>Yenile</button></div></div></div>
+  <div class="app-content p-4"><div class="container-fluid"><div class="row g-3 mb-3"><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Dosya</small><div class="fs-4 fw-bold" id="panel-upload-count">0</div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Toplam Boyut</small><div class="fs-4 fw-bold" id="panel-upload-size">0 MB</div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Dağılım</small><div class="fw-semibold" id="panel-upload-types">-</div></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-header bg-transparent"><div class="row g-2"><div class="col-md-6"><input id="panel-uploads-search" class="form-control form-control-sm" placeholder="Dosya, görsel ID veya kullanıcı ara" data-on-input="filterUploads"></div><div class="col-md-3"><select id="panel-uploads-mime" class="form-select form-select-sm" data-on-change="filterUploads"><option value="">Tüm türler</option><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option><option value="image/gif">GIF</option></select></div><div class="col-md-3"><label class="form-check mt-1"><input id="panel-uploads-orphans" class="form-check-input" type="checkbox" data-on-change="filterUploads"><span class="form-check-label">Yalnız yetim dosyalar</span></label></div></div></div><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th><input type="checkbox" data-on-change="toggleAllUploads"></th><th>Önizleme</th><th>Dosya</th><th>Tür</th><th>Boyut</th><th>Bağlantılar</th><th>Yükleyen</th><th>Tarih</th><th></th></tr></thead><tbody id="panel-uploads-list"></tbody></table></div><div class="card-footer bg-transparent" id="panel-uploads-pager"></div></div></div></div>
 </template>
 
 <!-- 10. HELP VIEW -->
@@ -909,6 +986,45 @@
 <!-- ========================================================================= -->
 <!-- LIME-CSR SPA JAVASCRIPT CORE                                              -->
 <!-- ========================================================================= -->
+
+<!-- AdminLTE's CSS does not include its interaction layer. Bootstrap is needed
+     for the user dropdown, while AdminLTE handles the responsive sidebar. -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@4.0.0-rc3/dist/js/adminlte.min.js" crossorigin="anonymous"></script>
+<script>
+  // Keep the shell usable if a third-party bundle is blocked by a browser
+  // extension or a temporary CDN failure. When AdminLTE is present its own
+  // handler wins; the fallback only runs if the class did not change.
+  (() => {
+    const body = document.body;
+    const sidebarToggle = document.querySelector('[data-lte-toggle="sidebar"]');
+    const sidebarOverlay = document.querySelector('.sidebar-overlay');
+
+    sidebarToggle?.addEventListener('click', event => {
+      event.preventDefault();
+      const wasOpen = body.classList.contains('sidebar-open');
+      window.setTimeout(() => {
+        if (body.classList.contains('sidebar-open') === wasOpen) {
+          body.classList.toggle('sidebar-open', !wasOpen);
+        }
+      }, 0);
+    });
+    sidebarOverlay?.addEventListener('click', () => body.classList.remove('sidebar-open'));
+
+    document.addEventListener('click', event => {
+      if (window.bootstrap?.Dropdown) return;
+      const target = event.target instanceof Element ? event.target : null;
+      const toggle = target?.closest('[data-bs-toggle="dropdown"]');
+      document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+        if (!toggle || !menu.closest('.dropdown')?.contains(toggle)) menu.classList.remove('show');
+      });
+      if (!toggle) return;
+      event.preventDefault();
+      const menu = toggle.closest('.dropdown')?.querySelector('.dropdown-menu');
+      menu?.classList.toggle('show');
+    });
+  })();
+</script>
 
 <script type="module">
   import { createStore, mount, unmount } from 'https://cdn.jsdelivr.net/npm/lime-csr-js@0.2.0/dist/index.min.js';
@@ -1251,7 +1367,19 @@
   }
 
   function renderUploadsTable() {
-    setTableRows('panel-uploads-list', (store.get('uploadsList') || []).map(item => `<tr><td>${hasPermission('admin.uploads.delete') ? `<input type="checkbox" class="form-check-input" data-upload-select value="${Number(item.id)}">` : ''}</td><td><a href="${safeLocalUrl(item.file_path)}" target="_blank" rel="noopener"><img src="${safeLocalUrl(item.file_path)}" alt="" loading="lazy" class="rounded border object-fit-cover" width="52" height="52"></a></td><td><strong>${escapeHtml(item.original_name)}</strong><small class="d-block text-secondary">${escapeHtml(item.image_id)}</small></td><td>${escapeHtml(item.mime_type)}</td><td>${escapeHtml(item.size_label)}</td><td>${Number(item.is_referenced) === 1 ? '<span class="badge bg-success-subtle text-success">Kullanımda</span>' : '<span class="badge bg-warning-subtle text-warning">Yetim</span>'}</td><td>${escapeHtml(item.username)}</td><td class="small text-secondary">${escapeHtml(item.created_at)}</td><td class="text-end text-nowrap">${hasPermission('admin.uploads.optimize') ? `<button class="btn btn-xs btn-outline-primary me-1" data-on-click="optimizeUpload" data-id="${Number(item.id)}" title="Optimize et"><i class="bi bi-lightning"></i></button>` : ''}${hasPermission('admin.uploads.delete') ? `<button class="btn btn-xs btn-outline-danger" data-on-click="deleteUpload" data-id="${Number(item.id)}"><i class="bi bi-trash"></i></button>` : ''}</td></tr>`).join(''), 9);
+    setTableRows('panel-uploads-list', (store.get('uploadsList') || []).map(item => {
+      const references = Array.isArray(item.references) ? item.references : [];
+      const referenceHtml = references.length
+        ? `<div class="upload-reference-list">${references.map(reference => {
+          const label = `${reference.entity_type || 'kayıt'} · ${reference.label || reference.entity_id || '-'}`;
+          const relation = reference.relation ? ` <span class="text-secondary">(${reference.relation})</span>` : '';
+          return reference.url && reference.url !== '#'
+            ? `<a href="${safeLocalUrl(reference.url)}" class="d-block text-truncate" target="_blank" rel="noopener" title="${escapeHtml(label)}">${escapeHtml(label)}${relation}</a>`
+            : `<span class="d-block text-truncate" title="${escapeHtml(label)}">${escapeHtml(label)}${relation}</span>`;
+        }).join('')}</div>`
+        : '<span class="badge bg-warning-subtle text-warning">Orphan</span>';
+      return `<tr><td>${hasPermission('admin.uploads.delete') ? `<input type="checkbox" class="form-check-input" data-upload-select value="${Number(item.id)}">` : ''}</td><td><a href="${safeLocalUrl(item.file_path)}" target="_blank" rel="noopener"><img src="${safeLocalUrl(item.file_path)}" alt="" loading="lazy" class="rounded border object-fit-cover" width="52" height="52"></a></td><td><strong>${escapeHtml(item.original_name)}</strong><small class="d-block text-secondary">${escapeHtml(item.image_id)}</small></td><td>${escapeHtml(item.mime_type)}</td><td>${escapeHtml(item.size_label)}</td><td><span class="badge ${references.length ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}">${references.length ? `${references.length} bağlantı` : 'Orphan'}</span>${referenceHtml}</td><td>${escapeHtml(item.username)}</td><td class="small text-secondary">${escapeHtml(item.created_at)}</td><td class="text-end text-nowrap">${hasPermission('admin.uploads.optimize') ? `<button class="btn btn-xs btn-outline-primary me-1" data-on-click="optimizeUpload" data-id="${Number(item.id)}" title="Optimize et"><i class="bi bi-lightning"></i></button>` : ''}${hasPermission('admin.uploads.delete') ? `<button class="btn btn-xs btn-outline-danger" data-on-click="deleteUpload" data-id="${Number(item.id)}"><i class="bi bi-trash"></i></button>` : ''}</td></tr>`;
+    }).join(''), 9);
     renderPager('panel-uploads-pager', store.get('uploadsMeta'), 'previousUploadsPage', 'nextUploadsPage');
     const stats = store.get('uploadsStats') || {};
     const count = document.getElementById('panel-upload-count'); if (count) count.textContent = Number(stats.total_files || 0).toLocaleString('tr-TR');
@@ -1273,15 +1401,37 @@
     if (route === 'uploads') renderUploadsTable();
   }
 
+  let dialogPreviousFocus = null;
+  let dialogCleanup = null;
+
   function closeDialog() {
-    document.getElementById('panel-dialog')?.remove();
+    const dialog = document.getElementById('panel-dialog');
+    if (!dialog) {
+      document.body.classList.remove('panel-dialog-open');
+      dialogPreviousFocus = null;
+      dialogCleanup = null;
+      return;
+    }
+    const cleanup = dialogCleanup;
+    dialogCleanup = null;
+    dialog.remove();
+    document.body.classList.remove('panel-dialog-open');
+    if (dialogPreviousFocus instanceof HTMLElement && document.contains(dialogPreviousFocus)) {
+      dialogPreviousFocus.focus();
+    }
+    dialogPreviousFocus = null;
+    if (typeof cleanup === 'function') {
+      Promise.resolve(cleanup()).catch(error => showToast(error.message || 'Geçici yüklemeler temizlenemedi.', 'danger'));
+    }
   }
 
   function openDialog(title, body, onSubmit, size = 'modal-lg') {
     closeDialog();
+    dialogPreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const overlay = document.createElement('div');
     overlay.id = 'panel-dialog';
     overlay.className = 'modal-backdrop-custom p-3';
+    overlay.tabIndex = -1;
     overlay.innerHTML = `
       <div class="modal-dialog ${size} m-0 w-100" role="dialog" aria-modal="true" aria-labelledby="panel-dialog-title">
         <div class="modal-content shadow-lg">
@@ -1301,6 +1451,29 @@
     overlay.addEventListener('click', event => {
       if (event.target === overlay || event.target.closest('[data-dialog-close]')) closeDialog();
     });
+    overlay.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeDialog();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = [...overlay.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')];
+      if (focusable.length === 0) {
+        event.preventDefault();
+        overlay.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
     overlay.querySelector('form').addEventListener('submit', async event => {
       event.preventDefault();
       const submit = event.submitter;
@@ -1313,6 +1486,7 @@
       }
     });
     document.body.appendChild(overlay);
+    document.body.classList.add('panel-dialog-open');
     applyPermissionVisibility(overlay);
     overlay.querySelector('input:not([type="hidden"]), select, textarea')?.focus();
     return overlay;
@@ -1367,13 +1541,20 @@
       <div class="row g-3">
         <div class="col-md-4"><label class="form-label">Bölüm numarası</label><input class="form-control" name="chapter_number" value="${escapeHtml(chapter.chapter_number)}" required></div>
         <div class="col-md-4"><label class="form-label">Tür</label><select class="form-select" name="type" id="dialog-chapter-type"><option value="text" ${chapter.type !== 'image' ? 'selected' : ''}>Metin</option><option value="image" ${chapter.type === 'image' ? 'selected' : ''}>Görsel</option></select></div>
-        <div class="col-md-4"><label class="form-label">Başlık</label><input class="form-control" name="title" value="${escapeHtml(chapter.title)}"></div>
+        <div class="col-md-4"><label class="form-label">Başlık</label><input class="form-control" name="title" maxlength="200" value="${escapeHtml(chapter.title)}"></div>
         <div class="col-md-4"><label class="form-label">Coin fiyatı</label><input type="number" min="0" class="form-control" name="price_amount" value="${escapeHtml(pricing.base_price ?? chapter.price_amount ?? 0)}"></div>
         <div class="col-md-4"><label class="form-label">Yayın tarihi</label><input type="datetime-local" class="form-control" name="published_at" value="${escapeHtml(dateValue(pricing.published_at ?? chapter.published_at))}"></div>
         <div class="col-md-4"><label class="form-label">Ücretsiz olma tarihi</label><input type="datetime-local" class="form-control" name="is_free_after" value="${escapeHtml(dateValue(pricing.is_free_after ?? chapter.is_free_after))}"></div>
         <div class="col-12 form-check ms-2"><input class="form-check-input" type="checkbox" name="is_members_only" value="1" id="dialog-chapter-members" ${Number(chapter.is_members_only) === 1 ? 'checked' : ''}><label class="form-check-label" for="dialog-chapter-members">Sadece üyeler</label></div>
+        <div class="col-12"><label class="form-label">Çevirmen notu</label><textarea class="form-control" name="translator_note" maxlength="2000" rows="3" placeholder="Okuyucuya gösterilecek ek not (isteğe bağlı)">${escapeHtml(chapter.translator_note)}</textarea></div>
         <div class="col-12" data-chapter-body><label class="form-label">Metin</label><textarea class="form-control" name="body" rows="8">${escapeHtml(chapter.body)}</textarea></div>
-        <div class="col-12" data-chapter-pages><label class="form-label">Görsel yolları (satır başına bir tane)</label><input type="file" accept="image/*,.zip" multiple class="form-control mb-2" name="page_files"><textarea class="form-control" name="pages" rows="8">${escapeHtml((chapter.pages || []).join('\n'))}</textarea></div>
+        <div class="col-12" data-chapter-pages>
+          <label class="form-label">Görsel sayfaları</label>
+          <input type="file" accept="image/*,.zip" multiple class="form-control mb-2" name="page_files">
+          <div class="row g-2 mb-2" data-page-preview></div>
+          <textarea class="form-control" name="pages" rows="6" placeholder="Görsel yolları (satır başına bir tane)">${escapeHtml((chapter.pages || []).join('\n'))}</textarea>
+          <div class="form-text">Önizleme kartlarındaki oklarla sıralayın veya bir kartı kaldırın.</div>
+        </div>
       </div>`;
   }
 
@@ -1409,7 +1590,9 @@
   function chapterPayload(formData, form) {
     const payload = Object.fromEntries(formData.entries());
     delete payload.page_files;
-    payload.price_amount = Number(payload.price_amount || 0);
+    if (Object.prototype.hasOwnProperty.call(payload, 'price_amount')) {
+      payload.price_amount = Number(payload.price_amount || 0);
+    }
     payload.is_members_only = form.elements.is_members_only?.checked ? 1 : 0;
     if (payload.type === 'image') {
       payload.pages = String(payload.pages || '').split('\n').map(value => value.trim()).filter(Boolean);
@@ -1422,15 +1605,35 @@
 
   async function openChapterEditor(content, chapterId = null) {
     const chapter = chapterId ? (await api(`/chapters/${chapterId}`))?.data || {} : {};
+    const uploadedPaths = [];
+    const originalPrice = chapterId ? Number(chapter.pricing?.base_price ?? chapter.price_amount ?? 0) : null;
     const overlay = openDialog(
       chapterId ? `Bölümü Düzenle: ${chapter.chapter_number}` : `${content.title} — Yeni Bölüm`,
       chapterForm(chapter),
       async (formData, form) => {
         const payload = chapterPayload(formData, form);
+        const requestedPrice = chapterId && !Object.prototype.hasOwnProperty.call(payload, 'price_amount')
+          ? originalPrice
+          : Number(payload.price_amount || 0);
+        if (chapterId) {
+          if (requestedPrice !== originalPrice && !hasPermission('admin.shop.manage')) {
+            throw new Error('Bölüm fiyatını değiştirmek için admin.shop.manage izni gerekir.');
+          }
+          // Price changes use the dedicated pricing endpoint so its audit trail
+          // and price_last_update semantics remain consistent with other shop
+          // operations. The content update keeps the existing price otherwise.
+          delete payload.price_amount;
+        }
         await api(chapterId ? `/chapters/${chapterId}` : `/content/${content.id}/chapters`, {
           method: chapterId ? 'PUT' : 'POST',
           body: payload
         });
+        if (chapterId && requestedPrice !== originalPrice) {
+          await api(`/chapters/${chapterId}/pricing`, {
+            method: 'PUT',
+            body: { price_coin: requestedPrice, is_active: requestedPrice > 0 }
+          });
+        }
         closeDialog();
         showToast(chapterId ? 'Bölüm güncellendi' : 'Bölüm oluşturuldu');
         await loadSeriesData();
@@ -1438,23 +1641,98 @@
       }
     );
     const typeInput = overlay.querySelector('#dialog-chapter-type');
+    const priceInput = overlay.querySelector('[name="price_amount"]');
+    if (chapterId && priceInput && !hasPermission('admin.shop.manage')) {
+      priceInput.disabled = true;
+      priceInput.title = 'Fiyat değiştirmek için admin.shop.manage izni gerekir.';
+    }
+    const pagesInput = overlay.querySelector('[name="pages"]');
+    const pagePreview = overlay.querySelector('[data-page-preview]');
+    const pagePaths = () => pagesInput.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+    const renderPagePreview = () => {
+      const paths = pagePaths();
+      pagePreview.innerHTML = paths.map((path, index) => `
+        <div class="col-6 col-sm-4 col-md-3" data-page-card data-page-index="${index}">
+          <div class="card h-100 border shadow-sm">
+            <div class="ratio ratio-3x4 bg-body-tertiary rounded-top overflow-hidden">
+              <img src="${safeLocalUrl(path)}" alt="Sayfa ${index + 1}" loading="lazy" class="w-100 h-100 object-fit-contain" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'d-flex align-items-center justify-content-center text-secondary small p-2', textContent:'Önizleme yok'}))">
+            </div>
+            <div class="card-body p-2">
+              <div class="small text-secondary text-truncate mb-2" title="${escapeHtml(path)}">${index + 1}. ${escapeHtml(path)}</div>
+              <div class="btn-group btn-group-sm w-100">
+                <button type="button" class="btn btn-outline-secondary" data-page-move="up" ${index === 0 ? 'disabled' : ''} aria-label="Yukarı taşı"><i class="bi bi-arrow-up"></i></button>
+                <button type="button" class="btn btn-outline-secondary" data-page-move="down" ${index === paths.length - 1 ? 'disabled' : ''} aria-label="Aşağı taşı"><i class="bi bi-arrow-down"></i></button>
+                <button type="button" class="btn btn-outline-danger" data-page-remove aria-label="Sayfayı kaldır"><i class="bi bi-trash"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>`).join('') || '<div class="col-12"><div class="text-secondary small">Henüz görsel sayfası yok.</div></div>';
+    };
+    pagePreview.addEventListener('click', event => {
+      const button = event.target.closest('[data-page-move], [data-page-remove]');
+      if (!button) return;
+      const card = button.closest('[data-page-card]');
+      const index = Number(card?.dataset.pageIndex);
+      const paths = pagePaths();
+      if (!Number.isInteger(index) || !paths[index]) return;
+      if (button.hasAttribute('data-page-remove')) {
+        paths.splice(index, 1);
+      } else {
+        const direction = button.dataset.pageMove === 'up' ? -1 : 1;
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= paths.length) return;
+        [paths[index], paths[targetIndex]] = [paths[targetIndex], paths[index]];
+      }
+      pagesInput.value = paths.join('\n');
+      renderPagePreview();
+    });
+    pagesInput.addEventListener('input', renderPagePreview);
+    let previousType = typeInput.value;
     const syncChapterFields = () => {
       const image = typeInput.value === 'image';
       overlay.querySelector('[data-chapter-body]').hidden = image;
       overlay.querySelector('[data-chapter-pages]').hidden = !image;
     };
-    typeInput.addEventListener('change', syncChapterFields);
+    typeInput.addEventListener('change', () => {
+      const nextType = typeInput.value;
+      if (nextType !== previousType) {
+        const warning = nextType === 'image'
+          ? 'Metin içeriği görsel bölüme çevrilecek. Kaydederseniz metin içeriği kaldırılır. Devam edilsin mi?'
+          : 'Görsel sayfaları metin bölüme çevrilecek. Kaydederseniz görsel sayfaları kaldırılır. Devam edilsin mi?';
+        if (!confirm(warning)) {
+          typeInput.value = previousType;
+          return;
+        }
+        previousType = nextType;
+      }
+      syncChapterFields();
+    });
     overlay.querySelector('[name="page_files"]').addEventListener('change', async event => {
+      const files = Array.from(event.target.files || []);
+      const zipFiles = files.filter(file => /\.zip$/i.test(file.name));
+      if (zipFiles.length > 0 && files.length > 1) {
+        showToast('ZIP ile diğer görselleri aynı anda seçmeyin; önce ZIP veya görsellerden birini yükleyin.', 'danger');
+        event.target.value = '';
+        return;
+      }
       try {
-        const paths = await uploadImages(event.target.files, 'chapters');
+        const paths = await uploadImages(files, 'chapters');
+        uploadedPaths.push(...paths);
         const textarea = overlay.querySelector('[name="pages"]');
         const existing = textarea.value.split('\n').map(value => value.trim()).filter(Boolean);
         textarea.value = [...existing, ...paths].join('\n');
+        renderPagePreview();
         showToast(`${paths.length} görsel yüklendi`);
       } catch (error) { showToast(error.message, 'danger'); }
       event.target.value = '';
     });
+    dialogCleanup = async () => {
+      if (uploadedPaths.length > 0) {
+        await api('/uploads/cleanup', { method: 'POST', body: { paths: uploadedPaths } });
+      }
+    };
     syncChapterFields();
+    renderPagePreview();
   }
 
   async function openSeriesPreview(contentId) {
@@ -1624,6 +1902,43 @@
         await openRbacDialog();
       } catch (error) { showToast(error.message, 'danger'); }
     });
+  }
+
+  async function openOwnershipMatrix() {
+    const [matrixResponse, ownershipResponse] = await Promise.all([api('/rbac/matrix'), api('/rbac/ownership')]);
+    const roles = matrixResponse?.data?.roles || [];
+    const capabilities = ownershipResponse?.data?.capabilities || [];
+    const records = ownershipResponse?.data?.records || [];
+    const roleHeading = roles.map(role => `<th class="text-center">${escapeHtml(role.name || role.slug)}</th>`).join('');
+    const rolePermissions = role => String(role.permissions || '').split(',').map(value => value.trim()).filter(Boolean);
+    const canRole = (role, capability) => {
+      if (capability.scope === 'owner') return 'Sahibi';
+      if (capability.scope === 'authenticated') return 'Giriş yapmış kullanıcı';
+      const permissions = rolePermissions(role);
+      if (role.slug === 'superadmin' || permissions.includes('*')) return 'Evet';
+      if (capability.scope === 'role_any') {
+        return String(capability.permission || '').split(' veya ').some(permission => permissions.includes(permission)) ? 'Evet' : 'Hayır';
+      }
+      return permissions.includes(capability.permission) ? 'Evet' : 'Hayır';
+    };
+    const capabilityRows = capabilities.map(capability => {
+      const cells = roles.map(role => {
+        const value = canRole(role, capability);
+        const style = value === 'Evet' ? 'text-success' : (value === 'Sahibi' ? 'text-info' : 'text-secondary');
+        return `<td class="text-center small ${style}">${value}</td>`;
+      }).join('');
+      return `<tr><td>${escapeHtml(capability.entity_label || capability.entity_type)}</td><td>${escapeHtml(capability.action || '-')}</td><td><code>${escapeHtml(capability.permission || 'kayıt sahibi')}</code></td>${cells}</tr>`;
+    }).join('');
+    const recordRows = records.map(record => `<tr><td><span class="badge bg-light text-dark border">${escapeHtml(record.entity_type)}</span></td><td>${escapeHtml(record.label || record.entity_id || '-')}<small class="d-block text-secondary">${escapeHtml(record.entity_id || '')}</small></td><td>${escapeHtml(record.owner_username || record.owner_id || '-')}</td><td class="small text-secondary">${escapeHtml(record.created_at || '-')}</td></tr>`).join('');
+    const overlay = openDialog(
+      'İçerik Sahipliği ve İşlem Yetkileri',
+      `<p class="text-secondary small">Rol tablosu yönetim API’sindeki izinlerden, “Sahibi” satırları ise kullanıcının kendi oluşturduğu kayıtlara uygulanan kapsamdan hesaplanır.</p>
+       <div class="table-responsive mb-4" style="max-height:55vh"><table class="table table-sm table-bordered align-middle"><thead class="table-dark position-sticky top-0"><tr><th>Varlık</th><th>İşlem</th><th>Gerekli izin / kapsam</th>${roleHeading}</tr></thead><tbody>${capabilityRows || '<tr><td colspan="4" class="text-secondary">Yetki kaydı bulunamadı.</td></tr>'}</tbody></table></div>
+       <h6>Son oluşturulan kayıtlar</h6><div class="table-responsive" style="max-height:35vh"><table class="table table-sm align-middle"><thead><tr><th>Tür</th><th>Kayıt</th><th>Sahibi</th><th>Oluşturulma</th></tr></thead><tbody>${recordRows || '<tr><td colspan="4" class="text-secondary">Kayıt bulunamadı.</td></tr>'}</tbody></table></div>`,
+      async () => {},
+      'modal-xl'
+    );
+    overlay.querySelector('button[type="submit"]')?.remove();
   }
 
   function packageForm(packageItem = {}) {
@@ -1815,11 +2130,12 @@
     }
   }
 
-  async function openChaptersDialog(contentId) {
+  async function openChaptersDialog(contentId, page = 1) {
     const content = (store.get('allSeriesList') || []).find(item => String(item.id) === String(contentId));
     if (!content) throw new Error('İçerik bulunamadı');
-    const response = await api(`/content/${content.id}/chapters?per_page=100`);
+    const response = await api(`/content/${content.id}/chapters?page=${Math.max(1, Number(page))}&per_page=25`);
     const chapters = responseItems(response);
+    const chapterMeta = responseMeta(response);
     const rows = chapters.map(chapter => `
       <tr>
         <td><input type="checkbox" class="form-check-input" data-chapter-select value="${escapeHtml(chapter.id)}"></td>
@@ -1834,14 +2150,21 @@
         </td>
       </tr>`).join('');
     const overlay = openDialog(
-      `${content.title} — Bölümler`,
+      `${content.title} — Bölümler (Sayfa ${chapterMeta.page}/${chapterMeta.total_pages})`,
       `<div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div class="btn-group btn-group-sm" data-requires-permission="admin.content.update"><button type="button" class="btn btn-outline-success" data-bulk-chapter="publish">Yayınla</button><button type="button" class="btn btn-outline-warning" data-bulk-chapter="schedule">Zamanla</button><button type="button" class="btn btn-outline-info" data-bulk-chapter="set_price">Fiyatlandır</button><button type="button" class="btn btn-outline-danger" data-bulk-chapter="delete">Sil</button></div><div class="d-flex gap-2"><button type="button" class="btn btn-outline-primary" data-manage-team data-requires-permission="admin.content.update"><i class="bi bi-people me-1"></i>Ekip</button><button type="button" class="btn btn-primary" data-create-chapter data-requires-permission="admin.chapter.create"><i class="bi bi-plus-lg me-1"></i>Yeni Bölüm</button></div></div>
-       <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th><input type="checkbox" class="form-check-input" data-select-all-chapters></th><th>#</th><th>Başlık</th><th>Tür</th><th>Fiyat</th><th>Yayın</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="text-center text-secondary py-4">Bölüm bulunamadı</td></tr>'}</tbody></table></div>`,
+       <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th><input type="checkbox" class="form-check-input" data-select-all-chapters></th><th>#</th><th>Başlık</th><th>Tür</th><th>Fiyat</th><th>Yayın</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="text-center text-secondary py-4">Bölüm bulunamadı</td></tr>'}</tbody></table></div>
+       <div class="d-flex justify-content-between align-items-center mt-3"><small class="text-secondary">${Number(chapterMeta.total || chapters.length)} bölüm</small><div class="btn-group btn-group-sm"><button type="button" class="btn btn-outline-secondary" data-chapter-page="prev" ${chapterMeta.page <= 1 ? 'disabled' : ''}>Önceki</button><button type="button" class="btn btn-outline-secondary" data-chapter-page="next" ${chapterMeta.page >= chapterMeta.total_pages ? 'disabled' : ''}>Sonraki</button></div></div>`,
       async () => {},
       'modal-xl'
     );
     overlay.querySelector('button[type="submit"]')?.remove();
     overlay.addEventListener('click', async event => {
+      const pageButton = event.target.closest('[data-chapter-page]');
+      if (pageButton && !pageButton.disabled) {
+        const nextPage = chapterMeta.page + (pageButton.dataset.chapterPage === 'next' ? 1 : -1);
+        await openChaptersDialog(content.id, nextPage);
+        return;
+      }
       const createButton = event.target.closest('[data-create-chapter]');
       const teamButton = event.target.closest('[data-manage-team]');
       const editButton = event.target.closest('[data-edit-chapter]');
@@ -2223,6 +2546,7 @@
     async openCreateSeriesModal() {
       try {
         const { genres, tags } = await loadTaxonomies();
+        const uploadedPaths = [];
         const overlay = openDialog('Yeni İçerik', contentForm({}, genres, tags), async (formData, form) => {
         const selectedGenres = selectedValues(formData, 'genres');
         const selectedTags = selectedValues(formData, 'tags');
@@ -2244,10 +2568,14 @@
         overlay.querySelector('[name="cover_file"]').addEventListener('change', async event => {
           try {
             const paths = await uploadImages(event.target.files, 'series_cover');
+            uploadedPaths.push(...paths);
             if (paths[0]) overlay.querySelector('[name="cover_image"]').value = paths[0];
             showToast('Kapak görseli yüklendi');
           } catch (error) { showToast(error.message, 'danger'); }
         });
+        dialogCleanup = async () => {
+          if (uploadedPaths.length > 0) await api('/uploads/cleanup', { method: 'POST', body: { paths: uploadedPaths } });
+        };
       } catch (error) { showToast(error.message, 'danger'); }
     },
     async openEditSeriesModal(e, el) {
@@ -2255,6 +2583,7 @@
       if (!content) return showToast('İçerik bulunamadı', 'danger');
       try {
         const { genres, tags } = await loadTaxonomies();
+        const uploadedPaths = [];
         const overlay = openDialog('İçeriği Düzenle', contentForm(content, genres, tags), async (formData, form) => {
         const selectedGenres = selectedValues(formData, 'genres');
         const selectedTags = selectedValues(formData, 'tags');
@@ -2274,10 +2603,14 @@
         overlay.querySelector('[name="cover_file"]').addEventListener('change', async event => {
           try {
             const paths = await uploadImages(event.target.files, 'series_cover');
+            uploadedPaths.push(...paths);
             if (paths[0]) overlay.querySelector('[name="cover_image"]').value = paths[0];
             showToast('Kapak görseli yüklendi');
           } catch (error) { showToast(error.message, 'danger'); }
         });
+        dialogCleanup = async () => {
+          if (uploadedPaths.length > 0) await api('/uploads/cleanup', { method: 'POST', body: { paths: uploadedPaths } });
+        };
       } catch (error) { showToast(error.message, 'danger'); }
     },
     async previewSeries(e, el) {
@@ -2303,6 +2636,10 @@
     },
     async openTaxonomyManager() {
       try { await openTaxonomyDialog(); }
+      catch (error) { showToast(error.message, 'danger'); }
+    },
+    async openOwnershipMatrix() {
+      try { await openOwnershipMatrix(); }
       catch (error) { showToast(error.message, 'danger'); }
     },
     filterSeries() { scheduleReload('series', () => loadSeriesData(1)); },

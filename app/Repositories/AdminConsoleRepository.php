@@ -737,7 +737,7 @@ final class AdminConsoleRepository
     public function listUploads(int $page, int $perPage, string $query = '', ?string $mime = null, bool $orphansOnly = false): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $referenceSql = '(EXISTS (SELECT 1 FROM series s WHERE s.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM blogs b WHERE b.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM users profile WHERE profile.profile_image = u.file_path OR profile.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM chapters ch WHERE CAST(ch.data AS CHAR) LIKE CONCAT("%", u.file_path, "%")))';
+        $referenceSql = '(EXISTS (SELECT 1 FROM series s WHERE s.deleted_at IS NULL AND s.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM blogs b WHERE b.deleted_at IS NULL AND (b.cover_image = u.file_path OR LOCATE(u.file_path, b.body) > 0)) OR EXISTS (SELECT 1 FROM users profile WHERE profile.profile_image = u.file_path OR profile.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM chapters ch WHERE ch.deleted_at IS NULL AND LOCATE(u.file_path, CAST(ch.data AS CHAR)) > 0) OR EXISTS (SELECT 1 FROM comments cm WHERE cm.deleted_at IS NULL AND LOCATE(u.file_path, cm.body) > 0))';
         $where = [];
         $params = [];
         if ($query !== '') {
@@ -763,6 +763,13 @@ final class AdminConsoleRepository
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
         $stmt->execute();
         $items = $stmt->fetchAll();
+        foreach ($items as &$item) {
+            $references = $this->findUploadReferences((string) ($item['file_path'] ?? ''));
+            $item['references'] = $references;
+            $item['reference_count'] = count($references);
+            $item['is_referenced'] = $item['reference_count'] > 0 ? 1 : 0;
+        }
+        unset($item);
 
         $count = $this->pdo->prepare('SELECT COUNT(*) FROM system_uploads u LEFT JOIN users us ON u.user_id = us.id' . $whereSql);
         $count->execute($params);
@@ -779,6 +786,111 @@ final class AdminConsoleRepository
         ];
     }
 
+    /**
+     * Finds every user/content record that uses an uploaded path.
+     *
+     * A single upload can be reused as several covers or appear in multiple
+     * chapter/blog/comment bodies, so references are intentionally returned as
+     * a list rather than a single owner field.
+     *
+     * @return array<int, array{entity_type:string, entity_id:string, relation:string, label:string, url:string|null}>
+     */
+    private function findUploadReferences(string $filePath): array
+    {
+        if ($filePath === '') return [];
+
+        $references = [];
+
+        $series = $this->pdo->prepare('SELECT id, title, slug, type FROM series WHERE deleted_at IS NULL AND cover_image = :path');
+        $series->execute(['path' => $filePath]);
+        foreach ($series->fetchAll() as $row) {
+            $references[] = [
+                'entity_type' => 'content',
+                'entity_id' => (string) $row['id'],
+                'relation' => 'cover_image',
+                'label' => (string) $row['title'],
+                'url' => '/' . str_replace('_', '-', (string) $row['type']) . '/' . (string) $row['slug'],
+            ];
+        }
+
+        $blogs = $this->pdo->prepare('SELECT id, title, slug, cover_image, body FROM blogs WHERE deleted_at IS NULL AND (cover_image = :cover_path OR LOCATE(:body_path, body) > 0)');
+        $blogs->execute(['cover_path' => $filePath, 'body_path' => $filePath]);
+        foreach ($blogs->fetchAll() as $row) {
+            if ((string) ($row['cover_image'] ?? '') === $filePath) {
+                $references[] = [
+                    'entity_type' => 'blog',
+                    'entity_id' => (string) $row['id'],
+                    'relation' => 'cover_image',
+                    'label' => (string) $row['title'],
+                    'url' => '/blogs/' . (string) $row['slug'],
+                ];
+            }
+            if (str_contains((string) ($row['body'] ?? ''), $filePath)) {
+                $references[] = [
+                    'entity_type' => 'blog',
+                    'entity_id' => (string) $row['id'],
+                    'relation' => 'body',
+                    'label' => (string) $row['title'],
+                    'url' => '/blogs/' . (string) $row['slug'],
+                ];
+            }
+        }
+
+        $users = $this->pdo->prepare('SELECT id, username, profile_image, cover_image FROM users WHERE profile_image = :profile_path OR cover_image = :cover_path');
+        $users->execute(['profile_path' => $filePath, 'cover_path' => $filePath]);
+        foreach ($users->fetchAll() as $row) {
+            if ((string) ($row['profile_image'] ?? '') === $filePath) {
+                $references[] = [
+                    'entity_type' => 'user',
+                    'entity_id' => (string) $row['id'],
+                    'relation' => 'profile_image',
+                    'label' => '@' . (string) $row['username'],
+                    'url' => '/profile/' . (string) $row['username'],
+                ];
+            }
+            if ((string) ($row['cover_image'] ?? '') === $filePath) {
+                $references[] = [
+                    'entity_type' => 'user',
+                    'entity_id' => (string) $row['id'],
+                    'relation' => 'cover_image',
+                    'label' => '@' . (string) $row['username'],
+                    'url' => '/profile/' . (string) $row['username'],
+                ];
+            }
+        }
+
+        $chapters = $this->pdo->prepare('SELECT ch.id, ch.chapter_number, ch.data, s.title AS series_title, s.slug AS series_slug, s.type AS series_type FROM chapters ch INNER JOIN series s ON s.id = ch.content_id WHERE ch.deleted_at IS NULL AND s.deleted_at IS NULL AND LOCATE(:path, CAST(ch.data AS CHAR)) > 0');
+        $chapters->execute(['path' => $filePath]);
+        foreach ($chapters->fetchAll() as $row) {
+            $references[] = [
+                'entity_type' => 'chapter',
+                'entity_id' => (string) $row['id'],
+                'relation' => 'pages',
+                'label' => (string) $row['series_title'] . ' · Bölüm ' . (string) $row['chapter_number'],
+                'url' => '/' . str_replace('_', '-', (string) $row['series_type']) . '/' . (string) $row['series_slug'] . '/chapter/' . (string) $row['chapter_number'],
+            ];
+        }
+
+        $comments = $this->pdo->prepare('SELECT id, target_type, target_id FROM comments WHERE deleted_at IS NULL AND LOCATE(:path, body) > 0');
+        $comments->execute(['path' => $filePath]);
+        foreach ($comments->fetchAll() as $row) {
+            $references[] = [
+                'entity_type' => 'comment',
+                'entity_id' => (string) $row['id'],
+                'relation' => 'body',
+                'label' => 'Yorum #' . (string) $row['id'],
+                'url' => null,
+            ];
+        }
+
+        $unique = [];
+        foreach ($references as $reference) {
+            $key = $reference['entity_type'] . ':' . $reference['entity_id'] . ':' . $reference['relation'];
+            $unique[$key] = $reference;
+        }
+        return array_values($unique);
+    }
+
     public function uploadStats(): array
     {
         $row = $this->pdo->query('SELECT COUNT(*) AS total_files, COALESCE(SUM(file_size), 0) AS total_bytes, COALESCE(AVG(file_size), 0) AS average_bytes, SUM(mime_type = "image/jpeg") AS jpeg_files, SUM(mime_type = "image/png") AS png_files, SUM(mime_type = "image/webp") AS webp_files, SUM(mime_type = "image/gif") AS gif_files FROM system_uploads')->fetch();
@@ -791,6 +903,27 @@ final class AdminConsoleRepository
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
         return $row ?: null;
+    }
+
+    /**
+     * Returns uploads owned by a user that are still unreferenced.
+     *
+     * This is used to roll back files uploaded while a form is being edited
+     * and then cancelled before the parent record is saved.
+     *
+     * @param array<int, string> $paths
+     * @return array<int, int>
+     */
+    public function unreferencedUploadIdsByPaths(array $paths, string $userId): array
+    {
+        $paths = array_values(array_unique(array_filter(array_map('strval', $paths))));
+        if ($paths === [] || $userId === '') return [];
+
+        $placeholders = implode(',', array_fill(0, count($paths), '?'));
+        $referenceSql = '(EXISTS (SELECT 1 FROM series s WHERE s.deleted_at IS NULL AND s.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM blogs b WHERE b.deleted_at IS NULL AND (b.cover_image = u.file_path OR LOCATE(u.file_path, b.body) > 0)) OR EXISTS (SELECT 1 FROM users profile WHERE profile.profile_image = u.file_path OR profile.cover_image = u.file_path) OR EXISTS (SELECT 1 FROM chapters ch WHERE ch.deleted_at IS NULL AND LOCATE(u.file_path, CAST(ch.data AS CHAR)) > 0) OR EXISTS (SELECT 1 FROM comments cm WHERE cm.deleted_at IS NULL AND LOCATE(u.file_path, cm.body) > 0))';
+        $stmt = $this->pdo->prepare("SELECT u.id FROM system_uploads u WHERE u.user_id = ? AND u.file_path IN ($placeholders) AND NOT $referenceSql");
+        $stmt->execute(array_merge([$userId], $paths));
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
     public function updateUploadFileSize(int $id, int $size): void
@@ -1031,6 +1164,72 @@ final class AdminConsoleRepository
                 'total' => 0,
             ];
         }
+    }
+
+    /**
+     * Lists recent user-created entities with their creator/owner identity.
+     * Content creation is recorded in admin_actions because the series table
+     * intentionally has no created_by column.
+     *
+     * @return array<int, array{entity_type:string, entity_id:string, label:string, owner_id:string|null, owner_username:string, created_at:string}>
+     */
+    public function listCreatedEntityOwnership(int $limit = 100): array
+    {
+        $limit = max(1, min(500, $limit));
+        $items = [];
+
+        $content = $this->pdo->prepare(
+            'SELECT s.id, s.title, s.created_at, ma.moderator_user_id AS owner_id, u.username AS owner_username
+             FROM series s
+             LEFT JOIN (
+                SELECT target_id, MAX(id) AS action_id
+                FROM admin_actions
+                WHERE target_type = "content" AND action = "create"
+                GROUP BY target_id
+             ) created ON created.target_id = s.id
+             LEFT JOIN admin_actions ma ON ma.id = created.action_id
+             LEFT JOIN users u ON u.id = ma.moderator_user_id
+             WHERE s.deleted_at IS NULL
+             ORDER BY s.created_at DESC
+             LIMIT :limit'
+        );
+        $content->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $content->execute();
+        foreach ($content->fetchAll() as $row) {
+            $items[] = [
+                'entity_type' => 'content',
+                'entity_id' => (string) $row['id'],
+                'label' => (string) $row['title'],
+                'owner_id' => $row['owner_id'] !== null ? (string) $row['owner_id'] : null,
+                'owner_username' => (string) ($row['owner_username'] ?? ($row['owner_id'] ? 'ID:' . $row['owner_id'] : 'Bilinmiyor')),
+                'created_at' => (string) $row['created_at'],
+            ];
+        }
+
+        $queries = [
+            ['type' => 'chapter', 'sql' => 'SELECT ch.id, CONCAT(s.title, " · Bölüm ", ch.chapter_number) AS label, ch.created_at, ch.created_by AS owner_id, u.username AS owner_username FROM chapters ch INNER JOIN series s ON s.id = ch.content_id LEFT JOIN users u ON u.id = ch.created_by WHERE ch.deleted_at IS NULL ORDER BY ch.created_at DESC LIMIT :limit'],
+            ['type' => 'blog', 'sql' => 'SELECT b.id, b.title AS label, b.created_at, b.user_id AS owner_id, u.username AS owner_username FROM blogs b LEFT JOIN users u ON u.id = b.user_id WHERE b.deleted_at IS NULL ORDER BY b.created_at DESC LIMIT :limit'],
+            ['type' => 'comment', 'sql' => 'SELECT c.id, CONCAT("Yorum #", c.id) AS label, c.created_at, c.user_id AS owner_id, u.username AS owner_username FROM comments c LEFT JOIN users u ON u.id = c.user_id WHERE c.deleted_at IS NULL ORDER BY c.created_at DESC LIMIT :limit'],
+            ['type' => 'image_upload', 'sql' => 'SELECT su.id, su.original_name AS label, su.created_at, su.user_id AS owner_id, u.username AS owner_username FROM system_uploads su LEFT JOIN users u ON u.id = su.user_id ORDER BY su.created_at DESC LIMIT :limit'],
+        ];
+        foreach ($queries as $query) {
+            $stmt = $this->pdo->prepare($query['sql']);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            foreach ($stmt->fetchAll() as $row) {
+                $items[] = [
+                    'entity_type' => $query['type'],
+                    'entity_id' => (string) $row['id'],
+                    'label' => (string) $row['label'],
+                    'owner_id' => $row['owner_id'] !== null ? (string) $row['owner_id'] : null,
+                    'owner_username' => (string) ($row['owner_username'] ?? ($row['owner_id'] ? 'ID:' . $row['owner_id'] : 'Bilinmiyor')),
+                    'created_at' => (string) $row['created_at'],
+                ];
+            }
+        }
+
+        usort($items, static fn(array $a, array $b): int => strcmp($b['created_at'], $a['created_at']));
+        return array_slice($items, 0, $limit);
     }
 
     public function roleExistsBySlug(string $roleSlug): bool
