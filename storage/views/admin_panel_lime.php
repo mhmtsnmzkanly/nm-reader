@@ -809,7 +809,7 @@
       </div>
       <div class="d-flex flex-wrap gap-2">
         <button type="button" class="btn btn-sm btn-outline-info" data-on-click="openWebhooks"><i class="bi bi-broadcast me-1"></i>Webhooklar</button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-file-earmark-code me-1"></i>.env</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-file-earmark-code me-1"></i>Ortam (.env)</button>
         <button type="button" class="btn btn-sm btn-primary" data-on-click="saveConfig"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet</button>
       </div>
     </div>
@@ -883,8 +883,14 @@
                 </select>
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-semibold">Site Logo URL</label>
-                <input type="text" class="form-control" data-model="config.site_logo" maxlength="255" placeholder="/assets/img/logo.svg">
+                <label class="form-label fw-semibold">Header Logo URL <code>site_logo</code></label>
+                <input type="text" class="form-control" data-model="config.site_logo" maxlength="255" placeholder="/assets/img/logo-header.svg">
+                <div class="form-text text-secondary">Public Header/Navbar logosu.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Footer Logo URL <code>logo_url</code></label>
+                <input type="text" class="form-control" data-model="config.logo_url" maxlength="255" placeholder="/assets/img/logo-footer.svg">
+                <div class="form-text text-secondary">Public Footer logosu.</div>
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Favicon URL</label>
@@ -994,9 +1000,17 @@
           </div>
         </div>
 
+        <div class="card border-0 shadow-sm rounded-3 mb-4" data-requires-permission="admin.settings.modify">
+          <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+              <h6 class="mb-1"><i class="bi bi-file-earmark-code text-secondary me-2"></i>Ortam değişkenleri (.env)</h6>
+              <p class="small text-secondary mb-0">Uygulama ve entegrasyon ortam ayarları ayrı bir modal üzerinden düzenlenir. Bu işlem yalnızca <code>ROOT_USER</code> için açıktır.</p>
+            </div>
+            <button type="button" class="btn btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-pencil-square me-1"></i>.env Düzenle</button>
+          </div>
+        </div>
         <div class="d-flex justify-content-end gap-2 mb-4">
           <button type="button" class="btn btn-outline-info" data-on-click="openWebhooks"><i class="bi bi-broadcast me-1"></i>Webhooklar</button>
-          <button type="button" class="btn btn-outline-secondary" data-on-click="openEnvEditor"><i class="bi bi-file-earmark-code me-1"></i>.env</button>
           <button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet</button>
         </div>
       </form>
@@ -1129,7 +1143,8 @@
         default_language: 'tr',
         footer_text: '© 2026 NM Reader. Tüm hakları saklıdır.',
         default_theme: 'dark',
-        site_logo: '/assets/img/logo.svg',
+        site_logo: '/assets/img/logo-header.svg',
+        logo_url: '/assets/img/logo-footer.svg',
         favicon_url: '/favicon.ico',
         default_profile_image: '/assets/img/default-profile.png',
         default_content_cover_image: '/assets/img/covers/placeholder.svg',
@@ -2855,9 +2870,6 @@
         const payload = { ...store.get('config') };
         payload.maintenance_whitelist_ips = String(payload.maintenance_whitelist_text || '').split(/\r?\n|,/).map(value => value.trim()).filter(Boolean);
         delete payload.maintenance_whitelist_text;
-        if (payload.site_logo) {
-          payload.logo_url = payload.site_logo;
-        }
         const res = await api('/config/site', { method: 'POST', body: payload });
         if (res?.data) {
           const updated = res.data;
