@@ -40,7 +40,6 @@ final class SiteConfigService
         'site_slogan' => ['group' => 'general', 'type' => 'string', 'default' => 'En İyi Çevrimiçi Manga ve Novel Okuyucusu', 'max' => 255],
         'site_abbreviation' => ['group' => 'general', 'type' => 'string', 'default' => 'NMR', 'max' => 20],
         'site_description' => ['group' => 'general', 'type' => 'string', 'default' => 'Read manga, manhwa, webtoon and novels.', 'max' => 1000],
-        'site_address' => ['group' => 'general', 'type' => 'string', 'default' => '', 'max' => 255],
         'default_language' => ['group' => 'general', 'type' => 'string', 'default' => 'tr', 'allowed' => ['tr', 'en']],
         'footer_text' => ['group' => 'general', 'type' => 'string', 'default' => '© 2026 NM Reader. Tüm hakları saklıdır.', 'max' => 500],
 
@@ -55,7 +54,6 @@ final class SiteConfigService
         // Security Group
         'maintenance_mode' => ['group' => 'security', 'type' => 'bool', 'default' => false],
         'maintenance_whitelist_ips' => ['group' => 'security', 'type' => 'json', 'default' => ['127.0.0.1', '::1']],
-        'enforce_https' => ['group' => 'security', 'type' => 'bool', 'default' => false],
 
         // Mail Group
         'mail_enabled' => ['group' => 'mail', 'type' => 'bool', 'default' => true],
@@ -200,7 +198,7 @@ final class SiteConfigService
             $normalized = strtolower(trim((string) $envValue));
             return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
         }
-        return (bool) $this->get('enforce_https', self::DEFINITIONS['enforce_https']['default']);
+        return false;
     }
 
     public function siteAddress(): string
@@ -209,7 +207,7 @@ final class SiteConfigService
         if (is_string($envValue) && trim($envValue) !== '') {
             return trim($envValue);
         }
-        return (string) $this->get('site_address', self::DEFINITIONS['site_address']['default']);
+        return '';
     }
 
     public function defaultLanguage(): string
@@ -270,10 +268,6 @@ final class SiteConfigService
         }
 
         $this->cache->delete(self::CACHE_KEY);
-        if (isset($payload['site_address'])) {
-            $this->cache->delete('robots_txt');
-            $this->cache->delete('sitemap_xml');
-        }
         self::$memoryCache = null;
         return $this->all();
     }
@@ -297,6 +291,117 @@ final class SiteConfigService
     public function definitions(): array
     {
         return self::DEFINITIONS;
+    }
+
+    /**
+     * Exposes the canonical setting definitions to install-time validators.
+     * This method is pure and does not require a database connection.
+     *
+     * @return array<string, array{group:string,type:string,default:mixed,max?:int,allowed?:array<int,string>}>
+     */
+    public static function settingDefinitions(): array
+    {
+        return self::DEFINITIONS;
+    }
+
+    /**
+     * Returns default values without constructing the database-backed service.
+     *
+     * @return array<string, mixed>
+     */
+    public static function defaultValues(): array
+    {
+        $defaults = [];
+        foreach (self::DEFINITIONS as $key => $definition) {
+            $defaults[$key] = $definition['default'];
+        }
+
+        return $defaults;
+    }
+
+    /**
+     * Validates and normalizes a site settings payload without writing it.
+     * Unknown settings are ignored to preserve forward compatibility with
+     * future clients, while known settings always use the same rules as the
+     * runtime configuration service.
+     *
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public static function validateInput(array $payload): array
+    {
+        $normalized = [];
+        foreach ($payload as $key => $value) {
+            $key = (string) $key;
+            if (!isset(self::DEFINITIONS[$key])) {
+                continue;
+            }
+
+            $definition = self::DEFINITIONS[$key];
+            $type = $definition['type'];
+            $normalized[$key] = match ($type) {
+                'int' => self::validateIntInput($key, $value),
+                'bool' => self::validateBoolInput($key, $value),
+                'json' => self::validateJsonInput($key, $value),
+                default => self::validateStringInput($key, $value, $definition),
+            };
+        }
+
+        return $normalized;
+    }
+
+    private static function validateIntInput(string $key, mixed $value): int
+    {
+        if (is_int($value)) return $value;
+        if (is_string($value) && filter_var($value, FILTER_VALIDATE_INT) !== false) {
+            return (int) $value;
+        }
+        throw new \InvalidArgumentException(sprintf("Setting '%s' must be an integer.", $key));
+    }
+
+    private static function validateBoolInput(string $key, mixed $value): bool
+    {
+        if (is_bool($value)) return $value;
+        if (is_int($value) && ($value === 0 || $value === 1)) return $value === 1;
+        if (is_string($value)) {
+            $normalized = strtolower(trim($value));
+            if (in_array($normalized, ['true', '1', 'yes', 'on'], true)) return true;
+            if (in_array($normalized, ['false', '0', 'no', 'off', ''], true)) return false;
+        }
+        throw new \InvalidArgumentException(sprintf("Setting '%s' must be a boolean (true/false).", $key));
+    }
+
+    private static function validateJsonInput(string $key, mixed $value): array|string
+    {
+        if (is_array($value)) {
+            json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return $value;
+        }
+        if (!is_string($value)) {
+            throw new \InvalidArgumentException(sprintf("Setting '%s' must be valid JSON.", $key));
+        }
+        $trimmed = trim($value);
+        if ($trimmed === '') return [];
+        $decoded = json_decode($trimmed, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+            throw new \InvalidArgumentException(sprintf("Setting '%s' must be a JSON array or object.", $key));
+        }
+        return $decoded;
+    }
+
+    private static function validateStringInput(string $key, mixed $value, array $definition): string
+    {
+        if (!is_string($value) && !is_scalar($value)) {
+            throw new \InvalidArgumentException(sprintf("Setting '%s' must be a string.", $key));
+        }
+        $string = trim((string) $value);
+        if (isset($definition['allowed']) && !in_array($string, $definition['allowed'], true)) {
+            throw new \InvalidArgumentException(sprintf("Invalid value '%s' for setting '%s'.", $string, $key));
+        }
+        if (isset($definition['max']) && mb_strlen($string) > (int) $definition['max']) {
+            throw new \InvalidArgumentException(sprintf("Setting '%s' exceeds its maximum length.", $key));
+        }
+        return $string;
     }
 
     private function castValueByType(string $key, string $type, mixed $raw): mixed

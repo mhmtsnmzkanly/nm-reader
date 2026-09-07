@@ -1,122 +1,270 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NovelMangaReader Setup</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #0b0e14; color: #fff; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .setup-card { background: #1a1e26; border: 1px solid #2d343f; border-radius: 12px; padding: 2rem; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .form-label { color: #8a94a6; font-size: 0.9rem; margin-bottom: 0.3rem; }
-        .form-control { background-color: #0b0e14; border: 1px solid #2d343f; color: #fff; border-radius: 8px; padding: 0.6rem 1rem; }
-        .form-control:focus { background-color: #0b0e14; border-color: #0d6efd; color: #fff; box-shadow: none; }
-        .btn-primary { background-color: #0d6efd; border: none; border-radius: 8px; padding: 0.8rem; font-weight: 600; width: 100%; margin-top: 1rem; }
-        .setup-header { text-align: center; margin-bottom: 2rem; }
-        .setup-header h1 { font-size: 1.5rem; font-weight: 700; color: #0d6efd; margin-bottom: 0.5rem; }
-        .setup-header p { color: #8a94a6; font-size: 0.9rem; }
-        .step-title { border-bottom: 1px solid #2d343f; padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1rem; font-weight: 600; color: #fff; }
-        #status-msg { display: none; margin-top: 1rem; padding: 1rem; border-radius: 8px; font-size: 0.9rem; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>NM Reader kurulumu</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/styles/overlayscrollbars.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/css/adminlte.min.css">
+  <style>
+    [data-show][hidden] { display: none !important; }
+    body { min-width: 320px; background: #f4f6f9; }
+    .installer-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    .installer-card { width: min(100%, 1080px); border: 0; box-shadow: 0 1rem 3rem rgba(0,0,0,.12); }
+    .installer-brand { color: var(--lte-primary, #0d6efd); letter-spacing: .02em; }
+    .wizard-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin-bottom: 1.5rem; }
+    .wizard-step { display: flex; align-items: center; gap: .5rem; color: #6c757d; font-size: .875rem; }
+    .wizard-step .badge { width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center; }
+    .wizard-step.active { color: var(--lte-primary, #0d6efd); font-weight: 600; }
+    .wizard-step.done { color: #198754; }
+    .mode-card { cursor: pointer; height: 100%; transition: transform .15s ease, box-shadow .15s ease; }
+    .mode-card:hover, .mode-card:focus-within { transform: translateY(-2px); box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.12); }
+    .mode-card .card-body { min-height: 190px; }
+    .form-section { border-top: 1px solid rgba(0,0,0,.1); padding-top: 1rem; margin-top: 1rem; }
+    .form-section:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+    .installer-alert { white-space: pre-wrap; }
+    .summary-value { overflow-wrap: anywhere; }
+    @media (max-width: 767.98px) {
+      .installer-shell { padding: .75rem; align-items: flex-start; }
+      .installer-card .card-body { padding: 1rem; }
+      .wizard-steps { grid-template-columns: repeat(2, 1fr); }
+      .wizard-step { font-size: .75rem; }
+    }
+  </style>
 </head>
 <body>
+  <main id="installer-app" class="installer-shell"></main>
 
-<div class="setup-card">
-    <div class="setup-header">
-        <h1>NovelMangaReader</h1>
-        <p>System Installation Wizard</p>
-    </div>
+  <template id="tpl-install-app">
+    <div class="card installer-card">
+      <div class="card-header bg-white border-0 pt-4 px-4 px-md-5">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+          <div>
+            <h1 class="h3 mb-1 installer-brand">NM Reader kurulumu</h1>
+            <p class="text-muted mb-0">${app_name} için güvenli kurulum sihirbazı</p>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-on-click="toggleTheme" aria-label="Tema değiştir"><i class="bi bi-circle-half"></i></button>
+        </div>
+        <div class="wizard-steps mt-4" aria-label="Kurulum adımları">
+          <div class="wizard-step" data-show="stepOneVisible"><span class="badge bg-primary">1</span> Ortam</div>
+          <div class="wizard-step" data-show="stepTwoVisible"><span class="badge bg-primary">2</span> Site ayarları</div>
+          <div class="wizard-step" data-show="stepThreeVisible"><span class="badge bg-primary">3</span> Yönetici</div>
+          <div class="wizard-step" data-show="stepFourVisible"><span class="badge bg-primary">4</span> Uygula</div>
+        </div>
+      </div>
 
-    <form id="setup-form">
-        <div class="step-title">Database Configuration</div>
-        <div class="row g-3">
-            <div class="col-md-8">
-                <label class="form-label">Host</label>
-                <input type="text" name="db[host]" class="form-control" value="127.0.0.1" required>
+      <div class="card-body px-4 px-md-5 pb-4">
+        <div class="alert alert-danger installer-alert" data-show="hasError" data-text="error" role="alert"></div>
+        <div class="alert alert-success installer-alert" data-show="hasSuccess" data-text="success" role="status"></div>
+
+        <section data-show="showMode">
+          <h2 class="h5 mb-2">Kurulum türünü seçin</h2>
+          <p class="text-muted mb-4">İşlem, son adımda onaylayana kadar veritabanına veya .env dosyasına yazılmaz.</p>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <button type="button" class="card mode-card text-start w-100" data-on-click="chooseFresh">
+                <div class="card-body"><i class="bi bi-stars fs-2 text-primary"></i><h3 class="h6 mt-3">Sıfırdan kurulum</h3><p class="text-muted small mb-0">Şema, site ayarları ve root kullanıcı oluşturulur.</p></div>
+              </button>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Port</label>
-                <input type="text" name="db[port]" class="form-control" value="3306" required>
+              <button type="button" class="card mode-card text-start w-100" data-on-click="chooseRestore">
+                <div class="card-body"><i class="bi bi-cloud-arrow-up fs-2 text-warning"></i><h3 class="h6 mt-3">Yedek geri yükleme</h3><p class="text-muted small mb-0">Veritabanı ve medya yedeği birlikte yüklenir.</p></div>
+              </button>
             </div>
-            <div class="col-12">
-                <label class="form-label">Database Name</label>
-                <input type="text" name="db[database]" class="form-control" value="nm-reader" required>
+            <div class="col-md-4">
+              <button type="button" class="card mode-card text-start w-100" data-on-click="chooseEnvOnly">
+                <div class="card-body"><i class="bi bi-sliders fs-2 text-success"></i><h3 class="h6 mt-3">Sadece .env oluştur</h3><p class="text-muted small mb-0">Mevcut NM Reader şemasını ve root kullanıcıyı kullanır.</p></div>
+              </button>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Username</label>
-                <input type="text" name="db[username]" class="form-control" value="root" required>
+          </div>
+        </section>
+
+        <section data-show="showEnvironment">
+          <h2 class="h5 mb-1">1. Ortam ve veritabanı</h2>
+          <p class="text-muted small">Bağlantı bilgileri doğrulanır; parola tarayıcıya geri gönderilmez.</p>
+          <form data-on-submit="submitEnvironment" novalidate>
+            <div class="row g-3">
+              <div class="col-md-8"><label class="form-label">Uygulama adı</label><input class="form-control" data-model="environment.APP_NAME" required></div>
+              <div class="col-md-4"><label class="form-label">Ortam</label><select class="form-select" data-model="environment.APP_ENV"><option value="production">production</option><option value="staging">staging</option><option value="local">local</option></select></div>
+              <div class="col-md-8"><label class="form-label">Uygulama URL'si</label><input type="url" class="form-control" data-model="environment.APP_URL" required></div>
+              <div class="col-md-4"><label class="form-label">Site adresi</label><input type="url" class="form-control" data-model="environment.SITE_ADDRESS" placeholder="İsteğe bağlı"></div>
+              <div class="col-md-6"><label class="form-label">Veritabanı host</label><input class="form-control" data-model="environment.DB_HOST" required></div>
+              <div class="col-md-2"><label class="form-label">Port</label><input type="number" class="form-control" data-model="environment.DB_PORT" min="1" max="65535" required></div>
+              <div class="col-md-4"><label class="form-label">Veritabanı adı</label><input class="form-control" data-model="environment.DB_DATABASE" pattern="[A-Za-z0-9_-]+" required></div>
+              <div class="col-md-6"><label class="form-label">Veritabanı kullanıcı adı</label><input class="form-control" data-model="environment.DB_USERNAME" required></div>
+              <div class="col-md-6"><label class="form-label">Veritabanı parolası</label><input type="password" class="form-control" data-model="environment.DB_PASSWORD" autocomplete="new-password"></div>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Password</label>
-                <input type="password" name="db[password]" class="form-control" placeholder="Optional">
+            <div class="form-section"><button type="button" class="btn btn-link px-0" data-on-click="toggleAdvanced"><i class="bi bi-chevron-down"></i> Gelişmiş ortam ayarları</button>
+              <div data-show="showAdvanced" class="row g-3 mt-1">
+                <div class="col-md-6"><label class="form-label">CORS kaynakları</label><input class="form-control" data-model="environment.CORS_ALLOWED_ORIGINS"></div>
+                <div class="col-md-6"><label class="form-label">Güvenilen proxy adresleri</label><input class="form-control" data-model="environment.TRUSTED_PROXIES" placeholder="IP/CIDR, virgülle ayırın"></div>
+                <div class="col-md-6"><label class="form-label">Saat dilimi</label><input class="form-control" data-model="environment.APP_TIMEZONE" required></div>
+                <div class="col-md-3"><label class="form-label">Oturum süresi (sn)</label><input type="number" class="form-control" data-model="environment.SESSION_LIFETIME" min="1"></div>
+                <div class="col-md-3"><label class="form-label">Refresh token (gün)</label><input type="number" class="form-control" data-model="environment.REFRESH_TOKEN_DAYS" min="1"></div>
+                <div class="col-md-3"><label class="form-label">Cache TTL (sn)</label><input type="number" class="form-control" data-model="environment.CACHE_TTL" min="1"></div>
+                <div class="col-md-3"><label class="form-label">DB charset</label><input class="form-control" data-model="environment.DB_CHARSET" required></div>
+                <div class="col-md-3 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="environment.APP_DEBUG" id="install-debug"><label class="form-check-label" for="install-debug">Debug</label></div>
+                <div class="col-md-3 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="environment.ENFORCE_HTTPS" id="install-https"><label class="form-check-label" for="install-https">HTTPS zorla</label></div>
+                <div class="col-md-3 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="environment.DB_PERSISTENT" id="install-persistent"><label class="form-check-label" for="install-persistent">Kalıcı DB bağlantısı</label></div>
+                <div class="col-md-3 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="environment.SESSION_COOKIE_SECURE" id="install-session-secure"><label class="form-check-label" for="install-session-secure">Oturum Secure</label></div>
+                <div class="col-md-3 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="environment.REMEMBER_COOKIE_SECURE" id="install-remember-secure"><label class="form-check-label" for="install-remember-secure">Remember Secure</label></div>
+                <div class="col-md-3"><label class="form-label">Oturum SameSite</label><select class="form-select" data-model="environment.SESSION_COOKIE_SAME_SITE"><option value="Lax">Lax</option><option value="Strict">Strict</option><option value="None">None</option></select></div>
+                <div class="col-md-3"><label class="form-label">Remember SameSite</label><select class="form-select" data-model="environment.REMEMBER_COOKIE_SAME_SITE"><option value="Lax">Lax</option><option value="Strict">Strict</option><option value="None">None</option></select></div>
+                <div class="col-12"><h3 class="h6 mt-2 mb-0">İsteğe bağlı entegrasyonlar</h3></div>
+                <div class="col-md-6"><label class="form-label">Resend API anahtarı</label><input type="password" class="form-control" data-model="environment.RESEND_API_KEY" autocomplete="off"></div>
+                <div class="col-md-6"><label class="form-label">Google Analytics ID</label><input class="form-control" data-model="environment.GOOGLE_ANALYTICS_ID"></div>
+                <div class="col-md-6"><label class="form-label">reCAPTCHA site anahtarı</label><input class="form-control" data-model="environment.GOOGLE_RECAPTCHA_SITE_KEY"></div>
+                <div class="col-md-6"><label class="form-label">reCAPTCHA gizli anahtarı</label><input type="password" class="form-control" data-model="environment.GOOGLE_RECAPTCHA_SECRET_KEY" autocomplete="off"></div>
+                <div class="col-md-6"><label class="form-label">Turnstile site anahtarı</label><input class="form-control" data-model="environment.CLOUDFLARE_TURNSTILE_SITE_KEY"></div>
+                <div class="col-md-6"><label class="form-label">Turnstile gizli anahtarı</label><input type="password" class="form-control" data-model="environment.CLOUDFLARE_TURNSTILE_SECRET_KEY" autocomplete="off"></div>
+              </div>
             </div>
-        </div>
+            <div class="d-flex justify-content-end mt-4"><button class="btn btn-primary" type="submit" data-show="notBusy">Bağlantıyı doğrula ve ilerle <i class="bi bi-arrow-right"></i></button><span class="text-muted small align-self-center" data-show="busy"><i class="bi bi-arrow-repeat"></i> Doğrulanıyor…</span></div>
+          </form>
+        </section>
 
-        <div class="step-title mt-4">Administrator Account</div>
-        <div class="row g-3">
-            <div class="col-12">
-                <label class="form-label">Admin Username</label>
-                <input type="text" name="admin[username]" class="form-control" value="admin" required>
+        <section data-show="showSite">
+          <h2 class="h5 mb-1">2. Site ayarları</h2><p class="text-muted small">Ayarlar varsayılan değerlerle gelir; kurulum tamamlanana kadar kaydedilmez.</p>
+          <form data-on-submit="submitSiteSettings">
+            <div class="row g-3">
+              <div class="col-md-6"><label class="form-label">Site adı</label><input class="form-control" data-model="siteSettings.site_name" required></div>
+              <div class="col-md-6"><label class="form-label">Kısa ad</label><input class="form-control" data-model="siteSettings.site_abbreviation" required></div>
+              <div class="col-12"><label class="form-label">Slogan</label><input class="form-control" data-model="siteSettings.site_slogan"></div>
+              <div class="col-12"><label class="form-label">Açıklama</label><textarea class="form-control" rows="2" data-model="siteSettings.site_description"></textarea></div>
+              <div class="col-md-6"><label class="form-label">Varsayılan dil</label><select class="form-select" data-model="siteSettings.default_language"><option value="tr">Türkçe</option><option value="en">English</option></select></div>
+              <div class="col-md-6"><label class="form-label">Tema</label><select class="form-select" data-model="siteSettings.default_theme"><option value="dark">dark</option><option value="default">default</option><option value="royal">royal</option><option value="bootstrap">bootstrap</option><option value="material">material</option><option value="apple">apple</option><option value="glass">glass</option></select></div>
+              <div class="col-12"><label class="form-label">Footer metni</label><input class="form-control" data-model="siteSettings.footer_text"></div>
+              <div class="col-md-6"><label class="form-label">Header logo yolu</label><input class="form-control" data-model="siteSettings.site_logo" required></div>
+              <div class="col-md-6"><label class="form-label">Footer logo yolu</label><input class="form-control" data-model="siteSettings.logo_url" required></div>
+              <div class="col-md-4"><label class="form-label">Favicon</label><input class="form-control" data-model="siteSettings.favicon_url"></div>
+              <div class="col-md-4"><label class="form-label">Profil görseli</label><input class="form-control" data-model="siteSettings.default_profile_image"></div>
+              <div class="col-md-4"><label class="form-label">Kapak görseli</label><input class="form-control" data-model="siteSettings.default_content_cover_image"></div>
             </div>
-            <div class="col-12">
-                <label class="form-label">Admin Email</label>
-                <input type="email" name="admin[email]" class="form-control" value="admin@example.com" required>
-            </div>
-            <div class="col-12">
-                <label class="form-label">Admin Password</label>
-                <input type="password" name="admin[password]" class="form-control" required minlength="8">
-            </div>
-        </div>
+            <div class="form-section"><h3 class="h6">Güvenlik ve e-posta</h3><div class="row g-3">
+              <div class="col-md-4 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="siteSettings.maintenance_mode" id="install-maintenance"><label class="form-check-label" for="install-maintenance">Bakım modu</label></div>
+              <div class="col-md-4 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="siteSettings.mail_enabled" id="install-mail"><label class="form-check-label" for="install-mail">E-posta etkin</label></div>
+              <div class="col-md-4 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="siteSettings.email_verification_required" id="install-verify"><label class="form-check-label" for="install-verify">E-posta doğrulaması</label></div>
+              <div class="col-md-6"><label class="form-label">Beyaz liste IP'leri (JSON)</label><textarea class="form-control" rows="2" data-model="siteSettings.maintenance_whitelist_ips"></textarea></div>
+              <div class="col-md-6"><label class="form-label">Gönderen adı</label><input class="form-control" data-model="siteSettings.mail_from_name"></div>
+              <div class="col-md-6"><label class="form-label">Gönderen adresi</label><input type="email" class="form-control" data-model="siteSettings.mail_from_address"></div>
+              <div class="col-md-6 form-check form-switch ms-2"><input type="checkbox" class="form-check-input" data-model="siteSettings.mail_send_on_register" id="install-register-mail"><label class="form-check-label" for="install-register-mail">Kayıtta e-posta gönder</label></div>
+              <div class="col-12"><label class="form-label">Şifre sıfırlama konusu</label><input class="form-control" data-model="siteSettings.password_reset_subject"></div>
+              <div class="col-12"><label class="form-label">Şifre sıfırlama gövdesi</label><textarea class="form-control" rows="3" data-model="siteSettings.password_reset_body"></textarea></div>
+              <div class="col-12"><label class="form-label">Doğrulama konusu</label><input class="form-control" data-model="siteSettings.email_verification_subject"></div>
+              <div class="col-12"><label class="form-label">Doğrulama gövdesi</label><textarea class="form-control" rows="3" data-model="siteSettings.email_verification_body"></textarea></div>
+            </div></div>
+            <div class="d-flex justify-content-between mt-4"><button type="button" class="btn btn-outline-secondary" data-on-click="backToEnvironment"><i class="bi bi-arrow-left"></i> Geri</button><button class="btn btn-primary" type="submit" data-show="notBusy">Ayarları doğrula ve ilerle <i class="bi bi-arrow-right"></i></button></div>
+          </form>
+        </section>
 
-        <button type="submit" id="submit-btn" class="btn btn-primary">Start Installation</button>
-    </form>
+        <section data-show="showBackup">
+          <h2 class="h5 mb-1">2. Yedekleri yükle</h2><p class="text-muted small">Şimdilik iki dosya zorunludur: veritabanı (.sql veya .sql.gz) ve medya (.tar.gz).</p>
+          <form data-on-submit="submitBackup" enctype="multipart/form-data"><div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Veritabanı yedeği</label><input type="file" class="form-control" name="database_backup" accept=".sql,.gz" required></div>
+            <div class="col-md-6"><label class="form-label">Medya yedeği</label><input type="file" class="form-control" name="media_backup" accept=".tar.gz,.tgz" required></div>
+          </div><div class="d-flex justify-content-between mt-4"><button type="button" class="btn btn-outline-secondary" data-on-click="backToEnvironment"><i class="bi bi-arrow-left"></i> Geri</button><button class="btn btn-primary" type="submit" data-show="notBusy">Dosyaları doğrula ve ilerle <i class="bi bi-arrow-right"></i></button></div></form>
+        </section>
 
-    <div id="status-msg"></div>
-</div>
+        <section data-show="showInspection">
+          <h2 class="h5 mb-1">2. Mevcut veritabanı</h2><p class="text-muted small">Şema ve root kullanıcı kontrol ediliyor; hiçbir tablo değiştirilmez.</p>
+          <div class="alert alert-info" data-show="inspectionReady">Gerekli tablolar bulundu. Root kullanıcı seçimi bir sonraki adımda yapılacak.</div>
+          <div class="alert alert-warning" data-show="inspectionIncomplete">Gerekli tablolar eksik; bu veritabanı env-only kurulumu için uygun değil.</div>
+          <div class="table-responsive"><table class="table table-sm"><tbody><tr><th>Tablo sayısı</th><td class="summary-value" data-text="databaseInspection.tablesCount"></td></tr><tr><th>Kullanıcı sayısı</th><td class="summary-value" data-text="databaseInspection.usersCount"></td></tr></tbody></table></div>
+          <div class="d-flex justify-content-between mt-4"><button type="button" class="btn btn-outline-secondary" data-on-click="backToEnvironment"><i class="bi bi-arrow-left"></i> Geri</button><button type="button" class="btn btn-primary" data-on-click="continueInspection">Root kullanıcı seçimine ilerle <i class="bi bi-arrow-right"></i></button></div>
+        </section>
 
-<script>
-    document.getElementById('setup-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('submit-btn');
-        const msg = document.getElementById('status-msg');
-        const formData = new FormData(e.target);
-        
-        btn.disabled = true;
-        btn.innerText = 'Installing...';
-        msg.style.display = 'none';
+        <section data-show="showRoot">
+          <h2 class="h5 mb-1">3. Root kullanıcı</h2><p class="text-muted small" data-show="freshRootHelp">Yeni root hesap, e-posta doğrulanmış ve otomatik giriş yapılabilir halde oluşturulur.</p><p class="text-muted small" data-show="existingRootHelp">Mevcut veritabanındaki sekiz karakterli kullanıcı ID'sini seçin.</p>
+          <form data-on-submit="submitRoot">
+            <div data-show="freshRootFields" class="row g-3"><div class="col-md-6"><label class="form-label">Kullanıcı adı</label><input class="form-control" data-model="root.username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+"></div><div class="col-md-6"><label class="form-label">E-posta</label><input type="email" class="form-control" data-model="root.email"></div><div class="col-md-6"><label class="form-label">Parola</label><input type="password" class="form-control" data-model="root.password" minlength="12" autocomplete="new-password"></div><div class="col-md-6"><label class="form-label">Parola tekrarı</label><input type="password" class="form-control" data-model="root.password_confirmation" minlength="12" autocomplete="new-password"></div></div>
+            <div data-show="existingRootFields"><label class="form-label">Root kullanıcı ID'si</label><input class="form-control" data-model="root.user_id" pattern="[a-zA-Z0-9]{8}" minlength="8" maxlength="8"><div class="form-text">Mevcut kullanıcı listesindeki ID'lerden birini girin.</div><div class="small text-muted mt-2" data-text="databaseInspection.userHint"></div></div>
+            <div class="alert alert-warning mt-4" data-show="needsConfirmation"><strong>Veritabanı boş değil.</strong> Değiştirme/yükleme onayı için veritabanı adını aşağıya aynen yazın.<input class="form-control mt-2" data-model="existingConfirmation"></div>
+            <div class="d-flex justify-content-between mt-4"><button type="button" class="btn btn-outline-secondary" data-on-click="backToPrevious"><i class="bi bi-arrow-left"></i> Geri</button><button class="btn btn-primary" type="submit" data-show="notBusy">Root bilgilerini doğrula <i class="bi bi-arrow-right"></i></button></div>
+          </form>
+        </section>
 
-        // Convert form data to nested object for the backend
-        const payload = { db: {}, admin: {} };
-        formData.forEach((value, key) => {
-            const parts = key.split(/\[|\]/).filter(p => p !== '');
-            payload[parts[0]][parts[1]] = value;
-        });
+        <section data-show="showSummary">
+          <h2 class="h5 mb-1">4. Kurulumu uygula</h2><p class="text-muted">Tüm doğrulamalar tamamlandı. Aşağıdaki işlem tek seferde uygulanacak.</p>
+          <ul class="list-group mb-4"><li class="list-group-item d-flex justify-content-between"><span>Kurulum türü</span><strong data-text="modeLabel"></strong></li><li class="list-group-item d-flex justify-content-between"><span>Veritabanı</span><strong data-text="environment.DB_DATABASE"></strong></li><li class="list-group-item d-flex justify-content-between"><span>Root kullanıcı</span><strong data-text="rootDisplay"></strong></li><li class="list-group-item d-flex justify-content-between"><span>Yedekler</span><strong data-text="backupDisplay"></strong></li></ul>
+          <div class="alert alert-warning">Bu adım veritabanı şemasını/yedeği, site ayarlarını, root kullanıcıyı ve .env dosyasını etkinleştirir.</div>
+          <div class="d-flex justify-content-between mt-4"><button type="button" class="btn btn-outline-secondary" data-on-click="backToRoot"><i class="bi bi-arrow-left"></i> Geri</button><button type="button" class="btn btn-success" data-on-click="completeInstall" data-show="notBusy">Kurulumu tamamla <i class="bi bi-check2"></i></button></div>
+        </section>
 
-        try {
-            const res = await fetch(window.location.pathname, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+        <section data-show="showSuccess" class="text-center py-4"><i class="bi bi-check-circle-fill display-3 text-success"></i><h2 class="h4 mt-3">Kurulum tamamlandı</h2><p class="text-muted">Panel açılıyor…</p></section>
+      </div>
+    </div>
+  </template>
 
-            if (data.status === 'success') {
-                msg.className = 'alert alert-success';
-                msg.innerText = data.data.message;
-                msg.style.display = 'block';
-                setTimeout(() => window.location.href = '/', 2000);
-            } else {
-                throw new Error(data.error.message || 'Unknown error');
-            }
-        } catch (err) {
-            msg.className = 'alert alert-danger';
-            msg.innerText = err.message;
-            msg.style.display = 'block';
-            btn.disabled = false;
-            btn.innerText = 'Start Installation';
-        }
+  <script>window.__NMR_INSTALL_CONTEXT = %%NMR_INSTALL_CONTEXT_JSON%%;</script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/js/adminlte.min.js"></script>
+  <script type="module">
+    import { createStore, mount } from 'https://cdn.jsdelivr.net/npm/lime-csr-js@0.2.0/dist/index.min.js';
+
+    const context = window.__NMR_INSTALL_CONTEXT || {};
+    const path = context.install_path || window.location.pathname;
+    const queryToken = new URLSearchParams(window.location.search).get('install_token') || '';
+    document.documentElement.dataset.bsTheme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const defaults = context.environment_defaults || {};
+    const siteDefaults = context.site_defaults || {};
+    const store = createStore({
+      mode: '', environment: { ...defaults }, siteSettings: { ...siteDefaults }, root: {},
+      existingConfirmation: '', database: { existing_table_count: 0 }, backup: {},
+      databaseInspection: { tables: [], users: [], tablesCount: 0, usersCount: 0, schema_ready: false },
+      screen: 'mode', busy: false, error: '', success: '', showAdvanced: false,
+      showMode: true, showEnvironment: false, showSite: false, showBackup: false, showInspection: false,
+      showRoot: false, showSummary: false, showSuccess: false, hasError: false, hasSuccess: false,
+      notBusy: true, stepOneVisible: true, stepTwoVisible: true, stepThreeVisible: true, stepFourVisible: true,
+      freshRootFields: false, existingRootFields: false, freshRootHelp: false, existingRootHelp: false,
+      needsConfirmation: false, inspectionReady: false, inspectionIncomplete: false,
+      modeLabel: '', rootDisplay: '', backupDisplay: ''
     });
-</script>
 
+    function setScreen(screen) {
+      store.batch(() => {
+        for (const name of ['showMode','showEnvironment','showSite','showBackup','showInspection','showRoot','showSummary','showSuccess']) store.set(name, false);
+        store.set('screen', screen); store.set('show' + screen[0].toUpperCase() + screen.slice(1), true);
+        const step = screen === 'mode' ? 0 : screen === 'environment' ? 1 : ['site','backup','inspection'].includes(screen) ? 2 : ['root'].includes(screen) ? 3 : 4;
+        store.set('stepOneVisible', step >= 1); store.set('stepTwoVisible', step >= 2); store.set('stepThreeVisible', step >= 3); store.set('stepFourVisible', step >= 4);
+      });
+    }
+    function setBusy(value) { store.batch(() => { store.set('busy', value); store.set('notBusy', !value); }); }
+    function showError(message) { store.batch(() => { store.set('error', String(message || 'İşlem başarısız.')); store.set('hasError', true); store.set('hasSuccess', false); }); }
+    function clearMessage() { store.batch(() => { store.set('error',''); store.set('success',''); store.set('hasError',false); store.set('hasSuccess',false); }); }
+    async function api(endpoint, options = {}) {
+      const headers = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': context.csrf_token || '' };
+      if (queryToken) headers['X-Install-Token'] = queryToken;
+      const init = { ...options, headers: { ...headers, ...(options.headers || {}) } };
+      const result = await fetch(path + endpoint, init);
+      const data = await result.json().catch(() => ({}));
+      if (!result.ok || data.status !== 'success') throw new Error(data?.error?.message || 'Sunucu isteği başarısız.');
+      return data.data || {};
+    }
+    async function jsonApi(endpoint, payload) { return api(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
+
+    if (Array.isArray(store.get('siteSettings.maintenance_whitelist_ips'))) store.set('siteSettings.maintenance_whitelist_ips', JSON.stringify(store.get('siteSettings.maintenance_whitelist_ips')));
+    async function chooseMode(mode, label) { clearMessage(); setBusy(true); try { await jsonApi('/mode', { mode }); store.set('modeLabel', label); setScreen('environment'); } catch (error) { showError(error.message); } finally { setBusy(false); } }
+    const handlers = {
+      async chooseFresh() { await chooseMode('fresh', 'Sıfırdan kurulum'); },
+      async chooseRestore() { await chooseMode('restore', 'Yedek geri yükleme'); },
+      async chooseEnvOnly() { await chooseMode('env_only', 'Sadece .env oluştur'); },
+      toggleTheme() { document.documentElement.dataset.bsTheme = document.documentElement.dataset.bsTheme === 'dark' ? 'light' : 'dark'; },
+      toggleAdvanced() { store.update('showAdvanced', value => !value); },
+      async submitEnvironment(event) { if (!event.currentTarget.checkValidity()) { event.currentTarget.reportValidity(); return; } clearMessage(); setBusy(true); try { const data = await jsonApi('/validate-environment', { environment: store.get('environment') }); store.set('database', data.database || {}); const mode = store.get('mode'); if (mode === 'fresh') { store.set('needsConfirmation', Number(data.database?.existing_table_count || 0) > 0); setScreen('site'); } else if (mode === 'restore') { store.set('needsConfirmation', Number(data.database?.existing_table_count || 0) > 0); setScreen('backup'); } else { const inspection = await jsonApi('/validate-existing-database', {}); const info = inspection.inspection || {}; store.batch(() => { store.set('databaseInspection', { ...info, tablesCount: (info.tables || []).length, usersCount: (info.users || []).length, userHint: (info.users || []).map(user => `${user.id} — ${user.username}`).join(', ') }); store.set('inspectionReady', info.schema_ready === true); store.set('inspectionIncomplete', info.schema_ready !== true); }); setScreen('inspection'); } } catch (error) { showError(error.message); } finally { setBusy(false); } },
+      async submitSiteSettings(event) { if (!event.currentTarget.checkValidity()) { event.currentTarget.reportValidity(); return; } clearMessage(); setBusy(true); try { await jsonApi('/validate-site-settings', { site_settings: store.get('siteSettings') }); setScreen('root'); store.batch(() => { store.set('freshRootFields', true); store.set('existingRootFields', false); store.set('freshRootHelp', true); store.set('existingRootHelp', false); }); } catch (error) { showError(error.message); } finally { setBusy(false); } },
+      async submitBackup(event) { if (!event.currentTarget.checkValidity()) { event.currentTarget.reportValidity(); return; } clearMessage(); setBusy(true); try { const formData = new FormData(event.currentTarget); const data = await api('/validate-backup', { method: 'POST', body: formData }); store.set('backup', data); setScreen('root'); store.batch(() => { store.set('freshRootFields', false); store.set('existingRootFields', true); store.set('freshRootHelp', false); store.set('existingRootHelp', true); }); } catch (error) { showError(error.message); } finally { setBusy(false); } },
+      continueInspection() { if (!store.get('databaseInspection.schema_ready')) { showError('Mevcut veritabanı şeması eksik.'); return; } store.batch(() => { store.set('freshRootFields', false); store.set('existingRootFields', true); store.set('freshRootHelp', false); store.set('existingRootHelp', true); }); setScreen('root'); },
+      backToEnvironment() { setScreen('environment'); },
+      backToRoot() { setScreen('root'); },
+      backToPrevious() { const mode = store.get('mode'); setScreen(mode === 'fresh' ? 'site' : mode === 'restore' ? 'backup' : 'inspection'); },
+      async submitRoot(event) { if (!event.currentTarget.checkValidity()) { event.currentTarget.reportValidity(); return; } clearMessage(); setBusy(true); try { await jsonApi('/validate-root', { root: store.get('root'), existing_confirmation: store.get('existingConfirmation') }); const root = store.get('root'); const userLabel = root.username || root.user_id || ''; store.batch(() => { store.set('rootDisplay', userLabel); store.set('backupDisplay', store.get('mode') === 'restore' ? 'Veritabanı + medya yedeği' : 'Yok'); }); setScreen('summary'); } catch (error) { showError(error.message); } finally { setBusy(false); } },
+      async completeInstall() { clearMessage(); setBusy(true); try { const data = await jsonApi('/complete', {}); store.set('success', data.message || 'Kurulum tamamlandı.'); store.set('hasSuccess', true); setScreen('success'); setTimeout(() => { window.location.href = data.redirect || '/panel'; }, 900); } catch (error) { showError(error.message); } finally { setBusy(false); } }
+    };
+    mount('install-app', { target: document.getElementById('installer-app'), context: { app_name: context.app_name || 'NM Reader' }, store, handlers });
+  </script>
 </body>
 </html>

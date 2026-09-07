@@ -857,7 +857,6 @@ INSERT INTO `system_settings` (`group`, `key`, `type`, `value`) VALUES
 ('general', 'site_slogan', 'string', 'En İyi Çevrimiçi Manga ve Novel Okuyucusu'),
 ('general', 'site_abbreviation', 'string', 'NMR'),
 ('general', 'site_description', 'string', 'Read manga, manhwa, webtoon and novels.'),
-('general', 'site_address', 'string', ''),
 ('general', 'default_language', 'string', 'tr'),
 ('general', 'footer_text', 'string', '© 2026 NM Reader. Tüm hakları saklıdır.'),
 ('appearance', 'default_theme', 'string', 'dark'),
@@ -868,7 +867,6 @@ INSERT INTO `system_settings` (`group`, `key`, `type`, `value`) VALUES
 ('appearance', 'default_content_cover_image', 'string', '/assets/img/covers/placeholder.svg'),
 ('security', 'maintenance_mode', 'bool', 'false'),
 ('security', 'maintenance_whitelist_ips', 'json', '["127.0.0.1", "::1"]'),
-('security', 'enforce_https', 'bool', 'false'),
 ('mail', 'mail_enabled', 'bool', 'true'),
 ('mail', 'mail_send_on_register', 'bool', 'true'),
 ('mail', 'email_verification_required', 'bool', 'false'),
@@ -910,7 +908,8 @@ VALUES
 ('004_rbac_role_permission_overrides', 'installed_from_schema'),
 ('005_series_lifecycle_and_revisions', 'installed_from_schema'),
 ('006_taxonomy_order', 'installed_from_schema'),
-('007_queue_cancellation', 'installed_from_schema');
+('007_queue_cancellation', 'installed_from_schema'),
+('008_remove_env_duplicate_site_settings', 'installed_from_schema');
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

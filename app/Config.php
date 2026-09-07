@@ -246,8 +246,16 @@ final class Config
             ], $healthy ? 200 : 503);
         });
 
-        $app->get("/install-63e4qq3", [InstallController::class, "index"]);
-        $app->post("/install-63e4qq3", [InstallController::class, "process"]);
+        $installPath = '/install-63e4qq3';
+        $app->get($installPath, [InstallController::class, "index"]);
+        $app->post($installPath, [InstallController::class, "process"])->add(new CsrfMiddleware());
+        $app->post($installPath . '/mode', [InstallController::class, "selectMode"])->add(new CsrfMiddleware());
+        $app->post($installPath . '/validate-environment', [InstallController::class, "validateEnvironment"])->add(new CsrfMiddleware());
+        $app->post($installPath . '/validate-site-settings', [InstallController::class, "validateSiteSettings"])->add(new CsrfMiddleware());
+        $app->post($installPath . '/validate-backup', [InstallController::class, "validateBackup"])->add(new CsrfMiddleware());
+        $app->post($installPath . '/validate-existing-database', [InstallController::class, "validateExistingDatabase"])->add(new CsrfMiddleware());
+        $app->post($installPath . '/validate-root', [InstallController::class, "validateRoot"])->add(new CsrfMiddleware());
+        $app->post($installPath . '/complete', [InstallController::class, "complete"])->add(new CsrfMiddleware());
         if (!file_exists(dirname(__DIR__) . "/.env")) return;
         $typePattern = "light-novel|web-novel|novel|manga|manhua|manhwa|webtoon";
         self::registerWebRoutes($app, $typePattern);

@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Config;
 use App\Helpers\ResponseHelper;
-use App\Services\EntityIdService;
 use App\Services\HtmlTemplateService;
-use PDO;
+use App\Services\InstallService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * InstallController - Handles the initial system setup.
- * Access is restricted once .env is properly configured.
+ * HTTP boundary for the installation wizard.
+ *
+ * Every endpoint only validates and stores a short-lived session draft. The
+ * InstallService::complete() call is the single point that changes the
+ * database, media directory, and .env file.
  */
 final class InstallController
 {
@@ -22,26 +25,27 @@ final class InstallController
     public function __construct(
         private readonly array $settings,
         private readonly HtmlTemplateService $templates,
-    )
-    {
-        $this->basePath = (string)($this->settings['app']['base_path'] ?? dirname(__DIR__, 2));
+        private readonly InstallService $installer,
+    ) {
+        $this->basePath = (string) ($this->settings['app']['base_path'] ?? dirname(__DIR__, 2));
     }
 
-    /**
-     * Renders the installation form.
-     */
     public function index(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        if (!$this->isAuthorizedInstaller($request)) {
-            return ResponseHelper::error(403, 'Installer access denied. Configure INSTALL_TOKEN for remote setup.');
-        }
-
-        // Safety: If .env exists and is valid, redirect to home.
-        if (file_exists($this->basePath . '/.env')) {
-            return $response->withHeader('Location', '/')->withStatus(302);
-        }
-
-        $content = $this->templates->render('install.html');
+        if (($guard = $this->guard($request, false)) !== null) return $guard;
+        if (is_file($this->basePath . '/.env')) return $response->withHeader('Location', '/')->withStatus(302);
+        $context = [
+            'app_name' => (string) ($this->settings['app']['name'] ?? 'NM Reader'),
+            'csrf_token' => (string) ($_SESSION['csrf_token'] ?? ''),
+            'modes' => [InstallService::MODE_FRESH, InstallService::MODE_RESTORE, InstallService::MODE_ENV_ONLY],
+            'environment_defaults' => InstallService::environmentDefaults(),
+            'site_defaults' => InstallService::siteDefaults(),
+            'install_path' => '/install-63e4qq3',
+        ];
+        $content = $this->templates->render('install.html', [
+            'install_context_json' => $this->jsonForHtml($context),
+            'app_name' => (string) ($this->settings['app']['name'] ?? 'NM Reader'),
+        ]);
         if ($content === null) {
             $response->getBody()->write('Installation template missing.');
             return $response->withStatus(500);
@@ -50,170 +54,276 @@ final class InstallController
         return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
     }
 
-    /**
-     * Processes the installation request.
-     */
-    public function process(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function selectMode(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        if (!$this->isAuthorizedInstaller($request)) {
-            return ResponseHelper::error(403, 'Installer access denied. Configure INSTALL_TOKEN for remote setup.');
-        }
-
-        if (file_exists($this->basePath . '/.env')) {
-            return ResponseHelper::error(403, 'System already installed.');
-        }
-
-        $data = (array)$request->getParsedBody();
-        $db = $data['db'] ?? [];
-        $admin = $data['admin'] ?? [];
-
+        if (($guard = $this->guard($request)) !== null) return $guard;
         try {
-            if (!is_array($db) || !is_array($admin)) {
-                throw new \InvalidArgumentException('Invalid installation payload.');
+            $mode = (string) ($this->body($request)['mode'] ?? '');
+            if (!in_array($mode, [InstallService::MODE_FRESH, InstallService::MODE_RESTORE, InstallService::MODE_ENV_ONLY], true)) {
+                throw new \InvalidArgumentException('Invalid installation mode.');
             }
-            $host = trim((string) ($db['host'] ?? ''));
-            $port = filter_var($db['port'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
-            $database = trim((string) ($db['database'] ?? ''));
-            $dbUsername = trim((string) ($db['username'] ?? ''));
-            $dbPassword = (string) ($db['password'] ?? '');
-            $adminUsername = trim((string) ($admin['username'] ?? ''));
-            $adminEmail = trim((string) ($admin['email'] ?? ''));
-            $adminPassword = (string) ($admin['password'] ?? '');
-            if ($host === '' || $port === false || !preg_match('/^[A-Za-z0-9_-]+$/', $database) || $dbUsername === '') {
-                throw new \InvalidArgumentException('Valid database connection settings are required.');
-            }
-            if (!preg_match('/^[A-Za-z0-9_]{3,30}$/', $adminUsername)
-                || filter_var($adminEmail, FILTER_VALIDATE_EMAIL) === false
-                || strlen($adminPassword) < 12
-            ) {
-                throw new \InvalidArgumentException('Admin username, valid email and a password of at least 12 characters are required.');
-            }
-
-            // 1. Test Database Connection
-            $dsn = "mysql:host={$host};port={$port};dbname={$database};charset=utf8mb4";
-            $pdo = new PDO($dsn, $dbUsername, $dbPassword, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]);
-
-            // 2. Import Schema
-            $schemaFile = $this->basePath . '/app/database/schema.sql';
-            if (!file_exists($schemaFile)) {
-                throw new \Exception('schema.sql not found in app/database directory.');
-            }
-
-            $sql = file_get_contents($schemaFile);
-            $pdo->exec($sql);
-
-            // 3. Create Admin User
-            $userId = EntityIdService::generate();
-            $hashedPassword = password_hash($adminPassword, PASSWORD_BCRYPT, ['cost' => 12]);
-            
-            $stmt = $pdo->prepare("INSERT INTO users (id, username, email, password_hash, roles, created_at) VALUES (?, ?, ?, ?, '1', NOW())");
-            $stmt->execute([$userId, $adminUsername, $adminEmail, $hashedPassword]);
-
-            // 4. Generate .env file
-            $envContent = $this->generateEnv([
-                'host' => $host,
-                'port' => $port,
-                'database' => $database,
-                'username' => $dbUsername,
-                'password' => $dbPassword,
-            ], $userId);
-            $envPath = $this->basePath . '/.env';
-            
-            // Check if root directory is writable
-            if (!is_writable($this->basePath)) {
-                throw new \Exception("The application root ({$this->basePath}) is not writable by the application user.");
-            }
-
-            if (file_put_contents($envPath, $envContent) === false) {
-                throw new \Exception('Failed to write .env file to disk.');
-            }
-
-            return ResponseHelper::success(['message' => 'Installation successful! Please refresh the page.']);
-        } catch (\InvalidArgumentException $e) {
-            return ResponseHelper::error(400, $e->getMessage());
-        } catch (\Throwable $e) {
-            error_log('Installation failed: ' . $e->getMessage());
-            return ResponseHelper::error(500, 'Installation failed. Check the server logs for details.');
+            $previous = $_SESSION['installer_draft'] ?? [];
+            if (is_array($previous)) foreach ((array) ($previous['backup'] ?? []) as $upload) $this->discardUpload($upload['path'] ?? null);
+            $_SESSION['installer_draft'] = ['mode' => $mode];
+            return ResponseHelper::success(['mode' => $mode]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
         }
     }
 
-    private function generateEnv(array $db, string $adminId): string
+    public function validateEnvironment(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $mediaSecret = bin2hex(random_bytes(32));
-        $dbHost = $this->envValue((string) $db['host']);
-        $dbName = $this->envValue((string) $db['database']);
-        $dbUser = $this->envValue((string) $db['username']);
-        $dbPassword = $this->envValue((string) $db['password']);
-        $rootUser = $this->envValue($adminId);
+        if (($guard = $this->guard($request)) !== null) return $guard;
+        try {
+            $draft = $this->draft();
+            $body = $this->body($request);
+            $result = $this->installer->validateEnvironment((array) ($body['environment'] ?? $body));
+            $draft['environment'] = $result['environment'];
+            $draft['database'] = $result['database'];
+            $this->saveDraft($draft);
+            return ResponseHelper::success([
+                'environment' => $this->redactEnvironment($result['environment']),
+                'database' => $result['database'],
+            ]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(422, $this->safeInstallMessage($exception), 'INSTALL_VALIDATION_FAILED');
+        }
+    }
 
-        return <<<EOT
-# Application Settings
-APP_NAME=NovelMangaReader
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=http://localhost:8080
-APP_TIMEZONE=UTC
-CORS_ALLOWED_ORIGINS=http://localhost:8080,http://localhost:3000
+    public function validateSiteSettings(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        if (($guard = $this->guard($request)) !== null) return $guard;
+        try {
+            $draft = $this->draft();
+            $this->requireDraftPart($draft, 'environment');
+            $body = $this->body($request);
+            $settings = $this->installer->validateSiteSettings((array) ($body['site_settings'] ?? $body));
+            $draft['site_settings'] = $settings;
+            $this->saveDraft($draft);
+            return ResponseHelper::success(['site_settings' => $settings]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(409, $this->safeInstallMessage($exception), 'INSTALL_VALIDATION_FAILED');
+        }
+    }
 
-# Session & Tokens
-SESSION_LIFETIME=7200
-REFRESH_TOKEN_DAYS=30
-CACHE_TTL=300
-SESSION_COOKIE_SECURE=false
-SESSION_COOKIE_SAME_SITE=Lax
-REMEMBER_COOKIE_SECURE=false
-REMEMBER_COOKIE_SAME_SITE=Lax
+    public function validateBackup(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        if (($guard = $this->guard($request)) !== null) return $guard;
+        $stored = [];
+        try {
+            $draft = $this->draft();
+            if (($draft['mode'] ?? '') !== InstallService::MODE_RESTORE) {
+                throw new \InvalidArgumentException('Backup uploads are only valid in restore mode.');
+            }
+            $files = $request->getUploadedFiles();
+            $database = $files['database_backup'] ?? null;
+            $media = $files['media_backup'] ?? null;
+            if (!$database instanceof \Psr\Http\Message\UploadedFileInterface || $database->getError() === UPLOAD_ERR_NO_FILE) {
+                throw new \InvalidArgumentException('A database backup file is required.');
+            }
+            if (!$media instanceof \Psr\Http\Message\UploadedFileInterface || $media->getError() === UPLOAD_ERR_NO_FILE) {
+                throw new \InvalidArgumentException('A media backup file is required.');
+            }
+            $this->discardUpload($draft['backup']['database']['path'] ?? null);
+            $this->discardUpload($draft['backup']['media']['path'] ?? null);
+            $stored['database'] = $this->installer->storeBackupUpload($database, 'database');
+            $stored['media'] = $this->installer->storeBackupUpload($media, 'media');
+            $draft['backup'] = $stored;
+            $this->saveDraft($draft);
+            return ResponseHelper::success([
+                'database' => $this->uploadSummary($draft['backup']['database']),
+                'media' => $this->uploadSummary($draft['backup']['media']),
+            ]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            foreach ($stored as $upload) $this->discardUpload($upload['path'] ?? null);
+            return ResponseHelper::error(422, $this->safeInstallMessage($exception), 'INSTALL_VALIDATION_FAILED');
+        }
+    }
 
-# Security
-# Comma-separated reverse proxy IPs/CIDRs allowed to provide forwarded client IP headers.
-TRUSTED_PROXIES=
-MEDIA_SECRET={$mediaSecret}
+    public function validateExistingDatabase(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        if (($guard = $this->guard($request)) !== null) return $guard;
+        try {
+            $draft = $this->draft();
+            if (($draft['mode'] ?? '') !== InstallService::MODE_ENV_ONLY) {
+                throw new \InvalidArgumentException('Existing database inspection is only valid in env-only mode.');
+            }
+            $this->requireDraftPart($draft, 'environment');
+            $inspection = $this->installer->inspectExistingDatabase((array) $draft['environment']);
+            $draft['database_inspection'] = $inspection;
+            $this->saveDraft($draft);
+            return ResponseHelper::success(['inspection' => $inspection]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(422, $this->safeInstallMessage($exception), 'INSTALL_VALIDATION_FAILED');
+        }
+    }
 
-# Integrations
-RESEND_API_KEY=""
-GOOGLE_ANALYTICS_ID=""
-GOOGLE_RECAPTCHA_SITE_KEY=""
-GOOGLE_RECAPTCHA_SECRET_KEY=""
-CLOUDFLARE_TURNSTILE_SITE_KEY=""
-CLOUDFLARE_TURNSTILE_SECRET_KEY=""
+    public function validateRoot(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        if (($guard = $this->guard($request)) !== null) return $guard;
+        try {
+            $draft = $this->draft();
+            $mode = (string) ($draft['mode'] ?? '');
+            if (!in_array($mode, [InstallService::MODE_FRESH, InstallService::MODE_RESTORE, InstallService::MODE_ENV_ONLY], true)) {
+                throw new \InvalidArgumentException('Choose an installation mode first.');
+            }
+            $this->requireDraftPart($draft, 'environment');
+            if ($mode === InstallService::MODE_ENV_ONLY) $this->requireDraftPart($draft, 'database_inspection');
+            if ($mode === InstallService::MODE_RESTORE) $this->requireDraftPart($draft, 'backup');
+            $body = $this->body($request);
+            if (in_array($mode, [InstallService::MODE_FRESH, InstallService::MODE_RESTORE], true)
+                && (int) (($draft['database']['existing_table_count'] ?? 0)) > 0
+                && trim((string) ($body['existing_confirmation'] ?? '')) !== (string) ($draft['environment']['DB_DATABASE'] ?? '')) {
+                throw new \InvalidArgumentException('The target database is not empty. Type its name to confirm replacement.');
+            }
+            $root = $this->installer->validateRoot((array) ($body['root'] ?? $body), $mode, (array) ($draft['database_inspection'] ?? []));
+            $draft['root'] = $root;
+            if (array_key_exists('existing_confirmation', $body)) {
+                $draft['existing_confirmation'] = trim((string) $body['existing_confirmation']);
+            }
+            $this->saveDraft($draft);
+            return ResponseHelper::success(['root' => $this->redactRoot($root)]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(409, $this->safeInstallMessage($exception), 'INSTALL_VALIDATION_FAILED');
+        }
+    }
 
-# Database Settings
-DB_HOST={$dbHost}
-DB_PORT={$db['port']}
-DB_DATABASE={$dbName}
-DB_USERNAME={$dbUser}
-DB_PASSWORD={$dbPassword}
-DB_CHARSET=utf8mb4
+    public function complete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        if (($guard = $this->guard($request)) !== null) return $guard;
+        try {
+            $draft = $this->draft();
+            foreach (['mode', 'environment', 'root'] as $part) $this->requireDraftPart($draft, $part);
+            $mode = (string) $draft['mode'];
+            if ($mode === InstallService::MODE_FRESH) $this->requireDraftPart($draft, 'site_settings');
+            if ($mode === InstallService::MODE_RESTORE) $this->requireDraftPart($draft, 'backup');
+            if ($mode === InstallService::MODE_ENV_ONLY) $this->requireDraftPart($draft, 'database_inspection');
 
-# Admin Settings
-ROOT_USER={$rootUser}
-EOT;
+            $result = $this->installer->complete($draft);
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $result['root_user_id'];
+            $_SESSION['username'] = $result['root_username'];
+            $_SESSION['roles'] = ['root', 'admin', 'user'];
+            unset($_SESSION['is_admin']);
+            $permissions = [];
+            foreach ((array) (Config::getRbacConfig()['roles'] ?? []) as $role) {
+                foreach ((array) ($role['permissions'] ?? []) as $permission) $permissions[] = (string) $permission;
+            }
+            $_SESSION['permissions'] = array_values(array_unique($permissions));
+            foreach ((array) ($draft['backup'] ?? []) as $upload) $this->discardUpload($upload['path'] ?? null);
+            unset($_SESSION['installer_draft']);
+            return ResponseHelper::success([
+                'message' => $result['message'],
+                'mode' => $result['mode'],
+                'root_user_id' => $result['root_user_id'],
+                'redirect' => '/panel',
+            ]);
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        } catch (\Throwable $exception) {
+            return ResponseHelper::error(409, $this->safeInstallMessage($exception), 'INSTALL_VALIDATION_FAILED');
+        }
+    }
+
+    /** Backwards-compatible alias for clients that still post to the old URL. */
+    public function process(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return $this->complete($request, $response);
+    }
+
+    private function guard(ServerRequestInterface $request, bool $alreadyInstalled = true): ?ResponseInterface
+    {
+        if (!$this->isAuthorizedInstaller($request)) return ResponseHelper::error(403, 'Installer access denied. Configure INSTALL_TOKEN for remote setup.');
+        if ($alreadyInstalled && is_file($this->basePath . '/.env')) return ResponseHelper::error(409, 'System already installed.');
+        return null;
+    }
+
+    /** @return array<string,mixed> */
+    private function body(ServerRequestInterface $request): array
+    {
+        $body = $request->getParsedBody();
+        return is_array($body) ? $body : [];
+    }
+
+    /** @return array<string,mixed> */
+    private function draft(): array
+    {
+        $draft = $_SESSION['installer_draft'] ?? [];
+        if (!is_array($draft) || $draft === []) throw new \InvalidArgumentException('Installation session expired. Start again.');
+        return $draft;
+    }
+
+    /** @param array<string,mixed> $draft */
+    private function saveDraft(array $draft): void
+    {
+        $_SESSION['installer_draft'] = $draft;
+    }
+
+    /** @param array<string,mixed> $draft */
+    private function requireDraftPart(array $draft, string $part): void
+    {
+        if (!array_key_exists($part, $draft) || $draft[$part] === [] || $draft[$part] === null) throw new \InvalidArgumentException('Complete the previous installation step first.');
+    }
+
+    /** @param array<string,mixed> $environment @return array<string,mixed> */
+    private function redactEnvironment(array $environment): array
+    {
+        if (($environment['DB_PASSWORD'] ?? '') !== '') $environment['DB_PASSWORD'] = '••••••••';
+        foreach (['RESEND_API_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY'] as $key) {
+            if (($environment[$key] ?? '') !== '') $environment[$key] = '••••••••';
+        }
+        return $environment;
+    }
+
+    /** @param array<string,mixed> $root @return array<string,mixed> */
+    private function redactRoot(array $root): array
+    {
+        unset($root['password'], $root['password_confirmation']);
+        return $root;
+    }
+
+    /** @param array<string,mixed> $upload @return array<string,mixed> */
+    private function uploadSummary(array $upload): array
+    {
+        return ['name' => $upload['name'] ?? '', 'size' => (int) ($upload['size'] ?? 0), 'kind' => $upload['kind'] ?? ''];
+    }
+
+    private function discardUpload(mixed $path): void
+    {
+        if (is_string($path) && str_starts_with($path, $this->basePath . '/storage/install/uploads/')) @unlink($path);
+    }
+
+    private function safeInstallMessage(\Throwable $exception): string
+    {
+        $message = trim($exception->getMessage());
+        $lower = strtolower($message);
+        if ($message === '' || str_contains($lower, 'password') || str_contains($lower, 'sqlstate')) return 'Installation validation failed. Check the supplied values and server configuration.';
+        return $message;
+    }
+
+    private function jsonForHtml(array $value): string
+    {
+        return (string) json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
     }
 
     private function isAuthorizedInstaller(ServerRequestInterface $request): bool
     {
         $remoteAddress = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? '');
-        if (in_array($remoteAddress, ['127.0.0.1', '::1'], true)) {
-            return true;
-        }
-
+        if (in_array($remoteAddress, ['127.0.0.1', '::1'], true)) return true;
         $expected = trim((string) ($_ENV['INSTALL_TOKEN'] ?? getenv('INSTALL_TOKEN') ?: ''));
-        if (strlen($expected) < 16) {
-            return false;
-        }
-        $body = $request->getParsedBody();
+        if (strlen($expected) < 16) return false;
         $provided = trim($request->getHeaderLine('X-Install-Token'));
         if ($provided === '') $provided = trim((string) ($request->getQueryParams()['install_token'] ?? ''));
-        if ($provided === '' && is_array($body)) $provided = trim((string) ($body['install_token'] ?? ''));
-
         return $provided !== '' && hash_equals($expected, $provided);
-    }
-
-    private function envValue(string $value): string
-    {
-        return '"' . addcslashes($value, "\\\"\n\r") . '"';
     }
 }

@@ -212,7 +212,11 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             'duration_ms' => (int) round((microtime(true) - $start) * 1000),
             'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
             'user_agent' => $userAgent,
-            'context' => ['query' => $request->getUri()->getQuery()],
+            'context' => ['query' => (function () use ($request): string {
+                $query = $request->getQueryParams();
+                if (array_key_exists('install_token', $query)) $query['install_token'] = '[redacted]';
+                return http_build_query($query);
+            })()],
         ]);
     } catch (\Throwable) {}
 

@@ -56,6 +56,7 @@ use App\Services\WebContextBuilder;
 use App\Services\WebUrlService;
 use App\Services\WebPageRenderer;
 use App\Services\HtmlTemplateService;
+use App\Services\InstallService;
 use App\Services\TaxonomyFormatter;
 use App\Middleware\I18nMiddleware;
 use App\Middleware\RequestIdMiddleware;
@@ -172,6 +173,8 @@ $builder->addDefinitions([
         ->constructorParameter('seoService', DI\get(\App\Services\SeoService::class)),
     HtmlTemplateService::class => DI\autowire(HtmlTemplateService::class)
         ->constructorParameter('basePath', $settings['app']['base_path']),
+    InstallService::class => DI\autowire(InstallService::class)
+        ->constructorParameter('settings', $settings),
     TaxonomyFormatter::class => DI\autowire(TaxonomyFormatter::class),
     UserActivityService::class => DI\autowire(UserActivityService::class),
     SlugService::class => DI\autowire(SlugService::class),
