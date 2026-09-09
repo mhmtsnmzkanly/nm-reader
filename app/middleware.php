@@ -18,7 +18,9 @@ $container = $app->getContainer();
 
 // 2. Identify Install Route to skip DB-dependent logic
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
-$isInstallRoute = str_contains($requestUri, 'install-63e4qq3');
+$requestPath = parse_url($requestUri, PHP_URL_PATH);
+$isInstallRoute = is_string($requestPath)
+    && preg_match('#^/install-63e4qq3(?:/|$)#', $requestPath) === 1;
 
 // Maintenance Mode Middleware (Runs inside Session & Auth scope so admin sessions are recognized)
 if (!$isInstallRoute) {
@@ -45,8 +47,9 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 
     $sessionPath = (string) $settings['app']['session_path'];
     if (!is_dir($sessionPath)) {
-        @mkdir($sessionPath, 0777, true);
+        @mkdir($sessionPath, 0700, true);
     }
+    if (is_dir($sessionPath)) @chmod($sessionPath, 0700);
 
     if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         $sessionLifetime = (int) ($settings['app']['session_lifetime_seconds'] ?? 3600);

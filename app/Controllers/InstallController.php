@@ -43,7 +43,11 @@ final class InstallController
             'install_path' => '/install-63e4qq3',
         ];
         $content = $this->templates->render('install.html', [
-            'install_context_json' => $this->jsonForHtml($context),
+            // Keep the replacement safe inside a JavaScript string. If a
+            // misconfigured web server serves the raw HTML template, the
+            // unreplaced token remains valid JavaScript and the client falls
+            // back to an empty context instead of failing to parse the page.
+            'install_context_b64' => base64_encode($this->jsonForHtml($context)),
             'app_name' => (string) ($this->settings['app']['name'] ?? 'NM Reader'),
         ]);
         if ($content === null) {
@@ -318,8 +322,6 @@ final class InstallController
 
     private function isAuthorizedInstaller(ServerRequestInterface $request): bool
     {
-        $remoteAddress = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? '');
-        if (in_array($remoteAddress, ['127.0.0.1', '::1'], true)) return true;
         $expected = trim((string) ($_ENV['INSTALL_TOKEN'] ?? getenv('INSTALL_TOKEN') ?: ''));
         if (strlen($expected) < 16) return false;
         $provided = trim($request->getHeaderLine('X-Install-Token'));

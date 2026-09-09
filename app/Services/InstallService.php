@@ -40,6 +40,9 @@ final class InstallService
 
     private const INTEGER_ENV_KEYS = ['SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL', 'DB_PORT'];
 
+    private const MAX_MEDIA_ARCHIVE_FILES = 100000;
+    private const MAX_MEDIA_ARCHIVE_BYTES = 16 * 1024 * 1024 * 1024;
+
     private const SITE_ENV_DUPLICATES = ['site_address', 'enforce_https'];
 
     public function __construct(private readonly array $settings)
@@ -228,14 +231,17 @@ final class InstallService
             throw new \InvalidArgumentException('The existing database does not contain the required NM Reader schema.');
         }
         if ($mode === self::MODE_ENV_ONLY) {
-            $found = false;
+            $found = null;
             foreach ((array) ($inspection['users'] ?? []) as $user) {
                 if ((string) ($user['id'] ?? '') === $id) {
-                    $found = true;
+                    $found = $user;
                     break;
                 }
             }
-            if (!$found) throw new \InvalidArgumentException('Selected root user was not found in the database.');
+            if (!is_array($found)) throw new \InvalidArgumentException('Selected root user was not found in the database.');
+            if (!$this->hasAdministratorRole($found['roles'] ?? null)) {
+                throw new \InvalidArgumentException('Selected root user must already have the administrator role.');
+            }
         }
         return ['user_id' => $id];
     }
@@ -476,6 +482,9 @@ final class InstallService
         $stmt->execute(['id' => $id]);
         $user = $stmt->fetch();
         if (!is_array($user)) throw new \InvalidArgumentException('Selected root user was not found after restore.');
+        if (!$this->hasAdministratorRole($user['roles'] ?? null)) {
+            throw new \InvalidArgumentException('Selected root user must already have the administrator role.');
+        }
         return [
             'id' => (string) ($user['id'] ?? $id),
             'username' => (string) ($user['username'] ?? ''),
@@ -511,6 +520,8 @@ final class InstallService
         try {
             $archive = new PharData($path);
             $iterator = new \RecursiveIteratorIterator($archive);
+            $fileCount = 0;
+            $expandedBytes = 0;
             foreach ($iterator as $file) {
                 if ($file instanceof \SplFileInfo && $file->isLink()) {
                     throw new \InvalidArgumentException('Media archive contains an unsafe link.');
@@ -518,6 +529,13 @@ final class InstallService
                 $name = str_replace('\\', '/', $iterator->getSubPathName());
                 if ($name === '' || str_starts_with($name, '/') || preg_match('~(^|/)\.\.?(/|$)|(^|/)\.\.?$~', $name)) {
                     throw new \InvalidArgumentException('Media archive contains an unsafe path.');
+                }
+                if ($file instanceof \SplFileInfo && $file->isFile()) {
+                    $fileCount++;
+                    $expandedBytes += max(0, (int) $file->getSize());
+                    if ($fileCount > self::MAX_MEDIA_ARCHIVE_FILES || $expandedBytes > self::MAX_MEDIA_ARCHIVE_BYTES) {
+                        throw new \InvalidArgumentException('Media archive expands beyond the allowed file or size limit.');
+                    }
                 }
             }
         } catch (\InvalidArgumentException $exception) {
@@ -539,10 +557,12 @@ final class InstallService
     {
         if (!is_file($path)) throw new \InvalidArgumentException('Media backup file is missing.');
         if (!mkdir($destination, 0700, true) && !is_dir($destination)) throw new \RuntimeException('Could not create media staging directory.');
+        $temporaryTarPath = null;
         try {
             $archive = new PharData($path);
             if (str_ends_with(strtolower($path), '.gz')) {
                 $tarPath = substr($path, 0, -3);
+                $temporaryTarPath = $tarPath;
                 if (!is_file($tarPath)) $archive->decompress();
                 $archive = new PharData($tarPath);
             }
@@ -551,7 +571,19 @@ final class InstallService
         } catch (\Throwable $exception) {
             $this->removeDirectory($destination);
             throw new \InvalidArgumentException('Media backup could not be extracted.', 0, $exception);
+        } finally {
+            if ($temporaryTarPath !== null && is_file($temporaryTarPath)) @unlink($temporaryTarPath);
         }
+    }
+
+    private function hasAdministratorRole(mixed $rawRoles): bool
+    {
+        $roles = array_map('trim', explode(',', (string) $rawRoles));
+        $lowerRoles = array_map('strtolower', $roles);
+        $adminId = (string) ((\App\Config::getRbacConfig()['id_map']['admin'] ?? 1));
+        return in_array($adminId, $roles, true)
+            || in_array('admin', $lowerRoles, true)
+            || in_array('root', $lowerRoles, true);
     }
 
     /** @param array<string, mixed> $environment */
