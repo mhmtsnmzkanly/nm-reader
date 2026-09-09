@@ -442,6 +442,13 @@ final class Config
                 $secure->post("/user/notifications/read", [UserController::class, "markNotificationsRead"]);
                 $secure->delete("/user/notifications/{notificationId:[0-9]+}", [UserController::class, "deleteNotification"]);
                 $secure->get("/user/follows/users", [UserController::class, "followedUsers"]);
+                $secure->get("/user/lists", [UserController::class, "lists"]);
+                $secure->post("/user/lists", [UserController::class, "createList"]);
+                $secure->get("/user/lists/{listId:[0-9]+}", [UserController::class, "list"]);
+                $secure->put("/user/lists/{listId:[0-9]+}", [UserController::class, "updateList"]);
+                $secure->delete("/user/lists/{listId:[0-9]+}", [UserController::class, "deleteList"]);
+                $secure->post("/user/lists/{listId:[0-9]+}/items", [UserController::class, "addListItem"]);
+                $secure->delete("/user/lists/{listId:[0-9]+}/items/{contentId:[a-z0-9]{6}}", [UserController::class, "removeListItem"]);
                 $secure->post("/user/follows/{person:[A-Za-z0-9_]+}", [UserController::class, "follow"]);
                 $secure->delete("/user/follows/{person:[A-Za-z0-9_]+}", [UserController::class, "unfollow"]);
                 $secure->post("/reports", [\App\Controllers\ReportController::class, "create"])->add(new RestrictedActionMiddleware($users, "reporting"));

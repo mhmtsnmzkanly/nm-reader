@@ -542,6 +542,35 @@ CREATE TABLE `user_series_follows` (
   CONSTRAINT `fk_follows_series` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `user_list_items`;
+DROP TABLE IF EXISTS `user_lists`;
+CREATE TABLE `user_lists` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `name` varchar(80) NOT NULL,
+  `description` varchar(500) DEFAULT NULL,
+  `visibility` enum('private','public') NOT NULL DEFAULT 'private',
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_user_list_name` (`user_id`,`name`),
+  KEY `idx_user_lists_user_order` (`user_id`,`sort_order`,`name`),
+  CONSTRAINT `fk_user_lists_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `user_list_items` (
+  `list_id` bigint(20) unsigned NOT NULL,
+  `content_id` char(6) NOT NULL,
+  `position` int(11) NOT NULL DEFAULT 0,
+  `added_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`list_id`,`content_id`),
+  KEY `idx_user_list_items_order` (`list_id`,`position`,`added_at`),
+  KEY `idx_user_list_items_content` (`content_id`),
+  CONSTRAINT `fk_user_list_items_list` FOREIGN KEY (`list_id`) REFERENCES `user_lists` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_list_items_content` FOREIGN KEY (`content_id`) REFERENCES `series` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `user_follows`;
 CREATE TABLE `user_follows` (
   `follower_id` char(8) NOT NULL,

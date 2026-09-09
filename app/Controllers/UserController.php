@@ -9,6 +9,7 @@ use App\Helpers\CursorPagination;
 use App\Services\UserService;
 use App\Services\WalletService;
 use App\Services\MeService;
+use App\Services\UserListService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -27,6 +28,7 @@ final class UserController
         private readonly UserService $users,
         private readonly WalletService $wallets,
         private readonly MeService $meService,
+        private readonly UserListService $lists,
     )
     {
     }
@@ -293,6 +295,88 @@ final class UserController
             $page,
             $perPage
         );
+    }
+
+    public function lists(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return ResponseHelper::success($this->lists->list((string) $request->getAttribute('user_id')));
+    }
+
+    public function list(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $list = $this->lists->get((string) $request->getAttribute('user_id'), (int) ($args['listId'] ?? 0));
+        return $list === null ? ResponseHelper::error(404, 'List not found') : ResponseHelper::success($list);
+    }
+
+    public function createList(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        try {
+            $payload = $request->getParsedBody();
+            return ResponseHelper::created($this->lists->create(
+                (string) $request->getAttribute('user_id'),
+                is_array($payload) ? $payload : []
+            ));
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\PDOException $e) {
+            if ((string) $e->getCode() === '23000') return ResponseHelper::error(409, 'A list with this name already exists');
+            throw $e;
+        }
+    }
+
+    public function updateList(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = $request->getParsedBody();
+            $list = $this->lists->update(
+                (string) $request->getAttribute('user_id'),
+                (int) ($args['listId'] ?? 0),
+                is_array($payload) ? $payload : []
+            );
+            return $list === null ? ResponseHelper::error(404, 'List not found') : ResponseHelper::success($list);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\PDOException $e) {
+            if ((string) $e->getCode() === '23000') return ResponseHelper::error(409, 'A list with this name already exists');
+            throw $e;
+        }
+    }
+
+    public function deleteList(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $deleted = $this->lists->delete((string) $request->getAttribute('user_id'), (int) ($args['listId'] ?? 0));
+        return $deleted ? ResponseHelper::success(['deleted' => true]) : ResponseHelper::error(404, 'List not found');
+    }
+
+    public function addListItem(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $payload = $request->getParsedBody();
+            $added = $this->lists->addItem(
+                (string) $request->getAttribute('user_id'),
+                (int) ($args['listId'] ?? 0),
+                is_array($payload) ? $payload : []
+            );
+            return ResponseHelper::success(['updated' => true, 'added' => $added]);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        } catch (\DomainException $e) {
+            return ResponseHelper::error(404, $e->getMessage());
+        }
+    }
+
+    public function removeListItem(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        try {
+            $removed = $this->lists->removeItem(
+                (string) $request->getAttribute('user_id'),
+                (int) ($args['listId'] ?? 0),
+                (string) ($args['contentId'] ?? '')
+            );
+            return $removed ? ResponseHelper::success(['deleted' => true]) : ResponseHelper::error(404, 'List item not found');
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        }
     }
 
     private function nextCursor(array $items, int $perPage): ?string
