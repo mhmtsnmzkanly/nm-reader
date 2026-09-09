@@ -1028,6 +1028,9 @@ final class Config
             $group->get("/genres", [AdminContentController::class, "listGenres"])->add($perm(["admin.panel.access"]));
             $group->get("/tags", [AdminContentController::class, "listTags"])->add($perm(["admin.panel.access"]));
             $group->get("/users", [AdminUsersController::class, "listUsers"])->add($perm(["admin.panel.access"]));
+            $group->get("/users/{id}/overview", [AdminUsersController::class, "userOverview"])->add($perm(["admin.users.manage"]));
+            $group->get("/users/{id}/comments", [AdminUsersController::class, "userComments"])->add($perm(["admin.users.manage"]));
+            $group->get("/users/{id}/blogs", [AdminUsersController::class, "userBlogs"])->add($perm(["admin.users.manage"]));
             $group->get("/users/{id}/violations", [AdminUsersController::class, "listViolations"])->add($perm(["admin.users.manage"]));
             $group->post("/users/{id}/violations", [AdminUsersController::class, "recordViolation"])->add(new CriticalActionMiddleware())->add($perm(["admin.users.manage"]));
             $group->get("/users/options", [AdminUsersController::class, "userOptions"])->add($perm(["admin.wallet.view"]));

@@ -25,6 +25,46 @@ final class UsersController extends AdminController
             );
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
+
+    public function userOverview(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+        {
+            try {
+                return ResponseHelper::success($this->usersService->userOverview((string) $args['id']));
+            } catch (\DomainException $exception) {
+                return ResponseHelper::error(404, $exception->getMessage());
+            }
+        }
+
+    public function userComments(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+        {
+            [$page, $perPage] = $this->pagination($request);
+            $query = $request->getQueryParams();
+            $result = $this->moderationService->listComments(
+                $page,
+                $perPage,
+                trim((string) ($query['q'] ?? '')),
+                isset($query['target_type']) && $query['target_type'] !== '' ? (string) $query['target_type'] : null,
+                (string) ($query['sort'] ?? 'newest'),
+                isset($query['moderation_status']) && $query['moderation_status'] !== '' ? (string) $query['moderation_status'] : null,
+                (string) $args['id']
+            );
+            return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
+        }
+
+    public function userBlogs(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+        {
+            [$page, $perPage] = $this->pagination($request);
+            $query = $request->getQueryParams();
+            $result = $this->moderationService->listBlogs(
+                $page,
+                $perPage,
+                trim((string) ($query['q'] ?? '')),
+                isset($query['status']) && $query['status'] !== '' ? (string) $query['status'] : null,
+                (string) ($query['sort'] ?? 'newest'),
+                (string) $args['id']
+            );
+            return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
+        }
     
     public function updateUser(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
@@ -43,8 +83,15 @@ final class UsersController extends AdminController
     public function listViolations(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             [$page, $perPage] = $this->pagination($request);
-            $limit = min(200, max($perPage, $page * $perPage));
-            return ResponseHelper::success($this->usersService->listViolations((string) $args['id'], $limit));
+            $query = $request->getQueryParams();
+            $result = $this->usersService->listViolations(
+                (string) $args['id'],
+                $page,
+                $perPage,
+                isset($query['level']) && $query['level'] !== '' ? (string) $query['level'] : null,
+                isset($query['scope']) && $query['scope'] !== '' ? (string) $query['scope'] : null
+            );
+            return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
 
     public function recordViolation(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

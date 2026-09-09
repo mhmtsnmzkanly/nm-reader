@@ -147,6 +147,84 @@ final class AdminUserRepository extends AdminRepositoryBase
         return $stmt->fetchAll();
     }
 
+    /**
+     * Return the moderation-facing profile for a single user. Counts and
+     * active restrictions are kept in this response so the detail page can
+     * render its header without issuing extra requests.
+     */
+    public function userOverview(string $id): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, username, display_name, email, bio, profile_image,
+                    cover_image, roles, created_at
+             FROM users
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $stmt->execute(['id' => $id]);
+        $user = $stmt->fetch();
+        if (!is_array($user)) {
+            return null;
+        }
+
+        $restrictions = $this->pdo->prepare(
+            'SELECT id, type, level, reason, ends_at, created_at
+             FROM bans
+             WHERE user_id = :user_id
+               AND revoked_at IS NULL
+               AND level IN ("temporary", "permanent")
+               AND (ends_at IS NULL OR ends_at > NOW())
+             ORDER BY created_at DESC, id DESC'
+        );
+        $restrictions->execute(['user_id' => $id]);
+        $activeRestrictions = $restrictions->fetchAll();
+
+        $counts = $this->pdo->prepare(
+            'SELECT
+                (SELECT COUNT(*) FROM comments WHERE user_id = :comments_user_id) AS comments_total,
+                (SELECT COUNT(*) FROM blogs WHERE user_id = :blogs_user_id) AS blogs_total,
+                (SELECT COUNT(*) FROM moderation_violations WHERE user_id = :violations_user_id) AS violations_total'
+        );
+        $counts->execute([
+            'comments_user_id' => $id,
+            'blogs_user_id' => $id,
+            'violations_user_id' => $id,
+        ]);
+        $stats = $counts->fetch() ?: [];
+
+        $config = \App\Config::getSettings()['rbac'] ?? [];
+        $idToSlug = array_flip((array) ($config['id_map'] ?? []));
+        $roleNames = [];
+        foreach (explode(',', (string) ($user['roles'] ?? '')) as $roleId) {
+            $roleId = trim($roleId);
+            if ($roleId !== '' && isset($idToSlug[$roleId])) {
+                $roleNames[] = (string) $idToSlug[$roleId];
+            }
+        }
+
+        return [
+            'user' => [
+                'id' => (string) $user['id'],
+                'username' => (string) $user['username'],
+                'display_name' => $user['display_name'] ?? null,
+                'email' => (string) $user['email'],
+                'bio' => $user['bio'] ?? null,
+                'profile_image' => $user['profile_image'] ?? null,
+                'cover_image' => $user['cover_image'] ?? null,
+                'roles' => (string) ($user['roles'] ?? ''),
+                'role_names' => implode(', ', $roleNames),
+                'created_at' => $user['created_at'] ?? null,
+                'is_banned' => $activeRestrictions !== [],
+            ],
+            'stats' => [
+                'comments_total' => (int) ($stats['comments_total'] ?? 0),
+                'blogs_total' => (int) ($stats['blogs_total'] ?? 0),
+                'violations_total' => (int) ($stats['violations_total'] ?? 0),
+            ],
+            'active_restrictions' => $activeRestrictions,
+        ];
+    }
+
     public function updateUser(
         string $id,
         string $role,
@@ -517,8 +595,25 @@ final class AdminUserRepository extends AdminRepositoryBase
         }
     }
 
-    public function listViolations(string $userId, int $limit = 100): array
+    public function listViolations(string $userId, int $page = 1, int $perPage = 20, ?string $level = null, ?string $scope = null): array
     {
+        $page = max(1, $page);
+        $perPage = max(1, min(100, $perPage));
+        $where = ['user_id = :user_id'];
+        $params = ['user_id' => $userId];
+        if ($level !== null && in_array($level, ['warning', 'removal', 'temporary', 'permanent'], true)) {
+            $where[] = 'level = :level';
+            $params['level'] = $level;
+        }
+        if ($scope !== null && in_array($scope, ['general', 'comment', 'blog'], true)) {
+            $where[] = 'scope = :scope';
+            $params['scope'] = $scope;
+        }
+        $whereSql = implode(' AND ', $where);
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM moderation_violations WHERE ' . $whereSql);
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
+
         $stmt = $this->pdo->prepare(
             'SELECT v.id, v.user_id, v.target_type, v.target_id, v.scope, v.level, v.action,
                     v.reason, v.ban_id, v.moderator_user_id, u.username AS moderator_username, v.created_at,
@@ -526,14 +621,18 @@ final class AdminUserRepository extends AdminRepositoryBase
              FROM moderation_violations v
              LEFT JOIN users u ON u.id = v.moderator_user_id
              LEFT JOIN bans b ON b.id = v.ban_id
-             WHERE v.user_id = :user_id
+             WHERE v.' . str_replace(' AND ', ' AND v.', $whereSql) . '
              ORDER BY v.id DESC
-             LIMIT :limit'
+             LIMIT :limit OFFSET :offset'
         );
-        $stmt->bindValue(':user_id', $userId);
-        $stmt->bindValue(':limit', max(1, min(200, $limit)), PDO::PARAM_INT);
+        foreach ($params as $key => $value) $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', ($page - 1) * $perPage, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll();
+        return [
+            'items' => $stmt->fetchAll(),
+            'total' => $total,
+        ];
     }
 
     public function suggestViolationLevel(string $userId, string $scope): string

@@ -103,6 +103,14 @@ const store = createStore({
   usersList: [],
   usersMeta: { page: 1, total_pages: 1, total: 0 },
   userSearch: '',
+  userDetailId: null,
+  userDetail: null,
+  userCommentsList: [],
+  userCommentsMeta: { page: 1, total_pages: 1, total: 0 },
+  userBlogsList: [],
+  userBlogsMeta: { page: 1, total_pages: 1, total: 0 },
+  userViolationsList: [],
+  userViolationsMeta: { page: 1, total_pages: 1, total: 0 },
   blogsList: [],
   blogsMeta: { page: 1, total_pages: 1, total: 0 },
   commentsList: [],
@@ -307,8 +315,221 @@ function renderSeriesTable() {
 }
 
 function renderUsersTable() {
-  setTableRows('panel-users-list', (store.get('usersList') || []).map(user => `<tr><td class="fw-bold"><i class="bi bi-person me-1 text-secondary"></i>${escapeHtml(user.username)}</td><td class="text-secondary">${escapeHtml(user.email)}</td><td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${escapeHtml(user.role_names)}</span></td><td><span class="badge ${escapeHtml(user.account_badge)}">${escapeHtml(user.account_status)}</span></td><td class="small text-secondary">${escapeHtml(user.created_at)}</td><td class="text-end">${hasPermission('admin.users.manage') ? `<button class="btn btn-xs btn-outline-primary me-1" data-on-click="openEditUserModal" data-id="${escapeHtml(user.id)}"><i class="bi bi-pencil me-1"></i>Düzenle</button>` : ''}${hasPermission('admin.wallet.view') ? `<button class="btn btn-xs btn-outline-warning" data-on-click="openWalletModal" data-id="${escapeHtml(user.id)}"><i class="bi bi-cash-coin me-1"></i>Bakiye</button>` : ''}</td></tr>`).join(''), 6);
+  setTableRows('panel-users-list', (store.get('usersList') || []).map(user => `<tr><td class="fw-bold"><i class="bi bi-person me-1 text-secondary"></i>${escapeHtml(user.username)}</td><td class="text-secondary">${escapeHtml(user.email)}</td><td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${escapeHtml(user.role_names)}</span></td><td><span class="badge ${escapeHtml(user.account_badge)}">${escapeHtml(user.account_status)}</span></td><td class="small text-secondary">${escapeHtml(user.created_at)}</td><td class="text-end">${hasPermission('admin.users.manage') ? `<a class="btn btn-xs btn-outline-primary me-1" href="/panel/action/user-detail/${encodeURIComponent(user.id)}" data-panel-link><i class="bi bi-person-lines-fill me-1"></i>İncele</a><button class="btn btn-xs btn-outline-secondary me-1" data-on-click="openEditUserModal" data-id="${escapeHtml(user.id)}"><i class="bi bi-pencil me-1"></i>Düzenle</button>` : ''}${hasPermission('admin.wallet.view') ? `<button class="btn btn-xs btn-outline-warning" data-on-click="openWalletModal" data-id="${escapeHtml(user.id)}"><i class="bi bi-cash-coin me-1"></i>Bakiye</button>` : ''}</td></tr>`).join(''), 6);
   renderPager('panel-users-pager', store.get('usersMeta'), 'previousUsersPage', 'nextUsersPage');
+}
+
+function userViolationLevel(level) {
+  return ({
+    warning: ['Uyarı', 'bg-info-subtle text-info'],
+    removal: ['İçerik kaldırma', 'bg-warning-subtle text-warning'],
+    temporary: ['Süreli engel', 'bg-danger-subtle text-danger'],
+    permanent: ['Kalıcı engel', 'bg-dark text-white']
+  })[String(level || '')] || [String(level || '-'), 'bg-secondary-subtle text-secondary'];
+}
+
+function userModerationStatus(status) {
+  return ({
+    pending: ['Bekliyor', 'bg-warning-subtle text-warning'],
+    approved: ['Onaylı', 'bg-success-subtle text-success'],
+    hidden: ['Gizli', 'bg-secondary-subtle text-secondary'],
+    deleted: ['Silindi', 'bg-danger-subtle text-danger']
+  })[String(status || '')] || [String(status || '-'), 'bg-light text-secondary'];
+}
+
+function renderUserCommentsTable() {
+  const rows = (store.get('userCommentsList') || []).map(comment => {
+    const status = userModerationStatus(comment.moderation_status || 'approved');
+    const context = comment.blog_title
+      ? `Blog: ${comment.blog_title}`
+      : comment.content_title
+        ? `${comment.target_type === 'chapter' ? 'Bölüm' : 'İçerik'}: ${comment.content_title}${comment.chapter_number ? ` #${comment.chapter_number}` : ''}`
+        : `${comment.target_type || 'Hedef'}: ${comment.target_id || '-'}`;
+    return `<tr><td class="text-wrap" style="min-width:260px">${escapeHtml(comment.body)}</td><td><span class="small text-secondary">${escapeHtml(context)}</span></td><td><span class="badge ${status[1]}">${escapeHtml(status[0])}</span></td><td class="text-nowrap"><span class="badge bg-success-subtle text-success">+${Number(comment.upvote_count || 0)}</span> <span class="badge bg-danger-subtle text-danger">-${Number(comment.downvote_count || 0)}</span></td><td class="small text-secondary text-nowrap">${escapeHtml(comment.created_at)}</td></tr>`;
+  }).join('');
+  setTableRows('panel-user-comments-list', rows, 5);
+  renderPager('panel-user-comments-pager', store.get('userCommentsMeta'), 'previousUserCommentsPage', 'nextUserCommentsPage');
+}
+
+function renderUserBlogsTable() {
+  const labels = { draft: 'Taslak', pending: 'Bekliyor', published: 'Yayınlandı', rejected: 'Reddedildi', hidden: 'Gizli' };
+  const rows = (store.get('userBlogsList') || []).map(blog => {
+    const status = blog.status || (Number(blog.approved) === 1 ? 'published' : 'pending');
+    const statusClass = Number(blog.approved) === 1 ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning';
+    return `<tr><td class="fw-semibold">${escapeHtml(blog.title)}</td><td class="small text-secondary">${escapeHtml(blog.slug || blog.id)}</td><td><span class="badge ${statusClass}">${escapeHtml(labels[status] || status)}</span></td><td class="small text-secondary text-nowrap">${escapeHtml(blog.created_at)}</td></tr>`;
+  }).join('');
+  setTableRows('panel-user-blogs-list', rows, 4);
+  renderPager('panel-user-blogs-pager', store.get('userBlogsMeta'), 'previousUserBlogsPage', 'nextUserBlogsPage');
+}
+
+function renderUserViolationsTable() {
+  const rows = (store.get('userViolationsList') || []).map(violation => {
+    const level = userViolationLevel(violation.level);
+    const active = violation.revoked_at ? 'İptal edildi' : (violation.ends_at && new Date(violation.ends_at.replace(' ', 'T')) < new Date() ? 'Süresi doldu' : 'Aktif');
+    return `<tr><td><span class="badge ${level[1]}">${escapeHtml(level[0])}</span><small class="d-block text-secondary">${escapeHtml(violation.scope || 'general')}</small></td><td>${escapeHtml(violation.action || '-')}<small class="d-block text-secondary">${escapeHtml(violation.target_type || '-')}/${escapeHtml(violation.target_id || '-')}</small></td><td class="text-wrap" style="min-width:220px">${escapeHtml(violation.reason)}</td><td>@${escapeHtml(violation.moderator_username || violation.moderator_user_id || '-')}</td><td class="small text-secondary text-nowrap">${escapeHtml(violation.created_at)}<small class="d-block">${escapeHtml(active)}</small></td></tr>`;
+  }).join('');
+  setTableRows('panel-user-violations-list', rows, 5);
+  renderPager('panel-user-violations-pager', store.get('userViolationsMeta'), 'previousUserViolationsPage', 'nextUserViolationsPage');
+}
+
+async function loadUserCommentsData(userId, page = 1) {
+  if (!userId) return;
+  try {
+    const params = new URLSearchParams({ page: String(page), per_page: '10' });
+    const values = {
+      q: document.getElementById('panel-user-comments-search')?.value || '',
+      target_type: document.getElementById('panel-user-comments-target')?.value || '',
+      moderation_status: document.getElementById('panel-user-comments-status')?.value || '',
+      sort: document.getElementById('panel-user-comments-sort')?.value || 'newest'
+    };
+    Object.entries(values).forEach(([key, value]) => { if (value) params.set(key, value); });
+    const response = await api(`/users/${encodeURIComponent(userId)}/comments?${params.toString()}`);
+    if (String(store.get('userDetailId')) !== String(userId)) return;
+    store.batch(() => {
+      store.set('userCommentsList', responseItems(response));
+      store.set('userCommentsMeta', responseMeta(response));
+    });
+    renderUserCommentsTable();
+  } catch (error) {
+    const target = document.getElementById('panel-user-comments-list');
+    if (target) setTableRows('panel-user-comments-list', `<tr><td colspan="5" class="text-center text-danger py-4">${escapeHtml(error.message)}</td></tr>`, 5);
+  }
+}
+
+async function loadUserBlogsData(userId, page = 1) {
+  if (!userId) return;
+  try {
+    const params = new URLSearchParams({ page: String(page), per_page: '10' });
+    const values = {
+      q: document.getElementById('panel-user-blogs-search')?.value || '',
+      status: document.getElementById('panel-user-blogs-status')?.value || '',
+      sort: document.getElementById('panel-user-blogs-sort')?.value || 'newest'
+    };
+    Object.entries(values).forEach(([key, value]) => { if (value) params.set(key, value); });
+    const response = await api(`/users/${encodeURIComponent(userId)}/blogs?${params.toString()}`);
+    if (String(store.get('userDetailId')) !== String(userId)) return;
+    store.batch(() => {
+      store.set('userBlogsList', responseItems(response));
+      store.set('userBlogsMeta', responseMeta(response));
+    });
+    renderUserBlogsTable();
+  } catch (error) {
+    const target = document.getElementById('panel-user-blogs-list');
+    if (target) setTableRows('panel-user-blogs-list', `<tr><td colspan="4" class="text-center text-danger py-4">${escapeHtml(error.message)}</td></tr>`, 4);
+  }
+}
+
+async function loadUserViolationsData(userId, page = 1) {
+  if (!userId) return;
+  try {
+    const params = new URLSearchParams({ page: String(page), per_page: '10' });
+    const level = document.getElementById('panel-user-violations-level')?.value || '';
+    const scope = document.getElementById('panel-user-violations-scope')?.value || '';
+    if (level) params.set('level', level);
+    if (scope) params.set('scope', scope);
+    const response = await api(`/users/${encodeURIComponent(userId)}/violations?${params.toString()}`);
+    if (String(store.get('userDetailId')) !== String(userId)) return;
+    store.batch(() => {
+      store.set('userViolationsList', responseItems(response));
+      store.set('userViolationsMeta', responseMeta(response));
+    });
+    renderUserViolationsTable();
+  } catch (error) {
+    const target = document.getElementById('panel-user-violations-list');
+    if (target) setTableRows('panel-user-violations-list', `<tr><td colspan="5" class="text-center text-danger py-4">${escapeHtml(error.message)}</td></tr>`, 5);
+  }
+}
+
+function userDetailFilters(overlay, userId) {
+  const bindReload = (selector, key, loader) => {
+    overlay.querySelectorAll(selector).forEach(input => {
+      const eventName = input.tagName === 'INPUT' ? 'input' : 'change';
+      input.addEventListener(eventName, () => scheduleReload(key, () => loader(userId, 1)));
+    });
+  };
+  bindReload('#panel-user-comments-search, #panel-user-comments-target, #panel-user-comments-status, #panel-user-comments-sort', 'user-comments', loadUserCommentsData);
+  bindReload('#panel-user-blogs-search, #panel-user-blogs-status, #panel-user-blogs-sort', 'user-blogs', loadUserBlogsData);
+  bindReload('#panel-user-violations-level, #panel-user-violations-scope', 'user-violations', loadUserViolationsData);
+  overlay.querySelectorAll('[data-user-tab]').forEach(button => button.addEventListener('click', () => {
+    const tab = button.dataset.userTab;
+    overlay.querySelectorAll('[data-user-tab]').forEach(item => item.classList.toggle('active', item === button));
+    overlay.querySelectorAll('[data-user-section]').forEach(section => { section.hidden = section.dataset.userSection !== tab; });
+    if (tab === 'blogs') loadUserBlogsData(userId, Number(store.get('userBlogsMeta')?.page || 1));
+    if (tab === 'violations') loadUserViolationsData(userId, Number(store.get('userViolationsMeta')?.page || 1));
+  }));
+}
+
+async function loadUserDetailPage(userId) {
+  if (!userId) throw new Error('Kullanıcı kimliği bulunamadı');
+  const response = await api(`/users/${encodeURIComponent(userId)}/overview`);
+  const overview = response?.data || {};
+  const user = overview.user || {};
+  const stats = overview.stats || {};
+  store.batch(() => {
+    store.set('userDetailId', userId);
+    store.set('userDetail', overview);
+    store.set('userCommentsList', []);
+    store.set('userBlogsList', []);
+    store.set('userViolationsList', []);
+    store.set('userCommentsMeta', { page: 1, total_pages: 1, total: 0 });
+    store.set('userBlogsMeta', { page: 1, total_pages: 1, total: 0 });
+    store.set('userViolationsMeta', { page: 1, total_pages: 1, total: 0 });
+  });
+  const restrictions = (overview.active_restrictions || []).map(item => {
+    const level = userViolationLevel(item.level);
+    return `<span class="badge ${level[1]} me-1 mb-1">${escapeHtml(item.type || 'general')}: ${escapeHtml(level[0])}${item.ends_at ? ` · ${escapeHtml(item.ends_at)}` : ''}</span>`;
+  }).join('') || '<span class="text-secondary">Aktif işlem kısıtlaması yok</span>';
+  const profileImage = safeLocalUrl(user.profile_image || store.get('config')?.default_profile_image || '/assets/img/default-profile.png');
+  const target = document.getElementById('panel-action-page');
+  if (!target) return;
+  const overlay = openDialog(
+    `Kullanıcı: @${user.username || userId}`,
+    `<div class="row g-4 mb-4"><div class="col-lg-8"><div class="d-flex gap-3 align-items-center"><img src="${profileImage}" alt="" width="72" height="72" class="rounded-circle object-fit-cover border"><div><h4 class="mb-1">${escapeHtml(user.display_name || user.username || userId)}</h4><div class="text-secondary">@${escapeHtml(user.username || userId)} · ${escapeHtml(user.email || '-')}</div><div class="mt-2"><span class="badge ${user.is_banned ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}">${user.is_banned ? 'Aktif kısıtlama' : 'Etkileşim açık'}</span> <span class="badge bg-primary-subtle text-primary">${escapeHtml(user.role_names || 'user')}</span></div></div></div>${user.bio ? `<p class="mt-3 mb-0 text-secondary">${escapeHtml(user.bio)}</p>` : ''}</div><div class="col-lg-4 d-flex justify-content-lg-end align-items-start"><a class="btn btn-danger btn-lg" href="/panel/action/user-penalty/${encodeURIComponent(userId)}" data-panel-link><i class="bi bi-shield-exclamation me-2"></i>CEZA VER</a></div></div><div class="row g-3 mb-4"><div class="col-md-4"><div class="card bg-body-tertiary border-0 h-100"><div class="card-body"><div class="small text-secondary">Yorumlar</div><div class="fs-3 fw-bold">${Number(stats.comments_total || 0).toLocaleString('tr-TR')}</div></div></div></div><div class="col-md-4"><div class="card bg-body-tertiary border-0 h-100"><div class="card-body"><div class="small text-secondary">Bloglar</div><div class="fs-3 fw-bold">${Number(stats.blogs_total || 0).toLocaleString('tr-TR')}</div></div></div></div><div class="col-md-4"><div class="card bg-body-tertiary border-0 h-100"><div class="card-body"><div class="small text-secondary">Cezalar</div><div class="fs-3 fw-bold">${Number(stats.violations_total || 0).toLocaleString('tr-TR')}</div></div></div></div></div><div class="mb-4"><h6 class="text-uppercase small text-secondary mb-2">Aktif kısıtlamalar</h6>${restrictions}</div><ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button type="button" class="nav-link active" data-user-tab="comments">Yorumlar</button></li><li class="nav-item"><button type="button" class="nav-link" data-user-tab="blogs">Bloglar</button></li><li class="nav-item"><button type="button" class="nav-link" data-user-tab="violations">Ceza geçmişi</button></li></ul><section data-user-section="comments"><div class="row g-2 mb-3"><div class="col-lg-5"><input id="panel-user-comments-search" class="form-control" placeholder="Yorumlarda ara..."></div><div class="col-md-3"><select id="panel-user-comments-target" class="form-select"><option value="">Tüm hedefler</option><option value="series">İçerik</option><option value="chapter">Bölüm</option><option value="blog">Blog</option></select></div><div class="col-md-2"><select id="panel-user-comments-status" class="form-select"><option value="">Tüm durumlar</option><option value="approved">Onaylı</option><option value="pending">Bekliyor</option><option value="hidden">Gizli</option><option value="deleted">Silindi</option></select></div><div class="col-md-2"><select id="panel-user-comments-sort" class="form-select"><option value="newest">Yeni</option><option value="oldest">Eski</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Yorum</th><th>Hedef</th><th>Durum</th><th>Oylar</th><th>Tarih</th></tr></thead><tbody id="panel-user-comments-list"></tbody></table></div><div id="panel-user-comments-pager" class="mt-3"></div></section><section data-user-section="blogs" hidden><div class="row g-2 mb-3"><div class="col-lg-6"><input id="panel-user-blogs-search" class="form-control" placeholder="Bloglarda ara..."></div><div class="col-md-3"><select id="panel-user-blogs-status" class="form-select"><option value="">Tüm durumlar</option><option value="draft">Taslak</option><option value="pending">Bekliyor</option><option value="published">Yayınlandı</option><option value="hidden">Gizli</option></select></div><div class="col-md-3"><select id="panel-user-blogs-sort" class="form-select"><option value="newest">Yeni</option><option value="oldest">Eski</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Başlık</th><th>Slug</th><th>Durum</th><th>Tarih</th></tr></thead><tbody id="panel-user-blogs-list"></tbody></table></div><div id="panel-user-blogs-pager" class="mt-3"></div></section><section data-user-section="violations" hidden><div class="row g-2 mb-3"><div class="col-md-6"><select id="panel-user-violations-level" class="form-select"><option value="">Tüm seviyeler</option><option value="warning">Uyarı</option><option value="removal">İçerik kaldırma</option><option value="temporary">Süreli engel</option><option value="permanent">Kalıcı engel</option></select></div><div class="col-md-6"><select id="panel-user-violations-scope" class="form-select"><option value="">Tüm kapsamlar</option><option value="general">Genel</option><option value="comment">Yorum</option><option value="blog">Blog</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Seviye</th><th>İşlem / Hedef</th><th>Gerekçe</th><th>Moderatör</th><th>Tarih</th></tr></thead><tbody id="panel-user-violations-list"></tbody></table></div><div id="panel-user-violations-pager" class="mt-3"></div></section>`,
+    async () => {},
+    'modal-xl'
+  );
+  overlay.querySelector('button[type="submit"]')?.remove();
+  overlay.querySelector('.card-footer')?.remove();
+  userDetailFilters(overlay, userId);
+  renderUserCommentsTable();
+  renderUserBlogsTable();
+  renderUserViolationsTable();
+  await loadUserCommentsData(userId, 1);
+}
+
+function violationScopeForTarget(targetType) {
+  return targetType === 'comment' ? 'comment' : (targetType === 'blog' ? 'blog' : 'general');
+}
+
+async function loadUserPenaltyPage(userId) {
+  if (!userId) throw new Error('Kullanıcı kimliği bulunamadı');
+  let overview = store.get('userDetail');
+  if (String(store.get('userDetailId')) !== String(userId) || !overview?.user) {
+    overview = (await api(`/users/${encodeURIComponent(userId)}/overview`))?.data || {};
+  }
+  const user = overview.user || {};
+  const overlay = openDialog(
+    `Ceza ver: @${user.username || userId}`,
+    `<div class="alert alert-info d-flex gap-2"><i class="bi bi-info-circle"></i><div>Beğeni ve oy işlemleri engellenmez. Buradaki kapsam yalnızca seçilen içerik, yorum veya blog oluşturma etkileşimlerini etkiler.</div></div><div class="row g-3"><div class="col-md-4"><label class="form-label">Hedef türü</label><select class="form-select" name="target_type" required><option value="comment">Yorum</option><option value="blog">Blog</option><option value="series">İçerik</option><option value="chapter">Bölüm</option><option value="system">Genel sistem</option></select></div><div class="col-md-4"><label class="form-label">Hedef ID</label><input class="form-control" name="target_id" maxlength="32" required></div><div class="col-md-4"><label class="form-label">Ceza seviyesi</label><select class="form-select" name="level" id="panel-user-penalty-level"><option value="warning">Uyarı</option><option value="removal">İçeriği kaldır</option><option value="temporary">Süreli engel</option><option value="permanent">Kalıcı engel</option></select></div><div class="col-md-4"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" name="auto_escalate" value="1" id="panel-user-penalty-auto" checked><label class="form-check-label" for="panel-user-penalty-auto">Geçmişe göre otomatik yükselt</label></div></div><div class="col-md-4"><label class="form-label">Bitiş (süreli ceza)</label><input type="datetime-local" class="form-control" name="ends_at"></div><div class="col-12"><label class="form-label">Gerekçe</label><textarea class="form-control" name="reason" rows="5" maxlength="1000" required></textarea></div></div>`,
+    async (formData, form) => {
+      const payload = Object.fromEntries(formData.entries());
+      payload.auto_escalate = form.elements.auto_escalate.checked;
+      payload.scope = violationScopeForTarget(payload.target_type);
+      if (payload.auto_escalate) payload.level = 'warning';
+      await api(`/users/${encodeURIComponent(userId)}/violations`, { method: 'POST', body: payload });
+      showToast('Ceza kaydı oluşturuldu');
+      panelNavigate(`/panel/action/user-detail/${encodeURIComponent(userId)}`);
+    },
+    'modal-xl'
+  );
+  const form = overlay.querySelector('#panel-dialog-form');
+  const auto = form?.elements.auto_escalate;
+  const level = form?.elements.level;
+  const sync = () => { if (level) level.disabled = Boolean(auto?.checked); };
+  auto?.addEventListener('change', sync);
+  sync();
+  const submit = form?.querySelector('button[type="submit"]');
+  if (submit) submit.textContent = 'CEZAYI UYGULA';
 }
 
 function renderBlogsTable() {
@@ -1281,16 +1502,17 @@ async function loadSeriesEditorPage(mode, id = null) {
 }
 
 const actionPermissions = {
-  taxonomy: ['admin.content.create'], ownership: ['admin.panel.access'], rbac: ['admin.panel.access'], chapters: ['admin.panel.access'], preview: ['admin.panel.access'], revisions: ['admin.panel.access'], team: ['admin.panel.access'], 'user-edit': ['admin.users.manage'], wallet: ['admin.wallet.view'], 'package-new': ['admin.shop.manage'], 'package-edit': ['admin.shop.manage'], 'ad-free': ['admin.shop.manage'], pricing: ['admin.shop.manage'], moderation: ['admin.logs.view'], 'log-viewer': ['admin.logs.view'], 'audit-log': ['admin.logs.view']
+  taxonomy: ['admin.content.create'], ownership: ['admin.panel.access'], rbac: ['admin.panel.access'], chapters: ['admin.panel.access'], preview: ['admin.panel.access'], revisions: ['admin.panel.access'], team: ['admin.panel.access'], 'user-edit': ['admin.users.manage'], 'user-detail': ['admin.users.manage'], 'user-penalty': ['admin.users.manage'], wallet: ['admin.wallet.view'], 'package-new': ['admin.shop.manage'], 'package-edit': ['admin.shop.manage'], 'ad-free': ['admin.shop.manage'], pricing: ['admin.shop.manage'], moderation: ['admin.logs.view'], 'log-viewer': ['admin.logs.view'], 'audit-log': ['admin.logs.view']
 };
 
 const actionParents = {
-  taxonomy: '/panel', ownership: '/panel/users', rbac: '/panel/users', chapters: '/panel/series', preview: '/panel/series', revisions: '/panel/series', team: '/panel/series', 'user-edit': '/panel/users', wallet: '/panel/users', 'package-new': '/panel/monetization', 'package-edit': '/panel/monetization', 'ad-free': '/panel/monetization', pricing: '/panel/monetization', moderation: '/panel/logs', 'log-viewer': '/panel/logs', 'audit-log': '/panel/logs'
+  taxonomy: '/panel', ownership: '/panel/users', rbac: '/panel/users', chapters: '/panel/series', preview: '/panel/series', revisions: '/panel/series', team: '/panel/series', 'user-edit': '/panel/users', 'user-detail': '/panel/users', 'user-penalty': '/panel/users', wallet: '/panel/users', 'package-new': '/panel/monetization', 'package-edit': '/panel/monetization', 'ad-free': '/panel/monetization', pricing: '/panel/monetization', moderation: '/panel/logs', 'log-viewer': '/panel/logs', 'audit-log': '/panel/logs'
 };
 
 async function loadPanelActionPage(action, id = null) {
   pageDialogMode = true;
   pageDialogParent = actionParents[action] || '/panel';
+  if (action === 'user-penalty' && id) pageDialogParent = `/panel/action/user-detail/${encodeURIComponent(id)}`;
   try {
     if (action === 'taxonomy') await openTaxonomyDialog();
     else if (action === 'ownership') await openOwnershipMatrix();
@@ -1309,7 +1531,8 @@ async function loadPanelActionPage(action, id = null) {
         if (found) store.set('allUsersList', [found]);
       }
       await openUserEditor(id);
-    }
+    } else if (action === 'user-detail') await loadUserDetailPage(id);
+    else if (action === 'user-penalty') await loadUserPenaltyPage(id);
     else if (action === 'wallet') await openWalletDialog(id);
     else if (action === 'package-new') await openPackageEditor();
     else if (action === 'package-edit') {
@@ -1831,6 +2054,16 @@ const handlers = {
   nextSeriesPage() { const meta = store.get('seriesMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadSeriesData(Number(meta.page) + 1); },
   previousUsersPage() { const page = Number(store.get('usersMeta')?.page || 1); if (page > 1) loadUsersData(page - 1); },
   nextUsersPage() { const meta = store.get('usersMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadUsersData(Number(meta.page) + 1); },
+  openUserDetail(e, el) { panelNavigate(`/panel/action/user-detail/${encodeURIComponent(el.dataset.id)}`); },
+  filterUserComments() { scheduleReload('user-comments', () => loadUserCommentsData(store.get('userDetailId'), 1)); },
+  previousUserCommentsPage() { const page = Number(store.get('userCommentsMeta')?.page || 1); if (page > 1) loadUserCommentsData(store.get('userDetailId'), page - 1); },
+  nextUserCommentsPage() { const meta = store.get('userCommentsMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadUserCommentsData(store.get('userDetailId'), Number(meta.page) + 1); },
+  filterUserBlogs() { scheduleReload('user-blogs', () => loadUserBlogsData(store.get('userDetailId'), 1)); },
+  previousUserBlogsPage() { const page = Number(store.get('userBlogsMeta')?.page || 1); if (page > 1) loadUserBlogsData(store.get('userDetailId'), page - 1); },
+  nextUserBlogsPage() { const meta = store.get('userBlogsMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadUserBlogsData(store.get('userDetailId'), Number(meta.page) + 1); },
+  filterUserViolations() { scheduleReload('user-violations', () => loadUserViolationsData(store.get('userDetailId'), 1)); },
+  previousUserViolationsPage() { const page = Number(store.get('userViolationsMeta')?.page || 1); if (page > 1) loadUserViolationsData(store.get('userDetailId'), page - 1); },
+  nextUserViolationsPage() { const meta = store.get('userViolationsMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadUserViolationsData(store.get('userDetailId'), Number(meta.page) + 1); },
   previousBlogsPage() { const page = Number(store.get('blogsMeta')?.page || 1); if (page > 1) loadBlogsData(page - 1); },
   nextBlogsPage() { const meta = store.get('blogsMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadBlogsData(Number(meta.page) + 1); },
   previousCommentsPage() { const page = Number(store.get('commentsMeta')?.page || 1); if (page > 1) loadCommentsData(page - 1); },
@@ -2069,7 +2302,7 @@ function resolvePanelRoute() {
   if (section === 'taxonomies') return { route: 'action', section: 'taxonomies', action: 'taxonomy', id: null, path: '/panel/taxonomies' };
   if (section === 'action' && parts[1]) {
     const action = parts[1];
-    const sectionMap = { taxonomy: 'series', ownership: 'users', rbac: 'users', chapters: 'series', preview: 'series', revisions: 'series', team: 'series', 'user-edit': 'users', wallet: 'users', 'package-new': 'monetization', 'package-edit': 'monetization', 'ad-free': 'monetization', pricing: 'monetization', moderation: 'logs', 'log-viewer': 'logs', 'audit-log': 'logs' };
+    const sectionMap = { taxonomy: 'series', ownership: 'users', rbac: 'users', chapters: 'series', preview: 'series', revisions: 'series', team: 'series', 'user-edit': 'users', 'user-detail': 'users', 'user-penalty': 'users', wallet: 'users', 'package-new': 'monetization', 'package-edit': 'monetization', 'ad-free': 'monetization', pricing: 'monetization', moderation: 'logs', 'log-viewer': 'logs', 'audit-log': 'logs' };
     if (Object.prototype.hasOwnProperty.call(actionPermissions, action)) return { route: 'action', section: sectionMap[action] || 'dashboard', action, id: parts[2] || null, path: `/panel/action/${parts.slice(1).join('/')}` };
   }
   if (section === 'reports' && /^\d+$/.test(parts[1] || '')) return { route: 'report-detail', section: 'reports', id: parts[1], path: `/panel/reports/${parts[1]}` };

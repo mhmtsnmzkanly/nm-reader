@@ -35,6 +35,27 @@ final class AdminUserService extends AdminConsoleServiceBase
         return OutputSanitizer::sanitizeRows($items, ['username']);
     }
 
+    public function userOverview(string $userId): array
+    {
+        $overview = $this->repo->userOverview($userId);
+        if ($overview === null) {
+            throw new \DomainException('User not found');
+        }
+
+        if (isset($overview['user']) && is_array($overview['user'])) {
+            $overview['user'] = OutputSanitizer::sanitizeFields(
+                $overview['user'],
+                ['username', 'display_name', 'email', 'bio', 'role_names']
+            );
+        }
+        $overview['active_restrictions'] = OutputSanitizer::sanitizeRows(
+            (array) ($overview['active_restrictions'] ?? []),
+            ['reason', 'type', 'level']
+        );
+
+        return $overview;
+    }
+
     public function recordViolation(string $userId, array $payload, string $moderatorId): array
     {
         $targetType = strtolower(trim((string) ($payload['target_type'] ?? '')));
@@ -108,9 +129,11 @@ final class AdminUserService extends AdminConsoleServiceBase
         );
     }
 
-    public function listViolations(string $userId, int $limit = 100): array
+    public function listViolations(string $userId, int $page = 1, int $perPage = 20, ?string $level = null, ?string $scope = null): array
     {
-        return $this->repo->listViolations($userId, $limit);
+        $result = $this->repo->listViolations($userId, $page, $perPage, $level, $scope);
+        $items = OutputSanitizer::sanitizeRows($result['items'], ['reason', 'moderator_username']);
+        return $this->withMeta($items, $result['total'], $page, $perPage);
     }
 
     public function updateUser(string $id, array $payload, string $moderatorId): array

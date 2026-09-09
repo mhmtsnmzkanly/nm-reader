@@ -100,7 +100,7 @@ final class AdminModerationRepository extends AdminRepositoryBase
         ];
     }
 
-    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest', ?string $moderationStatus = null): array
+    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest', ?string $moderationStatus = null, ?string $userId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
         $where = ['1 = 1'];
@@ -118,6 +118,10 @@ final class AdminModerationRepository extends AdminRepositoryBase
         if ($moderationStatus !== null && in_array($moderationStatus, ['pending', 'approved', 'hidden', 'deleted'], true)) {
             $where[] = 'c.moderation_status = :moderation_status';
             $params['moderation_status'] = $moderationStatus;
+        }
+        if ($userId !== null && $userId !== '') {
+            $where[] = 'c.user_id = :comment_user_id';
+            $params['comment_user_id'] = $userId;
         }
         $whereClause = implode(' AND ', $where);
         $orderBy = $sort === 'oldest' ? 'c.created_at ASC' : 'c.created_at DESC';
@@ -296,7 +300,7 @@ final class AdminModerationRepository extends AdminRepositoryBase
         ];
     }
 
-    public function listBlogs(int $page, int $perPage, string $query = '', ?string $status = null, string $sort = 'newest'): array
+    public function listBlogs(int $page, int $perPage, string $query = '', ?string $status = null, string $sort = 'newest', ?string $userId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
         $where = [];
@@ -316,6 +320,10 @@ final class AdminModerationRepository extends AdminRepositoryBase
             $params['query_title'] = $queryValue;
             $params['query_slug'] = $queryValue;
             $params['query_username'] = $queryValue;
+        }
+        if ($userId !== null && $userId !== '') {
+            $where[] = 'b.user_id = :blog_user_id';
+            $params['blog_user_id'] = $userId;
         }
         $whereClause = implode(' AND ', $where);
         $orderBy = $sort === 'oldest' ? 'b.created_at ASC' : 'b.created_at DESC';

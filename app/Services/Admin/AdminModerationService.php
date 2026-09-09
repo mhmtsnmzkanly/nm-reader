@@ -34,9 +34,9 @@ final class AdminModerationService extends AdminConsoleServiceBase
         return $this->withMeta($result['items'], $result['total'], $page, $perPage);
     }
 
-    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest', ?string $moderationStatus = null): array
+    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest', ?string $moderationStatus = null, ?string $userId = null): array
     {
-        $result = $this->repo->listComments($page, $perPage, $query, $targetType, $sort, $moderationStatus);
+        $result = $this->repo->listComments($page, $perPage, $query, $targetType, $sort, $moderationStatus, $userId);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['body', 'username', 'content_title', 'blog_title', 'moderation_status']);
     
         return $this->withMeta($items, $result['total'], $page, $perPage);
@@ -58,9 +58,9 @@ final class AdminModerationService extends AdminConsoleServiceBase
         return $this->withMeta($result['items'], $result['total'], $page, $perPage);
     }
 
-    public function listBlogs(int $page, int $perPage, string $query = '', ?string $status = null, string $sort = 'newest'): array
+    public function listBlogs(int $page, int $perPage, string $query = '', ?string $status = null, string $sort = 'newest', ?string $userId = null): array
     {
-        $result = $this->repo->listBlogs($page, $perPage, $query, $status, $sort);
+        $result = $this->repo->listBlogs($page, $perPage, $query, $status, $sort, $userId);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['title', 'username']);
         return $this->withMeta($items, $result['total'], $page, $perPage);
     }
