@@ -32,6 +32,7 @@ final class AdminConsoleService
         private readonly CacheService $cache,
         private readonly RetentionService $retention,
         private readonly AnalyticsAggregationService $aggregation,
+        private readonly QueueService $queueService,
         private readonly BackupService $backupService,
         private readonly SlugService $slugger,
         private readonly SitemapService $sitemapService,
@@ -173,12 +174,18 @@ final class AdminConsoleService
      */
     public function runQueueOnce(?string $jobType = null, int $limit = 10, ?string $moderatorId = null): array
     {
-        // Internal job trigger logic
-        return [
-            'triggered' => true, 
-            'type' => $jobType ?? 'general',
-            'limit' => $limit
-        ];
+        $result = $this->queueService->runOnce($limit, $jobType);
+        if ($moderatorId !== null) {
+            $this->repo->createModerationAction(
+                $moderatorId,
+                'system',
+                'queue',
+                'trigger',
+                sprintf('Queue worker run completed: %d processed, %d failed', $result['processed'], $result['failed'])
+            );
+        }
+
+        return $result;
     }
 
     /**

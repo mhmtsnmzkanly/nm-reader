@@ -7,7 +7,7 @@ declare(strict_types=1);
  * CLI Worker for processing the Job Queue.
  * 
  * Run this script via CLI to process background tasks (e.g., email notifications).
- * Usage: php app/Console/queue_worker.php [--sleep=5] [--limit=100]
+ * Usage: php app/Console/queue_worker.php [--sleep=5] [--limit=100] [--type=job_type]
  */
 
 use App\Services\QueueService;
@@ -27,12 +27,14 @@ $container = require __DIR__ . '/../dependencies.php';
 
 $sleep = 5;
 $limit = 50;
+$jobType = null;
 $once = false;
 
 // Parse arguments
 foreach (array_slice($argv, 1) as $arg) {
     if (str_starts_with($arg, '--sleep=')) $sleep = (int) substr($arg, 8);
     if (str_starts_with($arg, '--limit=')) $limit = (int) substr($arg, 8);
+    if (str_starts_with($arg, '--type=')) $jobType = trim(substr($arg, 7)) ?: null;
     if ($arg === '--once') $once = true;
 }
 
@@ -52,7 +54,7 @@ if (function_exists('pcntl_signal')) {
 
 while ($running) {
     try {
-        $results = $queue->runOnce($limit);
+        $results = $queue->runOnce($limit, $jobType);
         
         if ($results['processed'] > 0 || $once) {
             echo "[" . date('Y-m-d H:i:s') . "] Processed: " . $results['processed'] . " | Failed: " . $results['failed'] . " | Scanned: " . $results['scanned'] . PHP_EOL;

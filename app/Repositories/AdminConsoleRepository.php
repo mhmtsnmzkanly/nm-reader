@@ -503,9 +503,17 @@ final class AdminConsoleRepository
                 id,
                 job_type,
                 status,
+                dedupe_key,
+                priority,
+                max_attempts,
                 attempts,
                 last_error,
                 available_at,
+                locked_by,
+                locked_until,
+                started_at,
+                completed_at,
+                failed_at,
                 created_at,
                 updated_at
              FROM system_jobs' . $whereSql . '
@@ -525,7 +533,14 @@ final class AdminConsoleRepository
 
     public function retryQueueJob(int $id): bool
     {
-        $stmt = $this->pdo->prepare('UPDATE system_jobs SET status = "pending", attempts = 0, last_error = NULL, available_at = NOW(), updated_at = NOW() WHERE id = :id AND status IN ("failed", "cancelled")');
+        $stmt = $this->pdo->prepare(
+            'UPDATE system_jobs
+             SET status = "pending", attempts = 0, last_error = NULL, result = NULL,
+                 failed_at = NULL, completed_at = NULL, started_at = NULL,
+                 locked_by = NULL, locked_at = NULL,
+                 locked_until = NULL, available_at = NOW(), updated_at = NOW()
+             WHERE id = :id AND status IN ("failed", "cancelled")'
+        );
         $stmt->execute(['id' => $id]);
         return $stmt->rowCount() > 0;
     }

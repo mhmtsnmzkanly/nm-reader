@@ -918,13 +918,26 @@ CREATE TABLE `system_jobs` (
   `job_type` varchar(64) NOT NULL,
   `payload` longtext DEFAULT NULL,
   `status` enum('pending','processing','done','failed','cancelled') NOT NULL DEFAULT 'pending',
+  `dedupe_key` varchar(128) DEFAULT NULL,
+  `priority` smallint(6) NOT NULL DEFAULT 0,
+  `max_attempts` smallint(5) unsigned NOT NULL DEFAULT 3,
   `attempts` int(11) NOT NULL DEFAULT 0,
   `available_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `locked_by` varchar(80) DEFAULT NULL,
+  `locked_at` datetime DEFAULT NULL,
+  `locked_until` datetime DEFAULT NULL,
+  `started_at` datetime DEFAULT NULL,
+  `completed_at` datetime DEFAULT NULL,
+  `failed_at` datetime DEFAULT NULL,
   `last_error` varchar(500) DEFAULT NULL,
+  `result` longtext DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `idx_system_jobs_status_available` (`status`,`available_at`)
+  UNIQUE KEY `uq_system_jobs_dedupe` (`dedupe_key`),
+  KEY `idx_system_jobs_status_available` (`status`,`available_at`),
+  KEY `idx_system_jobs_lock` (`status`,`locked_until`),
+  KEY `idx_system_jobs_type_status` (`job_type`,`status`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `schema_migrations` (

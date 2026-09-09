@@ -8,7 +8,6 @@ use App\Helpers\ResponseHelper;
 use App\Services\AdminService;
 use App\Services\AdminConsoleService;
 use App\Services\SiteConfigService;
-use App\Services\QueueService;
 use App\Services\MetricsService;
 use App\Services\RetentionService;
 use App\Services\UploadService;
@@ -30,7 +29,6 @@ final class AdminPanelController
         private readonly AdminService $adminService,
         private readonly AdminConsoleService $console,
         private readonly SiteConfigService $siteConfig,
-        private readonly QueueService $queueService,
         private readonly MetricsService $metricsService,
         private readonly RetentionService $retentionService,
         private readonly UploadService $uploadService,
@@ -515,7 +513,10 @@ final class AdminPanelController
         $limit = max(1, min(100, (int) ($payload['limit'] ?? 10)));
         $jobType = isset($payload['job_type']) ? (string) $payload['job_type'] : null;
 
-        return ResponseHelper::success($this->queueService->runOnce($limit), ['job_type' => $jobType, 'requested_limit' => $limit, 'moderator_id' => $modId]);
+        return ResponseHelper::success(
+            $this->console->runQueueOnce($jobType, $limit, $modId),
+            ['job_type' => $jobType, 'requested_limit' => $limit, 'moderator_id' => $modId]
+        );
     }
 
     public function cleanupRetention(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
