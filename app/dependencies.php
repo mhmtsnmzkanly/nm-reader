@@ -3,6 +3,14 @@
 declare(strict_types=1);
 
 use App\Controllers\AdminPanelController;
+use App\Controllers\Admin\CommerceController as AdminCommerceController;
+use App\Controllers\Admin\ContentController as AdminContentController;
+use App\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Controllers\Admin\ModerationController as AdminModerationController;
+use App\Controllers\Admin\OperationsController as AdminOperationsController;
+use App\Controllers\Admin\SettingsController as AdminSettingsController;
+use App\Controllers\Admin\StorageController as AdminStorageController;
+use App\Controllers\Admin\UsersController as AdminUsersController;
 use App\Controllers\ContentController;
 use App\Controllers\UserInteractionController;
 use App\Controllers\AuthController;
@@ -16,6 +24,13 @@ use App\Controllers\AdminShellController;
 use App\Controllers\SystemPageController;
 use App\Repositories\BlogRepository;
 use App\Repositories\AdminConsoleRepository;
+use App\Repositories\Admin\AdminContentRepository;
+use App\Repositories\Admin\AdminDashboardRepository;
+use App\Repositories\Admin\AdminModerationRepository;
+use App\Repositories\Admin\AdminOperationsRepository;
+use App\Repositories\Admin\AdminStorageRepository;
+use App\Repositories\Admin\AdminTaxonomyRepository;
+use App\Repositories\Admin\AdminUserRepository;
 use App\Repositories\ChapterRepository;
 use App\Repositories\CommentRepository;
 use App\Repositories\CommentVoteRepository;
@@ -30,6 +45,16 @@ use App\Repositories\WalletRepository;
 use App\Services\AuthService;
 use App\Services\AdminService;
 use App\Services\AdminConsoleService;
+use App\Services\Admin\AdminContentService;
+use App\Services\Admin\AdminDashboardService;
+use App\Services\Admin\AdminModerationService;
+use App\Services\Admin\AdminOperationsService;
+use App\Services\Admin\AdminSettingsService;
+use App\Services\Admin\AdminStorageService;
+use App\Services\Admin\AdminUserService;
+use App\Services\Admin\ChapterAdminService;
+use App\Services\Admin\ContentAdminService;
+use App\Services\Admin\TaxonomyAdminService;
 use App\Services\AnalyticsService;
 use App\Services\AnalyticsAggregationService;
 use App\Services\BackupService;
@@ -132,6 +157,13 @@ $builder->addDefinitions([
 
     UserRepository::class => DI\autowire(UserRepository::class),
     BlogRepository::class => DI\autowire(BlogRepository::class),
+    AdminDashboardRepository::class => DI\autowire(AdminDashboardRepository::class),
+    AdminContentRepository::class => DI\autowire(AdminContentRepository::class),
+    AdminUserRepository::class => DI\autowire(AdminUserRepository::class),
+    AdminModerationRepository::class => DI\autowire(AdminModerationRepository::class),
+    AdminStorageRepository::class => DI\autowire(AdminStorageRepository::class),
+    AdminTaxonomyRepository::class => DI\autowire(AdminTaxonomyRepository::class),
+    AdminOperationsRepository::class => DI\autowire(AdminOperationsRepository::class),
     AdminConsoleRepository::class => DI\autowire(AdminConsoleRepository::class),
     SeriesRepository::class => DI\autowire(SeriesRepository::class),
     ChapterRepository::class => DI\autowire(ChapterRepository::class),
@@ -166,7 +198,17 @@ $builder->addDefinitions([
     RatingService::class => DI\autowire(RatingService::class),
     EntityIdService::class => DI\autowire(EntityIdService::class),
     AdminService::class => DI\autowire(AdminService::class),
+    ContentAdminService::class => DI\autowire(ContentAdminService::class),
+    ChapterAdminService::class => DI\autowire(ChapterAdminService::class),
+    TaxonomyAdminService::class => DI\autowire(TaxonomyAdminService::class),
     AdminConsoleService::class => DI\autowire(AdminConsoleService::class),
+    AdminDashboardService::class => DI\autowire(AdminDashboardService::class),
+    AdminContentService::class => DI\autowire(AdminContentService::class),
+    AdminUserService::class => DI\autowire(AdminUserService::class),
+    AdminModerationService::class => DI\autowire(AdminModerationService::class),
+    AdminStorageService::class => DI\autowire(AdminStorageService::class),
+    AdminOperationsService::class => DI\autowire(AdminOperationsService::class),
+    AdminSettingsService::class => DI\autowire(AdminSettingsService::class),
     UserService::class => DI\autowire(UserService::class),
     MeService::class => DI\autowire(MeService::class),
     WebContextBuilder::class => DI\autowire(WebContextBuilder::class)
@@ -214,6 +256,14 @@ $builder->addDefinitions([
     UserInteractionController::class => DI\autowire(UserInteractionController::class),
     UserController::class => DI\autowire(UserController::class),
     AdminPanelController::class => DI\autowire(AdminPanelController::class),
+    AdminDashboardController::class => DI\autowire(AdminDashboardController::class),
+    AdminContentController::class => DI\autowire(AdminContentController::class),
+    AdminUsersController::class => DI\autowire(AdminUsersController::class),
+    AdminModerationController::class => DI\autowire(AdminModerationController::class),
+    AdminStorageController::class => DI\autowire(AdminStorageController::class),
+    AdminOperationsController::class => DI\autowire(AdminOperationsController::class),
+    AdminSettingsController::class => DI\autowire(AdminSettingsController::class),
+    AdminCommerceController::class => DI\autowire(AdminCommerceController::class),
     InstallController::class => DI\autowire(InstallController::class)
         ->constructorParameter('settings', $settings),
     // Web routes are split by responsibility; shared bootstrap and shell
