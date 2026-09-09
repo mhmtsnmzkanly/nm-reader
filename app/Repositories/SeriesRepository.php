@@ -146,6 +146,7 @@ final class SeriesRepository
                     c.status,
                     c.is_adult,
                     c.is_members_only,
+                    c.disable_comments,
                     c.cover_image,
                     c.rating_avg,
                     c.rating_count,
@@ -189,6 +190,7 @@ final class SeriesRepository
                     c.status,
                     c.is_adult,
                     c.is_members_only,
+                    c.disable_comments,
                     c.cover_image,
                     c.rating_avg,
                     c.rating_count,
@@ -638,6 +640,32 @@ final class SeriesRepository
         $row = $stmt->fetch();
 
         return $row === false ? null : (string) $row['id'];
+    }
+
+    /**
+     * Returns whether comments are disabled for a series.
+     */
+    public function areCommentsDisabled(string $contentId): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT disable_comments FROM series WHERE id = :id AND deleted_at IS NULL LIMIT 1');
+        $stmt->execute(['id' => $contentId]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * Returns whether comments are disabled for the parent series of a chapter.
+     */
+    public function areChapterCommentsDisabled(string $chapterId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT s.disable_comments
+             FROM chapters ch
+             INNER JOIN series s ON s.id = ch.content_id
+             WHERE ch.id = :chapter_id AND ch.deleted_at IS NULL AND s.deleted_at IS NULL
+             LIMIT 1'
+        );
+        $stmt->execute(['chapter_id' => $chapterId]);
+        return (bool) $stmt->fetchColumn();
     }
 
     /**

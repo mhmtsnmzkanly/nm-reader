@@ -146,6 +146,7 @@ export type ContentSummary = {
   url_path?: string;
   is_adult?: boolean;
   is_members_only?: boolean;
+  disable_comments?: boolean;
 };
 
 export type ReadingProgress = {

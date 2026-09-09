@@ -171,6 +171,7 @@ final class AdminConsoleRepository
                 c.archived_at,
                 c.is_adult,
                 c.is_members_only,
+                c.disable_comments,
                 c.cover_image,
                 c.description,
                 c.chapter_count,
@@ -652,10 +653,10 @@ final class AdminConsoleRepository
     /**
      * Lists all comments with their context (Blog title or Series title).
      */
-    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest'): array
+    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest', ?string $moderationStatus = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $where = ['c.deleted_at IS NULL'];
+        $where = ['1 = 1'];
         $params = [];
         if ($query !== '') {
             $where[] = '(c.body LIKE :query OR u.username LIKE :query)';
@@ -664,6 +665,10 @@ final class AdminConsoleRepository
         if ($targetType !== null && in_array($targetType, ['series', 'chapter', 'blog'], true)) {
             $where[] = 'c.target_type = :target_type';
             $params['target_type'] = $targetType;
+        }
+        if ($moderationStatus !== null && in_array($moderationStatus, ['pending', 'approved', 'hidden', 'deleted'], true)) {
+            $where[] = 'c.moderation_status = :moderation_status';
+            $params['moderation_status'] = $moderationStatus;
         }
         $whereClause = implode(' AND ', $where);
         $orderBy = $sort === 'oldest' ? 'c.created_at ASC' : 'c.created_at DESC';
@@ -677,6 +682,8 @@ final class AdminConsoleRepository
                 c.user_id,
                 u.username,
                 c.body,
+                c.moderation_status,
+                c.deleted_at,
                 c.created_at,
                 c.upvote_count,
                 c.downvote_count,
@@ -730,7 +737,7 @@ final class AdminConsoleRepository
 
         $this->pdo->beginTransaction();
         try {
-            $stmt = $this->pdo->prepare('DELETE FROM comments WHERE id = :id');
+            $stmt = $this->pdo->prepare('UPDATE comments SET moderation_status = "deleted", deleted_at = NOW() WHERE id = :id AND deleted_at IS NULL');
             $stmt->execute(['id' => $id]);
             $success = $stmt->rowCount() > 0;
 
@@ -762,6 +769,54 @@ final class AdminConsoleRepository
 
             $this->pdo->commit();
             return $success;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Updates a comment moderation status while preserving the original row.
+     */
+    public function moderateComment(int $id, string $status, string $moderatorId, ?string $reason = null): bool
+    {
+        $allowed = ['pending', 'approved', 'hidden', 'deleted'];
+        if (!in_array($status, $allowed, true)) {
+            throw new \InvalidArgumentException('Invalid comment moderation status');
+        }
+
+        $stmt = $this->pdo->prepare('SELECT id, moderation_status FROM comments WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        if ($stmt->fetch() === false) {
+            return false;
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $update = $this->pdo->prepare(
+                'UPDATE comments
+                 SET moderation_status = :status,
+                     deleted_at = CASE WHEN :status_deleted = "deleted" THEN COALESCE(deleted_at, NOW()) ELSE NULL END
+                 WHERE id = :id'
+            );
+            $update->execute([
+                'status' => $status,
+                'status_deleted' => $status,
+                'id' => $id,
+            ]);
+
+            $audit = $this->pdo->prepare(
+                'INSERT INTO admin_actions (moderator_user_id, target_type, target_id, action, reason, created_at)
+                 VALUES (:mod, "comment", :cid, :action, :reason, NOW())'
+            );
+            $audit->execute([
+                'mod' => $moderatorId,
+                'cid' => (string) $id,
+                'action' => 'moderate_' . $status,
+                'reason' => $reason,
+            ]);
+            $this->pdo->commit();
+            return $update->rowCount() > 0;
         } catch (\Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
             throw $e;

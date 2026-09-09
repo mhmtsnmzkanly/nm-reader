@@ -282,7 +282,8 @@ final class AdminPanelController
             $perPage,
             trim((string) ($query['q'] ?? '')),
             isset($query['target_type']) ? (string) $query['target_type'] : null,
-            (string) ($query['sort'] ?? 'newest')
+            (string) ($query['sort'] ?? 'newest'),
+            isset($query['status']) ? (string) $query['status'] : null
         );
         return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
     }
@@ -292,6 +293,24 @@ final class AdminPanelController
         $modId = (string) $request->getAttribute('user_id');
         $this->console->deleteComment((int)$args['id'], $modId);
         return ResponseHelper::success();
+    }
+
+    public function moderateComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $payload = $request->getParsedBody();
+        $payload = is_array($payload) ? $payload : [];
+        $status = trim((string) ($payload['status'] ?? ''));
+        $reason = trim((string) ($payload['reason'] ?? ''));
+        if ($status === '') {
+            return ResponseHelper::error(400, 'status is required');
+        }
+        $modId = (string) $request->getAttribute('user_id');
+        try {
+            $updated = $this->console->moderateComment((int) $args['id'], $status, $modId, $reason !== '' ? $reason : null);
+            return $updated ? ResponseHelper::success(['updated' => true]) : ResponseHelper::error(404, 'Comment not found');
+        } catch (\InvalidArgumentException $e) {
+            return ResponseHelper::error(400, $e->getMessage());
+        }
     }
 
     // --- LOGS & OPS ---

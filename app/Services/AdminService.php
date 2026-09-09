@@ -228,6 +228,10 @@ final class AdminService
             $updates[] = 'is_members_only = :is_members_only';
             $params['is_members_only'] = !empty($payload['is_members_only']) ? 1 : 0;
         }
+        if (isset($payload['disable_comments'])) {
+            $updates[] = 'disable_comments = :disable_comments';
+            $params['disable_comments'] = !empty($payload['disable_comments']) ? 1 : 0;
+        }
         if (isset($payload['lifecycle_status'])) {
             $lifecycleStatus = strtolower(trim((string) $payload['lifecycle_status']));
             if (!in_array($lifecycleStatus, self::ALLOWED_LIFECYCLE_STATUSES, true)) {

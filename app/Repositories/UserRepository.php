@@ -457,6 +457,8 @@ final class UserRepository
                     (c.target_type = "chapter" AND ct.id = ch.content_id)
                 )
                 WHERE c.user_id = :user_id
+                  AND c.moderation_status = "approved"
+                  AND c.deleted_at IS NULL
                 ORDER BY c.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
@@ -478,10 +480,10 @@ final class UserRepository
     {
         $sql = 'SELECT
                     (SELECT COUNT(*) FROM votes cv WHERE cv.user_id = :user_id1) AS votes_cast,
-                    (SELECT COALESCE(SUM(c1.upvote_count), 0) FROM comments c1 WHERE c1.user_id = :user_id2) AS upvotes_received,
-                    (SELECT COALESCE(SUM(c2.downvote_count), 0) FROM comments c2 WHERE c2.user_id = :user_id3) AS downvotes_received,
+                    (SELECT COALESCE(SUM(c1.upvote_count), 0) FROM comments c1 WHERE c1.user_id = :user_id2 AND c1.moderation_status = "approved" AND c1.deleted_at IS NULL) AS upvotes_received,
+                    (SELECT COALESCE(SUM(c2.downvote_count), 0) FROM comments c2 WHERE c2.user_id = :user_id3 AND c2.moderation_status = "approved" AND c2.deleted_at IS NULL) AS downvotes_received,
                     (SELECT COUNT(*) FROM blogs b WHERE b.user_id = :user_id4 AND b.approved = 1) AS approved_blog_count,
-                    (SELECT COUNT(*) FROM comments c3 WHERE c3.user_id = :user_id5) AS comment_count,
+                    (SELECT COUNT(*) FROM comments c3 WHERE c3.user_id = :user_id5 AND c3.moderation_status = "approved" AND c3.deleted_at IS NULL) AS comment_count,
                     (SELECT COUNT(*) FROM user_chapters_reads r WHERE r.user_id = :user_id6) AS chapters_read,
                     (SELECT COUNT(*) FROM user_series_follows f WHERE f.user_id = :user_id7) AS series_following,
                     (SELECT COUNT(*) FROM user_series_follows f WHERE f.user_id = :user_id8) AS library_count,

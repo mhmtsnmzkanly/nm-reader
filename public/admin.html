@@ -615,7 +615,7 @@
 
   <div class="app-content p-4">
     <div class="container-fluid">
-      <div class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-2"><div class="col-md-6"><input type="search" class="form-control" id="panel-comments-search" placeholder="Yorum veya kullanıcı ara..." data-on-input="filterComments"></div><div class="col-md-3"><select class="form-select" id="panel-comments-target" data-on-change="filterComments"><option value="">Tüm hedefler</option><option value="series">Seri</option><option value="chapter">Bölüm</option><option value="blog">Blog</option></select></div><div class="col-md-3"><select class="form-select" id="panel-comments-sort" data-on-change="filterComments"><option value="newest">En yeni</option><option value="oldest">En eski</option></select></div></div></div></div>
+      <div class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-2"><div class="col-md-5"><input type="search" class="form-control" id="panel-comments-search" placeholder="Yorum veya kullanıcı ara..." data-on-input="filterComments"></div><div class="col-md-2"><select class="form-select" id="panel-comments-target" data-on-change="filterComments"><option value="">Tüm hedefler</option><option value="series">Seri</option><option value="chapter">Bölüm</option><option value="blog">Blog</option></select></div><div class="col-md-2"><select class="form-select" id="panel-comments-status" data-on-change="filterComments"><option value="">Tüm durumlar</option><option value="pending">Bekliyor</option><option value="approved">Onaylı</option><option value="hidden">Gizli</option><option value="deleted">Silindi</option></select></div><div class="col-md-3"><select class="form-select" id="panel-comments-sort" data-on-change="filterComments"><option value="newest">En yeni</option><option value="oldest">En eski</option></select></div></div></div></div>
       <div class="card border-0 shadow-sm rounded-3">
         <div class="card-body p-0 table-responsive">
           <table class="table table-hover align-middle mb-0">
@@ -624,6 +624,7 @@
                 <th>Kullanıcı</th>
                 <th>Yorum Metni</th>
                 <th>Bağlam</th>
+                <th>Durum</th>
                 <th>Beğeni / Dislike</th>
                 <th>Tarih</th>
                 <th class="text-end">İşlem</th>
@@ -1434,7 +1435,9 @@
   }
 
   function renderCommentsTable() {
-    setTableRows('panel-comments-list', (store.get('commentsList') || []).map(comment => `<tr><td class="fw-bold">${escapeHtml(comment.username)}</td><td class="text-wrap">${escapeHtml(comment.body)}</td><td><span class="small text-secondary">${escapeHtml(comment.context_label)}</span></td><td><span class="badge bg-success-subtle text-success">+${Number(comment.upvote_count || 0)}</span> <span class="badge bg-danger-subtle text-danger">-${Number(comment.downvote_count || 0)}</span></td><td class="small text-secondary">${escapeHtml(comment.created_at)}</td><td class="text-end">${hasPermission('admin.comment.delete') ? `<button class="btn btn-xs btn-outline-danger" data-on-click="deleteComment" data-id="${escapeHtml(comment.id)}"><i class="bi bi-trash"></i> Sil</button>` : ''}</td></tr>`).join(''), 6);
+    const statusLabel = { pending: 'Bekliyor', approved: 'Onaylı', hidden: 'Gizli', deleted: 'Silindi' };
+    const statusClass = { pending: 'bg-warning-subtle text-warning', approved: 'bg-success-subtle text-success', hidden: 'bg-secondary-subtle text-secondary', deleted: 'bg-danger-subtle text-danger' };
+    setTableRows('panel-comments-list', (store.get('commentsList') || []).map(comment => { const status = comment.moderation_status || 'approved'; const nextStatus = status === 'approved' ? 'hidden' : 'approved'; return `<tr><td class="fw-bold">${escapeHtml(comment.username)}</td><td class="text-wrap">${escapeHtml(comment.body)}</td><td><span class="small text-secondary">${escapeHtml(comment.context_label)}</span></td><td><span class="badge ${statusClass[status] || 'bg-light text-secondary'}">${escapeHtml(statusLabel[status] || status)}</span></td><td><span class="badge bg-success-subtle text-success">+${Number(comment.upvote_count || 0)}</span> <span class="badge bg-danger-subtle text-danger">-${Number(comment.downvote_count || 0)}</span></td><td class="small text-secondary">${escapeHtml(comment.created_at)}</td><td class="text-end text-nowrap">${hasPermission('admin.comment.delete') ? `<button class="btn btn-xs btn-outline-${nextStatus === 'approved' ? 'success' : 'warning'} me-1" data-on-click="moderateComment" data-id="${escapeHtml(comment.id)}" data-status="${nextStatus}" title="${nextStatus === 'approved' ? 'Onayla' : 'Gizle'}"><i class="bi bi-${nextStatus === 'approved' ? 'check-circle' : 'eye-slash'}"></i></button><button class="btn btn-xs btn-outline-danger" data-on-click="deleteComment" data-id="${escapeHtml(comment.id)}" title="Sil"><i class="bi bi-trash"></i></button>` : ''}</td></tr>`; }).join(''), 7);
     renderPager('panel-comments-pager', store.get('commentsMeta'), 'previousCommentsPage', 'nextCommentsPage');
   }
 
@@ -1685,6 +1688,7 @@
         <div class="col-md-3"><label class="form-label">Yayın yılı</label><input type="number" class="form-control" name="release_year" min="1800" max="%%NMR_NEXT_YEAR%%" value="${escapeHtml(content.release_year)}"></div>
         <div class="col-md-3 form-check ms-2"><input class="form-check-input" type="checkbox" name="is_adult" value="1" id="dialog-adult" ${checked(content.is_adult)}><label class="form-check-label" for="dialog-adult">Yetişkin içeriği</label></div>
         <div class="col-md-3 form-check"><input class="form-check-input" type="checkbox" name="is_members_only" value="1" id="dialog-members" ${checked(content.is_members_only)}><label class="form-check-label" for="dialog-members">Sadece üyeler</label></div>
+        <div class="col-md-3 form-check"><input class="form-check-input" type="checkbox" name="disable_comments" value="1" id="dialog-disable-comments" ${checked(content.disable_comments)}><label class="form-check-label" for="dialog-disable-comments">Yorumları kapat</label></div>
         <div class="col-12"><label class="form-label d-block">Türler</label><div class="d-flex flex-wrap gap-2" data-taxonomy-choices>${taxonomyChoices(genres, content.genre_ids, 'genres')}</div></div>
         <div class="col-12"><label class="form-label d-block">Etiketler</label><div class="d-flex flex-wrap gap-2" data-taxonomy-choices>${taxonomyChoices(tags, content.tag_ids, 'tags')}</div></div>
       </div>`;
@@ -2383,7 +2387,7 @@
       bindTaxonomyButtons(form);
       const uploadedPaths = [];
       form.querySelector('[name="cover_file"]')?.addEventListener('change', async event => { try { const paths = await uploadImages(event.target.files, 'series_cover'); uploadedPaths.push(...paths); if (paths[0]) form.querySelector('[name="cover_image"]').value = paths[0]; showToast('Kapak görseli yüklendi'); } catch (error) { showToast(error.message, 'danger'); } });
-      form.addEventListener('submit', async event => { event.preventDefault(); try { const data = new FormData(form); const selectedGenres = selectedValues(data, 'genres'); const selectedTags = selectedValues(data, 'tags'); const payload = Object.fromEntries(data.entries()); delete payload.genres; delete payload.tags; delete payload.cover_file; payload.is_adult = form.elements.is_adult.checked ? 1 : 0; payload.is_members_only = form.elements.is_members_only.checked ? 1 : 0; const response = mode === 'edit' ? await api(`/content/${encodeURIComponent(id)}`, { method: 'PUT', body: payload }) : await api('/content', { method: 'POST', body: payload }); const contentId = id || response?.data?.id; if (contentId) await api(`/contents/${encodeURIComponent(contentId)}/taxonomy`, { method: 'PUT', body: { genres: selectedGenres, tags: selectedTags } }); showToast(mode === 'edit' ? 'İçerik güncellendi' : 'İçerik oluşturuldu'); panelNavigate('/panel/series'); } catch (error) { showToast(error.message, 'danger'); } });
+      form.addEventListener('submit', async event => { event.preventDefault(); try { const data = new FormData(form); const selectedGenres = selectedValues(data, 'genres'); const selectedTags = selectedValues(data, 'tags'); const payload = Object.fromEntries(data.entries()); delete payload.genres; delete payload.tags; delete payload.cover_file; payload.is_adult = form.elements.is_adult.checked ? 1 : 0; payload.is_members_only = form.elements.is_members_only.checked ? 1 : 0; payload.disable_comments = form.elements.disable_comments.checked ? 1 : 0; const response = mode === 'edit' ? await api(`/content/${encodeURIComponent(id)}`, { method: 'PUT', body: payload }) : await api('/content', { method: 'POST', body: payload }); const contentId = id || response?.data?.id; if (contentId) await api(`/contents/${encodeURIComponent(contentId)}/taxonomy`, { method: 'PUT', body: { genres: selectedGenres, tags: selectedTags } }); showToast(mode === 'edit' ? 'İçerik güncellendi' : 'İçerik oluşturuldu'); panelNavigate('/panel/series'); } catch (error) { showToast(error.message, 'danger'); } });
     } catch (error) { target.innerHTML = `<div class="alert alert-danger">${escapeHtml(error.message)}</div>`; }
   }
 
@@ -2717,7 +2721,7 @@
   async function loadCommentsData(page = 1) {
     try {
       const params = new URLSearchParams({ page: String(page), per_page: '20' });
-      const values = { q: document.getElementById('panel-comments-search')?.value || '', target_type: document.getElementById('panel-comments-target')?.value || '', sort: document.getElementById('panel-comments-sort')?.value || 'newest' };
+      const values = { q: document.getElementById('panel-comments-search')?.value || '', target_type: document.getElementById('panel-comments-target')?.value || '', status: document.getElementById('panel-comments-status')?.value || '', sort: document.getElementById('panel-comments-sort')?.value || 'newest' };
       Object.entries(values).forEach(([key, value]) => { if (value) params.set(key, value); });
       const res = await api(`/comments?${params.toString()}`);
       store.batch(() => {
@@ -3022,6 +3026,14 @@
         await api(`/comments/${id}`, { method: 'DELETE' });
         showToast('Yorum silindi');
         loadCommentsData();
+      } catch (err) { showToast(err.message, 'danger'); }
+    },
+
+    async moderateComment(e, el) {
+      try {
+        await api(`/comments/${el.dataset.id}/moderation`, { method: 'PUT', body: { status: el.dataset.status } });
+        showToast(el.dataset.status === 'approved' ? 'Yorum onaylandı' : 'Yorum gizlendi');
+        loadCommentsData(Number(store.get('commentsMeta')?.page || 1));
       } catch (err) { showToast(err.message, 'danger'); }
     },
 

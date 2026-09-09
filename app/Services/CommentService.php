@@ -68,6 +68,9 @@ final class CommentService
         if ($this->chapters->findById($chapterId) === null) {
             throw new \DomainException('Chapter not found');
         }
+        if ($this->series->areChapterCommentsDisabled($chapterId)) {
+            throw new \DomainException('Comments are disabled for this content');
+        }
 
         if ($parentId !== null) {
             $parent = $this->comments->findById($parentId);
@@ -125,6 +128,9 @@ final class CommentService
         $contentId = $this->series->findContentIdBySlug($slug);
         if ($contentId === null) {
             throw new \DomainException('Series not found');
+        }
+        if ($this->series->areCommentsDisabled($contentId)) {
+            throw new \DomainException('Comments are disabled for this content');
         }
 
         if ($parentId !== null) {

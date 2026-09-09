@@ -387,10 +387,10 @@ final class AdminConsoleService
     /**
      * Lists social comments for moderation.
      */
-    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest'): array
+    public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest', ?string $moderationStatus = null): array
     {
-        $result = $this->repo->listComments($page, $perPage, $query, $targetType, $sort);
-        $items = OutputSanitizer::sanitizeRows($result['items'], ['body', 'username', 'content_title', 'blog_title']);
+        $result = $this->repo->listComments($page, $perPage, $query, $targetType, $sort, $moderationStatus);
+        $items = OutputSanitizer::sanitizeRows($result['items'], ['body', 'username', 'content_title', 'blog_title', 'moderation_status']);
 
         return $this->withMeta($items, $result['total'], $page, $perPage);
     }
@@ -401,6 +401,11 @@ final class AdminConsoleService
     public function deleteComment(int $id, string $moderatorId): bool
     {
         return $this->repo->deleteComment($id, $moderatorId);
+    }
+
+    public function moderateComment(int $id, string $status, string $moderatorId, ?string $reason = null): bool
+    {
+        return $this->repo->moderateComment($id, $status, $moderatorId, $reason);
     }
 
     /**

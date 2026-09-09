@@ -89,7 +89,7 @@ final class CommentRepository
     public function getByBlogId(string $blogId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $whereParts = ['c.target_type = "blog" AND c.target_id = :blog_id'];
+        $whereParts = ['c.target_type = "blog" AND c.target_id = :blog_id', 'c.moderation_status = "approved"', 'c.deleted_at IS NULL'];
         if ($cursorCreatedAt !== null && $cursorId !== null) {
             $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
         }
@@ -98,6 +98,7 @@ final class CommentRepository
                     c.id,
                     c.parent_id,
                     c.body,
+                    c.moderation_status,
                     c.upvote_count,
                     c.downvote_count,
                     c.created_at,
@@ -136,7 +137,7 @@ final class CommentRepository
     public function getByChapterId(string $chapterId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $whereParts = ['c.target_type = "chapter" AND c.target_id = :chapter_id'];
+        $whereParts = ['c.target_type = "chapter" AND c.target_id = :chapter_id', 'c.moderation_status = "approved"', 'c.deleted_at IS NULL'];
         if ($cursorCreatedAt !== null && $cursorId !== null) {
             $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
         }
@@ -145,6 +146,7 @@ final class CommentRepository
                     c.id,
                     c.parent_id,
                     c.body,
+                    c.moderation_status,
                     c.upvote_count,
                     c.downvote_count,
                     c.created_at,
@@ -183,7 +185,7 @@ final class CommentRepository
     public function getByContentId(string $contentId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursorCreatedAt = null, ?int $cursorId = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $whereParts = ['c.target_type = "series" AND c.target_id = :content_id'];
+        $whereParts = ['c.target_type = "series" AND c.target_id = :content_id', 'c.moderation_status = "approved"', 'c.deleted_at IS NULL'];
         if ($cursorCreatedAt !== null && $cursorId !== null) {
             $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
         }
@@ -192,6 +194,7 @@ final class CommentRepository
                     c.id,
                     c.parent_id,
                     c.body,
+                    c.moderation_status,
                     c.upvote_count,
                     c.downvote_count,
                     c.created_at,
@@ -229,7 +232,7 @@ final class CommentRepository
      */
     public function findById(int $id): ?array
     {
-        $sql = 'SELECT id, user_id, target_type, target_id, upvote_count, downvote_count
+        $sql = 'SELECT id, user_id, target_type, target_id, moderation_status, deleted_at, upvote_count, downvote_count
                 FROM comments WHERE id = :id LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
