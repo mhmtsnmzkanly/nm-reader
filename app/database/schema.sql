@@ -880,6 +880,16 @@ INSERT INTO `system_settings` (`group`, `key`, `type`, `value`) VALUES
 ('mail', 'email_verification_body', 'string', '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #18181b; color: #f4f4f5; border-radius: 12px;"><h2 style="color: #ffffff; margin-bottom: 16px;">E-posta Doğrulama</h2><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">Merhaba <strong>{{username}}</strong>,</p><p style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">{{site_name}} ailesine hoş geldiniz! Hesabınızı doğrulamak ve güvenliğinizi sağlamak için lütfen aşağıdaki butona tıklayın:</p><div style="text-align: center; margin: 28px 0;"><a href="{{action_url}}" style="background-color: #e11d48; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">E-postamı Doğrula</a></div><p style="color: #71717a; font-size: 12px; line-height: 1.5;">Bu bağlantı <strong>{{expires_in}}</strong> boyunca geçerlidir.</p></div>')
 ON DUPLICATE KEY UPDATE `group`=VALUES(`group`), `type`=VALUES(`type`), `value`=VALUES(`value`);
 
+-- Consolidated data migrations. These statements are intentionally kept in
+-- the canonical schema so a fresh install includes every historical change.
+-- 003_hash_existing_api_tokens.sql: never retain a plaintext API token.
+UPDATE `users`
+SET `api_token` = SHA2(`api_token`, 256)
+WHERE `api_token` IS NOT NULL AND `api_token` <> '';
+
+-- 008_remove_env_duplicate_site_settings.sql: these values are .env-only.
+DELETE FROM `system_settings` WHERE `key` IN ('site_address', 'enforce_https');
+
 DROP TABLE IF EXISTS `system_jobs`;
 CREATE TABLE `system_jobs` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
