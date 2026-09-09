@@ -739,14 +739,24 @@ CREATE TABLE `analytics_events` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `event_type` varchar(64) NOT NULL,
   `user_id` char(8) DEFAULT NULL,
+  `session_hash` char(64) DEFAULT NULL,
   `entity_type` varchar(32) DEFAULT NULL,
   `entity_id` varchar(32) DEFAULT NULL,
+  `page` varchar(255) DEFAULT NULL,
+  `route` varchar(100) DEFAULT NULL,
+  `source` varchar(64) DEFAULT NULL,
+  `search_query` varchar(255) DEFAULT NULL,
+  `referrer` varchar(500) DEFAULT NULL,
+  `duration_ms` int(11) DEFAULT NULL,
   `metadata` longtext DEFAULT NULL,
   `ip_hash` char(64) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_analytics_events_type_date` (`event_type`,`created_at`),
-  KEY `idx_analytics_events_entity` (`entity_type`,`entity_id`)
+  KEY `idx_analytics_events_entity` (`entity_type`,`entity_id`),
+  KEY `idx_analytics_events_session` (`session_hash`,`created_at`),
+  KEY `idx_analytics_events_source` (`source`,`created_at`),
+  KEY `idx_analytics_events_search` (`search_query`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `analytics_search_logs`;
