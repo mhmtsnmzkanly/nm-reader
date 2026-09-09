@@ -1,1 +1,0 @@
-import{u as s,r as a}from"./react-QbDTDCEN.js";import{d as o}from"./app-7PErm6NR.js";import"./lucide-CiC8sumC.js";const c=()=>{const{openAuthModal:t,isAuthenticated:r}=o(),e=s();return a.useEffect(()=>{r?e("/"):(t("register"),e("/",{replace:!0}))},[r,e,t]),null};export{c as RegisterPage};
