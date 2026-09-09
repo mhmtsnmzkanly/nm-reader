@@ -1,0 +1,12 @@
+{
+  "name": "nm-reader",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix ui run dev",
+    "build": "npm --prefix ui run build",
+    "clean": "npm --prefix ui run clean",
+    "lint": "npm --prefix ui run lint",
+    "test:client": "npm --prefix ui run test:client",
+    "test:e2e": "npm --prefix ui run test:e2e"
+  }
+}
