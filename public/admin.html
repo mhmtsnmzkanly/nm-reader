@@ -15,7 +15,7 @@
   <!-- AdminLTE Theme (same CDN stack as the installer) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/css/adminlte.min.css">
   <!-- Increase +1 when change css code -->
-  <link rel="stylesheet" href="/assets/css/admin.css?1">
+  <link rel="stylesheet" href="/assets/css/admin.css?2">
 
   <script>window.__NMR_CONTEXT = %%NMR_CONTEXT_JSON%%;</script>
 </head>
@@ -1020,7 +1020,7 @@
   const loader = document.getElementById('panel-bootstrap-loader');
 
   try {
-    await import('/assets/js/admin.js?1');
+    await import('/assets/js/admin.js?2');
     loader?.remove();
   } catch (error) {
     console.error('Admin panel yüklenemedi:', error);
