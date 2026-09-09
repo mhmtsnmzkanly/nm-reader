@@ -257,6 +257,7 @@ final class UserService
         $userId = (string) $user['id'];
         $blogs = $this->users->listApprovedBlogsByUser($userId, $blogPage, $blogPerPage);
         $comments = $this->users->listRecentCommentsByUser($userId, $commentPage, $commentPerPage);
+        $library = $this->users->listPublicFollowedContents($userId, 1, 20);
         $stats = $this->users->getPublicStatsByUser($userId);
 
         // Add counts for followers and following
@@ -284,7 +285,7 @@ final class UserService
             'comment_count' => self::SCORE_FORMULA['comment_count'],
         ];
 
-        $comments = OutputSanitizer::sanitizeRows($comments, ['body']);
+        $comments = OutputSanitizer::sanitizeRows($comments, ['body', 'content_title']);
         $blogs = OutputSanitizer::sanitizeRows($blogs, ['title']);
 
         $comments = array_map(function (array $row): array {
@@ -305,6 +306,28 @@ final class UserService
             return $row;
         }, $comments);
 
+        $activities = array_map(static function (array $row): array {
+            $targetType = (string) ($row['target_type'] ?? 'series');
+            $targetType = $targetType === 'chapter' ? 'chapter' : 'content';
+            $targetId = (string) ($row['target_id'] ?? $row['content_id'] ?? '');
+            $title = (string) ($row['content_title'] ?? $row['content_slug'] ?? $targetId);
+            return [
+                'id' => (string) ($row['id'] ?? ''),
+                'type' => 'comment',
+                'target' => [
+                    'type' => $targetType,
+                    'id' => $targetId,
+                    'slug' => $row['content_slug'] ?? null,
+                    'title' => $title,
+                    'content_type' => isset($row['content_type'])
+                        ? str_replace('_', '-', (string) $row['content_type'])
+                        : null,
+                ],
+                'text' => (string) ($row['body'] ?? ''),
+                'created_at' => (string) ($row['created_at'] ?? ''),
+            ];
+        }, $comments);
+
         $score = (((int) $stats['votes_cast']) * $weights['votes_cast'])
             + (((int) $stats['upvotes_received']) * $weights['upvotes_received'])
             + (((int) $stats['downvotes_received']) * $weights['downvotes_received'])
@@ -317,6 +340,10 @@ final class UserService
                 [
                     'avatar' => $user['profile_image'] ?? null,
                     'cover_image' => $user['cover_image'] ?? null,
+                    'display_name' => $user['username'] ?? null,
+                    'email' => null,
+                    'is_guest' => false,
+                    'joined_at' => $user['created_at'] ?? null,
                 ]
             ),
             'is_following' => $isFollowing,
@@ -331,6 +358,28 @@ final class UserService
                 'followers_count' => (int) $stats['followers_count'],
                 'following_count' => (int) $stats['following_count'],
             ],
+            // Keep the public profile response aligned with the React profile
+            // model while retaining the legacy statistics key for API clients.
+            'stats' => [
+                'score' => $score,
+                'chapters_read' => (int) ($stats['chapters_read'] ?? 0),
+                'series_following' => (int) ($stats['series_following'] ?? 0),
+                'library_count' => (int) ($stats['library_count'] ?? 0),
+                'comments' => (int) $stats['comment_count'],
+                'followers_count' => (int) $stats['followers_count'],
+                'following_count' => (int) $stats['following_count'],
+                'votes_count' => (int) $stats['votes_cast'],
+                'comments_count' => (int) $stats['comment_count'],
+                'blogs_count' => (int) $stats['approved_blog_count'],
+            ],
+            'user_state' => ['is_following' => $isFollowing],
+            'reading' => [
+                'chapters_read' => (int) ($stats['chapters_read'] ?? 0),
+                'completed_series' => (int) ($stats['completed_series'] ?? 0),
+                'ongoing_series' => (int) ($stats['ongoing_series'] ?? 0),
+            ],
+            'library' => $library,
+            'activities' => $activities,
             'blogs' => $blogs,
             'recent_comments' => $comments,
             'meta' => [

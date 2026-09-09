@@ -394,6 +394,42 @@ final class UserRepository
     }
 
     /**
+     * Lists publicly visible series followed by a user.
+     */
+    public function listPublicFollowedContents(string $userId, int $page = 1, int $perPage = 20): array
+    {
+        $offset = max(0, ($page - 1) * $perPage);
+        $sql = 'SELECT
+                    c.id,
+                    c.title,
+                    c.slug,
+                    c.type,
+                    c.status,
+                    c.cover_image,
+                    c.rating_avg,
+                    c.rating_count,
+                    c.chapter_count,
+                    c.comment_count,
+                    c.created_at,
+                    c.author,
+                    c.artist
+                FROM user_series_follows f
+                INNER JOIN series c ON c.id = f.content_id
+                WHERE f.user_id = :user_id
+                  AND c.deleted_at IS NULL
+                  AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
+                ORDER BY f.created_at DESC
+                LIMIT :limit OFFSET :offset';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Lists latest comments written by a user.
      */
     public function listRecentCommentsByUser(string $userId, int $page = 1, int $perPage = 10): array
@@ -412,7 +448,8 @@ final class UserRepository
                     c.downvote_count,
                     ch.chapter_number,
                     ct.slug AS content_slug,
-                    ct.type AS content_type
+                    ct.type AS content_type,
+                    ct.title AS content_title
                 FROM comments c
                 LEFT JOIN chapters ch ON (c.target_type = "chapter" AND ch.id = c.target_id)
                 LEFT JOIN series ct ON (
@@ -444,7 +481,14 @@ final class UserRepository
                     (SELECT COALESCE(SUM(c1.upvote_count), 0) FROM comments c1 WHERE c1.user_id = :user_id2) AS upvotes_received,
                     (SELECT COALESCE(SUM(c2.downvote_count), 0) FROM comments c2 WHERE c2.user_id = :user_id3) AS downvotes_received,
                     (SELECT COUNT(*) FROM blogs b WHERE b.user_id = :user_id4 AND b.approved = 1) AS approved_blog_count,
-                    (SELECT COUNT(*) FROM comments c3 WHERE c3.user_id = :user_id5) AS comment_count
+                    (SELECT COUNT(*) FROM comments c3 WHERE c3.user_id = :user_id5) AS comment_count,
+                    (SELECT COUNT(*) FROM user_chapters_reads r WHERE r.user_id = :user_id6) AS chapters_read,
+                    (SELECT COUNT(*) FROM user_series_follows f WHERE f.user_id = :user_id7) AS series_following,
+                    (SELECT COUNT(*) FROM user_series_follows f WHERE f.user_id = :user_id8) AS library_count,
+                    (SELECT COUNT(*) FROM user_series_follows f INNER JOIN series s ON s.id = f.content_id
+                     WHERE f.user_id = :user_id9 AND s.status = "completed" AND s.deleted_at IS NULL) AS completed_series,
+                    (SELECT COUNT(*) FROM user_series_follows f INNER JOIN series s ON s.id = f.content_id
+                     WHERE f.user_id = :user_id10 AND s.status = "ongoing" AND s.deleted_at IS NULL) AS ongoing_series
                 FROM users u
                 WHERE u.id = :user_id
                 LIMIT 1';
@@ -456,6 +500,11 @@ final class UserRepository
             'user_id3' => $userId,
             'user_id4' => $userId,
             'user_id5' => $userId,
+            'user_id6' => $userId,
+            'user_id7' => $userId,
+            'user_id8' => $userId,
+            'user_id9' => $userId,
+            'user_id10' => $userId,
         ]);
         $row = $stmt->fetch();
 
@@ -466,6 +515,11 @@ final class UserRepository
                 'downvotes_received' => 0,
                 'approved_blog_count' => 0,
                 'comment_count' => 0,
+                'chapters_read' => 0,
+                'series_following' => 0,
+                'library_count' => 0,
+                'completed_series' => 0,
+                'ongoing_series' => 0,
             ];
         }
 
