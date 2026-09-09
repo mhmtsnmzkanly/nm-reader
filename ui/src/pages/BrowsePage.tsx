@@ -38,13 +38,14 @@ export const BrowsePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'chapters'>('recent');
 
-  const currentTypeConfig = CONTENT_TYPES.find((ct) => ct.key === type) || CONTENT_TYPES[0];
+  const normalizedType = type.replace(/_/g, '-') as ContentType;
+  const currentTypeConfig = CONTENT_TYPES.find((ct) => ct.key === normalizedType) || CONTENT_TYPES[0];
   const typeDescription = lang === 'en' ? currentTypeConfig.descriptionEn : currentTypeConfig.descriptionTr;
 
   useEffect(() => {
     const fetchBrowse = async () => {
       setIsLoading(true);
-      const res = await contentService.getContentByType(type as ContentType, page, perPage);
+      const res = await contentService.getContentByType(normalizedType, page, perPage);
 
       if (res.status === 'success') {
         let items = [...res.data];
@@ -60,7 +61,7 @@ export const BrowsePage: React.FC = () => {
     };
 
     fetchBrowse();
-  }, [type, page, perPage, sortBy]);
+  }, [normalizedType, page, perPage, sortBy]);
 
   const handleTypeChange = (newType: ContentType) => {
     navigate(`/browse/${newType}?page=1`);
@@ -205,4 +206,3 @@ export const BrowsePage: React.FC = () => {
     </div>
   );
 };
-

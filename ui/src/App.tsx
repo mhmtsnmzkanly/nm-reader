@@ -66,6 +66,9 @@ export function App() {
                     <Route path="/search" element={<SearchPage />} />
 
                     {/* Content Details & Reader */}
+                    {/* Canonical server URLs also expose a one-segment type
+                        listing (e.g. /manga and /web_novel). */}
+                    <Route path="/:type" element={<BrowsePage />} />
                     <Route path="/:type/:slug" element={<ContentDetailPage />} />
                     <Route path="/:type/:slug/chapters" element={<ChapterListPage />} />
                     <Route path="/:type/:slug/chapter/:chapterNumber" element={<ReaderPage />} />
