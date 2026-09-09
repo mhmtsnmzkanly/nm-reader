@@ -19,7 +19,7 @@ import { ErrorState } from '../components/feedback/ErrorState';
 import { usePreferences } from '../contexts/PreferencesContext';
 
 export const PublicProfilePage: React.FC = () => {
-  const { username = 'deniz' } = useParams<{ username: string }>();
+  const { username = '' } = useParams<{ username: string }>();
   const { isAuthenticated, openAuthModal } = useAuth();
   const { formatDate, t } = usePreferences();
 
@@ -35,6 +35,12 @@ export const PublicProfilePage: React.FC = () => {
     const fetchPublicProfile = async () => {
       setIsLoading(true);
       setErrorMessage(null);
+
+      if (!username) {
+        setErrorMessage(t('profile.userNotFoundDesc'));
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const res = await userService.getPublicProfile(username);

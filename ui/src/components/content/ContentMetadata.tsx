@@ -43,7 +43,7 @@ export const ContentMetadata: React.FC<ContentMetadataProps> = ({ content, chapt
   const viewCountValue =
     content.views ??
     content.total_views ??
-    (content.rating_count ? content.rating_count * 28 : 12400);
+    0;
   const viewCount = toSafeNumber(viewCountValue);
 
   const statusLabel =

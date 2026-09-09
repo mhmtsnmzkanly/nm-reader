@@ -34,7 +34,7 @@ export const UnlockModal: React.FC<UnlockModalProps> = ({
 
   const price = isSeriesUnlock
     ? seriesPrice
-    : targetChapter?.price_coin ?? 10;
+    : targetChapter?.price_coin ?? 0;
 
   const chapNum = targetChapter?.number || targetChapter?.chapter_number || '';
 

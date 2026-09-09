@@ -367,6 +367,7 @@ final class Config
             $group->get("/search", [ContentController::class, "search"]);
             $group->get("/search/suggest", [ContentController::class, "suggest"]);
             $group->get("/i18n/{lang:[a-z]{2}}", [SystemPageController::class, "i18nJson"]);
+            $group->get("/site-config", [SystemPageController::class, "siteConfig"]);
             $group->post("/log/error", [SystemPageController::class, "logError"]);
             $group->post("/user/activity", [UserInteractionController::class, "trackActivity"])->add(new AuthMiddleware(true, $authorization));
             

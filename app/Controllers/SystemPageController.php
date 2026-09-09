@@ -87,6 +87,11 @@ final class SystemPageController
         return $response->withHeader('Content-Type', 'application/json');
     }
 
+    public function siteConfig(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        return \App\Helpers\ResponseHelper::success($this->siteConfig->public());
+    }
+
     public function renderError(ServerRequestInterface $request, ResponseInterface $response, int $code, string $message): ResponseInterface
     {
         $siteName = $this->siteConfig->siteName();

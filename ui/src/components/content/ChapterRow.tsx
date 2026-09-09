@@ -119,7 +119,7 @@ export const ChapterRow: React.FC<ChapterRowProps> = ({
             className="gap-1.5 py-1 px-2.5 font-mono cursor-pointer hover:scale-105 transition-transform"
           >
             <Lock className="w-3.5 h-3.5 text-amber-500" />
-            <span>{chapter.price_coin || 10} {t('wallet.coin')}</span>
+            <span>{chapter.price_coin ?? 0} {t('wallet.coin')}</span>
           </Badge>
         ) : (
           <div className="flex items-center gap-1 text-xs font-mono text-emerald-500 font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">

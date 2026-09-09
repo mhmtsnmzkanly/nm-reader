@@ -41,9 +41,9 @@ export const defaultUserPreferences: UserPreferences = {
     system: true,
   },
   account: {
-    is_logged_in: true,
-    email: 'deniz@example.test',
-    last_sync: '2026-08-14T02:00:00Z',
+    is_logged_in: false,
+    email: null,
+    last_sync: '',
   },
   lang: 'tr',
   theme: 'dark',
@@ -162,6 +162,10 @@ type PreferencesContextType = {
 
 const STORAGE_KEY = 'nm_user_preferences';
 
+function storageKeyForUser(userId?: string | null): string {
+  return `${STORAGE_KEY}:${userId || 'guest'}`;
+}
+
 function mergePrefsWithDefaults(input: unknown): UserPreferences {
   if (!input || typeof input !== 'object') {
     return { ...defaultUserPreferences };
@@ -208,18 +212,18 @@ function mergePrefsWithDefaults(input: unknown): UserPreferences {
       system: parsedNotifs.system !== undefined ? Boolean(parsedNotifs.system) : defaultUserPreferences.notifications.system,
     },
     account: {
-      is_logged_in: parsedAccount.is_logged_in !== undefined ? Boolean(parsedAccount.is_logged_in) : true,
-      email: typeof parsedAccount.email === 'string' ? parsedAccount.email : 'deniz@example.test',
-      last_sync: typeof parsedAccount.last_sync === 'string' ? parsedAccount.last_sync : new Date().toISOString(),
+      is_logged_in: parsedAccount.is_logged_in !== undefined ? Boolean(parsedAccount.is_logged_in) : false,
+      email: typeof parsedAccount.email === 'string' ? parsedAccount.email : null,
+      last_sync: typeof parsedAccount.last_sync === 'string' ? parsedAccount.last_sync : '',
     },
     lang: localeVal === 'en' ? 'en' : 'tr',
     theme: themeVal,
   };
 }
 
-function getInitialPrefs(): UserPreferences {
+function getInitialPrefs(storageKey: string): UserPreferences {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       const parsed = JSON.parse(saved);
       return mergePrefsWithDefaults(parsed);
@@ -234,11 +238,21 @@ const PreferencesContext = createContext<PreferencesContextType | undefined>(und
 
 export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { me, isLoading: isMeLoading, refreshMe } = useMe();
-  const [preferences, setPreferences] = useState<UserPreferences>(getInitialPrefs);
+  const storageKey = storageKeyForUser(me?.user_id);
+  const [preferences, setPreferences] = useState<UserPreferences>(() => getInitialPrefs(storageKey));
   const [isLoading, setIsLoading] = useState<boolean>(isMeLoading);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Drop the pre-account-scoped cache key so a previous user's data cannot
+    // be reused after login or logout.
+    try { localStorage.removeItem(STORAGE_KEY); } catch {
+      // Ignore storage access errors.
+    }
+    setPreferences(getInitialPrefs(storageKey));
+  }, [storageKey]);
 
   useEffect(() => {
     setIsLoading(isMeLoading);
@@ -246,13 +260,14 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setPreferences((prev) => {
       const merged = mergePrefsWithDefaults({ ...prev, ...me.preferences });
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        const { account: _account, ...persisted } = merged;
+        localStorage.setItem(storageKey, JSON.stringify(persisted));
       } catch {
         // ignore localStorage quota error
       }
       return merged;
     });
-  }, [isMeLoading, me]);
+  }, [isMeLoading, me, storageKey]);
 
   const reloadPreferences = useCallback(async () => {
     setIsError(false);
@@ -299,7 +314,8 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const persistPreferences = async (updated: UserPreferences) => {
     setPreferences(updated);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      const { account: _account, ...persisted } = updated;
+      localStorage.setItem(storageKey, JSON.stringify(persisted));
     } catch (e) {
       // ignore
     }

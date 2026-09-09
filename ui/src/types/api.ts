@@ -554,6 +554,7 @@ export type ReadingHistoryItem = {
     title?: string | null;
   };
   progress: number;
+  progress_pct?: number;
   last_page?: number;
   total_pages?: number;
   read_at: string;

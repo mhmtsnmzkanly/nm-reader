@@ -7,9 +7,9 @@ export function normalizeChapter(
   const raw = response?.chapter ?? response?.data ?? response ?? {};
 
   const series = raw.series ?? {
-    id: raw.content_id || fallbackSeries?.id || 'series_001',
-    title: fallbackSeries?.title || 'Series',
-    slug: fallbackSeries?.slug || 'series-slug',
+    id: raw.content_id || fallbackSeries?.id || '',
+    title: fallbackSeries?.title || '',
+    slug: fallbackSeries?.slug || '',
     type: fallbackSeries?.type || 'manga',
   };
 
