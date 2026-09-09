@@ -15,7 +15,7 @@ final class ContentController extends AdminController
         {
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
-            $result = $this->console->listContents(
+            $result = $this->contentService->listContents(
                 $page,
                 $perPage,
                 trim((string) ($query['q'] ?? '')),
@@ -31,14 +31,14 @@ final class ContentController extends AdminController
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::created($this->adminService->createContent($payload, $modId));
+            return ResponseHelper::created($this->adminContentService->createContent($payload, $modId));
         }
     
     public function updateContent(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            $this->adminService->updateContent((string)$args['id'], $payload, $modId);
+            $this->adminContentService->updateContent((string)$args['id'], $payload, $modId);
             return ResponseHelper::success();
         }
     
@@ -46,7 +46,7 @@ final class ContentController extends AdminController
         {
             try {
                 $payload = (array) $request->getParsedBody();
-                return ResponseHelper::success($this->adminService->changeContentLifecycle(
+                return ResponseHelper::success($this->adminContentService->changeContentLifecycle(
                     (string) $args['id'],
                     (string) ($payload['action'] ?? ''),
                     isset($payload['scheduled_at']) ? (string) $payload['scheduled_at'] : null,
@@ -62,7 +62,7 @@ final class ContentController extends AdminController
     public function contentPreview(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             try {
-                return ResponseHelper::success($this->adminService->contentPreview((string) $args['id']));
+                return ResponseHelper::success($this->adminContentService->contentPreview((string) $args['id']));
             } catch (\DomainException $exception) {
                 return ResponseHelper::error(404, $exception->getMessage());
             }
@@ -72,7 +72,7 @@ final class ContentController extends AdminController
         {
             try {
                 $limit = (int) ($request->getQueryParams()['limit'] ?? 50);
-                return ResponseHelper::success($this->adminService->contentRevisions((string) $args['id'], $limit));
+                return ResponseHelper::success($this->adminContentService->contentRevisions((string) $args['id'], $limit));
             } catch (\DomainException $exception) {
                 return ResponseHelper::error(404, $exception->getMessage());
             }
@@ -81,41 +81,41 @@ final class ContentController extends AdminController
     public function listChapters(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             [$page, $perPage] = $this->pagination($request);
-            $result = $this->adminService->listChapters((string)$args['id'], $page, $perPage);
+            $result = $this->adminChapterService->listChapters((string)$args['id'], $page, $perPage);
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
     
     public function getChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
-            return ResponseHelper::success($this->adminService->getChapter((string)$args['id']));
+            return ResponseHelper::success($this->adminChapterService->getChapter((string)$args['id']));
         }
     
     public function createChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::created($this->adminService->createChapter((string)$args['type'], (string)$args['slug'], $payload, $modId));
+            return ResponseHelper::created($this->adminChapterService->createChapter((string)$args['type'], (string)$args['slug'], $payload, $modId));
         }
     
     public function createChapterByContentId(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::created($this->adminService->createChapterByContentId((string)$args['id'], $payload, $modId));
+            return ResponseHelper::created($this->adminChapterService->createChapterByContentId((string)$args['id'], $payload, $modId));
         }
     
     public function updateChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            $this->adminService->updateChapter((string)$args['id'], $payload, $modId);
+            $this->adminChapterService->updateChapter((string)$args['id'], $payload, $modId);
             return ResponseHelper::success();
         }
     
     public function deleteChapter(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $modId = (string) $request->getAttribute('user_id');
-            $this->adminService->deleteChapter((string)$args['id'], $modId);
+            $this->adminChapterService->deleteChapter((string)$args['id'], $modId);
             return ResponseHelper::success(['deleted' => true]);
         }
     
@@ -128,7 +128,7 @@ final class ContentController extends AdminController
                 $action = (string) ($payload['action'] ?? '');
                 $params = (array) ($payload['params'] ?? []);
     
-                $result = $this->adminService->bulkChapterAction($chapterIds, $action, $params, $modId);
+                $result = $this->adminChapterService->bulkChapterAction($chapterIds, $action, $params, $modId);
                 return ResponseHelper::success($result);
             } catch (\InvalidArgumentException $e) {
                 return ResponseHelper::error(400, $e->getMessage());
@@ -137,19 +137,19 @@ final class ContentController extends AdminController
     
     public function listGenres(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->listAllGenres());
+            return ResponseHelper::success($this->contentService->listAllGenres());
         }
     
     public function listTags(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->listAllTags());
+            return ResponseHelper::success($this->contentService->listAllTags());
         }
     
     public function updateTaxonomy(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            $this->console->updateContentTaxonomy((string)$args['id'], (array)($payload['genres'] ?? []), (array)($payload['tags'] ?? []), $modId);
+            $this->contentService->updateContentTaxonomy((string)$args['id'], (array)($payload['genres'] ?? []), (array)($payload['tags'] ?? []), $modId);
             return ResponseHelper::success();
         }
     
@@ -157,20 +157,20 @@ final class ContentController extends AdminController
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::created($this->console->createGenre((string) ($payload['name'] ?? ''), $modId));
+            return ResponseHelper::created($this->contentService->createGenre((string) ($payload['name'] ?? ''), $modId));
         }
     
     public function createTag(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::created($this->console->createTag((string) ($payload['name'] ?? ''), $modId));
+            return ResponseHelper::created($this->contentService->createTag((string) ($payload['name'] ?? ''), $modId));
         }
     
     public function editTaxonomy(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             try {
-                return ResponseHelper::success($this->console->updateTaxonomy((int)$args['id'], (array)$request->getParsedBody(), (string)$request->getAttribute('user_id')));
+                return ResponseHelper::success($this->contentService->updateTaxonomy((int)$args['id'], (array)$request->getParsedBody(), (string)$request->getAttribute('user_id')));
             } catch (\InvalidArgumentException $e) {
                 return ResponseHelper::error(422, $e->getMessage());
             }
@@ -179,7 +179,7 @@ final class ContentController extends AdminController
     public function deleteTaxonomyItem(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             try {
-                $this->console->deleteTaxonomy((int)$args['id'], (string)$request->getAttribute('user_id'));
+                $this->contentService->deleteTaxonomy((int)$args['id'], (string)$request->getAttribute('user_id'));
                 return ResponseHelper::success();
             } catch (\InvalidArgumentException $e) {
                 return ResponseHelper::error(422, $e->getMessage());
@@ -189,7 +189,7 @@ final class ContentController extends AdminController
     public function mergeTaxonomies(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             try {
-                return ResponseHelper::success($this->console->mergeTaxonomies((array)$request->getParsedBody(), (string)$request->getAttribute('user_id')));
+                return ResponseHelper::success($this->contentService->mergeTaxonomies((array)$request->getParsedBody(), (string)$request->getAttribute('user_id')));
             } catch (\InvalidArgumentException $e) {
                 return ResponseHelper::error(422, $e->getMessage());
             }
@@ -198,7 +198,7 @@ final class ContentController extends AdminController
     public function reorderTaxonomies(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             try {
-                $this->console->reorderTaxonomies((array)$request->getParsedBody(), (string)$request->getAttribute('user_id'));
+                $this->contentService->reorderTaxonomies((array)$request->getParsedBody(), (string)$request->getAttribute('user_id'));
                 return ResponseHelper::success();
             } catch (\InvalidArgumentException $e) {
                 return ResponseHelper::error(422, $e->getMessage());
@@ -207,7 +207,7 @@ final class ContentController extends AdminController
     
     public function listSeriesTeam(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
-            return ResponseHelper::success($this->adminConsoleRepo->listSeriesTeam((string) $args['id']));
+            return ResponseHelper::success($this->adminContentRepo->listSeriesTeam((string) $args['id']));
         }
     
     public function assignSeriesTeam(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -220,14 +220,14 @@ final class ContentController extends AdminController
                 return ResponseHelper::error(400, 'user_id is required');
             }
     
-            $result = $this->adminConsoleRepo->assignTeamMember((string) $args['id'], $userId, $role);
+            $result = $this->adminContentRepo->assignTeamMember((string) $args['id'], $userId, $role);
             return ResponseHelper::created($result);
         }
     
     public function removeSeriesTeam(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $assignmentId = (int) ($args['assignmentId'] ?? 0);
-            $deleted = $this->adminConsoleRepo->removeTeamMember($assignmentId);
+            $deleted = $this->adminContentRepo->removeTeamMember($assignmentId);
             return ResponseHelper::success(['deleted' => $deleted]);
         }
 }

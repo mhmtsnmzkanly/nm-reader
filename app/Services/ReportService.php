@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
-use App\Repositories\AdminConsoleRepository;
+use App\Repositories\Admin\AdminModerationRepository;
 use App\Repositories\ReportRepository;
 use DomainException;
 use InvalidArgumentException;
@@ -50,7 +50,7 @@ final class ReportService
 
     public function __construct(
         private readonly ReportRepository $reports,
-        private readonly AdminConsoleRepository $adminConsole,
+        private readonly AdminModerationRepository $adminConsole,
         private readonly ContentSecurityScanner $scanner,
         private readonly PDO $pdo
     ) {

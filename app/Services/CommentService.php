@@ -12,7 +12,7 @@ use App\Repositories\CommentRepository;
 use App\Repositories\CommentVoteRepository;
 use App\Repositories\SeriesRepository;
 use App\Repositories\BlogRepository;
-use App\Repositories\AdminConsoleRepository;
+use App\Repositories\Admin\AdminUserRepository;
 use PDO;
 
 /**
@@ -32,7 +32,7 @@ final class CommentService
         private readonly ChapterRepository $chapters,
         private readonly SeriesRepository $series,
         private readonly BlogRepository $blogs,
-        private readonly AdminConsoleRepository $adminConsole,
+        private readonly AdminUserRepository $adminConsole,
         private readonly CacheService $cache,
         private readonly PDO $pdo,
         private readonly AnalyticsService $analytics,

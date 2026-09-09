@@ -775,6 +775,7 @@ final class UserRepository
                 FROM bans
                 WHERE user_id = :user_id
                   AND revoked_at IS NULL
+                  AND level IN ('temporary', 'permanent')
                   AND (ends_at IS NULL OR ends_at > NOW())";
         $params = ['user_id' => $userId];
 

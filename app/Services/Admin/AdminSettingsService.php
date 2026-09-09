@@ -7,7 +7,6 @@ namespace App\Services\Admin;
 use App\Config;
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
-use App\Repositories\AdminConsoleRepository;
 use App\Services\AnalyticsAggregationService;
 use App\Services\BackupService;
 use App\Services\CacheService;

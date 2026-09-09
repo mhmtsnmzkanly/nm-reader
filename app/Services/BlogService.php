@@ -8,6 +8,7 @@ use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
 use App\Repositories\BlogRepository;
 use App\Repositories\BlogVoteRepository;
+use App\Repositories\Admin\AdminModerationRepository;
 
 /**
  * Service for managing Blog posts and interaction.
@@ -25,7 +26,7 @@ final class BlogService
         private readonly SlugService $slugService,
         private readonly CacheService $cache,
         private readonly EntityIdService $entityIds,
-        private readonly \App\Repositories\AdminConsoleRepository $adminConsole,
+        private readonly AdminModerationRepository $adminConsole,
         private readonly ContentSecurityScanner $scanner
     ) {
     }

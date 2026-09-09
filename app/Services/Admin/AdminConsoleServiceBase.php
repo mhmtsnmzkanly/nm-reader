@@ -7,7 +7,7 @@ namespace App\Services\Admin;
 use App\Config;
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
-use App\Repositories\AdminConsoleRepository;
+use App\Repositories\Admin\AdminRepositoryBase;
 use App\Services\AnalyticsAggregationService;
 use App\Services\BackupService;
 use App\Services\CacheService;
@@ -16,12 +16,15 @@ use App\Services\RetentionService;
 use App\Services\SeriesService;
 use App\Services\SlugService;
 use App\Services\SitemapService;
+use App\Services\SystemLogService;
 use PDO;
 
 /** Shared infrastructure for extracted admin console services. */
 abstract class AdminConsoleServiceBase
 {
     protected const BAN_TYPES = ['general', 'comment', 'blog', 'voting', 'reporting'];
+    protected const BAN_LEVELS = ['warning', 'removal', 'temporary', 'permanent'];
+    protected const RESTRICTING_BAN_LEVELS = ['temporary', 'permanent'];
     protected const CACHE_KEY_KPI = 'admin_kpi_summary';
     protected const CACHE_TTL_KPI = 10;
     protected const ANALYTICS_AUTO_INTERVAL = 60;
@@ -39,7 +42,10 @@ abstract class AdminConsoleServiceBase
     ];
 
     public function __construct(
-        protected readonly AdminConsoleRepository $repo,
+        // Each extracted admin service supplies its own concrete repository in
+        // the DI definition. The shared base only relies on common repository
+        // helpers, so the legacy forwarding repository is no longer needed.
+        protected readonly AdminRepositoryBase $repo,
         protected readonly CacheService $cache,
         protected readonly RetentionService $retention,
         protected readonly AnalyticsAggregationService $aggregation,
@@ -49,6 +55,7 @@ abstract class AdminConsoleServiceBase
         protected readonly SitemapService $sitemapService,
         protected readonly SeriesService $seriesService,
         protected readonly PDO $pdo,
+        protected readonly SystemLogService $logs,
     ) {
     }
 

@@ -15,7 +15,7 @@ final class ModerationController extends AdminController
         {
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
-            $result = $this->console->listBlogs(
+            $result = $this->moderationService->listBlogs(
                 $page,
                 $perPage,
                 trim((string) ($query['q'] ?? '')),
@@ -28,14 +28,14 @@ final class ModerationController extends AdminController
     public function hideBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $modId = (string) $request->getAttribute('user_id');
-            $this->console->hideBlog((string)$args['id'], $modId);
+            $this->moderationService->hideBlog((string)$args['id'], $modId);
             return ResponseHelper::success();
         }
     
     public function deleteBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $modId = (string) $request->getAttribute('user_id');
-            $this->console->deleteBlog((string)$args['id'], $modId);
+            $this->moderationService->deleteBlog((string)$args['id'], $modId);
             return ResponseHelper::success();
         }
     
@@ -43,7 +43,7 @@ final class ModerationController extends AdminController
         {
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
-            $result = $this->console->listComments(
+            $result = $this->moderationService->listComments(
                 $page,
                 $perPage,
                 trim((string) ($query['q'] ?? '')),
@@ -57,7 +57,7 @@ final class ModerationController extends AdminController
     public function deleteComment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $modId = (string) $request->getAttribute('user_id');
-            $this->console->deleteComment((int)$args['id'], $modId);
+            $this->moderationService->deleteComment((int)$args['id'], $modId);
             return ResponseHelper::success();
         }
     
@@ -72,7 +72,7 @@ final class ModerationController extends AdminController
             }
             $modId = (string) $request->getAttribute('user_id');
             try {
-                $updated = $this->console->moderateComment((int) $args['id'], $status, $modId, $reason !== '' ? $reason : null);
+                $updated = $this->moderationService->moderateComment((int) $args['id'], $status, $modId, $reason !== '' ? $reason : null);
                 return $updated ? ResponseHelper::success(['updated' => true]) : ResponseHelper::error(404, 'Comment not found');
             } catch (\InvalidArgumentException $e) {
                 return ResponseHelper::error(400, $e->getMessage());
@@ -83,21 +83,21 @@ final class ModerationController extends AdminController
         {
             [$page, $perPage] = $this->pagination($request);
             $q = $request->getQueryParams();
-            $result = $this->console->listAuditLogs($page, $perPage, (string)($q['q'] ?? ''), isset($q['method']) ? (string)$q['method'] : null, isset($q['status']) ? (string)$q['status'] : null, isset($q['user_id']) ? (string)$q['user_id'] : null, isset($q['date_from']) ? (string)$q['date_from'] : null, isset($q['date_to']) ? (string)$q['date_to'] : null, (string)($q['sort'] ?? 'newest'));
+            $result = $this->moderationService->listAuditLogs($page, $perPage, (string)($q['q'] ?? ''), isset($q['method']) ? (string)$q['method'] : null, isset($q['status']) ? (string)$q['status'] : null, isset($q['user_id']) ? (string)$q['user_id'] : null, isset($q['date_from']) ? (string)$q['date_from'] : null, isset($q['date_to']) ? (string)$q['date_to'] : null, (string)($q['sort'] ?? 'newest'));
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
     
     public function loginEvents(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             [$page, $perPage] = $this->pagination($request);
-            $result = $this->console->listLoginEvents($page, $perPage);
+            $result = $this->moderationService->listLoginEvents($page, $perPage);
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
     
     public function moderationActions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             [$page, $perPage] = $this->pagination($request);
-            $result = $this->console->listModerationActions($page, $perPage);
+            $result = $this->moderationService->listModerationActions($page, $perPage);
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
     
@@ -105,7 +105,7 @@ final class ModerationController extends AdminController
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            $id = $this->console->createModerationAction($modId, $payload);
+            $id = $this->moderationService->createModerationAction($modId, $payload);
             return ResponseHelper::created(['id' => $id]);
         }
 }

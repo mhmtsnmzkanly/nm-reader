@@ -15,19 +15,19 @@ final class OperationsController extends AdminController
         {
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
-            $result = $this->console->listQueueJobs($page, $perPage, isset($query['status']) ? (string)$query['status'] : null, (string)($query['q'] ?? ''));
+            $result = $this->operationsService->listQueueJobs($page, $perPage, isset($query['status']) ? (string)$query['status'] : null, (string)($query['q'] ?? ''));
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
     
     public function systemHealth(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->systemHealth());
+            return ResponseHelper::success($this->operationsService->systemHealth());
         }
     
     public function retryQueueJob(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             try {
-                $this->console->retryQueueJob((int)$args['id'], (string)$request->getAttribute('user_id'));
+                $this->operationsService->retryQueueJob((int)$args['id'], (string)$request->getAttribute('user_id'));
                 return ResponseHelper::success();
             } catch (\DomainException $e) { return ResponseHelper::error(409, $e->getMessage()); }
         }
@@ -35,7 +35,7 @@ final class OperationsController extends AdminController
     public function cancelQueueJob(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             try {
-                $this->console->cancelQueueJob((int)$args['id'], (string)$request->getAttribute('user_id'));
+                $this->operationsService->cancelQueueJob((int)$args['id'], (string)$request->getAttribute('user_id'));
                 return ResponseHelper::success();
             } catch (\DomainException $e) { return ResponseHelper::error(409, $e->getMessage()); }
         }
@@ -48,7 +48,7 @@ final class OperationsController extends AdminController
             $jobType = isset($payload['job_type']) ? (string) $payload['job_type'] : null;
     
             return ResponseHelper::success(
-                $this->console->runQueueOnce($jobType, $limit, $modId),
+                $this->operationsService->runQueueOnce($jobType, $limit, $modId),
                 ['job_type' => $jobType, 'requested_limit' => $limit, 'moderator_id' => $modId]
             );
         }
@@ -57,14 +57,14 @@ final class OperationsController extends AdminController
         {
             $payload = (array) $request->getParsedBody();
             $days = max(1, min(3650, (int) ($payload['days'] ?? 30)));
-            return ResponseHelper::success($this->console->cleanupRetention($days));
+            return ResponseHelper::success($this->operationsService->cleanupRetention($days));
         }
     
     public function triggerBackup(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             try {
                 $modId = (string) $request->getAttribute('user_id');
-                return ResponseHelper::success($this->console->triggerBackup($modId));
+                return ResponseHelper::success($this->operationsService->triggerBackup($modId));
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());
             } catch (\InvalidArgumentException $e) {
@@ -76,7 +76,7 @@ final class OperationsController extends AdminController
         {
             try {
                 $modId = (string) $request->getAttribute('user_id');
-                return ResponseHelper::success($this->console->triggerSitemap($modId));
+                return ResponseHelper::success($this->operationsService->triggerSitemap($modId));
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());
             }
@@ -86,7 +86,7 @@ final class OperationsController extends AdminController
         {
             try {
                 $modId = (string) $request->getAttribute('user_id');
-                return ResponseHelper::success($this->console->triggerCacheWarmup($modId));
+                return ResponseHelper::success($this->operationsService->triggerCacheWarmup($modId));
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());
             }
@@ -96,7 +96,7 @@ final class OperationsController extends AdminController
         {
             try {
                 $modId = (string) $request->getAttribute('user_id');
-                return ResponseHelper::success($this->console->triggerAnalytics($modId));
+                return ResponseHelper::success($this->operationsService->triggerAnalytics($modId));
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());
             }
@@ -106,7 +106,7 @@ final class OperationsController extends AdminController
         {
             try {
                 $modId = (string) $request->getAttribute('user_id');
-                return ResponseHelper::success($this->console->triggerApiTests($modId));
+                return ResponseHelper::success($this->operationsService->triggerApiTests($modId));
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());
             }
@@ -116,7 +116,7 @@ final class OperationsController extends AdminController
         {
             try {
                 $modId = (string) $request->getAttribute('user_id');
-                return ResponseHelper::success($this->console->triggerOpenApi($modId));
+                return ResponseHelper::success($this->operationsService->triggerOpenApi($modId));
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());
             }
@@ -126,7 +126,7 @@ final class OperationsController extends AdminController
         {
             try {
                 $modId = (string) $request->getAttribute('user_id');
-                return ResponseHelper::success($this->console->triggerSeedData($modId));
+                return ResponseHelper::success($this->operationsService->triggerSeedData($modId));
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());
             }
@@ -135,14 +135,14 @@ final class OperationsController extends AdminController
     public function systemAccessLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             [$page, $perPage] = $this->pagination($request);
-            $result = $this->console->listSystemAccessLogs($page, $perPage);
+            $result = $this->operationsService->listSystemAccessLogs($page, $perPage);
             return ResponseHelper::success($result['items'], $result['meta']);
         }
     
     public function systemErrorLogs(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             [$page, $perPage] = $this->pagination($request);
-            $result = $this->console->listSystemErrorLogs($page, $perPage);
+            $result = $this->operationsService->listSystemErrorLogs($page, $perPage);
             return ResponseHelper::success($result['items'], $result['meta']);
         }
 }

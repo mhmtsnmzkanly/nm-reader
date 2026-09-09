@@ -4,10 +4,19 @@ declare(strict_types=1);
 
 namespace App\Controllers\Admin;
 
-use App\Repositories\AdminConsoleRepository;
+use App\Repositories\Admin\AdminContentRepository;
+use App\Repositories\Admin\AdminUserRepository;
 use App\Repositories\UserRepository;
-use App\Services\AdminConsoleService;
-use App\Services\AdminService;
+use App\Services\Admin\AdminContentService;
+use App\Services\Admin\AdminDashboardService;
+use App\Services\Admin\AdminModerationService;
+use App\Services\Admin\AdminOperationsService;
+use App\Services\Admin\AdminSettingsService;
+use App\Services\Admin\AdminStorageService;
+use App\Services\Admin\AdminUserService;
+use App\Services\Admin\ChapterAdminService;
+use App\Services\Admin\ContentAdminService;
+use App\Services\Admin\TaxonomyAdminService;
 use App\Services\AnalyticsAggregationService;
 use App\Services\MetricsService;
 use App\Services\RetentionService;
@@ -21,15 +30,22 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * Shared dependencies and request helpers for admin API controllers.
  *
- * Domain controllers intentionally share this small compatibility base during
- * the first extraction phase. Services and repositories can be narrowed later
- * without changing the public API route contract.
+ * Domain controllers share the extracted services while keeping the public
+ * API route contract stable.
  */
 abstract class AdminController
 {
     public function __construct(
-        protected readonly AdminService $adminService,
-        protected readonly AdminConsoleService $console,
+        protected readonly ContentAdminService $adminContentService,
+        protected readonly ChapterAdminService $adminChapterService,
+        protected readonly TaxonomyAdminService $adminTaxonomyService,
+        protected readonly AdminDashboardService $dashboardService,
+        protected readonly AdminContentService $contentService,
+        protected readonly AdminUserService $usersService,
+        protected readonly AdminModerationService $moderationService,
+        protected readonly AdminStorageService $storageService,
+        protected readonly AdminOperationsService $operationsService,
+        protected readonly AdminSettingsService $settingsService,
         protected readonly SiteConfigService $siteConfig,
         protected readonly MetricsService $metricsService,
         protected readonly RetentionService $retentionService,
@@ -38,7 +54,8 @@ abstract class AdminController
         protected readonly AnalyticsAggregationService $aggregation,
         protected readonly WalletService $wallets,
         protected readonly WebhookService $webhooks,
-        protected readonly AdminConsoleRepository $adminConsoleRepo,
+        protected readonly AdminContentRepository $adminContentRepo,
+        protected readonly AdminUserRepository $adminUserRepo,
         protected readonly UserRepository $users,
     ) {
     }

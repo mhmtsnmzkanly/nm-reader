@@ -6,7 +6,6 @@ namespace App\Services\Admin;
 
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
-use App\Repositories\AdminConsoleRepository;
 use App\Services\AnalyticsAggregationService;
 use App\Services\BackupService;
 use App\Services\CacheService;
@@ -95,8 +94,8 @@ final class AdminOperationsService extends AdminConsoleServiceBase
 
     public function listSystemErrorLogs(int $page, int $perPage): array
     {
-        // Custom error log retrieval could be added here
-        return $this->withMeta([], 0, $page, $perPage);
+        $result = $this->logs->getErrorLogsPage($page, $perPage);
+        return $this->withMeta($result['items'], $result['total'], $page, $perPage);
     }
 
     public function cleanupRetention(int $days): array

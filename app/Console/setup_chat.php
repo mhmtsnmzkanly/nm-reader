@@ -12,7 +12,7 @@ require __DIR__ . '/../../vendor/autoload.php';
 
 use App\Config;
 use App\Repositories\BlogRepository;
-use App\Repositories\AdminConsoleRepository;
+use App\Repositories\Admin\AdminUserRepository;
 use App\Services\EntityIdService;
 
 $basePath = dirname(__DIR__, 2);
@@ -21,8 +21,8 @@ Config::loadEnvironment($basePath);
 $container = require __DIR__ . '/../dependencies.php';
 /** @var BlogRepository $blogs */
 $blogs = $container->get(BlogRepository::class);
-/** @var AdminConsoleRepository $adminRepo */
-$adminRepo = $container->get(AdminConsoleRepository::class);
+/** @var AdminUserRepository $adminRepo */
+$adminRepo = $container->get(AdminUserRepository::class);
 /** @var EntityIdService $ids */
 $ids = $container->get(EntityIdService::class);
 

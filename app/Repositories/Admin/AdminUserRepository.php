@@ -29,6 +29,7 @@ final class AdminUserRepository extends AdminRepositoryBase
                 FROM bans ban_filter
                 WHERE ban_filter.user_id = u.id
                   AND ban_filter.revoked_at IS NULL
+                  AND ban_filter.level IN ("temporary", "permanent")
                   AND (ban_filter.ends_at IS NULL OR ban_filter.ends_at > NOW())
             )';
             $where[] = $accountStatus === 'banned' ? $exists : 'NOT ' . $exists;
@@ -61,6 +62,7 @@ final class AdminUserRepository extends AdminRepositoryBase
                     FROM bans active_ban
                     WHERE active_ban.user_id = u.id
                       AND active_ban.revoked_at IS NULL
+                      AND active_ban.level IN ("temporary", "permanent")
                       AND (active_ban.ends_at IS NULL OR active_ban.ends_at > NOW())
                 ) AS is_banned,
                 (
@@ -72,6 +74,15 @@ final class AdminUserRepository extends AdminRepositoryBase
                     ORDER BY active_ban.created_at DESC
                     LIMIT 1
                 ) AS ban_type,
+                (
+                    SELECT active_ban.level
+                    FROM bans active_ban
+                    WHERE active_ban.user_id = u.id
+                      AND active_ban.revoked_at IS NULL
+                      AND (active_ban.ends_at IS NULL OR active_ban.ends_at > NOW())
+                    ORDER BY active_ban.created_at DESC
+                    LIMIT 1
+                ) AS ban_level,
                 (
                     SELECT active_ban.reason
                     FROM bans active_ban
@@ -145,7 +156,8 @@ final class AdminUserRepository extends AdminRepositoryBase
         ?string $bio = null,
         string $banType = 'general',
         ?string $banReason = null,
-        ?string $banEndsAt = null
+        ?string $banEndsAt = null,
+        string $banLevel = 'temporary'
     ): void
     {
         $this->pdo->beginTransaction();
@@ -205,11 +217,16 @@ final class AdminUserRepository extends AdminRepositoryBase
                 }
             }
     
-            // Ban status. Revoking a ban keeps its history for moderation
-            // audits; any duplicate active rows are handled together so an
-            // unban cannot leave a stale restriction behind.
+            if (!in_array($banLevel, ['warning', 'removal', 'temporary', 'permanent'], true)) {
+                throw new \InvalidArgumentException('Invalid ban level');
+            }
+
+            // Restriction status. Warning/removal actions are disciplinary
+            // history only and do not block interaction. Active restricting
+            // rows are updated together so duplicate rows cannot leave a
+            // stale restriction behind.
             $stmt = $this->pdo->prepare(
-                'SELECT id, type, reason, ends_at
+                'SELECT id, type, level, reason, ends_at
                  FROM bans
                  WHERE user_id = :user_id
                    AND revoked_at IS NULL
@@ -219,42 +236,50 @@ final class AdminUserRepository extends AdminRepositoryBase
             );
             $stmt->execute(['user_id' => $id]);
             $activeBans = $stmt->fetchAll();
-            $activeBan = is_array($activeBans[0] ?? null) ? $activeBans[0] : null;
-            $currentlyBanned = $activeBan !== null;
-    
-            if ($isBanned && !$currentlyBanned) {
+            $activeRestrictedBans = array_values(array_filter(
+                $activeBans,
+                static fn(array $ban): bool => in_array((string) ($ban['level'] ?? 'temporary'), ['temporary', 'permanent'], true)
+            ));
+            $activeBan = is_array($activeRestrictedBans[0] ?? null) ? $activeRestrictedBans[0] : null;
+            $currentlyBanned = $activeRestrictedBans !== [];
+
+            if ($isBanned && in_array($banLevel, ['temporary', 'permanent'], true) && !$currentlyBanned) {
                 $this->pdo->prepare(
                     'INSERT INTO bans
-                        (user_id, type, reason, ends_at, banned_by_user_id, created_at, updated_at)
+                        (user_id, type, level, reason, ends_at, banned_by_user_id, created_at, updated_at)
                      VALUES
-                        (:user_id, :type, :reason, :ends_at, :banned_by, NOW(), NOW())'
+                        (:user_id, :type, :level, :reason, :ends_at, :banned_by, NOW(), NOW())'
                 )->execute([
                     'user_id' => $id,
                     'type' => $banType,
+                    'level' => $banLevel,
                     'reason' => $banReason ?? 'Banned by admin',
                     'ends_at' => $banEndsAt,
                     'banned_by' => $moderatorId,
                 ]);
                 $this->pdo->prepare(
                     'INSERT INTO admin_actions
-                        (moderator_user_id, target_type, target_id, action, reason, created_at)
+                        (moderator_user_id, target_type, target_id, action, reason, metadata, created_at)
                      VALUES
-                        (:mod, "user", :target_id, "ban", :reason, NOW())'
+                        (:mod, "user", :target_id, "ban", :reason, :metadata, NOW())'
                 )->execute([
                     'mod' => $moderatorId,
                     'target_id' => $id,
                     'reason' => $banReason ?? 'Banned by admin',
+                    'metadata' => json_encode(['level' => $banLevel, 'type' => $banType], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 ]);
-            } elseif ($isBanned && $currentlyBanned) {
+            } elseif ($isBanned && in_array($banLevel, ['temporary', 'permanent'], true) && $currentlyBanned) {
                 $this->pdo->prepare(
                     'UPDATE bans
-                     SET type = :type, reason = :reason, ends_at = :ends_at, updated_at = NOW()
+                     SET type = :type, level = :level, reason = :reason, ends_at = :ends_at, updated_at = NOW()
                      WHERE user_id = :user_id
                        AND revoked_at IS NULL
+                       AND level IN ("temporary", "permanent")
                        AND (ends_at IS NULL OR ends_at > NOW())'
                 )->execute([
                     'user_id' => $id,
                     'type' => $banType,
+                    'level' => $banLevel,
                     'reason' => $banReason ?? 'Banned by admin',
                     'ends_at' => $banEndsAt,
                 ]);
@@ -273,10 +298,32 @@ final class AdminUserRepository extends AdminRepositoryBase
                         'active_bans_before' => count($activeBans),
                         'diff' => [
                             'type' => ['before' => (string) ($activeBan['type'] ?? ''), 'after' => $banType],
+                            'level' => ['before' => (string) ($activeBan['level'] ?? 'temporary'), 'after' => $banLevel],
                             'reason' => ['before' => (string) ($activeBan['reason'] ?? ''), 'after' => $banReason],
                             'ends_at' => ['before' => $activeBan['ends_at'] ?? null, 'after' => $banEndsAt],
                         ],
                     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ]);
+            } elseif ($isBanned && !in_array($banLevel, ['temporary', 'permanent'], true) && $currentlyBanned) {
+                $this->pdo->prepare(
+                    'UPDATE bans
+                     SET revoked_at = NOW(), revoked_by_user_id = :revoked_by, updated_at = NOW()
+                     WHERE user_id = :user_id
+                       AND revoked_at IS NULL
+                       AND level IN ("temporary", "permanent")
+                       AND (ends_at IS NULL OR ends_at > NOW())'
+                )->execute(['user_id' => $id, 'revoked_by' => $moderatorId]);
+
+                $this->pdo->prepare(
+                    'INSERT INTO admin_actions
+                        (moderator_user_id, target_type, target_id, action, reason, metadata, created_at)
+                     VALUES
+                        (:mod, "user", :target_id, "ban_downgrade", :reason, :metadata, NOW())'
+                )->execute([
+                    'mod' => $moderatorId,
+                    'target_id' => $id,
+                    'reason' => $banReason ?? 'Restriction downgraded to a non-blocking disciplinary action',
+                    'metadata' => json_encode(['level' => $banLevel, 'type' => $banType], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 ]);
             } elseif (!$isBanned && $currentlyBanned) {
                 $this->pdo->prepare(
@@ -284,6 +331,7 @@ final class AdminUserRepository extends AdminRepositoryBase
                      SET revoked_at = NOW(), revoked_by_user_id = :revoked_by, updated_at = NOW()
                      WHERE user_id = :user_id
                        AND revoked_at IS NULL
+                       AND level IN ("temporary", "permanent")
                        AND (ends_at IS NULL OR ends_at > NOW())'
                 )->execute(['user_id' => $id, 'revoked_by' => $moderatorId]);
     
@@ -299,6 +347,223 @@ final class AdminUserRepository extends AdminRepositoryBase
         } catch (\Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * Record a disciplinary violation and apply its optional restriction.
+     *
+     * Warning and removal levels are audit-only. Temporary and permanent
+     * levels create an action-scoped ban, while any non-warning level removes
+     * the reported target from public display. Everything is committed as one
+     * transaction so a violation can never be recorded without its action.
+     */
+    public function recordViolation(
+        string $userId,
+        string $targetType,
+        string $targetId,
+        string $scope,
+        string $level,
+        string $reason,
+        string $moderatorId,
+        ?string $endsAt = null,
+        bool $autoEscalate = false
+    ): array {
+        $allowedTargets = ['series', 'chapter', 'blog', 'comment', 'system'];
+        $allowedScopes = ['general', 'comment', 'blog'];
+        $allowedLevels = ['warning', 'removal', 'temporary', 'permanent'];
+        if (!in_array($targetType, $allowedTargets, true)) throw new \InvalidArgumentException('Invalid violation target type');
+        if (!in_array($scope, $allowedScopes, true)) throw new \InvalidArgumentException('Invalid violation scope');
+        if (($targetType === 'comment' && $scope !== 'comment')
+            || ($targetType === 'blog' && $scope !== 'blog')
+            || (in_array($targetType, ['series', 'chapter', 'system'], true) && $scope !== 'general')) {
+            throw new \InvalidArgumentException('Violation scope does not match the target type');
+        }
+        if (!in_array($level, $allowedLevels, true)) throw new \InvalidArgumentException('Invalid violation level');
+        if ($targetId === '' || strlen($targetId) > 32) throw new \InvalidArgumentException('Invalid violation target id');
+        if ($reason === '') throw new \InvalidArgumentException('Violation reason is required');
+
+        $this->pdo->beginTransaction();
+        try {
+            $userStmt = $this->pdo->prepare('SELECT id FROM users WHERE id = :id LIMIT 1 FOR UPDATE');
+            $userStmt->execute(['id' => $userId]);
+            if (!$userStmt->fetch()) throw new \DomainException('User not found');
+
+            if ($autoEscalate) {
+                $level = $this->suggestViolationLevel($userId, $scope);
+            }
+
+            if ($level === 'temporary' && $endsAt === null) {
+                $endsAt = date('Y-m-d H:i:s', time() + 7 * 86400);
+            }
+            if ($level === 'permanent' || in_array($level, ['warning', 'removal'], true)) {
+                $endsAt = null;
+            }
+
+            // Restrictions are scoped. A blog violation must not silently
+            // revoke an unrelated comment restriction; a general restriction
+            // already covers every scope and is therefore retained.
+            $active = $this->pdo->prepare(
+                'SELECT id, type FROM bans
+                 WHERE user_id = :user_id AND revoked_at IS NULL
+                   AND level IN ("temporary", "permanent")
+                   AND (ends_at IS NULL OR ends_at > NOW())
+                   AND (type = "general" OR type = :scope)
+                 FOR UPDATE'
+            );
+            $active->execute(['user_id' => $userId, 'scope' => $scope]);
+            $activeRows = $active->fetchAll();
+            $generalBan = null;
+            foreach ($activeRows as $activeRow) {
+                if ((string) ($activeRow['type'] ?? '') === 'general') {
+                    $generalBan = $activeRow;
+                    break;
+                }
+            }
+
+            if (in_array($level, ['temporary', 'permanent'], true) && $generalBan === null && $activeRows !== []) {
+                $this->pdo->prepare(
+                    'UPDATE bans
+                     SET revoked_at = NOW(), revoked_by_user_id = :moderator, updated_at = NOW()
+                     WHERE user_id = :user_id AND revoked_at IS NULL
+                       AND level IN ("temporary", "permanent")
+                       AND (ends_at IS NULL OR ends_at > NOW())
+                       AND type = :scope'
+                )->execute(['user_id' => $userId, 'moderator' => $moderatorId, 'scope' => $scope]);
+            }
+
+            $banId = null;
+            if (in_array($level, ['temporary', 'permanent'], true)) {
+                if ($generalBan !== null) {
+                    $banId = (int) ($generalBan['id'] ?? 0) ?: null;
+                    if ($scope === 'general' && $banId !== null) {
+                        $this->pdo->prepare(
+                            'UPDATE bans
+                             SET level = :level, reason = :reason, ends_at = :ends_at, updated_at = NOW()
+                             WHERE id = :id'
+                        )->execute([
+                            'id' => $banId,
+                            'level' => $level,
+                            'reason' => $reason,
+                            'ends_at' => $endsAt,
+                        ]);
+                    }
+                } else {
+                    $ban = $this->pdo->prepare(
+                        'INSERT INTO bans
+                            (user_id, type, level, reason, ends_at, banned_by_user_id, created_at, updated_at)
+                         VALUES
+                            (:user_id, :type, :level, :reason, :ends_at, :moderator, NOW(), NOW())'
+                    );
+                    $ban->execute([
+                        'user_id' => $userId,
+                        'type' => $scope,
+                        'level' => $level,
+                        'reason' => $reason,
+                        'ends_at' => $endsAt,
+                        'moderator' => $moderatorId,
+                    ]);
+                    $banId = (int) $this->pdo->lastInsertId();
+                }
+            }
+
+            if ($level !== 'warning') {
+                $this->removeModeratedTarget($targetType, $targetId);
+            }
+
+            $violation = $this->pdo->prepare(
+                'INSERT INTO moderation_violations
+                    (user_id, target_type, target_id, scope, level, action, reason, ban_id, moderator_user_id, created_at)
+                 VALUES
+                    (:user_id, :target_type, :target_id, :scope, :level, :action, :reason, :ban_id, :moderator, NOW())'
+            );
+            $violation->execute([
+                'user_id' => $userId,
+                'target_type' => $targetType,
+                'target_id' => $targetId,
+                'scope' => $scope,
+                'level' => $level,
+                'action' => $level === 'warning' ? 'warn' : ($level === 'removal' ? 'remove' : 'restrict'),
+                'reason' => $reason,
+                'ban_id' => $banId,
+                'moderator' => $moderatorId,
+            ]);
+            $violationId = (int) $this->pdo->lastInsertId();
+
+            $this->createModerationAction(
+                $moderatorId,
+                in_array($targetType, ['series', 'chapter'], true) ? 'content' : $targetType,
+                $targetId,
+                'disciplinary_' . $level,
+                $reason,
+                ['violation_id' => $violationId, 'scope' => $scope, 'ban_id' => $banId, 'auto_escalated' => $autoEscalate]
+            );
+
+            $this->pdo->commit();
+            return [
+                'violation_id' => $violationId,
+                'user_id' => $userId,
+                'target_type' => $targetType,
+                'target_id' => $targetId,
+                'scope' => $scope,
+                'level' => $level,
+                'action' => $level === 'warning' ? 'warn' : ($level === 'removal' ? 'remove' : 'restrict'),
+                'ban_id' => $banId,
+                'ends_at' => $endsAt,
+            ];
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
+    }
+
+    public function listViolations(string $userId, int $limit = 100): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT v.id, v.user_id, v.target_type, v.target_id, v.scope, v.level, v.action,
+                    v.reason, v.ban_id, v.moderator_user_id, u.username AS moderator_username, v.created_at,
+                    b.ends_at, b.revoked_at
+             FROM moderation_violations v
+             LEFT JOIN users u ON u.id = v.moderator_user_id
+             LEFT JOIN bans b ON b.id = v.ban_id
+             WHERE v.user_id = :user_id
+             ORDER BY v.id DESC
+             LIMIT :limit'
+        );
+        $stmt->bindValue(':user_id', $userId);
+        $stmt->bindValue(':limit', max(1, min(200, $limit)), PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    public function suggestViolationLevel(string $userId, string $scope): string
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*)
+             FROM moderation_violations
+             WHERE user_id = :user_id AND scope = :scope
+               AND created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)'
+        );
+        $stmt->execute(['user_id' => $userId, 'scope' => $scope]);
+        return match (min(3, (int) $stmt->fetchColumn())) {
+            0 => 'warning',
+            1 => 'removal',
+            2 => 'temporary',
+            default => 'permanent',
+        };
+    }
+
+    private function removeModeratedTarget(string $targetType, string $targetId): void
+    {
+        $sql = match ($targetType) {
+            'series' => 'UPDATE series SET deleted_at = COALESCE(deleted_at, NOW()) WHERE id = :id',
+            'chapter' => 'UPDATE chapters SET deleted_at = COALESCE(deleted_at, NOW()) WHERE id = :id',
+            'blog' => 'UPDATE blogs SET deleted_at = COALESCE(deleted_at, NOW()), status = "hidden", approved = 0 WHERE id = :id',
+            'comment' => 'UPDATE comments SET deleted_at = COALESCE(deleted_at, NOW()), moderation_status = "deleted" WHERE id = :id',
+            default => null,
+        };
+        if ($sql !== null) {
+            $this->pdo->prepare($sql)->execute(['id' => $targetId]);
         }
     }
 

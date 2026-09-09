@@ -15,7 +15,7 @@ final class SettingsController extends AdminController
         {
             try {
                 $modId = (string) $request->getAttribute('user_id');
-                return ResponseHelper::success($this->console->readEnv($modId));
+                return ResponseHelper::success($this->settingsService->readEnv($modId));
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());
             }
@@ -26,7 +26,7 @@ final class SettingsController extends AdminController
             try {
                 $payload = (array) $request->getParsedBody();
                 $modId = (string) $request->getAttribute('user_id');
-                $this->console->updateEnv($payload, $modId);
+                $this->settingsService->updateEnv($payload, $modId);
                 return ResponseHelper::success(['saved' => true]);
             } catch (\DomainException $e) {
                 return ResponseHelper::error(403, $e->getMessage());

@@ -7,7 +7,6 @@ namespace App\Services\Admin;
 use App\Config;
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
-use App\Repositories\AdminConsoleRepository;
 use App\Services\AnalyticsAggregationService;
 use App\Services\BackupService;
 use App\Services\CacheService;
@@ -36,6 +35,84 @@ final class AdminUserService extends AdminConsoleServiceBase
         return OutputSanitizer::sanitizeRows($items, ['username']);
     }
 
+    public function recordViolation(string $userId, array $payload, string $moderatorId): array
+    {
+        $targetType = strtolower(trim((string) ($payload['target_type'] ?? '')));
+        if (!in_array($targetType, ['series', 'chapter', 'blog', 'comment', 'system'], true)) {
+            throw new \InvalidArgumentException('Invalid violation target type');
+        }
+
+        $targetId = trim((string) ($payload['target_id'] ?? ''));
+        if ($targetId === '' || strlen($targetId) > 32) {
+            throw new \InvalidArgumentException('Invalid violation target id');
+        }
+
+        $scope = strtolower(trim((string) ($payload['scope'] ?? match ($targetType) {
+            'comment' => 'comment',
+            'blog' => 'blog',
+            default => 'general',
+        })));
+        if (!in_array($scope, ['general', 'comment', 'blog'], true)) {
+            throw new \InvalidArgumentException('Invalid violation scope');
+        }
+        if (($targetType === 'comment' && $scope !== 'comment')
+            || ($targetType === 'blog' && $scope !== 'blog')
+            || (in_array($targetType, ['series', 'chapter', 'system'], true) && $scope !== 'general')) {
+            throw new \InvalidArgumentException('Violation scope does not match the target type');
+        }
+
+        $autoEscalate = is_bool($payload['auto_escalate'] ?? null)
+            ? (bool) $payload['auto_escalate']
+            : in_array(strtolower(trim((string) ($payload['auto_escalate'] ?? ''))), ['1', 'true', 'yes', 'on'], true);
+        $level = strtolower(trim((string) ($payload['level'] ?? ($autoEscalate ? 'warning' : ''))));
+        if (!in_array($level, AdminConsoleServiceBase::BAN_LEVELS, true)) {
+            throw new \InvalidArgumentException('Invalid violation level');
+        }
+
+        $reason = Validator::sanitizeMultilineText((string) ($payload['reason'] ?? ''));
+        if ($reason === '' || mb_strlen($reason) > 1000) {
+            throw new \InvalidArgumentException('Violation reason is required and must be at most 1000 characters');
+        }
+
+        $endsAt = trim((string) ($payload['ends_at'] ?? ''));
+        if ($endsAt !== '') {
+            $date = \DateTimeImmutable::createFromFormat('Y-m-d\\TH:i', $endsAt)
+                ?: \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $endsAt);
+            if (!$date || $date <= new \DateTimeImmutable('now')) {
+                throw new \InvalidArgumentException('ends_at must be a future date');
+            }
+            $endsAt = $date->format('Y-m-d H:i:s');
+        } else {
+            $endsAt = null;
+        }
+
+        $rootId = trim((string) (Config::getSettings()['app']['root_user'] ?? ''));
+        // Auto escalation can turn a nominal warning into a permanent
+        // restriction, so protect the moderator/ROOT_USER before the
+        // repository calculates the effective level.
+        if (($autoEscalate || in_array($level, ['temporary', 'permanent'], true))
+            && ($userId === $moderatorId || ($rootId !== '' && $userId === $rootId))) {
+            throw new \InvalidArgumentException('The ROOT_USER account and your own account cannot receive a restriction.');
+        }
+
+        return $this->repo->recordViolation(
+            $userId,
+            $targetType,
+            $targetId,
+            $scope,
+            $level,
+            $reason,
+            $moderatorId,
+            $endsAt,
+            $autoEscalate
+        );
+    }
+
+    public function listViolations(string $userId, int $limit = 100): array
+    {
+        return $this->repo->listViolations($userId, $limit);
+    }
+
     public function updateUser(string $id, array $payload, string $moderatorId): array
     {
         $rawBanned = $payload['is_banned'] ?? false;
@@ -59,6 +136,11 @@ final class AdminUserService extends AdminConsoleServiceBase
         $banType = strtolower(trim((string) ($payload['ban_type'] ?? 'general')));
         if (!in_array($banType, AdminConsoleServiceBase::BAN_TYPES, true)) {
             throw new \InvalidArgumentException('Invalid ban type');
+        }
+
+        $banLevel = strtolower(trim((string) ($payload['ban_level'] ?? 'temporary')));
+        if (!in_array($banLevel, AdminConsoleServiceBase::BAN_LEVELS, true)) {
+            throw new \InvalidArgumentException('Invalid ban level');
         }
     
         $banReason = Validator::sanitizeMultilineText((string) ($payload['ban_reason'] ?? ''));
@@ -87,7 +169,8 @@ final class AdminUserService extends AdminConsoleServiceBase
             $payload['bio'] ?? null,
             $banType,
             $banReason === '' ? null : $banReason,
-            $banEndsAt
+            $banEndsAt,
+            $banLevel
         );
     
         return ['id' => $id, 'updated' => true];

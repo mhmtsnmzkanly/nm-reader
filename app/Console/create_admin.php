@@ -9,7 +9,7 @@ declare(strict_types=1);
  */
 
 use App\Services\AuthService;
-use App\Services\AdminConsoleService;
+use App\Services\Admin\AdminUserService;
 use App\Config;
 
 require __DIR__ . '/../../vendor/autoload.php';
@@ -23,8 +23,8 @@ $container = require __DIR__ . '/../dependencies.php';
 
 /** @var AuthService $auth */
 $auth = $container->get(AuthService::class);
-/** @var AdminConsoleService $admin */
-$admin = $container->get(AdminConsoleService::class);
+/** @var AdminUserService $admin */
+$admin = $container->get(AdminUserService::class);
 
 echo "--- Admin Creation Tool ---
 ";
@@ -44,7 +44,7 @@ try {
     // 2. Assign Admin Role
     $admin->assignRoleToUser([
         'user_id' => $user['id'],
-        'role_slug' => 'admin'
+        'role' => 'admin'
     ]);
 
     echo "SUCCESS: Admin '{$username}' created with ID: {$user['id']}

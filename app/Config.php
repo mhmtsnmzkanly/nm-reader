@@ -1028,6 +1028,8 @@ final class Config
             $group->get("/genres", [AdminContentController::class, "listGenres"])->add($perm(["admin.panel.access"]));
             $group->get("/tags", [AdminContentController::class, "listTags"])->add($perm(["admin.panel.access"]));
             $group->get("/users", [AdminUsersController::class, "listUsers"])->add($perm(["admin.panel.access"]));
+            $group->get("/users/{id}/violations", [AdminUsersController::class, "listViolations"])->add($perm(["admin.users.manage"]));
+            $group->post("/users/{id}/violations", [AdminUsersController::class, "recordViolation"])->add(new CriticalActionMiddleware())->add($perm(["admin.users.manage"]));
             $group->get("/users/options", [AdminUsersController::class, "userOptions"])->add($perm(["admin.wallet.view"]));
             $group->get("/uploads", [AdminStorageController::class, "uploads"])->add($perm(["admin.uploads.view"]));
             $group->post("/uploads/cleanup", [AdminStorageController::class, "cleanupUploads"])->add($anyPerm(["admin.content.create", "admin.content.update", "admin.chapter.create"]));

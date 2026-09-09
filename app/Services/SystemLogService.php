@@ -77,7 +77,9 @@ final class SystemLogService
             return [];
         }
 
-        $lines = $this->tail($file, $limit);
+        $lines = $limit <= 0
+            ? $this->allLines($file)
+            : $this->tail($file, $limit);
         $parsed = [];
 
         foreach ($lines as $line) {
@@ -113,6 +115,29 @@ final class SystemLogService
         }
 
         return array_reverse($parsed);
+    }
+
+    /**
+     * Return a paginated error-log view for the admin API.
+     *
+     * Error logs are file-backed rather than database-backed. We parse the
+     * current rotating file once, keep the newest-first ordering used by the
+     * log viewer, and paginate the normalized records at the service boundary.
+     * Older rotated files are intentionally handled by resolveLogFile() in the
+     * same way as the existing viewer.
+     */
+    public function getErrorLogsPage(int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, min(100, $perPage));
+        $items = $this->getErrorLogs(0);
+        $total = count($items);
+        $offset = ($page - 1) * $perPage;
+
+        return [
+            'items' => array_slice($items, $offset, $perPage),
+            'total' => $total,
+        ];
     }
 
     /**
@@ -155,6 +180,17 @@ final class SystemLogService
 
         fclose($handle);
         return $text;
+    }
+
+    /** @return list<string> */
+    private function allLines(string $filename): array
+    {
+        $lines = file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false) {
+            return [];
+        }
+
+        return array_values(array_map(static fn(string $line): string => trim($line), $lines));
     }
 
     private function parseJsonLine(string $line): ?array

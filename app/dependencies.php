@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Controllers\AdminPanelController;
 use App\Controllers\Admin\CommerceController as AdminCommerceController;
 use App\Controllers\Admin\ContentController as AdminContentController;
 use App\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -23,7 +22,6 @@ use App\Controllers\AccountPageController;
 use App\Controllers\AdminShellController;
 use App\Controllers\SystemPageController;
 use App\Repositories\BlogRepository;
-use App\Repositories\AdminConsoleRepository;
 use App\Repositories\Admin\AdminContentRepository;
 use App\Repositories\Admin\AdminDashboardRepository;
 use App\Repositories\Admin\AdminModerationRepository;
@@ -43,8 +41,6 @@ use App\Repositories\UploadRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WalletRepository;
 use App\Services\AuthService;
-use App\Services\AdminService;
-use App\Services\AdminConsoleService;
 use App\Services\Admin\AdminContentService;
 use App\Services\Admin\AdminDashboardService;
 use App\Services\Admin\AdminModerationService;
@@ -164,7 +160,6 @@ $builder->addDefinitions([
     AdminStorageRepository::class => DI\autowire(AdminStorageRepository::class),
     AdminTaxonomyRepository::class => DI\autowire(AdminTaxonomyRepository::class),
     AdminOperationsRepository::class => DI\autowire(AdminOperationsRepository::class),
-    AdminConsoleRepository::class => DI\autowire(AdminConsoleRepository::class),
     SeriesRepository::class => DI\autowire(SeriesRepository::class),
     ChapterRepository::class => DI\autowire(ChapterRepository::class),
     CommentRepository::class => DI\autowire(CommentRepository::class),
@@ -197,18 +192,23 @@ $builder->addDefinitions([
     CommentService::class => DI\autowire(CommentService::class),
     RatingService::class => DI\autowire(RatingService::class),
     EntityIdService::class => DI\autowire(EntityIdService::class),
-    AdminService::class => DI\autowire(AdminService::class),
     ContentAdminService::class => DI\autowire(ContentAdminService::class),
     ChapterAdminService::class => DI\autowire(ChapterAdminService::class),
     TaxonomyAdminService::class => DI\autowire(TaxonomyAdminService::class),
-    AdminConsoleService::class => DI\autowire(AdminConsoleService::class),
-    AdminDashboardService::class => DI\autowire(AdminDashboardService::class),
-    AdminContentService::class => DI\autowire(AdminContentService::class),
-    AdminUserService::class => DI\autowire(AdminUserService::class),
-    AdminModerationService::class => DI\autowire(AdminModerationService::class),
-    AdminStorageService::class => DI\autowire(AdminStorageService::class),
-    AdminOperationsService::class => DI\autowire(AdminOperationsService::class),
-    AdminSettingsService::class => DI\autowire(AdminSettingsService::class),
+    AdminDashboardService::class => DI\autowire(AdminDashboardService::class)
+        ->constructorParameter('repo', DI\get(AdminDashboardRepository::class)),
+    AdminContentService::class => DI\autowire(AdminContentService::class)
+        ->constructorParameter('repo', DI\get(AdminContentRepository::class)),
+    AdminUserService::class => DI\autowire(AdminUserService::class)
+        ->constructorParameter('repo', DI\get(AdminUserRepository::class)),
+    AdminModerationService::class => DI\autowire(AdminModerationService::class)
+        ->constructorParameter('repo', DI\get(AdminModerationRepository::class)),
+    AdminStorageService::class => DI\autowire(AdminStorageService::class)
+        ->constructorParameter('repo', DI\get(AdminStorageRepository::class)),
+    AdminOperationsService::class => DI\autowire(AdminOperationsService::class)
+        ->constructorParameter('repo', DI\get(AdminOperationsRepository::class)),
+    AdminSettingsService::class => DI\autowire(AdminSettingsService::class)
+        ->constructorParameter('repo', DI\get(AdminModerationRepository::class)),
     UserService::class => DI\autowire(UserService::class),
     MeService::class => DI\autowire(MeService::class),
     WebContextBuilder::class => DI\autowire(WebContextBuilder::class)
@@ -255,7 +255,6 @@ $builder->addDefinitions([
     \App\Controllers\MediaController::class => DI\autowire(\App\Controllers\MediaController::class),
     UserInteractionController::class => DI\autowire(UserInteractionController::class),
     UserController::class => DI\autowire(UserController::class),
-    AdminPanelController::class => DI\autowire(AdminPanelController::class),
     AdminDashboardController::class => DI\autowire(AdminDashboardController::class),
     AdminContentController::class => DI\autowire(AdminContentController::class),
     AdminUsersController::class => DI\autowire(AdminUsersController::class),

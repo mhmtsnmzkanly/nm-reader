@@ -13,7 +13,7 @@ final class DashboardController extends AdminController
 {
     public function overview(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->overview());
+            return ResponseHelper::success($this->dashboardService->overview());
         }
     
     public function reauthenticate(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -22,41 +22,41 @@ final class DashboardController extends AdminController
             $userId = (string)$request->getAttribute('user_id');
             $hash = $this->users->passwordHashForId($userId);
             if ($hash === null || !password_verify((string)($payload['password'] ?? ''), $hash)) {
-                $this->console->createModerationAction($userId, 'security', $userId, 'auth_fail', 'Critical action reauthentication failed');
+                $this->dashboardService->createModerationAction($userId, 'security', $userId, 'auth_fail', 'Critical action reauthentication failed');
                 return ResponseHelper::error(401, 'Parola doğrulanamadı.');
             }
             $_SESSION['admin_reauthenticated_at'] = time();
             $_SESSION['admin_reauthenticated_user_id'] = $userId;
-            $this->console->createModerationAction($userId, 'security', $userId, 'update', 'Critical action reauthentication succeeded');
+            $this->dashboardService->createModerationAction($userId, 'security', $userId, 'update', 'Critical action reauthentication succeeded');
             return ResponseHelper::success(['valid_for_seconds' => 300]);
         }
     
     public function siteVisits(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->siteVisits());
+            return ResponseHelper::success($this->dashboardService->siteVisits());
         }
     
     public function viewStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             $q = $request->getQueryParams();
-            return ResponseHelper::success($this->console->viewStats((int)($q['days'] ?? 30), (int)($q['limit'] ?? 10)));
+            return ResponseHelper::success($this->dashboardService->viewStats((int)($q['days'] ?? 30), (int)($q['limit'] ?? 10)));
         }
     
     public function blogStats(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             $q = $request->getQueryParams();
-            return ResponseHelper::success($this->console->blogStats((int)($q['days'] ?? 30), (int)($q['limit'] ?? 10)));
+            return ResponseHelper::success($this->dashboardService->blogStats((int)($q['days'] ?? 30), (int)($q['limit'] ?? 10)));
         }
     
     public function userReputation(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             $q = $request->getQueryParams();
-            return ResponseHelper::success($this->console->userReputation((int)($q['limit'] ?? 10)));
+            return ResponseHelper::success($this->dashboardService->userReputation((int)($q['limit'] ?? 10)));
         }
     
     public function metricsSnapshot(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->overview());
+            return ResponseHelper::success($this->dashboardService->overview());
         }
     
     public function metricsInsights(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -66,10 +66,10 @@ final class DashboardController extends AdminController
             $limit = (int) ($q['limit'] ?? 10);
     
             return ResponseHelper::success([
-                'views' => $this->console->viewStats($days, $limit),
-                'blogs' => $this->console->blogStats($days, $limit),
-                'visits' => $this->console->siteVisits(),
-                'reputation' => $this->console->userReputation($limit),
+                'views' => $this->dashboardService->viewStats($days, $limit),
+                'blogs' => $this->dashboardService->blogStats($days, $limit),
+                'visits' => $this->dashboardService->siteVisits(),
+                'reputation' => $this->dashboardService->userReputation($limit),
             ]);
         }
     

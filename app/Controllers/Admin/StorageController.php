@@ -15,14 +15,14 @@ final class StorageController extends AdminController
         {
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
-            $result = $this->console->listUploads($page, $perPage, (string)($query['q'] ?? ''), isset($query['mime']) ? (string)$query['mime'] : null, filter_var($query['orphans'] ?? false, FILTER_VALIDATE_BOOL));
+            $result = $this->storageService->listUploads($page, $perPage, (string)($query['q'] ?? ''), isset($query['mime']) ? (string)$query['mime'] : null, filter_var($query['orphans'] ?? false, FILTER_VALIDATE_BOOL));
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null, ['stats' => $result['stats'] ?? []]);
         }
     
     public function deleteUpload(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             $modId = (string) $request->getAttribute('user_id');
-            $this->console->deleteUpload((int)$args['id'], $modId);
+            $this->storageService->deleteUpload((int)$args['id'], $modId);
             return ResponseHelper::success();
         }
     
@@ -31,18 +31,18 @@ final class StorageController extends AdminController
             $payload = (array) $request->getParsedBody();
             $paths = is_array($payload['paths'] ?? null) ? $payload['paths'] : [];
             $userId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::success($this->console->cleanupUnreferencedUploads($paths, $userId));
+            return ResponseHelper::success($this->storageService->cleanupUnreferencedUploads($paths, $userId));
         }
     
     public function deleteUploads(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             $payload = (array)$request->getParsedBody();
-            return ResponseHelper::success($this->console->deleteUploads((array)($payload['ids'] ?? []), (string)$request->getAttribute('user_id')));
+            return ResponseHelper::success($this->storageService->deleteUploads((array)($payload['ids'] ?? []), (string)$request->getAttribute('user_id')));
         }
     
     public function optimizeUpload(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
-            try { return ResponseHelper::success($this->console->optimizeUpload((int)$args['id'], (string)$request->getAttribute('user_id'))); }
+            try { return ResponseHelper::success($this->storageService->optimizeUpload((int)$args['id'], (string)$request->getAttribute('user_id'))); }
             catch (\InvalidArgumentException|\DomainException $e) { return ResponseHelper::error(422, $e->getMessage()); }
         }
     

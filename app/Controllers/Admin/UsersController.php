@@ -15,7 +15,7 @@ final class UsersController extends AdminController
         {
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
-            $result = $this->console->listUsers(
+            $result = $this->usersService->listUsers(
                 $page,
                 $perPage,
                 trim((string) ($query['q'] ?? '')),
@@ -31,8 +31,32 @@ final class UsersController extends AdminController
             try {
                 $payload = (array) $request->getParsedBody();
                 $modId = (string) $request->getAttribute('user_id');
-                $this->console->updateUser((string)$args['id'], $payload, $modId);
+                $this->usersService->updateUser((string)$args['id'], $payload, $modId);
                 return ResponseHelper::success();
+            } catch (\InvalidArgumentException $exception) {
+                return ResponseHelper::error(400, $exception->getMessage());
+            } catch (\DomainException $exception) {
+                return ResponseHelper::error(404, $exception->getMessage());
+            }
+        }
+
+    public function listViolations(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+        {
+            [$page, $perPage] = $this->pagination($request);
+            $limit = min(200, max($perPage, $page * $perPage));
+            return ResponseHelper::success($this->usersService->listViolations((string) $args['id'], $limit));
+        }
+
+    public function recordViolation(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+        {
+            try {
+                $payload = (array) $request->getParsedBody();
+                $result = $this->usersService->recordViolation(
+                    (string) $args['id'],
+                    $payload,
+                    (string) $request->getAttribute('user_id')
+                );
+                return ResponseHelper::created($result);
             } catch (\InvalidArgumentException $exception) {
                 return ResponseHelper::error(400, $exception->getMessage());
             } catch (\DomainException $exception) {
@@ -42,18 +66,18 @@ final class UsersController extends AdminController
     
     public function userOptions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->listAllUsersForSelect());
+            return ResponseHelper::success($this->usersService->listAllUsersForSelect());
         }
     
     public function rbacRoles(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->listRbacRoles());
+            return ResponseHelper::success($this->usersService->listRbacRoles());
         }
     
     public function rbacAssignments(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             [$page, $perPage] = $this->pagination($request);
-            $result = $this->console->listRbacAssignments($page, $perPage);
+            $result = $this->usersService->listRbacAssignments($page, $perPage);
             return ResponseHelper::success($result['items'], $result['meta']);
         }
     
@@ -62,7 +86,7 @@ final class UsersController extends AdminController
             try {
                 $payload = (array) $request->getParsedBody();
                 $modId = (string) $request->getAttribute('user_id');
-                $this->console->assignPermissionToRole($payload, $modId);
+                $this->usersService->assignPermissionToRole($payload, $modId);
                 return ResponseHelper::success(['assigned' => true]);
             } catch (\InvalidArgumentException $exception) {
                 return ResponseHelper::error(400, $exception->getMessage());
@@ -74,7 +98,7 @@ final class UsersController extends AdminController
             try {
                 $payload = (array) $request->getParsedBody();
                 $modId = (string) $request->getAttribute('user_id');
-                $revoked = $this->console->revokePermissionFromRole($payload, $modId);
+                $revoked = $this->usersService->revokePermissionFromRole($payload, $modId);
                 return ResponseHelper::success(['revoked' => $revoked]);
             } catch (\InvalidArgumentException $exception) {
                 return ResponseHelper::error(400, $exception->getMessage());
@@ -83,8 +107,8 @@ final class UsersController extends AdminController
     
     public function permissionMatrix(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            $roles = $this->console->listRolesWithPermissions();
-            $permissions = $this->adminConsoleRepo->getAllSystemPermissions();
+            $roles = $this->usersService->listRolesWithPermissions();
+            $permissions = $this->adminUserRepo->getAllSystemPermissions();
             return ResponseHelper::success([
                 'roles' => $roles,
                 'permissions' => $permissions,
@@ -93,6 +117,6 @@ final class UsersController extends AdminController
     
     public function ownershipCapabilities(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->console->ownershipCapabilities());
+            return ResponseHelper::success($this->usersService->ownershipCapabilities());
         }
 }

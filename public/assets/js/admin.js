@@ -891,6 +891,7 @@ async function openUserEditor(userId) {
   const legacyVotingOption = user.ban_type === 'voting'
     ? '<option value="voting" selected>Oy verme (eski kayıt; artık kısıtlanmıyor)</option>'
     : '';
+  const banLevel = user.ban_level || 'temporary';
   const overlay = openDialog(
     `Kullanıcıyı Düzenle: ${user.username}`,
     `<div class="mb-3"><label class="form-label">Kullanıcı adı</label><input class="form-control" value="${escapeHtml(user.username)}" disabled></div>
@@ -899,6 +900,7 @@ async function openUserEditor(userId) {
      <div class="mb-3"><label class="form-label">Rol</label><select class="form-select" name="role">${roles.map(role => `<option value="${escapeHtml(role.slug)}" ${role.slug === currentRole ? 'selected' : ''}>${escapeHtml(role.name || role.slug)}</option>`).join('')}</select></div>
      <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="is_banned" value="1" id="dialog-user-banned" ${Number(user.is_banned) === 1 ? 'checked' : ''}><label class="form-check-label" for="dialog-user-banned">Kullanıcıyı yasakla</label></div>
      <div class="mb-3"><label class="form-label">Yasak kapsamı</label><select class="form-select" name="ban_type"><option value="general" ${user.ban_type === 'general' || !user.ban_type ? 'selected' : ''}>Tüm üretim işlemleri</option><option value="comment" ${user.ban_type === 'comment' ? 'selected' : ''}>Yorum</option><option value="blog" ${user.ban_type === 'blog' ? 'selected' : ''}>Blog</option>${legacyVotingOption}<option value="reporting" ${user.ban_type === 'reporting' ? 'selected' : ''}>Rapor gönderme</option></select></div>
+     <div class="mb-3"><label class="form-label">Ceza seviyesi</label><select class="form-select" name="ban_level"><option value="warning" ${banLevel === 'warning' ? 'selected' : ''}>Uyarı (engelleme yok)</option><option value="removal" ${banLevel === 'removal' ? 'selected' : ''}>İçerik kaldırma (engelleme yok)</option><option value="temporary" ${banLevel === 'temporary' ? 'selected' : ''}>Süreli işlem engeli</option><option value="permanent" ${banLevel === 'permanent' ? 'selected' : ''}>Kalıcı işlem engeli</option></select></div>
      <div class="mb-3"><label class="form-label">Yasak bitişi (boş = süresiz)</label><input type="datetime-local" class="form-control" name="ban_ends_at" value="${escapeHtml(banEndsAt)}"></div>
      <div><label class="form-label">Yasak nedeni</label><textarea class="form-control" name="ban_reason" maxlength="1000" rows="3">${escapeHtml(user.ban_reason || '')}</textarea></div>`,
     async (formData, form) => {

@@ -36,11 +36,13 @@ CREATE TABLE `users` (
   UNIQUE KEY `uniq_api_token` (`api_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `moderation_violations`;
 DROP TABLE IF EXISTS `bans`;
 CREATE TABLE `bans` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` char(8) NOT NULL,
   `type` enum('general','comment','blog','voting','reporting') NOT NULL DEFAULT 'general',
+  `level` enum('warning','removal','temporary','permanent') NOT NULL DEFAULT 'temporary',
   `reason` text NOT NULL,
   `ends_at` datetime DEFAULT NULL,
   `banned_by_user_id` char(8) DEFAULT NULL,
@@ -56,6 +58,31 @@ CREATE TABLE `bans` (
   CONSTRAINT `fk_bans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_bans_banned_by_user` FOREIGN KEY (`banned_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_bans_revoked_by_user` FOREIGN KEY (`revoked_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Disciplinary history is separate from the current restriction record. A
+-- warning or removal is therefore retained for audit purposes without
+-- blocking the user's login or interaction permissions.
+CREATE TABLE `moderation_violations` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `target_type` enum('series','chapter','blog','comment','system') NOT NULL,
+  `target_id` varchar(32) NOT NULL,
+  `scope` enum('general','comment','blog') NOT NULL DEFAULT 'general',
+  `level` enum('warning','removal','temporary','permanent') NOT NULL DEFAULT 'warning',
+  `action` enum('warn','remove','restrict') NOT NULL DEFAULT 'warn',
+  `reason` text NOT NULL,
+  `ban_id` bigint(20) unsigned DEFAULT NULL,
+  `moderator_user_id` char(8) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_violations_user_created` (`user_id`,`created_at`),
+  KEY `idx_violations_target` (`target_type`,`target_id`,`created_at`),
+  KEY `idx_violations_scope_level` (`scope`,`level`,`created_at`),
+  KEY `idx_violations_ban` (`ban_id`),
+  CONSTRAINT `fk_violations_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_violations_ban` FOREIGN KEY (`ban_id`) REFERENCES `bans` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_violations_moderator` FOREIGN KEY (`moderator_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `series`;

@@ -6,11 +6,10 @@ namespace App\Services\Admin;
 
 use App\Helpers\ChapterNumber;
 use App\Helpers\Validator;
-use App\Repositories\AdminConsoleRepository;
+use App\Repositories\Admin\AdminModerationRepository;
 use App\Repositories\ChapterRepository;
 use App\Repositories\SeriesRepository;
 use App\Repositories\WalletRepository;
-use App\Services\AdminConsoleService;
 use App\Services\CacheService;
 use App\Services\ContentSecurityScanner;
 use App\Services\EntityIdService;
@@ -44,7 +43,7 @@ protected const TYPE_SEGMENT_TO_DB = [
         protected readonly SlugService $slugService,
         protected readonly CacheService $cache,
         protected readonly QueueService $queue,
-        protected readonly AdminConsoleService $adminConsole,
+        protected readonly AdminModerationRepository $adminConsole,
         protected readonly ContentSecurityScanner $scanner,
     ) {
     }

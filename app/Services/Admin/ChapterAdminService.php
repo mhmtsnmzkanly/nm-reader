@@ -6,11 +6,9 @@ namespace App\Services\Admin;
 
 use App\Helpers\ChapterNumber;
 use App\Helpers\Validator;
-use App\Repositories\AdminConsoleRepository;
 use App\Repositories\ChapterRepository;
 use App\Repositories\SeriesRepository;
 use App\Repositories\WalletRepository;
-use App\Services\AdminConsoleService;
 use App\Services\CacheService;
 use App\Services\ContentSecurityScanner;
 use App\Services\EntityIdService;

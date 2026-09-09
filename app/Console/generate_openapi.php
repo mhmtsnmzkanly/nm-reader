@@ -127,6 +127,8 @@ $endpoints = [
     ['POST', '/admin/series_tags', 'Admin Create Tag', 'Admin', true],
     ['GET', '/admin/users', 'Admin List Users', 'Admin', true],
     ['PUT', '/admin/users/{id}', 'Admin Update User Record', 'Admin', true],
+    ['GET', '/admin/users/{id}/violations', 'Admin List User Disciplinary History', 'Admin', true],
+    ['POST', '/admin/users/{id}/violations', 'Admin Record User Disciplinary Violation', 'Admin', true],
     ['GET', '/admin/users/options', 'Admin User Select Options', 'Admin', true],
     ['GET', '/admin/rbac/roles', 'Admin List RBAC Roles', 'Admin', true],
     ['GET', '/admin/rbac/assignments', 'Admin List Role Assignments', 'Admin', true],
