@@ -183,8 +183,9 @@ final class MetricsService
             : sprintf('DATE_SUB(NOW(), INTERVAL %d DAY)', $offsetDays);
 
         $views = $this->countSafe(
-            "SELECT COUNT(*) FROM analytics_series_views
-             WHERE viewed_at >= {$startExpr} AND viewed_at < {$endExpr}"
+            "SELECT COUNT(*) FROM analytics_events
+             WHERE event_type = 'content_view' AND entity_type = 'content'
+               AND created_at >= {$startExpr} AND created_at < {$endExpr}"
         );
         $follows = $this->countSafe(
             "SELECT COUNT(*) FROM user_series_follows
@@ -215,12 +216,13 @@ final class MetricsService
 
         $views = $this->countSafe(
             "SELECT COUNT(*)
-             FROM analytics_series_views cv
-             INNER JOIN series_taxonomy_map cg ON cg.content_id = cv.content_id
+             FROM analytics_events cv
+             INNER JOIN series_taxonomy_map cg ON cg.content_id = cv.entity_id
              INNER JOIN taxonomies g ON g.id = cg.taxonomy_id AND g.type = 'genre'
              WHERE g.slug = " . $this->pdo->quote($slug) . "
-               AND cv.viewed_at >= {$startExpr}
-               AND cv.viewed_at < {$endExpr}"
+               AND cv.event_type = 'content_view' AND cv.entity_type = 'content'
+               AND cv.created_at >= {$startExpr}
+               AND cv.created_at < {$endExpr}"
         );
 
         $follows = $this->countSafe(
@@ -283,9 +285,10 @@ final class MetricsService
             FROM taxonomies g
             LEFT JOIN (
                 SELECT cg.taxonomy_id AS genre_id, COUNT(*) AS view_total
-                FROM analytics_series_views cv
-                INNER JOIN series_taxonomy_map cg ON cg.content_id = cv.content_id
-                WHERE cv.viewed_at >= {$startExpr} AND cv.viewed_at < {$endExpr}
+                FROM analytics_events cv
+                INNER JOIN series_taxonomy_map cg ON cg.content_id = cv.entity_id
+                WHERE cv.event_type = 'content_view' AND cv.entity_type = 'content'
+                  AND cv.created_at >= {$startExpr} AND cv.created_at < {$endExpr}
                 GROUP BY cg.taxonomy_id
             ) v ON v.genre_id = g.id
             LEFT JOIN (
@@ -572,7 +575,7 @@ final class MetricsService
              FROM series c
              LEFT JOIN (
                 SELECT content_id, SUM(view_count) AS view_count_7d
-                FROM analytics_series_daily
+                FROM analytics_snapshots_series_top
                 WHERE stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY)
                 GROUP BY content_id
              ) v ON v.content_id = c.id
