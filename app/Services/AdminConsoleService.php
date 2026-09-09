@@ -314,6 +314,8 @@ final class AdminConsoleService
         if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true) || !function_exists('imagecreatefromstring')) {
             throw new \DomainException('This image type cannot be optimized on this server');
         }
+        $this->repo->markUploadProcessing($id);
+        try {
         $path = dirname(__DIR__, 2) . '/storage/media/' . basename((string)$upload['file_path']);
         if (!is_file($path)) throw new \DomainException('Physical file not found');
         $raw = file_get_contents($path);
@@ -329,13 +331,17 @@ final class AdminConsoleService
         $newSize = (int)(filesize($temporary) ?: 0);
         if ($newSize > 0 && ($oldSize === 0 || $newSize < $oldSize)) {
             if (!rename($temporary, $path)) { @unlink($temporary); throw new \RuntimeException('Optimized image could not replace original'); }
-            $this->repo->updateUploadFileSize($id, $newSize);
         } else {
             @unlink($temporary);
             $newSize = $oldSize;
         }
+        $this->repo->updateUploadFileSize($id, $newSize, hash_file('sha256', $path) ?: null);
         $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'update', "Upload optimized: $oldSize -> $newSize bytes");
         return ['id' => $id, 'old_size' => $oldSize, 'new_size' => $newSize, 'saved_bytes' => max(0, $oldSize - $newSize)];
+        } catch (\Throwable $e) {
+            try { $this->repo->markUploadProcessingFailed($id, $e->getMessage()); } catch (\Throwable) {}
+            throw $e;
+        }
     }
 
     /**

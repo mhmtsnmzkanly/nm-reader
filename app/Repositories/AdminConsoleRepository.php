@@ -1086,10 +1086,22 @@ final class AdminConsoleRepository
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
-    public function updateUploadFileSize(int $id, int $size): void
+    public function updateUploadFileSize(int $id, int $size, ?string $checksum = null): void
     {
-        $stmt = $this->pdo->prepare('UPDATE system_uploads SET file_size = :size WHERE id = :id');
-        $stmt->execute(['id' => $id, 'size' => $size]);
+        $stmt = $this->pdo->prepare('UPDATE system_uploads SET file_size = :size, checksum = COALESCE(:checksum, checksum), processing_status = "ready", processing_error = NULL, optimized_at = NOW() WHERE id = :id');
+        $stmt->execute(['id' => $id, 'size' => $size, 'checksum' => $checksum]);
+    }
+
+    public function markUploadProcessing(int $id): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE system_uploads SET processing_status = "processing", processing_error = NULL WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+    }
+
+    public function markUploadProcessingFailed(int $id, string $error): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE system_uploads SET processing_status = "failed", processing_error = :error WHERE id = :id');
+        $stmt->execute(['id' => $id, 'error' => mb_substr($error, 0, 1000)]);
     }
 
     /**

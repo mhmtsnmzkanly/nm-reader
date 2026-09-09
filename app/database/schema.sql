@@ -702,11 +702,20 @@ CREATE TABLE `system_uploads` (
   `image_id` varchar(32) NOT NULL,
   `original_name` varchar(255) NOT NULL,
   `file_path` varchar(255) NOT NULL,
+  `storage_provider` varchar(32) NOT NULL DEFAULT 'local',
+  `storage_key` varchar(255) DEFAULT NULL,
   `mime_type` varchar(100) NOT NULL,
   `file_size` int(11) NOT NULL,
+  `checksum` char(64) DEFAULT NULL,
+  `processing_status` enum('uploaded','processing','ready','failed','deleted') NOT NULL DEFAULT 'ready',
+  `processing_error` text DEFAULT NULL,
+  `optimized_at` datetime DEFAULT NULL,
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `idx_upload_user` (`user_id`),
+  KEY `idx_upload_processing` (`processing_status`,`created_at`),
+  KEY `idx_upload_checksum` (`checksum`),
   CONSTRAINT `fk_uploads_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

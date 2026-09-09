@@ -273,13 +273,21 @@ final class UploadService
         }
 
         $publicPath = '/media/public/' . $fileName;
+        $checksum = hash_file('sha256', $targetPath) ?: null;
+        $metadata = [
+            'width' => (int) ($imageInfo[0] ?? 0),
+            'height' => (int) ($imageInfo[1] ?? 0),
+            'target' => $targetSubdir,
+        ];
         $this->repository->logImageUpload(
             $userId,
             $imageId,
             $originalName,
             $mimeType,
-            $size,
-            $publicPath
+            (int) (filesize($targetPath) ?: $size),
+            $publicPath,
+            $checksum,
+            $metadata
         );
 
         return $publicPath;
