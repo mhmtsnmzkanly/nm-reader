@@ -35,6 +35,28 @@ CREATE TABLE `users` (
   UNIQUE KEY `uniq_api_token` (`api_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+DROP TABLE IF EXISTS `bans`;
+CREATE TABLE `bans` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` char(8) NOT NULL,
+  `type` enum('general','comment','blog','voting','reporting') NOT NULL DEFAULT 'general',
+  `reason` text NOT NULL,
+  `ends_at` datetime DEFAULT NULL,
+  `banned_by_user_id` char(8) DEFAULT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `revoked_by_user_id` char(8) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_bans_user_active` (`user_id`,`type`,`revoked_at`,`ends_at`),
+  KEY `idx_bans_ends_at` (`ends_at`),
+  KEY `idx_bans_banned_by` (`banned_by_user_id`),
+  KEY `idx_bans_revoked_by` (`revoked_by_user_id`),
+  CONSTRAINT `fk_bans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bans_banned_by_user` FOREIGN KEY (`banned_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_bans_revoked_by_user` FOREIGN KEY (`revoked_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `series`;
 CREATE TABLE `series` (
   `id` char(6) NOT NULL,

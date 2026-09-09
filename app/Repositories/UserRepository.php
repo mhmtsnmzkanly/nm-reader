@@ -760,25 +760,22 @@ final class UserRepository
     }
 
     /**
-     * Checks if a user is currently banned via moderation logs.
+     * Checks if a user has an active ban for the requested action scope.
+     * A general ban always applies; scoped bans only apply to their matching scope.
      */
-    public function isBanned(string $userId): bool
+    public function isBanned(string $userId, ?string $scope = null): bool
     {
         try {
             $stmt = $this->pdo->prepare(
                 "SELECT 1
-                 FROM admin_actions
-                 WHERE target_type = 'user'
-                   AND action = 'ban'
-                   AND (
-                        target_id = :target_id
-                        OR target_id = (
-                            SELECT username FROM users WHERE id = :target_id LIMIT 1
-                        )
-                   )
+                 FROM bans
+                 WHERE user_id = :user_id
+                   AND revoked_at IS NULL
+                   AND (ends_at IS NULL OR ends_at > NOW())
+                   AND (:scope IS NULL OR type = 'general' OR type = :scope)
                  LIMIT 1"
             );
-            $stmt->execute(['target_id' => $userId]);
+            $stmt->execute(['user_id' => $userId, 'scope' => $scope]);
 
             return $stmt->fetchColumn() !== false;
         } catch (\Throwable) {

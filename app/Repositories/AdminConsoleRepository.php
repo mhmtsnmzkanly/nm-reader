@@ -215,7 +215,13 @@ final class AdminConsoleRepository
             $params['query'] = '%' . $query . '%';
         }
         if (in_array($accountStatus, ['active', 'banned'], true)) {
-            $exists = 'EXISTS (SELECT 1 FROM admin_actions ban_filter WHERE ban_filter.target_type = "user" AND ban_filter.action = "ban" AND (ban_filter.target_id = u.id OR ban_filter.target_id = u.username))';
+            $exists = 'EXISTS (
+                SELECT 1
+                FROM bans ban_filter
+                WHERE ban_filter.user_id = u.id
+                  AND ban_filter.revoked_at IS NULL
+                  AND (ban_filter.ends_at IS NULL OR ban_filter.ends_at > NOW())
+            )';
             $where[] = $accountStatus === 'banned' ? $exists : 'NOT ' . $exists;
         }
         $roleId = (string) ((\App\Config::getSettings()['rbac']['id_map'][$role] ?? ''));
@@ -243,11 +249,38 @@ final class AdminConsoleRepository
                 u.created_at,
                 EXISTS(
                     SELECT 1
-                    FROM admin_actions ma
-                    WHERE ma.target_type = "user"
-                      AND ma.action = "ban"
-                      AND (ma.target_id = u.id OR ma.target_id = u.username)
+                    FROM bans active_ban
+                    WHERE active_ban.user_id = u.id
+                      AND active_ban.revoked_at IS NULL
+                      AND (active_ban.ends_at IS NULL OR active_ban.ends_at > NOW())
                 ) AS is_banned,
+                (
+                    SELECT active_ban.type
+                    FROM bans active_ban
+                    WHERE active_ban.user_id = u.id
+                      AND active_ban.revoked_at IS NULL
+                      AND (active_ban.ends_at IS NULL OR active_ban.ends_at > NOW())
+                    ORDER BY active_ban.created_at DESC
+                    LIMIT 1
+                ) AS ban_type,
+                (
+                    SELECT active_ban.reason
+                    FROM bans active_ban
+                    WHERE active_ban.user_id = u.id
+                      AND active_ban.revoked_at IS NULL
+                      AND (active_ban.ends_at IS NULL OR active_ban.ends_at > NOW())
+                    ORDER BY active_ban.created_at DESC
+                    LIMIT 1
+                ) AS ban_reason,
+                (
+                    SELECT active_ban.ends_at
+                    FROM bans active_ban
+                    WHERE active_ban.user_id = u.id
+                      AND active_ban.revoked_at IS NULL
+                      AND (active_ban.ends_at IS NULL OR active_ban.ends_at > NOW())
+                    ORDER BY active_ban.created_at DESC
+                    LIMIT 1
+                ) AS ban_ends_at,
                 (SELECT COUNT(*) FROM comments c WHERE c.user_id = u.id) AS comment_count,
                 (SELECT COUNT(*) FROM blogs b WHERE b.user_id = u.id) AS blog_count,
                 (SELECT COUNT(*) FROM user_series_follows f WHERE f.user_id = u.id) AS follow_count,
@@ -297,7 +330,17 @@ final class AdminConsoleRepository
     /**
      * Atomically updates user details, roles, and moderation (ban) status.
      */
-    public function updateUser(string $id, string $role, bool $isBanned, string $moderatorId, ?string $email = null, ?string $bio = null): void
+    public function updateUser(
+        string $id,
+        string $role,
+        bool $isBanned,
+        string $moderatorId,
+        ?string $email = null,
+        ?string $bio = null,
+        string $banType = 'general',
+        ?string $banReason = null,
+        ?string $banEndsAt = null
+    ): void
     {
         $this->pdo->beginTransaction();
         try {
@@ -344,23 +387,60 @@ final class AdminConsoleRepository
                 }
             }
 
-            // Ban status
-            $stmt = $this->pdo->prepare('SELECT 1 FROM admin_actions WHERE target_type = "user" AND action = "ban" AND target_id = :target_id');
-            $stmt->execute(['target_id' => $id]);
-            $currentlyBanned = $stmt->fetchColumn() !== false;
+            // Ban status. Revoking a ban keeps its history for moderation audits.
+            $stmt = $this->pdo->prepare(
+                'SELECT id
+                 FROM bans
+                 WHERE user_id = :user_id
+                   AND revoked_at IS NULL
+                   AND (ends_at IS NULL OR ends_at > NOW())
+                 ORDER BY created_at DESC
+                 LIMIT 1'
+            );
+            $stmt->execute(['user_id' => $id]);
+            $activeBanId = $stmt->fetchColumn();
+            $currentlyBanned = $activeBanId !== false;
 
             if ($isBanned && !$currentlyBanned) {
+                $this->pdo->prepare(
+                    'INSERT INTO bans
+                        (user_id, type, reason, ends_at, banned_by_user_id, created_at, updated_at)
+                     VALUES
+                        (:user_id, :type, :reason, :ends_at, :banned_by, NOW(), NOW())'
+                )->execute([
+                    'user_id' => $id,
+                    'type' => $banType,
+                    'reason' => $banReason ?? 'Banned by admin',
+                    'ends_at' => $banEndsAt,
+                    'banned_by' => $moderatorId,
+                ]);
                 $this->pdo->prepare(
                     'INSERT INTO admin_actions
                         (moderator_user_id, target_type, target_id, action, reason, created_at)
                      VALUES
-                        (:mod, "user", :target_id, "ban", "Banned by admin", NOW())'
-                )->execute(['mod' => $moderatorId, 'target_id' => $id]);
+                        (:mod, "user", :target_id, "ban", :reason, NOW())'
+                )->execute([
+                    'mod' => $moderatorId,
+                    'target_id' => $id,
+                    'reason' => $banReason ?? 'Banned by admin',
+                ]);
+            } elseif ($isBanned && $currentlyBanned) {
+                $this->pdo->prepare(
+                    'UPDATE bans
+                     SET type = :type, reason = :reason, ends_at = :ends_at, updated_at = NOW()
+                     WHERE id = :id'
+                )->execute([
+                    'id' => (int) $activeBanId,
+                    'type' => $banType,
+                    'reason' => $banReason ?? 'Banned by admin',
+                    'ends_at' => $banEndsAt,
+                ]);
             } elseif (!$isBanned && $currentlyBanned) {
                 $this->pdo->prepare(
-                    'DELETE FROM admin_actions
-                     WHERE target_type = "user" AND action = "ban" AND target_id = :target_id'
-                )->execute(['target_id' => $id]);
+                    'UPDATE bans
+                     SET revoked_at = NOW(), revoked_by_user_id = :revoked_by, updated_at = NOW()
+                     WHERE id = :id'
+                )->execute(['id' => (int) $activeBanId, 'revoked_by' => $moderatorId]);
 
                 $this->pdo->prepare(
                     'INSERT INTO admin_actions

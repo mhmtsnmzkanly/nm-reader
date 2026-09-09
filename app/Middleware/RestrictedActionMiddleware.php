@@ -49,7 +49,7 @@ final class RestrictedActionMiddleware implements MiddlewareInterface
             return ResponseHelper::error(401, 'Unauthorized');
         }
 
-        if ($this->users()->isBanned($userId)) {
+        if ($this->users()->isBanned($userId, $this->banScope())) {
             return ResponseHelper::error(403, sprintf('Your account is restricted from %s', $this->actionName));
         }
 
@@ -69,5 +69,16 @@ final class RestrictedActionMiddleware implements MiddlewareInterface
 
         $this->users = $resolved;
         return $resolved;
+    }
+
+    private function banScope(): string
+    {
+        return match ($this->actionName) {
+            'commenting' => 'comment',
+            'voting' => 'voting',
+            'reporting' => 'reporting',
+            'blog creation', 'blog update', 'blog deletion' => 'blog',
+            default => 'general',
+        };
     }
 }

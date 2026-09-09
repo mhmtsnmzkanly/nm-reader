@@ -11,6 +11,7 @@ use App\Services\AnalyticsAggregationService;
 
 final class AdminConsoleService
 {
+    private const BAN_TYPES = ['general', 'comment', 'blog', 'voting', 'reporting'];
     private const CACHE_KEY_KPI = 'admin_kpi_summary';
     private const CACHE_TTL_KPI = 10;
     private const ANALYTICS_AUTO_INTERVAL = 60;
@@ -339,13 +340,38 @@ final class AdminConsoleService
             throw new \InvalidArgumentException('Invalid email format');
         }
 
+        $banType = strtolower(trim((string) ($payload['ban_type'] ?? 'general')));
+        if (!in_array($banType, self::BAN_TYPES, true)) {
+            throw new \InvalidArgumentException('Invalid ban type');
+        }
+
+        $banReason = Validator::sanitizeMultilineText((string) ($payload['ban_reason'] ?? ''));
+        if (strlen($banReason) > 1000) {
+            throw new \InvalidArgumentException('ban_reason must be at most 1000 characters');
+        }
+
+        $banEndsAt = trim((string) ($payload['ban_ends_at'] ?? ''));
+        if ($banEndsAt !== '') {
+            $date = \DateTimeImmutable::createFromFormat('Y-m-d\\TH:i', $banEndsAt)
+                ?: \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $banEndsAt);
+            if (!$date || $date <= new \DateTimeImmutable('now')) {
+                throw new \InvalidArgumentException('ban_ends_at must be a future date');
+            }
+            $banEndsAt = $date->format('Y-m-d H:i:s');
+        } else {
+            $banEndsAt = null;
+        }
+
         $this->repo->updateUser(
             $id,
             (string) ($payload['role'] ?? ''),
             (bool) ($payload['is_banned'] ?? false),
             $moderatorId,
             $payload['email'] ?? null,
-            $payload['bio'] ?? null
+            $payload['bio'] ?? null,
+            $banType,
+            $banReason === '' ? null : $banReason,
+            $banEndsAt
         );
 
         return ['id' => $id, 'updated' => true];
