@@ -13,6 +13,9 @@ final class AdminConsoleService
 {
     private const CACHE_KEY_KPI = 'admin_kpi_summary';
     private const CACHE_TTL_KPI = 10;
+    private const ANALYTICS_AUTO_INTERVAL = 60;
+    private const ANALYTICS_LOCK_TTL = 300;
+    private const ANALYTICS_LAST_RUN_TTL = 86400 * 7;
     private const ENV_MASK = '********';
     private const ENV_EDITABLE_KEYS = [
         'APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'SITE_ADDRESS', 'APP_TIMEZONE', 'CORS_ALLOWED_ORIGINS',
@@ -37,11 +40,11 @@ final class AdminConsoleService
     /**
      * Aggregates key system metrics for the dashboard.
      * Uses caching to reduce database load.
-     * Automatically triggers analytics aggregation every 12 hours.
+     * Automatically refreshes analytics at most once every 60 seconds.
      */
     public function overview(): array
     {
-        // Lazy-cron: Check if we need to aggregate data (every 12 hours)
+        // Lazy timer: check whether the 60-second aggregation interval elapsed.
         $this->checkAndAutoTriggerAnalytics();
 
         $data = $this->cache->remember(self::CACHE_KEY_KPI, self::CACHE_TTL_KPI, function () {
@@ -759,9 +762,9 @@ final class AdminConsoleService
 
         try {
             $this->aggregation->aggregateAll(30);
-            $this->cache->set('system_last_analytics_run', (string)time(), 86400 * 7);
+            $this->cache->set('system_last_analytics_run', (string)time(), self::ANALYTICS_LAST_RUN_TTL);
             $this->cache->delete(self::CACHE_KEY_KPI);
-            $output[] = 'SUCCESS: 30-day analytics aggregated successfully.';
+            $output[] = 'SUCCESS: Analytics snapshots refreshed (30-day window; *_7d metrics use 7 days).';
             $success = true;
         } catch (\Throwable $e) {
             $output[] = 'ERROR: ' . $e->getMessage();
@@ -850,29 +853,40 @@ final class AdminConsoleService
     }
 
     /**
-     * Internal helper to check and run analytics aggregation if 12 hours have passed.
+     * Internal lazy timer. The check runs when the dashboard is requested;
+     * the aggregation itself is throttled to once per 60 seconds.
      */
     private function checkAndAutoTriggerAnalytics(): void
     {
         $lastRunKey = 'system_last_analytics_run';
-        $twelveHoursInSeconds = 12 * 3600;
-        
-        $lastRun = (int)$this->cache->get($lastRunKey);
-        $now = time();
+        $lastRun = (int) $this->cache->get($lastRunKey);
+        if ((time() - $lastRun) < self::ANALYTICS_AUTO_INTERVAL) {
+            return;
+        }
 
-        if (($now - $lastRun) >= $twelveHoursInSeconds) {
-            try {
-                // Perform aggregation directly via service
-                $this->aggregation->aggregateAll(30);
-                
-                // Record completion time
-                $this->cache->set($lastRunKey, (string)$now, 86400 * 7);
-                
-                // Invalidate KPI cache to show new data
-                $this->cache->delete(self::CACHE_KEY_KPI);
-            } catch (\Throwable $e) {
-                error_log("Auto-Analytics Failed: " . $e->getMessage());
+        // increment() is backed by CacheService's atomic key lock. This
+        // prevents concurrent dashboard requests from starting duplicate runs.
+        $lockKey = 'system_analytics_aggregation_lock';
+        if ($this->cache->increment($lockKey, 1, self::ANALYTICS_LOCK_TTL) !== 1) {
+            return;
+        }
+
+        try {
+            // Re-check after acquiring the lock because another request may
+            // have completed the aggregation between the first read and lock.
+            $lastRun = (int) $this->cache->get($lastRunKey);
+            $now = time();
+            if (($now - $lastRun) < self::ANALYTICS_AUTO_INTERVAL) {
+                return;
             }
+
+            $this->aggregation->aggregateAll(30);
+            $this->cache->set($lastRunKey, (string) time(), self::ANALYTICS_LAST_RUN_TTL);
+            $this->cache->delete(self::CACHE_KEY_KPI);
+        } catch (\Throwable $e) {
+            error_log("Auto-Analytics Failed: " . $e->getMessage());
+        } finally {
+            $this->cache->delete($lockKey);
         }
     }
 }

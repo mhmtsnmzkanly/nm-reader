@@ -780,6 +780,8 @@ CREATE TABLE `analytics_snapshots_search` (
   `query` varchar(255) NOT NULL,
   `search_count` int(11) NOT NULL DEFAULT 0,
   `zero_result_count` int(11) NOT NULL DEFAULT 0,
+  `result_total` bigint(20) NOT NULL DEFAULT 0,
+  `last_searched_at` datetime DEFAULT NULL,
   PRIMARY KEY (`stat_date`,`query`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -909,7 +911,8 @@ VALUES
 ('005_series_lifecycle_and_revisions', 'installed_from_schema'),
 ('006_taxonomy_order', 'installed_from_schema'),
 ('007_queue_cancellation', 'installed_from_schema'),
-('008_remove_env_duplicate_site_settings', 'installed_from_schema');
+('008_remove_env_duplicate_site_settings', 'installed_from_schema'),
+('009_search_snapshot_details', 'installed_from_schema');
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

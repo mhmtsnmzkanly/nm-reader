@@ -70,7 +70,7 @@ final class AdminConsoleRepository
                 "SELECT s.title, s.type, s.slug, SUM(t.view_count) as view_count_7d, 0 as comment_count_7d
                  FROM analytics_snapshots_series_top t
                  JOIN series s ON s.id = t.content_id
-                 WHERE t.stat_date >= DATE_SUB(:latest, INTERVAL 7 DAY)
+                 WHERE t.stat_date >= DATE_SUB(:latest, INTERVAL 6 DAY)
                  GROUP BY t.content_id
                  ORDER BY view_count_7d DESC
                  LIMIT 5"
@@ -1423,6 +1423,9 @@ final class AdminConsoleRepository
     {
         $days = max(1, min(90, $days));
         $limit = max(1, min(30, $limit));
+        // Snapshot rows are calendar-day buckets. Convert the requested
+        // number of days to an inclusive date window (today counts as day 1).
+        $windowDays = max(0, $days - 1);
         $series_tags = $this->queryList(
             'SELECT
                 t.slug,
@@ -1435,7 +1438,7 @@ final class AdminConsoleRepository
              GROUP BY t.id, t.slug, t.name
              ORDER BY view_total DESC, t.name ASC
              LIMIT :limit',
-            ['limit' => $limit, 'days' => $days]
+            ['limit' => $limit, 'days' => $windowDays]
         );
 
         $series_genres = $this->queryList(
@@ -1450,7 +1453,7 @@ final class AdminConsoleRepository
              GROUP BY g.id, g.slug, g.name
              ORDER BY view_total DESC, g.name ASC
              LIMIT :limit',
-            ['limit' => $limit, 'days' => $days]
+            ['limit' => $limit, 'days' => $windowDays]
         );
 
         $types = $this->queryList(
@@ -1461,7 +1464,7 @@ final class AdminConsoleRepository
              GROUP BY c.type
              ORDER BY view_total DESC, c.type ASC
              LIMIT :limit',
-            ['limit' => $limit, 'days' => $days]
+            ['limit' => $limit, 'days' => $windowDays]
         );
 
         $series = $this->queryList(
@@ -1477,7 +1480,7 @@ final class AdminConsoleRepository
              GROUP BY c.id, c.title, c.slug, c.type
              ORDER BY view_total DESC, c.title ASC
              LIMIT :limit',
-            ['limit' => $limit, 'days' => $days]
+            ['limit' => $limit, 'days' => $windowDays]
         );
 
         $chapters = $this->queryList(
@@ -1496,7 +1499,7 @@ final class AdminConsoleRepository
              GROUP BY ch.id, ch.chapter_number, ch.title, c.slug, c.title, c.type
              ORDER BY view_total DESC, ch.chapter_number ASC
              LIMIT :limit',
-            ['limit' => $limit, 'days' => $days]
+            ['limit' => $limit, 'days' => $windowDays]
         );
 
         return [
@@ -1610,6 +1613,7 @@ final class AdminConsoleRepository
     private function visitCount(int $days): int
     {
         $days = max(1, min(365, $days));
+        $windowDays = max(0, $days - 1);
         try {
             $stmt = $this->pdo->prepare(
                 'SELECT COALESCE(SUM(metric_value), 0) AS total
@@ -1618,7 +1622,7 @@ final class AdminConsoleRepository
                    AND stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)'
             );
             $stmt->bindValue(':metric_name', 'total_views', PDO::PARAM_STR);
-            $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+            $stmt->bindValue(':days', $windowDays, PDO::PARAM_INT);
             $stmt->execute();
             return (int) ($stmt->fetchColumn() ?? 0);
         } catch (\Throwable) {

@@ -19,16 +19,14 @@ final class AnalyticsAggregationService
         return [
             'days' => $days,
             'daily_views_rows' => $this->aggregateDailyViews($days),
-            'daily_funnel_rows' => $this->aggregateDailyFunnel($days),
-            'hourly_views_rows' => $this->aggregateHourlyViews(2),
+            // These metrics are explicitly named *_7d and must always use a
+            // seven-day window, even when the general aggregation window is
+            // configured to 30 days.
+            'daily_funnel_rows' => $this->aggregateDailyFunnel(7),
             'top_content_rows' => $this->aggregateTopContent($days),
             'top_chapter_rows' => $this->aggregateTopChapters($days),
-            'top_author_rows' => $this->aggregateTopAuthors($days),
-            'top_type_rows' => $this->aggregateTopTypes($days),
             'search_rows' => $this->aggregateSearchSnapshot($days),
-            'auth_rows' => $this->aggregateAuthSnapshot($days),
             'health_rows' => $this->aggregateSystemHealth(),
-            'daily_metrics_synced' => $this->syncToDailyMetrics($days),
         ];
     }
 
@@ -103,143 +101,125 @@ final class AnalyticsAggregationService
         return $total;
     }
 
-    private function aggregateHourlyViews(int $days): int
-    {
-        $sql = "INSERT INTO analytics_snapshots_hourly (bucket_start, metric_name, metric_value)
-                SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00') AS bucket_start, 'total_views' AS metric_name, COUNT(*) AS metric_value
-                FROM analytics_events
-                WHERE event_type IN ('content_view', 'chapter_view')
-                  AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
-                GROUP BY DATE_FORMAT(created_at, '%Y-%m-%d %H:00:00')
-                ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->rowCount();
-    }
-
     private function aggregateTopContent(int $days): int
     {
-        $sql = "INSERT INTO analytics_snapshots_series_top (content_id, stat_date, view_count)
-                SELECT entity_id, CURRENT_DATE(), COUNT(*)
-                FROM analytics_events
-                WHERE event_type = 'content_view'
-                  AND entity_type = 'content'
-                  AND entity_id IS NOT NULL
-                  AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
-                GROUP BY entity_id
-                ON DUPLICATE KEY UPDATE view_count = VALUES(view_count)";
+        // Rebuild the complete window so rows from the previous rolling
+        // snapshot format cannot remain mixed with daily rows.
+        $this->pdo->beginTransaction();
+        try {
+            $cleanup = $this->pdo->prepare(
+                'DELETE FROM analytics_snapshots_series_top
+                 WHERE stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)'
+            );
+            $cleanup->bindValue(':days', $days, PDO::PARAM_INT);
+            $cleanup->execute();
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
-        $stmt->execute();
+            $sql = "INSERT INTO analytics_snapshots_series_top (content_id, stat_date, view_count)
+                    SELECT entity_id, DATE(created_at), COUNT(*)
+                    FROM analytics_events
+                    WHERE event_type = 'content_view'
+                      AND entity_type = 'content'
+                      AND entity_id IS NOT NULL
+                      AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
+                    GROUP BY entity_id, DATE(created_at)
+                    ON DUPLICATE KEY UPDATE view_count = VALUES(view_count)";
 
-        return $stmt->rowCount();
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->rowCount();
+            $this->pdo->commit();
+            return $rows;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     private function aggregateTopChapters(int $days): int
     {
-        $sql = "INSERT INTO analytics_snapshots_chapters_top (chapter_id, stat_date, view_count)
-                SELECT entity_id, CURRENT_DATE(), COUNT(*)
-                FROM analytics_events
-                WHERE event_type = 'chapter_view'
-                  AND entity_type = 'chapter'
-                  AND entity_id IS NOT NULL
-                  AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
-                GROUP BY entity_id
-                ON DUPLICATE KEY UPDATE view_count = VALUES(view_count)";
+        // Rebuild the complete window so rows from the previous rolling
+        // snapshot format cannot remain mixed with daily rows.
+        $this->pdo->beginTransaction();
+        try {
+            $cleanup = $this->pdo->prepare(
+                'DELETE FROM analytics_snapshots_chapters_top
+                 WHERE stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)'
+            );
+            $cleanup->bindValue(':days', $days, PDO::PARAM_INT);
+            $cleanup->execute();
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
-        $stmt->execute();
+            $sql = "INSERT INTO analytics_snapshots_chapters_top (chapter_id, stat_date, view_count)
+                    SELECT entity_id, DATE(created_at), COUNT(*)
+                    FROM analytics_events
+                    WHERE event_type = 'chapter_view'
+                      AND entity_type = 'chapter'
+                      AND entity_id IS NOT NULL
+                      AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
+                    GROUP BY entity_id, DATE(created_at)
+                    ON DUPLICATE KEY UPDATE view_count = VALUES(view_count)";
 
-        return $stmt->rowCount();
-    }
-
-    private function aggregateTopAuthors(int $days): int
-    {
-        // Using analytics_snapshots_daily with a special prefix for simplicity, 
-        // or we can just count them. Let's use snapshots_daily with metric_name like 'author_views:Author Name'
-        $sql = "INSERT INTO analytics_snapshots_daily (stat_date, metric_name, metric_value)
-                SELECT CURRENT_DATE(), CONCAT('author_views:', m.author), COUNT(*)
-                FROM analytics_events e
-                INNER JOIN series m ON m.id = e.entity_id
-                WHERE e.event_type = 'content_view' AND e.entity_type = 'content'
-                  AND m.author IS NOT NULL AND m.author <> ''
-                  AND e.created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
-                GROUP BY m.author
-                ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->rowCount();
-    }
-
-    private function aggregateTopTypes(int $days): int
-    {
-        $sql = "INSERT INTO analytics_snapshots_daily (stat_date, metric_name, metric_value)
-                SELECT CURRENT_DATE(), CONCAT('type_views:', s.type), COUNT(*)
-                FROM analytics_events e
-                INNER JOIN series s ON s.id = e.entity_id
-                WHERE e.event_type = 'content_view' AND e.entity_type = 'content'
-                  AND e.created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
-                GROUP BY s.type
-                ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->rowCount();
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->rowCount();
+            $this->pdo->commit();
+            return $rows;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     private function aggregateSearchSnapshot(int $days): int
     {
-        $sql = "INSERT INTO analytics_snapshots_search (stat_date, query, search_count, zero_result_count)
-                SELECT
-                    CURRENT_DATE() AS stat_date,
-                    JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.query')) AS query,
-                    COUNT(*) AS search_count,
-                    SUM(CASE WHEN CAST(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.result_count')) AS SIGNED) = 0 THEN 1 ELSE 0 END) AS zero_result_count
-                FROM analytics_events
-                WHERE event_type = 'search'
-                  AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
-                  AND metadata IS NOT NULL
-                GROUP BY JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.query'))
-                HAVING query IS NOT NULL AND query <> ''
-                ON DUPLICATE KEY UPDATE
-                    search_count = VALUES(search_count),
-                    zero_result_count = VALUES(zero_result_count)";
+        // Rebuild the complete window so legacy rolling rows cannot be mixed
+        // with the daily records consumed by search-insights.
+        $this->pdo->beginTransaction();
+        try {
+            $cleanup = $this->pdo->prepare(
+                'DELETE FROM analytics_snapshots_search
+                 WHERE stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL :days DAY)'
+            );
+            $cleanup->bindValue(':days', $days, PDO::PARAM_INT);
+            $cleanup->execute();
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
-        $stmt->execute();
+            $sql = "INSERT INTO analytics_snapshots_search (stat_date, query, search_count, zero_result_count, result_total, last_searched_at)
+                    SELECT
+                        DATE(created_at) AS stat_date,
+                        JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.query')) AS query,
+                        COUNT(*) AS search_count,
+                        SUM(CASE WHEN CAST(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.result_count')) AS SIGNED) = 0 THEN 1 ELSE 0 END) AS zero_result_count,
+                        SUM(COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.result_count')) AS UNSIGNED), 0)) AS result_total,
+                        MAX(created_at) AS last_searched_at
+                    FROM analytics_events
+                    WHERE event_type = 'search'
+                      AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
+                      AND metadata IS NOT NULL
+                    GROUP BY DATE(created_at), JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.query'))
+                    HAVING query IS NOT NULL AND query <> ''
+                    ON DUPLICATE KEY UPDATE
+                        search_count = VALUES(search_count),
+                        zero_result_count = VALUES(zero_result_count),
+                        result_total = VALUES(result_total),
+                        last_searched_at = VALUES(last_searched_at)";
 
-        return $stmt->rowCount();
-    }
-
-    private function aggregateAuthSnapshot(int $days): int
-    {
-        $sql = "INSERT INTO analytics_snapshots_auth (stat_date, failed_login_count, rate_limited_count)
-                SELECT
-                    CURRENT_DATE() AS stat_date,
-                    COALESCE(SUM(CASE WHEN event_type = 'auth_login_failed' THEN 1 ELSE 0 END), 0) AS failed_login_count,
-                    COALESCE(SUM(CASE WHEN event_type = 'auth_login_failed'
-                         AND JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.failure_reason')) = 'rate_limited' THEN 1 ELSE 0 END), 0) AS rate_limited_count
-                FROM analytics_events
-                WHERE event_type IN ('auth_login_success', 'auth_login_failed')
-                  AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
-                ON DUPLICATE KEY UPDATE
-                    failed_login_count = VALUES(failed_login_count),
-                    rate_limited_count = VALUES(rate_limited_count)";
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->rowCount();
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->rowCount();
+            $this->pdo->commit();
+            return $rows;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     private function aggregateSystemHealth(): int
@@ -326,42 +306,4 @@ final class AnalyticsAggregationService
         return $stmt->rowCount();
     }
 
-    private function syncToDailyMetrics(int $days): int
-    {
-        $count = 0;
-        try {
-            // 1. Content top views
-            $count += (int) $this->pdo->exec(
-                "INSERT INTO analytics_daily_metrics (stat_date, metric_category, metric_key, entity_type, entity_id, metric_value)
-                 SELECT CURRENT_DATE(), 'content', 'top_views_7d', 'series', entity_id, COUNT(*)
-                 FROM analytics_events
-                 WHERE event_type = 'content_view' AND entity_type = 'content' AND entity_id IS NOT NULL
-                   AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                 GROUP BY entity_id
-                 ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)"
-            );
-
-            // 2. Chapter top views
-            $count += (int) $this->pdo->exec(
-                "INSERT INTO analytics_daily_metrics (stat_date, metric_category, metric_key, entity_type, entity_id, metric_value)
-                 SELECT CURRENT_DATE(), 'chapter', 'top_views_7d', 'chapter', entity_id, COUNT(*)
-                 FROM analytics_events
-                 WHERE event_type = 'chapter_view' AND entity_type = 'chapter' AND entity_id IS NOT NULL
-                   AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                 GROUP BY entity_id
-                 ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)"
-            );
-
-            // 3. Funnel & general totals
-            $count += (int) $this->pdo->exec(
-                "INSERT INTO analytics_daily_metrics (stat_date, metric_category, metric_key, entity_type, entity_id, metric_value)
-                 SELECT stat_date, 'funnel', metric_name, '', '', metric_value
-                 FROM analytics_snapshots_daily
-                 WHERE stat_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                 ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)"
-            );
-        } catch (\Throwable) {}
-
-        return $count;
-    }
 }

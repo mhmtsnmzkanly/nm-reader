@@ -348,12 +348,13 @@ final class MetricsService
                     c.title,
                     c.slug,
                     c.type,
-                    s.view_count AS view_count_7d,
+                    SUM(s.view_count) AS view_count_7d,
                     0 AS comment_count_7d
                 FROM analytics_snapshots_series_top s
                 INNER JOIN series c ON c.id = s.content_id
-                WHERE s.stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
-                ORDER BY s.view_count DESC
+                WHERE s.stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY)
+                GROUP BY c.id, c.title, c.slug, c.type
+                ORDER BY view_count_7d DESC
                 LIMIT :limit';
 
         try {
@@ -389,11 +390,13 @@ final class MetricsService
     {
         try {
             $stmt = $this->pdo->query(
-                'SELECT failed_login_count, rate_limited_count
-                 FROM analytics_snapshots_auth
-                 WHERE stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
-                 ORDER BY stat_date DESC
-                 LIMIT 1'
+                "SELECT
+                    COALESCE(SUM(CASE WHEN event_type = 'auth_login_failed' THEN 1 ELSE 0 END), 0) AS failed_login_count,
+                    COALESCE(SUM(CASE WHEN event_type = 'auth_login_failed'
+                         AND JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.failure_reason')) = 'rate_limited' THEN 1 ELSE 0 END), 0) AS rate_limited_count
+                 FROM analytics_events
+                 WHERE event_type IN ('auth_login_success', 'auth_login_failed')
+                   AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)"
             );
             $row = $stmt === false ? false : $stmt->fetch();
             return is_array($row) ? $row : [];
@@ -524,7 +527,7 @@ final class MetricsService
         $top = $this->rowsSafe(
             'SELECT query, SUM(search_count) as search_count, SUM(zero_result_count) as zero_result_count
              FROM analytics_snapshots_search
-             WHERE stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+             WHERE stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY)
              GROUP BY query
              ORDER BY search_count DESC
              LIMIT 10'
@@ -750,21 +753,29 @@ final class MetricsService
     {
         $days = $this->normalizeDays($days);
         $limit = max(1, min(100, $limit));
-        $startExpr = sprintf('DATE_SUB(NOW(), INTERVAL %d DAY)', $days);
+        // Snapshots are stored per calendar day. Use exactly $days dates
+        // (today plus the preceding $days - 1 dates) when reading them.
+        $startExpr = sprintf('DATE_SUB(CURRENT_DATE(), INTERVAL %d DAY)', max(0, $days - 1));
 
         $zeroResults = $this->rowsSafe(
-            "SELECT query, COUNT(*) as search_count, MAX(searched_at) as last_searched_at
-             FROM analytics_search_logs
-             WHERE searched_at >= {$startExpr} AND result_count = 0
+            "SELECT query,
+                    SUM(zero_result_count) AS search_count,
+                    MAX(last_searched_at) AS last_searched_at
+             FROM analytics_snapshots_search
+             WHERE stat_date >= {$startExpr}
              GROUP BY query
+             HAVING SUM(zero_result_count) > 0
              ORDER BY search_count DESC
              LIMIT {$limit}"
         );
 
         $popularSearches = $this->rowsSafe(
-            "SELECT query, COUNT(*) as search_count, AVG(result_count) as avg_results, MAX(searched_at) as last_searched_at
-             FROM analytics_search_logs
-             WHERE searched_at >= {$startExpr}
+            "SELECT query,
+                    SUM(search_count) AS search_count,
+                    (SUM(result_total) / NULLIF(SUM(search_count), 0)) AS avg_results,
+                    MAX(last_searched_at) AS last_searched_at
+             FROM analytics_snapshots_search
+             WHERE stat_date >= {$startExpr}
              GROUP BY query
              ORDER BY search_count DESC
              LIMIT {$limit}"

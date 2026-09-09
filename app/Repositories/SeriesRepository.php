@@ -822,26 +822,6 @@ final class SeriesRepository
     }
 
     /**
-     * Records a search query for analytics.
-     */
-    public function logSearchQuery(string $query, int $resultCount, ?string $userId, string $ipHash): void
-    {
-        try {
-            $stmt = $this->pdo->prepare(
-                'INSERT INTO analytics_search_logs (user_id, query, result_count, ip_hash, searched_at)
-                 VALUES (:user_id, :query, :result_count, :ip_hash, NOW())'
-            );
-            $stmt->bindValue(':user_id', $userId, $userId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
-            $stmt->bindValue(':query', mb_substr($query, 0, 120));
-            $stmt->bindValue(':result_count', $resultCount, PDO::PARAM_INT);
-            $stmt->bindValue(':ip_hash', $ipHash, PDO::PARAM_STR);
-            $stmt->execute();
-        } catch (\Throwable) {
-            // analytics log should not break search endpoint.
-        }
-    }
-
-    /**
      * Lists active series for sitemap generation.
      */
     public function listContentsForSitemap(int $limit = 50000): array

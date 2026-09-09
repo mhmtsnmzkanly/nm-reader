@@ -362,6 +362,8 @@ final class SeriesService
 
     /**
      * Logs a search event for analytics purposes.
+     * AnalyticsService is the single event source; the aggregation job builds
+     * the daily search snapshot consumed by the admin analytics endpoints.
      *
      * @param string $query
      * @param int $resultCount
@@ -385,7 +387,6 @@ final class SeriesService
             ],
             $ip
         );
-        $this->series->logSearchQuery($query, $resultCount, $userId, hash('sha256', $ip));
     }
 
     /**
