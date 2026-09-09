@@ -18,12 +18,13 @@ final class WebUrlService
 
         $uri = $request->getUri();
         $scheme = $uri->getScheme() ?: 'http';
-        $host = $uri->getHost();
-        $port = $uri->getPort();
-
-        if ($host === '') {
-            $settings = Config::getInstance();
-            $configuredUrl = rtrim((string) ($settings['app']['url'] ?? 'http://localhost:8080'), '/');
+        $settings = Config::getSettings();
+        // Canonical URLs must not depend on an unvalidated Host header. The
+        // explicit site address wins, with APP_URL as the deployment fallback.
+        $configuredUrl = rtrim((string) (
+            ($settings['app']['site_address'] ?? '') ?: ($settings['app']['url'] ?? '')
+        ), '/');
+        if ($configuredUrl !== '') {
             if (str_starts_with($configuredUrl, '//')) {
                 $configuredUrl = $scheme . ':' . $configuredUrl;
             }
@@ -33,6 +34,10 @@ final class WebUrlService
             return $configuredUrl . (str_starts_with($path, '/') ? $path : '/' . $path);
         }
 
+        // A request without any configured URL is only a last-resort local
+        // fallback. Normal deployments should always set APP_URL/SITE_ADDRESS.
+        $host = $uri->getHost();
+        $port = $uri->getPort();
         $authority = $host;
         if ($port !== null && !(($scheme === 'http' && $port === 80) || ($scheme === 'https' && $port === 443))) {
             $authority .= ':' . $port;

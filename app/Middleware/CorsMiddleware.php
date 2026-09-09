@@ -59,7 +59,8 @@ final class CorsMiddleware implements MiddlewareInterface
     {
         $normalizedOrigin = rtrim(strtolower(trim($origin)), '/');
         foreach ($this->allowedOrigins as $allowedOrigin) {
-            if ($normalizedOrigin === rtrim(strtolower(trim((string) $allowedOrigin)), '/')) {
+            $allowedOrigin = rtrim(strtolower(trim((string) $allowedOrigin)), '/');
+            if ($normalizedOrigin === $allowedOrigin) {
                 return true;
             }
         }

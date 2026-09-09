@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Helpers\RequestSecurity;
 use App\Helpers\ResponseHelper;
 use App\Services\CacheService;
 use Psr\Http\Message\ResponseInterface;
@@ -29,12 +30,14 @@ final class RateLimitMiddleware implements MiddlewareInterface
      * @param string $bucket Unique identifier for the rate limit rule (e.g., 'login').
      * @param int $limit Maximum number of requests allowed.
      * @param int $windowSeconds The time window duration in seconds.
+     * @param list<string> $trustedProxies Reverse proxies allowed to provide client IP headers.
      */
     public function __construct(
         private readonly CacheService $cache,
         private readonly string $bucket,
         private readonly int $limit,
-        private readonly int $windowSeconds
+        private readonly int $windowSeconds,
+        private readonly array $trustedProxies = []
     ) {
     }
 
@@ -44,7 +47,7 @@ final class RateLimitMiddleware implements MiddlewareInterface
     #[\Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+        $ip = RequestSecurity::clientIp($request, $this->trustedProxies);
         $ipHash = hash('sha256', $ip);
         $key = sprintf('rate_%s_%s', $this->bucket, $ipHash);
 

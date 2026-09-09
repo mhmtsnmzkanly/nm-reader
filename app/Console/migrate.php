@@ -4,14 +4,11 @@
 declare(strict_types=1);
 
 use App\Config;
-use Dotenv\Dotenv;
 
 $baseDir = dirname(__DIR__, 2);
 require $baseDir . '/vendor/autoload.php';
 
-if (is_file($baseDir . '/.env')) {
-    Dotenv::createUnsafeImmutable($baseDir)->load();
-}
+Config::loadEnvironment($baseDir);
 
 $settings = Config::getSettings();
 $db = $settings['database'];

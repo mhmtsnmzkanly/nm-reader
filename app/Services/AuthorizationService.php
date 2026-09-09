@@ -35,8 +35,9 @@ final class AuthorizationService
 
     public function __construct(private readonly ?PDO $pdo = null)
     {
-        $this->rootUserId = $_ENV['ROOT_USER'] ?? getenv('ROOT_USER') ?: null;
-        $config = \App\Config::getSettings()['rbac'] ?? [];
+        $settings = \App\Config::getSettings();
+        $this->rootUserId = trim((string) ($settings['app']['root_user'] ?? '')) ?: null;
+        $config = $settings['rbac'] ?? [];
         foreach ($config['roles'] ?? [] as $slug => $role) {
             $this->rolePriority[$slug] = (int) ($role['priority'] ?? 0);
             $this->roleBasePermissions[$slug] = (array) ($role['permissions'] ?? []);

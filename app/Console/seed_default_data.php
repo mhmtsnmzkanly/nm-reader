@@ -11,14 +11,9 @@ declare(strict_types=1);
 require __DIR__ . '/../../vendor/autoload.php';
 
 use App\Config;
-use Dotenv\Dotenv;
 
-// 1. Load .env manually if it exists to override defaults
 $basePath = dirname(__DIR__, 2);
-if (file_exists($basePath . '/.env')) {
-    $dotenv = Dotenv::createImmutable($basePath);
-    $dotenv->load();
-}
+Config::loadEnvironment($basePath);
 
 $settings = Config::getSettings();
 $db = $settings['database'];

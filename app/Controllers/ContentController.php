@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Config;
+use App\Helpers\RequestSecurity;
 use App\Helpers\ResponseHelper;
 use App\Services\AnalyticsService;
 use App\Services\SeriesService;
@@ -37,7 +39,7 @@ final class ContentController
         [$page, $perPage] = $this->pagination($request);
         $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
         $items = $this->seriesService->home($page, $perPage, is_string($userId) ? $userId : null);
-        $this->analytics->track('home_view', is_string($userId) ? $userId : null, 'home', null, ['page' => $page, 'per_page' => $perPage], (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown'));
+        $this->analytics->track('home_view', is_string($userId) ? $userId : null, 'home', null, ['page' => $page, 'per_page' => $perPage], $this->clientIp($request));
         return ResponseHelper::paginate($items, $page, $perPage);
     }
 
@@ -70,7 +72,7 @@ final class ContentController
 
     public function content(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+        $ip = $this->clientIp($request);
         $item = $this->seriesService->contentDetail((string)$args['slug'], $ip);
         return $item ? ResponseHelper::success($item) : ResponseHelper::error(404, 'Not found');
     }
@@ -78,7 +80,7 @@ final class ContentController
     public function contentByType(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         try {
-            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $ip = $this->clientIp($request);
             $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
             $item = $this->seriesService->contentDetailByType((string)$args['type'], (string)$args['slug'], $ip, is_string($userId) ? $userId : null);
             return $item ? ResponseHelper::success($item) : ResponseHelper::error(404, 'Content not found');
@@ -97,7 +99,7 @@ final class ContentController
         try {
             $type = (string) $args['type'];
             $slug = (string) $args['slug'];
-            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $ip = $this->clientIp($request);
             $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
             $userId = is_string($userId) ? $userId : null;
 
@@ -140,7 +142,7 @@ final class ContentController
         $num = (string) $args['chapterNumber'];
         $type = (string) $args['type'];
         $slug = (string) $args['slug'];
-        $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+        $ip = $this->clientIp($request);
         $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
 
         try {
@@ -204,7 +206,7 @@ final class ContentController
 
         $userId = $request->getAttribute('user_id') ?: ($_SESSION['user_id'] ?? null);
         $items = $this->seriesService->search($query, $page, $perPage, $filters, is_string($userId) ? $userId : null);
-        $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+        $ip = $this->clientIp($request);
         $this->seriesService->logSearch($query, count($items), is_string($userId) ? $userId : null, $ip);
 
         $meta = ['q' => $query];
@@ -289,6 +291,11 @@ final class ContentController
             $code = str_contains($message, 'not found') ? 404 : (str_contains($message, 'not individually') ? 400 : 402);
             return ResponseHelper::error($code, $e->getMessage());
         }
+    }
+
+    private function clientIp(ServerRequestInterface $request): string
+    {
+        return RequestSecurity::clientIp($request, (array) (Config::getSettings()['app']['trusted_proxies'] ?? []));
     }
 
     private function pagination(ServerRequestInterface $request): array

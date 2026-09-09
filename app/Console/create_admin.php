@@ -10,16 +10,13 @@ declare(strict_types=1);
 
 use App\Services\AuthService;
 use App\Services\AdminConsoleService;
+use App\Config;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
 $basePath = dirname(__DIR__, 2);
 
-// Load Environment
-if (file_exists($basePath . '/.env')) {
-    $dotenv = Dotenv\Dotenv::createImmutable($basePath);
-    $dotenv->load();
-}
+Config::loadEnvironment($basePath);
 
 $settings = \App\Config::getSettings();
 $container = require __DIR__ . '/../dependencies.php';

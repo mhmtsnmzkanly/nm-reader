@@ -4,17 +4,13 @@
 declare(strict_types=1);
 
 use App\Services\AnalyticsAggregationService;
-use Dotenv\Dotenv;
+use App\Config;
 
 require __DIR__ . '/../../vendor/autoload.php';
 
 $basePath = dirname(__DIR__, 2);
 
-// Load Environment
-if (file_exists($basePath . '/.env')) {
-    $dotenv = Dotenv::createImmutable($basePath);
-    $dotenv->load();
-}
+Config::loadEnvironment($basePath);
 
 $settings = \App\Config::getSettings();
 date_default_timezone_set((string) ($settings['app']['timezone'] ?? 'UTC'));
@@ -33,4 +29,3 @@ $aggregation = $container->get(AnalyticsAggregationService::class);
 $result = $aggregation->aggregateAll($days);
 
 fwrite(STDOUT, json_encode($result, JSON_UNESCAPED_SLASHES) . PHP_EOL);
-

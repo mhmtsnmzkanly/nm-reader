@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Config;
 use App\DTO\UserActivityDto;
+use App\Helpers\RequestSecurity;
 use App\Helpers\ResponseHelper;
 use App\Helpers\CursorPagination;
 use App\Services\CommentService;
@@ -183,7 +185,7 @@ final class UserInteractionController
         $tabId = (string) ($body['tab_id'] ?? '');
         $duration = (int) ($body['duration'] ?? 0);
         if ($tabId === '' || $duration <= 0) return ResponseHelper::error(400, 'Invalid data');
-        $ip = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
+        $ip = RequestSecurity::clientIp($request, (array) (Config::getSettings()['app']['trusted_proxies'] ?? []));
         $ua = $request->getServerParams()['HTTP_USER_AGENT'] ?? null;
         try {
             $this->activity->logActivity(new UserActivityDto((string)$userId, $tabId, $duration, hash('sha256', $ip), $ua));

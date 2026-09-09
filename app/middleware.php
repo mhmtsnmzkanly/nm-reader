@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Helpers\ResponseHelper;
+use App\Helpers\RequestSecurity;
+use App\Config;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -20,7 +22,7 @@ $container = $app->getContainer();
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $requestPath = parse_url($requestUri, PHP_URL_PATH);
 $isInstallRoute = is_string($requestPath)
-    && preg_match('#^/install-63e4qq3(?:/|$)#', $requestPath) === 1;
+    && preg_match('#^' . preg_quote(Config::INSTALL_PATH, '#') . '(?:/|$)#', $requestPath) === 1;
 
 // Maintenance Mode Middleware (Runs inside Session & Auth scope so admin sessions are recognized)
 if (!$isInstallRoute) {
@@ -58,8 +60,11 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         session_name((string) $settings['app']['session_name']);
         session_save_path($sessionPath);
         
-        $isHttps = ($request->getUri()->getScheme() === 'https');
-        $sessionSecure = (bool) ($settings['app']['session_cookie_secure'] ?? $isHttps);
+        $trustedProxies = (array) ($settings['app']['trusted_proxies'] ?? []);
+        $isHttps = RequestSecurity::isSecure($request, $trustedProxies);
+        // Never downgrade a cookie on a secure request, even when an old
+        // configuration omitted SESSION_COOKIE_SECURE.
+        $sessionSecure = (bool) ($settings['app']['session_cookie_secure'] ?? false) || $isHttps;
         $sessionSameSite = (string) ($settings['app']['session_same_site'] ?? 'Lax');
         $sessionLifetimeCookie = (int) ($settings['app']['session_cookie_lifetime'] ?? 0);
 
@@ -83,7 +88,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         try {
             $authService = $container->get(\App\Services\AuthService::class);
             $refreshToken = $request->getCookieParams()['nm_remember'];
-            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $ip = RequestSecurity::clientIp($request, (array) ($settings['app']['trusted_proxies'] ?? []));
             $ua = (string) ($request->getHeaderLine('User-Agent') ?: 'unknown');
             
             $user = $authService->refresh($refreshToken, $ip, $ua);
@@ -108,7 +113,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 
     if (isset($_SESSION['csrf_token'])) {
         $response = $response->withHeader('X-CSRF-Token', (string) $_SESSION['csrf_token']);
-        $isHttps = ($request->getUri()->getScheme() === 'https' || strtolower(trim($request->getHeaderLine('X-Forwarded-Proto'))) === 'https');
+        $isHttps = RequestSecurity::isSecure($request, (array) ($settings['app']['trusted_proxies'] ?? []));
         $csrfCookie = sprintf(
             'csrf_token=%s; Path=/; SameSite=Lax%s',
             urlencode((string) $_SESSION['csrf_token']),
@@ -121,7 +126,8 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         $rememberDays = (int) ($settings['app']['refresh_token_days'] ?? 30);
         $expires = time() + ($rememberDays * 24 * 60 * 60);
         $rememberSameSite = (string) ($settings['app']['remember_cookie_same_site'] ?? 'Lax');
-        $rememberSecure = (bool) ($settings['app']['remember_cookie_secure'] ?? ($request->getUri()->getScheme() === 'https'));
+        $rememberSecure = (bool) ($settings['app']['remember_cookie_secure'] ?? false)
+            || RequestSecurity::isSecure($request, (array) ($settings['app']['trusted_proxies'] ?? []));
 
         $cookie = sprintf(
             'nm_remember=%s; Expires=%s; Path=/; HttpOnly; SameSite=%s%s',
@@ -134,7 +140,8 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         $response = $response->withAddedHeader('Set-Cookie', $cookie);
     } elseif ($invalidToken) {
         $rememberSameSite = (string) ($settings['app']['remember_cookie_same_site'] ?? 'Lax');
-        $rememberSecure = (bool) ($settings['app']['remember_cookie_secure'] ?? ($request->getUri()->getScheme() === 'https'));
+        $rememberSecure = (bool) ($settings['app']['remember_cookie_secure'] ?? false)
+            || RequestSecurity::isSecure($request, (array) ($settings['app']['trusted_proxies'] ?? []));
         $cookie = sprintf(
             'nm_remember=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=%s%s',
             $rememberSameSite,
@@ -152,7 +159,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 });
 
 // HTTPS Enforcement
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute): ResponseInterface {
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($settings, $isInstallRoute): ResponseInterface {
     if ($isInstallRoute) return $handler->handle($request);
 
     $path = (string) $request->getUri()->getPath();
@@ -160,25 +167,19 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         return $handler->handle($request);
     }
     
-    try {
-        $siteConfig = $container->get(\App\Services\SiteConfigService::class);
-        if (!$siteConfig->enforceHttps()) {
-            return $handler->handle($request);
-        }
-
-        $protoHeader = strtolower(trim($request->getHeaderLine('X-Forwarded-Proto')));
-        $isSecure = $request->getUri()->getScheme() === 'https' || $protoHeader === 'https';
-        if ($isSecure) {
-            return $handler->handle($request);
-        }
-
-        $uri = $request->getUri()->withScheme('https');
-        $responseFactory = new \Slim\Psr7\Factory\ResponseFactory();
-        $response = $responseFactory->createResponse(308);
-        return $response->withHeader('Location', (string) $uri);
-    } catch (\Throwable) {
+    if (!(bool) ($settings['app']['enforce_https'] ?? false)) {
         return $handler->handle($request);
     }
+
+    $isSecure = RequestSecurity::isSecure($request, (array) ($settings['app']['trusted_proxies'] ?? []));
+    if ($isSecure) {
+        return $handler->handle($request);
+    }
+
+    $uri = $request->getUri()->withScheme('https');
+    $responseFactory = new \Slim\Psr7\Factory\ResponseFactory();
+    $response = $responseFactory->createResponse(308);
+    return $response->withHeader('Location', (string) $uri);
 });
 
 $app->addBodyParsingMiddleware();
@@ -198,7 +199,7 @@ if (!$isInstallRoute) {
 $app->addRoutingMiddleware();
 
 // Access and Audit Logging (Depends on DB for audit) - SKIP if installing
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute): ResponseInterface {
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute, $settings): ResponseInterface {
     $start = microtime(true);
     $response = $handler->handle($request);
 
@@ -213,7 +214,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
             'path' => (string) $request->getUri()->getPath(),
             'status' => $response->getStatusCode(),
             'duration_ms' => (int) round((microtime(true) - $start) * 1000),
-            'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
+            'ip_hash' => hash('sha256', RequestSecurity::clientIp($request, (array) ($settings['app']['trusted_proxies'] ?? []))),
             'user_agent' => $userAgent,
             'context' => ['query' => (function () use ($request): string {
                 $query = $request->getQueryParams();
@@ -226,7 +227,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
     return $response;
 });
 
-$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute): ResponseInterface {
+$app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($container, $isInstallRoute, $settings): ResponseInterface {
     $startedAt = microtime(true);
     $response = $handler->handle($request);
     
@@ -248,7 +249,7 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         $outcome = $status >= 400 ? 'failure' : 'success';
         $normalizedAction = preg_replace('/\/[a-z0-9]{6,}(?=\/|$)/i', '/:id', $path);
         $action = strtoupper($method) . ' ' . ($normalizedAction !== false ? $normalizedAction : $path);
-        $ipHash = hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown'));
+        $ipHash = hash('sha256', RequestSecurity::clientIp($request, (array) ($settings['app']['trusted_proxies'] ?? [])));
         $userAgent = substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255);
         $query = $request->getQueryParams();
         if (array_key_exists('install_token', $query)) $query['install_token'] = '[redacted]';
@@ -318,7 +319,7 @@ $app->add(\App\Middleware\RequestIdMiddleware::class);
 // Error Handling
 $errorMiddleware = $app->addErrorMiddleware((bool) ($settings['app']['debug'] ?? false), true, true);
 $errorMiddleware->setDefaultErrorHandler(
-    function (ServerRequestInterface $request, Throwable $exception, bool $displayErrorDetails) use ($container): ResponseInterface {
+    function (ServerRequestInterface $request, Throwable $exception, bool $displayErrorDetails) use ($container, $settings): ResponseInterface {
         $statusCode = 500;
         $message = 'Internal server error';
 
@@ -337,7 +338,7 @@ $errorMiddleware->setDefaultErrorHandler(
                     'path' => (string) $request->getUri()->getPath(),
                     'status' => $statusCode,
                     'duration_ms' => 0,
-                    'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
+                    'ip_hash' => hash('sha256', RequestSecurity::clientIp($request, (array) ($settings['app']['trusted_proxies'] ?? []))),
                     'user_agent' => substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255),
                     'context' => ['trace' => $exception->getTraceAsString()],
                 ]);

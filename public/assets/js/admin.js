@@ -1106,23 +1106,24 @@ async function openEnvDialog() {
   const values = response?.data || {};
   const envGroups = [
     { title: 'Uygulama ve Adres', icon: 'bi-gear', keys: ['APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'SITE_ADDRESS', 'APP_TIMEZONE'] },
-    { title: 'Oturum ve Kimlik Doğrulama', icon: 'bi-shield-lock', keys: ['SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'SESSION_COOKIE_SECURE', 'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS'] },
+    { title: 'Oturum ve Kimlik Doğrulama', icon: 'bi-shield-lock', keys: ['SESSION_LIFETIME', 'SESSION_COOKIE_LIFETIME', 'REFRESH_TOKEN_DAYS', 'SESSION_COOKIE_SECURE', 'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS'] },
     { title: 'Cache, CORS ve Proxy', icon: 'bi-hdd-network', keys: ['CACHE_TTL', 'CORS_ALLOWED_ORIGINS', 'TRUSTED_PROXIES'] },
-    { title: 'Entegrasyonlar', icon: 'bi-plug', keys: ['RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY'] }
+    { title: 'Entegrasyonlar', icon: 'bi-plug', keys: ['RESEND_API_KEY', 'MAIL_FROM_NAME', 'MAIL_FROM_ADDRESS', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY'] }
   ];
   const editableKeys = envGroups.flatMap(group => group.keys);
   const booleanKeys = new Set(['APP_DEBUG', 'SESSION_COOKIE_SECURE', 'REMEMBER_COOKIE_SECURE', 'ENFORCE_HTTPS']);
+  const numericKeys = new Set(['SESSION_LIFETIME', 'SESSION_COOKIE_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL']);
   const sensitiveKeys = new Set(editableKeys.filter(key => /(?:PASSWORD|SECRET|TOKEN|KEY)$/.test(key)));
   const labels = {
     APP_NAME: 'Uygulama adı', APP_ENV: 'Çalışma ortamı', APP_DEBUG: 'Debug modu', APP_URL: 'Uygulama URL', SITE_ADDRESS: 'Site adresi',
-    APP_TIMEZONE: 'Saat dilimi', CORS_ALLOWED_ORIGINS: 'CORS izinli adresler', SESSION_LIFETIME: 'Oturum süresi (sn)',
+    APP_TIMEZONE: 'Saat dilimi', CORS_ALLOWED_ORIGINS: 'CORS izinli adresler', SESSION_LIFETIME: 'Oturum süresi (sn)', SESSION_COOKIE_LIFETIME: 'Oturum cookie süresi (sn)',
     REFRESH_TOKEN_DAYS: 'Refresh token süresi (gün)', CACHE_TTL: 'Cache süresi (sn)',
     SESSION_COOKIE_SECURE: 'Oturum çerezi Secure', SESSION_COOKIE_SAME_SITE: 'Oturum çerezi SameSite', ENFORCE_HTTPS: 'HTTPS zorunlu',
     REMEMBER_COOKIE_SECURE: 'Remember çerezi Secure', REMEMBER_COOKIE_SAME_SITE: 'Remember çerezi SameSite',
     TRUSTED_PROXIES: 'Güvenilen proxy adresleri', RESEND_API_KEY: 'Resend API anahtarı',
     GOOGLE_ANALYTICS_ID: 'Google Analytics ID', GOOGLE_RECAPTCHA_SITE_KEY: 'reCAPTCHA site anahtarı',
     GOOGLE_RECAPTCHA_SECRET_KEY: 'reCAPTCHA gizli anahtarı', CLOUDFLARE_TURNSTILE_SITE_KEY: 'Turnstile site anahtarı',
-    CLOUDFLARE_TURNSTILE_SECRET_KEY: 'Turnstile gizli anahtarı'
+    CLOUDFLARE_TURNSTILE_SECRET_KEY: 'Turnstile gizli anahtarı', MAIL_FROM_NAME: 'Mail gönderici adı', MAIL_FROM_ADDRESS: 'Mail gönderici adresi'
   };
   const renderField = key => {
     const value = values[key] ?? '';
@@ -1131,7 +1132,7 @@ async function openEnvDialog() {
       const checked = String(value).toLowerCase() === 'true' || String(value) === '1';
       return `<div class="col-md-6"><div class="form-check form-switch border rounded-3 p-3"><input class="form-check-input ms-0 me-2" type="checkbox" id="env-${key}" name="${key}" data-env-key="${key}" data-env-type="boolean" value="true" ${checked ? 'checked' : ''}><label class="form-check-label fw-semibold" for="env-${key}">${escapeHtml(label)} <code>${key}</code></label></div></div>`;
     }
-    const inputType = sensitiveKeys.has(key) ? 'password' : (key === 'APP_URL' || key === 'SITE_ADDRESS' ? 'url' : 'text');
+    const inputType = sensitiveKeys.has(key) ? 'password' : (numericKeys.has(key) ? 'number' : (key === 'MAIL_FROM_ADDRESS' ? 'email' : (key === 'APP_URL' || key === 'SITE_ADDRESS' ? 'url' : 'text')));
     const safeValue = sensitiveKeys.has(key) && value === '********' ? '********' : String(value);
     const placeholder = sensitiveKeys.has(key) ? 'Değiştirmek istemiyorsanız boş bırakın' : '';
     return `<div class="col-md-6"><label class="form-label fw-semibold" for="env-${key}">${escapeHtml(label)} <code>${key}</code></label><input type="${inputType}" class="form-control${sensitiveKeys.has(key) ? ' font-monospace' : ''}" id="env-${key}" name="${key}" data-env-key="${key}" value="${escapeHtml(safeValue)}" placeholder="${escapeHtml(placeholder)}" autocomplete="off"></div>`;
@@ -1170,13 +1171,14 @@ function panelNavigate(path) {
 function envPageMarkup(values) {
   const groups = [
     { title: 'Uygulama ve Adres', keys: ['APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'SITE_ADDRESS', 'APP_TIMEZONE'] },
-    { title: 'Oturum ve Güvenlik', keys: ['SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'SESSION_COOKIE_SECURE', 'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS'] },
+    { title: 'Oturum ve Güvenlik', keys: ['SESSION_LIFETIME', 'SESSION_COOKIE_LIFETIME', 'REFRESH_TOKEN_DAYS', 'SESSION_COOKIE_SECURE', 'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS'] },
     { title: 'Cache, CORS ve Proxy', keys: ['CACHE_TTL', 'CORS_ALLOWED_ORIGINS', 'TRUSTED_PROXIES'] },
-    { title: 'Entegrasyonlar', keys: ['RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY'] }
+    { title: 'Entegrasyonlar', keys: ['RESEND_API_KEY', 'MAIL_FROM_NAME', 'MAIL_FROM_ADDRESS', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY'] }
   ];
   const booleans = new Set(['APP_DEBUG', 'SESSION_COOKIE_SECURE', 'REMEMBER_COOKIE_SECURE', 'ENFORCE_HTTPS']);
+  const numericKeys = new Set(['SESSION_LIFETIME', 'SESSION_COOKIE_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL']);
   const sensitive = key => /(?:PASSWORD|SECRET|TOKEN|KEY)$/.test(key);
-  const labels = { APP_NAME: 'Uygulama adı', APP_ENV: 'Çalışma ortamı', APP_DEBUG: 'Debug modu', APP_URL: 'Uygulama URL', SITE_ADDRESS: 'Site adresi', APP_TIMEZONE: 'Saat dilimi', SESSION_LIFETIME: 'Oturum süresi (sn)', REFRESH_TOKEN_DAYS: 'Refresh token süresi (gün)', CACHE_TTL: 'Cache süresi (sn)', SESSION_COOKIE_SECURE: 'Oturum çerezi Secure', SESSION_COOKIE_SAME_SITE: 'Oturum çerezi SameSite', ENFORCE_HTTPS: 'HTTPS zorunlu', REMEMBER_COOKIE_SECURE: 'Remember çerezi Secure', REMEMBER_COOKIE_SAME_SITE: 'Remember çerezi SameSite', CORS_ALLOWED_ORIGINS: 'CORS izinli adresler', TRUSTED_PROXIES: 'Güvenilen proxy adresleri', RESEND_API_KEY: 'Resend API anahtarı', GOOGLE_ANALYTICS_ID: 'Google Analytics ID', GOOGLE_RECAPTCHA_SITE_KEY: 'reCAPTCHA site anahtarı', GOOGLE_RECAPTCHA_SECRET_KEY: 'reCAPTCHA gizli anahtarı', CLOUDFLARE_TURNSTILE_SITE_KEY: 'Turnstile site anahtarı', CLOUDFLARE_TURNSTILE_SECRET_KEY: 'Turnstile gizli anahtarı' };
+  const labels = { APP_NAME: 'Uygulama adı', APP_ENV: 'Çalışma ortamı', APP_DEBUG: 'Debug modu', APP_URL: 'Uygulama URL', SITE_ADDRESS: 'Site adresi', APP_TIMEZONE: 'Saat dilimi', SESSION_LIFETIME: 'Oturum süresi (sn)', SESSION_COOKIE_LIFETIME: 'Oturum cookie süresi (sn)', REFRESH_TOKEN_DAYS: 'Refresh token süresi (gün)', CACHE_TTL: 'Cache süresi (sn)', SESSION_COOKIE_SECURE: 'Oturum çerezi Secure', SESSION_COOKIE_SAME_SITE: 'Oturum çerezi SameSite', ENFORCE_HTTPS: 'HTTPS zorunlu', REMEMBER_COOKIE_SECURE: 'Remember çerezi Secure', REMEMBER_COOKIE_SAME_SITE: 'Remember çerezi SameSite', CORS_ALLOWED_ORIGINS: 'CORS izinli adresler', TRUSTED_PROXIES: 'Güvenilen proxy adresleri', RESEND_API_KEY: 'Resend API anahtarı', MAIL_FROM_NAME: 'Mail gönderici adı', MAIL_FROM_ADDRESS: 'Mail gönderici adresi', GOOGLE_ANALYTICS_ID: 'Google Analytics ID', GOOGLE_RECAPTCHA_SITE_KEY: 'reCAPTCHA site anahtarı', GOOGLE_RECAPTCHA_SECRET_KEY: 'reCAPTCHA gizli anahtarı', CLOUDFLARE_TURNSTILE_SITE_KEY: 'Turnstile site anahtarı', CLOUDFLARE_TURNSTILE_SECRET_KEY: 'Turnstile gizli anahtarı' };
   const field = key => {
     const value = values[key] ?? '';
     const label = labels[key] || key;
@@ -1185,7 +1187,7 @@ function envPageMarkup(values) {
       return `<div class="col-md-6"><div class="form-check form-switch border rounded-3 p-3"><input class="form-check-input ms-0 me-2" type="checkbox" id="route-env-${key}" data-env-key="${key}" data-env-type="boolean" ${checked ? 'checked' : ''}><label class="form-check-label fw-semibold" for="route-env-${key}">${escapeHtml(label)} <code>${key}</code></label></div></div>`;
     }
     const isSecret = sensitive(key);
-    const type = isSecret ? 'password' : (key === 'APP_URL' || key === 'SITE_ADDRESS' ? 'url' : 'text');
+    const type = isSecret ? 'password' : (numericKeys.has(key) ? 'number' : (key === 'MAIL_FROM_ADDRESS' ? 'email' : (key === 'APP_URL' || key === 'SITE_ADDRESS' ? 'url' : 'text')));
     return `<div class="col-md-6"><label class="form-label fw-semibold" for="route-env-${key}">${escapeHtml(label)} <code>${key}</code></label><input class="form-control${isSecret ? ' font-monospace' : ''}" type="${type}" id="route-env-${key}" data-env-key="${key}" value="${escapeHtml(String(value))}" placeholder="${isSecret ? 'Değiştirmek istemiyorsanız boş bırakın' : ''}" autocomplete="off"></div>`;
   };
   return `<div class="alert alert-warning small">Bu sayfa yalnızca root yönetici içindir. Hassas değerler maskeli gösterilir ve boş bırakılırsa korunur.</div><form id="panel-config-env-form"><div class="card-body p-0">${groups.map(group => `<section class="mb-4"><h6 class="border-bottom pb-2 mb-3">${escapeHtml(group.title)}</h6><div class="row g-3">${group.keys.map(field).join('')}</div></section>`).join('')}</div><div class="d-flex justify-content-end gap-2"><a href="/panel/config" data-panel-link class="btn btn-outline-secondary">İptal</a><button class="btn btn-primary" type="submit">Kaydet</button></div></form>`;

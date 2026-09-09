@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Config;
+use App\Helpers\RequestSecurity;
 use App\Services\CacheService;
 use App\Services\I18nService;
 use App\Services\SiteConfigService;
@@ -32,7 +34,7 @@ final class SystemPageController
         $payload = (array) $request->getParsedBody();
         $this->errorLogger->error('frontend_error: ' . (string) ($payload['message'] ?? 'Unknown JS error'), [
             'user_id' => $_SESSION['user_id'] ?? null,
-            'ip_hash' => hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown')),
+            'ip_hash' => hash('sha256', RequestSecurity::clientIp($request, (array) (Config::getSettings()['app']['trusted_proxies'] ?? []))),
             'user_agent' => substr((string) $request->getHeaderLine('User-Agent'), 0, 255),
             'url' => (string) ($payload['url'] ?? ''),
             'stack' => (string) ($payload['stack'] ?? ''),

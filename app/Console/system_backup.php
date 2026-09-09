@@ -5,16 +5,10 @@ declare(strict_types=1);
 
 /** CLI compatibility entrypoint for the native BackupService. */
 
-use Dotenv\Dotenv;
-
 require __DIR__ . '/../../vendor/autoload.php';
 
 $basePath = dirname(__DIR__, 2);
-if (is_file($basePath . '/.env')) {
-    Dotenv::createImmutable($basePath)->load();
-}
-
-\App\Config::getSettings();
+\App\Config::loadEnvironment($basePath);
 $container = require __DIR__ . '/../dependencies.php';
 $backup = $container->get(\App\Services\BackupService::class);
 $result = $backup->create();

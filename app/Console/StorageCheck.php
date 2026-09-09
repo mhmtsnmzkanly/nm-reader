@@ -7,7 +7,7 @@ namespace App\Console;
 
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
-use Dotenv\Dotenv;
+use App\Config;
 
 /**
  * CLI Tool & Diagnostic Class for Storage Read/Write Validation.
@@ -22,11 +22,7 @@ final class StorageCheck
     {
         $this->basePath = rtrim($basePath ?? dirname(__DIR__, 2), '/');
         
-        // Load Environment if available
-        if (file_exists($this->basePath . '/.env')) {
-            $dotenv = Dotenv::createImmutable($this->basePath);
-            $dotenv->safeLoad();
-        }
+        Config::loadEnvironment($this->basePath);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Config;
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
 use App\Repositories\AdminConsoleRepository;
@@ -28,11 +29,12 @@ protected const BAN_TYPES = ['general', 'comment', 'blog', 'voting', 'reporting'
     protected const ENV_MASK = '********';
     protected const ENV_EDITABLE_KEYS = [
         'APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'SITE_ADDRESS', 'APP_TIMEZONE', 'CORS_ALLOWED_ORIGINS',
-        'SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL', 'SESSION_COOKIE_SECURE',
+        'SESSION_LIFETIME', 'SESSION_COOKIE_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL', 'SESSION_COOKIE_SECURE',
         'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE', 'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS',
         'TRUSTED_PROXIES',
         'RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY',
         'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY',
+        'MAIL_FROM_NAME', 'MAIL_FROM_ADDRESS',
     ];
 
     public function __construct(
@@ -97,14 +99,38 @@ protected const BAN_TYPES = ['general', 'comment', 'blog', 'voting', 'reporting'
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
         $data = [];
         foreach ($lines as $line) {
-            if (str_starts_with(trim($line), '#')) continue;
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, '#')) continue;
+            if (str_starts_with(strtolower($line), 'export ')) {
+                $line = ltrim(substr($line, 7));
+            }
             $parts = explode('=', $line, 2);
             if (count($parts) !== 2) continue;
             $key = strtoupper(trim($parts[0]));
             if (!preg_match('/^[A-Z][A-Z0-9_]*$/', $key)) continue;
-            $data[$key] = trim($parts[1], " \"'");
+            $data[$key] = $this->parseEnvValue($parts[1]);
         }
         return $data;
+    }
+
+    protected function parseEnvValue(string $raw): string
+    {
+        $value = trim($raw);
+        $length = strlen($value);
+        if ($length >= 2) {
+            $quote = $value[0];
+            if (($quote === '"' || $quote === "'") && $value[$length - 1] === $quote) {
+                $value = substr($value, 1, -1);
+                if ($quote === '"') {
+                    // Installer-generated values escape only backslashes and
+                    // double quotes (control characters are rejected).
+                    $value = str_replace(['\\\\', '\\"'], ['\\', '"'], $value);
+                } else {
+                    $value = str_replace(['\\\\', "\\'"], ['\\', "'"], $value);
+                }
+            }
+        }
+        return $value;
     }
 
     protected function isSensitiveEnvKey(string $key): bool
@@ -150,7 +176,7 @@ protected const BAN_TYPES = ['general', 'comment', 'blog', 'voting', 'reporting'
 
     protected function ensureRootUser(?string $userId): void
     {
-        $rootId = $_ENV['ROOT_USER'] ?? getenv('ROOT_USER') ?: null;
+        $rootId = trim((string) (Config::getSettings()['app']['root_user'] ?? '')) ?: null;
         if ($rootId === null || $userId === null || $userId !== $rootId) {
             throw new \DomainException('Unauthorized: Only the ROOT_USER can perform this action.');
         }

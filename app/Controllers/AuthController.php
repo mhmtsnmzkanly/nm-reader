@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Config;
+use App\Helpers\RequestSecurity;
 use App\Helpers\ResponseHelper;
 use App\Services\AuthService;
 use App\Services\SiteConfigService;
@@ -32,8 +33,8 @@ final class AuthController
      */
     private function verifyTurnstile(array $payload, string $ip): void
     {
-        $siteKey = trim((string) ($_ENV['CLOUDFLARE_TURNSTILE_SITE_KEY'] ?? getenv('CLOUDFLARE_TURNSTILE_SITE_KEY') ?: ''));
-        $secretKey = trim((string) ($_ENV['CLOUDFLARE_TURNSTILE_SECRET_KEY'] ?? getenv('CLOUDFLARE_TURNSTILE_SECRET_KEY') ?: ''));
+        $siteKey = trim((string) Config::getEnv('CLOUDFLARE_TURNSTILE_SITE_KEY', ''));
+        $secretKey = trim((string) Config::getEnv('CLOUDFLARE_TURNSTILE_SECRET_KEY', ''));
 
         if ($siteKey === '' || $secretKey === '') {
             return;
@@ -82,6 +83,11 @@ final class AuthController
             return rtrim($siteAddress, '/');
         }
 
+        $configuredUrl = trim((string) (Config::getSettings()['app']['url'] ?? ''));
+        if ($configuredUrl !== '') {
+            return rtrim($configuredUrl, '/');
+        }
+
         $uri = $request->getUri();
         $scheme = $uri->getScheme() ?: 'http';
         $host = $uri->getHost() ?: 'localhost';
@@ -98,10 +104,8 @@ final class AuthController
         if (!in_array($sameSite, ['Lax', 'Strict', 'None'], true)) {
             $sameSite = 'Lax';
         }
-        $forwardedProto = strtolower(trim($request->getHeaderLine('X-Forwarded-Proto')));
         $secure = (bool) ($settings['remember_cookie_secure'] ?? false)
-            || $request->getUri()->getScheme() === 'https'
-            || $forwardedProto === 'https';
+            || RequestSecurity::isSecure($request, (array) ($settings['trusted_proxies'] ?? []));
         if ($sameSite === 'None') {
             $secure = true;
         }
@@ -115,6 +119,11 @@ final class AuthController
         );
     }
 
+    private function clientIp(ServerRequestInterface $request): string
+    {
+        return RequestSecurity::clientIp($request, (array) (Config::getSettings()['app']['trusted_proxies'] ?? []));
+    }
+
     /**
      * Handles user registration.
      */
@@ -122,7 +131,7 @@ final class AuthController
     {
         try {
             $payload = (array) $request->getParsedBody();
-            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $ip = $this->clientIp($request);
             $this->verifyTurnstile($payload, $ip);
 
             $user = $this->authService->register($payload, $this->resolveAppUrl($request));
@@ -143,7 +152,7 @@ final class AuthController
     {
         try {
             $payload = (array) $request->getParsedBody();
-            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $ip = $this->clientIp($request);
             $ua = (string) ($request->getHeaderLine('User-Agent') ?: 'unknown');
             
             $this->verifyTurnstile($payload, $ip);
@@ -183,7 +192,7 @@ final class AuthController
             if ($refreshToken === '') {
                 $refreshToken = trim((string) ($request->getCookieParams()['nm_remember'] ?? ''));
             }
-            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $ip = $this->clientIp($request);
             $ua = (string) ($request->getHeaderLine('User-Agent') ?: 'unknown');
             $user = $this->authService->refresh($refreshToken, $ip, $ua);
 
@@ -230,7 +239,7 @@ final class AuthController
     {
         try {
             $payload = (array) $request->getParsedBody();
-            $ip = (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');
+            $ip = $this->clientIp($request);
             $this->verifyTurnstile($payload, $ip);
 
             $email = (string) ($payload['email'] ?? '');
@@ -336,8 +345,7 @@ final class AuthController
         $sessionSameSite = ucfirst(strtolower((string) ($sessionSettings['session_same_site'] ?? 'Lax')));
         if (!in_array($sessionSameSite, ['Lax', 'Strict', 'None'], true)) $sessionSameSite = 'Lax';
         $isSecure = (bool) ($sessionSettings['session_cookie_secure'] ?? false)
-            || $request->getUri()->getScheme() === 'https'
-            || strtolower(trim($request->getHeaderLine('X-Forwarded-Proto'))) === 'https';
+            || RequestSecurity::isSecure($request, (array) ($sessionSettings['trusted_proxies'] ?? []));
         if ($sessionSameSite === 'None') $isSecure = true;
         $sessionCookie = sprintf(
             '%s=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/; HttpOnly; SameSite=%s%s',

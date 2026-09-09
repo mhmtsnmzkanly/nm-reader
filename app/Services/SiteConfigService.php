@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Config;
 use PDO;
 
 final class SiteConfigService
 {
-    private const CACHE_KEY = 'site_config:all:v2';
+    private const CACHE_KEY = 'site_config:all:v3';
     private const CACHE_TTL = 600;
 
     /** @var list<string> Settings safe to embed in public HTML/application context. */
@@ -28,6 +29,7 @@ final class SiteConfigService
     ];
 
     private static ?array $memoryCache = null;
+    private static ?int $memoryCacheExpiresAt = null;
 
     /**
      * Definitions of all supported settings, their groups, types, and defaults.
@@ -80,17 +82,25 @@ final class SiteConfigService
      */
     public function all(): array
     {
-        if (self::$memoryCache !== null) {
+        if (self::$memoryCache !== null
+            && self::$memoryCacheExpiresAt !== null
+            && self::$memoryCacheExpiresAt > time()) {
             return self::$memoryCache;
         }
+        self::$memoryCache = null;
+        self::$memoryCacheExpiresAt = null;
 
         $cached = $this->cache->get(self::CACHE_KEY);
         if (is_array($cached)) {
             // Older cache entries may contain rows that are no longer part of
             // the supported schema. Never return those entries to callers.
             $cached = array_intersect_key($cached, self::DEFINITIONS);
-            self::$memoryCache = $cached;
-            return $cached;
+            // Keep newly introduced definitions available even while an older
+            // cache entry is still present.
+            $settings = array_replace($this->defaults(), $cached);
+            self::$memoryCache = $settings;
+            self::$memoryCacheExpiresAt = time() + self::CACHE_TTL;
+            return $settings;
         }
 
         $settings = $this->defaults();
@@ -121,6 +131,7 @@ final class SiteConfigService
 
         $this->cache->set(self::CACHE_KEY, $settings, self::CACHE_TTL);
         self::$memoryCache = $settings;
+        self::$memoryCacheExpiresAt = time() + self::CACHE_TTL;
         return $settings;
     }
 
@@ -193,21 +204,12 @@ final class SiteConfigService
 
     public function enforceHttps(): bool
     {
-        $envValue = $_ENV['ENFORCE_HTTPS'] ?? ($_SERVER['ENFORCE_HTTPS'] ?? getenv('ENFORCE_HTTPS'));
-        if ($envValue !== false && $envValue !== null && $envValue !== '') {
-            $normalized = strtolower(trim((string) $envValue));
-            return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
-        }
-        return false;
+        return (bool) (Config::getSettings()['app']['enforce_https'] ?? false);
     }
 
     public function siteAddress(): string
     {
-        $envValue = $_ENV['SITE_ADDRESS'] ?? ($_SERVER['SITE_ADDRESS'] ?? getenv('SITE_ADDRESS'));
-        if (is_string($envValue) && trim($envValue) !== '') {
-            return trim($envValue);
-        }
-        return '';
+        return trim((string) (Config::getSettings()['app']['site_address'] ?? ''));
     }
 
     public function defaultLanguage(): string
@@ -269,6 +271,7 @@ final class SiteConfigService
 
         $this->cache->delete(self::CACHE_KEY);
         self::$memoryCache = null;
+        self::$memoryCacheExpiresAt = null;
         return $this->all();
     }
 

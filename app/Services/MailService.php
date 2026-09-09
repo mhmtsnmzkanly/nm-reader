@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Config;
+
 final class MailService
 {
     private ?string $logPath;
@@ -43,12 +45,12 @@ final class MailService
 
     public function getApiKey(): string
     {
-        return trim((string) ($_ENV['RESEND_API_KEY'] ?? getenv('RESEND_API_KEY') ?: ''));
+        return trim((string) Config::getEnv('RESEND_API_KEY', ''));
     }
 
     public function getFromAddress(): string
     {
-        $envFrom = trim((string) ($_ENV['MAIL_FROM_ADDRESS'] ?? getenv('MAIL_FROM_ADDRESS') ?: ''));
+        $envFrom = trim((string) Config::getEnv('MAIL_FROM_ADDRESS', ''));
         if ($envFrom !== '') {
             return $envFrom;
         }
@@ -57,7 +59,7 @@ final class MailService
 
     public function getFromName(): string
     {
-        $envName = trim((string) ($_ENV['MAIL_FROM_NAME'] ?? getenv('MAIL_FROM_NAME') ?: ''));
+        $envName = trim((string) Config::getEnv('MAIL_FROM_NAME', ''));
         if ($envName !== '') {
             return $envName;
         }

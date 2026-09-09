@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Config;
+use App\Helpers\RequestSecurity;
 use App\Helpers\ResponseHelper;
 use App\Services\HtmlTemplateService;
 use App\Services\InstallService;
@@ -33,14 +34,16 @@ final class InstallController
     public function index(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         if (($guard = $this->guard($request, false)) !== null) return $guard;
-        if (is_file($this->basePath . '/.env')) return $response->withHeader('Location', '/')->withStatus(302);
+        if (Config::isApplicationConfigured($this->basePath)) {
+            return $response->withHeader('Location', '/')->withStatus(302);
+        }
         $context = [
             'app_name' => (string) ($this->settings['app']['name'] ?? 'NM Reader'),
             'csrf_token' => (string) ($_SESSION['csrf_token'] ?? ''),
             'modes' => [InstallService::MODE_FRESH, InstallService::MODE_RESTORE, InstallService::MODE_ENV_ONLY],
             'environment_defaults' => InstallService::environmentDefaults(),
             'site_defaults' => InstallService::siteDefaults(),
-            'install_path' => '/install-63e4qq3',
+            'install_path' => Config::INSTALL_PATH,
         ];
         $content = $this->templates->render('install.html', [
             // Keep the replacement safe inside a JavaScript string. If a
@@ -248,7 +251,9 @@ final class InstallController
     private function guard(ServerRequestInterface $request, bool $alreadyInstalled = true): ?ResponseInterface
     {
         if (!$this->isAuthorizedInstaller($request)) return ResponseHelper::error(403, 'Installer access denied. Configure INSTALL_TOKEN for remote setup.');
-        if ($alreadyInstalled && is_file($this->basePath . '/.env')) return ResponseHelper::error(409, 'System already installed.');
+        if ($alreadyInstalled && Config::isApplicationConfigured($this->basePath)) {
+            return ResponseHelper::error(409, 'System already installed.');
+        }
         return null;
     }
 
@@ -322,10 +327,23 @@ final class InstallController
 
     private function isAuthorizedInstaller(ServerRequestInterface $request): bool
     {
-        $expected = trim((string) ($_ENV['INSTALL_TOKEN'] ?? getenv('INSTALL_TOKEN') ?: ''));
-        if (strlen($expected) < 16) return false;
+        $expected = trim((string) Config::getEnv('INSTALL_TOKEN', ''));
         $provided = trim($request->getHeaderLine('X-Install-Token'));
         if ($provided === '') $provided = trim((string) ($request->getQueryParams()['install_token'] ?? ''));
-        return $provided !== '' && hash_equals($expected, $provided);
+
+        // A configured token is mandatory for every non-local deployment.
+        // When no token exists, keep first-time local development usable while
+        // refusing installer access from arbitrary remote clients.
+        if ($expected !== '') {
+            return strlen($expected) >= 16
+                && $provided !== ''
+                && hash_equals($expected, $provided);
+        }
+
+        $clientIp = RequestSecurity::clientIp(
+            $request,
+            (array) ($this->settings['app']['trusted_proxies'] ?? [])
+        );
+        return in_array($clientIp, ['127.0.0.1', '::1', '::ffff:127.0.0.1'], true);
     }
 }

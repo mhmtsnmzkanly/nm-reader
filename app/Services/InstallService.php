@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Config;
 use App\Services\SiteConfigService;
 use PDO;
 use PharData;
@@ -24,7 +25,7 @@ final class InstallService
 
     private const ENV_KEYS = [
         'APP_NAME', 'APP_ENV', 'APP_DEBUG', 'APP_URL', 'SITE_ADDRESS', 'APP_TIMEZONE',
-        'CORS_ALLOWED_ORIGINS', 'SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL',
+        'CORS_ALLOWED_ORIGINS', 'SESSION_LIFETIME', 'SESSION_COOKIE_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL',
         'SESSION_COOKIE_SECURE', 'SESSION_COOKIE_SAME_SITE', 'REMEMBER_COOKIE_SECURE',
         'REMEMBER_COOKIE_SAME_SITE', 'ENFORCE_HTTPS', 'TRUSTED_PROXIES', 'DB_PERSISTENT',
         'RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY',
@@ -38,7 +39,7 @@ final class InstallService
         'ENFORCE_HTTPS', 'DB_PERSISTENT',
     ];
 
-    private const INTEGER_ENV_KEYS = ['SESSION_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL', 'DB_PORT'];
+    private const INTEGER_ENV_KEYS = ['SESSION_LIFETIME', 'SESSION_COOKIE_LIFETIME', 'REFRESH_TOKEN_DAYS', 'CACHE_TTL', 'DB_PORT'];
 
     private const MAX_MEDIA_ARCHIVE_FILES = 100000;
     private const MAX_MEDIA_ARCHIVE_BYTES = 16 * 1024 * 1024 * 1024;
@@ -61,6 +62,7 @@ final class InstallService
             'APP_TIMEZONE' => 'UTC',
             'CORS_ALLOWED_ORIGINS' => 'http://localhost:8080,http://localhost:3000',
             'SESSION_LIFETIME' => 7200,
+            'SESSION_COOKIE_LIFETIME' => 0,
             'REFRESH_TOKEN_DAYS' => 30,
             'CACHE_TTL' => 300,
             'SESSION_COOKIE_SECURE' => false,
@@ -102,47 +104,17 @@ final class InstallService
      */
     public function validateEnvironment(array $input): array
     {
-        $values = array_replace(self::environmentDefaults(), array_intersect_key($input, array_flip(self::ENV_KEYS)));
-
+        // Config is the single normalization contract for both the installer
+        // and the admin environment editor. Keep installer-specific work
+        // below limited to connection/filesystem checks.
+        $values = Config::normalizeEnvironment(
+            array_replace(self::environmentDefaults(), array_intersect_key($input, array_flip(self::ENV_KEYS)))
+        );
         foreach (self::BOOLEAN_ENV_KEYS as $key) {
-            $values[$key] = $this->toBool($key, $values[$key]);
+            $values[$key] = $values[$key] === 'true';
         }
         foreach (self::INTEGER_ENV_KEYS as $key) {
-            $values[$key] = $this->toPositiveInt($key, $values[$key]);
-        }
-        if ($values['DB_PORT'] > 65535) throw new \InvalidArgumentException('DB_PORT must be between 1 and 65535.');
-
-        $values['APP_NAME'] = $this->toString('APP_NAME', $values['APP_NAME'], 120);
-        $values['APP_ENV'] = strtolower($this->toString('APP_ENV', $values['APP_ENV'], 32));
-        if (!in_array($values['APP_ENV'], ['local', 'staging', 'production'], true)) {
-            throw new \InvalidArgumentException('APP_ENV must be local, staging, or production.');
-        }
-        $values['APP_URL'] = $this->url('APP_URL', $values['APP_URL'], false);
-        $values['SITE_ADDRESS'] = $this->url('SITE_ADDRESS', $values['SITE_ADDRESS'], true);
-        $values['APP_TIMEZONE'] = $this->timezone((string) $values['APP_TIMEZONE']);
-        $values['CORS_ALLOWED_ORIGINS'] = $this->origins((string) $values['CORS_ALLOWED_ORIGINS']);
-        $values['SESSION_COOKIE_SAME_SITE'] = $this->sameSite('SESSION_COOKIE_SAME_SITE', $values['SESSION_COOKIE_SAME_SITE']);
-        $values['REMEMBER_COOKIE_SAME_SITE'] = $this->sameSite('REMEMBER_COOKIE_SAME_SITE', $values['REMEMBER_COOKIE_SAME_SITE']);
-
-        $values['DB_HOST'] = $this->toString('DB_HOST', $values['DB_HOST'], 255);
-        if (!preg_match('/^[A-Za-z0-9._:\[\]-]+$/', $values['DB_HOST'])) {
-            throw new \InvalidArgumentException('DB_HOST contains unsupported characters.');
-        }
-        $values['DB_DATABASE'] = $this->toString('DB_DATABASE', $values['DB_DATABASE'], 64);
-        if (!preg_match('/^[A-Za-z0-9_-]+$/', $values['DB_DATABASE'])) {
-            throw new \InvalidArgumentException('DB_DATABASE contains unsupported characters.');
-        }
-        $values['DB_USERNAME'] = $this->toString('DB_USERNAME', $values['DB_USERNAME'], 150);
-        $values['DB_PASSWORD'] = $this->toString('DB_PASSWORD', $values['DB_PASSWORD'], 512, false);
-        $values['DB_CHARSET'] = $this->toString('DB_CHARSET', $values['DB_CHARSET'], 32);
-        if (!preg_match('/^[A-Za-z0-9_]+$/', $values['DB_CHARSET'])) {
-            throw new \InvalidArgumentException('DB_CHARSET contains unsupported characters.');
-        }
-
-        foreach (['TRUSTED_PROXIES', 'RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID', 'GOOGLE_RECAPTCHA_SITE_KEY',
-            'GOOGLE_RECAPTCHA_SECRET_KEY', 'CLOUDFLARE_TURNSTILE_SITE_KEY',
-            'CLOUDFLARE_TURNSTILE_SECRET_KEY'] as $key) {
-            $values[$key] = $this->toString($key, $values[$key], 2048, false);
+            $values[$key] = (int) $values[$key];
         }
 
         $pdo = $this->connect($values);
@@ -602,6 +574,7 @@ final class InstallService
             'APP_TIMEZONE=' . $value($environment['APP_TIMEZONE']),
             'CORS_ALLOWED_ORIGINS=' . $value($environment['CORS_ALLOWED_ORIGINS']),
             'SESSION_LIFETIME=' . (int) $environment['SESSION_LIFETIME'],
+            'SESSION_COOKIE_LIFETIME=' . (int) ($environment['SESSION_COOKIE_LIFETIME'] ?? 0),
             'REFRESH_TOKEN_DAYS=' . (int) $environment['REFRESH_TOKEN_DAYS'],
             'CACHE_TTL=' . (int) $environment['CACHE_TTL'],
             'SESSION_COOKIE_SECURE=' . $bool($environment['SESSION_COOKIE_SECURE']),
@@ -632,76 +605,6 @@ final class InstallService
     private function envValue(string $value): string
     {
         return '"' . addcslashes($value, "\\\"\n\r") . '"';
-    }
-
-    private function toString(string $key, mixed $value, int $max, bool $trim = true): string
-    {
-        if (!is_string($value) && !is_scalar($value)) throw new \InvalidArgumentException("{$key} must be a string.");
-        $value = (string) $value;
-        if (str_contains($value, "\n") || str_contains($value, "\r") || str_contains($value, "\0")) {
-            throw new \InvalidArgumentException("{$key} contains invalid control characters.");
-        }
-        if ($trim) $value = trim($value);
-        if ($value === '' && in_array($key, ['APP_NAME', 'APP_URL', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME', 'DB_CHARSET'], true)) {
-            throw new \InvalidArgumentException("{$key} is required.");
-        }
-        if (mb_strlen($value) > $max) throw new \InvalidArgumentException("{$key} exceeds its maximum length.");
-        return $value;
-    }
-
-    private function toPositiveInt(string $key, mixed $value): int
-    {
-        $parsed = filter_var($value, FILTER_VALIDATE_INT);
-        if ($parsed === false || $parsed < 1) throw new \InvalidArgumentException("{$key} must be a positive integer.");
-        return (int) $parsed;
-    }
-
-    private function toBool(string $key, mixed $value): bool
-    {
-        if (is_bool($value)) return $value;
-        if (is_int($value) && ($value === 0 || $value === 1)) return $value === 1;
-        if (is_string($value)) {
-            $value = strtolower(trim($value));
-            if (in_array($value, ['true', '1', 'yes', 'on'], true)) return true;
-            if (in_array($value, ['false', '0', 'no', 'off', ''], true)) return false;
-        }
-        throw new \InvalidArgumentException("{$key} must be true or false.");
-    }
-
-    private function url(string $key, mixed $value, bool $optional): string
-    {
-        $value = trim((string) $value);
-        if ($optional && $value === '') return '';
-        if (filter_var($value, FILTER_VALIDATE_URL) === false || !preg_match('~^https?://~i', $value)) {
-            throw new \InvalidArgumentException("{$key} must be a valid HTTP(S) URL.");
-        }
-        return rtrim($value, '/');
-    }
-
-    private function timezone(string $value): string
-    {
-        $value = trim($value);
-        if (!in_array($value, \DateTimeZone::listIdentifiers(), true)) throw new \InvalidArgumentException('APP_TIMEZONE is invalid.');
-        return $value;
-    }
-
-    private function sameSite(string $key, mixed $value): string
-    {
-        $value = ucfirst(strtolower(trim((string) $value)));
-        if (!in_array($value, ['Lax', 'Strict', 'None'], true)) throw new \InvalidArgumentException("{$key} must be Lax, Strict, or None.");
-        return $value;
-    }
-
-    private function origins(string $value): string
-    {
-        $origins = array_values(array_filter(array_map('trim', explode(',', $value))));
-        foreach ($origins as $origin) {
-            if ($origin === '*') continue;
-            if (filter_var($origin, FILTER_VALIDATE_URL) === false || !preg_match('~^https?://~i', $origin)) {
-                throw new \InvalidArgumentException('CORS_ALLOWED_ORIGINS contains an invalid URL.');
-            }
-        }
-        return implode(',', $origins);
     }
 
     private function removeDirectory(string $directory): void

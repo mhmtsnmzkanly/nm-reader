@@ -11,16 +11,12 @@ declare(strict_types=1);
 require __DIR__ . '/../../vendor/autoload.php';
 
 use App\Config;
-use Dotenv\Dotenv;
 use App\Repositories\BlogRepository;
 use App\Repositories\AdminConsoleRepository;
 use App\Services\EntityIdService;
 
 $basePath = dirname(__DIR__, 2);
-if (file_exists($basePath . '/.env')) {
-    $dotenv = Dotenv::createImmutable($basePath);
-    $dotenv->load();
-}
+Config::loadEnvironment($basePath);
 
 $container = require __DIR__ . '/../dependencies.php';
 /** @var BlogRepository $blogs */
