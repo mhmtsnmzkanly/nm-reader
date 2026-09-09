@@ -27,7 +27,7 @@ export const defaultSiteConfig: SiteConfig = {
   site_logo: '/assets/img/logo-header.svg',
   logo_url: '/assets/img/logo-footer.svg',
   favicon_url: '/favicon.ico',
-  default_profile_image: '/assets/img/default-profile.png',
+  default_profile_image: '/assets/img/default-profile.svg',
   default_content_cover_image: '/assets/img/covers/placeholder.svg',
 };
 

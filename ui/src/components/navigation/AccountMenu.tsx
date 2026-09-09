@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { usePreferences } from '../../contexts/PreferencesContext';
 import { useNotifications } from '../../contexts/NotificationsContext';
+import { Avatar } from '../profile/Avatar';
 
 export const AccountMenu: React.FC = () => {
   const { user, roles, permissions, isAuthenticated, logout, openAuthModal } = useAuth();
@@ -61,13 +62,13 @@ export const AccountMenu: React.FC = () => {
         className="flex items-center gap-2 p-0.5 rounded-full ring-1 ring-[var(--border-color)] hover:ring-[var(--accent-color)] transition-all cursor-pointer focus:outline-none"
         aria-label="User account menu"
       >
-        <div className="w-8 h-8 rounded-full overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--accent-color)] font-serif font-bold text-xs">
-          {user.profile_image ? (
-            <img src={user.profile_image} alt={user.username} className="w-full h-full object-cover" />
-          ) : (
-            (user.username || 'U').substring(0, 2).toUpperCase()
-          )}
-        </div>
+        <Avatar
+          src={user.profile_image}
+          alt={user.username}
+          name={user.username}
+          size="sm"
+          className="border-0"
+        />
       </button>
 
       {isOpen && (

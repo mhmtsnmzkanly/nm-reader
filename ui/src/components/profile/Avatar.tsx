@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
+import { useSiteConfig } from '../../contexts/SiteConfigContext';
 
 type AvatarProps = {
   src?: string | null;
@@ -19,6 +20,11 @@ export const Avatar: React.FC<AvatarProps> = ({
   ring = false,
 }) => {
   const [hasError, setHasError] = useState(false);
+  const { default_profile_image: defaultProfileImage } = useSiteConfig();
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src, defaultProfileImage]);
 
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',
@@ -41,13 +47,15 @@ export const Avatar: React.FC<AvatarProps> = ({
     ? 'ring-4 ring-[var(--bg-card)] shadow-xl'
     : 'border border-[var(--border-color)]';
 
-  if (src && !hasError) {
+  const imageSrc = src || defaultProfileImage || '/assets/img/default-profile.svg';
+
+  if (imageSrc && !hasError) {
     return (
       <div
         className={`relative inline-block rounded-full overflow-hidden shrink-0 bg-[var(--bg-tertiary)] select-none ${sizeClasses[size]} ${ringClass} ${className}`}
       >
         <img
-          src={src}
+          src={imageSrc}
           alt={alt || name || 'Avatar'}
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover"

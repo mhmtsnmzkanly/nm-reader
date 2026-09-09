@@ -1044,6 +1044,7 @@ final class Config
             $group->get("/comments", [AdminModerationController::class, "comments"])->add($perm(["admin.panel.access"]));
             $group->delete("/comments/{id:[0-9]+}", [AdminModerationController::class, "deleteComment"])->add(new CriticalActionMiddleware())->add($perm(["admin.comment.delete"]));
             $group->put("/comments/{id:[0-9]+}/moderation", [AdminModerationController::class, "moderateComment"])->add(new CriticalActionMiddleware())->add($perm(["admin.comment.delete"]));
+            $group->put("/users/{id}/profile", [AdminUsersController::class, "updateUserProfile"])->add(new CriticalActionMiddleware())->add($perm(["admin.users.manage"]));
             $group->put("/users/{id}", [AdminUsersController::class, "updateUser"])->add(new CriticalActionMiddleware())->add($perm(["admin.users.manage"]));
             $group->get("/rbac/roles", [AdminUsersController::class, "rbacRoles"])->add($perm(["admin.panel.access"]));
             $group->get("/rbac/assignments", [AdminUsersController::class, "rbacAssignments"])->add($perm(["admin.panel.access"]));

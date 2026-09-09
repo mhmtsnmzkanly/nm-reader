@@ -199,6 +199,46 @@ final class AdminUserService extends AdminConsoleServiceBase
         return ['id' => $id, 'updated' => true];
     }
 
+    /**
+     * Update profile fields without touching moderation restrictions.
+     * The legacy updateUser() contract also accepts ban fields and therefore
+     * intentionally remains separate from the user detail page editor.
+     */
+    public function updateUserProfile(string $id, array $payload, string $moderatorId): void
+    {
+        $email = array_key_exists('email', $payload) ? trim((string) $payload['email']) : null;
+        if ($email !== null && ($email === '' || !Validator::validEmail($email))) {
+            throw new \InvalidArgumentException('Invalid email format');
+        }
+        if ($email !== null && !$this->repo->isEmailAvailableForUser($id, $email)) {
+            throw new \InvalidArgumentException('Email address is already in use');
+        }
+
+        $displayName = array_key_exists('display_name', $payload)
+            ? Validator::sanitizeText((string) $payload['display_name'])
+            : null;
+        if ($displayName !== null && mb_strlen($displayName) > 50) {
+            throw new \InvalidArgumentException('display_name must be at most 50 characters');
+        }
+
+        $bio = array_key_exists('bio', $payload)
+            ? Validator::sanitizeMultilineText((string) $payload['bio'])
+            : null;
+        if ($bio !== null && mb_strlen($bio) > 1000) {
+            throw new \InvalidArgumentException('bio must be at most 1000 characters');
+        }
+
+        $role = array_key_exists('role', $payload) ? trim((string) $payload['role']) : '';
+        if ($role !== '') {
+            $idMap = (array) (Config::getSettings()['rbac']['id_map'] ?? []);
+            if (!array_key_exists($role, $idMap)) {
+                throw new \InvalidArgumentException('Invalid role');
+            }
+        }
+
+        $this->repo->updateUserProfile($id, $role, $moderatorId, $email, $displayName, $bio);
+    }
+
     public function listRbacRoles(): array
     {
         $items = $this->repo->listRolesWithPermissions();

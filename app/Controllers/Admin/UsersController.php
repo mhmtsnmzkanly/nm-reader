@@ -80,6 +80,23 @@ final class UsersController extends AdminController
             }
         }
 
+    public function updateUserProfile(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+        {
+            try {
+                $payload = (array) $request->getParsedBody();
+                $this->usersService->updateUserProfile(
+                    (string) $args['id'],
+                    $payload,
+                    (string) $request->getAttribute('user_id')
+                );
+                return ResponseHelper::success(['updated' => true]);
+            } catch (\InvalidArgumentException $exception) {
+                return ResponseHelper::error(400, $exception->getMessage());
+            } catch (\DomainException $exception) {
+                return ResponseHelper::error(404, $exception->getMessage());
+            }
+        }
+
     public function listViolations(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
             [$page, $perPage] = $this->pagination($request);

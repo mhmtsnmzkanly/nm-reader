@@ -441,7 +441,7 @@
                 <th>Rol</th>
                 <th>Hesap Durumu</th>
                 <th>Kayıt Tarihi</th>
-                <th class="text-end">İşlemler</th>
+                <th class="text-end">İncele</th>
               </tr>
             </thead>
             <tbody id="panel-users-list"></tbody>
@@ -843,7 +843,7 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Varsayılan Profil Resmi</label>
-                <input type="text" class="form-control" data-model="config.default_profile_image" maxlength="255" placeholder="/assets/img/default-profile.png">
+                <input type="text" class="form-control" data-model="config.default_profile_image" maxlength="255" placeholder="/assets/img/default-profile.svg">
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Varsayılan İçerik Kapak Resmi</label>
@@ -997,6 +997,18 @@
   <div class="app-content p-4"><div class="container-fluid"><div id="panel-config-env-page"><div class="text-secondary">Ortam değişkenleri yükleniyor...</div></div></div></div>
 </template>
 
+<template id="tpl-panel-user-detail">
+  <div id="panel-user-detail-page"></div>
+</template>
+
+<template id="tpl-panel-user-penalty">
+  <div id="panel-user-penalty-page"></div>
+</template>
+
+<template id="tpl-panel-user-wallet">
+  <div id="panel-user-wallet-page"></div>
+</template>
+
 <template id="tpl-panel-action">
   <div id="panel-action-page"></div>
 </template>
@@ -1020,7 +1032,7 @@
   const loader = document.getElementById('panel-bootstrap-loader');
 
   try {
-    await import('/assets/js/admin.js?2');
+    await import('/assets/js/admin.js?3');
     loader?.remove();
   } catch (error) {
     console.error('Admin panel yüklenemedi:', error);

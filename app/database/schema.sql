@@ -975,7 +975,7 @@ INSERT INTO `system_settings` (`group`, `key`, `type`, `value`) VALUES
 ('appearance', 'site_logo', 'string', '/assets/img/logo-header.svg'),
 ('appearance', 'logo_url', 'string', '/assets/img/logo-footer.svg'),
 ('appearance', 'favicon_url', 'string', '/favicon.ico'),
-('appearance', 'default_profile_image', 'string', '/assets/img/default-profile.png'),
+('appearance', 'default_profile_image', 'string', '/assets/img/default-profile.svg'),
 ('appearance', 'default_content_cover_image', 'string', '/assets/img/covers/placeholder.svg'),
 ('security', 'maintenance_mode', 'bool', 'false'),
 ('security', 'maintenance_whitelist_ips', 'json', '["127.0.0.1", "::1"]'),

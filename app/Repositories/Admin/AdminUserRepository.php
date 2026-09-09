@@ -428,6 +428,69 @@ final class AdminUserRepository extends AdminRepositoryBase
         }
     }
 
+    public function updateUserProfile(
+        string $id,
+        string $role,
+        string $moderatorId,
+        ?string $email = null,
+        ?string $displayName = null,
+        ?string $bio = null
+    ): void {
+        $this->pdo->beginTransaction();
+        try {
+            $userStmt = $this->pdo->prepare(
+                'SELECT id, roles FROM users WHERE id = :user_id LIMIT 1 FOR UPDATE'
+            );
+            $userStmt->execute(['user_id' => $id]);
+            $currentUser = $userStmt->fetch();
+            if (!is_array($currentUser)) {
+                throw new \DomainException('User not found');
+            }
+
+            $parts = [];
+            $params = ['id' => $id];
+            if ($email !== null) {
+                $parts[] = 'email = :email';
+                $params['email'] = $email;
+            }
+            if ($displayName !== null) {
+                $parts[] = 'display_name = :display_name';
+                $params['display_name'] = $displayName === '' ? null : $displayName;
+            }
+            if ($bio !== null) {
+                $parts[] = 'bio = :bio';
+                $params['bio'] = $bio === '' ? null : $bio;
+            }
+            if ($parts !== []) {
+                $this->pdo->prepare('UPDATE users SET ' . implode(', ', $parts) . ' WHERE id = :id')->execute($params);
+            }
+
+            if ($role !== '') {
+                $idMap = (array) (\App\Config::getSettings()['rbac']['id_map'] ?? []);
+                $roleId = (string) ($idMap[$role] ?? '');
+                $oldRoles = (string) ($currentUser['roles'] ?? '');
+                if ($roleId !== '' && $roleId !== $oldRoles) {
+                    $this->pdo->prepare('UPDATE users SET roles = :role_id WHERE id = :user_id')
+                        ->execute(['role_id' => $roleId, 'user_id' => $id]);
+                    $audit = $this->pdo->prepare(
+                        'INSERT INTO admin_actions (moderator_user_id, target_type, target_id, action, reason, created_at)
+                         VALUES (:mod, "user", :uid, "role_change", :reason, NOW())'
+                    );
+                    $audit->execute([
+                        'mod' => $moderatorId,
+                        'uid' => $id,
+                        'reason' => json_encode(['diff' => ['roles' => ['before' => $oldRoles, 'after' => $roleId]]]),
+                    ]);
+                }
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
     /**
      * Record a disciplinary violation and apply its optional restriction.
      *

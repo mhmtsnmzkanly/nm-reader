@@ -127,6 +127,7 @@ $endpoints = [
     ['POST', '/admin/series_tags', 'Admin Create Tag', 'Admin', true],
     ['GET', '/admin/users', 'Admin List Users', 'Admin', true],
     ['PUT', '/admin/users/{id}', 'Admin Update User Record', 'Admin', true],
+    ['PUT', '/admin/users/{id}/profile', 'Admin Update User Profile', 'Admin', true],
     ['GET', '/admin/users/{id}/overview', 'Admin User Moderation Overview', 'Admin', true],
     ['GET', '/admin/users/{id}/comments', 'Admin List User Comments', 'Admin', true],
     ['GET', '/admin/users/{id}/blogs', 'Admin List User Blogs', 'Admin', true],

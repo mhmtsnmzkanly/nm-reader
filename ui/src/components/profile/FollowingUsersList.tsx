@@ -14,9 +14,11 @@ import {
 import { userService } from '../../services';
 import { FollowingUserItem } from '../../types/api';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { useSiteConfig } from '../../contexts/SiteConfigContext';
 
 export const FollowingUsersList: React.FC = () => {
   const { t } = usePreferences();
+  const { default_profile_image: defaultProfileImage } = useSiteConfig();
   const [users, setUsers] = useState<FollowingUserItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [togglingUsername, setTogglingUsername] = useState<string | null>(null);
@@ -121,9 +123,9 @@ export const FollowingUsersList: React.FC = () => {
                     className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-90 transition-opacity"
                   >
                     <div className="w-12 h-12 rounded-2xl overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-color)] shrink-0">
-                      {user.avatar ? (
+                      {user.avatar || defaultProfileImage ? (
                         <img
-                          src={user.avatar}
+                          src={user.avatar || defaultProfileImage}
                           alt={user.display_name || user.username}
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover"

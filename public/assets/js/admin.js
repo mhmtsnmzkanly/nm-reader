@@ -111,6 +111,9 @@ const store = createStore({
   userBlogsMeta: { page: 1, total_pages: 1, total: 0 },
   userViolationsList: [],
   userViolationsMeta: { page: 1, total_pages: 1, total: 0 },
+  userWalletId: null,
+  userWallet: null,
+  userWalletMeta: { page: 1, total_pages: 1, total: 0 },
   blogsList: [],
   blogsMeta: { page: 1, total_pages: 1, total: 0 },
   commentsList: [],
@@ -142,7 +145,7 @@ const store = createStore({
       site_logo: '/assets/img/logo-header.svg',
       logo_url: '/assets/img/logo-footer.svg',
       favicon_url: '/favicon.ico',
-      default_profile_image: '/assets/img/default-profile.png',
+      default_profile_image: '/assets/img/default-profile.svg',
       default_content_cover_image: '/assets/img/covers/placeholder.svg',
       maintenance_mode: false,
       maintenance_whitelist_text: Array.isArray(initial.maintenance_whitelist_ips) ? initial.maintenance_whitelist_ips.join('\n') : '127.0.0.1\n::1',
@@ -279,7 +282,7 @@ function renderPager(id, meta, previousHandler, nextHandler) {
   if (!target) return;
   const page = Number(meta?.page || 1);
   const totalPages = Math.max(1, Number(meta?.total_pages || 1));
-  target.innerHTML = `<div class="d-flex justify-content-between align-items-center"><button class="btn btn-sm btn-outline-secondary" data-on-click="${previousHandler}" ${page <= 1 ? 'disabled' : ''}>Önceki</button><span class="small text-secondary">Sayfa ${page} / ${totalPages} · ${Number(meta?.total || 0)} kayıt</span><button class="btn btn-sm btn-outline-secondary" data-on-click="${nextHandler}" ${page >= totalPages ? 'disabled' : ''}>Sonraki</button></div>`;
+  target.innerHTML = `<div class="d-flex justify-content-between align-items-center"><button class="btn btn-sm btn-outline-secondary" data-on-click="${previousHandler}" ${page <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left me-1"></i>Önceki</button><span class="small text-secondary">Sayfa ${page} / ${totalPages} · ${Number(meta?.total || 0)} kayıt</span><button class="btn btn-sm btn-outline-secondary" data-on-click="${nextHandler}" ${page >= totalPages ? 'disabled' : ''}>Sonraki<i class="bi bi-chevron-right ms-1"></i></button></div>`;
 }
 
 function renderDashboardTables() {
@@ -315,7 +318,7 @@ function renderSeriesTable() {
 }
 
 function renderUsersTable() {
-  setTableRows('panel-users-list', (store.get('usersList') || []).map(user => `<tr><td class="fw-bold"><i class="bi bi-person me-1 text-secondary"></i>${escapeHtml(user.username)}</td><td class="text-secondary">${escapeHtml(user.email)}</td><td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${escapeHtml(user.role_names)}</span></td><td><span class="badge ${escapeHtml(user.account_badge)}">${escapeHtml(user.account_status)}</span></td><td class="small text-secondary">${escapeHtml(user.created_at)}</td><td class="text-end">${hasPermission('admin.users.manage') ? `<a class="btn btn-xs btn-outline-primary me-1" href="/panel/action/user-detail/${encodeURIComponent(user.id)}" data-panel-link><i class="bi bi-person-lines-fill me-1"></i>İncele</a><button class="btn btn-xs btn-outline-secondary me-1" data-on-click="openEditUserModal" data-id="${escapeHtml(user.id)}"><i class="bi bi-pencil me-1"></i>Düzenle</button>` : ''}${hasPermission('admin.wallet.view') ? `<button class="btn btn-xs btn-outline-warning" data-on-click="openWalletModal" data-id="${escapeHtml(user.id)}"><i class="bi bi-cash-coin me-1"></i>Bakiye</button>` : ''}</td></tr>`).join(''), 6);
+  setTableRows('panel-users-list', (store.get('usersList') || []).map(user => `<tr><td class="fw-bold"><i class="bi bi-person me-1 text-secondary"></i>${escapeHtml(user.username)}</td><td class="text-secondary">${escapeHtml(user.email)}</td><td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${escapeHtml(user.role_names)}</span></td><td><span class="badge ${escapeHtml(user.account_badge)}">${escapeHtml(user.account_status)}</span></td><td class="small text-secondary">${escapeHtml(user.created_at)}</td><td class="text-end">${hasPermission('admin.users.manage') ? `<a class="btn btn-sm btn-outline-primary" href="/panel/user/${encodeURIComponent(user.id)}" data-panel-link><i class="bi bi-person-lines-fill me-1"></i>İncele</a>` : '<span class="text-secondary small">Yetki yok</span>'}</td></tr>`).join(''), 6);
   renderPager('panel-users-pager', store.get('usersMeta'), 'previousUsersPage', 'nextUsersPage');
 }
 
@@ -461,13 +464,22 @@ function userDetailFilters(overlay, userId) {
 
 async function loadUserDetailPage(userId) {
   if (!userId) throw new Error('Kullanıcı kimliği bulunamadı');
-  const response = await api(`/users/${encodeURIComponent(userId)}/overview`);
+  const [response, rolesResponse, walletResponse] = await Promise.all([
+    api(`/users/${encodeURIComponent(userId)}/overview`),
+    hasPermission('admin.panel.access') ? api('/rbac/roles').catch(() => null) : Promise.resolve(null),
+    hasPermission('admin.wallet.view') ? api(`/wallets/${encodeURIComponent(userId)}`).catch(() => null) : Promise.resolve(null)
+  ]);
   const overview = response?.data || {};
   const user = overview.user || {};
   const stats = overview.stats || {};
+  const wallet = walletResponse?.data || {};
+  const roles = responseItems(rolesResponse);
+  const currentRole = String(user.role_names || 'user').split(',')[0].trim() || 'user';
+  const roleOptions = roles.map(role => `<option value="${escapeHtml(role.slug)}" ${role.slug === currentRole ? 'selected' : ''}>${escapeHtml(role.name || role.slug)}</option>`).join('')
+    || `<option value="${escapeHtml(currentRole)}" selected>${escapeHtml(currentRole)}</option>`;
   store.batch(() => {
     store.set('userDetailId', userId);
-    store.set('userDetail', overview);
+    store.set('userDetail', { ...overview, wallet });
     store.set('userCommentsList', []);
     store.set('userBlogsList', []);
     store.set('userViolationsList', []);
@@ -479,18 +491,28 @@ async function loadUserDetailPage(userId) {
     const level = userViolationLevel(item.level);
     return `<span class="badge ${level[1]} me-1 mb-1">${escapeHtml(item.type || 'general')}: ${escapeHtml(level[0])}${item.ends_at ? ` · ${escapeHtml(item.ends_at)}` : ''}</span>`;
   }).join('') || '<span class="text-secondary">Aktif işlem kısıtlaması yok</span>';
-  const profileImage = safeLocalUrl(user.profile_image || store.get('config')?.default_profile_image || '/assets/img/default-profile.png');
-  const target = document.getElementById('panel-action-page');
+  const profileImage = safeLocalUrl(user.profile_image || store.get('config')?.default_profile_image || '/assets/img/default-profile.svg');
+  const target = document.getElementById('panel-user-detail-page');
   if (!target) return;
-  const overlay = openDialog(
-    `Kullanıcı: @${user.username || userId}`,
-    `<div class="row g-4 mb-4"><div class="col-lg-8"><div class="d-flex gap-3 align-items-center"><img src="${profileImage}" alt="" width="72" height="72" class="rounded-circle object-fit-cover border"><div><h4 class="mb-1">${escapeHtml(user.display_name || user.username || userId)}</h4><div class="text-secondary">@${escapeHtml(user.username || userId)} · ${escapeHtml(user.email || '-')}</div><div class="mt-2"><span class="badge ${user.is_banned ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}">${user.is_banned ? 'Aktif kısıtlama' : 'Etkileşim açık'}</span> <span class="badge bg-primary-subtle text-primary">${escapeHtml(user.role_names || 'user')}</span></div></div></div>${user.bio ? `<p class="mt-3 mb-0 text-secondary">${escapeHtml(user.bio)}</p>` : ''}</div><div class="col-lg-4 d-flex justify-content-lg-end align-items-start"><a class="btn btn-danger btn-lg" href="/panel/action/user-penalty/${encodeURIComponent(userId)}" data-panel-link><i class="bi bi-shield-exclamation me-2"></i>CEZA VER</a></div></div><div class="row g-3 mb-4"><div class="col-md-4"><div class="card bg-body-tertiary border-0 h-100"><div class="card-body"><div class="small text-secondary">Yorumlar</div><div class="fs-3 fw-bold">${Number(stats.comments_total || 0).toLocaleString('tr-TR')}</div></div></div></div><div class="col-md-4"><div class="card bg-body-tertiary border-0 h-100"><div class="card-body"><div class="small text-secondary">Bloglar</div><div class="fs-3 fw-bold">${Number(stats.blogs_total || 0).toLocaleString('tr-TR')}</div></div></div></div><div class="col-md-4"><div class="card bg-body-tertiary border-0 h-100"><div class="card-body"><div class="small text-secondary">Cezalar</div><div class="fs-3 fw-bold">${Number(stats.violations_total || 0).toLocaleString('tr-TR')}</div></div></div></div></div><div class="mb-4"><h6 class="text-uppercase small text-secondary mb-2">Aktif kısıtlamalar</h6>${restrictions}</div><ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button type="button" class="nav-link active" data-user-tab="comments">Yorumlar</button></li><li class="nav-item"><button type="button" class="nav-link" data-user-tab="blogs">Bloglar</button></li><li class="nav-item"><button type="button" class="nav-link" data-user-tab="violations">Ceza geçmişi</button></li></ul><section data-user-section="comments"><div class="row g-2 mb-3"><div class="col-lg-5"><input id="panel-user-comments-search" class="form-control" placeholder="Yorumlarda ara..."></div><div class="col-md-3"><select id="panel-user-comments-target" class="form-select"><option value="">Tüm hedefler</option><option value="series">İçerik</option><option value="chapter">Bölüm</option><option value="blog">Blog</option></select></div><div class="col-md-2"><select id="panel-user-comments-status" class="form-select"><option value="">Tüm durumlar</option><option value="approved">Onaylı</option><option value="pending">Bekliyor</option><option value="hidden">Gizli</option><option value="deleted">Silindi</option></select></div><div class="col-md-2"><select id="panel-user-comments-sort" class="form-select"><option value="newest">Yeni</option><option value="oldest">Eski</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Yorum</th><th>Hedef</th><th>Durum</th><th>Oylar</th><th>Tarih</th></tr></thead><tbody id="panel-user-comments-list"></tbody></table></div><div id="panel-user-comments-pager" class="mt-3"></div></section><section data-user-section="blogs" hidden><div class="row g-2 mb-3"><div class="col-lg-6"><input id="panel-user-blogs-search" class="form-control" placeholder="Bloglarda ara..."></div><div class="col-md-3"><select id="panel-user-blogs-status" class="form-select"><option value="">Tüm durumlar</option><option value="draft">Taslak</option><option value="pending">Bekliyor</option><option value="published">Yayınlandı</option><option value="hidden">Gizli</option></select></div><div class="col-md-3"><select id="panel-user-blogs-sort" class="form-select"><option value="newest">Yeni</option><option value="oldest">Eski</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Başlık</th><th>Slug</th><th>Durum</th><th>Tarih</th></tr></thead><tbody id="panel-user-blogs-list"></tbody></table></div><div id="panel-user-blogs-pager" class="mt-3"></div></section><section data-user-section="violations" hidden><div class="row g-2 mb-3"><div class="col-md-6"><select id="panel-user-violations-level" class="form-select"><option value="">Tüm seviyeler</option><option value="warning">Uyarı</option><option value="removal">İçerik kaldırma</option><option value="temporary">Süreli engel</option><option value="permanent">Kalıcı engel</option></select></div><div class="col-md-6"><select id="panel-user-violations-scope" class="form-select"><option value="">Tüm kapsamlar</option><option value="general">Genel</option><option value="comment">Yorum</option><option value="blog">Blog</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Seviye</th><th>İşlem / Hedef</th><th>Gerekçe</th><th>Moderatör</th><th>Tarih</th></tr></thead><tbody id="panel-user-violations-list"></tbody></table></div><div id="panel-user-violations-pager" class="mt-3"></div></section>`,
-    async () => {},
-    'modal-xl'
-  );
-  overlay.querySelector('button[type="submit"]')?.remove();
-  overlay.querySelector('.card-footer')?.remove();
-  userDetailFilters(overlay, userId);
+  target.innerHTML = `<div class="app-content-header py-3 px-4 bg-body border-bottom"><div class="container-fluid d-flex flex-wrap align-items-center gap-3"><a class="btn btn-outline-secondary btn-lg text-nowrap" href="/panel/users" data-panel-link><i class="bi bi-arrow-left me-2"></i>Kullanıcılara dön</a><div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel" data-panel-link><i class="bi bi-speedometer2 me-1"></i>Panel</a></li><li class="breadcrumb-item"><a href="/panel/users" data-panel-link><i class="bi bi-people me-1"></i>Kullanıcılar</a></li><li class="breadcrumb-item active" aria-current="page">@${escapeHtml(user.username || userId)}</li></ol></nav><h3 class="mb-0 fw-bold fs-4"><i class="bi bi-person-vcard me-2 text-primary"></i>Kullanıcı detayı</h3><p class="text-secondary small mb-0">Profil, içerik, cüzdan ve moderasyon geçmişi</p></div></div></div><div class="app-content p-4"><div class="container-fluid"><div class="row g-4 mb-4"><div class="col-xl-8"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="d-flex flex-wrap align-items-center gap-3"><img src="${profileImage}" alt="" width="88" height="88" class="rounded-circle object-fit-cover border border-2"><div><h4 class="mb-1">${escapeHtml(user.display_name || user.username || userId)}</h4><div class="text-secondary"><i class="bi bi-at me-1"></i>${escapeHtml(user.username || userId)} <span class="mx-1">·</span> <i class="bi bi-envelope me-1"></i>${escapeHtml(user.email || '-')}</div><div class="mt-2"><span class="badge ${user.is_banned ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'}"><i class="bi ${user.is_banned ? 'bi-shield-exclamation' : 'bi-shield-check'} me-1"></i>${user.is_banned ? 'Aktif kısıtlama' : 'Etkileşim açık'}</span> <span class="badge bg-primary-subtle text-primary"><i class="bi bi-person-badge me-1"></i>${escapeHtml(user.role_names || 'user')}</span></div></div></div><div class="mt-3"><h6 class="text-uppercase small text-secondary mb-2"><i class="bi bi-shield-lock me-1"></i>Aktif kısıtlamalar</h6>${restrictions}</div></div></div></div><div class="col-xl-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bi bi-pencil-square me-2 text-primary"></i>Profil bilgileri</h6></div><div class="card-body"><form id="panel-user-profile-form"><div class="mb-3"><label class="form-label small fw-semibold">Görünen ad</label><input class="form-control" name="display_name" maxlength="50" value="${escapeHtml(user.display_name || '')}"></div><div class="mb-3"><label class="form-label small fw-semibold">E-posta</label><input type="email" class="form-control" name="email" value="${escapeHtml(user.email || '')}" required></div><div class="mb-3"><label class="form-label small fw-semibold">Rol</label><select class="form-select" name="role">${roleOptions}</select></div><div class="mb-3"><label class="form-label small fw-semibold">Biyografi</label><textarea class="form-control" name="bio" maxlength="1000" rows="4">${escapeHtml(user.bio || '')}</textarea></div><button type="submit" class="btn btn-primary w-100"><i class="bi bi-save me-2"></i>Profili kaydet</button></form></div></div></div></div><div class="row g-3 mb-4"><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-start"><div><div class="small text-secondary"><i class="bi bi-chat-square-text me-1"></i>Yorumlar</div><div class="fs-3 fw-bold">${Number(stats.comments_total || 0).toLocaleString('tr-TR')}</div></div><i class="bi bi-chat-square-text fs-3 text-info opacity-75"></i></div></div></div></div><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-start"><div><div class="small text-secondary"><i class="bi bi-newspaper me-1"></i>Bloglar</div><div class="fs-3 fw-bold">${Number(stats.blogs_total || 0).toLocaleString('tr-TR')}</div></div><i class="bi bi-newspaper fs-3 text-warning opacity-75"></i></div></div></div></div><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-start gap-2"><div><div class="small text-secondary"><i class="bi bi-shield-exclamation me-1"></i>Cezalar</div><div class="fs-3 fw-bold">${Number(stats.violations_total || 0).toLocaleString('tr-TR')}</div></div>${hasPermission('admin.users.manage') ? `<a class="btn btn-sm btn-outline-danger text-nowrap" href="/panel/user/${encodeURIComponent(userId)}/penalty" data-panel-link title="Ceza ver"><i class="bi bi-shield-exclamation me-1"></i>Ceza ver</a>` : ''}</div></div></div></div><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-start gap-2"><div><div class="small text-secondary"><i class="bi bi-coin me-1"></i>Bakiye</div><div class="fs-3 fw-bold text-warning">${Number(wallet.balance_coin || 0).toLocaleString('tr-TR')} <small class="fs-6">coin</small></div></div>${hasPermission('admin.wallet.view') ? `<a class="btn btn-sm btn-outline-warning text-nowrap" href="/panel/user/${encodeURIComponent(userId)}/wallet" data-panel-link title="Wallet"><i class="bi bi-wallet2 me-1"></i>Wallet</a>` : ''}</div></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-body p-4"><ul class="nav nav-tabs mb-3" role="tablist"><li class="nav-item"><button type="button" class="nav-link active" data-user-tab="comments"><i class="bi bi-chat-square-text me-1"></i>Yorumlar</button></li><li class="nav-item"><button type="button" class="nav-link" data-user-tab="blogs"><i class="bi bi-newspaper me-1"></i>Bloglar</button></li><li class="nav-item"><button type="button" class="nav-link" data-user-tab="violations"><i class="bi bi-shield-exclamation me-1"></i>Ceza geçmişi</button></li></ul><section data-user-section="comments"><div class="row g-2 mb-3"><div class="col-lg-5"><input id="panel-user-comments-search" class="form-control" placeholder="Yorumlarda ara..."></div><div class="col-md-3"><select id="panel-user-comments-target" class="form-select"><option value="">Tüm hedefler</option><option value="series">İçerik</option><option value="chapter">Bölüm</option><option value="blog">Blog</option></select></div><div class="col-md-2"><select id="panel-user-comments-status" class="form-select"><option value="">Tüm durumlar</option><option value="approved">Onaylı</option><option value="pending">Bekliyor</option><option value="hidden">Gizli</option><option value="deleted">Silindi</option></select></div><div class="col-md-2"><select id="panel-user-comments-sort" class="form-select"><option value="newest">Yeni</option><option value="oldest">Eski</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Yorum</th><th>Hedef</th><th>Durum</th><th>Oylar</th><th>Tarih</th></tr></thead><tbody id="panel-user-comments-list"></tbody></table></div><div id="panel-user-comments-pager" class="mt-3"></div></section><section data-user-section="blogs" hidden><div class="row g-2 mb-3"><div class="col-lg-6"><input id="panel-user-blogs-search" class="form-control" placeholder="Bloglarda ara..."></div><div class="col-md-3"><select id="panel-user-blogs-status" class="form-select"><option value="">Tüm durumlar</option><option value="draft">Taslak</option><option value="pending">Bekliyor</option><option value="published">Yayınlandı</option><option value="hidden">Gizli</option></select></div><div class="col-md-3"><select id="panel-user-blogs-sort" class="form-select"><option value="newest">Yeni</option><option value="oldest">Eski</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Başlık</th><th>Slug</th><th>Durum</th><th>Tarih</th></tr></thead><tbody id="panel-user-blogs-list"></tbody></table></div><div id="panel-user-blogs-pager" class="mt-3"></div></section><section data-user-section="violations" hidden><div class="row g-2 mb-3"><div class="col-md-6"><select id="panel-user-violations-level" class="form-select"><option value="">Tüm seviyeler</option><option value="warning">Uyarı</option><option value="removal">İçerik kaldırma</option><option value="temporary">Süreli engel</option><option value="permanent">Kalıcı engel</option></select></div><div class="col-md-6"><select id="panel-user-violations-scope" class="form-select"><option value="">Tüm kapsamlar</option><option value="general">Genel</option><option value="comment">Yorum</option><option value="blog">Blog</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Seviye</th><th>İşlem / Hedef</th><th>Gerekçe</th><th>Moderatör</th><th>Tarih</th></tr></thead><tbody id="panel-user-violations-list"></tbody></table></div><div id="panel-user-violations-pager" class="mt-3"></div></section></div></div></div></div>`;
+  const profileForm = target.querySelector('#panel-user-profile-form');
+  profileForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = profileForm.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    try {
+      await api(`/users/${encodeURIComponent(userId)}/profile`, {
+        method: 'PUT',
+        body: Object.fromEntries(new FormData(profileForm).entries())
+      });
+      showToast('Profil bilgileri güncellendi');
+      await loadUserDetailPage(userId);
+    } catch (error) {
+      showToast(error.message, 'danger');
+      if (submit) submit.disabled = false;
+    }
+  });
+  userDetailFilters(target, userId);
   renderUserCommentsTable();
   renderUserBlogsTable();
   renderUserViolationsTable();
@@ -508,28 +530,32 @@ async function loadUserPenaltyPage(userId) {
     overview = (await api(`/users/${encodeURIComponent(userId)}/overview`))?.data || {};
   }
   const user = overview.user || {};
-  const overlay = openDialog(
-    `Ceza ver: @${user.username || userId}`,
-    `<div class="alert alert-info d-flex gap-2"><i class="bi bi-info-circle"></i><div>Beğeni ve oy işlemleri engellenmez. Buradaki kapsam yalnızca seçilen içerik, yorum veya blog oluşturma etkileşimlerini etkiler.</div></div><div class="row g-3"><div class="col-md-4"><label class="form-label">Hedef türü</label><select class="form-select" name="target_type" required><option value="comment">Yorum</option><option value="blog">Blog</option><option value="series">İçerik</option><option value="chapter">Bölüm</option><option value="system">Genel sistem</option></select></div><div class="col-md-4"><label class="form-label">Hedef ID</label><input class="form-control" name="target_id" maxlength="32" required></div><div class="col-md-4"><label class="form-label">Ceza seviyesi</label><select class="form-select" name="level" id="panel-user-penalty-level"><option value="warning">Uyarı</option><option value="removal">İçeriği kaldır</option><option value="temporary">Süreli engel</option><option value="permanent">Kalıcı engel</option></select></div><div class="col-md-4"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" name="auto_escalate" value="1" id="panel-user-penalty-auto" checked><label class="form-check-label" for="panel-user-penalty-auto">Geçmişe göre otomatik yükselt</label></div></div><div class="col-md-4"><label class="form-label">Bitiş (süreli ceza)</label><input type="datetime-local" class="form-control" name="ends_at"></div><div class="col-12"><label class="form-label">Gerekçe</label><textarea class="form-control" name="reason" rows="5" maxlength="1000" required></textarea></div></div>`,
-    async (formData, form) => {
-      const payload = Object.fromEntries(formData.entries());
+  const target = document.getElementById('panel-user-penalty-page');
+  if (!target) return;
+  target.innerHTML = `<div class="app-content-header py-3 px-4 bg-body border-bottom"><div class="container-fluid d-flex flex-wrap align-items-center gap-3"><a class="btn btn-outline-secondary btn-lg text-nowrap" href="/panel/user/${encodeURIComponent(userId)}" data-panel-link><i class="bi bi-arrow-left me-2"></i>Kullanıcıya dön</a><div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel" data-panel-link><i class="bi bi-speedometer2 me-1"></i>Panel</a></li><li class="breadcrumb-item"><a href="/panel/users" data-panel-link><i class="bi bi-people me-1"></i>Kullanıcılar</a></li><li class="breadcrumb-item"><a href="/panel/user/${encodeURIComponent(userId)}" data-panel-link><i class="bi bi-person-vcard me-1"></i>@${escapeHtml(user.username || userId)}</a></li><li class="breadcrumb-item active" aria-current="page">Ceza ver</li></ol></nav><h3 class="mb-0 fw-bold fs-4"><i class="bi bi-shield-exclamation me-2 text-danger"></i>Kullanıcıya ceza ver</h3><p class="text-secondary small mb-0">@${escapeHtml(user.username || userId)} için etkileşim kapsamını belirleyin.</p></div></div></div><div class="app-content p-4"><div class="container-fluid"><div class="row justify-content-center"><div class="col-xxl-9"><div class="alert alert-info d-flex gap-2 align-items-start shadow-sm"><i class="bi bi-info-circle-fill fs-5"></i><div><strong>Not:</strong> Beğeni ve oy işlemleri engellenmez. Ceza; seçilen içerik, yorum veya blog oluşturma gibi etkileşimleri etkiler.</div></div><form id="panel-user-penalty-form" class="card border-0 shadow-sm"><div class="card-header bg-transparent py-3"><h5 class="mb-0"><i class="bi bi-sliders me-2 text-primary"></i>Ceza ayarları</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-4"><label class="form-label fw-semibold">Hedef türü</label><select class="form-select" name="target_type" required><option value="comment">Yorum</option><option value="blog">Blog</option><option value="series">İçerik</option><option value="chapter">Bölüm</option><option value="system">Genel sistem</option></select></div><div class="col-md-4"><label class="form-label fw-semibold">Hedef ID</label><input class="form-control" name="target_id" maxlength="32" placeholder="İlgili içerik/yorum kimliği" required></div><div class="col-md-4"><label class="form-label fw-semibold">Ceza seviyesi</label><select class="form-select" name="level" id="panel-user-penalty-level"><option value="warning">Uyarı</option><option value="removal">İçeriği kaldır</option><option value="temporary">Süreli engel</option><option value="permanent">Kalıcı engel</option></select></div><div class="col-md-6"><div class="form-check form-switch mt-2"><input class="form-check-input" type="checkbox" name="auto_escalate" value="1" id="panel-user-penalty-auto" checked><label class="form-check-label" for="panel-user-penalty-auto"><i class="bi bi-graph-up-arrow me-1"></i>Geçmişe göre otomatik yükselt</label></div><div class="form-text">Açıkken sistem geçmişe göre uygun seviyeyi belirler.</div></div><div class="col-md-6"><label class="form-label fw-semibold">Bitiş <span class="text-secondary fw-normal">(süreli ceza)</span></label><input type="datetime-local" class="form-control" name="ends_at"></div><div class="col-12"><label class="form-label fw-semibold">Gerekçe</label><textarea class="form-control" name="reason" rows="6" maxlength="1000" placeholder="Kararın gerekçesini yazın" required></textarea><div class="form-text">En fazla 1000 karakter.</div></div></div></div><div class="card-footer bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2"><a class="btn btn-outline-secondary btn-lg" href="/panel/user/${encodeURIComponent(userId)}" data-panel-link><i class="bi bi-arrow-left me-2"></i>Vazgeç</a><button type="submit" class="btn btn-danger btn-lg"><i class="bi bi-shield-check me-2"></i>CEZAYI UYGULA</button></div></form></div></div></div></div>`;
+  const form = target.querySelector('#panel-user-penalty-form');
+  form?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = form.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    try {
+      const payload = Object.fromEntries(new FormData(form).entries());
       payload.auto_escalate = form.elements.auto_escalate.checked;
       payload.scope = violationScopeForTarget(payload.target_type);
       if (payload.auto_escalate) payload.level = 'warning';
       await api(`/users/${encodeURIComponent(userId)}/violations`, { method: 'POST', body: payload });
       showToast('Ceza kaydı oluşturuldu');
-      panelNavigate(`/panel/action/user-detail/${encodeURIComponent(userId)}`);
-    },
-    'modal-xl'
-  );
-  const form = overlay.querySelector('#panel-dialog-form');
+      panelNavigate(`/panel/user/${encodeURIComponent(userId)}`);
+    } catch (error) {
+      showToast(error.message, 'danger');
+      if (submit) submit.disabled = false;
+    }
+  });
   const auto = form?.elements.auto_escalate;
   const level = form?.elements.level;
   const sync = () => { if (level) level.disabled = Boolean(auto?.checked); };
   auto?.addEventListener('change', sync);
   sync();
-  const submit = form?.querySelector('button[type="submit"]');
-  if (submit) submit.textContent = 'CEZAYI UYGULA';
 }
 
 function renderBlogsTable() {
@@ -1240,41 +1266,58 @@ function openPackageEditor(packageItem = null) {
 }
 
 async function openWalletDialog(userId) {
+  return loadUserWalletPage(userId);
+}
+
+async function loadUserWalletPage(userId, page = 1) {
+  if (!userId) throw new Error('Kullanıcı kimliği bulunamadı');
   const canManageWallet = hasPermission('admin.wallet.manage');
   const canLoadPackages = canManageWallet && hasPermission('admin.shop.manage');
-  const [walletResponse, transactionResponse, packageResponse] = await Promise.all([
-    api(`/wallets/${userId}`),
-    api(`/wallets/${userId}/transactions?per_page=50`),
-    canLoadPackages ? api('/shop/packages?per_page=100') : Promise.resolve(null)
+  const [walletResponse, transactionResponse, packageResponse, userResponse] = await Promise.all([
+    api(`/wallets/${encodeURIComponent(userId)}`),
+    api(`/wallets/${encodeURIComponent(userId)}/transactions?page=${page}&per_page=25`),
+    canLoadPackages ? api('/shop/packages?per_page=100') : Promise.resolve(null),
+    hasPermission('admin.users.manage') ? api(`/users/${encodeURIComponent(userId)}/overview`).catch(() => null) : Promise.resolve(null)
   ]);
   const wallet = walletResponse?.data || {};
+  const user = userResponse?.data?.user || {};
   const transactions = responseItems(transactionResponse);
   const packages = responseItems(packageResponse);
-  const rows = transactions.map(item => `<tr><td>${escapeHtml(item.type)}</td><td class="${Number(item.coin_delta) >= 0 ? 'text-success' : 'text-danger'}">${Number(item.coin_delta)}</td><td>${Number(item.balance_after || 0)}</td><td>${escapeHtml([item.reference_type, item.reference_id].filter(Boolean).join(':') || '-')}</td><td>${escapeHtml(item.created_at)}</td></tr>`).join('') || '<tr><td colspan="5" class="text-center text-secondary">İşlem bulunamadı</td></tr>';
-  const overlay = openDialog(
-    `Cüzdan: ${userId}`,
-    `<div class="row g-3 mb-4"><div class="col-md-4"><div class="border rounded p-3"><small class="text-secondary">Bakiye</small><div class="fs-4 fw-bold text-warning">${Number(wallet.balance_coin || 0)} coin</div></div></div><div class="col-md-4"><div class="border rounded p-3"><small class="text-secondary">Toplam satın alınan</small><div class="fs-4 fw-bold">${Number(wallet.total_coin_purchased || 0)}</div></div></div><div class="col-md-4"><div class="border rounded p-3"><small class="text-secondary">Toplam harcanan</small><div class="fs-4 fw-bold">${Number(wallet.total_coin_spent || 0)}</div></div></div></div>
-     <div data-requires-permission="admin.wallet.manage"><h6>Manuel bakiye işlemi</h6><div class="row g-2 mb-4"><div class="col-md-3"><select class="form-select" name="wallet_action"><option value="credit">Coin ekle</option><option value="debit">Coin düş</option></select></div><div class="col-md-3"><input type="number" min="1" class="form-control" name="amount" value="10" required></div><div class="col-md-6"><input class="form-control" name="reason" placeholder="İşlem nedeni" required></div></div></div>
-     ${canLoadPackages ? `<div class="border rounded p-3 mb-4"><h6>Paket tanımla</h6><div class="row g-2"><div class="col-md-4"><select class="form-select" name="package_id">${packages.map(item => `<option value="${item.id}">${escapeHtml(item.name)} (${Number(item.total_coin || 0)} coin)</option>`).join('')}</select></div><div class="col-md-3"><input class="form-control" name="cash_amount" placeholder="Nakit tutarı"></div><div class="col-md-3"><input class="form-control" name="grant_reason" placeholder="Neden"></div><div class="col-md-2 d-grid"><button type="button" class="btn btn-info" data-grant-package>Paketi ver</button></div></div></div>` : ''}
-     <h6>Son işlemler</h6><div class="table-responsive" style="max-height:280px"><table class="table table-sm"><thead><tr><th>Tür</th><th>Değişim</th><th>Son bakiye</th><th>Referans</th><th>Tarih</th></tr></thead><tbody>${rows}</tbody></table></div>`,
-    async formData => {
-      const action = String(formData.get('wallet_action')) === 'debit' ? 'debit' : 'credit';
-      await api(`/wallets/${userId}/${action}`, { method: 'POST', body: { amount: Number(formData.get('amount')), reason: String(formData.get('reason') || '') } });
-      showToast('Cüzdan güncellendi');
-      await openWalletDialog(userId);
-    },
-    'modal-xl'
-  );
-  if (!canManageWallet) overlay.querySelector('button[type="submit"]')?.remove();
-  overlay.addEventListener('click', async event => {
-    if (!event.target.closest('[data-grant-package]')) return;
-    const form = overlay.querySelector('form');
-    try {
-      await api(`/wallets/${userId}/grant-package`, { method: 'POST', body: { package_id: Number(form.elements.package_id.value), cash_amount: form.elements.cash_amount.value, reason: form.elements.grant_reason.value } });
-      showToast('Paket kullanıcıya tanımlandı');
-      await openWalletDialog(userId);
-    } catch (error) { showToast(error.message, 'danger'); }
+  store.batch(() => {
+    store.set('userWalletId', userId);
+    store.set('userWallet', wallet);
+    store.set('userWalletMeta', responseMeta(transactionResponse));
   });
+  const target = document.getElementById('panel-user-wallet-page');
+  if (!target) return;
+  const rows = transactions.map(item => `<tr><td><span class="badge bg-light text-dark border">${escapeHtml(item.type)}</span></td><td class="fw-semibold ${Number(item.coin_delta) >= 0 ? 'text-success' : 'text-danger'}">${Number(item.coin_delta) >= 0 ? '+' : ''}${Number(item.coin_delta)}</td><td>${Number(item.balance_after || 0).toLocaleString('tr-TR')}</td><td>${escapeHtml([item.reference_type, item.reference_id].filter(Boolean).join(':') || '-')}</td><td class="small text-secondary text-nowrap">${escapeHtml(item.created_at)}</td></tr>`).join('');
+  target.innerHTML = `<div class="app-content-header py-3 px-4 bg-body border-bottom"><div class="container-fluid d-flex flex-wrap align-items-center gap-3"><a class="btn btn-outline-secondary btn-lg text-nowrap" href="/panel/user/${encodeURIComponent(userId)}" data-panel-link><i class="bi bi-arrow-left me-2"></i>Kullanıcıya dön</a><div><nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel" data-panel-link><i class="bi bi-speedometer2 me-1"></i>Panel</a></li><li class="breadcrumb-item"><a href="/panel/users" data-panel-link><i class="bi bi-people me-1"></i>Kullanıcılar</a></li><li class="breadcrumb-item"><a href="/panel/user/${encodeURIComponent(userId)}" data-panel-link><i class="bi bi-person-vcard me-1"></i>@${escapeHtml(user.username || userId)}</a></li><li class="breadcrumb-item active" aria-current="page">Wallet</li></ol></nav><h3 class="mb-0 fw-bold fs-4"><i class="bi bi-wallet2 me-2 text-warning"></i>Kullanıcı cüzdanı</h3><p class="text-secondary small mb-0">@${escapeHtml(user.username || userId)} hesabının coin hareketleri ve bakiyesi</p></div></div></div><div class="app-content p-4"><div class="container-fluid"><div class="row g-3 mb-4"><div class="col-sm-6 col-xl-4"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="small text-secondary"><i class="bi bi-coin me-1"></i>Mevcut bakiye</div><div class="display-6 fw-bold text-warning">${Number(wallet.balance_coin || 0).toLocaleString('tr-TR')}</div><div class="text-secondary">coin</div></div></div></div><div class="col-sm-6 col-xl-4"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="small text-secondary"><i class="bi bi-cart-check me-1"></i>Toplam satın alınan</div><div class="display-6 fw-bold">${Number(wallet.total_coin_purchased || 0).toLocaleString('tr-TR')}</div><div class="text-secondary">coin</div></div></div></div><div class="col-sm-6 col-xl-4"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="small text-secondary"><i class="bi bi-graph-down-arrow me-1"></i>Toplam harcanan</div><div class="display-6 fw-bold">${Number(wallet.total_coin_spent || 0).toLocaleString('tr-TR')}</div><div class="text-secondary">coin</div></div></div></div></div><div class="row g-4 mb-4">${canManageWallet ? `<div class="col-xl-6"><form id="panel-user-wallet-form" class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent py-3"><h5 class="mb-0"><i class="bi bi-arrow-left-right me-2 text-primary"></i>Manuel bakiye işlemi</h5></div><div class="card-body p-4"><div class="mb-3"><label class="form-label fw-semibold">İşlem</label><select class="form-select" name="wallet_action"><option value="credit">Coin ekle</option><option value="debit">Coin düş</option></select></div><div class="mb-3"><label class="form-label fw-semibold">Miktar</label><input type="number" min="1" class="form-control" name="amount" value="10" required></div><div class="mb-3"><label class="form-label fw-semibold">İşlem nedeni</label><textarea class="form-control" name="reason" rows="3" maxlength="255" required></textarea></div></div><div class="card-footer bg-transparent text-end"><button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-2"></i>İşlemi uygula</button></div></form></div>` : ''}${canLoadPackages ? `<div class="col-xl-6"><form id="panel-user-wallet-package-form" class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent py-3"><h5 class="mb-0"><i class="bi bi-box-seam me-2 text-info"></i>Paket tanımla</h5></div><div class="card-body p-4"><div class="mb-3"><label class="form-label fw-semibold">Coin paketi</label><select class="form-select" name="package_id" required>${packages.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} (${Number(item.total_coin || 0)} coin)</option>`).join('')}</select></div><div class="mb-3"><label class="form-label fw-semibold">Nakit tutarı</label><input class="form-control" name="cash_amount" placeholder="Örn. 99.90"></div><div class="mb-3"><label class="form-label fw-semibold">Tanımlama nedeni</label><textarea class="form-control" name="grant_reason" rows="3" maxlength="255" required></textarea></div></div><div class="card-footer bg-transparent text-end"><button type="submit" class="btn btn-info"><i class="bi bi-gift me-2"></i>Paketi ver</button></div></form></div>` : ''}</div><div class="card border-0 shadow-sm"><div class="card-header bg-transparent py-3"><h5 class="mb-0"><i class="bi bi-clock-history me-2 text-secondary"></i>Cüzdan hareketleri</h5></div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-4">Tür</th><th>Değişim</th><th>Son bakiye</th><th>Referans</th><th>Tarih</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="text-center text-secondary py-5"><i class="bi bi-inbox fs-3 d-block mb-2"></i>İşlem bulunamadı</td></tr>'}</tbody></table></div></div><div class="card-footer bg-transparent"><div id="panel-user-wallet-pager"></div></div></div></div></div>`;
+  const walletForm = target.querySelector('#panel-user-wallet-form');
+  walletForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = walletForm.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    try {
+      const data = new FormData(walletForm);
+      const action = String(data.get('wallet_action')) === 'debit' ? 'debit' : 'credit';
+      await api(`/wallets/${encodeURIComponent(userId)}/${action}`, { method: 'POST', body: { amount: Number(data.get('amount')), reason: String(data.get('reason') || '') } });
+      showToast('Cüzdan güncellendi');
+      await loadUserWalletPage(userId, Number(store.get('userWalletMeta')?.page || 1));
+    } catch (error) { showToast(error.message, 'danger'); if (submit) submit.disabled = false; }
+  });
+  const packageForm = target.querySelector('#panel-user-wallet-package-form');
+  packageForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = packageForm.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+    try {
+      const data = new FormData(packageForm);
+      await api(`/wallets/${encodeURIComponent(userId)}/grant-package`, { method: 'POST', body: { package_id: Number(data.get('package_id')), cash_amount: String(data.get('cash_amount') || ''), reason: String(data.get('grant_reason') || '') } });
+      showToast('Paket kullanıcıya tanımlandı');
+      await loadUserWalletPage(userId, Number(store.get('userWalletMeta')?.page || 1));
+    } catch (error) { showToast(error.message, 'danger'); if (submit) submit.disabled = false; }
+  });
+  renderPager('panel-user-wallet-pager', store.get('userWalletMeta'), 'previousUserWalletPage', 'nextUserWalletPage');
 }
 
 async function openAdFreeDialog() {
@@ -1510,6 +1553,18 @@ const actionParents = {
 };
 
 async function loadPanelActionPage(action, id = null) {
+  if (id && action === 'user-detail') {
+    panelNavigate(`/panel/user/${encodeURIComponent(id)}`);
+    return;
+  }
+  if (id && action === 'user-penalty') {
+    panelNavigate(`/panel/user/${encodeURIComponent(id)}/penalty`);
+    return;
+  }
+  if (id && action === 'wallet') {
+    panelNavigate(`/panel/user/${encodeURIComponent(id)}/wallet`);
+    return;
+  }
   pageDialogMode = true;
   pageDialogParent = actionParents[action] || '/panel';
   if (action === 'user-penalty' && id) pageDialogParent = `/panel/action/user-detail/${encodeURIComponent(id)}`;
@@ -2054,7 +2109,7 @@ const handlers = {
   nextSeriesPage() { const meta = store.get('seriesMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadSeriesData(Number(meta.page) + 1); },
   previousUsersPage() { const page = Number(store.get('usersMeta')?.page || 1); if (page > 1) loadUsersData(page - 1); },
   nextUsersPage() { const meta = store.get('usersMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadUsersData(Number(meta.page) + 1); },
-  openUserDetail(e, el) { panelNavigate(`/panel/action/user-detail/${encodeURIComponent(el.dataset.id)}`); },
+  openUserDetail(e, el) { panelNavigate(`/panel/user/${encodeURIComponent(el.dataset.id)}`); },
   filterUserComments() { scheduleReload('user-comments', () => loadUserCommentsData(store.get('userDetailId'), 1)); },
   previousUserCommentsPage() { const page = Number(store.get('userCommentsMeta')?.page || 1); if (page > 1) loadUserCommentsData(store.get('userDetailId'), page - 1); },
   nextUserCommentsPage() { const meta = store.get('userCommentsMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadUserCommentsData(store.get('userDetailId'), Number(meta.page) + 1); },
@@ -2064,6 +2119,8 @@ const handlers = {
   filterUserViolations() { scheduleReload('user-violations', () => loadUserViolationsData(store.get('userDetailId'), 1)); },
   previousUserViolationsPage() { const page = Number(store.get('userViolationsMeta')?.page || 1); if (page > 1) loadUserViolationsData(store.get('userDetailId'), page - 1); },
   nextUserViolationsPage() { const meta = store.get('userViolationsMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadUserViolationsData(store.get('userDetailId'), Number(meta.page) + 1); },
+  previousUserWalletPage() { const page = Number(store.get('userWalletMeta')?.page || 1); if (page > 1) loadUserWalletPage(store.get('userWalletId'), page - 1); },
+  nextUserWalletPage() { const meta = store.get('userWalletMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadUserWalletPage(store.get('userWalletId'), Number(meta.page) + 1); },
   previousBlogsPage() { const page = Number(store.get('blogsMeta')?.page || 1); if (page > 1) loadBlogsData(page - 1); },
   nextBlogsPage() { const meta = store.get('blogsMeta') || {}; if (Number(meta.page) < Number(meta.total_pages)) loadBlogsData(Number(meta.page) + 1); },
   previousCommentsPage() { const page = Number(store.get('commentsMeta')?.page || 1); if (page > 1) loadCommentsData(page - 1); },
@@ -2082,13 +2139,13 @@ const handlers = {
     panelNavigate(`/panel/reports/${encodeURIComponent(el.dataset.id)}`);
   },
   async openEditUserModal(e, el) {
-    panelNavigate(`/panel/action/user-edit/${encodeURIComponent(el.dataset.id)}`);
+    panelNavigate(`/panel/user/${encodeURIComponent(el.dataset.id)}`);
   },
   async openRbacMatrix() {
     panelNavigate('/panel/action/rbac');
   },
   async openWalletModal(e, el) {
-    panelNavigate(`/panel/action/wallet/${encodeURIComponent(el.dataset.id)}`);
+    panelNavigate(`/panel/user/${encodeURIComponent(el.dataset.id)}/wallet`);
   },
   openCreatePackageModal() { panelNavigate('/panel/action/package-new'); },
   openEditPackageModal(e, el) {
@@ -2283,6 +2340,9 @@ const routePermissions = {
   webhook: ['admin.settings.modify'],
   'config-env': ['admin.settings.modify'],
   'report-detail': ['admin.reports.view'],
+  'user-detail': ['admin.users.manage'],
+  'user-penalty': ['admin.users.manage'],
+  'user-wallet': ['admin.wallet.view'],
   'series-new': ['admin.content.create'],
   'series-edit': ['admin.content.update']
 };
@@ -2308,6 +2368,12 @@ function resolvePanelRoute() {
   if (section === 'reports' && /^\d+$/.test(parts[1] || '')) return { route: 'report-detail', section: 'reports', id: parts[1], path: `/panel/reports/${parts[1]}` };
   if (section === 'series' && parts[1] === 'new') return { route: 'series-new', section: 'series', path: '/panel/series/new' };
   if (section === 'series' && parts[1] && parts[2] === 'edit') return { route: 'series-edit', section: 'series', id: parts[1], path: `/panel/series/${parts[1]}/edit` };
+  if (section === 'user' && parts[1]) {
+    const id = parts[1];
+    if (!parts[2]) return { route: 'user-detail', section: 'users', id, path: `/panel/user/${encodeURIComponent(id)}` };
+    if (parts[2] === 'penalty') return { route: 'user-penalty', section: 'users', id, path: `/panel/user/${encodeURIComponent(id)}/penalty` };
+    if (parts[2] === 'wallet') return { route: 'user-wallet', section: 'users', id, path: `/panel/user/${encodeURIComponent(id)}/wallet` };
+  }
   if (validPanelRoutes.includes(section)) return { route: section, section, path: panelRoutePath(section) };
   return { route: 'dashboard', section: 'dashboard', path: '/panel' };
 }
@@ -2326,7 +2392,9 @@ function navigate() {
 
   // Update active nav link
   let activeNavLink = null;
-  const activeSection = route === 'action' ? resolved.section : route;
+  const activeSection = route === 'action'
+    ? resolved.section
+    : ['user-detail', 'user-penalty', 'user-wallet'].includes(route) ? 'users' : route;
   document.querySelectorAll('#panel-sidebar-nav a[data-route]').forEach(a => {
     if (a.getAttribute('data-route') === activeSection) {
       a.classList.add('active-nav-link');
@@ -2350,7 +2418,9 @@ function navigate() {
     logAutoRefreshTimer = null;
   }
 
-  const templateRoute = route === 'series-new' || route === 'series-edit' ? 'series-editor' : (route === 'action' ? 'action' : route);
+  const templateRoute = route === 'series-new' || route === 'series-edit'
+    ? 'series-editor'
+    : (route === 'action' ? 'action' : route);
   currentCleanup = mount(`panel-${templateRoute}`, {
     target,
     store,
@@ -2373,6 +2443,9 @@ function navigate() {
   else if (route === 'uploads') loadUploadsData();
   else if (route === 'config') loadConfigData();
   else if (route === 'report-detail') loadReportDetailPage(resolved.id);
+  else if (route === 'user-detail') loadUserDetailPage(resolved.id);
+  else if (route === 'user-penalty') loadUserPenaltyPage(resolved.id);
+  else if (route === 'user-wallet') loadUserWalletPage(resolved.id);
   else if (route === 'series-new') loadSeriesEditorPage('new');
   else if (route === 'series-edit') loadSeriesEditorPage('edit', resolved.id);
   else if (route === 'webhook') loadWebhookPage();
