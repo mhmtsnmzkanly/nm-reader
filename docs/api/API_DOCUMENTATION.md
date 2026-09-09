@@ -127,6 +127,7 @@ Every response returned by `/api/v1/*` follows the strict JSON structure:
 | `GET` | `/api/v1/search` | Optional | Filtered series search (`q`, `genres`, `tags`, `status`, `sort`) |
 | `GET` | `/api/v1/search/suggest` | Optional | Live search suggestions autocomplete |
 | `GET` | `/api/v1/i18n/{lang}` | Public | Static localized translations asset |
+| `GET` | `/api/v1/site-config` | Public | Safe public site configuration for CSR fallback |
 | `POST` | `/api/v1/log/error` | Public | Client runtime error reporting |
 | `POST` | `/api/v1/user/activity` | Required | Client reading session heartbeats & analytics |
 | `GET` | `/api/v1/profile/{person}` | Optional | Public user profile, badges, stats |

@@ -61,6 +61,7 @@ $endpoints = [
     ['GET', '/search', 'Filtered Series Search', 'Search', false],
     ['GET', '/search/suggest', 'Live Search Suggestions', 'Search', false],
     ['GET', '/i18n/{lang}', 'Translations Dictionary', 'System', false],
+    ['GET', '/site-config', 'Public Site Configuration', 'System', false],
     ['POST', '/log/error', 'Client Error Logging', 'System', false],
     ['POST', '/user/activity', 'Track User Activity', 'Analytics', true],
     ['GET', '/profile/{person}', 'Public User Profile', 'User', false],

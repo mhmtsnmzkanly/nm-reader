@@ -497,6 +497,18 @@ final class ApiTestSuite
         // 39. GET /api/v1/i18n/{lang}
         $this->assertResponse('GET /api/v1/i18n/tr', $this->request('GET', '/api/v1/i18n/tr'), 200, 'GET /api/v1/i18n/{lang}');
 
+        // 39a. GET /api/v1/site-config (public fallback for incomplete SSR context)
+        $siteConfig = $this->assertResponse('GET /api/v1/site-config', $this->request('GET', '/api/v1/site-config'), 200, 'GET /api/v1/site-config');
+        $siteConfigData = $siteConfig['data'] ?? null;
+        if (is_array($siteConfigData) && array_key_exists('site_name', $siteConfigData) && array_key_exists('default_language', $siteConfigData)) {
+            $this->passCount++;
+            echo "  [PASS] Public site-config fallback exposes safe site identity fields\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'Public site-config fallback is missing safe site identity fields';
+            echo "  [FAIL] Public site-config fallback is missing safe site identity fields\n";
+        }
+
         // 40. POST /api/v1/log/error
         $this->assertResponse('POST /api/v1/log/error', $this->request('POST', '/api/v1/log/error', [], ['message' => 'Test error']), 200, 'POST /api/v1/log/error');
 

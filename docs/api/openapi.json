@@ -1935,6 +1935,36 @@
                 ]
             }
         },
+        "/site-config": {
+            "get": {
+                "summary": "Public Site Configuration",
+                "tags": [
+                    "System"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseEnvelope"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation or Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseEnvelope"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/log/error": {
             "post": {
                 "summary": "Client Error Logging",
