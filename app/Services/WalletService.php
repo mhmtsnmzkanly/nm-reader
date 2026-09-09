@@ -92,12 +92,12 @@ final class WalletService
             $this->wallets->updateWalletBalances($userId, $newBalance, (int)$wallet['total_coin_purchased'], $newSpent);
             $refundId = $this->wallets->createTransaction($userId, 'refund', $amount, $newBalance, 'wallet_transaction', (string)$transactionId, $reason, ['original_type' => $original['type']], $moderatorId);
             $this->wallets->revokeUnlockByTransactionId($transactionId);
+            $this->recordAdminAction($moderatorId, 'user', (string) $original['user_id'], 'refund', "Transaction $transactionId refunded: $reason");
             $pdo->commit();
         } catch (\Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
             throw $e;
         }
-        $this->recordAdminAction($moderatorId, 'user', (string)$original['user_id'], 'refund', "Transaction $transactionId refunded: $reason");
         return ['refund_transaction_id' => $refundId, 'original_transaction_id' => $transactionId, 'refunded_coin' => $amount, 'wallet' => $this->wallet((string)$original['user_id'])];
     }
 
@@ -127,16 +127,24 @@ final class WalletService
     public function createPackage(array $payload, string $moderatorId): array
     {
         $data = $this->normalizePackagePayload($payload);
-        $id = $this->wallets->createPackage(
-            $data['name'],
-            $data['coin_amount'],
-            $data['bonus_coin'],
-            $data['display_price'],
-            $data['currency'],
-            $data['is_active'],
-            $data['sort_order']
-        );
-        $this->recordAdminAction($moderatorId, 'system', (string) $id, 'package_create', 'Created shop package');
+        $pdo = $this->wallets->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $id = $this->wallets->createPackage(
+                $data['name'],
+                $data['coin_amount'],
+                $data['bonus_coin'],
+                $data['display_price'],
+                $data['currency'],
+                $data['is_active'],
+                $data['sort_order']
+            );
+            $this->recordAdminAction($moderatorId, 'system', (string) $id, 'package_create', 'Created shop package');
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
 
         return ['id' => $id] + $data + ['total_coin' => $data['coin_amount'] + $data['bonus_coin']];
     }
@@ -144,17 +152,25 @@ final class WalletService
     public function updatePackage(int $id, array $payload, string $moderatorId): array
     {
         $data = $this->normalizePackagePayload($payload);
-        $this->wallets->updatePackage(
-            $id,
-            $data['name'],
-            $data['coin_amount'],
-            $data['bonus_coin'],
-            $data['display_price'],
-            $data['currency'],
-            $data['is_active'],
-            $data['sort_order']
-        );
-        $this->recordAdminAction($moderatorId, 'system', (string) $id, 'package_update', 'Updated shop package');
+        $pdo = $this->wallets->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $this->wallets->updatePackage(
+                $id,
+                $data['name'],
+                $data['coin_amount'],
+                $data['bonus_coin'],
+                $data['display_price'],
+                $data['currency'],
+                $data['is_active'],
+                $data['sort_order']
+            );
+            $this->recordAdminAction($moderatorId, 'system', (string) $id, 'package_update', 'Updated shop package');
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
 
         return ['id' => $id] + $data + ['total_coin' => $data['coin_amount'] + $data['bonus_coin']];
     }
@@ -188,6 +204,7 @@ final class WalletService
                 ['source' => 'admin_manual_credit'],
                 $moderatorId
             );
+            $this->recordAdminAction($moderatorId, 'user', $targetUserId, 'wallet_credit', $reason);
             $pdo->commit();
         } catch (\Throwable $e) {
             if ($pdo->inTransaction()) {
@@ -195,8 +212,6 @@ final class WalletService
             }
             throw $e;
         }
-
-        $this->recordAdminAction($moderatorId, 'user', $targetUserId, 'wallet_credit', $reason);
 
         return [
             'transaction_id' => $transactionId,
@@ -236,6 +251,7 @@ final class WalletService
                 ['source' => 'admin_manual_debit'],
                 $moderatorId
             );
+            $this->recordAdminAction($moderatorId, 'user', $targetUserId, 'wallet_debit', $reason);
             $pdo->commit();
         } catch (\Throwable $e) {
             if ($pdo->inTransaction()) {
@@ -243,8 +259,6 @@ final class WalletService
             }
             throw $e;
         }
-
-        $this->recordAdminAction($moderatorId, 'user', $targetUserId, 'wallet_debit', $reason);
 
         return [
             'transaction_id' => $transactionId,
@@ -292,6 +306,7 @@ final class WalletService
                 ],
                 $moderatorId
             );
+            $this->recordAdminAction($moderatorId, 'user', $targetUserId, 'wallet_package_credit', $description);
             $pdo->commit();
         } catch (\Throwable $e) {
             if ($pdo->inTransaction()) {
@@ -299,8 +314,6 @@ final class WalletService
             }
             throw $e;
         }
-
-        $this->recordAdminAction($moderatorId, 'user', $targetUserId, 'wallet_package_credit', $description);
 
         return [
             'transaction_id' => $transactionId,
@@ -319,9 +332,17 @@ final class WalletService
 
         $priceCoin = max(0, (int) ($payload['price_coin'] ?? 0));
         $isActive = (bool) ($payload['is_active'] ?? true);
-        $this->wallets->upsertSeriesPricing($contentId, $priceCoin, $isActive);
+        $pdo = $this->wallets->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $this->wallets->upsertSeriesPricing($contentId, $priceCoin, $isActive);
+            $this->recordAdminAction($moderatorId, 'series', $contentId, 'pricing_update', sprintf('Updated series pricing to %d coin', $priceCoin));
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
         $this->invalidateContentCaches((string) $content['type'], (string) $content['slug']);
-        $this->recordAdminAction($moderatorId, 'series', $contentId, 'pricing_update', sprintf('Updated series pricing to %d coin', $priceCoin));
 
         return [
             'content_id' => $contentId,
@@ -342,14 +363,20 @@ final class WalletService
         if (!$isActive) {
             $priceCoin = 0;
         }
-        $this->wallets->upsertChapterPricing($chapterId, $priceCoin, $isActive);
-
         $content = $this->findSeriesById((string) $chapter['content_id']);
+        $pdo = $this->wallets->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $this->wallets->upsertChapterPricing($chapterId, $priceCoin, $isActive);
+            $this->recordAdminAction($moderatorId, 'chapter', $chapterId, 'pricing_update', sprintf('Updated chapter pricing to %d coin', $priceCoin));
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
         if ($content !== null) {
             $this->invalidateContentCaches((string) $content['type'], (string) $content['slug']);
         }
-
-        $this->recordAdminAction($moderatorId, 'chapter', $chapterId, 'pricing_update', sprintf('Updated chapter pricing to %d coin', $priceCoin));
 
         return [
             'chapter_id' => $chapterId,
@@ -597,8 +624,16 @@ final class WalletService
             $name = 'Reklamsiz Deneyim';
         }
 
-        $this->wallets->upsertFeatureProduct(self::FEATURE_AD_FREE, mb_substr($name, 0, 120), $coinPrice, $durationDays, $isActive);
-        $this->recordAdminAction($moderatorId, 'system', self::FEATURE_AD_FREE, 'feature_update', sprintf('Updated ad-free plan to %d coin / %d day', $coinPrice, $durationDays));
+        $pdo = $this->wallets->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $this->wallets->upsertFeatureProduct(self::FEATURE_AD_FREE, mb_substr($name, 0, 120), $coinPrice, $durationDays, $isActive);
+            $this->recordAdminAction($moderatorId, 'system', self::FEATURE_AD_FREE, 'feature_update', sprintf('Updated ad-free plan to %d coin / %d day', $coinPrice, $durationDays));
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
 
         return $this->adFreeProduct();
     }

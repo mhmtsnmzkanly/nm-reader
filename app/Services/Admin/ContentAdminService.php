@@ -87,28 +87,36 @@ final class ContentAdminService extends AdminServiceBase
                     0, 0, 0, 0, NOW()
                 )';
     
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'id' => $id,
-            'title' => $title,
-            'slug' => $slug,
-            'description' => $description,
-            'type' => $dbType,
-            'status' => $status,
-            'lifecycle_status' => $lifecycleStatus,
-            'scheduled_at' => $scheduledAt,
-            'published_at' => $publishedAt,
-            'archived_at' => $archivedAt,
-            'is_adult' => $isAdult,
-            'is_members_only' => $isMembersOnly,
-            'cover_image' => $coverImage,
-        ]);
-    
-        $this->upsertContentMetadata($id, $author, $artist, $alternativeTitles, $country, $releaseYear);
-        $this->recordSeriesRevision($id, $moderatorId, 'create');
-    
-        if ($moderatorId !== null) {
-            $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'create', "New series created: $title");
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                'id' => $id,
+                'title' => $title,
+                'slug' => $slug,
+                'description' => $description,
+                'type' => $dbType,
+                'status' => $status,
+                'lifecycle_status' => $lifecycleStatus,
+                'scheduled_at' => $scheduledAt,
+                'published_at' => $publishedAt,
+                'archived_at' => $archivedAt,
+                'is_adult' => $isAdult,
+                'is_members_only' => $isMembersOnly,
+                'cover_image' => $coverImage,
+            ]);
+
+            $this->upsertContentMetadata($id, $author, $artist, $alternativeTitles, $country, $releaseYear);
+            $this->recordSeriesRevision($id, $moderatorId, 'create');
+
+            if ($moderatorId !== null) {
+                $this->adminConsole->createModerationAction($moderatorId, 'content', $id, 'create', "New series created: $title");
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
         }
     
         $this->invalidateListingCaches();

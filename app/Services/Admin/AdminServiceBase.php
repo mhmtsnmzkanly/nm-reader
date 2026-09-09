@@ -99,7 +99,18 @@ protected const TYPE_SEGMENT_TO_DB = [
                 'country' => $country,
                 'release_year' => $releaseYear !== null ? (string) $releaseYear : null,
             ]);
-        } catch (\Throwable) {}
+        } catch (\Throwable $exception) {
+            // These metadata columns were added after the original series
+            // table. Keep compatibility with an older schema, but do not
+            // hide connection, constraint, or other write failures: callers
+            // need those errors to roll back their surrounding transaction.
+            $sqlState = $exception instanceof \PDOException
+                ? (string) ($exception->errorInfo[0] ?? $exception->getCode())
+                : '';
+            if (!in_array($sqlState, ['42S02', '42S22'], true)) {
+                throw $exception;
+            }
+        }
     }
 
     protected function sanitizePerson(string $value): ?string

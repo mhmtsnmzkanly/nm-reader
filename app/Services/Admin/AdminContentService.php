@@ -33,10 +33,17 @@ final class AdminContentService extends AdminConsoleServiceBase
     {
         $name = trim($name);
         if ($name === '') throw new \InvalidArgumentException('Name is required');
-        
-        $genre = $this->repo->createGenre($name, $this->taxonomySlug($name));
-        $this->repo->createModerationAction($moderatorId, 'system', (string)$genre['id'], 'create_genre', "New genre created: $name");
-        
+
+        $this->pdo->beginTransaction();
+        try {
+            $genre = $this->repo->createGenre($name, $this->taxonomySlug($name));
+            $this->repo->createModerationAction($moderatorId, 'system', (string) $genre['id'], 'create_genre', "New genre created: $name");
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
+
         return $genre;
     }
 
@@ -44,17 +51,23 @@ final class AdminContentService extends AdminConsoleServiceBase
     {
         $name = trim($name);
         if ($name === '') throw new \InvalidArgumentException('Name is required');
-    
-        $tag = $this->repo->createTag($name, $this->taxonomySlug($name));
-        $this->repo->createModerationAction($moderatorId, 'system', (string)$tag['id'], 'create_tag', "New tag created: $name");
-    
+
+        $this->pdo->beginTransaction();
+        try {
+            $tag = $this->repo->createTag($name, $this->taxonomySlug($name));
+            $this->repo->createModerationAction($moderatorId, 'system', (string) $tag['id'], 'create_tag', "New tag created: $name");
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
+
         return $tag;
     }
 
     public function updateContentTaxonomy(string $contentId, array $genreIds, array $tagIds, string $moderatorId): void
     {
-        $this->repo->updateContentTaxonomy($contentId, $genreIds, $tagIds);
-        $this->repo->createModerationAction($moderatorId, 'content', $contentId, 'update', 'Genre/Tag assignments updated');
+        $this->repo->updateContentTaxonomy($contentId, $genreIds, $tagIds, $moderatorId);
     }
 
     public function listAllGenres(): array
@@ -73,8 +86,17 @@ final class AdminContentService extends AdminConsoleServiceBase
         if (!$existing) throw new \InvalidArgumentException('Taxonomy not found');
         $name = trim((string)($payload['name'] ?? ''));
         if ($name === '') throw new \InvalidArgumentException('Name is required');
-        $updated = $this->repo->updateTaxonomy($id, $name, $this->taxonomySlug($name));
-        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'update_taxonomy', "Taxonomy renamed: {$existing['name']} -> $name");
+
+        $this->pdo->beginTransaction();
+        try {
+            $updated = $this->repo->updateTaxonomy($id, $name, $this->taxonomySlug($name));
+            $this->repo->createModerationAction($moderatorId, 'system', (string) $id, 'update_taxonomy', "Taxonomy renamed: {$existing['name']} -> $name");
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
+
         return $updated ?? [];
     }
 
@@ -83,8 +105,16 @@ final class AdminContentService extends AdminConsoleServiceBase
         $existing = $this->repo->taxonomyById($id);
         if (!$existing) throw new \InvalidArgumentException('Taxonomy not found');
         if ((int)$existing['usage_count'] > 0) throw new \InvalidArgumentException('Used taxonomy must be merged before deletion');
-        if (!$this->repo->deleteTaxonomy($id)) throw new \RuntimeException('Taxonomy could not be deleted');
-        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'delete', "Taxonomy deleted: {$existing['name']}");
+
+        $this->pdo->beginTransaction();
+        try {
+            if (!$this->repo->deleteTaxonomy($id)) throw new \RuntimeException('Taxonomy could not be deleted');
+            $this->repo->createModerationAction($moderatorId, 'system', (string) $id, 'delete', "Taxonomy deleted: {$existing['name']}");
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
     }
 
     public function mergeTaxonomies(array $payload, string $moderatorId): array
@@ -92,9 +122,7 @@ final class AdminContentService extends AdminConsoleServiceBase
         $sourceId = (int)($payload['source_id'] ?? 0);
         $targetId = (int)($payload['target_id'] ?? 0);
         if ($sourceId <= 0 || $targetId <= 0 || $sourceId === $targetId) throw new \InvalidArgumentException('Valid, different source_id and target_id are required');
-        $merged = $this->repo->mergeTaxonomies($sourceId, $targetId);
-        $this->repo->createModerationAction($moderatorId, 'system', (string)$targetId, 'update_taxonomy', "Taxonomy $sourceId merged into $targetId");
-        return $merged;
+        return $this->repo->mergeTaxonomies($sourceId, $targetId, $moderatorId);
     }
 
     public function reorderTaxonomies(array $payload, string $moderatorId): void
@@ -106,7 +134,6 @@ final class AdminContentService extends AdminConsoleServiceBase
             if (!is_array($item) || (int)($item['id'] ?? 0) <= 0) throw new \InvalidArgumentException('Each item must contain a valid id');
             $normalized[] = ['id' => (int)$item['id'], 'sort_order' => max(0, (int)($item['sort_order'] ?? 0))];
         }
-        $this->repo->reorderTaxonomies($normalized);
-        $this->repo->createModerationAction($moderatorId, 'system', 'taxonomy-order', 'update_taxonomy', 'Taxonomy order updated');
+        $this->repo->reorderTaxonomies($normalized, $moderatorId);
     }
 }

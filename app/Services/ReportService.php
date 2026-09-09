@@ -10,6 +10,7 @@ use App\Repositories\AdminConsoleRepository;
 use App\Repositories\ReportRepository;
 use DomainException;
 use InvalidArgumentException;
+use PDO;
 
 /**
  * Service for Content Reporting and Moderation.
@@ -50,7 +51,8 @@ final class ReportService
     public function __construct(
         private readonly ReportRepository $reports,
         private readonly AdminConsoleRepository $adminConsole,
-        private readonly ContentSecurityScanner $scanner
+        private readonly ContentSecurityScanner $scanner,
+        private readonly PDO $pdo
     ) {
     }
 
@@ -182,15 +184,22 @@ final class ReportService
             }
         }
 
-        $this->reports->updateStatus($id, $status, $sanitizedNote, $reviewedBy);
+        $this->pdo->beginTransaction();
+        try {
+            $this->reports->updateStatus($id, $status, $sanitizedNote, $reviewedBy);
 
-        $this->adminConsole->createModerationAction(
-            $reviewedBy,
-            'report',
-            (string) $id,
-            'review',
-            sprintf('Report #%d status updated to "%s". Note: %s', $id, $status, $sanitizedNote ?? 'None')
-        );
+            $this->adminConsole->createModerationAction(
+                $reviewedBy,
+                'report',
+                (string) $id,
+                'review',
+                sprintf('Report #%d status updated to "%s". Note: %s', $id, $status, $sanitizedNote ?? 'None')
+            );
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
 
         return [
             'id' => $id,

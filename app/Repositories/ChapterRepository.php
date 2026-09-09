@@ -422,34 +422,47 @@ final class ChapterRepository
         $contentId = $row !== false ? (string) $row['content_id'] : null;
         $chapterNum = $row !== false ? (float) ($row['chapter_num'] ?? 0.00) : 0.00;
 
-        // 2. Log individual chapter read history
-        $this->pdo->prepare(
-            'INSERT INTO user_chapters_reads (user_id, chapter_id, content_id, read_at)
-             VALUES (:user_id, :chapter_id, :content_id, NOW())
-             ON DUPLICATE KEY UPDATE read_at = NOW(), content_id = VALUES(content_id)'
-        )->execute(['user_id' => $userId, 'chapter_id' => $chapterId, 'content_id' => $contentId]);
-
-        if ($contentId) {
-            // 3. Update or Insert overall series reading progress
+        $this->pdo->beginTransaction();
+        try {
+            // 2. Log individual chapter read history
             $this->pdo->prepare(
-                'INSERT INTO user_reading_progress (user_id, series_id, last_chapter_id, updated_at)
-                 VALUES (:user_id, :series_id, :chapter_id, NOW())
-                 ON DUPLICATE KEY UPDATE last_chapter_id = VALUES(last_chapter_id), updated_at = NOW()'
-            )->execute(['user_id' => $userId, 'series_id' => $contentId, 'chapter_id' => $chapterId]);
+                'INSERT INTO user_chapters_reads (user_id, chapter_id, content_id, read_at)
+                 VALUES (:user_id, :chapter_id, :content_id, NOW())
+                 ON DUPLICATE KEY UPDATE read_at = NOW(), content_id = VALUES(content_id)'
+            )->execute(['user_id' => $userId, 'chapter_id' => $chapterId, 'content_id' => $contentId]);
 
-            // 4. Create history on first open, preserving any progress already saved.
-            try {
+            if ($contentId) {
+                // 3. Update or Insert overall series reading progress
                 $this->pdo->prepare(
-                    'INSERT INTO user_reading_history (user_id, content_id, chapter_id, chapter_number, progress_pct, is_completed, last_read_at)
-                     VALUES (:user_id, :content_id, :chapter_id, :chapter_number, 0, 0, NOW())
-                     ON DUPLICATE KEY UPDATE chapter_number = VALUES(chapter_number), read_count = read_count + 1, last_read_at = NOW()'
-                )->execute([
-                    'user_id' => $userId,
-                    'content_id' => $contentId,
-                    'chapter_id' => $chapterId,
-                    'chapter_number' => $chapterNum,
-                ]);
-            } catch (\Throwable) {}
+                    'INSERT INTO user_reading_progress (user_id, series_id, last_chapter_id, updated_at)
+                     VALUES (:user_id, :series_id, :chapter_id, NOW())
+                     ON DUPLICATE KEY UPDATE last_chapter_id = VALUES(last_chapter_id), updated_at = NOW()'
+                )->execute(['user_id' => $userId, 'series_id' => $contentId, 'chapter_id' => $chapterId]);
+
+                // 4. Create history on first open, preserving any progress already saved.
+                try {
+                    $this->pdo->prepare(
+                        'INSERT INTO user_reading_history (user_id, content_id, chapter_id, chapter_number, progress_pct, is_completed, last_read_at)
+                         VALUES (:user_id, :content_id, :chapter_id, :chapter_number, 0, 0, NOW())
+                         ON DUPLICATE KEY UPDATE chapter_number = VALUES(chapter_number), read_count = read_count + 1, last_read_at = NOW()'
+                    )->execute([
+                        'user_id' => $userId,
+                        'content_id' => $contentId,
+                        'chapter_id' => $chapterId,
+                        'chapter_number' => $chapterNum,
+                    ]);
+                } catch (\Throwable $exception) {
+                    // Older installations may not have the optional history
+                    // table yet; other failures must abort the whole progress
+                    // update instead of leaving partial read state behind.
+                    if ((string) $exception->getCode() !== '42S02') throw $exception;
+                }
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
         }
     }
 

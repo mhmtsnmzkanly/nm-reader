@@ -29,14 +29,28 @@ final class AdminOperationsService extends AdminConsoleServiceBase
 
     public function retryQueueJob(int $id, string $moderatorId): void
     {
-        if (!$this->repo->retryQueueJob($id)) throw new \DomainException('Only failed or cancelled jobs can be retried');
-        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'trigger', 'Queue job retried');
+        $this->pdo->beginTransaction();
+        try {
+            if (!$this->repo->retryQueueJob($id)) throw new \DomainException('Only failed or cancelled jobs can be retried');
+            $this->repo->createModerationAction($moderatorId, 'system', (string) $id, 'trigger', 'Queue job retried');
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
     }
 
     public function cancelQueueJob(int $id, string $moderatorId): void
     {
-        if (!$this->repo->cancelQueueJob($id)) throw new \DomainException('Only pending jobs can be cancelled');
-        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'trigger', 'Queue job cancelled');
+        $this->pdo->beginTransaction();
+        try {
+            if (!$this->repo->cancelQueueJob($id)) throw new \DomainException('Only pending jobs can be cancelled');
+            $this->repo->createModerationAction($moderatorId, 'system', (string) $id, 'trigger', 'Queue job cancelled');
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
     }
 
     public function systemHealth(): array

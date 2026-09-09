@@ -443,27 +443,41 @@ final class AdminUserRepository extends AdminRepositoryBase
 
     public function assignPermissionToRole(string $roleSlug, string $permissionCode, string $moderatorId): void
     {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO rbac_role_permission_overrides (role_slug, permission_code, effect, updated_by)
-             VALUES (:role, :permission, "grant", :updated_by)
-             ON DUPLICATE KEY UPDATE effect = "grant", updated_by = VALUES(updated_by), updated_at = NOW()'
-        );
-        $stmt->execute(['role' => $roleSlug, 'permission' => $permissionCode, 'updated_by' => $moderatorId]);
-        $this->createModerationAction($moderatorId, 'role', $roleSlug, 'grant_permission', $permissionCode);
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO rbac_role_permission_overrides (role_slug, permission_code, effect, updated_by)
+                 VALUES (:role, :permission, "grant", :updated_by)
+                 ON DUPLICATE KEY UPDATE effect = "grant", updated_by = VALUES(updated_by), updated_at = NOW()'
+            );
+            $stmt->execute(['role' => $roleSlug, 'permission' => $permissionCode, 'updated_by' => $moderatorId]);
+            $this->createModerationAction($moderatorId, 'role', $roleSlug, 'grant_permission', $permissionCode);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
     }
 
     public function revokePermissionFromRole(string $roleSlug, string $permissionCode, string $moderatorId): bool
     {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO rbac_role_permission_overrides (role_slug, permission_code, effect, updated_by)
-             VALUES (:role, :permission, "revoke", :updated_by)
-             ON DUPLICATE KEY UPDATE effect = "revoke", updated_by = VALUES(updated_by), updated_at = NOW()'
-        );
-        $result = $stmt->execute(['role' => $roleSlug, 'permission' => $permissionCode, 'updated_by' => $moderatorId]);
-        if ($result) {
-            $this->createModerationAction($moderatorId, 'role', $roleSlug, 'revoke_permission', $permissionCode);
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO rbac_role_permission_overrides (role_slug, permission_code, effect, updated_by)
+                 VALUES (:role, :permission, "revoke", :updated_by)
+                 ON DUPLICATE KEY UPDATE effect = "revoke", updated_by = VALUES(updated_by), updated_at = NOW()'
+            );
+            $result = $stmt->execute(['role' => $roleSlug, 'permission' => $permissionCode, 'updated_by' => $moderatorId]);
+            if ($result) {
+                $this->createModerationAction($moderatorId, 'role', $roleSlug, 'revoke_permission', $permissionCode);
+            }
+            $this->pdo->commit();
+            return $result;
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
         }
-        return $result;
     }
 
     public function assignRoleToUser(string $userId, string $roleSlug): bool
@@ -492,10 +506,17 @@ final class AdminUserRepository extends AdminRepositoryBase
 
     public function revokeUserSession(string $userId, string $sessionKey, string $moderatorId): void
     {
-        $stmt = $this->pdo->prepare('DELETE FROM user_sessions WHERE user_id = :user_id AND session_key = :session_key');
-        $stmt->execute(['user_id' => $userId, 'session_key' => $sessionKey]);
-    
-        $this->createModerationAction($moderatorId, 'user', $userId, 'revoke_session', 'Session forcefully revoked by admin');
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare('DELETE FROM user_sessions WHERE user_id = :user_id AND session_key = :session_key');
+            $stmt->execute(['user_id' => $userId, 'session_key' => $sessionKey]);
+
+            $this->createModerationAction($moderatorId, 'user', $userId, 'revoke_session', 'Session forcefully revoked by admin');
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
     }
 
     public function userExists(string $userId): bool

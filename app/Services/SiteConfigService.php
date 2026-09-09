@@ -249,24 +249,31 @@ final class SiteConfigService
              ON DUPLICATE KEY UPDATE `group` = VALUES(`group`), `type` = VALUES(`type`), `value` = VALUES(`value`), updated_at = NOW()'
         );
 
-        foreach ($payload as $key => $val) {
-            $key = (string) $key;
-            if (!isset(self::DEFINITIONS[$key])) {
-                continue;
+        $this->pdo->beginTransaction();
+        try {
+            foreach ($payload as $key => $val) {
+                $key = (string) $key;
+                if (!isset(self::DEFINITIONS[$key])) {
+                    continue;
+                }
+
+                $definition = self::DEFINITIONS[$key];
+                $group = $definition['group'];
+                $type = $definition['type'];
+
+                $serialized = $this->normalizeForWrite($key, $val, $type, $definition);
+
+                $stmt->execute([
+                    'grp' => $group,
+                    'key' => $key,
+                    'typ' => $type,
+                    'val' => $serialized,
+                ]);
             }
-
-            $definition = self::DEFINITIONS[$key];
-            $group = $definition['group'];
-            $type = $definition['type'];
-
-            $serialized = $this->normalizeForWrite($key, $val, $type, $definition);
-
-            $stmt->execute([
-                'grp' => $group,
-                'key' => $key,
-                'typ' => $type,
-                'val' => $serialized,
-            ]);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
         }
 
         $this->cache->delete(self::CACHE_KEY);

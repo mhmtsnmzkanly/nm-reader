@@ -17,6 +17,7 @@ Config::loadEnvironment($basePath);
 
 $settings = Config::getSettings();
 $db = $settings['database'];
+$pdo = null;
 
 try {
     $dsn = "mysql:host={$db['host']};port={$db['port']};dbname={$db['database']};charset={$db['charset']}";
@@ -24,6 +25,7 @@ try {
         \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
         \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
     ]);
+    $pdo->beginTransaction();
 
     echo "🌱 Seeding default Taxonomy data...\n";
 
@@ -141,9 +143,14 @@ try {
     }
     echo "✅ Default system settings seeded.\n";
 
+    $pdo->commit();
+
     echo "\n🎉 Database seeding completed successfully!\n";
 
 } catch (\Throwable $e) {
+    if ($pdo instanceof \PDO && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     echo "❌ Seeding failed: " . $e->getMessage() . "\n";
     exit(1);
 }

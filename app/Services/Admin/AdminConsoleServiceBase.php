@@ -16,6 +16,7 @@ use App\Services\RetentionService;
 use App\Services\SeriesService;
 use App\Services\SlugService;
 use App\Services\SitemapService;
+use PDO;
 
 /** Shared infrastructure for extracted admin console services. */
 abstract class AdminConsoleServiceBase
@@ -47,6 +48,7 @@ protected const BAN_TYPES = ['general', 'comment', 'blog', 'voting', 'reporting'
         protected readonly SlugService $slugger,
         protected readonly SitemapService $sitemapService,
         protected readonly SeriesService $seriesService,
+        protected readonly PDO $pdo,
     ) {
     }
 

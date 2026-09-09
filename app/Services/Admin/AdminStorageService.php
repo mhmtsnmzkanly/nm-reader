@@ -30,7 +30,20 @@ final class AdminStorageService extends AdminConsoleServiceBase
 
     public function deleteUpload(int $id, string $moderatorId): void
     {
-        $info = $this->repo->deleteUpload($id);
+        $this->pdo->beginTransaction();
+        try {
+            $info = $this->repo->deleteUpload($id);
+            if (!$info) {
+                $this->pdo->commit();
+                return;
+            }
+            $this->createModerationAction($moderatorId, 'system', (string) $id, 'delete', "Deleted system upload record: " . (string) ($info['image_id'] ?? ''));
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
+
         if ($info) {
             $filePath = (string) ($info['file_path'] ?? '');
             if ($filePath !== '') {
@@ -45,8 +58,6 @@ final class AdminStorageService extends AdminConsoleServiceBase
                     @unlink($publicDiskPath);
                 }
             }
-            $imageId = (string) ($info['image_id'] ?? '');
-            $this->createModerationAction($moderatorId, 'system', (string)$id, 'delete', "Deleted system upload record: $imageId");
         }
     }
 
@@ -112,8 +123,15 @@ final class AdminStorageService extends AdminConsoleServiceBase
             @unlink($temporary);
             $newSize = $oldSize;
         }
-        $this->repo->updateUploadFileSize($id, $newSize, hash_file('sha256', $path) ?: null);
-        $this->repo->createModerationAction($moderatorId, 'system', (string)$id, 'update', "Upload optimized: $oldSize -> $newSize bytes");
+        $this->pdo->beginTransaction();
+        try {
+            $this->repo->updateUploadFileSize($id, $newSize, hash_file('sha256', $path) ?: null);
+            $this->repo->createModerationAction($moderatorId, 'system', (string) $id, 'update', "Upload optimized: $oldSize -> $newSize bytes");
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
         return ['id' => $id, 'old_size' => $oldSize, 'new_size' => $newSize, 'saved_bytes' => max(0, $oldSize - $newSize)];
         } catch (\Throwable $e) {
             try { $this->repo->markUploadProcessingFailed($id, $e->getMessage()); } catch (\Throwable) {}

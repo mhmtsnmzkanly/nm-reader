@@ -79,25 +79,39 @@ final class CommentService
             }
         }
 
-        $commentId = $this->comments->addComment(
-            userId: $userId,
-            contentId: null,
-            chapterId: $chapterId,
-            body: $body,
-            parentId: $parentId
-        );
-        $this->analytics->track('comment_create', $userId, 'chapter', $chapterId, ['comment_id' => $commentId]);
-        $this->chapters->incrementDailyCommentCount($chapterId);
-
         $content = $this->chapters->findContentIdentityByChapterId($chapterId);
+        $contentId = null;
         if ($content !== null) {
-            $slug = $content['slug'];
-            $type = $content['type'];
+            $contentId = $this->series->findContentIdBySlug((string) $content['slug']);
+        }
 
-            $contentId = $this->series->findContentIdBySlug($slug);
+        $this->pdo->beginTransaction();
+        try {
+            $commentId = $this->comments->addComment(
+                userId: $userId,
+                contentId: null,
+                chapterId: $chapterId,
+                body: $body,
+                parentId: $parentId
+            );
             if ($contentId !== null) {
                 $this->series->incrementCommentCount($contentId);
             }
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
+
+        // Analytics counters are intentionally non-blocking and run after the
+        // comment transaction so a metrics failure cannot leave domain data
+        // half-written.
+        $this->analytics->track('comment_create', $userId, 'chapter', $chapterId, ['comment_id' => $commentId]);
+        $this->chapters->incrementDailyCommentCount($chapterId);
+
+        if ($content !== null) {
+            $slug = $content['slug'];
+            $type = $content['type'];
 
             $this->cache->delete(sprintf('content_%s', $slug));
             $this->cache->delete(sprintf('content_%s_%s', $type, $slug));
@@ -140,15 +154,23 @@ final class CommentService
             }
         }
 
-        $commentId = $this->comments->addComment(
-            userId: $userId,
-            contentId: $contentId,
-            chapterId: null,
-            body: $body,
-            parentId: $parentId
-        );
+        $this->pdo->beginTransaction();
+        try {
+            $commentId = $this->comments->addComment(
+                userId: $userId,
+                contentId: $contentId,
+                chapterId: null,
+                body: $body,
+                parentId: $parentId
+            );
+            $this->series->incrementCommentCount($contentId);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
+
         $this->analytics->track('comment_create', $userId, 'series', $contentId, ['comment_id' => $commentId]);
-        $this->series->incrementCommentCount($contentId);
 
         $this->cache->delete(sprintf('content_%s', $slug));
         $this->cache->delete(sprintf('content_%s_%s', $type, $slug));

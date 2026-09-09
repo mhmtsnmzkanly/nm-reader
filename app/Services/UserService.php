@@ -551,9 +551,17 @@ final class UserService
             throw new \InvalidArgumentException('You cannot follow yourself');
         }
 
-        $created = $this->users->followUser($userId, $targetId);
-        if ($created) {
-            $this->users->upsertUserFollowNotification($targetId, $userId);
+        $pdo = $this->users->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $created = $this->users->followUser($userId, $targetId);
+            if ($created) {
+                $this->users->upsertUserFollowNotification($targetId, $userId);
+            }
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
         }
 
         return [
@@ -583,8 +591,16 @@ final class UserService
             throw new \InvalidArgumentException('You cannot unfollow yourself');
         }
 
-        $this->users->unfollowUser($userId, $targetId);
-        $this->users->removeUserFollowNotification($targetId, $userId);
+        $pdo = $this->users->getPdo();
+        $pdo->beginTransaction();
+        try {
+            $this->users->unfollowUser($userId, $targetId);
+            $this->users->removeUserFollowNotification($targetId, $userId);
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
 
         return [
             'followed' => false,

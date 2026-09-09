@@ -170,26 +170,34 @@ final class AuthService
             : $this->sessionLifetimeSeconds;
         $expiresAt = (new \DateTimeImmutable())->modify('+' . $sessionTtlSeconds . ' seconds');
 
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO user_sessions (session_key, user_id, ip_hash, user_agent, expires_at)
-             VALUES (:session_key, :user_id, :ip_hash, :user_agent, :expires_at)'
-        );
-        $stmt->execute([
-            'session_key' => $sessionKey,
-            'user_id' => (string) $user['id'],
-            'ip_hash' => hash('sha256', $ip),
-            'user_agent' => substr($userAgent, 0, 255),
-            'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
-        ]);
+        $refreshToken = null;
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO user_sessions (session_key, user_id, ip_hash, user_agent, expires_at)
+                 VALUES (:session_key, :user_id, :ip_hash, :user_agent, :expires_at)'
+            );
+            $stmt->execute([
+                'session_key' => $sessionKey,
+                'user_id' => (string) $user['id'],
+                'ip_hash' => hash('sha256', $ip),
+                'user_agent' => substr($userAgent, 0, 255),
+                'expires_at' => $expiresAt->format('Y-m-d H:i:s'),
+            ]);
+
+            if ($remember) {
+                $refreshToken = bin2hex(random_bytes(48));
+                $tokenHash = hash('sha256', $refreshToken);
+                $this->userTokens->createToken('refresh', $tokenHash, $expiresAt, (string) $user['id'], null, $sessionKey);
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
 
         $_SESSION['session_key'] = $sessionKey;
-
-        $refreshToken = null;
-        if ($remember) {
-            $refreshToken = bin2hex(random_bytes(48));
-            $tokenHash = hash('sha256', $refreshToken);
-            $this->userTokens->createToken('refresh', $tokenHash, $expiresAt, (string) $user['id'], null, $sessionKey);
-        }
 
         $userEmail = (string) ($user['email'] ?? $identity);
         $this->clearFailedLogins($userEmail, $ip);
@@ -323,13 +331,19 @@ final class AuthService
         }
 
         $userId = (string) $user['id'];
-        $this->userTokens->revokeActiveTokensForUser($userId, 'password_reset');
-
         $resetToken = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $resetToken);
         $expiresAt = (new \DateTimeImmutable())->modify('+1 hour');
 
-        $this->userTokens->createToken('password_reset', $tokenHash, $expiresAt, $userId, $email);
+        $this->pdo->beginTransaction();
+        try {
+            $this->userTokens->revokeActiveTokensForUser($userId, 'password_reset');
+            $this->userTokens->createToken('password_reset', $tokenHash, $expiresAt, $userId, $email);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
         $this->mailService->sendPasswordReset($email, (string) $user['username'], $resetToken, $appUrl ?: 'http://localhost:3000');
     }
 
@@ -355,12 +369,19 @@ final class AuthService
 
         $userId = (string) $tokenRow['user_id'];
         $newHash = password_hash($password, PASSWORD_DEFAULT);
-        $this->users->updatePassword($userId, $newHash);
-        $this->userTokens->consumeToken($tokenHash);
+        $this->pdo->beginTransaction();
+        try {
+            $this->users->updatePassword($userId, $newHash);
+            $this->userTokens->consumeToken($tokenHash);
 
-        // Invalidate active sessions on password reset
-        $stmt = $this->pdo->prepare('UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = :user_id');
-        $stmt->execute(['user_id' => $userId]);
+            // Invalidate active sessions on password reset
+            $stmt = $this->pdo->prepare('UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = :user_id');
+            $stmt->execute(['user_id' => $userId]);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
 
         return [
             'id' => $userId,
@@ -385,8 +406,15 @@ final class AuthService
         }
 
         $userId = (string) $tokenRow['user_id'];
-        $this->users->markEmailVerified($userId);
-        $this->userTokens->consumeToken($tokenHash);
+        $this->pdo->beginTransaction();
+        try {
+            $this->users->markEmailVerified($userId);
+            $this->userTokens->consumeToken($tokenHash);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
 
         return [
             'id' => $userId,
@@ -411,13 +439,19 @@ final class AuthService
         $email = (string) $user['email'];
         $username = (string) $user['username'];
 
-        $this->userTokens->revokeActiveTokensForUser($userId, 'email_verification');
-
         $token = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $token);
         $expiresAt = (new \DateTimeImmutable())->modify('+24 hours');
 
-        $this->userTokens->createToken('email_verification', $tokenHash, $expiresAt, $userId, $email);
+        $this->pdo->beginTransaction();
+        try {
+            $this->userTokens->revokeActiveTokensForUser($userId, 'email_verification');
+            $this->userTokens->createToken('email_verification', $tokenHash, $expiresAt, $userId, $email);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
         $this->mailService->sendEmailVerification($email, $username, $token, $appUrl ?: 'http://localhost:3000');
     }
 
@@ -430,12 +464,19 @@ final class AuthService
             return;
         }
 
-        $stmt = $this->pdo->prepare(
-            'UPDATE user_sessions SET revoked_at = NOW() WHERE session_key = :session_key'
-        );
-        $stmt->execute(['session_key' => $sessionKey]);
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare(
+                'UPDATE user_sessions SET revoked_at = NOW() WHERE session_key = :session_key'
+            );
+            $stmt->execute(['session_key' => $sessionKey]);
 
-        $this->userTokens->revokeTokensBySessionKey($sessionKey);
+            $this->userTokens->revokeTokensBySessionKey($sessionKey);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
     }
 
     /**
@@ -458,32 +499,40 @@ final class AuthService
      */
     public function revokeSession(string $userId, string $sessionKey, ?string $moderatorId = null): void
     {
-        $stmt = $this->pdo->prepare(
-            'UPDATE user_sessions
-             SET revoked_at = NOW()
-             WHERE user_id = :user_id AND session_key = :session_key'
-        );
-        $stmt->execute([
-            'user_id' => $userId,
-            'session_key' => $sessionKey,
-        ]);
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare(
+                'UPDATE user_sessions
+                 SET revoked_at = NOW()
+                 WHERE user_id = :user_id AND session_key = :session_key'
+            );
+            $stmt->execute([
+                'user_id' => $userId,
+                'session_key' => $sessionKey,
+            ]);
 
-        $this->userTokens->revokeTokensBySessionKey($sessionKey);
+            $this->userTokens->revokeTokensBySessionKey($sessionKey);
 
-        if ($moderatorId !== null) {
-            try {
-                $stmt = $this->pdo->prepare(
-                    'INSERT INTO admin_actions (moderator_user_id, target_type, target_id, action, reason, created_at)
-                     VALUES (:mod, "user", :uid, "revoke_session", :reason, NOW())'
-                );
-                $stmt->execute([
-                    'mod' => $moderatorId,
-                    'uid' => $userId,
-                    'reason' => json_encode(['session_key' => $sessionKey])
-                ]);
-            } catch (\Throwable) {
-                // Ignore audit errors here
+            if ($moderatorId !== null) {
+                try {
+                    $stmt = $this->pdo->prepare(
+                        'INSERT INTO admin_actions (moderator_user_id, target_type, target_id, action, reason, created_at)
+                         VALUES (:mod, "user", :uid, "revoke_session", :reason, NOW())'
+                    );
+                    $stmt->execute([
+                        'mod' => $moderatorId,
+                        'uid' => $userId,
+                        'reason' => json_encode(['session_key' => $sessionKey])
+                    ]);
+                } catch (\Throwable) {
+                    // Audit failures must not prevent session revocation.
+                }
             }
+
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
         }
     }
 
@@ -498,15 +547,23 @@ final class AuthService
 
         if ($sessionKeys === []) return 0;
 
-        $update = $this->pdo->prepare(
-            'UPDATE user_sessions SET revoked_at = NOW()
-             WHERE user_id = :user_id AND session_key <> :current_session AND revoked_at IS NULL'
-        );
-        $update->execute(['user_id' => $userId, 'current_session' => $currentSessionKey]);
-        foreach ($sessionKeys as $sessionKey) {
-            $this->userTokens->revokeTokensBySessionKey($sessionKey);
+        $this->pdo->beginTransaction();
+        try {
+            $update = $this->pdo->prepare(
+                'UPDATE user_sessions SET revoked_at = NOW()
+                 WHERE user_id = :user_id AND session_key <> :current_session AND revoked_at IS NULL'
+            );
+            $update->execute(['user_id' => $userId, 'current_session' => $currentSessionKey]);
+            foreach ($sessionKeys as $sessionKey) {
+                $this->userTokens->revokeTokensBySessionKey($sessionKey);
+            }
+            $affected = $update->rowCount();
+            $this->pdo->commit();
+            return $affected;
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
         }
-        return $update->rowCount();
     }
 
     private function resolveRoles(string $userId): array

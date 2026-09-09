@@ -87,7 +87,7 @@ final class AdminContentRepository extends AdminRepositoryBase
         ];
     }
 
-    public function updateContentTaxonomy(string $contentId, array $genreIds, array $tagIds): void
+    public function updateContentTaxonomy(string $contentId, array $genreIds, array $tagIds, ?string $moderatorId = null): void
     {
         $this->pdo->beginTransaction();
         try {
@@ -98,6 +98,10 @@ final class AdminContentRepository extends AdminRepositoryBase
                 foreach ($allTaxIds as $tid) {
                     if ($tid) $stmt->execute(['id' => $contentId, 'tid' => (int) $tid]);
                 }
+            }
+
+            if ($moderatorId !== null) {
+                $this->createModerationAction($moderatorId, 'content', $contentId, 'update', 'Genre/Tag assignments updated');
             }
     
             $this->pdo->commit();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use PDO;
 use App\Repositories\RatingRepository;
 use App\Repositories\SeriesRepository;
 use App\Services\CacheService;
@@ -35,7 +36,8 @@ final class RatingService
         private readonly RatingRepository $ratings,
         private readonly SeriesRepository $series,
         private readonly CacheService $cache,
-        private readonly AnalyticsService $analytics
+        private readonly AnalyticsService $analytics,
+        private readonly PDO $pdo
     ) {
     }
 
@@ -59,8 +61,15 @@ final class RatingService
             throw new \DomainException('Content not found');
         }
 
-        $this->ratings->upsert($userId, $contentId, $rating);
-        $this->ratings->refreshContentSummary($contentId);
+        $this->pdo->beginTransaction();
+        try {
+            $this->ratings->upsert($userId, $contentId, $rating);
+            $this->ratings->refreshContentSummary($contentId);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
         $this->analytics->track('content_rate', $userId, 'content', $contentId, ['rating' => $rating]);
         $this->cache->delete(sprintf('content_%s', $slug));
         $this->cache->deleteByPrefix(sprintf('content_%s', $slug));
@@ -89,8 +98,15 @@ final class RatingService
             throw new \DomainException('Content not found');
         }
 
-        $this->ratings->upsert($userId, $contentId, $rating);
-        $this->ratings->refreshContentSummary($contentId);
+        $this->pdo->beginTransaction();
+        try {
+            $this->ratings->upsert($userId, $contentId, $rating);
+            $this->ratings->refreshContentSummary($contentId);
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
+            throw $exception;
+        }
         $this->analytics->track('content_rate', $userId, 'content', $contentId, ['rating' => $rating]);
         $this->cache->delete(sprintf('content_%s', $slug));
         $this->cache->delete(sprintf('content_%s_%s', $dbType, $slug));

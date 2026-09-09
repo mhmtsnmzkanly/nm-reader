@@ -51,7 +51,7 @@ final class AdminTaxonomyRepository extends AdminRepositoryBase
         return $stmt->rowCount() > 0;
     }
 
-    public function mergeTaxonomies(int $sourceId, int $targetId): array
+    public function mergeTaxonomies(int $sourceId, int $targetId, ?string $moderatorId = null): array
     {
         $this->pdo->beginTransaction();
         try {
@@ -64,6 +64,9 @@ final class AdminTaxonomyRepository extends AdminRepositoryBase
             $stmt->execute(['target_id' => $targetId, 'source_id' => $sourceId]);
             $this->pdo->prepare('DELETE FROM series_taxonomy_map WHERE taxonomy_id = :id')->execute(['id' => $sourceId]);
             $this->pdo->prepare('DELETE FROM taxonomies WHERE id = :id')->execute(['id' => $sourceId]);
+            if ($moderatorId !== null) {
+                $this->createModerationAction($moderatorId, 'system', (string) $targetId, 'update_taxonomy', "Taxonomy $sourceId merged into $targetId");
+            }
             $this->pdo->commit();
             return $this->taxonomyById($targetId) ?? $target;
         } catch (\Throwable $e) {
@@ -72,13 +75,16 @@ final class AdminTaxonomyRepository extends AdminRepositoryBase
         }
     }
 
-    public function reorderTaxonomies(array $items): void
+    public function reorderTaxonomies(array $items, ?string $moderatorId = null): void
     {
         $stmt = $this->pdo->prepare('UPDATE taxonomies SET sort_order = :sort_order WHERE id = :id');
         $this->pdo->beginTransaction();
         try {
             foreach ($items as $item) {
                 $stmt->execute(['id' => (int)$item['id'], 'sort_order' => (int)$item['sort_order']]);
+            }
+            if ($moderatorId !== null) {
+                $this->createModerationAction($moderatorId, 'system', 'taxonomy-order', 'update_taxonomy', 'Taxonomy order updated');
             }
             $this->pdo->commit();
         } catch (\Throwable $e) {
