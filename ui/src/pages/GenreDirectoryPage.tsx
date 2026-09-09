@@ -5,13 +5,25 @@ import { contentService } from '../services';
 import { Genre } from '../types/api';
 import { usePreferences } from '../contexts/PreferencesContext';
 
+function getBootstrapGenres(): Genre[] | null {
+  if (typeof window === 'undefined') return null;
+  const page = window.__NMR_CONTEXT?.current_page;
+  const items = page?.data?.items;
+  return page?.route === 'genres' && Array.isArray(items) ? items as Genre[] : null;
+}
+
 export const GenreDirectoryPage: React.FC = () => {
   const { t } = usePreferences();
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [bootstrapGenres] = useState(getBootstrapGenres);
+  const [genres, setGenres] = useState<Genre[]>(bootstrapGenres || []);
+  const [isLoading, setIsLoading] = useState(bootstrapGenres === null);
 
   useEffect(() => {
     const fetchGenres = async () => {
+      if (bootstrapGenres !== null) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       const res = await contentService.getGenres();
       if (res.status === 'success') {
@@ -21,7 +33,7 @@ export const GenreDirectoryPage: React.FC = () => {
     };
 
     fetchGenres();
-  }, []);
+  }, [bootstrapGenres]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8 transition-colors duration-300">

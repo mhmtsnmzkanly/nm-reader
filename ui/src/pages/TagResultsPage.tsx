@@ -6,6 +6,15 @@ import { ContentCard } from '../components/content/ContentCard';
 import { Pagination } from '../components/feedback/Pagination';
 import { usePreferences } from '../contexts/PreferencesContext';
 
+function getBootstrapTagResults(slug: string, page: number): ContentSummary[] | null {
+  if (page !== 1 || typeof window === 'undefined') return null;
+  const current = window.__NMR_CONTEXT?.current_page;
+  const items = current?.data?.items;
+  return current?.route === 'tag' && current.data?.slug === slug && Array.isArray(items)
+    ? items as ContentSummary[]
+    : null;
+}
+
 export const TagResultsPage: React.FC = () => {
   const { t } = usePreferences();
   const { slug = '' } = useParams<{ slug: string }>();
@@ -14,12 +23,17 @@ export const TagResultsPage: React.FC = () => {
   const page = parseInt(searchParams.get('page') || '1', 10);
   const perPage = parseInt(searchParams.get('per_page') || '10', 10);
 
-  const [contents, setContents] = useState<ContentSummary[]>([]);
+  const [bootstrapContents] = useState(() => getBootstrapTagResults(slug, page));
+  const [contents, setContents] = useState<ContentSummary[]>(bootstrapContents || []);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(bootstrapContents === null);
 
   useEffect(() => {
     const fetchTagContent = async () => {
+      if (bootstrapContents !== null && page === 1) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       const res = await contentService.getTagContents(slug, page, perPage);
 
@@ -31,7 +45,7 @@ export const TagResultsPage: React.FC = () => {
     };
 
     fetchTagContent();
-  }, [slug, page, perPage]);
+  }, [bootstrapContents, slug, page, perPage]);
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams);

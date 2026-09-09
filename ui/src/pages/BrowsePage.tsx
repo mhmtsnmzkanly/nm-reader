@@ -14,6 +14,14 @@ type TypeOption = {
   descriptionEn: string;
 };
 
+function getBootstrapListing(type: string, page: number): ContentSummary[] | null {
+  if (page !== 1 || typeof window === 'undefined') return null;
+  const current = window.__NMR_CONTEXT?.current_page;
+  const data = current?.data;
+  if (current?.route !== 'listing' || data?.type !== type || !Array.isArray(data.items)) return null;
+  return data.items as ContentSummary[];
+}
+
 const CONTENT_TYPES: TypeOption[] = [
   { key: 'manga', label: 'Manga', descriptionTr: 'Japon Çizgi Romanları', descriptionEn: 'Japanese Comics' },
   { key: 'manhwa', label: 'Manhwa', descriptionTr: 'Kore Çizgi Romanları', descriptionEn: 'Korean Comics' },
@@ -32,18 +40,27 @@ export const BrowsePage: React.FC = () => {
 
   const page = parseInt(searchParams.get('page') || '1', 10);
   const perPage = parseInt(searchParams.get('per_page') || '10', 10);
+  const normalizedType = type.replace(/_/g, '-') as ContentType;
 
-  const [contents, setContents] = useState<ContentSummary[]>([]);
+  const bootstrapItems = useState(() => getBootstrapListing(normalizedType, page))[0];
+  const [contents, setContents] = useState<ContentSummary[]>(bootstrapItems || []);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(bootstrapItems === null);
   const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'chapters'>('recent');
 
-  const normalizedType = type.replace(/_/g, '-') as ContentType;
   const currentTypeConfig = CONTENT_TYPES.find((ct) => ct.key === normalizedType) || CONTENT_TYPES[0];
   const typeDescription = lang === 'en' ? currentTypeConfig.descriptionEn : currentTypeConfig.descriptionTr;
 
   useEffect(() => {
     const fetchBrowse = async () => {
+      if (bootstrapItems !== null && page === 1) {
+        const items = [...bootstrapItems];
+        if (sortBy === 'rating') items.sort((a, b) => (b.rating_avg || 0) - (a.rating_avg || 0));
+        if (sortBy === 'chapters') items.sort((a, b) => (b.chapter_count || 0) - (a.chapter_count || 0));
+        setContents(items);
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       const res = await contentService.getContentByType(normalizedType, page, perPage);
 

@@ -145,8 +145,22 @@ final class ContentPageController extends BasePageController
     {
         $siteName = $this->siteConfig->siteName();
         $type = (string) ($args['type'] ?? '');
+        $bootstrapType = $type !== '' ? $type : 'manga';
+        $userId = isset($_SESSION['user_id']) ? (string) $_SESSION['user_id'] : null;
+        $path = $request->getUri()->getPath();
+        $contextRoute = $path === '/genres' ? 'genres' : ($path === '/tags' ? 'tags' : 'listing');
+        $items = match ($contextRoute) {
+            'genres' => $this->seriesService->series_genres(1, 50),
+            'tags' => $this->seriesService->series_tags(1, 50),
+            default => $this->seriesService->byType($bootstrapType, 1, 10, $userId !== '' ? $userId : null),
+        };
         $display = $type !== '' ? ucwords(str_replace('-', ' ', $type)) : 'Tum';
-        return $this->render($request, $response, [], 'Browse - ' . $siteName, [
+        return $this->render($request, $response, [
+            'current_page' => [
+                'route' => $contextRoute,
+                'data' => ['type' => $bootstrapType, 'items' => $items, 'page' => 1],
+            ],
+        ], 'Browse - ' . $siteName, [
             'title' => sprintf('%s Serileri - %s', $display, $siteName),
             'description' => sprintf('%s turundeki serileri listele, incele ve okumaya basla.', $display),
             'type' => 'website', 'robots' => 'index,follow',
@@ -166,8 +180,16 @@ final class ContentPageController extends BasePageController
     private function taxonomyPage(ServerRequestInterface $request, ResponseInterface $response, string $slug, string $route, string $description): ResponseInterface
     {
         $display = ucwords(str_replace('-', ' ', $slug));
+        $userId = isset($_SESSION['user_id']) ? (string) $_SESSION['user_id'] : null;
+        $items = $route === 'genre'
+            ? $this->seriesService->byGenre($slug, 1, 10, $userId !== '' ? $userId : null)
+            : $this->seriesService->byTag($slug, 1, 10, $userId !== '' ? $userId : null);
         return $this->render($request, $response, [
             'breadcrumbs' => $this->breadcrumbs($request, $route, ['name' => $display]),
+            'current_page' => [
+                'route' => $route,
+                'data' => ['slug' => $slug, 'items' => $items, 'page' => 1],
+            ],
         ], ucfirst($route) . ': ' . $slug, [
             'title' => sprintf('%s: %s - %s', ucfirst($route), $display, $this->siteConfig->siteName()),
             'description' => sprintf($description, $display), 'robots' => 'index,follow',

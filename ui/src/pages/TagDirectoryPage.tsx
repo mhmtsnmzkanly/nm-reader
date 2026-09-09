@@ -5,13 +5,25 @@ import { contentService } from '../services';
 import { Tag } from '../types/api';
 import { usePreferences } from '../contexts/PreferencesContext';
 
+function getBootstrapTags(): Tag[] | null {
+  if (typeof window === 'undefined') return null;
+  const page = window.__NMR_CONTEXT?.current_page;
+  const items = page?.data?.items;
+  return page?.route === 'tags' && Array.isArray(items) ? items as Tag[] : null;
+}
+
 export const TagDirectoryPage: React.FC = () => {
   const { t } = usePreferences();
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [bootstrapTags] = useState(getBootstrapTags);
+  const [tags, setTags] = useState<Tag[]>(bootstrapTags || []);
+  const [isLoading, setIsLoading] = useState(bootstrapTags === null);
 
   useEffect(() => {
     const fetchTags = async () => {
+      if (bootstrapTags !== null) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       const res = await contentService.getTags();
       if (res.status === 'success') {
@@ -21,7 +33,7 @@ export const TagDirectoryPage: React.FC = () => {
     };
 
     fetchTags();
-  }, []);
+  }, [bootstrapTags]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8 transition-colors duration-300">
