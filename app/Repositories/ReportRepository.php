@@ -99,7 +99,7 @@ final class ReportRepository
                         ELSE NULL
                     END) AS target_url
                 FROM reports r
-                INNER JOIN users u ON u.id = r.user_id
+                LEFT JOIN users u ON u.id = r.user_id
                 LEFT JOIN users ru ON ru.id = r.reviewed_by
                 LEFT JOIN series s ON (r.target_type = "series" AND s.id = r.target_id)
                 LEFT JOIN chapters ch ON (r.target_type = "chapter" AND ch.id = r.target_id)
@@ -180,7 +180,7 @@ final class ReportRepository
                         ELSE NULL
                     END) AS target_url
                 FROM reports r
-                INNER JOIN users u ON u.id = r.user_id
+                LEFT JOIN users u ON u.id = r.user_id
                 LEFT JOIN users ru ON ru.id = r.reviewed_by
                 LEFT JOIN series s ON (r.target_type = "series" AND s.id = r.target_id)
                 LEFT JOIN chapters ch ON (r.target_type = "chapter" AND ch.id = r.target_id)

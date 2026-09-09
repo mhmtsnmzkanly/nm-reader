@@ -399,7 +399,7 @@ CREATE TABLE `votes` (
 DROP TABLE IF EXISTS `reports`;
 CREATE TABLE `reports` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` char(8) NOT NULL,
+  `user_id` char(8) DEFAULT NULL,
   `target_type` enum('series','chapter','blog','comment') NOT NULL,
   `target_id` varchar(32) NOT NULL,
   `reason` varchar(64) NOT NULL,
@@ -414,7 +414,7 @@ CREATE TABLE `reports` (
   UNIQUE KEY `uniq_user_target_reason` (`user_id`,`target_type`,`target_id`,`reason`),
   KEY `idx_reports_status_created` (`status`,`created_at`),
   KEY `idx_reports_target` (`target_type`,`target_id`),
-  CONSTRAINT `fk_reports_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_reports_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_reports_reviewer` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
