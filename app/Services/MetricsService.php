@@ -28,7 +28,7 @@ final class MetricsService
             'ratings_total' => $this->countSafe('SELECT COUNT(*) FROM ratings'),
             'content_follows_total' => $this->countSafe('SELECT COUNT(*) FROM user_series_follows'),
             'user_follows_total' => $this->countSafe('SELECT COUNT(*) FROM user_follows'),
-            'notifications_unread_total' => $this->countSafe('SELECT COUNT(*) FROM user_notifications WHERE is_read = 0'),
+            'notifications_unread_total' => $this->countSafe('SELECT COUNT(*) FROM user_notifications WHERE read_at IS NULL'),
             'queue_pending_total' => $this->countSafe("SELECT COUNT(*) FROM system_jobs WHERE status = 'pending'"),
             'queue_failed_total' => $this->countSafe("SELECT COUNT(*) FROM system_jobs WHERE status = 'failed'"),
             'today_login_success_total' => $this->dailyMetric('auth_login_success_total'),
@@ -554,7 +554,7 @@ final class MetricsService
             'generated_today' => $generated,
             'read_today' => $read,
             'read_rate_pct' => $this->pct($read, $generated),
-            'unread_total' => $this->countSafe('SELECT COUNT(*) FROM user_notifications WHERE is_read = 0'),
+            'unread_total' => $this->countSafe('SELECT COUNT(*) FROM user_notifications WHERE read_at IS NULL'),
         ];
     }
 

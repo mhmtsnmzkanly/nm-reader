@@ -230,7 +230,7 @@ final class QueueService
                 $eventId = (int) $this->pdo->lastInsertId();
             } catch (\Throwable) {}
 
-            $sql = 'INSERT INTO user_notifications (user_id, event_id, actor_user_id, type, title, body, `data`, is_read, created_at)
+            $sql = 'INSERT INTO user_notifications (user_id, event_id, actor_user_id, type, title, body, `data`, created_at)
                     SELECT
                         f.user_id,
                         :event_id,
@@ -239,7 +239,6 @@ final class QueueService
                         :title,
                         :body,
                         :data,
-                        0,
                         NOW()
                     FROM user_series_follows f
                     WHERE f.content_id = :content_id';

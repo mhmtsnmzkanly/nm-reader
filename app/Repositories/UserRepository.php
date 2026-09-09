@@ -567,7 +567,8 @@ final class UserRepository
                     COALESCE(e.title, n.title) AS title,
                     COALESCE(e.body, n.body) AS body,
                     COALESCE(e.`data`, n.`data`) AS `data`,
-                    n.is_read,
+                    CASE WHEN n.read_at IS NULL THEN 0 ELSE 1 END AS is_read,
+                    n.read_at,
                     n.created_at,
                     COALESCE(e.actor_user_id, n.actor_user_id) AS actor_user_id,
                     u.username AS actor_username
@@ -599,8 +600,8 @@ final class UserRepository
     {
         $stmt = $this->pdo->prepare(
             'UPDATE user_notifications
-             SET is_read = 1, read_at = NOW()
-             WHERE user_id = :user_id AND is_read = 0'
+             SET read_at = COALESCE(read_at, NOW())
+             WHERE user_id = :user_id AND read_at IS NULL'
         );
         $stmt->execute(['user_id' => $userId]);
     }
@@ -609,7 +610,7 @@ final class UserRepository
     {
         $stmt = $this->pdo->prepare(
             'UPDATE user_notifications
-             SET is_read = 1, read_at = COALESCE(read_at, NOW())
+             SET read_at = COALESCE(read_at, NOW())
              WHERE id = :id AND user_id = :user_id'
         );
         $stmt->execute(['id' => $notificationId, 'user_id' => $userId]);
@@ -719,7 +720,7 @@ final class UserRepository
         if ($existing !== false) {
             $update = $this->pdo->prepare(
                 'UPDATE user_notifications
-                 SET title = :title, body = :body, `data` = :data, is_read = 0, created_at = NOW()
+                 SET title = :title, body = :body, `data` = :data, read_at = NULL, created_at = NOW()
                  WHERE id = :id'
             );
             $update->execute([
@@ -732,8 +733,8 @@ final class UserRepository
         }
 
         $insert = $this->pdo->prepare(
-            'INSERT INTO user_notifications (user_id, actor_user_id, type, title, body, `data`, is_read, created_at)
-             VALUES (:user_id, :actor_user_id, :type, :title, :body, :data, 0, NOW())'
+            'INSERT INTO user_notifications (user_id, actor_user_id, type, title, body, `data`, created_at)
+             VALUES (:user_id, :actor_user_id, :type, :title, :body, :data, NOW())'
         );
         $insert->execute([
             'user_id' => $targetUserId,

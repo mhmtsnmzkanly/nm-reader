@@ -614,6 +614,7 @@ export type NotificationItem = {
   body: string;
   data: string | NotificationPayloadData; // JSON string or object
   is_read: number; // 0 or 1
+  read_at?: string | null;
   created_at: string;
   actor_user_id: string;
   actor_username: string;
