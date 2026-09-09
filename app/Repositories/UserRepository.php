@@ -39,7 +39,7 @@ final class UserRepository
      */
     public function findByEmail(string $email): ?array
     {
-        $sql = 'SELECT id, username, email, email_verified_at, password_hash, bio, created_at FROM users WHERE email = :email LIMIT 1';
+        $sql = 'SELECT id, username, display_name, email, email_verified_at, password_hash, bio, created_at FROM users WHERE email = :email LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['email' => $email]);
         $row = $stmt->fetch();
@@ -55,7 +55,7 @@ final class UserRepository
      */
     public function findByUsername(string $username): ?array
     {
-        $sql = 'SELECT id, username, email, email_verified_at, password_hash, bio, created_at FROM users WHERE username = :username LIMIT 1';
+        $sql = 'SELECT id, username, display_name, email, email_verified_at, password_hash, bio, created_at FROM users WHERE username = :username LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['username' => $username]);
         $row = $stmt->fetch();
@@ -94,7 +94,7 @@ final class UserRepository
      */
     public function findById(string $id): ?array
     {
-        $sql = 'SELECT id, username, email, email_verified_at, bio, profile_image, cover_image, created_at FROM users WHERE id = :id LIMIT 1';
+        $sql = 'SELECT id, username, display_name, email, email_verified_at, bio, profile_image, cover_image, created_at FROM users WHERE id = :id LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
@@ -133,7 +133,7 @@ final class UserRepository
      */
     public function findPublicByPerson(string $person): ?array
     {
-        $sql = 'SELECT id, username, bio, profile_image, cover_image, created_at
+        $sql = 'SELECT id, username, display_name, bio, profile_image, cover_image, created_at
                 FROM users
                 WHERE id = :person_id OR username = :person_username
                 LIMIT 1';
@@ -529,16 +529,18 @@ final class UserRepository
     /**
      * Updates user bio and image URLs.
      */
-    public function updatePublicProfile(string $userId, ?string $bio, ?string $profileImage, ?string $coverImage): void
+    public function updatePublicProfile(string $userId, ?string $displayName, ?string $bio, ?string $profileImage, ?string $coverImage): void
     {
         $stmt = $this->pdo->prepare(
             'UPDATE users
-             SET bio = :bio,
+             SET display_name = :display_name,
+                 bio = :bio,
                  profile_image = :profile_image,
                  cover_image = :cover_image
              WHERE id = :id'
         );
         $stmt->execute([
+            'display_name' => $displayName,
             'bio' => $bio,
             'profile_image' => $profileImage,
             'cover_image' => $coverImage,

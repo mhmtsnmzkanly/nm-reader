@@ -63,7 +63,7 @@ final class UserService
             return null;
         }
 
-        return OutputSanitizer::sanitizeFields($row, ['username', 'email', 'bio']);
+        return OutputSanitizer::sanitizeFields($row, ['username', 'display_name', 'email', 'bio']);
     }
 
     /**
@@ -336,11 +336,13 @@ final class UserService
 
         return [
             'user' => array_merge(
-                OutputSanitizer::sanitizeFields($user, ['username', 'bio']),
+                OutputSanitizer::sanitizeFields($user, ['username', 'display_name', 'bio']),
                 [
                     'avatar' => $user['profile_image'] ?? null,
                     'cover_image' => $user['cover_image'] ?? null,
-                    'display_name' => $user['username'] ?? null,
+                    'display_name' => (($user['display_name'] ?? '') !== ''
+                        ? $user['display_name']
+                        : ($user['username'] ?? null)),
                     'email' => null,
                     'is_guest' => false,
                     'joined_at' => $user['created_at'] ?? null,
@@ -390,7 +392,7 @@ final class UserService
     }
 
     /**
-     * Updates public profile details (bio, images).
+     * Updates public profile details (display name, bio, images).
      *
      * @param string $userId
      * @param array $payload
@@ -402,6 +404,17 @@ final class UserService
         $current = $this->users->findById($userId);
         if ($current === null) {
             return null;
+        }
+
+        $displayName = $this->scanner->assertSafe(
+            Validator::sanitizeText((string) ($payload['display_name'] ?? ($current['display_name'] ?? $current['username'] ?? ''))),
+            'user_display_name'
+        );
+        if ($displayName === '') {
+            $displayName = (string) ($current['username'] ?? '');
+        }
+        if (strlen($displayName) > 80) {
+            throw new \InvalidArgumentException('display_name must be at most 80 characters');
         }
 
         $bio = $this->scanner->assertSafe(Validator::sanitizeMultilineText((string) ($payload['bio'] ?? (string) ($current['bio'] ?? ''))), 'user_bio');
@@ -449,10 +462,10 @@ final class UserService
             throw new \InvalidArgumentException('cover_image is too long');
         }
 
-        $this->users->updatePublicProfile($userId, $bio === '' ? null : $bio, $profileImage, $coverImage);
+        $this->users->updatePublicProfile($userId, $displayName, $bio === '' ? null : $bio, $profileImage, $coverImage);
 
         $updated = $this->users->findById($userId);
-        return $updated === null ? null : OutputSanitizer::sanitizeFields($updated, ['username', 'email', 'bio']);
+        return $updated === null ? null : OutputSanitizer::sanitizeFields($updated, ['username', 'display_name', 'email', 'bio']);
     }
 
     /**

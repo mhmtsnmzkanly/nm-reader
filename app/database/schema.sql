@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` char(8) NOT NULL,
   `username` varchar(50) NOT NULL,
+  `display_name` varchar(80) DEFAULT NULL,
   `email` varchar(150) NOT NULL,
   `email_verified_at` datetime DEFAULT NULL,
   `password_hash` varchar(255) NOT NULL,
