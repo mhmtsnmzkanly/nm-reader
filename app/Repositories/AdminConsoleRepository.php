@@ -575,7 +575,7 @@ final class AdminConsoleRepository
         $offset = max(0, ($page - 1) * $perPage);
         $where = [];
         $params = [];
-        if ($query !== '') { $where[] = '(al.path LIKE :query OR al.user_agent LIKE :query OR u.username LIKE :query)'; $params['query'] = '%' . $query . '%'; }
+        if ($query !== '') { $where[] = '(al.path LIKE :query OR al.action LIKE :query OR al.request_id LIKE :query OR al.user_agent LIKE :query OR u.username LIKE :query)'; $params['query'] = '%' . $query . '%'; }
         if ($method !== null && in_array($method, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], true)) { $where[] = 'al.method = :method'; $params['method'] = $method; }
         if ($statusGroup === '2xx') $where[] = 'al.status_code BETWEEN 200 AND 299';
         elseif ($statusGroup === '4xx') $where[] = 'al.status_code BETWEEN 400 AND 499';
@@ -592,14 +592,18 @@ final class AdminConsoleRepository
         $stmt = $this->pdo->prepare(
             'SELECT
                 al.id,
+                al.request_id,
                 al.user_id,
                 u.username,
                 al.method,
                 al.path,
+                al.action,
+                al.outcome,
                 al.status_code,
                 al.ip_hash,
                 al.user_agent,
                 al.duration_ms,
+                al.context_json,
                 al.created_at
              FROM system_audit_logs al
              LEFT JOIN users u ON u.id = al.user_id
@@ -839,6 +843,8 @@ final class AdminConsoleRepository
                 target_id,
                 action,
                 reason,
+                outcome,
+                metadata,
                 created_at
              FROM admin_actions
              ORDER BY id DESC
@@ -862,13 +868,15 @@ final class AdminConsoleRepository
         string $targetType,
         string $targetId,
         string $action,
-        ?string $reason
+        ?string $reason,
+        ?array $metadata = null,
+        string $outcome = 'success'
     ): int {
         $stmt = $this->pdo->prepare(
             'INSERT INTO admin_actions
-                (moderator_user_id, target_type, target_id, action, reason, created_at)
+                (moderator_user_id, target_type, target_id, action, reason, outcome, metadata, created_at)
              VALUES
-                (:moderator_user_id, :target_type, :target_id, :action, :reason, NOW())'
+                (:moderator_user_id, :target_type, :target_id, :action, :reason, :outcome, :metadata, NOW())'
         );
         $stmt->execute([
             'moderator_user_id' => $moderatorUserId,
@@ -876,6 +884,8 @@ final class AdminConsoleRepository
             'target_id' => $targetId,
             'action' => $action,
             'reason' => $reason !== null ? mb_substr($reason, 0, 255) : null,
+            'outcome' => in_array($outcome, ['success', 'failure'], true) ? $outcome : 'success',
+            'metadata' => $metadata === null ? null : json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ]);
 
         return (int) $this->pdo->lastInsertId();

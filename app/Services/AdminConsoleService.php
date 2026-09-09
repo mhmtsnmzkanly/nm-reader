@@ -449,7 +449,9 @@ final class AdminConsoleService
             (string) $data['target_type'],
             (string) $data['target_id'],
             (string) $data['action'],
-            (string) ($data['reason'] ?? '')
+            (string) ($data['reason'] ?? ''),
+            is_array($data['metadata'] ?? null) ? $data['metadata'] : null,
+            (string) ($data['outcome'] ?? 'success')
         );
     }
 

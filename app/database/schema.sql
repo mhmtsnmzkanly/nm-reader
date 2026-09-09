@@ -635,26 +635,36 @@ CREATE TABLE `admin_actions` (
   `moderator_user_id` char(8) DEFAULT NULL,
   `target_type` enum('comment','blog','content','user','system','role','series','chapter','security') NOT NULL,
   `target_id` varchar(32) NOT NULL,
-  `action` enum('hide','delete','ban','warn','approve','trigger','grant_permission','revoke_permission','role_change','unban','update','create','update_taxonomy','revoke_session','wallet_credit','wallet_debit','wallet_package_credit','refund','series_unlock','chapter_unlock','feature_unlock','package_create','package_update','pricing_update','feature_update','auth_fail','permission_denied','create_genre','create_tag','env_update') NOT NULL,
+  `action` varchar(64) NOT NULL,
   `reason` text DEFAULT NULL,
+  `outcome` enum('success','failure') NOT NULL DEFAULT 'success',
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_admin_actions_target` (`target_type`,`target_id`,`created_at`),
+  KEY `idx_admin_actions_action_created` (`action`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `system_audit_logs`;
 CREATE TABLE `system_audit_logs` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `request_id` char(16) DEFAULT NULL,
   `user_id` char(8) DEFAULT NULL,
   `method` varchar(10) NOT NULL,
   `path` varchar(255) NOT NULL,
+  `action` varchar(100) DEFAULT NULL,
+  `outcome` enum('success','failure') NOT NULL DEFAULT 'success',
   `status_code` int(11) NOT NULL,
   `ip_hash` char(64) NOT NULL,
   `user_agent` varchar(255) DEFAULT NULL,
   `duration_ms` int(11) NOT NULL,
+  `context_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`context_json`)),
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
+  KEY `idx_audit_request_id` (`request_id`),
   KEY `idx_audit_created` (`created_at`),
-  KEY `idx_audit_status_created` (`status_code`,`created_at`)
+  KEY `idx_audit_status_created` (`status_code`,`created_at`),
+  KEY `idx_audit_outcome_created` (`outcome`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 DROP TABLE IF EXISTS `system_uploads`;

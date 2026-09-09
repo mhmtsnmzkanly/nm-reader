@@ -245,8 +245,13 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
         $method = $request->getMethod();
         $path = (string) $request->getUri()->getPath();
         $status = $response->getStatusCode();
+        $outcome = $status >= 400 ? 'failure' : 'success';
+        $normalizedAction = preg_replace('/\/[a-z0-9]{6,}(?=\/|$)/i', '/:id', $path);
+        $action = strtoupper($method) . ' ' . ($normalizedAction !== false ? $normalizedAction : $path);
         $ipHash = hash('sha256', (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown'));
         $userAgent = substr((string) ($request->getHeaderLine('User-Agent') ?: ''), 0, 255);
+        $query = $request->getQueryParams();
+        if (array_key_exists('install_token', $query)) $query['install_token'] = '[redacted]';
 
         $auditLogger->info('audit', [
             'user_id' => $userId, 'method' => $method, 'path' => $path,
@@ -264,12 +269,16 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 
         if ($isMutation || $isSensitive || $isFailure) {
             $stmt = $pdo->prepare(
-                'INSERT INTO system_audit_logs (user_id, method, path, status_code, ip_hash, user_agent, duration_ms, created_at)
-                 VALUES (:user_id, :method, :path, :status_code, :ip_hash, :user_agent, :duration_ms, NOW())'
+                'INSERT INTO system_audit_logs
+                    (request_id, user_id, method, path, action, outcome, status_code, ip_hash, user_agent, duration_ms, context_json, created_at)
+                 VALUES (:request_id, :user_id, :method, :path, :action, :outcome, :status_code, :ip_hash, :user_agent, :duration_ms, :context_json, NOW())'
             );
             $stmt->execute([
+                'request_id' => $request->getAttribute('request_id') ?: null,
                 'user_id' => $userId, 'method' => $method, 'path' => $path,
+                'action' => substr($action, 0, 100), 'outcome' => $outcome,
                 'status_code' => $status, 'ip_hash' => $ipHash, 'user_agent' => $userAgent, 'duration_ms' => $duration,
+                'context_json' => json_encode(['query' => $query], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             ]);
         }
     } catch (\Throwable) {}
