@@ -32,6 +32,7 @@ use App\Services\AdminService;
 use App\Services\AdminConsoleService;
 use App\Services\AnalyticsService;
 use App\Services\AnalyticsAggregationService;
+use App\Services\BackupService;
 use App\Services\AuthorizationService;
 use App\Services\I18nService;
 use App\Services\BlogService;
@@ -155,6 +156,8 @@ $builder->addDefinitions([
     AnalyticsService::class => DI\autowire(AnalyticsService::class)
         ->constructorParameter('logger', DI\get('logger.error')),
     AnalyticsAggregationService::class => DI\autowire(AnalyticsAggregationService::class),
+    BackupService::class => DI\autowire(BackupService::class)
+        ->constructorParameter('basePath', $settings['app']['base_path']),
     BlogService::class => DI\autowire(BlogService::class),
     \App\Services\ReportService::class => DI\autowire(\App\Services\ReportService::class),
     SeriesService::class => DI\autowire(SeriesService::class),

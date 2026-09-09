@@ -3083,7 +3083,11 @@
         const response = await api(`/maintenance/${el.dataset.task}`, { method: 'POST' });
         const result = response?.data || {};
         if (output) output.textContent = Array.isArray(result.output) ? result.output.join('\n') : JSON.stringify(result, null, 2);
-        showToast('Bakım işlemi tamamlandı');
+        if (result.success === false) {
+          showToast('Bakım işlemi başarısız oldu', 'danger');
+        } else {
+          showToast('Bakım işlemi tamamlandı');
+        }
       } catch (error) {
         if (output) output.textContent = error.message;
         showToast(error.message, 'danger');

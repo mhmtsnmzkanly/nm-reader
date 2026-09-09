@@ -1546,6 +1546,7 @@ final class AdminConsoleRepository
              FROM blogs b
              INNER JOIN users u ON u.id = b.user_id
              WHERE ' . $notDeleted . '
+               AND b.created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
              GROUP BY u.id, u.username
              ORDER BY blog_total DESC, u.username ASC
              LIMIT :limit',

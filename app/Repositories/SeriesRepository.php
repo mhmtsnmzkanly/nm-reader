@@ -734,13 +734,6 @@ final class SeriesRepository
     {
         $stmt = $this->pdo->prepare('UPDATE series SET comment_count = comment_count + 1 WHERE id = :id');
         $stmt->execute(['id' => $contentId]);
-
-        $daily = $this->pdo->prepare(
-            'INSERT INTO analytics_series_daily (content_id, stat_date, view_count, comment_count)
-             VALUES (:content_id, CURRENT_DATE(), 0, 1)
-             ON DUPLICATE KEY UPDATE comment_count = comment_count + 1'
-        );
-        $daily->execute(['content_id' => $contentId]);
     }
 
     /**
@@ -754,13 +747,6 @@ final class SeriesRepository
             'content_id' => $contentId,
             'ip_hash' => $ipHash,
         ]);
-
-        $daily = $this->pdo->prepare(
-            'INSERT INTO analytics_series_daily (content_id, stat_date, view_count, comment_count)
-             VALUES (:content_id, CURRENT_DATE(), 1, 0)
-             ON DUPLICATE KEY UPDATE view_count = view_count + 1'
-        );
-        $daily->execute(['content_id' => $contentId]);
     }
 
     /**

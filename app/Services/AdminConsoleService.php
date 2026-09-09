@@ -31,6 +31,7 @@ final class AdminConsoleService
         private readonly CacheService $cache,
         private readonly RetentionService $retention,
         private readonly AnalyticsAggregationService $aggregation,
+        private readonly BackupService $backupService,
         private readonly SlugService $slugger,
         private readonly SitemapService $sitemapService,
         private readonly SeriesService $seriesService
@@ -709,8 +710,17 @@ final class AdminConsoleService
     public function triggerBackup(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
-        $scriptPath = dirname(__DIR__, 2) . '/app/Console/system_backup.php';
-        return $this->runCliScript($scriptPath, '', $moderatorId, 'backup', 'Manual backup triggered');
+        $result = $this->backupService->create();
+        if ($moderatorId !== null) {
+            $this->repo->createModerationAction(
+                $moderatorId,
+                'system',
+                'backup',
+                'trigger',
+                $result['success'] ? 'Manual backup completed' : 'Manual backup failed'
+            );
+        }
+        return $result;
     }
 
     public function triggerSitemap(?string $moderatorId = null): array
