@@ -165,7 +165,8 @@ final class WebhookService
                 CURLOPT_POSTFIELDS => $body,
                 CURLOPT_TIMEOUT => 5,
                 CURLOPT_CONNECTTIMEOUT => 3,
-                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
             ]);
 
             $res = curl_exec($ch);

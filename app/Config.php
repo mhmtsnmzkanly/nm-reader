@@ -954,7 +954,10 @@ final class Config
                 $secure->post("/content/{type:" . $typePattern . "}/{slug}/rate", [UserInteractionController::class, "rateByType"]);
                 $secure->post("/content/{type:" . $typePattern . "}/{slug}/comment", [UserInteractionController::class, "createSeriesComment"])->add(new RestrictedActionMiddleware($users, "commenting"));
                 $secure->post("/chapter/{chapterId:[a-z0-9]{6}}/comment", [UserInteractionController::class, "createChapterComment"])->add(new RestrictedActionMiddleware($users, "commenting"));
-                $secure->post("/comments/{commentId:[0-9]+}/vote", [UserInteractionController::class, "voteComment"])->add(new RestrictedActionMiddleware($users, "voting"));
+                // Reactions remain available to users with interaction
+                // penalties; only content creation/moderation actions are
+                // restricted by the ban middleware.
+                $secure->post("/comments/{commentId:[0-9]+}/vote", [UserInteractionController::class, "voteComment"]);
                 $secure->post("/user/profile", [UserController::class, "updateProfile"]);
                 $secure->get("/user/profile", [UserController::class, "profile"]);
                 $secure->get("/user/history", [UserController::class, "history"]);
@@ -979,10 +982,10 @@ final class Config
                 $secure->post("/blogs", [BlogController::class, "create"])->add(new RestrictedActionMiddleware($users, "blog creation"));
                 $secure->put("/blogs/{id:[a-z0-9]{6}}", [BlogController::class, "update"])->add(new RestrictedActionMiddleware($users, "blog update"));
                 $secure->delete("/blogs/{id:[a-z0-9]{6}}", [BlogController::class, "delete"])->add(new RestrictedActionMiddleware($users, "blog deletion"));
-                $secure->post("/blogs/image", [BlogController::class, "uploadImage"]);
-                $secure->post("/blogs/{slug}/vote", [BlogController::class, "vote"])->add(new RestrictedActionMiddleware($users, "voting"));
+                $secure->post("/blogs/image", [BlogController::class, "uploadImage"])->add(new RestrictedActionMiddleware($users, "blog creation"));
+                $secure->post("/blogs/{slug}/vote", [BlogController::class, "vote"]);
                 $secure->post("/blogs/{slug}/comments", [UserInteractionController::class, "createBlogComment"])->add(new RestrictedActionMiddleware($users, "commenting"));
-                $secure->post("/blogs/{slug}/comments/{commentId:[0-9]+}/vote", [UserInteractionController::class, "voteBlogComment"])->add(new RestrictedActionMiddleware($users, "voting"));
+                $secure->post("/blogs/{slug}/comments/{commentId:[0-9]+}/vote", [UserInteractionController::class, "voteBlogComment"]);
                 $secure->get("/auth/sessions", [AuthController::class, "sessions"]);
                 $secure->delete("/auth/sessions/{sessionKey:[a-z0-9]+}", [AuthController::class, "revokeSession"]);
                 $secure->post("/auth/sessions/revoke-others", [AuthController::class, "revokeOtherSessions"]);

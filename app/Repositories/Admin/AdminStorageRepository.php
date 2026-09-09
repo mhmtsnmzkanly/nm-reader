@@ -18,8 +18,12 @@ final class AdminStorageRepository extends AdminRepositoryBase
         $where = [];
         $params = [];
         if ($query !== '') {
-            $where[] = '(u.original_name LIKE :query OR u.image_id LIKE :query OR u.file_path LIKE :query OR us.username LIKE :query)';
-            $params['query'] = '%' . $query . '%';
+            $where[] = '(u.original_name LIKE :query_original_name OR u.image_id LIKE :query_image_id OR u.file_path LIKE :query_file_path OR us.username LIKE :query_username)';
+            $queryValue = '%' . $query . '%';
+            $params['query_original_name'] = $queryValue;
+            $params['query_image_id'] = $queryValue;
+            $params['query_file_path'] = $queryValue;
+            $params['query_username'] = $queryValue;
         }
         if ($mime !== null && $mime !== '') {
             $where[] = 'u.mime_type = :mime';

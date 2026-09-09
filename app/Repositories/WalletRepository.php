@@ -196,8 +196,12 @@ final class WalletRepository
         $where = [];
         $params = [];
         if ($query !== '') {
-            $where[] = '(wt.user_id LIKE :query OR u.username LIKE :query OR wt.description LIKE :query OR wt.reference_id LIKE :query)';
-            $params['query'] = '%' . $query . '%';
+            $where[] = '(wt.user_id LIKE :query_user_id OR u.username LIKE :query_username OR wt.description LIKE :query_description OR wt.reference_id LIKE :query_reference_id)';
+            $queryValue = '%' . $query . '%';
+            $params['query_user_id'] = $queryValue;
+            $params['query_username'] = $queryValue;
+            $params['query_description'] = $queryValue;
+            $params['query_reference_id'] = $queryValue;
         }
         if ($type !== null && $type !== '') {
             $where[] = 'wt.type = :type';

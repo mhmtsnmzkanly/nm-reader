@@ -21,8 +21,10 @@ final class AdminOperationsRepository extends AdminRepositoryBase
             $params['status'] = $status;
         }
         if ($query !== '') {
-            $where[] = '(job_type LIKE :query OR last_error LIKE :query)';
-            $params['query'] = '%' . $query . '%';
+            $where[] = '(job_type LIKE :query_job_type OR last_error LIKE :query_last_error)';
+            $queryValue = '%' . $query . '%';
+            $params['query_job_type'] = $queryValue;
+            $params['query_last_error'] = $queryValue;
         }
         $whereSql = $where === [] ? '' : ' WHERE ' . implode(' AND ', $where);
         $count = $this->pdo->prepare('SELECT COUNT(*) FROM system_jobs' . $whereSql);

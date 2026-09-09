@@ -21,7 +21,7 @@ use PDO;
 /** Shared infrastructure for extracted admin console services. */
 abstract class AdminConsoleServiceBase
 {
-protected const BAN_TYPES = ['general', 'comment', 'blog', 'voting', 'reporting'];
+    protected const BAN_TYPES = ['general', 'comment', 'blog', 'voting', 'reporting'];
     protected const CACHE_KEY_KPI = 'admin_kpi_summary';
     protected const CACHE_TTL_KPI = 10;
     protected const ANALYTICS_AUTO_INTERVAL = 60;

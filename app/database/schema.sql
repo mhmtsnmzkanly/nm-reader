@@ -661,7 +661,7 @@ DROP TABLE IF EXISTS `admin_actions`;
 CREATE TABLE `admin_actions` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `moderator_user_id` char(8) DEFAULT NULL,
-  `target_type` enum('comment','blog','content','user','system','role','series','chapter','security') NOT NULL,
+  `target_type` enum('comment','blog','content','user','system','role','series','chapter','security','report') NOT NULL,
   `target_id` varchar(32) NOT NULL,
   `action` varchar(64) NOT NULL,
   `reason` text DEFAULT NULL,

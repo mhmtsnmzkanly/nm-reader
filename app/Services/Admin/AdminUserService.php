@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Config;
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
 use App\Repositories\AdminConsoleRepository;
@@ -37,6 +38,20 @@ final class AdminUserService extends AdminConsoleServiceBase
 
     public function updateUser(string $id, array $payload, string $moderatorId): array
     {
+        $rawBanned = $payload['is_banned'] ?? false;
+        $isBanned = is_bool($rawBanned)
+            ? $rawBanned
+            : is_scalar($rawBanned)
+                && in_array(strtolower(trim((string) $rawBanned)), ['1', 'true', 'yes', 'on'], true);
+
+        $rootId = trim((string) (Config::getSettings()['app']['root_user'] ?? ''));
+        if ($isBanned && $id === $moderatorId) {
+            throw new \InvalidArgumentException('You cannot ban your own account.');
+        }
+        if ($isBanned && $rootId !== '' && $id === $rootId) {
+            throw new \InvalidArgumentException('The ROOT_USER account cannot be banned.');
+        }
+
         if (isset($payload['email']) && $payload['email'] !== '' && !Validator::validEmail((string)$payload['email'])) {
             throw new \InvalidArgumentException('Invalid email format');
         }
@@ -66,7 +81,7 @@ final class AdminUserService extends AdminConsoleServiceBase
         $this->repo->updateUser(
             $id,
             (string) ($payload['role'] ?? ''),
-            (bool) ($payload['is_banned'] ?? false),
+            $isBanned,
             $moderatorId,
             $payload['email'] ?? null,
             $payload['bio'] ?? null,

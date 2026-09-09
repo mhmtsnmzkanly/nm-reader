@@ -429,14 +429,16 @@ final class SeriesRepository
                     type, 
                     cover_image 
                 FROM series 
-                WHERE (title LIKE :q OR slug LIKE :q)
+                WHERE (title LIKE :title_query OR slug LIKE :slug_query)
                   AND deleted_at IS NULL
                   AND (lifecycle_status = "published" OR (lifecycle_status = "scheduled" AND scheduled_at <= NOW()))
                 ORDER BY rating_count DESC 
                 LIMIT :limit';
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':q', '%' . $query . '%');
+        $queryValue = '%' . $query . '%';
+        $stmt->bindValue(':title_query', $queryValue);
+        $stmt->bindValue(':slug_query', $queryValue);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 

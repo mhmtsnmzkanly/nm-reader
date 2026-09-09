@@ -91,7 +91,7 @@ final class CommentRepository
         $offset = max(0, ($page - 1) * $perPage);
         $whereParts = ['c.target_type = "blog" AND c.target_id = :blog_id', 'c.moderation_status = "approved"', 'c.deleted_at IS NULL'];
         if ($cursorCreatedAt !== null && $cursorId !== null) {
-            $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
+            $whereParts[] = '(c.created_at < :cursor_created_before OR (c.created_at = :cursor_created_equal AND c.id < :cursor_id))';
         }
         $where = implode(' AND ', $whereParts);
         $sql = 'SELECT 
@@ -119,7 +119,8 @@ final class CommentRepository
         $stmt->bindValue(':viewer_user_id', $viewerUserId, $viewerUserId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':blog_id', $blogId, PDO::PARAM_STR);
         if ($cursorCreatedAt !== null && $cursorId !== null) {
-            $stmt->bindValue(':cursor_created', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_created_before', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_created_equal', $cursorCreatedAt, PDO::PARAM_STR);
             $stmt->bindValue(':cursor_id', $cursorId, PDO::PARAM_INT);
         }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
@@ -139,7 +140,7 @@ final class CommentRepository
         $offset = max(0, ($page - 1) * $perPage);
         $whereParts = ['c.target_type = "chapter" AND c.target_id = :chapter_id', 'c.moderation_status = "approved"', 'c.deleted_at IS NULL'];
         if ($cursorCreatedAt !== null && $cursorId !== null) {
-            $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
+            $whereParts[] = '(c.created_at < :cursor_created_before OR (c.created_at = :cursor_created_equal AND c.id < :cursor_id))';
         }
         $where = implode(' AND ', $whereParts);
         $sql = 'SELECT 
@@ -167,7 +168,8 @@ final class CommentRepository
         $stmt->bindValue(':viewer_user_id', $viewerUserId, $viewerUserId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':chapter_id', $chapterId, PDO::PARAM_STR);
         if ($cursorCreatedAt !== null && $cursorId !== null) {
-            $stmt->bindValue(':cursor_created', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_created_before', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_created_equal', $cursorCreatedAt, PDO::PARAM_STR);
             $stmt->bindValue(':cursor_id', $cursorId, PDO::PARAM_INT);
         }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
@@ -187,7 +189,7 @@ final class CommentRepository
         $offset = max(0, ($page - 1) * $perPage);
         $whereParts = ['c.target_type = "series" AND c.target_id = :content_id', 'c.moderation_status = "approved"', 'c.deleted_at IS NULL'];
         if ($cursorCreatedAt !== null && $cursorId !== null) {
-            $whereParts[] = '(c.created_at < :cursor_created OR (c.created_at = :cursor_created AND c.id < :cursor_id))';
+            $whereParts[] = '(c.created_at < :cursor_created_before OR (c.created_at = :cursor_created_equal AND c.id < :cursor_id))';
         }
         $where = implode(' AND ', $whereParts);
         $sql = 'SELECT 
@@ -215,7 +217,8 @@ final class CommentRepository
         $stmt->bindValue(':viewer_user_id', $viewerUserId, $viewerUserId === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':content_id', $contentId, PDO::PARAM_STR);
         if ($cursorCreatedAt !== null && $cursorId !== null) {
-            $stmt->bindValue(':cursor_created', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_created_before', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_created_equal', $cursorCreatedAt, PDO::PARAM_STR);
             $stmt->bindValue(':cursor_id', $cursorId, PDO::PARAM_INT);
         }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);

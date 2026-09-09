@@ -28,10 +28,16 @@ final class UsersController extends AdminController
     
     public function updateUser(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {
-            $payload = (array) $request->getParsedBody();
-            $modId = (string) $request->getAttribute('user_id');
-            $this->console->updateUser((string)$args['id'], $payload, $modId);
-            return ResponseHelper::success();
+            try {
+                $payload = (array) $request->getParsedBody();
+                $modId = (string) $request->getAttribute('user_id');
+                $this->console->updateUser((string)$args['id'], $payload, $modId);
+                return ResponseHelper::success();
+            } catch (\InvalidArgumentException $exception) {
+                return ResponseHelper::error(400, $exception->getMessage());
+            } catch (\DomainException $exception) {
+                return ResponseHelper::error(404, $exception->getMessage());
+            }
         }
     
     public function userOptions(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

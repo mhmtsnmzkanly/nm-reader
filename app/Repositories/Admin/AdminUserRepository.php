@@ -17,8 +17,11 @@ final class AdminUserRepository extends AdminRepositoryBase
         $where = [];
         $params = [];
         if ($query !== '') {
-            $where[] = '(u.id LIKE :query OR u.username LIKE :query OR u.email LIKE :query)';
-            $params['query'] = '%' . $query . '%';
+            $where[] = '(u.id LIKE :query_id OR u.username LIKE :query_username OR u.email LIKE :query_email)';
+            $queryValue = '%' . $query . '%';
+            $params['query_id'] = $queryValue;
+            $params['query_username'] = $queryValue;
+            $params['query_email'] = $queryValue;
         }
         if (in_array($accountStatus, ['active', 'banned'], true)) {
             $exists = 'EXISTS (
@@ -147,6 +150,23 @@ final class AdminUserRepository extends AdminRepositoryBase
     {
         $this->pdo->beginTransaction();
         try {
+            // Lock and validate the target before applying any partial update.
+            // Without this check an unknown user ID could produce a misleading
+            // successful response when only profile fields were submitted.
+            $userStmt = $this->pdo->prepare(
+                'SELECT id, roles
+                 FROM users
+                 WHERE id = :user_id
+                 LIMIT 1
+                 FOR UPDATE'
+            );
+            $userStmt->execute(['user_id' => $id]);
+            $currentUser = $userStmt->fetch();
+            if (!is_array($currentUser)) {
+                throw new \DomainException('User not found');
+            }
+            $oldRoles = (string) ($currentUser['roles'] ?? '');
+
             if ($email !== null || $bio !== null) {
                 $parts = [];
                 $params = ['id' => $id];
@@ -165,11 +185,6 @@ final class AdminUserRepository extends AdminRepositoryBase
     
             // Role update
             if ($role !== '') {
-                $stmt = $this->pdo->prepare('SELECT id, roles FROM users WHERE id = :user_id LIMIT 1');
-                $stmt->execute(['user_id' => $id]);
-                $currentUser = $stmt->fetch();
-                $oldRoles = (string)($currentUser['roles'] ?? '');
-    
                 $config = \App\Config::getSettings()['rbac'] ?? [];
                 $idMap = (array) ($config['id_map'] ?? []);
                 $roleId = (string) ($idMap[$role] ?? '');
@@ -190,19 +205,22 @@ final class AdminUserRepository extends AdminRepositoryBase
                 }
             }
     
-            // Ban status. Revoking a ban keeps its history for moderation audits.
+            // Ban status. Revoking a ban keeps its history for moderation
+            // audits; any duplicate active rows are handled together so an
+            // unban cannot leave a stale restriction behind.
             $stmt = $this->pdo->prepare(
-                'SELECT id
+                'SELECT id, type, reason, ends_at
                  FROM bans
                  WHERE user_id = :user_id
                    AND revoked_at IS NULL
                    AND (ends_at IS NULL OR ends_at > NOW())
                  ORDER BY created_at DESC
-                 LIMIT 1'
+                 FOR UPDATE'
             );
             $stmt->execute(['user_id' => $id]);
-            $activeBanId = $stmt->fetchColumn();
-            $currentlyBanned = $activeBanId !== false;
+            $activeBans = $stmt->fetchAll();
+            $activeBan = is_array($activeBans[0] ?? null) ? $activeBans[0] : null;
+            $currentlyBanned = $activeBan !== null;
     
             if ($isBanned && !$currentlyBanned) {
                 $this->pdo->prepare(
@@ -231,19 +249,43 @@ final class AdminUserRepository extends AdminRepositoryBase
                 $this->pdo->prepare(
                     'UPDATE bans
                      SET type = :type, reason = :reason, ends_at = :ends_at, updated_at = NOW()
-                     WHERE id = :id'
+                     WHERE user_id = :user_id
+                       AND revoked_at IS NULL
+                       AND (ends_at IS NULL OR ends_at > NOW())'
                 )->execute([
-                    'id' => (int) $activeBanId,
+                    'user_id' => $id,
                     'type' => $banType,
                     'reason' => $banReason ?? 'Banned by admin',
                     'ends_at' => $banEndsAt,
+                ]);
+
+                $audit = $this->pdo->prepare(
+                    'INSERT INTO admin_actions
+                        (moderator_user_id, target_type, target_id, action, reason, metadata, created_at)
+                     VALUES
+                        (:mod, "user", :target_id, "ban_update", :reason, :metadata, NOW())'
+                );
+                $audit->execute([
+                    'mod' => $moderatorId,
+                    'target_id' => $id,
+                    'reason' => $banReason ?? 'Ban updated by admin',
+                    'metadata' => json_encode([
+                        'active_bans_before' => count($activeBans),
+                        'diff' => [
+                            'type' => ['before' => (string) ($activeBan['type'] ?? ''), 'after' => $banType],
+                            'reason' => ['before' => (string) ($activeBan['reason'] ?? ''), 'after' => $banReason],
+                            'ends_at' => ['before' => $activeBan['ends_at'] ?? null, 'after' => $banEndsAt],
+                        ],
+                    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 ]);
             } elseif (!$isBanned && $currentlyBanned) {
                 $this->pdo->prepare(
                     'UPDATE bans
                      SET revoked_at = NOW(), revoked_by_user_id = :revoked_by, updated_at = NOW()
-                     WHERE id = :id'
-                )->execute(['id' => (int) $activeBanId, 'revoked_by' => $moderatorId]);
+                     WHERE user_id = :user_id
+                       AND revoked_at IS NULL
+                       AND (ends_at IS NULL OR ends_at > NOW())'
+                )->execute(['user_id' => $id, 'revoked_by' => $moderatorId]);
     
                 $this->pdo->prepare(
                     'INSERT INTO admin_actions

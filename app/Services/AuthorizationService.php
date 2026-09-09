@@ -185,8 +185,11 @@ final class AuthorizationService
             $rows = $this->pdo->query(
                 'SELECT role_slug, permission_code, effect FROM rbac_role_permission_overrides'
             )->fetchAll();
-        } catch (\Throwable) {
-            return $permissionsByRole;
+        } catch (\Throwable $exception) {
+            // A failed override lookup must not silently restore revoked
+            // permissions. Fail closed so authorization cannot be widened by
+            // a database outage or a broken RBAC table.
+            throw new \RuntimeException('Unable to load RBAC permission overrides.', 0, $exception);
         }
 
         foreach ($rows as $row) {

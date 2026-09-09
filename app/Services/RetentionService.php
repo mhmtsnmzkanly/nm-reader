@@ -43,16 +43,16 @@ final class RetentionService
             'DELETE FROM user_login_logs WHERE attempted_at < DATE_SUB(NOW(), INTERVAL :days DAY)',
             $days
         );
-        $result['auth_tokens_deleted'] = $this->deleteSafe(
+        $result['auth_refresh_tokens_deleted'] = $this->deleteSafe(
             'DELETE FROM user_tokens
-             WHERE (used_at IS NOT NULL AND used_at < DATE_SUB(NOW(), INTERVAL :days DAY))
-                OR expires_at < DATE_SUB(NOW(), INTERVAL :days DAY)',
+             WHERE (used_at IS NOT NULL AND used_at < DATE_SUB(NOW(), INTERVAL :used_days DAY))
+                OR expires_at < DATE_SUB(NOW(), INTERVAL :expires_days DAY)',
             $days
         );
         $result['auth_sessions_deleted'] = $this->deleteSafe(
             'DELETE FROM user_sessions
-             WHERE (revoked_at IS NOT NULL AND revoked_at < DATE_SUB(NOW(), INTERVAL :days DAY))
-                OR expires_at < DATE_SUB(NOW(), INTERVAL :days DAY)',
+             WHERE (revoked_at IS NOT NULL AND revoked_at < DATE_SUB(NOW(), INTERVAL :revoked_days DAY))
+                OR expires_at < DATE_SUB(NOW(), INTERVAL :expires_days DAY)',
             $days
         );
         $result['job_queue_done_deleted'] = $this->deleteSafe(
@@ -83,7 +83,11 @@ final class RetentionService
     {
         try {
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+            foreach (['days', 'used_days', 'expires_days', 'revoked_days'] as $parameter) {
+                if (str_contains($sql, ':' . $parameter)) {
+                    $stmt->bindValue(':' . $parameter, $days, PDO::PARAM_INT);
+                }
+            }
             $stmt->execute();
             return $stmt->rowCount();
         } catch (\Throwable) {

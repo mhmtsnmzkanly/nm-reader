@@ -101,9 +101,12 @@ final class UserTokenRepository
 
     public function cleanupExpired(int $daysOld = 7): int
     {
-        $sql = 'DELETE FROM user_tokens WHERE (expires_at < DATE_SUB(NOW(), INTERVAL :days DAY)) OR (used_at IS NOT NULL AND used_at < DATE_SUB(NOW(), INTERVAL :days DAY))';
+        $sql = 'DELETE FROM user_tokens
+                WHERE expires_at < DATE_SUB(NOW(), INTERVAL :expires_days DAY)
+                   OR (used_at IS NOT NULL AND used_at < DATE_SUB(NOW(), INTERVAL :used_days DAY))';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':days', $daysOld, PDO::PARAM_INT);
+        $stmt->bindValue(':expires_days', $daysOld, PDO::PARAM_INT);
+        $stmt->bindValue(':used_days', $daysOld, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->rowCount();
     }

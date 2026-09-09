@@ -558,7 +558,7 @@ final class UserRepository
         $offset = max(0, ($page - 1) * $perPage);
         $whereParts = ['n.user_id = :user_id'];
         if ($cursorCreatedAt !== null && $cursorId !== null) {
-            $whereParts[] = '(n.created_at < :cursor_created OR (n.created_at = :cursor_created AND n.id < :cursor_id))';
+            $whereParts[] = '(n.created_at < :cursor_created_before OR (n.created_at = :cursor_created_equal AND n.id < :cursor_id))';
         }
         $where = implode(' AND ', $whereParts);
         $sql = 'SELECT
@@ -581,7 +581,8 @@ final class UserRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
         if ($cursorCreatedAt !== null && $cursorId !== null) {
-            $stmt->bindValue(':cursor_created', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_created_before', $cursorCreatedAt, PDO::PARAM_STR);
+            $stmt->bindValue(':cursor_created_equal', $cursorCreatedAt, PDO::PARAM_STR);
             $stmt->bindValue(':cursor_id', $cursorId, PDO::PARAM_INT);
         }
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
@@ -770,21 +771,24 @@ final class UserRepository
      */
     public function isBanned(string $userId, ?string $scope = null): bool
     {
-        try {
-            $stmt = $this->pdo->prepare(
-                "SELECT 1
-                 FROM bans
-                 WHERE user_id = :user_id
-                   AND revoked_at IS NULL
-                   AND (ends_at IS NULL OR ends_at > NOW())
-                   AND (:scope IS NULL OR type = 'general' OR type = :scope)
-                 LIMIT 1"
-            );
-            $stmt->execute(['user_id' => $userId, 'scope' => $scope]);
+        $sql = "SELECT 1
+                FROM bans
+                WHERE user_id = :user_id
+                  AND revoked_at IS NULL
+                  AND (ends_at IS NULL OR ends_at > NOW())";
+        $params = ['user_id' => $userId];
 
-            return $stmt->fetchColumn() !== false;
-        } catch (\Throwable) {
-            return false;
+        // Native PDO prepares do not allow reusing a named placeholder. Build
+        // the scoped predicate only when a scope is requested, avoiding both
+        // duplicate placeholders and nullable comparison ambiguity.
+        if ($scope !== null) {
+            $sql .= "\n                  AND (type = 'general' OR type = :scope)";
+            $params['scope'] = $scope;
         }
+
+        $stmt = $this->pdo->prepare($sql . "\n                LIMIT 1");
+        $stmt->execute($params);
+
+        return $stmt->fetchColumn() !== false;
     }
 }

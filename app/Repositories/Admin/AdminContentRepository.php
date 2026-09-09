@@ -17,8 +17,12 @@ final class AdminContentRepository extends AdminRepositoryBase
         $where = ['c.deleted_at IS NULL'];
         $params = [];
         if ($query !== '') {
-            $where[] = '(c.id LIKE :query OR c.title LIKE :query OR c.slug LIKE :query OR c.alternative_titles LIKE :query)';
-            $params['query'] = '%' . $query . '%';
+            $where[] = '(c.id LIKE :query_id OR c.title LIKE :query_title OR c.slug LIKE :query_slug OR c.alternative_titles LIKE :query_alternative_titles)';
+            $queryValue = '%' . $query . '%';
+            $params['query_id'] = $queryValue;
+            $params['query_title'] = $queryValue;
+            $params['query_slug'] = $queryValue;
+            $params['query_alternative_titles'] = $queryValue;
         }
         if ($status !== null && in_array($status, ['ongoing', 'completed', 'hiatus', 'dropped'], true)) {
             $where[] = 'c.status = :status';

@@ -16,7 +16,9 @@ use Psr\Http\Server\RequestHandlerInterface;
  * Middleware for blocking Restricted Actions by Banned Users.
  *
  * This middleware prevents users with a 'ban' status from performing 
- * specific sensitive actions (e.g., commenting, voting, blog creation).
+ * specific content-producing actions (commenting, blog creation/update and
+ * reporting). Reaction/voting routes intentionally do not use this middleware;
+ * the legacy `voting` scope is retained only so old ban records can be read.
  *
  * It checks the ban status in real-time via the UserRepository.
  *
@@ -26,7 +28,7 @@ final class RestrictedActionMiddleware implements MiddlewareInterface
 {
     /**
      * @param UserRepository $users
-     * @param string $actionName Semantic name of the action (e.g., 'commenting').
+     * @param string $actionName Semantic name of the restricted action (e.g., 'commenting').
      */
     public function __construct(
         private UserRepository|Closure $users,

@@ -16,7 +16,15 @@ final class AdminModerationRepository extends AdminRepositoryBase
         $offset = max(0, ($page - 1) * $perPage);
         $where = [];
         $params = [];
-        if ($query !== '') { $where[] = '(al.path LIKE :query OR al.action LIKE :query OR al.request_id LIKE :query OR al.user_agent LIKE :query OR u.username LIKE :query)'; $params['query'] = '%' . $query . '%'; }
+        if ($query !== '') {
+            $where[] = '(al.path LIKE :query_path OR al.action LIKE :query_action OR al.request_id LIKE :query_request_id OR al.user_agent LIKE :query_user_agent OR u.username LIKE :query_username)';
+            $queryValue = '%' . $query . '%';
+            $params['query_path'] = $queryValue;
+            $params['query_action'] = $queryValue;
+            $params['query_request_id'] = $queryValue;
+            $params['query_user_agent'] = $queryValue;
+            $params['query_username'] = $queryValue;
+        }
         if ($method !== null && in_array($method, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], true)) { $where[] = 'al.method = :method'; $params['method'] = $method; }
         if ($statusGroup === '2xx') $where[] = 'al.status_code BETWEEN 200 AND 299';
         elseif ($statusGroup === '4xx') $where[] = 'al.status_code BETWEEN 400 AND 499';
@@ -98,8 +106,10 @@ final class AdminModerationRepository extends AdminRepositoryBase
         $where = ['1 = 1'];
         $params = [];
         if ($query !== '') {
-            $where[] = '(c.body LIKE :query OR u.username LIKE :query)';
-            $params['query'] = '%' . $query . '%';
+            $where[] = '(c.body LIKE :query_body OR u.username LIKE :query_username)';
+            $queryValue = '%' . $query . '%';
+            $params['query_body'] = $queryValue;
+            $params['query_username'] = $queryValue;
         }
         if ($targetType !== null && in_array($targetType, ['series', 'chapter', 'blog'], true)) {
             $where[] = 'c.target_type = :target_type';
@@ -301,8 +311,11 @@ final class AdminModerationRepository extends AdminRepositoryBase
             }
         }
         if ($query !== '') {
-            $where[] = '(b.title LIKE :query OR b.slug LIKE :query OR u.username LIKE :query)';
-            $params['query'] = '%' . $query . '%';
+            $where[] = '(b.title LIKE :query_title OR b.slug LIKE :query_slug OR u.username LIKE :query_username)';
+            $queryValue = '%' . $query . '%';
+            $params['query_title'] = $queryValue;
+            $params['query_slug'] = $queryValue;
+            $params['query_username'] = $queryValue;
         }
         $whereClause = implode(' AND ', $where);
         $orderBy = $sort === 'oldest' ? 'b.created_at ASC' : 'b.created_at DESC';
