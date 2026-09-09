@@ -297,6 +297,8 @@ final class InstallService
         $pendingEnv = $basePath . '/.env.installing-' . bin2hex(random_bytes(8));
         $mediaStage = null;
         $oldMedia = null;
+        $databaseSwap = null;
+        $environmentActivated = false;
         $rootId = (string) ($root['user_id'] ?? '');
         $rootUser = [];
         try {
@@ -311,16 +313,17 @@ final class InstallService
             );
 
             if ($mode === self::MODE_FRESH) {
-                $this->importSchema($pdo);
-                $pdo->beginTransaction();
-                try {
-                    $this->writeSiteSettings($pdo, $siteSettings);
-                    $rootId = $this->createRootUser($pdo, $root);
-                    $pdo->commit();
-                } catch (\Throwable $exception) {
-                    if ($pdo->inTransaction()) $pdo->rollBack();
-                    throw $exception;
-                }
+                // MySQL/MariaDB implicitly commit DDL. Build the complete
+                // schema in an isolated database first, then move all tables
+                // with one atomic RENAME TABLE statement. This keeps a
+                // failed schema import from partially replacing the target.
+                [$rootId, $databaseSwap] = $this->installFreshDatabase(
+                    $environment,
+                    $siteSettings,
+                    $root,
+                    $tables,
+                );
+                $rootUser = ['username' => (string) ($root['username'] ?? '')];
             } elseif ($mode === self::MODE_RESTORE) {
                 $databaseUpload = (array) ($state['backup']['database'] ?? []);
                 $mediaUpload = (array) ($state['backup']['media'] ?? []);
@@ -328,8 +331,12 @@ final class InstallService
                     throw new \InvalidArgumentException('Both database and media backup files are required for restore.');
                 }
                 $mediaStage = $this->extractMediaArchive((string) ($mediaUpload['path'] ?? ''), $basePath . '/storage/media.installing-' . bin2hex(random_bytes(8)));
-                $this->importSqlArchive($pdo, (string) ($databaseUpload['path'] ?? ''));
-                $rootUser = $this->assertUserExists($pdo, $rootId);
+                [$rootUser, $databaseSwap] = $this->installRestoreDatabase(
+                    $environment,
+                    (string) ($databaseUpload['path'] ?? ''),
+                    $rootId,
+                    $tables,
+                );
                 $mediaDirectory = $basePath . '/storage/media';
                 $oldMedia = $basePath . '/storage/media.previous-' . bin2hex(random_bytes(8));
                 if (is_dir($mediaDirectory)) rename($mediaDirectory, $oldMedia);
@@ -351,6 +358,12 @@ final class InstallService
                 throw new \RuntimeException('Could not activate the environment file.');
             }
             $pendingEnv = '';
+            $environmentActivated = true;
+
+            // Remove staging/previous data only after the environment file is
+            // active. Database cleanup is best-effort after this point; the
+            // active target remains usable if a temporary DB cannot be dropped.
+            if (is_array($databaseSwap)) $this->finalizeDatabaseSwap($databaseSwap);
             if ($oldMedia !== null) $this->removeDirectory($oldMedia);
 
             return [
@@ -361,17 +374,316 @@ final class InstallService
             ];
         } catch (\Throwable $exception) {
             if ($pendingEnv !== '' && is_file($pendingEnv)) @unlink($pendingEnv);
+            if ($environmentActivated) @unlink($basePath . '/.env');
             if ($mediaStage !== null && is_dir($mediaStage)) $this->removeDirectory($mediaStage);
             if ($oldMedia !== null && is_dir($oldMedia)) {
                 $mediaDirectory = $basePath . '/storage/media';
                 if (is_dir($mediaDirectory)) $this->removeDirectory($mediaDirectory);
                 @rename($oldMedia, $mediaDirectory);
             }
+            if (is_array($databaseSwap)) {
+                try {
+                    $this->rollbackDatabaseSwap($databaseSwap);
+                } catch (\Throwable $rollbackException) {
+                    throw new \RuntimeException(
+                        'Installation failed and the database rollback could not be completed automatically.',
+                        0,
+                        $rollbackException,
+                    );
+                }
+            }
             throw $exception;
         } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
         }
+    }
+
+    /**
+     * Builds a fresh installation in an isolated database and atomically
+     * swaps its tables into the requested database. DDL cannot be rolled back
+     * by a MySQL/MariaDB transaction, so isolation is the transaction boundary
+     * for schema changes. Site settings and the root user are still committed
+     * in a normal transaction inside the staging database.
+     *
+     * @param array<string, mixed> $environment
+     * @param array<string, mixed> $siteSettings
+     * @param array<string, mixed> $root
+     * @param list<string> $existingTables
+     * @return array{0:string,1:array<string,mixed>}
+     */
+    private function installFreshDatabase(
+        array $environment,
+        array $siteSettings,
+        array $root,
+        array $existingTables,
+    ): array {
+        $swap = $this->createDatabaseSwap($environment, $existingTables);
+        try {
+            $stagingEnvironment = $environment;
+            $stagingEnvironment['DB_DATABASE'] = $swap['staging_db'];
+            $stagingPdo = $this->connect($stagingEnvironment);
+            $this->importSchema($stagingPdo);
+
+            if (!$stagingPdo->beginTransaction()) {
+                throw new \RuntimeException('Could not begin the installation data transaction.');
+            }
+            try {
+                $this->writeSiteSettings($stagingPdo, $siteSettings);
+                $rootId = $this->createRootUser($stagingPdo, $root);
+                $stagingPdo->commit();
+            } catch (\Throwable $exception) {
+                if ($stagingPdo->inTransaction()) $stagingPdo->rollBack();
+                throw $exception;
+            }
+
+            $this->swapStagingDatabase($swap);
+            return [$rootId, $swap];
+        } catch (\Throwable $exception) {
+            $this->cleanupDatabaseSwap($swap);
+            throw $exception;
+        }
+    }
+
+    /**
+     * Restores a SQL backup in an isolated database before swapping it into
+     * place. This gives restore mode the same all-or-nothing database behavior
+     * as a fresh schema installation.
+     *
+     * @param array<string, mixed> $environment
+     * @param list<string> $existingTables
+     * @return array{0:array<string,mixed>,1:array<string,mixed>}
+     */
+    private function installRestoreDatabase(
+        array $environment,
+        string $databasePath,
+        string $rootId,
+        array $existingTables,
+    ): array {
+        $swap = $this->createDatabaseSwap($environment, $existingTables);
+        try {
+            $stagingEnvironment = $environment;
+            $stagingEnvironment['DB_DATABASE'] = $swap['staging_db'];
+            $stagingPdo = $this->connect($stagingEnvironment);
+            $this->importSqlArchive($stagingPdo, $databasePath);
+            $stagingTables = $this->tableNames($stagingPdo);
+            $missing = array_diff(['users', 'system_settings', 'schema_migrations'], $stagingTables);
+            if ($missing !== []) {
+                throw new \InvalidArgumentException('Database backup is missing required NM Reader tables.');
+            }
+            $rootUser = $this->assertUserExists($stagingPdo, $rootId);
+            $this->swapStagingDatabase($swap);
+            return [$rootUser, $swap];
+        } catch (\Throwable $exception) {
+            $this->cleanupDatabaseSwap($swap);
+            throw $exception;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $environment
+     * @param list<string> $existingTables
+     * @return array<string,mixed>
+     */
+    private function createDatabaseSwap(array $environment, array $existingTables): array
+    {
+        $server = $this->connectServer($environment);
+        $stagingDatabase = $this->createTemporaryDatabase($server, (string) ($environment['DB_CHARSET'] ?? 'utf8mb4'));
+
+        return [
+            'environment' => $environment,
+            'target_db' => (string) ($environment['DB_DATABASE'] ?? ''),
+            'staging_db' => $stagingDatabase,
+            'backup_db' => null,
+            'target_tables' => array_values(array_map('strval', $existingTables)),
+            'staging_tables' => [],
+            'swapped' => false,
+        ];
+    }
+
+    /**
+     * @param array<string,mixed> $swap
+     */
+    private function swapStagingDatabase(array &$swap): void
+    {
+        $environment = (array) ($swap['environment'] ?? []);
+        $stagingEnvironment = $environment;
+        $stagingEnvironment['DB_DATABASE'] = (string) ($swap['staging_db'] ?? '');
+        $stagingPdo = $this->connect($stagingEnvironment);
+        $stagingTables = $this->tableNames($stagingPdo);
+        if ($stagingTables === []) {
+            throw new \RuntimeException('The staged database contains no tables.');
+        }
+
+        $targetDatabase = (string) ($swap['target_db'] ?? '');
+        $targetTables = array_values(array_map('strval', (array) ($swap['target_tables'] ?? [])));
+        $server = $this->connectServer($environment);
+        $backupDatabase = null;
+        if ($targetTables !== []) {
+            $backupDatabase = $this->createTemporaryDatabase($server, (string) ($environment['DB_CHARSET'] ?? 'utf8mb4'));
+            $swap['backup_db'] = $backupDatabase;
+        }
+
+        $renames = [];
+        foreach ($targetTables as $table) {
+            $this->assertDatabaseIdentifier($table);
+            $renames[] = $this->qualifiedIdentifier($targetDatabase, $table)
+                . ' TO ' . $this->qualifiedIdentifier((string) $backupDatabase, $table);
+        }
+        foreach ($stagingTables as $table) {
+            $this->assertDatabaseIdentifier($table);
+            $renames[] = $this->qualifiedIdentifier((string) $swap['staging_db'], $table)
+                . ' TO ' . $this->qualifiedIdentifier($targetDatabase, $table);
+        }
+
+        try {
+            $server->exec('RENAME TABLE ' . implode(', ', $renames));
+        } catch (\Throwable $exception) {
+            if ($backupDatabase !== null) {
+                try {
+                    $server->exec('DROP DATABASE IF EXISTS ' . $this->quoteIdentifier($backupDatabase));
+                } catch (\Throwable) {
+                    // Preserve the original swap error; cleanup is retried by
+                    // the caller's rollback path.
+                }
+                $swap['backup_db'] = null;
+            }
+            throw new \RuntimeException('Could not atomically activate the staged database.', 0, $exception);
+        }
+
+        $swap['staging_tables'] = $stagingTables;
+        $swap['swapped'] = true;
+    }
+
+    /**
+     * Removes temporary databases after the new environment is active.
+     * Cleanup is deliberately best-effort: a cleanup privilege/connection
+     * failure must not turn an already committed installation into a rollback
+     * attempt (the swap itself is still valid and the temporary DBs are
+     * isolated from application traffic).
+     *
+     * @param array<string,mixed> $swap
+     */
+    private function finalizeDatabaseSwap(array $swap): void
+    {
+        try {
+            $server = $this->connectServer((array) ($swap['environment'] ?? []));
+            foreach ([(string) ($swap['staging_db'] ?? ''), (string) ($swap['backup_db'] ?? '')] as $database) {
+                if ($database === '') continue;
+                try {
+                    $server->exec('DROP DATABASE IF EXISTS ' . $this->quoteIdentifier($database));
+                } catch (\Throwable) {
+                    // The installation is already active; leave the temporary
+                    // database for an administrator to clean up later.
+                }
+            }
+        } catch (\Throwable) {
+            // Do not undo a successful database swap for cleanup failures.
+        }
+    }
+
+    /** @param array<string,mixed> $swap */
+    private function rollbackDatabaseSwap(array $swap): void
+    {
+        $server = $this->connectServer((array) ($swap['environment'] ?? []));
+        $stagingDatabase = (string) ($swap['staging_db'] ?? '');
+        $targetDatabase = (string) ($swap['target_db'] ?? '');
+        $backupDatabase = (string) ($swap['backup_db'] ?? '');
+
+        if (($swap['swapped'] ?? false) === true) {
+            $renames = [];
+            foreach ((array) ($swap['staging_tables'] ?? []) as $table) {
+                $this->assertDatabaseIdentifier((string) $table);
+                $renames[] = $this->qualifiedIdentifier($targetDatabase, (string) $table)
+                    . ' TO ' . $this->qualifiedIdentifier($stagingDatabase, (string) $table);
+            }
+            if ($backupDatabase !== '') {
+                foreach ((array) ($swap['target_tables'] ?? []) as $table) {
+                    $this->assertDatabaseIdentifier((string) $table);
+                    $renames[] = $this->qualifiedIdentifier($backupDatabase, (string) $table)
+                        . ' TO ' . $this->qualifiedIdentifier($targetDatabase, (string) $table);
+                }
+            }
+            if ($renames !== []) {
+                $server->exec('RENAME TABLE ' . implode(', ', $renames));
+            }
+        }
+
+        foreach ([$stagingDatabase, $backupDatabase] as $database) {
+            if ($database !== '') $server->exec('DROP DATABASE IF EXISTS ' . $this->quoteIdentifier($database));
+        }
+    }
+
+    /** @param array<string,mixed> $swap */
+    private function cleanupDatabaseSwap(array $swap): void
+    {
+        try {
+            $server = $this->connectServer((array) ($swap['environment'] ?? []));
+            foreach ([(string) ($swap['staging_db'] ?? ''), (string) ($swap['backup_db'] ?? '')] as $database) {
+                if ($database !== '') $server->exec('DROP DATABASE IF EXISTS ' . $this->quoteIdentifier($database));
+            }
+        } catch (\Throwable) {
+            // The original installation error is more useful to the caller.
+        }
+    }
+
+    /** @param array<string,mixed> $environment */
+    private function connectServer(array $environment): PDO
+    {
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;charset=%s',
+            $environment['DB_HOST'],
+            (int) $environment['DB_PORT'],
+            $environment['DB_CHARSET'],
+        );
+        return new PDO($dsn, (string) $environment['DB_USERNAME'], (string) $environment['DB_PASSWORD'], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
+    }
+
+    private function createTemporaryDatabase(PDO $server, string $charset): string
+    {
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $name = 'nmr_install_' . bin2hex(random_bytes(8));
+            $stmt = $server->prepare('SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = :name');
+            $stmt->execute(['name' => $name]);
+            if ($stmt->fetchColumn() !== false) continue;
+            $this->assertDatabaseIdentifier($name);
+            $this->assertDatabaseIdentifier($charset);
+            try {
+                $server->exec('CREATE DATABASE ' . $this->quoteIdentifier($name) . ' DEFAULT CHARACTER SET ' . $charset);
+                return $name;
+            } catch (\Throwable $exception) {
+                throw new \RuntimeException(
+                    'Transactional schema installation requires CREATE/DROP DATABASE privileges.',
+                    0,
+                    $exception,
+                );
+            }
+        }
+        throw new \RuntimeException('Could not allocate a temporary installation database.');
+    }
+
+    private function qualifiedIdentifier(string $database, string $table): string
+    {
+        $this->assertDatabaseIdentifier($database);
+        $this->assertDatabaseIdentifier($table);
+        return $this->quoteIdentifier($database) . '.' . $this->quoteIdentifier($table);
+    }
+
+    private function assertDatabaseIdentifier(string $identifier): void
+    {
+        if ($identifier === '' || preg_match('/^[A-Za-z0-9_$-]{1,64}$/', $identifier) !== 1) {
+            throw new \RuntimeException('Database identifier contains unsupported characters.');
+        }
+    }
+
+    private function quoteIdentifier(string $identifier): string
+    {
+        $this->assertDatabaseIdentifier($identifier);
+        return '`' . str_replace('`', '``', $identifier) . '`';
     }
 
     /** @param array<string, mixed> $environment */
@@ -399,6 +711,11 @@ final class InstallService
         return array_values(array_map('strval', is_array($tables) ? $tables : []));
     }
 
+    /**
+     * Imports the canonical schema into a staging connection only. The caller
+     * must perform the final table swap after this method returns; executing
+     * this DDL directly on the target database would not be rollback-safe.
+     */
     private function importSchema(PDO $pdo): void
     {
         $basePath = (string) ($this->settings['app']['base_path'] ?? dirname(__DIR__, 2));
@@ -522,6 +839,12 @@ final class InstallService
         if (!is_file($path)) throw new \InvalidArgumentException('Database backup file is missing.');
         $sql = str_ends_with(strtolower($path), '.gz') ? @gzdecode((string) file_get_contents($path)) : file_get_contents($path);
         if ($sql === false || $sql === null || trim($sql) === '') throw new \InvalidArgumentException('Database backup could not be read.');
+        // A restore is executed against an isolated staging database. A dump
+        // must not be able to switch the connection back to the live target
+        // database or create/drop arbitrary databases.
+        if (preg_match('/(?:^|;)\s*(?:USE\s+|(?:CREATE|DROP)\s+(?:DATABASE|SCHEMA)\b)/im', $sql) === 1) {
+            throw new \InvalidArgumentException('Database backup contains an unsupported database directive.');
+        }
         $pdo->exec($sql);
     }
 
