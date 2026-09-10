@@ -142,6 +142,8 @@ $endpoints = [
     ['GET', '/admin/rbac/ownership', 'Admin Get Entity Ownership and Capability Matrix', 'Admin', true],
     ['GET', '/admin/blogs', 'Admin List Blogs', 'Admin', true],
     ['GET', '/admin/blogs/pending', 'Admin List Pending Blogs', 'Admin', true],
+    ['GET', '/admin/blogs/{id}/preview', 'Admin Preview Blog', 'Admin', true],
+    ['GET', '/admin/votes/likers', 'Admin List Users Who Upvoted a Target', 'Admin', true],
     ['POST', '/admin/blogs/{id}/approve', 'Admin Approve Blog Post', 'Admin', true],
     ['POST', '/admin/blogs/{id}/hide', 'Admin Hide Blog Post', 'Admin', true],
     ['DELETE', '/admin/blogs/{id}', 'Admin Delete Blog Post', 'Admin', true],

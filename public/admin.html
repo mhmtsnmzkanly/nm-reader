@@ -722,7 +722,13 @@
     <template id="tpl-panel-rows-user-comments"
       ><template data-for each="items" as="item"
         ><tr>
-          <td class="text-break">${item.body}</td>
+          <td class="text-break">
+            <span class="badge ${item.reply_badge_class}"
+              ><i class="bi bi-arrow-return-right me-1"></i>Yanıt</span
+            >${item.body}<small class="${item.reply_reference_class}"
+              >Üst yorum: ${item.parent_reference}</small
+            >
+          </td>
           <td>${item.context_label}</td>
           <td>
             <span class="badge ${item.status_class}">${item.status_label}</span>
@@ -732,6 +738,15 @@
             <span class="text-danger">-${item.downvotes}</span>
           </td>
           <td class="text-nowrap">${item.created_at}</td>
+          <td class="text-end">
+            <a
+              class="btn btn-xs btn-outline-danger"
+              href="${item.likers_url}"
+              data-panel-link
+              title="Beğenenler"
+              ><i class="bi bi-heart-fill me-1"></i>${item.upvotes}</a
+            >
+          </td>
         </tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
@@ -752,6 +767,22 @@
             <span class="badge ${item.status_class}">${item.status_label}</span>
           </td>
           <td class="text-nowrap">${item.created_at}</td>
+          <td class="text-end">
+            <a
+              class="btn btn-xs btn-outline-danger me-1"
+              href="${item.likers_url}"
+              data-panel-link
+              title="Beğenenler"
+              ><i class="bi bi-heart-fill me-1"></i>${item.upvotes}</a
+            >
+            <a
+              class="btn btn-xs btn-outline-info"
+              href="${item.preview_url}"
+              data-panel-link
+              title="Önizle"
+              ><i class="bi bi-eye"></i></a
+            >
+          </td>
         </tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
@@ -800,6 +831,20 @@
           </td>
           <td>${item.created_at}</td>
           <td class="text-end text-nowrap">
+            <a
+              class="btn btn-xs btn-outline-danger me-1"
+              href="${item.likers_url}"
+              data-panel-link
+              title="Beğenenler"
+              ><i class="bi bi-heart-fill me-1"></i>${item.upvotes}</a
+            >
+            <a
+              class="btn btn-xs btn-outline-info me-1"
+              href="${item.preview_url}"
+              data-panel-link
+              title="Önizle"
+              ><i class="bi bi-eye"></i></a
+            >
             <button
               type="button"
               class="btn btn-xs btn-outline-success me-1 ${item.approve_class}"
@@ -836,7 +881,11 @@
     <template id="tpl-panel-rows-comments"
       ><template data-for each="items" as="item"
         ><tr>
-          <td>@${item.username}</td>
+          <td>
+            @${item.username}<small class="${item.reply_reference_class}"
+              ><i class="bi bi-arrow-return-right me-1"></i>Yanıt: ${item.parent_reference}</small
+            >
+          </td>
           <td class="text-break">${item.body}</td>
           <td>${item.context_label}</td>
           <td>
@@ -845,6 +894,13 @@
           <td>+${item.upvotes} / -${item.downvotes}</td>
           <td>${item.created_at}</td>
           <td class="text-end">
+            <a
+              class="btn btn-xs btn-outline-danger me-1"
+              href="${item.likers_url}"
+              data-panel-link
+              title="Beğenenler"
+              ><i class="bi bi-heart-fill me-1"></i>${item.upvotes}</a
+            >
             <button
               type="button"
               class="btn btn-xs btn-outline-${item.next_class} ${item.moderate_class}"
@@ -861,6 +917,38 @@
           ><tr>
             <td colspan="${colspan}" class="text-center text-secondary py-4">
               Yorum bulunamadı
+            </td>
+          </tr></template
+        ></template
+      ></template
+    >
+    <template id="tpl-panel-rows-likers"
+      ><template data-for each="items" as="item"
+        ><tr>
+          <td>
+            <a
+              href="${item.profile_url}"
+              data-panel-link
+              class="text-decoration-none d-inline-flex align-items-center"
+              ><img
+                src="${item.avatar_url}"
+                alt=""
+                width="32"
+                height="32"
+                loading="lazy"
+                class="rounded-circle object-fit-cover me-2"
+              /><span><i class="bi bi-person-circle me-1"></i>@${item.username}</span></a
+            ><small class="d-block text-secondary ms-4"
+              >${item.display_name}</small
+            >
+          </td>
+          <td class="text-nowrap">${item.created_at}</td>
+        </tr></template
+      ><template data-if is-truthy="has_items"
+        ><template data-else
+          ><tr>
+            <td colspan="2" class="text-center text-secondary py-4">
+              Beğeni bulunamadı
             </td>
           </tr></template
         ></template
@@ -1408,6 +1496,7 @@ ${bio}</textarea>
                         <th>Durum</th>
                         <th>Oylar</th>
                         <th>Tarih</th>
+                        <th class="text-end">Beğenenler</th>
                       </tr>
                     </thead>
                     <tbody id="panel-user-comments-list"></tbody>
@@ -1448,6 +1537,8 @@ ${bio}</textarea>
                         <th>Slug</th>
                         <th>Durum</th>
                         <th>Tarih</th>
+                        <th class="text-end">Beğenenler</th>
+                        <th class="text-end">Önizle</th>
                       </tr>
                     </thead>
                     <tbody id="panel-user-blogs-list"></tbody>
@@ -2368,6 +2459,122 @@ ${pages}</textarea>
         ></template
       ></template
     >
+    <template id="tpl-panel-chapter-preview"
+      ><div class="row g-4">
+        <div class="col-12">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <span class="badge bg-primary">${type_label}</span
+            ><span class="badge bg-secondary">${publication_label}</span
+            ><span class="badge bg-warning text-dark"
+              ><i class="bi bi-coin me-1"></i>${price_label}</span
+            ><span class="badge bg-light text-dark border"
+              >${access_label}</span
+            >
+          </div>
+          <h3 class="mb-2">${heading}</h3>
+          <p class="text-secondary mb-4">
+            <i class="bi bi-book me-1"></i>${series_title}
+            <span class="mx-2">·</span>
+            <i class="bi bi-hash me-1"></i>${chapter_number}
+          </p>
+          <template data-if is-truthy="is_text"
+            ><article
+              class="border rounded-3 bg-body-tertiary p-4 lh-lg"
+              style="white-space: pre-wrap; overflow-wrap: anywhere"
+            >${body}</article
+            ><template data-else
+              ><template data-if is-truthy="has_pages"
+                ><div class="row g-3">
+                  <template data-for each="pages" as="item"
+                    ><div class="col-6 col-md-4 col-xl-3">
+                      <div class="card h-100 border shadow-sm">
+                        <div
+                          class="ratio ratio-3x4 bg-body-tertiary rounded-top overflow-hidden"
+                        >
+                          <img
+                            src="${item.url}"
+                            alt="Sayfa ${item.number}"
+                            loading="lazy"
+                            class="w-100 h-100 object-fit-contain"
+                          />
+                        </div>
+                        <div class="card-body py-2 px-3 small text-secondary">
+                          Sayfa ${item.number}
+                        </div>
+                      </div></div
+                  ></template>
+                </div>
+                <template data-else
+                  ><div class="alert alert-secondary mb-0">
+                    Bu bölüm için görsel sayfası bulunamadı.
+                  </div></template
+                ></template
+              ></template
+            ></template
+          ></template
+          <template data-if is-truthy="has_translator_note"
+            ><div class="alert alert-info mt-4 mb-0">
+              <strong><i class="bi bi-info-circle me-1"></i>Çevirmen notu</strong
+              ><div class="mt-2" style="white-space: pre-wrap">${translator_note}</div>
+            </div></template
+          >
+          <template data-if is-truthy="is_published"
+            ><a
+              class="btn btn-outline-primary mt-4"
+              href="${public_url}"
+              target="_blank"
+              rel="noopener"
+              ><i class="bi bi-box-arrow-up-right me-1"></i>Canlı sayfayı aç</a
+            ><template data-else
+              ><div class="alert alert-warning mt-4 mb-0">
+                Bu bölüm henüz halka açık değil; yalnızca yönetici önizlemesindesiniz.
+              </div></template
+            ></template
+          >
+        </div>
+      </div></template
+    >
+    <template id="tpl-panel-blog-preview"
+      ><div class="row g-4">
+        <div class="col-12">
+          <template data-if is-truthy="has_cover"
+            ><div class="ratio ratio-21x9 bg-body-tertiary rounded-3 overflow-hidden mb-4">
+              <img
+                src="${cover_image}"
+                alt="${title}"
+                class="w-100 h-100 object-fit-cover"
+              /></div
+            ></template
+          >
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <span class="badge ${status_badge}">${status_label}</span
+            ><span class="text-secondary small"
+              ><i class="bi bi-person me-1"></i>@${username}</span
+            ><span class="text-secondary small"
+              ><i class="bi bi-calendar3 me-1"></i>${created_at}</span
+            >
+          </div>
+          <h3 class="mb-3">${title}</h3>
+          <div
+            class="border rounded-3 bg-body-tertiary p-4 lh-lg"
+            style="white-space: pre-wrap; overflow-wrap: anywhere"
+          >${body}</div>
+          <template data-if is-truthy="is_published"
+            ><a
+              class="btn btn-outline-primary mt-4"
+              href="${public_url}"
+              target="_blank"
+              rel="noopener"
+              ><i class="bi bi-box-arrow-up-right me-1"></i>Canlı sayfayı aç</a
+            ><template data-else
+              ><div class="alert alert-warning mt-4 mb-0">
+                Bu blog henüz halka açık değil; yalnızca yönetici önizlemesindesiniz.
+              </div></template
+            ></template
+          >
+        </div>
+      </div></template
+    >
     <template id="tpl-panel-report-breadcrumb"
       ><li class="breadcrumb-item">
         <a href="/panel" data-panel-link>Panel</a>
@@ -3146,7 +3353,13 @@ ${admin_note}</textarea>
           <td>${item.price_label}</td>
           <td>${item.published_at}</td>
           <td class="text-end">
-            <button
+            <a
+              class="btn btn-xs btn-outline-info me-1"
+              href="${item.preview_url}"
+              data-panel-link
+              title="Önizle"
+              ><i class="bi bi-eye"></i></a
+            ><button
               type="button"
               class="btn btn-xs btn-outline-primary"
               data-edit-chapter="${item.id}"
@@ -5772,6 +5985,50 @@ ${admin_note}</textarea>
           </div>
         </div></div
     ></template>
+    <template id="tpl-panel-likers-page"
+      ><partial name="panel-page-header" data="header"></partial>
+      <div class="app-content p-4">
+        <div class="container-fluid">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                  <h4 class="mb-1"><i class="bi bi-heart-fill text-danger me-2"></i>${target_title}</h4>
+                  <p class="text-secondary mb-0">${target_context}</p>
+                </div>
+                <span class="badge bg-primary-subtle text-primary"
+                  >${target_type_label} · ${total} beğeni</span
+                >
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label visually-hidden" for="panel-likers-search">Kullanıcı ara</label
+                  ><input
+                    id="panel-likers-search"
+                    type="search"
+                    class="form-control"
+                    placeholder="Kullanıcı adına göre ara..."
+                    value="${query}"
+                    data-on-input="filterLikers"
+                  />
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Kullanıcı</th>
+                      <th>Beğeni tarihi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="panel-likers-list"></tbody>
+                </table>
+              </div>
+              <div id="panel-likers-pager" class="mt-3"></div>
+            </div>
+          </div>
+        </div></div
+    ></template>
     <template id="tpl-panel-series-preview-page"
       ><partial name="panel-page-header" data="header"></partial>
       <div class="app-content p-4">
@@ -5779,6 +6036,28 @@ ${admin_note}</textarea>
           <div class="card border-0 shadow-sm">
             <div class="card-body p-4">
               <partial name="panel-series-preview" data="fields"></partial>
+            </div>
+          </div>
+        </div></div
+    ></template>
+    <template id="tpl-panel-chapter-preview-page"
+      ><partial name="panel-page-header" data="header"></partial>
+      <div class="app-content p-4">
+        <div class="container-fluid">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <partial name="panel-chapter-preview" data="fields"></partial>
+            </div>
+          </div>
+        </div></div
+    ></template>
+    <template id="tpl-panel-blog-preview-page"
+      ><partial name="panel-page-header" data="header"></partial>
+      <div class="app-content p-4">
+        <div class="container-fluid">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <partial name="panel-blog-preview" data="fields"></partial>
             </div>
           </div>
         </div></div
@@ -5853,7 +6132,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when change admin.js code
-        await import("/assets/js/admin.js?30");
+        await import("/assets/js/admin.js?34");
         loader?.remove();
       } catch (error) {
         console.error("Admin panel yüklenemedi:", error);

@@ -1039,8 +1039,10 @@ final class Config
             $group->delete("/uploads/{id:[0-9]+}", [AdminStorageController::class, "deleteUpload"])->add(new CriticalActionMiddleware())->add($perm(["admin.uploads.delete"]));
             $group->post("/uploads/bulk-delete", [AdminStorageController::class, "deleteUploads"])->add(new CriticalActionMiddleware())->add($perm(["admin.uploads.delete"]));
             $group->post("/uploads/{id:[0-9]+}/optimize", [AdminStorageController::class, "optimizeUpload"])->add($perm(["admin.uploads.optimize"]));
+            $group->get("/votes/likers", [AdminModerationController::class, "likers"])->add($perm(["admin.panel.access"]));
             $group->get("/blogs", [AdminModerationController::class, "blogs"])->add($perm(["admin.panel.access"]));
             $group->get("/blogs/pending", [BlogController::class, "pending"])->add($perm(["admin.panel.access"]));
+            $group->get("/blogs/{id}/preview", [AdminModerationController::class, "blogPreview"])->add($perm(["admin.panel.access"]));
             $group->get("/comments", [AdminModerationController::class, "comments"])->add($perm(["admin.panel.access"]));
             $group->delete("/comments/{id:[0-9]+}", [AdminModerationController::class, "deleteComment"])->add(new CriticalActionMiddleware())->add($perm(["admin.comment.delete"]));
             $group->put("/comments/{id:[0-9]+}/moderation", [AdminModerationController::class, "moderateComment"])->add(new CriticalActionMiddleware())->add($perm(["admin.comment.delete"]));

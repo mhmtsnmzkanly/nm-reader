@@ -127,6 +127,9 @@ const store = createStore({
   userWalletMeta: { page: 1, total_pages: 1, total: 0 },
   blogsList: [],
   blogsMeta: { page: 1, total_pages: 1, total: 0 },
+  likersList: [],
+  likersMeta: { page: 1, total_pages: 1, total: 0 },
+  likersTarget: null,
   commentsList: [],
   commentsMeta: { page: 1, total_pages: 1, total: 0 },
   reportsList: [],
@@ -590,6 +593,21 @@ function userModerationStatus(status) {
   );
 }
 
+function commentThreadFields(comment) {
+  const parentId = Number(comment.parent_id || 0);
+  const parentUsername = String(comment.parent_username || "").trim();
+  const isReply = Number.isInteger(parentId) && parentId > 0;
+  const parentReference = isReply
+    ? `${parentUsername ? `@${parentUsername} · ` : ""}#${parentId}`
+    : "";
+  return {
+    is_reply: isReply,
+    parent_reference: parentReference,
+    reply_badge_class: isReply ? "bg-info-subtle text-info me-1" : "d-none",
+    reply_reference_class: isReply ? "d-block text-info mt-1" : "d-none",
+  };
+}
+
 function renderUserCommentsTable() {
   const items = (store.get("userCommentsList") || []).map((comment) => {
     const status = userModerationStatus(
@@ -602,18 +620,20 @@ function renderUserCommentsTable() {
         : `${comment.target_type || "Hedef"}: ${comment.target_id || "-"}`;
     return {
       ...comment,
+      ...commentThreadFields(comment),
       context_label: context,
       status_label: status[0],
       status_class: status[1],
       upvotes: Number(comment.upvote_count || 0),
       downvotes: Number(comment.downvote_count || 0),
+      likers_url: `/panel/comments/${encodeURIComponent(String(comment.id))}/likers`,
     };
   });
   setTableRows(
     "panel-user-comments-list",
     "panel-rows-user-comments",
     items,
-    5,
+    6,
   );
   renderPager(
     "panel-user-comments-pager",
@@ -640,12 +660,15 @@ function renderUserBlogsTable() {
         : "bg-warning-subtle text-warning";
     return {
       ...blog,
+      preview_url: `/panel/blogs/${encodeURIComponent(String(blog.id))}/preview`,
+      likers_url: `/panel/blogs/${encodeURIComponent(String(blog.id))}/likers`,
+      upvotes: Number(blog.upvote_count || blog.likes || 0),
       slug_label: blog.slug || blog.id,
       status_class: statusClass,
       status_label: labels[status] || status,
     };
   });
-  setTableRows("panel-user-blogs-list", "panel-rows-user-blogs", items, 4);
+  setTableRows("panel-user-blogs-list", "panel-rows-user-blogs", items, 6);
   renderPager(
     "panel-user-blogs-pager",
     store.get("userBlogsMeta"),
@@ -725,7 +748,7 @@ async function loadUserCommentsData(userId, page = 1) {
         "panel-user-comments-list",
         "panel-rows-user-comments",
         [],
-        5,
+        6,
         { error_message: error.message },
       );
   }
@@ -758,7 +781,7 @@ async function loadUserBlogsData(userId, page = 1) {
     if (error?.name === "AbortError") return;
     const target = document.getElementById("panel-user-blogs-list");
     if (target)
-      setTableRows("panel-user-blogs-list", "panel-rows-user-blogs", [], 4, {
+      setTableRows("panel-user-blogs-list", "panel-rows-user-blogs", [], 6, {
         error_message: error.message,
       });
   }
@@ -1010,6 +1033,9 @@ function renderBlogsTable() {
     const canHide = canModerate && Boolean(blog.can_hide);
     return {
       ...blog,
+      preview_url: `/panel/blogs/${encodeURIComponent(String(blog.id))}/preview`,
+      likers_url: `/panel/blogs/${encodeURIComponent(String(blog.id))}/likers`,
+      upvotes: Number(blog.upvote_count || blog.likes || 0),
       can_approve: canApprove,
       can_hide: canHide,
       can_delete: canModerate,
@@ -1046,10 +1072,12 @@ function renderCommentsTable() {
     const nextStatus = status === "approved" ? "hidden" : "approved";
     return {
       ...comment,
+      ...commentThreadFields(comment),
       status_label: statusLabel[status] || status,
       status_class: statusClass[status] || "bg-light text-secondary",
       upvotes: Number(comment.upvote_count || 0),
       downvotes: Number(comment.downvote_count || 0),
+      likers_url: `/panel/comments/${encodeURIComponent(String(comment.id))}/likers`,
       can_moderate: canModerate,
       moderate_class: canModerate ? "" : "d-none",
       next_status: nextStatus,
@@ -1681,6 +1709,185 @@ async function loadSeriesPreviewPage(contentId) {
   if (cover) cover.setAttribute("src", previewCover);
   const liveLink = page.querySelector("[data-preview-live]");
   if (liveLink && urlPath !== "#") liveLink.setAttribute("href", urlPath);
+}
+
+async function loadChapterPreviewPage(seriesId, chapterId) {
+  const requestEpoch = pageEpoch;
+  const response = await api(`/chapters/${encodeURIComponent(chapterId)}`);
+  assertCurrentPage(requestEpoch);
+  const chapter = response?.data || {};
+  const chapterNumber = String(chapter.chapter_number || "-");
+  const type = String(chapter.type || "text").toLowerCase();
+  const pages = Array.isArray(chapter.pages)
+    ? chapter.pages.map((page, index) => {
+        const path =
+          page && typeof page === "object"
+            ? page.url || page.image_path || ""
+            : page;
+        return { number: index + 1, url: safeLocalPath(path) };
+      })
+    : [];
+  const pricing = chapter.pricing || {};
+  const effectivePrice = Number(
+    pricing.price_coin ?? chapter.price_amount ?? 0,
+  );
+  const publishedAt = pricing.published_at || chapter.published_at || "";
+  const isPublished =
+    Boolean(publishedAt) &&
+    String(chapter.series_lifecycle_status || "") === "published";
+  const seriesType = String(chapter.series_type || "").replaceAll("_", "-");
+  const seriesSlug = String(chapter.series_slug || "");
+  const publicUrl =
+    seriesType && seriesSlug && chapterNumber !== "-"
+      ? `/${encodeURIComponent(seriesType)}/${encodeURIComponent(seriesSlug)}/chapter/${encodeURIComponent(chapterNumber)}`
+      : "#";
+
+  mountEditorPage(
+    `Önizleme: Bölüm ${chapterNumber}`,
+    {
+      name: "panel-chapter-preview",
+      context: {
+        type_label: type === "image" ? "Görsel" : "Metin",
+        publication_label: isPublished
+          ? "Yayınlandı"
+          : publishedAt
+            ? "Yayın bekliyor"
+            : "Taslak",
+        price_label:
+          effectivePrice > 0 ? `${effectivePrice} coin` : "Ücretsiz",
+        access_label: Number(chapter.is_members_only) === 1
+          ? "Sadece üyeler"
+          : "Açık erişim",
+        heading: chapter.title
+          ? `Bölüm ${chapterNumber} — ${chapter.title}`
+          : `Bölüm ${chapterNumber}`,
+        series_title: chapter.series_title || seriesId,
+        chapter_number: chapterNumber,
+        is_text: type === "text",
+        body: chapter.body || "Bu bölüm için metin içeriği bulunamadı.",
+        has_pages: pages.length > 0,
+        pages,
+        has_translator_note: Boolean(String(chapter.translator_note || "").trim()),
+        translator_note: chapter.translator_note || "",
+        is_published: isPublished && publicUrl !== "#",
+        public_url: publicUrl,
+      },
+    },
+  );
+}
+
+async function loadBlogPreviewPage(blogId) {
+  const requestEpoch = pageEpoch;
+  const response = await api(`/blogs/${encodeURIComponent(blogId)}/preview`);
+  assertCurrentPage(requestEpoch);
+  const blog = response?.data || {};
+  const coverImage = safeLocalPath(blog.cover_image);
+  const isPublished =
+    Number(blog.approved) === 1 &&
+    String(blog.status || "") === "published" &&
+    !blog.deleted_at &&
+    Boolean(blog.slug);
+  const statusLabels = {
+    draft: "Taslak",
+    pending: "Bekliyor",
+    published: "Yayınlandı",
+    rejected: "Reddedildi",
+    hidden: "Gizli",
+  };
+  const statusClasses = {
+    draft: "bg-secondary-subtle text-secondary",
+    pending: "bg-warning-subtle text-warning",
+    published: "bg-success-subtle text-success",
+    rejected: "bg-danger-subtle text-danger",
+    hidden: "bg-dark-subtle text-dark",
+  };
+
+  mountEditorPage(`Önizleme: ${blog.title || blogId}`, {
+    name: "panel-blog-preview",
+    context: {
+      has_cover: coverImage !== "#",
+      cover_image: coverImage,
+      title: blog.title || "Başlıksız blog",
+      username: blog.username || "-",
+      created_at: blog.created_at || "-",
+      body: blog.body || "İçerik bulunamadı.",
+      status_label: statusLabels[blog.status] || blog.status || "Bilinmiyor",
+      status_badge:
+        statusClasses[blog.status] || "bg-secondary-subtle text-secondary",
+      is_published,
+      public_url: isPublished
+        ? `/blogs/${encodeURIComponent(String(blog.slug))}`
+        : "#",
+    },
+  });
+}
+
+async function loadLikersPage(targetType, targetId, pageNumber = 1) {
+  const requestEpoch = pageEpoch;
+  const query = document.getElementById("panel-likers-search")?.value || "";
+  const params = new URLSearchParams({
+    target_type: targetType,
+    target_id: targetId,
+    page: String(Math.max(1, Number(pageNumber) || 1)),
+    per_page: "20",
+  });
+  if (query.trim()) params.set("q", query.trim());
+
+  const response = await api(`/votes/likers?${params.toString()}`);
+  assertCurrentPage(requestEpoch);
+  const target = response?.meta?.target || {};
+  const parentId = Number(target.parent_id || 0);
+  const isReply = Number.isInteger(parentId) && parentId > 0;
+  const parentReference = isReply
+    ? `${target.parent_username ? `@${target.parent_username} · ` : ""}#${parentId}`
+    : "";
+  const fallbackAvatar = safeLocalPath(
+    store.get("config")?.default_profile_image,
+  );
+  const items = responseItems(response).map((item) => ({
+    ...item,
+    display_name: item.display_name || "-",
+    avatar_url:
+      safeLocalPath(item.profile_image) !== "#"
+        ? safeLocalPath(item.profile_image)
+        : fallbackAvatar !== "#"
+          ? fallbackAvatar
+          : "/assets/img/default-profile.svg",
+    profile_url: `/panel/user/${encodeURIComponent(String(item.user_id))}`,
+  }));
+  const targetTitle = String(target.title || `${targetType} #${targetId}`);
+  const targetContext =
+    targetType === "blog"
+      ? `Blog / ${target.slug || targetId}`
+      : `${target.target_label || "Yorum"} · #${targetId}${isReply ? ` · Yanıt: ${parentReference}` : ""}`;
+  store.batch(() => {
+    store.set("likersList", items);
+    store.set("likersMeta", responseMeta(response));
+    store.set("likersTarget", { targetType, targetId });
+  });
+
+  const page = mountEditorPage("Beğenen kullanıcılar", {
+    name: "panel-likers",
+    context: {
+      target_title: targetTitle,
+      target_context: targetContext,
+      target_type_label:
+        targetType === "blog" ? "Blog" : isReply ? "Yorum yanıtı" : "Yorum",
+      total: Number(response?.meta?.total || 0),
+      query,
+    },
+  });
+  mountPartial(
+    "panel-rows-likers",
+    page.querySelector("#panel-likers-list"),
+    { items, has_items: items.length > 0 },
+  );
+  renderPager(
+    "panel-likers-pager",
+    responseMeta(response),
+    "previousLikersPage",
+    "nextLikersPage",
+  );
 }
 
 async function loadSeriesRevisionsPage(contentId) {
@@ -2807,6 +3014,12 @@ async function loadChaptersPage(contentId, pageNumber = 1) {
   assertCurrentPage(requestEpoch);
   const chapters = responseItems(response).map((chapter) => ({
     id: chapter.id,
+    preview_url:
+      "/panel/series/" +
+      encodeURIComponent(content.id) +
+      "/chapters/" +
+      encodeURIComponent(chapter.id) +
+      "/preview",
     chapter_number: chapter.chapter_number || "-",
     title: chapter.title || "-",
     type: chapter.type || "-",
@@ -3594,6 +3807,29 @@ const handlers = {
     if (Number(meta.page) < Number(meta.total_pages))
       loadBlogsData(Number(meta.page) + 1);
   },
+  filterLikers() {
+    const target = store.get("likersTarget") || {};
+    if (!target.targetType || !target.targetId) return;
+    scheduleReload("likers", () =>
+      loadLikersPage(target.targetType, target.targetId, 1),
+    );
+  },
+  previousLikersPage() {
+    const target = store.get("likersTarget") || {};
+    const page = Number(store.get("likersMeta")?.page || 1);
+    if (page > 1 && target.targetType && target.targetId)
+      loadLikersPage(target.targetType, target.targetId, page - 1);
+  },
+  nextLikersPage() {
+    const target = store.get("likersTarget") || {};
+    const meta = store.get("likersMeta") || {};
+    if (
+      Number(meta.page) < Number(meta.total_pages) &&
+      target.targetType &&
+      target.targetId
+    )
+      loadLikersPage(target.targetType, target.targetId, Number(meta.page) + 1);
+  },
   previousCommentsPage() {
     const page = Number(store.get("commentsMeta")?.page || 1);
     if (page > 1) loadCommentsData(page - 1);
@@ -3986,6 +4222,16 @@ const panelRoutes = {
                           loadChapterPage(seriesId, chapterId),
                       }),
                     },
+                    {
+                      segment: "preview",
+                      index: panelPage(null, {
+                        route: "chapter-preview",
+                        section: "series",
+                        permissions: ["admin.panel.access"],
+                        load: ({ seriesId, chapterId }) =>
+                          loadChapterPreviewPage(seriesId, chapterId),
+                      }),
+                    },
                   ],
                 },
               ],
@@ -4089,10 +4335,64 @@ const panelRoutes = {
         section: "blogs",
         load: () => loadBlogsData(),
       }),
+      branches: [
+        {
+          segment: /^(?<blogId>[a-zA-Z0-9_-]+)$/,
+          param: "blogId",
+          branches: [
+            {
+              segment: "preview",
+              index: panelPage(null, {
+                route: "blog-preview",
+                section: "blogs",
+                permissions: ["admin.panel.access"],
+                load: ({ blogId }) => loadBlogPreviewPage(blogId),
+              }),
+            },
+            {
+              segment: "likers",
+              index: panelPage(null, {
+                route: "blog-likers",
+                section: "blogs",
+                permissions: ["admin.panel.access"],
+                load: ({ blogId }) => loadLikersPage("blog", blogId),
+              }),
+            },
+          ],
+        },
+      ],
+      fallback: panelPage("panel-blogs", {
+        route: "blogs",
+        section: "blogs",
+        load: () => loadBlogsData(),
+      }),
     },
     {
       segment: "comments",
       index: panelPage("panel-comments", {
+        route: "comments",
+        section: "comments",
+        load: () => loadCommentsData(),
+      }),
+      branches: [
+        {
+          segment: /^(?<commentId>[0-9]+)$/,
+          param: "commentId",
+          branches: [
+            {
+              segment: "likers",
+              index: panelPage(null, {
+                route: "comment-likers",
+                section: "comments",
+                permissions: ["admin.panel.access"],
+                load: ({ commentId }) =>
+                  loadLikersPage("comment", commentId),
+              }),
+            },
+          ],
+        },
+      ],
+      fallback: panelPage("panel-comments", {
         route: "comments",
         section: "comments",
         load: () => loadCommentsData(),
@@ -4422,7 +4722,11 @@ function navigate() {
       : sectionParent && sectionParent !== "dashboard"
         ? "/panel/" + sectionParent
         : "/panel";
-  if (["chapter-new", "chapter-edit", "series-team"].includes(resolved.route)) {
+  if (
+    ["chapter-new", "chapter-edit", "chapter-preview", "series-team"].includes(
+      resolved.route,
+    )
+  ) {
     pageParent =
       "/panel/series/" +
       encodeURIComponent(resolved.params.seriesId) +

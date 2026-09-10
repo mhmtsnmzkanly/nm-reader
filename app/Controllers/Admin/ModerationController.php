@@ -24,6 +24,41 @@ final class ModerationController extends AdminController
             );
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
+
+    public function blogPreview(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+        {
+            try {
+                return ResponseHelper::success($this->moderationService->getBlogForPreview((string) $args['id']));
+            } catch (\DomainException $exception) {
+                return ResponseHelper::error(404, $exception->getMessage());
+            }
+        }
+
+    public function likers(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+        {
+            [$page, $perPage] = $this->pagination($request);
+            $query = $request->getQueryParams();
+            try {
+                $result = $this->moderationService->listLikers(
+                    strtolower(trim((string) ($query['target_type'] ?? ''))),
+                    trim((string) ($query['target_id'] ?? '')),
+                    $page,
+                    $perPage,
+                    trim((string) ($query['q'] ?? ''))
+                );
+                return ResponseHelper::paginate(
+                    $result['items'],
+                    $page,
+                    $perPage,
+                    $result['total'],
+                    ['target' => $result['target']]
+                );
+            } catch (\InvalidArgumentException $exception) {
+                return ResponseHelper::error(400, $exception->getMessage());
+            } catch (\DomainException $exception) {
+                return ResponseHelper::error(404, $exception->getMessage());
+            }
+        }
     
     public function hideBlog(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
         {

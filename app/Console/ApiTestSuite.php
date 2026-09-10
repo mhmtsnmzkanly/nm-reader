@@ -678,6 +678,7 @@ final class ApiTestSuite
             ['POST', '/api/v1/admin/uploads/1/optimize', 'POST /api/v1/admin/uploads/{id}/optimize'],
             ['GET', '/api/v1/admin/blogs', 'GET /api/v1/admin/blogs'],
             ['GET', '/api/v1/admin/blogs/pending', 'GET /api/v1/admin/blogs/pending'],
+            ['GET', '/api/v1/admin/votes/likers?target_type=blog&target_id=blg001', 'GET /api/v1/admin/votes/likers'],
             ['GET', '/api/v1/admin/comments', 'GET /api/v1/admin/comments'],
             ['DELETE', '/api/v1/admin/comments/1', 'DELETE /api/v1/admin/comments/{id}'],
             ['PUT', '/api/v1/admin/users/usr12345', 'PUT /api/v1/admin/users/{id}'],

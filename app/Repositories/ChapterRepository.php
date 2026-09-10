@@ -28,9 +28,24 @@ final class ChapterRepository
      */
     public function findById(string $chapterId): ?array
     {
-        $sql = 'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.is_members_only, ch.`data`, ch.created_at, ch.created_by, u.username
+        $sql = 'SELECT
+                    ch.id,
+                    ch.content_id,
+                    ch.chapter_number,
+                    ch.title,
+                    ch.type,
+                    ch.is_members_only,
+                    ch.`data`,
+                    ch.created_at,
+                    ch.created_by,
+                    u.username,
+                    s.title AS series_title,
+                    s.slug AS series_slug,
+                    s.type AS series_type,
+                    s.lifecycle_status AS series_lifecycle_status
                 FROM chapters ch
                 LEFT JOIN users u ON u.id = ch.created_by
+                LEFT JOIN series s ON s.id = ch.content_id
                 WHERE ch.id = :id AND ch.deleted_at IS NULL LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $chapterId]);

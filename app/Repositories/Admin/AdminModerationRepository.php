@@ -135,6 +135,8 @@ final class AdminModerationRepository extends AdminRepositoryBase
                 c.user_id,
                 u.username,
                 c.body,
+                c.parent_id,
+                parent_user.username AS parent_username,
                 c.moderation_status,
                 c.deleted_at,
                 c.created_at,
@@ -151,6 +153,8 @@ final class AdminModerationRepository extends AdminRepositoryBase
                 ch.chapter_number
              FROM comments c
              INNER JOIN users u ON u.id = c.user_id
+             LEFT JOIN comments parent_comment ON parent_comment.id = c.parent_id
+             LEFT JOIN users parent_user ON parent_user.id = parent_comment.user_id
              LEFT JOIN chapters ch ON (c.target_type = "chapter" AND ch.id = c.target_id)
              LEFT JOIN series s ON (c.target_type = "series" AND s.id = c.target_id)
              LEFT JOIN series s2 ON (c.target_type = "chapter" AND s2.id = ch.content_id)
@@ -341,7 +345,9 @@ final class AdminModerationRepository extends AdminRepositoryBase
                 b.status,
                 b.approved,
                 b.created_at,
-                b.approved_at
+                b.approved_at,
+                (SELECT COUNT(*) FROM votes v WHERE v.target_type = "blog" AND v.target_id = b.id AND v.vote = 1) AS upvote_count,
+                (SELECT COUNT(*) FROM votes v WHERE v.target_type = "blog" AND v.target_id = b.id AND v.vote = -1) AS downvote_count
              FROM blogs b
              INNER JOIN users u ON u.id = b.user_id
              WHERE ' . $whereClause . '
@@ -356,6 +362,162 @@ final class AdminModerationRepository extends AdminRepositoryBase
         return [
             'items' => $stmt->fetchAll(),
             'total' => $total,
+        ];
+    }
+
+    /**
+     * Retrieves a blog post for the administrator preview, regardless of its
+     * publication state. The body is returned so the panel can review drafts
+     * and hidden posts without exposing them through the public API.
+     */
+    public function findBlogForPreview(string $id): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT
+                b.id,
+                b.user_id,
+                u.username,
+                b.title,
+                b.slug,
+                b.body,
+                b.cover_image,
+                b.status,
+                b.approved,
+                b.approver_user_id,
+                b.approved_at,
+                b.created_at,
+                b.updated_at,
+                b.deleted_at
+             FROM blogs b
+             INNER JOIN users u ON u.id = b.user_id
+             WHERE b.id = :id
+             LIMIT 1'
+        );
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /**
+     * Lists users who upvoted a blog or comment.
+     *
+     * Votes are intentionally filtered to vote=1: a downvote is not a
+     * "beğeni" and should remain visible only in the aggregate counters.
+     */
+    public function listLikers(string $targetType, string $targetId, int $page, int $perPage, string $query = ''): array
+    {
+        $offset = max(0, ($page - 1) * $perPage);
+        $where = [
+            'v.target_type = :target_type',
+            'v.target_id = :target_id',
+            'v.vote = 1',
+        ];
+        $params = [
+            'target_type' => $targetType,
+            'target_id' => $targetId,
+        ];
+        if ($query !== '') {
+            $where[] = '(u.username LIKE :query_username OR u.display_name LIKE :query_display_name)';
+            $queryValue = '%' . $query . '%';
+            $params['query_username'] = $queryValue;
+            $params['query_display_name'] = $queryValue;
+        }
+        $whereClause = implode(' AND ', $where);
+
+        $count = $this->pdo->prepare(
+            'SELECT COUNT(*)
+             FROM votes v
+             INNER JOIN users u ON u.id = v.user_id
+             WHERE ' . $whereClause
+        );
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
+
+        $stmt = $this->pdo->prepare(
+            'SELECT
+                v.user_id,
+                u.username,
+                u.display_name,
+                u.profile_image,
+                v.updated_at AS created_at
+             FROM votes v
+             INNER JOIN users u ON u.id = v.user_id
+             WHERE ' . $whereClause . '
+             ORDER BY v.updated_at DESC, v.id DESC
+             LIMIT :limit OFFSET :offset'
+        );
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
+        }
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return [
+            'items' => $stmt->fetchAll(),
+            'total' => $total,
+        ];
+    }
+
+    /**
+     * Resolves a small, non-sensitive label for the likers page header.
+     */
+    public function findVoteTarget(string $targetType, string $targetId): ?array
+    {
+        if ($targetType === 'blog') {
+            $stmt = $this->pdo->prepare(
+                'SELECT id, title, slug
+                 FROM blogs
+                 WHERE id = :id
+                 LIMIT 1'
+            );
+            $stmt->execute(['id' => $targetId]);
+            $row = $stmt->fetch();
+            if ($row === false) return null;
+            return [
+                'target_type' => 'blog',
+                'target_id' => (string) $row['id'],
+                'title' => (string) $row['title'],
+                'slug' => (string) $row['slug'],
+            ];
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT
+                c.id,
+                c.body,
+                c.target_type,
+                c.target_id,
+                c.parent_id,
+                parent_user.username AS parent_username,
+                CASE
+                    WHEN c.target_type = "blog" THEN b.title
+                    WHEN c.target_type = "chapter" THEN CONCAT(s_ch.title, " · Bölüm ", ch.chapter_number)
+                    WHEN c.target_type = "series" THEN s_se.title
+                    ELSE NULL
+                END AS target_label
+             FROM comments c
+             LEFT JOIN blogs b ON c.target_type = "blog" AND b.id = c.target_id
+             LEFT JOIN comments parent_comment ON parent_comment.id = c.parent_id
+             LEFT JOIN users parent_user ON parent_user.id = parent_comment.user_id
+             LEFT JOIN chapters ch ON c.target_type = "chapter" AND ch.id = c.target_id
+             LEFT JOIN series s_ch ON ch.content_id = s_ch.id
+             LEFT JOIN series s_se ON c.target_type = "series" AND s_se.id = c.target_id
+             WHERE c.id = :id
+             LIMIT 1'
+        );
+        $stmt->execute(['id' => $targetId]);
+        $row = $stmt->fetch();
+        if ($row === false) return null;
+
+        return [
+            'target_type' => 'comment',
+            'target_id' => (string) $row['id'],
+            'title' => trim((string) ($row['body'] ?? '')),
+            'target_label' => (string) ($row['target_label'] ?? ''),
+            'parent_id' => $row['parent_id'] !== null ? (int) $row['parent_id'] : null,
+            'parent_username' => $row['parent_username'] !== null ? (string) $row['parent_username'] : null,
         ];
     }
 

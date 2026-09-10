@@ -37,7 +37,14 @@ final class AdminModerationService extends AdminConsoleServiceBase
     public function listComments(int $page, int $perPage, string $query = '', ?string $targetType = null, string $sort = 'newest', ?string $moderationStatus = null, ?string $userId = null): array
     {
         $result = $this->repo->listComments($page, $perPage, $query, $targetType, $sort, $moderationStatus, $userId);
-        $items = OutputSanitizer::sanitizeRows($result['items'], ['body', 'username', 'content_title', 'blog_title', 'moderation_status']);
+        $items = OutputSanitizer::sanitizeRows($result['items'], [
+            'body',
+            'username',
+            'parent_username',
+            'content_title',
+            'blog_title',
+            'moderation_status',
+        ]);
     
         return $this->withMeta($items, $result['total'], $page, $perPage);
     }
@@ -63,6 +70,54 @@ final class AdminModerationService extends AdminConsoleServiceBase
         $result = $this->repo->listBlogs($page, $perPage, $query, $status, $sort, $userId);
         $items = OutputSanitizer::sanitizeRows($result['items'], ['title', 'username']);
         return $this->withMeta($items, $result['total'], $page, $perPage);
+    }
+
+    public function getBlogForPreview(string $id): array
+    {
+        $blog = $this->repo->findBlogForPreview($id);
+        if ($blog === null) {
+            throw new \DomainException('Blog not found');
+        }
+
+        return OutputSanitizer::sanitizeFields($blog, [
+            'username',
+            'title',
+            'slug',
+            'body',
+            'cover_image',
+            'status',
+        ]);
+    }
+
+    public function listLikers(string $targetType, string $targetId, int $page, int $perPage, string $query = ''): array
+    {
+        if (!in_array($targetType, ['blog', 'comment'], true)) {
+            throw new \InvalidArgumentException('target_type must be blog or comment');
+        }
+        if (trim($targetId) === '') {
+            throw new \InvalidArgumentException('target_id is required');
+        }
+
+        $target = $this->repo->findVoteTarget($targetType, $targetId);
+        if ($target === null || (string) ($target['target_type'] ?? '') !== $targetType) {
+            throw new \DomainException('Vote target not found');
+        }
+
+        $result = $this->repo->listLikers($targetType, $targetId, $page, $perPage, trim($query));
+        return [
+            'items' => OutputSanitizer::sanitizeRows($result['items'], [
+                'username',
+                'display_name',
+                'profile_image',
+            ]),
+            'total' => $result['total'],
+            'target' => OutputSanitizer::sanitizeFields($target, [
+                'title',
+                'slug',
+                'target_label',
+                'parent_username',
+            ]),
+        ];
     }
 
     public function hideBlog(string $id, string $moderatorId): void
