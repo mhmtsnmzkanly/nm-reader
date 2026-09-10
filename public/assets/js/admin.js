@@ -1,7 +1,13 @@
-// AdminLTE sidebar/dropdown fallback.
-// Keep the shell usable if a third-party bundle is blocked by a browser
-// extension or a temporary CDN failure. When AdminLTE is present its own
-// handler wins; the fallback only runs if the class did not change.
+function setSidebarGroupState(item, toggle, open) {
+  item.classList.toggle("menu-open", open);
+  toggle.setAttribute("aria-expanded", String(open));
+  const submenu = item.querySelector(":scope > .nav-treeview");
+  if (submenu) submenu.style.display = open ? "block" : "none";
+}
+
+// AdminLTE sidebar/dropdown helpers.
+// Treeview state is panel-owned so it remains deterministic even when the
+// optional AdminLTE bundle is unavailable or loaded in a different order.
 (() => {
   const body = document.body;
   const sidebarToggle = document.querySelector('[data-lte-toggle="sidebar"]');
@@ -21,10 +27,8 @@
     body.classList.remove("sidebar-open"),
   );
 
-  // Keep treeview toggles usable if the CDN-provided AdminLTE handler is
-  // unavailable. The fallback deliberately does not stop propagation: the
-  // router only handles links carrying data-route, so group toggles remain
-  // outside navigation and AdminLTE can still handle the same click.
+  // Panel-owned treeview toggles. Route links and group buttons have separate
+  // selectors, so opening a group never enters the panel router.
   sidebarNav?.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     const toggle = target?.closest(
@@ -34,15 +38,7 @@
     event.preventDefault();
     const item = toggle.closest(".nav-item");
     if (!item) return;
-    const wasOpen = item.classList.contains("menu-open");
-    // AdminLTE may have already toggled the item before this fallback runs.
-    // Deferring the fallback avoids opening/closing twice in that case.
-    queueMicrotask(() => {
-      if (item.classList.contains("menu-open") === wasOpen) {
-        const isOpen = item.classList.toggle("menu-open");
-        toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-      }
-    });
+    setSidebarGroupState(item, toggle, !item.classList.contains("menu-open"));
   });
 
   document.addEventListener("click", (event) => {
@@ -4432,10 +4428,10 @@ function navigate() {
     ?.closest(".nav-treeview")
     ?.closest(".nav-item");
   if (activeNavGroup) {
-    activeNavGroup.classList.add("menu-open");
-    activeNavGroup
-      .querySelector(':scope > .nav-link[role="button"][href="#"]')
-      ?.setAttribute("aria-expanded", "true");
+    const groupToggle = activeNavGroup.querySelector(
+      ':scope > .nav-link[role="button"][href="#"]',
+    );
+    if (groupToggle) setSidebarGroupState(activeNavGroup, groupToggle, true);
   }
 
   if (resolved.route !== "logs" && logAutoRefreshTimer) {

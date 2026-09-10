@@ -123,9 +123,7 @@
             <ul
               class="nav sidebar-menu flex-column gap-1 px-2"
               id="panel-sidebar-nav"
-              data-lte-toggle="treeview"
               role="menu"
-              data-accordion="false"
             >
               <li class="nav-item">
                 <a
@@ -5862,7 +5860,7 @@ ${admin_note}</textarea>
       const loader = document.getElementById("panel-bootstrap-loader");
 
       try {
-        await import("/assets/js/admin.js?24");
+        await import("/assets/js/admin.js?27");
         loader?.remove();
       } catch (error) {
         console.error("Admin panel yüklenemedi:", error);
