@@ -309,7 +309,7 @@ function scheduleReload(key, callback) {
 // Lime templates assign attribute values through setAttribute, so they must
 // receive the raw validated path (escaping here would display entities).
 function safeLocalPath(value) {
-  const url = String(value || "");
+  const url = String(value ?? "").trim();
   return url.startsWith("/") && !url.startsWith("//") ? url : "#";
 }
 
@@ -1651,11 +1651,19 @@ async function loadSeriesPreviewPage(contentId) {
   assertCurrentPage(requestEpoch);
   const content = response?.data || {};
   const coverImage = safeLocalPath(content.cover_image);
+  const configuredCover = safeLocalPath(
+    store.get("config")?.default_content_cover_image,
+  );
+  const previewCover =
+    coverImage !== "#"
+      ? coverImage
+      : configuredCover !== "#"
+        ? configuredCover
+        : "/assets/img/covers/placeholder.svg";
   const urlPath = safeLocalPath(content.url_path);
   const page = mountEditorPage(`Önizleme: ${content.title || contentId}`, {
     name: "panel-series-preview",
     context: {
-      has_cover: coverImage !== "#",
       type: content.type || "-",
       status: content.status || "-",
       lifecycle_status: content.lifecycle_status || "-",
@@ -1670,7 +1678,7 @@ async function loadSeriesPreviewPage(contentId) {
     },
   });
   const cover = page.querySelector("[data-preview-cover]");
-  if (cover && coverImage !== "#") cover.setAttribute("src", coverImage);
+  if (cover) cover.setAttribute("src", previewCover);
   const liveLink = page.querySelector("[data-preview-live]");
   if (liveLink && urlPath !== "#") liveLink.setAttribute("href", urlPath);
 }

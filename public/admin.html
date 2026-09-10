@@ -2230,19 +2230,12 @@ ${pages}</textarea>
       ><div class="row g-4">
         <div class="col-md-4">
           <div class="ratio ratio-3x4 bg-body-tertiary rounded overflow-hidden">
-            <template data-if is-truthy="has_cover"
-              ><img
-                data-preview-cover
-                class="w-100 h-100 object-fit-cover"
-                alt=""
-              /><template data-else
-                ><div
-                  class="d-flex align-items-center justify-content-center text-secondary"
-                >
-                  Kapak yok
-                </div></template
-              ></template
-            >
+            <img
+              data-preview-cover
+              src="/assets/img/covers/placeholder.svg"
+              class="w-100 h-100 object-fit-cover"
+              alt=""
+            />
           </div>
         </div>
         <div class="col-md-8">
@@ -5860,7 +5853,7 @@ ${admin_note}</textarea>
       const loader = document.getElementById("panel-bootstrap-loader");
 
       try {
-        await import("/assets/js/admin.js?28");
+        await import("/assets/js/admin.js?29");
         loader?.remove();
       } catch (error) {
         console.error("Admin panel yüklenemedi:", error);
