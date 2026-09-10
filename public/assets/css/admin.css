@@ -1,33 +1,83 @@
-[data-show][hidden] { display: none !important; }
-.lime-badge { font-size: 0.75rem; padding: 0.25em 0.6em; border-radius: 9999px; }
-.lime-toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 1090; }
-.lime-spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: lime-spin .75s linear infinite; }
-@keyframes lime-spin { to { transform: rotate(360deg); } }
-.panel-bootstrap-loader {
+[data-show][hidden] {
+  display: none !important;
+}
+.lime-badge {
+  font-size: 0.75rem;
+  padding: 0.25em 0.6em;
+  border-radius: 9999px;
+}
+.lime-toast-container {
   position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 1090;
+}
+.lime-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: lime-spin 0.75s linear infinite;
+}
+@keyframes lime-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.panel-bootstrap-loader {
+  position: absolute;
   inset: 0;
   z-index: 3000;
+  min-height: 12rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: .75rem;
+  gap: 0.75rem;
   color: var(--bs-body-color, #212529);
   background-color: var(--bs-body-bg, #fff);
 }
-.active-nav-link { background-color: rgba(255,255,255,0.15) !important; color: #fff !important; font-weight: 600; }
+#panel-app {
+  position: relative;
+}
+.panel-page-root {
+  display: contents;
+}
+.active-nav-link {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+  font-weight: 600;
+}
 /* Keep grouped navigation usable even when the optional AdminLTE JS bundle
    is unavailable. AdminLTE uses the same menu-open state. */
-#panel-sidebar-nav > .nav-item > .nav-treeview { display: none; }
-#panel-sidebar-nav > .nav-item.menu-open > .nav-treeview { display: block; }
-#panel-sidebar-nav .nav-arrow { transition: transform .2s ease-in-out; }
-#panel-sidebar-nav > .nav-item.menu-open > .nav-link .nav-arrow { transform: translateY(-50%) rotate(90deg); }
-.cursor-pointer { cursor: pointer; }
-.upload-reference-list { max-height: 6rem; overflow-y: auto; min-width: 12rem; }
+#panel-sidebar-nav > .nav-item > .nav-treeview {
+  display: none;
+}
+#panel-sidebar-nav > .nav-item.menu-open > .nav-treeview {
+  display: block;
+}
+#panel-sidebar-nav .nav-arrow {
+  transition: transform 0.2s ease-in-out;
+}
+#panel-sidebar-nav > .nav-item.menu-open > .nav-link .nav-arrow {
+  transform: translateY(-50%) rotate(90deg);
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.upload-reference-list {
+  max-height: 6rem;
+  overflow-y: auto;
+  min-width: 12rem;
+}
 
 /* AdminLTE's responsive layout expects the sidebar overlay to be present in
    the app wrapper. Keep the overlay above the page, but below the sidebar. */
-.sidebar-overlay { display: none; }
+.sidebar-overlay {
+  display: none;
+}
 @media (max-width: 991.98px) {
   .sidebar-expand-lg.sidebar-open .sidebar-overlay {
     display: block;
@@ -38,83 +88,5 @@
     height: 100%;
     cursor: pointer;
     background: rgba(0, 0, 0, 0.2);
-  }
-}
-
-/* The panel dialogs are created dynamically and therefore do not use
-   Bootstrap's .modal container. Give them a safe, scrollable layout. */
-body.panel-dialog-open { overflow: hidden; }
-.modal-backdrop-custom {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  overflow: hidden;
-  box-sizing: border-box;
-  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
-  background-color: rgba(0, 0, 0, 0.55);
-}
-.modal-backdrop-custom .modal-dialog {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: min(100%, var(--bs-modal-width, 500px));
-  max-height: calc(100dvh - 2rem);
-  min-width: 0;
-  overflow: hidden;
-  margin: auto !important;
-}
-.modal-backdrop-custom .modal-content {
-  width: 100%;
-  min-width: 0;
-  max-height: calc(100dvh - 2rem);
-  overflow: hidden;
-  opacity: 1;
-  color: var(--bs-body-color, #212529);
-  background-color: var(--bs-body-bg, #fff);
-  background-clip: padding-box;
-}
-.modal-backdrop-custom form {
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.modal-backdrop-custom .modal-header,
-.modal-backdrop-custom .modal-footer {
-  flex-shrink: 0;
-  min-width: 0;
-}
-.modal-backdrop-custom .modal-title {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.modal-backdrop-custom .modal-body {
-  min-height: 0;
-  min-width: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overflow-wrap: anywhere;
-}
-.modal-backdrop-custom .modal-body .table-responsive {
-  max-width: 100%;
-  overflow-x: auto;
-}
-@media (max-width: 575.98px) {
-  .modal-backdrop-custom {
-    align-items: stretch;
-    padding: max(.5rem, env(safe-area-inset-top)) max(.5rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) max(.5rem, env(safe-area-inset-left));
-  }
-  .modal-backdrop-custom .modal-dialog,
-  .modal-backdrop-custom .modal-content {
-    max-height: calc(100dvh - 1rem);
-  }
-  .modal-backdrop-custom .modal-header,
-  .modal-backdrop-custom .modal-body,
-  .modal-backdrop-custom .modal-footer {
-    padding: .75rem;
-  }
-  .modal-backdrop-custom .modal-footer > .btn {
-    flex: 1 1 auto;
   }
 }
