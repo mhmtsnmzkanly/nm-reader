@@ -28,7 +28,7 @@
   sidebarNav?.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     const toggle = target?.closest(
-      '#panel-sidebar-nav > .nav-item > a[data-lte-toggle="treeview"]',
+      '#panel-sidebar-nav > .nav-item > a[role="button"][href="#"]',
     );
     if (!toggle) return;
     event.preventDefault();
@@ -4434,7 +4434,7 @@ function navigate() {
   if (activeNavGroup) {
     activeNavGroup.classList.add("menu-open");
     activeNavGroup
-      .querySelector(':scope > .nav-link[data-lte-toggle="treeview"]')
+      .querySelector(':scope > .nav-link[role="button"][href="#"]')
       ?.setAttribute("aria-expanded", "true");
   }
 
