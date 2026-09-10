@@ -2232,7 +2232,7 @@ ${pages}</textarea>
           <div class="ratio ratio-3x4 bg-body-tertiary rounded overflow-hidden">
             <template data-if is-truthy="has_cover"
               ><img
-                src="${cover_image}"
+                data-preview-cover
                 class="w-100 h-100 object-fit-cover"
                 alt=""
               /><template data-else
@@ -2264,7 +2264,7 @@ ${pages}</textarea>
           </dl>
           <template data-if is-truthy="is_published"
             ><a
-              href="${url_path}"
+              data-preview-live
               target="_blank"
               rel="noopener"
               class="btn btn-outline-primary"
@@ -5860,7 +5860,7 @@ ${admin_note}</textarea>
       const loader = document.getElementById("panel-bootstrap-loader");
 
       try {
-        await import("/assets/js/admin.js?27");
+        await import("/assets/js/admin.js?28");
         loader?.remove();
       } catch (error) {
         console.error("Admin panel yüklenemedi:", error);

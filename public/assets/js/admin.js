@@ -1650,12 +1650,12 @@ async function loadSeriesPreviewPage(contentId) {
   const response = await api(`/content/${contentId}/preview`);
   assertCurrentPage(requestEpoch);
   const content = response?.data || {};
+  const coverImage = safeLocalPath(content.cover_image);
   const urlPath = safeLocalPath(content.url_path);
   const page = mountEditorPage(`Önizleme: ${content.title || contentId}`, {
     name: "panel-series-preview",
     context: {
-      has_cover: Boolean(content.cover_image),
-      cover_image: safeLocalPath(content.cover_image),
+      has_cover: coverImage !== "#",
       type: content.type || "-",
       status: content.status || "-",
       lifecycle_status: content.lifecycle_status || "-",
@@ -1669,6 +1669,10 @@ async function loadSeriesPreviewPage(contentId) {
       url_path: urlPath,
     },
   });
+  const cover = page.querySelector("[data-preview-cover]");
+  if (cover && coverImage !== "#") cover.setAttribute("src", coverImage);
+  const liveLink = page.querySelector("[data-preview-live]");
+  if (liveLink && urlPath !== "#") liveLink.setAttribute("href", urlPath);
 }
 
 async function loadSeriesRevisionsPage(contentId) {
