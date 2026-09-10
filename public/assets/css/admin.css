@@ -42,6 +42,9 @@
 #panel-app {
   position: relative;
 }
+.ratio-3x4 {
+  --bs-aspect-ratio: 133.333333%;
+}
 .panel-page-root {
   display: contents;
 }
