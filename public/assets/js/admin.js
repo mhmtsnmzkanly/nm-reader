@@ -2811,6 +2811,10 @@ async function loadChaptersPage(contentId, pageNumber = 1) {
     title: chapter.title || "-",
     type: chapter.type || "-",
     price_amount: Number(chapter.price_amount || 0),
+    price_label:
+      Number(chapter.price_amount || 0) > 0
+        ? `${Number(chapter.price_amount)} coin`
+        : "Ücretsiz",
     published_at: chapter.published_at || "-",
   }));
   const chapterMeta = responseMeta(response);

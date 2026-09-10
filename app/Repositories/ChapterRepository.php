@@ -310,7 +310,11 @@ final class ChapterRepository
     {
         $offset = max(0, ($page - 1) * $perPage);
         $stmt = $this->pdo->prepare(
-            'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.is_members_only, ch.created_at, u.username
+            'SELECT ch.id, ch.content_id, ch.chapter_number, ch.title, ch.type, ch.is_members_only,
+                    CASE WHEN ch.is_free_after IS NOT NULL AND ch.is_free_after <= NOW()
+                         THEN 0 ELSE ch.price_amount END AS price_amount,
+                    ch.price_amount AS base_price, ch.is_free_after, ch.published_at,
+                    ch.created_at, u.username
              FROM chapters ch
              LEFT JOIN users u ON u.id = ch.created_by
              WHERE ch.content_id = :content_id AND ch.deleted_at IS NULL

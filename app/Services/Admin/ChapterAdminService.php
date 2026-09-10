@@ -190,7 +190,7 @@ final class ChapterAdminService extends AdminServiceBase
 
     public function listChapters(string $contentId, int $page, int $perPage): array
     {
-        $items = $this->chapters->listByContentId($contentId, $page, $perPage, true);
+        $items = $this->chapters->listByContentId($contentId, $page, $perPage);
         $items = array_map(static function (array $row): array {
             $row['chapter_number'] = ChapterNumber::normalize($row['chapter_number'] ?? '');
             return $row;
