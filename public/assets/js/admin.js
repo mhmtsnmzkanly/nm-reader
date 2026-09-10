@@ -1814,7 +1814,7 @@ async function loadBlogPreviewPage(blogId) {
       status_label: statusLabels[blog.status] || blog.status || "Bilinmiyor",
       status_badge:
         statusClasses[blog.status] || "bg-secondary-subtle text-secondary",
-      is_published,
+      is_published: isPublished,
       public_url: isPublished
         ? `/blogs/${encodeURIComponent(String(blog.slug))}`
         : "#",
