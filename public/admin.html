@@ -2459,17 +2459,14 @@ ${pages}</textarea>
         ></template
       ></template
     >
-    <template id="tpl-panel-chapter-preview"
-      ><div class="row g-4">
+    <template id="tpl-panel-chapter-preview">
+      <div class="row g-4">
         <div class="col-12">
           <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <span class="badge bg-primary">${type_label}</span
-            ><span class="badge bg-secondary">${publication_label}</span
-            ><span class="badge bg-warning text-dark"
-              ><i class="bi bi-coin me-1"></i>${price_label}</span
-            ><span class="badge bg-light text-dark border"
-              >${access_label}</span
-            >
+            <span class="badge bg-primary">${type_label}</span>
+            <span class="badge bg-secondary">${publication_label}</span>
+            <span class="badge bg-warning text-dark"><i class="bi bi-coin me-1"></i>${price_label}</span>
+            <span class="badge bg-light text-dark border">${access_label}</span>
           </div>
           <h3 class="mb-2">${heading}</h3>
           <p class="text-secondary mb-4">
@@ -2477,20 +2474,18 @@ ${pages}</textarea>
             <span class="mx-2">·</span>
             <i class="bi bi-hash me-1"></i>${chapter_number}
           </p>
-          <template data-if is-truthy="is_text"
-            ><article
+          <template data-if is-truthy="is_text">
+            <article
               class="border rounded-3 bg-body-tertiary p-4 lh-lg"
               style="white-space: pre-wrap; overflow-wrap: anywhere"
-            >${body}</article
-            ><template data-else
-              ><template data-if is-truthy="has_pages"
-                ><div class="row g-3">
-                  <template data-for each="pages" as="item"
-                    ><div class="col-6 col-md-4 col-xl-3">
+            >${body}</article>
+            <template data-else>
+              <template data-if is-truthy="has_pages">
+                <div class="row g-3">
+                  <template data-for each="pages" as="item">
+                    <div class="col-6 col-md-4 col-xl-3">
                       <div class="card h-100 border shadow-sm">
-                        <div
-                          class="ratio ratio-3x4 bg-body-tertiary rounded-top overflow-hidden"
-                        >
+                        <div class="ratio ratio-3x4 bg-body-tertiary rounded-top overflow-hidden">
                           <img
                             src="${item.url}"
                             alt="Sayfa ${item.number}"
@@ -2501,39 +2496,41 @@ ${pages}</textarea>
                         <div class="card-body py-2 px-3 small text-secondary">
                           Sayfa ${item.number}
                         </div>
-                      </div></div
-                  ></template>
+                      </div>
+                    </div>
+                  </template>
                 </div>
-                <template data-else
-                  ><div class="alert alert-secondary mb-0">
+                <template data-else>
+                  <div class="alert alert-secondary mb-0">
                     Bu bölüm için görsel sayfası bulunamadı.
-                  </div></template
-                ></template
-              ></template
-            ></template
-          ></template
-          <template data-if is-truthy="has_translator_note"
-            ><div class="alert alert-info mt-4 mb-0">
-              <strong><i class="bi bi-info-circle me-1"></i>Çevirmen notu</strong
-              ><div class="mt-2" style="white-space: pre-wrap">${translator_note}</div>
-            </div></template
-          >
-          <template data-if is-truthy="is_published"
-            ><a
+                  </div>
+                </template>
+              </template>
+            </template>
+          </template>
+          <template data-if is-truthy="has_translator_note">
+            <div class="alert alert-info mt-4 mb-0">
+              <strong><i class="bi bi-info-circle me-1"></i>Çevirmen notu</strong>
+              <div class="mt-2" style="white-space: pre-wrap">${translator_note}</div>
+            </div>
+          </template>
+          <template data-if is-truthy="is_published">
+            <a
               class="btn btn-outline-primary mt-4"
               href="${public_url}"
               target="_blank"
               rel="noopener"
               ><i class="bi bi-box-arrow-up-right me-1"></i>Canlı sayfayı aç</a
-            ><template data-else
-              ><div class="alert alert-warning mt-4 mb-0">
+            >
+            <template data-else>
+              <div class="alert alert-warning mt-4 mb-0">
                 Bu bölüm henüz halka açık değil; yalnızca yönetici önizlemesindesiniz.
-              </div></template
-            ></template
-          >
+              </div>
+            </template>
+          </template>
         </div>
-      </div></template
-    >
+      </div>
+    </template>
     <template id="tpl-panel-blog-preview"
       ><div class="row g-4">
         <div class="col-12">
