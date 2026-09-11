@@ -99,57 +99,63 @@ export const RecentChaptersSection: React.FC<RecentChaptersSectionProps> = ({ ch
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {groupedSeries.map((item) => (
-          <div
-            key={item.seriesSlug}
-            className="group bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--accent-color)]/60 rounded-2xl p-4 transition-all duration-300 hover:shadow-lg flex gap-4"
-          >
-            {/* Thumbnail Kapak Görseli */}
-            <Link
-              to={`/${item.seriesType}/${item.seriesSlug}`}
-              className="w-20 sm:w-24 flex-shrink-0 aspect-[3/4] rounded-xl overflow-hidden bg-[var(--bg-tertiary)] relative shadow-xs"
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
+        {groupedSeries.map((item) => {
+          const latestThreeChapters = item.chapters.slice(0, 3);
+
+          return (
+            <div
+              key={item.seriesSlug}
+              className="group bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--accent-color)]/60 rounded-2xl p-4 transition-all duration-300 hover:shadow-lg flex flex-col gap-3.5"
             >
-              {item.cover ? (
-                <img
-                  src={item.cover}
-                  alt={item.seriesTitle}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center font-bold text-xs text-[var(--text-muted)] bg-slate-800">
-                  {item.seriesTitle.substring(0, 2)}
-                </div>
-              )}
-            </Link>
-
-            {/* Seri Bilgileri ve Alt Alta Bölüm Listesi */}
-            <div className="flex flex-col justify-between flex-grow min-w-0">
-              <div>
-                {/* Tür Etiketi & En Son Bölümün Zamanı */}
-                <div className="flex items-center justify-between gap-1 text-[10px] text-[var(--text-muted)] font-mono mb-1.5">
-                  <Badge variant="gold" size="sm" className="text-[9px] px-1.5 py-0">
-                    {item.seriesType.toUpperCase()}
-                  </Badge>
-                  <span className="flex items-center gap-1 text-[var(--text-muted)] truncate">
-                    <Clock className="w-3 h-3 text-[var(--text-muted)]" />
-                    {formatRelativeTime(item.latestDateStr)}
-                  </span>
-                </div>
-
-                {/* Seri Başlığı */}
-                <Link to={`/${item.seriesType}/${item.seriesSlug}`}>
-                  <h3 className="font-bold text-sm sm:text-base font-serif text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors line-clamp-1 leading-snug mb-3">
-                    {item.seriesTitle}
-                  </h3>
+              {/* ÜST ALAN: Sol Kapak | Sağ İçerik Alanı (Tür, Zaman, Başlık) */}
+              <div className="flex items-center gap-3.5 min-w-0">
+                {/* Sol Kapak */}
+                <Link
+                  to={`/${item.seriesType}/${item.seriesSlug}`}
+                  className="w-16 sm:w-20 shrink-0 aspect-[3/4] rounded-xl overflow-hidden bg-[var(--bg-tertiary)] relative shadow-xs"
+                >
+                  {item.cover ? (
+                    <img
+                      src={item.cover}
+                      alt={item.seriesTitle}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-bold text-xs text-[var(--text-muted)] bg-slate-800">
+                      {item.seriesTitle.substring(0, 2)}
+                    </div>
+                  )}
                 </Link>
+
+                {/* Sağ İçerik Alanı (Tür, Zaman, Başlık) */}
+                <div className="flex flex-col justify-center gap-1.5 flex-grow min-w-0">
+                  <div className="flex items-center justify-between gap-1 text-[10px] text-[var(--text-muted)] font-mono">
+                    <Badge variant="gold" size="sm" className="text-[9px] px-1.5 py-0">
+                      {item.seriesType.toUpperCase()}
+                    </Badge>
+                    <span className="flex items-center gap-1 text-[var(--text-muted)] truncate">
+                      <Clock className="w-3 h-3 text-[var(--text-muted)]" />
+                      {formatRelativeTime(item.latestDateStr)}
+                    </span>
+                  </div>
+
+                  <Link to={`/${item.seriesType}/${item.seriesSlug}`}>
+                    <h3 className="font-bold text-sm sm:text-base font-serif text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors line-clamp-2 leading-snug">
+                      {item.seriesTitle}
+                    </h3>
+                  </Link>
+                </div>
               </div>
 
-              {/* Alt Alta Sıralanan Yeni Bölümler */}
+              {/* AYIRAÇ ÇİZGİSİ */}
+              <div className="border-t border-[var(--border-color)]/70" />
+
+              {/* ALT ALAN: BÖLÜM LİSTESİ (Son 3 Bölüm) */}
               <div className="flex flex-col gap-1.5">
-                {item.chapters.map((ch) => {
+                {latestThreeChapters.map((ch) => {
                   const chapterNum = ch.chapter_number;
                   const pubDate = ch.published_at || ch.created_at || '';
 
@@ -176,10 +182,9 @@ export const RecentChaptersSection: React.FC<RecentChaptersSectionProps> = ({ ch
                 })}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
 };
-
