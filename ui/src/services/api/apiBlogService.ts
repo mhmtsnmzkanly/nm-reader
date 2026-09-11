@@ -24,12 +24,23 @@ export class ApiBlogService implements IBlogService {
     slug: string,
     vote: -1 | 0 | 1
   ): Promise<
-    ApiResponse<{ vote: number; upvote_count: number; downvote_count: number; likes: number }>
+    ApiResponse<{
+      vote?: number;
+      upvote_count?: number;
+      downvote_count?: number;
+      likes?: number;
+      my_vote?: number;
+      score?: number;
+    }>
   > {
-    return api.post<{ vote: number; upvote_count: number; downvote_count: number; likes: number }>(
-      `/blogs/${slug}/vote`,
-      { vote }
-    );
+    return api.post<{
+      vote?: number;
+      upvote_count?: number;
+      downvote_count?: number;
+      likes?: number;
+      my_vote?: number;
+      score?: number;
+    }>(`/blogs/${slug}/vote`, { vote });
   }
 
   async uploadBlogImage(formData: FormData): Promise<ApiResponse<{ path: string; url: string }>> {

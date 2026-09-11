@@ -28,7 +28,9 @@ const BLOG_COMMENT_REASONS = [
   'insult',
   'hate_speech',
   'sexual_content',
+  'spoiler',
   'misinformation',
+  'copyright',
   'other',
 ] as const;
 
@@ -96,10 +98,20 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           onClose();
         }, 1500);
       } else {
-        setErrorMsg(res.error?.message || t('report.errorOccurred'));
+        const code = res.error?.code || (res as any).code;
+        const msg = res.error?.message || (res as any).message;
+        if (code === 'already_reported' || msg?.toLowerCase().includes('already reported') || msg?.toLowerCase().includes('daha önce bildirdiniz')) {
+          setErrorMsg(t('report.alreadyReported'));
+        } else {
+          setErrorMsg(msg || t('report.errorOccurred'));
+        }
       }
-    } catch {
-      setErrorMsg(t('report.errorOccurred'));
+    } catch (err: any) {
+      if (err?.code === 'already_reported' || err?.message?.toLowerCase().includes('already reported') || err?.message?.toLowerCase().includes('daha önce bildirdiniz')) {
+        setErrorMsg(t('report.alreadyReported'));
+      } else {
+        setErrorMsg(t('report.errorOccurred'));
+      }
     } finally {
       setIsSubmitting(false);
     }

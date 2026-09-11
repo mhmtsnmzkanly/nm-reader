@@ -1,12 +1,47 @@
+/**
+ * Safely parses date strings from API into Date object.
+ *
+ * The API server (PHP/MySQL) stores and returns timestamps in UTC (e.g. 'YYYY-MM-DD HH:mm:ss' or 'YYYY-MM-DDTHH:mm:ss').
+ * Without an explicit timezone indicator ('Z' or offset), standard JS `new Date(...)` treats datetime
+ * strings as local browser time, resulting in an offset mismatch (e.g., UTC+3 users seeing 3 hours ago).
+ */
+export function parseDate(dateString: string | null | undefined): Date | null {
+  if (!dateString) return null;
+  const trimmed = dateString.trim();
+  if (!trimmed) return null;
+
+  // Already has explicit timezone indicator (e.g. 'Z', '+03:00', '-05:00', '+0300')
+  if (/[zZ]$|[+-]\d{2}(:\d{2})?$/.test(trimmed)) {
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Date-only format: YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Datetime format without timezone: 'YYYY-MM-DD HH:mm:ss' or 'YYYY-MM-DDTHH:mm:ss'
+  const normalized = trimmed.replace(' ', 'T') + 'Z';
+  const d = new Date(normalized);
+  if (!isNaN(d.getTime())) {
+    return d;
+  }
+
+  const fallback = new Date(trimmed);
+  return isNaN(fallback.getTime()) ? null : fallback;
+}
+
 export function formatRelativeTime(dateString: string, lang: 'tr' | 'en' = 'tr'): string {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString;
+  const date = parseDate(dateString);
+  if (!date || isNaN(date.getTime())) return dateString;
 
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  // Less than 60 seconds
+  // Less than 60 seconds (also handles minor clock drift where diffInSeconds < 0)
   if (diffInSeconds < 60) {
     return lang === 'en' ? 'Just now' : 'Az önce';
   }
@@ -64,8 +99,8 @@ export function formatDate(
   options?: Intl.DateTimeFormatOptions
 ): string {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString;
+  const date = parseDate(dateString);
+  if (!date || isNaN(date.getTime())) return dateString;
 
   const locale = lang === 'en' ? 'en-US' : 'tr-TR';
   const defaultOptions: Intl.DateTimeFormatOptions = options || {

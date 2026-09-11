@@ -11,9 +11,10 @@ import {
 import { walletService } from '../../services';
 import { FeatureEntitlement } from '../../types/api';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { parseDate } from '../../utils/formatDate';
 
 export const FeatureEntitlementsList: React.FC = () => {
-  const { t, formatRelativeTime } = usePreferences();
+  const { t, formatRelativeTime, formatDate } = usePreferences();
   const [entitlements, setEntitlements] = useState<FeatureEntitlement[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -80,7 +81,7 @@ export const FeatureEntitlementsList: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {entitlements.map((item) => {
             const Icon = getFeatureIcon(item.feature_key);
-            const isActive = item.is_active ?? (item.expires_at ? new Date(item.expires_at).getTime() > Date.now() : true);
+            const isActive = item.is_active ?? (item.expires_at ? (parseDate(item.expires_at)?.getTime() ?? 0) > Date.now() : true);
 
             return (
               <div
@@ -154,7 +155,7 @@ export const FeatureEntitlementsList: React.FC = () => {
                   {item.expires_at ? (
                     <span className="flex items-center gap-1 text-[var(--text-primary)]">
                       <Clock className="w-3 h-3 text-[var(--accent-color)]" />
-                      {t('entitlements.expiresAt')}: {new Date(item.expires_at).toLocaleDateString()}
+                      {t('entitlements.expiresAt')}: {formatDate(item.expires_at)}
                     </span>
                   ) : (
                     <span className="text-emerald-600 dark:text-emerald-400 font-semibold">

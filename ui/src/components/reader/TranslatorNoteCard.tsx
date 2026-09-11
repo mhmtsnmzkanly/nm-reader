@@ -54,16 +54,16 @@ export const TranslatorNoteCard: React.FC<TranslatorNoteCardProps> = ({
               type="button"
               onClick={() => setIsExpanded((prev) => !prev)}
               className="p-1.5 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer text-xs flex items-center gap-1 font-mono"
-              aria-label={isExpanded ? 'Gizle' : 'Göster'}
+              aria-label={isExpanded ? (t('reader.hideNote') || 'Gizle') : (t('reader.showNote') || 'Genişlet')}
             >
               {isExpanded ? (
                 <>
-                  <span className="hidden sm:inline text-[11px]">Gizle</span>
+                  <span className="hidden sm:inline text-[11px]">{t('reader.hideNote') || 'Gizle'}</span>
                   <ChevronUp className="w-3.5 h-3.5" />
                 </>
               ) : (
                 <>
-                  <span className="hidden sm:inline text-[11px]">Genişlet</span>
+                  <span className="hidden sm:inline text-[11px]">{t('reader.showNote') || 'Genişlet'}</span>
                   <ChevronDown className="w-3.5 h-3.5" />
                 </>
               )}

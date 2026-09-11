@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import Markdown from 'react-markdown';
-import { ArrowLeft, Eye, Edit3, Sparkles, FileText, Send } from 'lucide-react';
+import { ArrowLeft, Eye, Edit3, Sparkles, FileText, Send, AlertTriangle } from 'lucide-react';
 import { blogService } from '../services';
 import { Button } from '../components/ui/Button';
 import { BlogImageUpload } from '../components/blog/BlogImageUpload';
@@ -22,6 +22,9 @@ export const EditBlogPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitType, setSubmitType] = useState<'draft' | 'pending' | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [blogStatus, setBlogStatus] = useState<string>('');
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -29,10 +32,12 @@ export const EditBlogPage: React.FC = () => {
       const res = await blogService.getMyBlog(id);
       if (res.status === 'success' && res.data) {
         const blog = res.data;
+        setBlogStatus(blog.status || 'draft');
+        setRejectionReason((blog as any).rejection_reason || (blog as any).reject_reason || null);
         setTitle(blog.title || '');
         setExcerpt(blog.excerpt || '');
         setCoverImage(blog.cover_image || '');
-        setContent(blog.body || blog.content || '');
+        setContent(blog.body || '');
         const tagNames = blog.tags?.map((tg) => (typeof tg === 'string' ? tg : tg.name || tg.slug || tg.id)) || [];
         setTagsInput(tagNames.join(', '));
       } else {
@@ -49,6 +54,7 @@ export const EditBlogPage: React.FC = () => {
 
     setIsSubmitting(true);
     setSubmitType(targetStatus);
+    setErrorMessage(null);
     const tags = tagsInput
       .split(',')
       .map((t) => t.trim().replace(/^#/, ''))
@@ -65,6 +71,9 @@ export const EditBlogPage: React.FC = () => {
 
     if (res.status === 'success') {
       navigate('/my-blogs');
+    } else {
+      const err = (res as any).error?.message || (res as any).message || t('blog.saveError');
+      setErrorMessage(err);
     }
     setIsSubmitting(false);
     setSubmitType(null);
@@ -107,9 +116,16 @@ export const EditBlogPage: React.FC = () => {
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>{t('navigation.myBlogs')}</span>
         </Link>
-        <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--accent-color)] font-bold">
-          {t('blog.communityBadge')}
-        </span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--accent-color)] font-bold">
+            {t('blog.communityBadge')}
+          </span>
+          {blogStatus && (
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium uppercase border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
+              {blogStatus}
+            </span>
+          )}
+        </div>
         <h1 className="font-serif text-3xl font-bold text-[var(--text-primary)]">
           {t('blog.editBlogHeader')}
         </h1>
@@ -117,6 +133,29 @@ export const EditBlogPage: React.FC = () => {
           {t('blog.editBlogDesc')}
         </p>
       </div>
+
+      {/* Rejection Alert Banner */}
+      {(blogStatus === 'rejected' || rejectionReason) && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-start gap-3 shadow-xs">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-1 text-xs">
+            <span className="font-bold text-sm">{t('blog.rejectionNotice')}</span>
+            {rejectionReason && (
+              <p className="text-[var(--text-primary)] leading-relaxed">
+                <span className="font-semibold text-rose-300">{t('blog.rejectionReason')}: </span>
+                {rejectionReason}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Error Alert */}
+      {errorMessage && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono">
+          {errorMessage}
+        </div>
+      )}
 
       <div className="flex flex-col gap-6 bg-[var(--bg-card)] p-6 sm:p-8 rounded-2xl border border-[var(--border-color)] shadow-sm">
         {/* Cover Image Upload */}

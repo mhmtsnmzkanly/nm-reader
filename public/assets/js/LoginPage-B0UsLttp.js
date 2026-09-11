@@ -1,1 +1,0 @@
-import{u as r,r as a}from"./react-QbDTDCEN.js";import{d as s}from"./app-DMM_rXN0.js";import"./lucide-CiC8sumC.js";const c=()=>{const{openAuthModal:e,isAuthenticated:o}=s(),t=r();return a.useEffect(()=>{o?t("/"):(e("login"),t("/",{replace:!0}))},[o,t,e]),null};export{c as LoginPage};

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Chapter, ContentType } from '../types/api';
 import { fetchChapter } from '../services/chapterService';
 import { contentService, userService } from '../services';
@@ -228,19 +228,6 @@ export const ChapterReader: React.FC = () => {
           <LockedChapter chapter={chapter} onUnlock={handleUnlock} />
         ) : (
           <>
-            {/* Translator Note Banner */}
-            {chapter.translator_note && (
-              <div className="my-4 max-w-4xl mx-auto w-full p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 shadow-sm">
-                <span className="font-bold flex items-center gap-2 mb-1 text-amber-400">
-                  <Info className="w-4 h-4 text-amber-400" />
-                  {t('reader.translatorNote') || 'Çevirmen Notu:'}
-                </span>
-                <p className="text-sm text-[var(--text-primary)] whitespace-pre-line leading-relaxed">
-                  {chapter.translator_note}
-                </p>
-              </div>
-            )}
-
             {chapter.type === 'text' ? (
               <NovelReader chapter={chapter} readerSettings={readerSettings} />
             ) : (

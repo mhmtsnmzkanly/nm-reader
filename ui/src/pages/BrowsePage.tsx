@@ -10,8 +10,6 @@ import { usePreferences } from '../contexts/PreferencesContext';
 type TypeOption = {
   key: ContentType;
   label: string;
-  descriptionTr: string;
-  descriptionEn: string;
 };
 
 function getBootstrapListing(type: string, page: number): ContentSummary[] | null {
@@ -23,17 +21,17 @@ function getBootstrapListing(type: string, page: number): ContentSummary[] | nul
 }
 
 const CONTENT_TYPES: TypeOption[] = [
-  { key: 'manga', label: 'Manga', descriptionTr: 'Japon Çizgi Romanları', descriptionEn: 'Japanese Comics' },
-  { key: 'manhwa', label: 'Manhwa', descriptionTr: 'Kore Çizgi Romanları', descriptionEn: 'Korean Comics' },
-  { key: 'manhua', label: 'Manhua', descriptionTr: 'Çin Çizgi Romanları', descriptionEn: 'Chinese Comics' },
-  { key: 'webtoon', label: 'Webtoon', descriptionTr: 'Renkli Dikey Web Çizimleri', descriptionEn: 'Color Web Comics' },
-  { key: 'light-novel', label: 'Light Novel', descriptionTr: 'Japon Hafif Romanları', descriptionEn: 'Japanese Light Novels' },
-  { key: 'web-novel', label: 'Web Novel', descriptionTr: 'İnternet Romanları', descriptionEn: 'Web Novels' },
-  { key: 'novel', label: 'Novel', descriptionTr: 'Geleneksel ve Fantastik Romanlar', descriptionEn: 'Novels & Fiction' },
+  { key: 'manga', label: 'Manga' },
+  { key: 'manhwa', label: 'Manhwa' },
+  { key: 'manhua', label: 'Manhua' },
+  { key: 'webtoon', label: 'Webtoon' },
+  { key: 'light-novel', label: 'Light Novel' },
+  { key: 'web-novel', label: 'Web Novel' },
+  { key: 'novel', label: 'Novel' },
 ];
 
 export const BrowsePage: React.FC = () => {
-  const { t, lang } = usePreferences();
+  const { t } = usePreferences();
   const { type = 'manga' } = useParams<{ type: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -49,7 +47,7 @@ export const BrowsePage: React.FC = () => {
   const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'chapters'>('recent');
 
   const currentTypeConfig = CONTENT_TYPES.find((ct) => ct.key === normalizedType) || CONTENT_TYPES[0];
-  const typeDescription = lang === 'en' ? currentTypeConfig.descriptionEn : currentTypeConfig.descriptionTr;
+  const typeDescription = t(`browse.typeDescriptions.${currentTypeConfig.key}`);
 
   useEffect(() => {
     const fetchBrowse = async () => {

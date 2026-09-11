@@ -133,7 +133,7 @@ export const Header: React.FC = () => {
                               {t('navigation.genres')}
                             </span>
                             <span className="text-[9px] text-[var(--text-muted)] font-mono truncate">
-                              Dizini Gör
+                              {t('navigation.genresDirectoryDesc')}
                             </span>
                           </div>
                         </Link>
@@ -155,7 +155,7 @@ export const Header: React.FC = () => {
                               {t('navigation.tags')}
                             </span>
                             <span className="text-[9px] text-[var(--text-muted)] font-mono truncate">
-                              Etiketleri Bul
+                              {t('navigation.tagsFindDesc')}
                             </span>
                           </div>
                         </Link>
@@ -169,7 +169,7 @@ export const Header: React.FC = () => {
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between px-1">
                         <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                          Formatlar
+                          {t('navigation.formats')}
                         </span>
                         <Link
                           to="/browse"

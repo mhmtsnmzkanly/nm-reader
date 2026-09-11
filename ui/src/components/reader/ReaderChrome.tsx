@@ -151,7 +151,7 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
           <ReportButton
             targetType="chapter"
             targetId={chapter.id}
-            targetTitle={`Bölüm ${chapter.chapter_number}`}
+            targetTitle={t('chapters.chapterNumber', { number: chapter.chapter_number })}
             variant="icon"
             className="p-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-amber-500 hover:border-amber-500/40"
           />

@@ -15,7 +15,13 @@ export const SearchPage: React.FC = () => {
   const selectedGenresStr = searchParams.get('genres') || '';
   const selectedTagsStr = searchParams.get('tags') || '';
   const statusParam = searchParams.get('status') || '';
-  const sortParam = searchParams.get('sort') || 'EN YENİLER';
+  const rawSort = searchParams.get('sort') || '';
+  const normalizeSort = (s: string) => {
+    if (s === 'EN ÇOK OKUNAN' || s === 'popular') return 'popular';
+    if (s === 'EN YÜKSEK PUAN' || s === 'rating') return 'rating';
+    return 'latest';
+  };
+  const sortParam = normalizeSort(rawSort);
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
   const perPageParam = parseInt(searchParams.get('per_page') || '10', 10);
 
@@ -183,9 +189,9 @@ export const SearchPage: React.FC = () => {
             </label>
             <div className="flex flex-wrap gap-1.5">
               {[
-                { key: 'EN YENİLER', label: t('browse.sortNewest') },
-                { key: 'EN ÇOK OKUNAN', label: t('browse.sortPopular') },
-                { key: 'EN YÜKSEK PUAN', label: t('browse.sortRating') },
+                { key: 'latest', label: t('browse.sortNewest') },
+                { key: 'popular', label: t('browse.sortPopular') },
+                { key: 'rating', label: t('browse.sortRating') },
               ].map((s) => (
                 <button
                   key={s.key}

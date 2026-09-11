@@ -326,17 +326,17 @@ export type BlogItem = {
   updated_at?: string;
   read_time: number;
   tags: BlogTag[];
-  content: string;
+  body: string;
   stats: BlogStats;
   user_state?: BlogUserState;
   status?: 'draft' | 'pending' | 'published' | 'rejected' | string;
   // Compatibility fields
+  content?: string;
   user_id?: string;
   approved?: number;
   approver_user_id?: string | null;
   approved_at?: string | null;
   created_at?: string;
-  body?: string;
   author_username?: string;
   approver_username?: string | null;
   views?: number;

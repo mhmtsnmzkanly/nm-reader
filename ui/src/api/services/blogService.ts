@@ -72,11 +72,24 @@ export class ApiBlogService implements IBlogService {
   public voteBlog(
     slug: string,
     vote: -1 | 0 | 1
-  ): Promise<ApiResponse<{ vote: number; upvote_count: number; downvote_count: number; likes: number }>> {
-    return apiClient.post<{ vote: number; upvote_count: number; downvote_count: number; likes: number }>(
-      `/blogs/${slug}/vote`,
-      { vote }
-    );
+  ): Promise<
+    ApiResponse<{
+      vote?: number;
+      upvote_count?: number;
+      downvote_count?: number;
+      likes?: number;
+      my_vote?: number;
+      score?: number;
+    }>
+  > {
+    return apiClient.post<{
+      vote?: number;
+      upvote_count?: number;
+      downvote_count?: number;
+      likes?: number;
+      my_vote?: number;
+      score?: number;
+    }>(`/blogs/${slug}/vote`, { vote });
   }
 
   public toggleLikeBlog(slug: string): Promise<ApiResponse<{ liked: boolean; likes: number }>> {

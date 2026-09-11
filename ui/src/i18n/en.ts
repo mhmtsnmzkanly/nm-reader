@@ -95,7 +95,10 @@ export const en = {
     "profile": "Profile",
     "adminPanel": "Admin Panel",
     "account": "Account Management",
-    "categories": "Categories"
+    "categories": "Categories",
+    "genresDirectoryDesc": "View Directory",
+    "tagsFindDesc": "Find Tags",
+    "formats": "Formats"
   },
   "home": {
     "heroBadge": "FEATURED SPOTLIGHT",
@@ -137,7 +140,16 @@ export const en = {
     "allStatuses": "All Statuses",
     "allGenres": "All Categories",
     "filterByTag": "Filter by Tag",
-    "resultsCount": "Displaying {count} series"
+    "resultsCount": "Displaying {count} series",
+    "typeDescriptions": {
+      "manga": "Japanese Comics",
+      "manhwa": "Korean Comics",
+      "manhua": "Chinese Comics",
+      "webtoon": "Color Web Comics",
+      "light-novel": "Japanese Light Novels",
+      "web-novel": "Web Novels",
+      "novel": "Novels & Fiction"
+    }
   },
   "genres": {
     "title": "Genres & Categories",
@@ -298,7 +310,9 @@ export const en = {
     "unlocking": "Unlocking...",
     "yourBalance": "Your Balance:",
     "translatorNote": "Translator / Editor Note",
-    "translatorNoteBadge": "Translator's Note"
+    "translatorNoteBadge": "Translator's Note",
+    "hideNote": "Hide",
+    "showNote": "Expand"
   },
   "auth": {
     "login": "Log In",
@@ -585,7 +599,8 @@ export const en = {
     "accentCyan": "Sky Cyan",
     "accentPurple": "Royal Purple",
     "languageSection": "Language & Localization",
-    "languageDesc": "Choose your preferred interface language across the platform.",
+    "languageDesc": "Select the default language used across the application.",
+    "language": "Language",
     "readerDefaults": "Default Reader Settings",
     "readerDefaultsDesc": "Initial settings automatically applied when opening a new chapter.",
     "layout": "Page Layout",
@@ -730,6 +745,13 @@ export const en = {
     "submitNotice": "Your blog post was successfully submitted for editorial review.",
     "voteUp": "Like",
     "voteDown": "Dislike",
+    "cannotVoteOwn": "You cannot vote on your own blog post.",
+    "loginToVote": "Please log in to vote.",
+    "score": "Score",
+    "votedUp": "Liked",
+    "votedDown": "Disliked",
+    "votePromptTitle": "How did you like this post?",
+    "votePromptDesc": "Cast your vote to share your feedback and support the author.",
     "allBlogsBack": "Back to All Blogs",
     "author": "Author",
     "defaultAuthor": "Author",
@@ -780,6 +802,16 @@ export const en = {
     "statusPending": "In Review",
     "statusPublished": "Published",
     "statusRejected": "Rejected",
+    "statusHidden": "Hidden",
+    "rejectionReason": "Rejection Reason:",
+    "rejectionNotice": "This post was rejected by moderation. Please review the explanation below, update your draft, and resubmit.",
+    "authorFallback": "Author",
+    "restrictedAccess": "This blog post is not published.",
+    "restrictedAccessDesc": "This content may be a draft, under review, or hidden.",
+    "like": "Like",
+    "liked": "Liked",
+    "saveSuccess": "Blog post saved successfully.",
+    "saveError": "An error occurred while saving the blog post.",
     "deleteBlogConfirm": "Are you sure you want to delete this blog post?",
     "deleteSuccess": "Blog post deleted successfully.",
     "actionDelete": "Delete",
@@ -1089,6 +1121,7 @@ export const en = {
       "hate_speech": "Hate Speech",
       "sexual_content": "Inappropriate / Explicit Content",
       "misinformation": "Misinformation",
+      "spoiler": "Unmarked Spoilers",
       "other": "Other"
     },
     "descriptionLabel": "Detailed Description (Optional)",
@@ -1100,6 +1133,7 @@ export const en = {
     "successTitle": "Report Received",
     "successMessage": "Thank you for your feedback. Our moderation team will review it shortly.",
     "loginRequired": "Please log in to submit a report.",
+    "alreadyReported": "You have already submitted a report for this content.",
     "errorOccurred": "An error occurred while submitting the report. Please try again."
   },
   "adult": {

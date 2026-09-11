@@ -12,6 +12,7 @@ import {
 import { walletService } from '../../services';
 import { FeatureEntitlement } from '../../types/api';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { parseDate } from '../../utils/formatDate';
 
 type PurchaseState = 'idle' | 'purchasing' | 'success' | 'error';
 
@@ -21,7 +22,7 @@ interface AdFreeCardProps {
 }
 
 export const AdFreeCard: React.FC<AdFreeCardProps> = ({ onPurchased, onOpenTopUp }) => {
-  const { t } = usePreferences();
+  const { t, formatDate } = usePreferences();
   const [purchaseState, setPurchaseState] = useState<PurchaseState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeEntitlement, setActiveEntitlement] = useState<FeatureEntitlement | null>(null);
@@ -34,7 +35,7 @@ export const AdFreeCard: React.FC<AdFreeCardProps> = ({ onPurchased, onOpenTopUp
       const adFree = res.data.find(
         (e) =>
           e.feature_key === 'ad_free' &&
-          (e.is_active || (e.expires_at && new Date(e.expires_at).getTime() > Date.now()))
+          (e.is_active || (e.expires_at && (parseDate(e.expires_at)?.getTime() ?? 0) > Date.now()))
       );
       setActiveEntitlement(adFree || null);
     }
@@ -108,7 +109,7 @@ export const AdFreeCard: React.FC<AdFreeCardProps> = ({ onPurchased, onOpenTopUp
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
               {isAlreadyActive && activeEntitlement?.expires_at
                 ? t('adFree.activeUntil', {
-                    date: new Date(activeEntitlement.expires_at).toLocaleDateString(),
+                    date: formatDate(activeEntitlement.expires_at),
                   })
                 : t('shop.adFreeDesc')}
             </p>
@@ -131,7 +132,7 @@ export const AdFreeCard: React.FC<AdFreeCardProps> = ({ onPurchased, onOpenTopUp
           {isAlreadyActive ? (
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
               <CheckCircle2 className="w-4 h-4" />
-              <span>{t('shop.adFreeActive', { expires: activeEntitlement?.expires_at ? new Date(activeEntitlement.expires_at).toLocaleDateString() : 'Aktif' })}</span>
+              <span>{t('shop.adFreeActive', { expires: activeEntitlement?.expires_at ? formatDate(activeEntitlement.expires_at) : 'Aktif' })}</span>
             </div>
           ) : (
             <div className="flex flex-col gap-2 w-full sm:w-auto">

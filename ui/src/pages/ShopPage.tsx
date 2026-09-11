@@ -23,7 +23,7 @@ export const ShopPage: React.FC = () => {
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
-  const [, setSelectedPkgId] = useState<string | null>(null);
+  const [selectedPkgId, setSelectedPkgId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -246,6 +246,7 @@ export const ShopPage: React.FC = () => {
       {/* TopUp Modal */}
       <TopUpModal
         isOpen={isTopUpOpen}
+        initialPackageId={selectedPkgId}
         onClose={() => {
           setIsTopUpOpen(false);
           setSelectedPkgId(null);

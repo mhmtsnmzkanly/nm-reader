@@ -175,7 +175,7 @@ export const AccountMenu: React.FC = () => {
               className="flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--text-muted)] hover:text-[var(--accent-color)] cursor-pointer uppercase"
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>Dil: {lang.toUpperCase()}</span>
+              <span>{t('preferences.language')}: {lang.toUpperCase()}</span>
             </button>
           </div>
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Eye, ThumbsUp, MessageSquare } from 'lucide-react';
+import { Calendar, Eye, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import { BlogSummary } from '../../types/api';
 import { usePreferences } from '../../contexts/PreferencesContext';
 
@@ -53,17 +53,25 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
           <span className="font-medium text-[var(--text-primary)]">{blog.author?.username || blog.author_username || t('common.anonymous')}</span>
 
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <Eye className="w-3 h-3" />
-              {blog.views}
-            </span>
-            <span className="flex items-center gap-1">
+            {blog.views !== undefined && (
+              <span className="flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                {blog.views}
+              </span>
+            )}
+            <span className="flex items-center gap-1" title={t('blog.voteUp')}>
               <ThumbsUp className="w-3 h-3 text-[var(--accent-color)]" />
-              {blog.likes}
+              {blog.upvote_count ?? blog.likes ?? 0}
             </span>
+            {(blog.downvote_count ?? 0) > 0 && (
+              <span className="flex items-center gap-1 text-rose-400" title={t('blog.voteDown')}>
+                <ThumbsDown className="w-3 h-3" />
+                {blog.downvote_count}
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <MessageSquare className="w-3 h-3" />
-              {blog.comments_count}
+              {blog.comments_count ?? 0}
             </span>
           </div>
         </div>

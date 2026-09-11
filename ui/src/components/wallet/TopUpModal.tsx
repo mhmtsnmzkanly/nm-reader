@@ -9,12 +9,14 @@ type TopUpModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (newBalance: number, pkg: ShopPackage) => void;
+  initialPackageId?: string | number | null;
 };
 
 export const TopUpModal: React.FC<TopUpModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  initialPackageId,
 }) => {
   const { t } = usePreferences();
   const [packages, setPackages] = useState<ShopPackage[]>([]);
@@ -39,14 +41,17 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({
       if (res.status === 'success' && res.data) {
         setPackages(res.data);
         setCheckoutAvailable(res.meta?.checkout_available !== false);
-        const featured = res.data.find((p) => p.is_featured) || res.data[0];
-        setSelectedPkg(featured || null);
+        const matching = initialPackageId
+          ? res.data.find((p) => String(p.id) === String(initialPackageId))
+          : null;
+        const fallback = res.data.find((p) => p.is_featured) || res.data[0];
+        setSelectedPkg(matching || fallback || null);
       }
       setIsLoading(false);
     };
 
     loadPackages();
-  }, [isOpen]);
+  }, [isOpen, initialPackageId]);
 
   if (!isOpen) return null;
 

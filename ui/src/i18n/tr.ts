@@ -95,7 +95,10 @@ export const tr = {
     "profile": "Profilim",
     "adminPanel": "Yönetim Paneli",
     "account": "Hesap Yönetimi",
-    "categories": "Kategoriler"
+    "categories": "Kategoriler",
+    "genresDirectoryDesc": "Dizini Gör",
+    "tagsFindDesc": "Etiketleri Bul",
+    "formats": "Formatlar"
   },
   "home": {
     "heroBadge": "ÖNE ÇIKAN İÇERİK",
@@ -137,7 +140,16 @@ export const tr = {
     "allStatuses": "Tüm Durumlar",
     "allGenres": "Tüm Kategoriler",
     "filterByTag": "Etikete Göre Filtrele",
-    "resultsCount": "Toplam {count} seri listeleniyor"
+    "resultsCount": "Toplam {count} seri listeleniyor",
+    "typeDescriptions": {
+      "manga": "Japon Çizgi Romanları",
+      "manhwa": "Kore Çizgi Romanları",
+      "manhua": "Çin Çizgi Romanları",
+      "webtoon": "Renkli Dikey Web Çizimleri",
+      "light-novel": "Japon Hafif Romanları",
+      "web-novel": "İnternet Romanları",
+      "novel": "Geleneksel ve Fantastik Romanlar"
+    }
   },
   "genres": {
     "title": "Türler & Kategoriler",
@@ -298,7 +310,9 @@ export const tr = {
     "unlocking": "Kilit açılıyor...",
     "yourBalance": "Mevcut Bakiyeniz:",
     "translatorNote": "Çevirmen / Editör Notu",
-    "translatorNoteBadge": "Çevirmen Notu"
+    "translatorNoteBadge": "Çevirmen Notu",
+    "hideNote": "Gizle",
+    "showNote": "Genişlet"
   },
   "auth": {
     "login": "Giriş Yap",
@@ -586,6 +600,7 @@ export const tr = {
     "accentPurple": "Asil Mor",
     "languageSection": "Dil ve Yerelleştirme",
     "languageDesc": "Uygulama genelinde kullanılacak dili seçin.",
+    "language": "Dil",
     "readerDefaults": "Varsayılan Okuyucu Ayarları",
     "readerDefaultsDesc": "Yeni bir bölüm açıldığında uygulanacak başlangıç ayarları.",
     "layout": "Sayfa Düzeni",
@@ -730,6 +745,13 @@ export const tr = {
     "submitNotice": "Yazınız başarıyla gönderildi ve editör onayına sunuldu.",
     "voteUp": "Beğen",
     "voteDown": "Beğenme",
+    "cannotVoteOwn": "Kendi blog yazınıza oy veremezsiniz.",
+    "loginToVote": "Oy vermek için lütfen giriş yapın.",
+    "score": "Puan",
+    "votedUp": "Beğendiniz",
+    "votedDown": "Beğenmediniz",
+    "votePromptTitle": "Bu yazıyı nasıl buldunuz?",
+    "votePromptDesc": "Görüşünüzü belirtmek ve yazara geri bildirim vermek için oy kullanın.",
     "allBlogsBack": "Tüm Bloglara Dön",
     "author": "Yazar",
     "defaultAuthor": "Yazar",
@@ -780,6 +802,16 @@ export const tr = {
     "statusPending": "İncelemede",
     "statusPublished": "Yayında",
     "statusRejected": "Reddedildi",
+    "statusHidden": "Gizlendi",
+    "rejectionReason": "Ret Sebebi:",
+    "rejectionNotice": "Bu yazı moderatör tarafından onaylanmadı. Aşağıdaki açıklamayı dikkate alarak düzenleyebilir ve tekrar onaya gönderebilirsiniz.",
+    "authorFallback": "Yazar",
+    "restrictedAccess": "Bu blog yazısı yayında değil.",
+    "restrictedAccessDesc": "Bu içerik taslak, onay aşamasında veya gizlenmiş olabilir.",
+    "like": "Beğen",
+    "liked": "Beğenildi",
+    "saveSuccess": "Blog yazısı başarıyla kaydedildi.",
+    "saveError": "Blog yazısı kaydedilirken bir hata oluştu.",
     "deleteBlogConfirm": "Bu blog yazısını silmek istediğinize emin misiniz?",
     "deleteSuccess": "Blog yazısı başarıyla silindi.",
     "actionDelete": "Sil",
@@ -1089,6 +1121,7 @@ export const tr = {
       "hate_speech": "Nefret Söylemi",
       "sexual_content": "Uygunsuz / Cinsel İçerik",
       "misinformation": "Yanıltıcı Bilgi",
+      "spoiler": "İşaretsiz Spoiler (Sürprizbozan)",
       "other": "Diğer"
     },
     "descriptionLabel": "Detaylı Açıklama (İsteğe Bağlı)",
@@ -1100,6 +1133,7 @@ export const tr = {
     "successTitle": "Bildiriminiz Alındı",
     "successMessage": "Geri bildiriminiz için teşekkürler. İnceleme ekibimiz en kısa sürede değerlendirecektir.",
     "loginRequired": "Rapor göndermek için lütfen giriş yapınız.",
+    "alreadyReported": "Bu içerik için zaten bildirimde bulundunuz.",
     "errorOccurred": "Rapor gönderilirken bir hata oluştu. Lütfen tekrar deneyiniz."
   },
   "adult": {

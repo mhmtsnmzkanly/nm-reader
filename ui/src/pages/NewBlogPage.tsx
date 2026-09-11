@@ -17,6 +17,7 @@ export const NewBlogPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitType, setSubmitType] = useState<'draft' | 'pending' | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleCreate = async (targetStatus: 'draft' | 'pending') => {
@@ -24,6 +25,7 @@ export const NewBlogPage: React.FC = () => {
 
     setIsSubmitting(true);
     setSubmitType(targetStatus);
+    setErrorMessage(null);
     const tags = tagsInput
       .split(',')
       .map((t) => t.trim().replace(/^#/, ''))
@@ -40,6 +42,9 @@ export const NewBlogPage: React.FC = () => {
 
     if (res.status === 'success' && res.data) {
       navigate('/my-blogs');
+    } else {
+      const err = (res as any).error?.message || (res as any).message || t('blog.saveError');
+      setErrorMessage(err);
     }
     setIsSubmitting(false);
     setSubmitType(null);
@@ -66,6 +71,13 @@ export const NewBlogPage: React.FC = () => {
           {t('blog.newPostDesc')}
         </p>
       </div>
+
+      {/* Error Alert */}
+      {errorMessage && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono">
+          {errorMessage}
+        </div>
+      )}
 
       <div
         className="flex flex-col gap-6 bg-[var(--bg-card)] p-6 sm:p-8 rounded-2xl border border-[var(--border-color)] shadow-sm"

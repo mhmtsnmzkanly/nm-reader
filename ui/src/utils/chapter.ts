@@ -6,11 +6,12 @@ export function normalizeChapter(
 ): Chapter {
   const raw = response?.chapter ?? response?.data ?? response ?? {};
 
-  const series = raw.series ?? {
-    id: raw.content_id || fallbackSeries?.id || '',
-    title: fallbackSeries?.title || '',
-    slug: fallbackSeries?.slug || '',
-    type: fallbackSeries?.type || 'manga',
+  const rawSeries = typeof raw.series === 'object' && raw.series !== null ? raw.series : {};
+  const series = {
+    id: rawSeries.id || raw.content_id || fallbackSeries?.id || '',
+    title: rawSeries.title || raw.series_title || raw.content_title || fallbackSeries?.title || '',
+    slug: rawSeries.slug || raw.series_slug || fallbackSeries?.slug || '',
+    type: rawSeries.type || raw.series_type || fallbackSeries?.type || 'manga',
   };
 
   const nav = raw.navigation ?? {

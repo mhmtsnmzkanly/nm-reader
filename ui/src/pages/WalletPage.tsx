@@ -84,8 +84,8 @@ export const WalletPage: React.FC = () => {
       currentPage,
       perPage,
       activeFilter,
-      debouncedSearch,
-      sortOption
+      sortOption,
+      debouncedSearch
     );
 
     if (txRes.status === 'success' && txRes.data) {

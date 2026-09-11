@@ -107,7 +107,16 @@ export interface IBlogService {
   voteBlog(
     slug: string,
     vote: -1 | 0 | 1
-  ): Promise<ApiResponse<{ vote: number; upvote_count: number; downvote_count: number; likes: number }>>;
+  ): Promise<
+    ApiResponse<{
+      vote?: number;
+      upvote_count?: number;
+      downvote_count?: number;
+      likes?: number;
+      my_vote?: number;
+      score?: number;
+    }>
+  >;
 
   // Görsel yükleme (Backend { path, url } döner)
   uploadBlogImage(formData: FormData): Promise<ApiResponse<{ path: string; url: string }>>;

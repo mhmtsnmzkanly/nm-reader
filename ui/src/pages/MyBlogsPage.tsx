@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Calendar, Eye, ThumbsUp, MessageSquare, Edit2, Trash2, Clock, AlertCircle, CheckCircle2, FileEdit, XCircle } from 'lucide-react';
+import { Plus, Calendar, Eye, EyeOff, ThumbsUp, MessageSquare, Edit2, Trash2, Clock, AlertCircle, CheckCircle2, FileEdit, XCircle } from 'lucide-react';
 import { blogService } from '../services';
 import { BlogSummary } from '../types/api';
 import { Button } from '../components/ui/Button';
@@ -58,6 +58,13 @@ export const MyBlogsPage: React.FC = () => {
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
             <CheckCircle2 className="w-3 h-3" />
             <span>{t('blog.statusPublished')}</span>
+          </span>
+        );
+      case 'hidden':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-medium bg-neutral-500/10 text-neutral-400 border border-neutral-500/20">
+            <EyeOff className="w-3 h-3" />
+            <span>{t('blog.statusHidden')}</span>
           </span>
         );
       case 'rejected':
