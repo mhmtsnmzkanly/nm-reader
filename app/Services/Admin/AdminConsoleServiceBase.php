@@ -103,7 +103,10 @@ abstract class AdminConsoleServiceBase
 
     protected function readEnvFile(): array
     {
-        $path = dirname(__DIR__, 2) . '/.env';
+        // Admin services live in app/Services/Admin; the environment file is
+        // kept at the project root alongside app/ and public/.
+        $base = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\');
+        $path = $base . '/.env';
         if (!file_exists($path)) return [];
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
         $data = [];

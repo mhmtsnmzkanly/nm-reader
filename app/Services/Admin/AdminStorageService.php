@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Config;
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
 use App\Services\AnalyticsAggregationService;
@@ -46,7 +47,7 @@ final class AdminStorageService extends AdminConsoleServiceBase
         if ($info) {
             $filePath = (string) ($info['file_path'] ?? '');
             if ($filePath !== '') {
-                $basePath = dirname(__DIR__, 2);
+                $basePath = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\');
                 $cleanName = basename($filePath);
                 $storageDiskPath = $basePath . '/storage/media/' . $cleanName;
                 if (is_file($storageDiskPath)) {
@@ -82,7 +83,7 @@ final class AdminStorageService extends AdminConsoleServiceBase
             if (!$info) continue;
             $filePath = (string) ($info['file_path'] ?? '');
             if ($filePath !== '') {
-                $basePath = dirname(__DIR__, 2);
+                $basePath = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\');
                 $cleanName = basename($filePath);
                 foreach ([$basePath . '/storage/media/' . $cleanName, $basePath . '/public' . $filePath] as $diskPath) {
                     if (is_file($diskPath)) @unlink($diskPath);
@@ -103,7 +104,8 @@ final class AdminStorageService extends AdminConsoleServiceBase
         }
         $this->repo->markUploadProcessing($id);
         try {
-        $path = dirname(__DIR__, 2) . '/storage/media/' . basename((string)$upload['file_path']);
+        $basePath = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\');
+        $path = $basePath . '/storage/media/' . basename((string)$upload['file_path']);
         if (!is_file($path)) throw new \DomainException('Physical file not found');
         $raw = file_get_contents($path);
         $image = $raw === false ? false : @imagecreatefromstring($raw);

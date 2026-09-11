@@ -1021,6 +1021,7 @@ final class Config
 
         $app->group("/api/v1/admin", function (RouteCollectorProxy $group) use ($typePattern, $perm, $anyPerm, $cache, $trustedProxies): void {
             $group->get("/overview", [AdminDashboardController::class, "overview"])->add($perm(["admin.panel.access"]));
+            $group->get("/dashboard-data", [AdminDashboardController::class, "dashboardData"])->add($perm(["admin.metrics.view"]));
             $group->post("/auth/reauth", [AdminDashboardController::class, "reauthenticate"])->add($perm(["admin.panel.access"]));
             $group->get("/series", [AdminContentController::class, "listSeries"])->add($perm(["admin.panel.access"]));
             $group->get("/contents", [AdminContentController::class, "listSeries"])->add($perm(["admin.panel.access"]));

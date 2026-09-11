@@ -106,6 +106,7 @@ $endpoints = [
     // 9. Admin
     ['POST', '/admin/auth/reauth', 'Admin Reauthenticate Critical Actions', 'Admin', true],
     ['GET', '/admin/overview', 'Admin Dashboard Metrics Overview', 'Admin', true],
+    ['GET', '/admin/dashboard-data', 'Admin Complete Dashboard Payload', 'Admin', true],
     ['GET', '/admin/series', 'Admin List Series', 'Admin', true],
     ['GET', '/admin/contents', 'Admin List Content Alias', 'Admin', true],
     ['GET', '/admin/content', 'Admin List Content Alias', 'Admin', true],

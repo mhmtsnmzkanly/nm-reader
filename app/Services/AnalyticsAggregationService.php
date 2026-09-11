@@ -77,13 +77,35 @@ final class AnalyticsAggregationService
              ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)",
             $days
         );
+        // Retention denominators must contain only mature cohorts. A user who
+        // registered today cannot have a meaningful D1 result yet; likewise a
+        // user registered six days ago cannot be part of a D7 cohort.
+        $total += $this->upsertMetricFromSql(
+            "INSERT INTO analytics_snapshots_daily (stat_date, metric_name, metric_value)
+             SELECT CURRENT_DATE(), 'd1_eligible_users_total', COUNT(*)
+             FROM users
+             WHERE created_at >= DATE_SUB(NOW(), INTERVAL 8 DAY)
+               AND created_at < DATE_SUB(NOW(), INTERVAL 1 DAY)
+             ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)",
+            $days
+        );
         $total += $this->upsertMetricFromSql(
             "INSERT INTO analytics_snapshots_daily (stat_date, metric_name, metric_value)
              SELECT CURRENT_DATE(), 'd1_retained_total', COUNT(DISTINCT u.id)
              FROM users u
              INNER JOIN user_chapters_reads r ON r.user_id = u.id
-             WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+             WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL 8 DAY)
+               AND u.created_at < DATE_SUB(NOW(), INTERVAL 1 DAY)
                AND r.read_at >= DATE_ADD(u.created_at, INTERVAL 1 DAY)
+             ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)",
+            $days
+        );
+        $total += $this->upsertMetricFromSql(
+            "INSERT INTO analytics_snapshots_daily (stat_date, metric_name, metric_value)
+             SELECT CURRENT_DATE(), 'd7_eligible_users_total', COUNT(*)
+             FROM users
+             WHERE created_at >= DATE_SUB(NOW(), INTERVAL 37 DAY)
+               AND created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
              ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)",
             $days
         );
@@ -92,7 +114,8 @@ final class AnalyticsAggregationService
              SELECT CURRENT_DATE(), 'd7_retained_total', COUNT(DISTINCT u.id)
              FROM users u
              INNER JOIN user_chapters_reads r ON r.user_id = u.id
-             WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+             WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL 37 DAY)
+               AND u.created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
                AND r.read_at >= DATE_ADD(u.created_at, INTERVAL 7 DAY)
              ON DUPLICATE KEY UPDATE metric_value = VALUES(metric_value)",
             $days

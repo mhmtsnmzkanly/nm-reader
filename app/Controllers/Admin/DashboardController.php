@@ -15,6 +15,34 @@ final class DashboardController extends AdminController
         {
             return ResponseHelper::success($this->dashboardService->overview());
         }
+
+    /**
+     * Returns the complete dashboard payload in one request. The legacy
+     * endpoint above remains available for consumers that only need KPIs.
+     */
+    public function dashboardData(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+        {
+            $query = $request->getQueryParams();
+            $days = max(1, min(90, (int) ($query['days'] ?? 30)));
+            $limit = max(1, min(30, (int) ($query['limit'] ?? 10)));
+
+            return ResponseHelper::success([
+                'overview' => $this->dashboardService->overview(),
+                'insights' => [
+                    'views' => $this->dashboardService->viewStats($days, $limit),
+                    'blogs' => $this->dashboardService->blogStats($days, $limit),
+                    'visits' => $this->dashboardService->siteVisits(),
+                    'reputation' => $this->dashboardService->userReputation($limit),
+                ],
+                'monetization' => $this->metricsService->monetizationAnalytics($days),
+                'search' => $this->metricsService->searchInsights($days, $limit),
+                'meta' => [
+                    'period_days' => $days,
+                    'limit' => $limit,
+                    'generated_at' => gmdate('c'),
+                ],
+            ]);
+        }
     
     public function reauthenticate(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {

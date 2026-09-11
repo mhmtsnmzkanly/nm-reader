@@ -77,6 +77,8 @@ const store = createStore({
     total_contents: 0,
     total_chapters: 0,
     queue_pending: 0,
+    queue_failed: 0,
+    reports_pending: 0,
   },
   topContents: [],
   analytics: {
@@ -90,6 +92,7 @@ const store = createStore({
     search_total: 0,
     zero_result_pct: "0%",
     d1_retention: "0%",
+    d7_retention: "0%",
     new_users: 0,
     total_coins: 0,
     total_unlocks: 0,
@@ -99,15 +102,26 @@ const store = createStore({
     blog_deleted: 0,
     blog_created: 0,
     blog_approved: 0,
+    unique_visitors_daily: 0,
+    unique_visitors_weekly: 0,
+    unique_visitors_monthly: 0,
+    d1_eligible_users: 0,
+    d7_eligible_users: 0,
   },
+  dashboardPeriodDays: 30,
+  dashboardPeriodLabel: "30 gün",
+  dashboardLoading: false,
+  dashboardError: "",
+  dashboardGeneratedAt: "",
+  dashboardTrafficTrend: [],
+  dashboardBlogDaily: [],
+  dashboardRevenueTrend: [],
   dashboardGenres: [],
   dashboardTags: [],
   dashboardReputation: [],
   dashboardTypes: [],
   dashboardChapters: [],
   dashboardBlogAuthors: [],
-  dashboardBlogDailyCreated: [],
-  dashboardBlogDailyApproved: [],
   monetizationSeries: [],
   zeroResultSearches: [],
   seriesList: [],
@@ -146,6 +160,8 @@ const store = createStore({
   queueJobsList: [],
   queueMeta: { page: 1, total_pages: 1, total: 0 },
   systemHealth: {},
+  systemHealthError: "",
+  opsOperation: { loading: false, message: "", type: "info" },
   config: (() => {
     const initial = window.__NMR_CONTEXT?.site_config || {};
     return {
@@ -392,6 +408,7 @@ function renderDashboardTables() {
       type: item.type,
       views: Number(item.view_count_7d || 0),
       comments: Number(item.comment_count_7d || 0),
+      detail_url: safeLocalPath(`/panel/series/${encodeURIComponent(item.id || "")}/preview`),
     })),
     4,
   );
@@ -472,31 +489,226 @@ function renderDashboardTables() {
     })),
     3,
   );
-  const dailyBlog = new Map();
-  (store.get("dashboardBlogDailyCreated") || []).forEach((item) =>
-    dailyBlog.set(item.day, {
-      day: item.day,
-      created: Number(item.total || 0),
-      approved: 0,
-    }),
-  );
-  (store.get("dashboardBlogDailyApproved") || []).forEach((item) => {
-    const current = dailyBlog.get(item.day) || {
-      day: item.day,
-      created: 0,
-      approved: 0,
-    };
-    current.approved = Number(item.total || 0);
-    dailyBlog.set(item.day, current);
-  });
   setTableRows(
     "panel-dashboard-blog-daily",
     "panel-rows-dashboard-blog-daily",
-    Array.from(dailyBlog.values()).sort((a, b) =>
+    (store.get("dashboardBlogDaily") || []).slice().sort((a, b) =>
       String(b.day).localeCompare(String(a.day)),
     ),
     3,
   );
+}
+
+let dashboardCharts = [];
+let dashboardAutoRefreshTimer = null;
+
+function destroyDashboardCharts() {
+  dashboardCharts.forEach((chart) => chart.destroy());
+  dashboardCharts = [];
+}
+
+function chartTheme() {
+  const styles = getComputedStyle(document.documentElement);
+  return {
+    text: styles.getPropertyValue("--bs-body-color").trim() || "#adb5bd",
+    grid: styles.getPropertyValue("--bs-border-color").trim() || "#495057",
+  };
+}
+
+function createDashboardChart(id, config) {
+  const canvas = document.getElementById(id);
+  if (!canvas || typeof window.Chart !== "function") return;
+  const chart = new window.Chart(canvas.getContext("2d"), config);
+  dashboardCharts.push(chart);
+}
+
+function setDashboardChartState(id, hasData, message) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return false;
+  canvas.hidden = !hasData;
+  const empty = canvas.parentElement?.querySelector("[data-chart-empty]");
+  if (empty) {
+    empty.hidden = hasData;
+    empty.textContent = message || "Bu dönem için veri yok.";
+  }
+  return hasData;
+}
+
+function renderDashboardCharts() {
+  destroyDashboardCharts();
+  const ChartCtor = window.Chart;
+  if (typeof ChartCtor !== "function") {
+    [
+      "panel-dashboard-traffic-chart",
+      "panel-dashboard-funnel-chart",
+      "panel-dashboard-blog-chart",
+      "panel-dashboard-revenue-chart",
+    ].forEach((id) =>
+      setDashboardChartState(id, false, "Grafik kütüphanesi yüklenemedi."),
+    );
+    document.querySelectorAll("[data-chart-fallback]").forEach((node) => {
+      node.textContent = "Grafikler yüklenemedi. Tablo verileri kullanılabilir.";
+    });
+    return;
+  }
+
+  const theme = chartTheme();
+  const trend = store.get("dashboardTrafficTrend") || [];
+  if (setDashboardChartState("panel-dashboard-traffic-chart", trend.length > 0)) createDashboardChart("panel-dashboard-traffic-chart", {
+    type: "line",
+    data: {
+      labels: trend.map((item) => String(item.day || "").slice(5)),
+      datasets: [
+        {
+          label: "Görüntülenme",
+          data: trend.map((item) => Number(item.views || 0)),
+          borderColor: "#0d6efd",
+          backgroundColor: "rgba(13,110,253,.15)",
+          fill: true,
+          tension: 0.35,
+        },
+        {
+          label: "Benzersiz ziyaretçi",
+          data: trend.map((item) => Number(item.unique_visitors || 0)),
+          borderColor: "#20c997",
+          backgroundColor: "transparent",
+          tension: 0.35,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: { legend: { labels: { color: theme.text } } },
+      scales: {
+        x: { ticks: { color: theme.text }, grid: { color: theme.grid } },
+        y: { beginAtZero: true, ticks: { color: theme.text }, grid: { color: theme.grid } },
+      },
+    },
+  });
+
+  const overview = store.get("overview") || {};
+  const funnel = overview.funnel || {};
+  const funnelValues = [
+    Number(String(funnel.home_to_content_pct || 0).replace("%", "")),
+    Number(String(funnel.content_to_chapter_pct || 0).replace("%", "")),
+  ];
+  if (setDashboardChartState("panel-dashboard-funnel-chart", funnelValues.some((value) => value > 0))) createDashboardChart("panel-dashboard-funnel-chart", {
+    type: "bar",
+    data: {
+      labels: ["Ana sayfa → içerik", "İçerik → bölüm"],
+      datasets: [{
+        label: "Dönüşüm %",
+        data: funnelValues,
+        backgroundColor: ["#6f42c1", "#fd7e14"],
+        borderRadius: 6,
+      }],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, max: 100, ticks: { color: theme.text, callback: (value) => `${value}%` }, grid: { color: theme.grid } },
+        y: { ticks: { color: theme.text }, grid: { display: false } },
+      },
+    },
+  });
+
+  const blogDaily = store.get("dashboardBlogDaily") || [];
+  if (setDashboardChartState("panel-dashboard-blog-chart", blogDaily.length > 0)) createDashboardChart("panel-dashboard-blog-chart", {
+    type: "bar",
+    data: {
+      labels: blogDaily.map((item) => String(item.day || "").slice(5)),
+      datasets: [
+        { label: "Oluşturulan", data: blogDaily.map((item) => Number(item.created || 0)), backgroundColor: "#ffc107" },
+        { label: "Onaylanan", data: blogDaily.map((item) => Number(item.approved || 0)), backgroundColor: "#198754" },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: theme.text } } },
+      scales: {
+        x: { stacked: false, ticks: { color: theme.text }, grid: { color: theme.grid } },
+        y: { beginAtZero: true, ticks: { color: theme.text }, grid: { color: theme.grid } },
+      },
+    },
+  });
+
+  const revenue = store.get("dashboardRevenueTrend") || [];
+  if (setDashboardChartState("panel-dashboard-revenue-chart", revenue.length > 0)) createDashboardChart("panel-dashboard-revenue-chart", {
+    type: "line",
+    data: {
+      labels: revenue.map((item) => String(item.stat_date || "").slice(5)),
+      datasets: [{
+        label: "Harcanan coin",
+        data: revenue.map((item) => Number(item.coin_total || 0)),
+        borderColor: "#dc3545",
+        backgroundColor: "rgba(220,53,69,.15)",
+        fill: true,
+        tension: 0.35,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: theme.text } } },
+      scales: {
+        x: { ticks: { color: theme.text }, grid: { color: theme.grid } },
+        y: { beginAtZero: true, ticks: { color: theme.text }, grid: { color: theme.grid } },
+      },
+    },
+  });
+}
+
+function updateDashboardStateView() {
+  const loading = document.getElementById("panel-dashboard-loading");
+  const error = document.getElementById("panel-dashboard-error");
+  const updated = document.getElementById("panel-dashboard-updated");
+  const period = document.getElementById("panel-dashboard-period");
+  const refresh = document.querySelector('[data-on-click="refreshDashboard"]');
+  const isLoading = Boolean(store.get("dashboardLoading"));
+  const message = String(store.get("dashboardError") || "");
+  if (loading) loading.hidden = !isLoading;
+  if (error) {
+    error.hidden = !message;
+    error.textContent = message;
+  }
+  if (updated) {
+    const generatedAt = store.get("dashboardGeneratedAt");
+    updated.textContent = generatedAt
+      ? `Son güncelleme: ${new Date(generatedAt).toLocaleString("tr-TR")}`
+      : "Henüz veri alınmadı";
+  }
+  if (period) period.value = String(store.get("dashboardPeriodDays") || 30);
+  if (refresh) {
+    refresh.disabled = isLoading;
+    refresh.setAttribute("aria-busy", String(isLoading));
+  }
+}
+
+function setOpsOperation(message, type = "info", loading = false) {
+  store.set("opsOperation", { message: String(message || ""), type, loading });
+  const output = document.getElementById("panel-ops-operation");
+  const buttons = document.querySelectorAll("[data-ops-operation]");
+  if (output) {
+    output.hidden = !message;
+    output.className = `alert alert-${type} d-flex align-items-center gap-2`;
+    output.replaceChildren();
+    if (loading) {
+      const spinner = document.createElement("span");
+      spinner.className = "lime-spinner";
+      spinner.setAttribute("aria-hidden", "true");
+      output.append(spinner);
+    }
+    output.append(document.createTextNode(String(message || "")));
+  }
+  buttons.forEach((button) => {
+    button.disabled = loading;
+  });
 }
 
 function renderSeriesTable() {
@@ -1200,15 +1412,46 @@ function renderFinanceTable() {
 
 function renderQueueTable() {
   const canManage = hasPermission("admin.jobs.run");
+  const statusClasses = {
+    pending: "bg-warning-subtle text-warning",
+    processing: "bg-info-subtle text-info",
+    done: "bg-success-subtle text-success",
+    failed: "bg-danger-subtle text-danger",
+    cancelled: "bg-secondary-subtle text-secondary",
+  };
+  const formatDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(String(value).replace(" ", "T"));
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString("tr-TR");
+  };
+  const ageLabel = (value) => {
+    if (!value) return "-";
+    const date = new Date(String(value).replace(" ", "T"));
+    if (Number.isNaN(date.getTime())) return "-";
+    const minutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60000));
+    if (minutes < 60) return `${minutes} dk`;
+    const hours = Math.floor(minutes / 60);
+    return hours < 24 ? `${hours} sa` : `${Math.floor(hours / 24)} gün`;
+  };
   const items = (store.get("queueJobsList") || []).map((job) => ({
     ...job,
+    status_class: statusClasses[job.status] || "bg-light text-secondary",
+    priority_label: Number(job.priority || 0),
+    attempts_label: `${Number(job.attempts || 0)}/${Number(job.max_attempts || 0)}`,
+    created_label: formatDate(job.created_at),
+    available_label: formatDate(job.available_at),
+    age_label: ageLabel(job.created_at),
+    stale_label:
+      job.status === "processing" && job.locked_until && new Date(String(job.locked_until).replace(" ", "T")).getTime() < Date.now()
+        ? "Kilit süresi doldu"
+        : "",
     can_retry: canManage && ["failed", "cancelled"].includes(job.status),
     can_cancel: canManage && job.status === "pending",
     retry_class:
       canManage && ["failed", "cancelled"].includes(job.status) ? "" : "d-none",
     cancel_class: canManage && job.status === "pending" ? "" : "d-none",
   }));
-  setTableRows("panel-queue-jobs", "panel-rows-queue", items, 7);
+  setTableRows("panel-queue-jobs", "panel-rows-queue", items, 9);
   renderPager(
     "panel-queue-pager",
     store.get("queueMeta"),
@@ -1216,28 +1459,69 @@ function renderQueueTable() {
     "nextQueuePage",
   );
   const health = store.get("systemHealth") || {};
+  const hasHealth = Object.keys(health).length > 0;
   const db = document.getElementById("panel-health-database");
   if (db) {
-    db.textContent = health.database?.ok
+    db.textContent = !hasHealth
+      ? "Yetki gerekli"
+      : health.database?.ok
       ? `Çalışıyor · ${health.database.version || ""}`
       : "Hata";
-    db.className = `fw-bold ${health.database?.ok ? "text-success" : "text-danger"}`;
+    db.className = `fw-bold ${!hasHealth ? "text-secondary" : health.database?.ok ? "text-success" : "text-danger"}`;
   }
   const storage = document.getElementById("panel-health-storage");
   if (storage) {
-    storage.textContent = health.storage?.ok
-      ? `${(Number(health.storage.free_bytes || 0) / 1073741824).toFixed(1)} GB boş`
+    storage.textContent = !hasHealth
+      ? "Yetki gerekli"
+      : health.storage?.ok
+      ? `${(Number(health.storage.free_bytes || 0) / 1073741824).toFixed(1)} GB boş · %${Number(health.storage.usage_pct || 0).toFixed(1)} kullanım`
       : "Yazma hatası";
-    storage.className = `fw-bold ${health.storage?.ok ? "text-success" : "text-danger"}`;
+    storage.className = `fw-bold ${!hasHealth ? "text-secondary" : health.storage?.ok ? "text-success" : "text-danger"}`;
   }
   const queue = document.getElementById("panel-health-queue");
   if (queue)
-    queue.textContent = `${Number(health.queue?.pending || 0)} bekleyen · ${Number(health.queue?.failed || 0)} hata`;
+    queue.textContent = !hasHealth
+      ? "Yetki gerekli"
+      : `${Number(health.queue?.pending || 0)} bekleyen · ${Number(health.queue?.processing || 0)} işleniyor · ${Number(health.queue?.failed || 0)} hata`;
+  const queueDetail = document.getElementById("panel-health-queue-detail");
+  if (queueDetail) {
+    const oldest = health.queue?.oldest_pending_at;
+    queueDetail.textContent = !hasHealth
+      ? "-"
+      : health.queue?.stale_processing
+      ? `${health.queue.stale_processing} kilitli · en eski ${ageLabel(oldest)}`
+      : `Gecikmiş: ${Number(health.queue?.delayed || 0)} · en eski: ${ageLabel(oldest)}`;
+  }
   const backup = document.getElementById("panel-health-backup");
   if (backup)
-    backup.textContent = health.backup
-      ? `${health.backup.file} · ${health.backup.created_at}`
+    backup.textContent = !hasHealth
+      ? "Yetki gerekli"
+      : health.backup
+      ? `${health.backup.complete ? "Tam" : "Eksik"} · ${health.backup.created_at}`
       : "Yedek bulunamadı";
+  const backupDetail = document.getElementById("panel-health-backup-detail");
+  if (backupDetail) {
+    backupDetail.textContent = !hasHealth
+      ? "-"
+      : health.backup
+      ? `${health.backup.database_file ? "DB ✓" : "DB ✕"} · ${health.backup.media_file ? "Medya ✓" : "Medya ✕"}`
+      : "Henüz yedek alınmadı";
+  }
+  const migration = document.getElementById("panel-health-migration");
+  if (migration) {
+    migration.textContent = !hasHealth
+      ? "-"
+      : health.latest_migration?.version
+      ? `Şema: ${health.latest_migration.version}`
+      : "Şema bilgisi yok";
+  }
+  const advanced = document.getElementById("panel-advanced-maintenance");
+  if (advanced) {
+    advanced.hidden = !canManage || health.capabilities?.root_maintenance !== true;
+  }
+  document.querySelectorAll("[data-developer-tool]").forEach((element) => {
+    element.hidden = health.capabilities?.developer_tools !== true;
+  });
 }
 
 function renderLogsTable() {
@@ -3148,40 +3432,74 @@ async function loadChaptersPage(contentId, pageNumber = 1) {
 // 4. Data Fetchers
 async function loadDashboardData() {
   const requestEpoch = pageEpoch;
+  const formatCount = (value) => Number(value || 0).toLocaleString("tr-TR");
+  const days = Math.max(1, Math.min(90, Number(store.get("dashboardPeriodDays") || 30)));
+  store.batch(() => {
+    store.set("dashboardLoading", true);
+    store.set("dashboardError", "");
+    store.set("dashboardPeriodDays", days);
+  });
+  updateDashboardStateView();
   try {
-    const [data, insights, monetization, searches] = await Promise.all([
-      api("/overview"),
-      api("/metrics/insights?days=30&limit=10").catch(() => null),
-      api("/analytics/monetization?days=30").catch(() => null),
-      api("/analytics/search-insights?days=30&limit=10").catch(() => null),
-    ]);
+    const data = await api(`/dashboard-data?days=${days}&limit=10`);
     assertCurrentPage(requestEpoch);
     if (data?.data) {
-      const metrics = data.data.metrics || {};
-      const insightData = insights?.data || {};
+      const payload = data.data;
+      const overviewData = payload.overview || {};
+      const metrics = overviewData.metrics || {};
+      const insightData = payload.insights || {};
       const visits = insightData.visits || {};
       const views = insightData.views || {};
       const blogSummary = insightData.blogs?.summary || {};
-      const money = monetization?.data || {};
-      const searchData = searches?.data || {};
+      const money = payload.monetization || {};
+      const searchData = payload.search || {};
+      const blogDaily = new Map();
+      (insightData.blogs?.daily_created || []).forEach((item) =>
+        blogDaily.set(item.day, {
+          day: item.day,
+          created: Number(item.total || 0),
+          approved: 0,
+        }),
+      );
+      (insightData.blogs?.daily_approved || []).forEach((item) => {
+        const current = blogDaily.get(item.day) || {
+          day: item.day,
+          created: 0,
+          approved: 0,
+        };
+        current.approved = Number(item.total || 0);
+        blogDaily.set(item.day, current);
+      });
       store.batch(() => {
-        store.set("overview.total_users", data.data.kpis?.users_total || 0);
+        store.set("overview.total_users", formatCount(overviewData.kpis?.users_total));
         store.set(
           "overview.total_contents",
-          data.data.kpis?.contents_total || 0,
+          formatCount(overviewData.kpis?.contents_total),
         );
         store.set(
           "overview.total_chapters",
-          data.data.kpis?.chapters_total || 0,
+          formatCount(overviewData.kpis?.chapters_total),
         );
         store.set(
           "overview.queue_pending",
-          data.data.kpis?.blogs_pending_total || 0,
+          formatCount(overviewData.kpis?.blogs_pending_total),
         );
+        store.set(
+          "overview.queue_failed",
+          formatCount(overviewData.kpis?.queue_failed_total),
+        );
+        store.set(
+          "overview.reports_pending",
+          formatCount(overviewData.kpis?.reports_pending_total),
+        );
+        store.set("overview.funnel", metrics.funnel || {});
         store.set("topContents", metrics.top_contents_7d || []);
-        store.set("analytics.visits_daily", visits.daily || 0);
-        store.set("analytics.visits_weekly", visits.weekly || 0);
-        store.set("analytics.visits_monthly", visits.monthly || 0);
+        store.set("analytics.visits_daily", formatCount(visits.daily));
+        store.set("analytics.visits_weekly", formatCount(visits.weekly));
+        store.set("analytics.visits_monthly", formatCount(visits.monthly));
+        store.set("analytics.unique_visitors_daily", formatCount(visits.unique_daily));
+        store.set("analytics.unique_visitors_weekly", formatCount(visits.unique_weekly));
+        store.set("analytics.unique_visitors_monthly", formatCount(visits.unique_monthly));
         store.set(
           "analytics.home_to_content",
           `${metrics.funnel?.home_to_content_pct || 0}%`,
@@ -3200,7 +3518,7 @@ async function loadDashboardData() {
         );
         store.set(
           "analytics.search_total",
-          metrics.retention_search?.search_total_7d || 0,
+          formatCount(metrics.retention_search?.search_total_7d),
         );
         store.set(
           "analytics.zero_result_pct",
@@ -3212,18 +3530,30 @@ async function loadDashboardData() {
         );
         store.set(
           "analytics.new_users",
-          metrics.retention_search?.new_users_7d || 0,
+          formatCount(metrics.retention_search?.new_users_7d),
         );
-        store.set("analytics.total_coins", money.total_coins_spent || 0);
-        store.set("analytics.total_unlocks", money.total_unlocks || 0);
-        store.set("analytics.blog_total", blogSummary.total || 0);
-        store.set("analytics.blog_visible", blogSummary.visible_total || 0);
-        store.set("analytics.blog_hidden", blogSummary.hidden_total || 0);
-        store.set("analytics.blog_deleted", blogSummary.deleted_total || 0);
-        store.set("analytics.blog_created", blogSummary.created_last_days || 0);
+        store.set(
+          "analytics.d1_eligible_users",
+          formatCount(metrics.retention_search?.d1_eligible_users_7d),
+        );
+        store.set(
+          "analytics.d7_retention",
+          `${metrics.retention_search?.d7_retention_pct || 0}%`,
+        );
+        store.set(
+          "analytics.d7_eligible_users",
+          formatCount(metrics.retention_search?.d7_eligible_users_30d),
+        );
+        store.set("analytics.total_coins", formatCount(money.total_coins_spent));
+        store.set("analytics.total_unlocks", formatCount(money.total_unlocks));
+        store.set("analytics.blog_total", formatCount(blogSummary.total));
+        store.set("analytics.blog_visible", formatCount(blogSummary.visible_total));
+        store.set("analytics.blog_hidden", formatCount(blogSummary.hidden_total));
+        store.set("analytics.blog_deleted", formatCount(blogSummary.deleted_total));
+        store.set("analytics.blog_created", formatCount(blogSummary.created_last_days));
         store.set(
           "analytics.blog_approved",
-          blogSummary.approved_last_days || 0,
+          formatCount(blogSummary.approved_last_days),
         );
         store.set("dashboardGenres", views.series_genres || []);
         store.set("dashboardTags", views.series_tags || []);
@@ -3231,22 +3561,49 @@ async function loadDashboardData() {
         store.set("dashboardTypes", views.types || []);
         store.set("dashboardChapters", views.chapters || []);
         store.set("dashboardBlogAuthors", insightData.blogs?.top_authors || []);
-        store.set(
-          "dashboardBlogDailyCreated",
-          insightData.blogs?.daily_created || [],
-        );
-        store.set(
-          "dashboardBlogDailyApproved",
-          insightData.blogs?.daily_approved || [],
-        );
+        store.set("dashboardBlogDaily", Array.from(blogDaily.values()));
+        store.set("dashboardTrafficTrend", visits.trend || []);
+        store.set("dashboardRevenueTrend", money.daily_trend || []);
         store.set("monetizationSeries", money.top_series || []);
         store.set("zeroResultSearches", searchData.zero_result_searches || []);
+        store.set("dashboardGeneratedAt", payload.meta?.generated_at || "");
+        store.set("dashboardPeriodLabel", days === 1 ? "24 saat" : `${days} gün`);
+        store.set("dashboardLoading", false);
+        store.set("dashboardError", "");
       });
       renderDashboardTables();
+      renderDashboardCharts();
+      updateDashboardStateView();
+      if (!dashboardAutoRefreshTimer) {
+        dashboardAutoRefreshTimer = window.setInterval(() => {
+          if (
+            store.get("currentRoute") === "dashboard" &&
+            document.visibilityState === "visible"
+          )
+            loadDashboardData();
+        }, 60000);
+      }
+      pageCleanup = () => {
+        destroyDashboardCharts();
+        if (dashboardAutoRefreshTimer) {
+          clearInterval(dashboardAutoRefreshTimer);
+          dashboardAutoRefreshTimer = null;
+        }
+      };
+      return true;
     }
   } catch (e) {
     if (e?.name === "AbortError") return;
     console.error("Dashboard load error:", e);
+    store.batch(() => {
+      store.set("dashboardLoading", false);
+      store.set(
+        "dashboardError",
+        e?.message || "Dashboard verileri yüklenemedi.",
+      );
+    });
+    updateDashboardStateView();
+    return false;
   }
 }
 
@@ -3547,19 +3904,53 @@ async function loadQueueJobsData(page = 1) {
     const params = new URLSearchParams({ page: String(page), per_page: "25" });
     const query = document.getElementById("panel-queue-search")?.value || "";
     const status = document.getElementById("panel-queue-status")?.value || "";
+    const jobType = document.getElementById("panel-queue-job-type")?.value || "";
     if (query) params.set("q", query);
     if (status) params.set("status", status);
-    const [response, health] = await Promise.all([
+    if (jobType) params.set("job_type", jobType);
+    const [queueResult, healthResult] = await Promise.allSettled([
       api(`/queue/jobs?${params.toString()}`),
       api("/system/health"),
     ]);
+    if (queueResult.status === "rejected") throw queueResult.reason;
+    const response = queueResult.value;
+    const health = healthResult.status === "fulfilled" ? healthResult.value : null;
     assertCurrentPage(requestEpoch);
     store.batch(() => {
       store.set("queueJobsList", responseItems(response));
       store.set("queueMeta", responseMeta(response));
       store.set("systemHealth", health?.data || {});
+      store.set(
+        "systemHealthError",
+        healthResult.status === "rejected"
+          ? /HTTP 403/.test(healthResult.reason?.message || "")
+            ? "Sistem sağlık kartları için admin.health.view yetkisi gerekir."
+            : healthResult.reason?.message || "Sağlık bilgisi alınamadı."
+          : "",
+      );
     });
     renderQueueTable();
+    const healthError = store.get("systemHealthError");
+    const healthNotice = document.getElementById("panel-health-error");
+    if (healthNotice) {
+      healthNotice.hidden = !healthError;
+      healthNotice.textContent = healthError || "";
+    }
+    if (!opsAutoRefreshTimer) {
+      opsAutoRefreshTimer = window.setInterval(() => {
+        if (
+          store.get("currentRoute") === "ops" &&
+          document.visibilityState === "visible"
+        )
+          loadQueueJobsData(Number(store.get("queueMeta")?.page || 1));
+      }, 30000);
+    }
+    pageCleanup = () => {
+      if (opsAutoRefreshTimer) {
+        clearInterval(opsAutoRefreshTimer);
+        opsAutoRefreshTimer = null;
+      }
+    };
   } catch (error) {
     if (error?.name === "AbortError") return;
     showToast("Kuyruk alınamadı: " + error.message, "danger");
@@ -3585,12 +3976,21 @@ async function loadConfigData() {
 }
 
 let logAutoRefreshTimer = null;
+let opsAutoRefreshTimer = null;
 
 // 5. Global Action Handlers
 const handlers = {
-  refreshDashboard() {
+  async refreshDashboard() {
+    const success = await loadDashboardData();
+    showToast(
+      success ? "İstatistikler güncellendi" : "Dashboard verileri alınamadı",
+      success ? "success" : "danger",
+    );
+  },
+  changeDashboardPeriod(e, el) {
+    const value = Number(el?.value || e?.target?.value || 30);
+    store.set("dashboardPeriodDays", Math.max(1, Math.min(90, value)));
     loadDashboardData();
-    showToast("İstatistikler güncellendi");
   },
   loadSeries() {
     loadSeriesData(Number(store.get("seriesMeta")?.page || 1));
@@ -3675,9 +4075,34 @@ const handlers = {
     loadUploadsData();
     showToast("Yüklemeler yenilendi");
   },
-  loadQueueJobs() {
-    loadQueueJobsData();
+  async loadQueueJobs() {
+    await loadQueueJobsData();
     showToast("Kuyruk yenilendi");
+  },
+  switchOpsView(e, el) {
+    const view = el?.dataset.opsView || "all";
+    const sections = {
+      health: document.getElementById("panel-ops-health"),
+      queue: document.getElementById("panel-ops-queue"),
+      maintenance: document.getElementById("panel-ops-maintenance"),
+    };
+    if (view === "all") {
+      Object.values(sections).forEach((section) => {
+        if (section) section.hidden = false;
+      });
+    } else {
+      Object.entries(sections).forEach(([key, section]) => {
+        if (section) section.hidden = key !== view;
+      });
+    }
+    document
+      .querySelectorAll("[data-ops-view]")
+      .forEach((button) => {
+        const active = button.dataset.opsView === view;
+        button.classList.toggle("btn-primary", active);
+        button.classList.toggle("btn-outline-secondary", !active);
+        button.setAttribute("aria-selected", String(active));
+      });
   },
   filterQueue() {
     scheduleReload("queue", () => loadQueueJobsData(1));
@@ -4016,51 +4441,95 @@ const handlers = {
   },
 
   async runQueueWorker() {
+    setOpsOperation("Kuyruk işleri çalıştırılıyor…", "info", true);
     try {
       const limit = Number(
         document.getElementById("panel-queue-limit")?.value || 20,
       );
+      const jobType = document.getElementById("panel-queue-run-type")?.value || null;
       const res = await api("/queue/run-once", {
         method: "POST",
-        body: { limit },
+        body: { limit, job_type: jobType || undefined },
       });
-      showToast(`Kuyruk çalıştırıldı (limit: ${res?.data?.limit || limit})`);
-      loadQueueJobsData();
+      const result = res?.data || {};
+      await loadQueueJobsData();
+      setOpsOperation(
+        `Kuyruk tamamlandı · ${Number(result.processed || 0)} işlendi · ${Number(result.failed || 0)} hata`,
+        Number(result.failed || 0) > 0 ? "warning" : "success",
+      );
+      showToast("Kuyruk çalıştırıldı");
     } catch (err) {
       if (err?.name === "AbortError") return;
+      setOpsOperation(err.message, "danger");
       showToast(err.message, "danger");
     }
   },
 
   async runRetentionCleanup() {
+    const days = Number(
+      document.getElementById("panel-cleanup-days")?.value || 30,
+    );
+    if (!Number.isFinite(days) || days < 7) {
+      showToast("Temizlik için en az 7 gün seçin.", "danger");
+      return;
+    }
+    if (
+      !confirm(
+        `${days} günden eski oturum, log ve tamamlanmış kuyruk kayıtları silinecek. Devam edilsin mi?`,
+      )
+    )
+      return;
+    setOpsOperation("Sistem temizliği çalıştırılıyor…", "info", true);
     try {
-      const days = Number(
-        document.getElementById("panel-cleanup-days")?.value || 30,
+      const response = await api("/retention/cleanup", {
+        method: "POST",
+        body: { days },
+      });
+      const result = response?.data || {};
+      await loadQueueJobsData();
+      setOpsOperation(
+        `Temizlik tamamlandı · ${Number(result.total_deleted || 0)} kayıt silindi (${days} gün saklama)`,
+        "success",
       );
-      await api("/retention/cleanup", { method: "POST", body: { days } });
       showToast("Sistem temizliği başarıyla tamamlandı");
     } catch (err) {
       if (err?.name === "AbortError") return;
+      setOpsOperation(err.message, "danger");
       showToast(err.message, "danger");
     }
   },
 
   async runCacheWarmup() {
+    setOpsOperation("Önbellek ısıtılıyor…", "info", true);
     try {
-      await api("/maintenance/warmup", { method: "POST" });
-      showToast("Önbellek başarıyla ısıtıldı");
+      const response = await api("/maintenance/warmup", { method: "POST" });
+      const result = response?.data || {};
+      setOpsOperation(
+        Array.isArray(result.output)
+          ? result.output[result.output.length - 1] || "Önbellek ısıtıldı"
+          : "Önbellek başarıyla ısıtıldı",
+        result.success === false ? "danger" : "success",
+      );
+      showToast(
+        result.success === false ? "Önbellek ısıtma başarısız oldu" : "Önbellek başarıyla ısıtıldı",
+        result.success === false ? "danger" : "success",
+      );
     } catch (err) {
       if (err?.name === "AbortError") return;
+      setOpsOperation(err.message, "danger");
       showToast(err.message, "danger");
     }
   },
 
   async generateSitemap() {
+    setOpsOperation("Sitemap oluşturuluyor…", "info", true);
     try {
       await api("/maintenance/sitemap", { method: "POST" });
+      setOpsOperation("Sitemap başarıyla oluşturuldu.", "success");
       showToast("Sitemap başarıyla üretildi");
     } catch (err) {
       if (err?.name === "AbortError") return;
+      setOpsOperation(err.message, "danger");
       showToast(err.message, "danger");
     }
   },
@@ -4068,6 +4537,7 @@ const handlers = {
   async runMaintenance(e, el) {
     const output = document.getElementById("panel-maintenance-output");
     if (output) output.textContent = "İşlem çalışıyor...";
+    setOpsOperation("Bakım işlemi çalışıyor…", "info", true);
     try {
       const response = await api(`/maintenance/${el.dataset.task}`, {
         method: "POST",
@@ -4078,13 +4548,16 @@ const handlers = {
           ? result.output.join("\n")
           : JSON.stringify(result, null, 2);
       if (result.success === false) {
+        setOpsOperation("Bakım işlemi başarısız oldu.", "danger");
         showToast("Bakım işlemi başarısız oldu", "danger");
       } else {
+        setOpsOperation("Bakım işlemi tamamlandı.", "success");
         showToast("Bakım işlemi tamamlandı");
       }
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (output) output.textContent = error.message;
+      setOpsOperation(error.message, "danger");
       showToast(error.message, "danger");
     }
   },
@@ -4126,7 +4599,9 @@ const target = document.getElementById("panel-app");
 
 const panelPage = (view, options = {}) => ({
   view,
-  permissions: [],
+  // Every panel page requires the base panel entitlement unless a route
+  // explicitly narrows it to a more specific permission.
+  permissions: ["admin.panel.access"],
   ...options,
 });
 
@@ -4509,7 +4984,7 @@ const panelRoutes = {
       index: panelPage("panel-ops", {
         route: "ops",
         section: "ops",
-        permissions: ["admin.health.view"],
+        permissions: ["admin.panel.access"],
         load: () => loadQueueJobsData(),
       }),
     },
@@ -4626,11 +5101,13 @@ const panelRoutes = {
   index: panelPage("panel-dashboard", {
     route: "dashboard",
     section: "dashboard",
+    permissions: ["admin.metrics.view"],
     load: () => loadDashboardData(),
   }),
   fallback: panelPage("panel-dashboard", {
     route: "dashboard",
     section: "dashboard",
+    permissions: ["admin.metrics.view"],
     redirect: "/panel",
     load: () => loadDashboardData(),
   }),
@@ -4700,8 +5177,22 @@ function navigate() {
 
   const required = resolved.permissions || [];
   if (required.length > 0 && !hasPermission(...required)) {
-    history.replaceState({}, "", "/panel");
-    resolved = resolvePanelRoute();
+    if (window.location.pathname !== "/panel") {
+      history.replaceState({}, "", "/panel");
+      resolved = resolvePanelRoute();
+    }
+    const fallbackRequired = resolved?.permissions || [];
+    if (fallbackRequired.length > 0 && !hasPermission(...fallbackRequired)) {
+      pageEpoch++;
+      pageRequests.abort();
+      pageRequests = new AbortController();
+      disposePage();
+      mountPage("panel-page-error", {
+        parent_path: "/",
+        error_message: "Bu panel bölümü için gerekli yetkiniz bulunmuyor.",
+      });
+      return;
+    }
   }
 
   pageEpoch++;

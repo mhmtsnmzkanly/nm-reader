@@ -665,6 +665,7 @@ final class ApiTestSuite
 
         $adminRoutes = [
             ['GET', '/api/v1/admin/overview', 'GET /api/v1/admin/overview'],
+            ['GET', '/api/v1/admin/dashboard-data', 'GET /api/v1/admin/dashboard-data'],
             ['POST', '/api/v1/admin/auth/reauth', 'POST /api/v1/admin/auth/reauth'],
             ['GET', '/api/v1/admin/series', 'GET /api/v1/admin/series'],
             ['GET', '/api/v1/admin/genres', 'GET /api/v1/admin/genres'],

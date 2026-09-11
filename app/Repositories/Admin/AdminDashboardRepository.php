@@ -15,8 +15,13 @@ final class AdminDashboardRepository extends AdminRepositoryBase
     {
         $todayViews = $this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'total_views' ORDER BY stat_date DESC LIMIT 1");
         
-        // Fetch Performance & Health
-        $health = $this->pdo->query("SELECT * FROM analytics_snapshots_health ORDER BY stat_date DESC LIMIT 1")->fetch();
+        // Fetch Performance & Health. The dashboard should still render while
+        // the first analytics rollup (or a fresh schema) is not available.
+        try {
+            $health = $this->pdo->query("SELECT * FROM analytics_snapshots_health ORDER BY stat_date DESC LIMIT 1")->fetch() ?: null;
+        } catch (\Throwable) {
+            $health = null;
+        }
         $errorRate = 0;
         if ($health && ($health['request_total_24h'] ?? 0) > 0) {
             $errorRate = round(($health['server_error_total_24h'] / $health['request_total_24h']) * 100, 2);
@@ -34,16 +39,29 @@ final class AdminDashboardRepository extends AdminRepositoryBase
         $searchTotal = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'search_total_7d' ORDER BY stat_date DESC LIMIT 1");
         $zeroResults = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'zero_result_total_7d' ORDER BY stat_date DESC LIMIT 1");
         $d1Retained = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'd1_retained_total' ORDER BY stat_date DESC LIMIT 1");
+        $d1EligibleUsers = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'd1_eligible_users_total' ORDER BY stat_date DESC LIMIT 1");
+        $d7Retained = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'd7_retained_total' ORDER BY stat_date DESC LIMIT 1");
+        $d7EligibleUsers = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'd7_eligible_users_total' ORDER BY stat_date DESC LIMIT 1");
         $newUsers = (int)$this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'new_users_7d_total' ORDER BY stat_date DESC LIMIT 1");
-    
-        $retentionPct = $newUsers > 0 ? round(($d1Retained / $newUsers) * 100, 1) : 0;
     
         // Fetch Top Contents 7d (most recent date available in snapshots)
         $latestDate = $this->queryValue("SELECT MAX(stat_date) FROM analytics_snapshots_series_top");
         $topContents = [];
         if ($latestDate) {
             $stmt = $this->pdo->prepare(
-                "SELECT s.title, s.type, s.slug, SUM(t.view_count) as view_count_7d, 0 as comment_count_7d
+                "SELECT s.id, s.title, s.type, s.slug, SUM(t.view_count) as view_count_7d,
+                        COALESCE((
+                            SELECT COUNT(*)
+                            FROM comments cm
+                            LEFT JOIN chapters ccm ON cm.target_type = 'chapter' AND ccm.id = cm.target_id
+                            WHERE cm.created_at >= DATE_SUB(:latest_comments, INTERVAL 6 DAY)
+                              AND cm.deleted_at IS NULL
+                              AND cm.moderation_status <> 'deleted'
+                              AND (
+                                  (cm.target_type = 'series' AND cm.target_id = t.content_id)
+                                  OR (cm.target_type = 'chapter' AND ccm.content_id = t.content_id)
+                              )
+                        ), 0) AS comment_count_7d
                  FROM analytics_snapshots_series_top t
                  JOIN series s ON s.id = t.content_id
                  WHERE t.stat_date >= DATE_SUB(:latest, INTERVAL 6 DAY)
@@ -51,7 +69,7 @@ final class AdminDashboardRepository extends AdminRepositoryBase
                  ORDER BY view_count_7d DESC
                  LIMIT 5"
             );
-            $stmt->execute(['latest' => $latestDate]);
+            $stmt->execute(['latest' => $latestDate, 'latest_comments' => $latestDate]);
             $topContents = $stmt->fetchAll();
         }
     
@@ -64,6 +82,7 @@ final class AdminDashboardRepository extends AdminRepositoryBase
             'blogs_pending_total' => $this->count('SELECT COUNT(*) FROM blogs WHERE approved = 0'),
             'queue_pending_total' => $this->count("SELECT COUNT(*) FROM system_jobs WHERE status = 'pending'"),
             'queue_failed_total' => $this->count("SELECT COUNT(*) FROM system_jobs WHERE status = 'failed'"),
+            'reports_pending_total' => $this->count("SELECT COUNT(*) FROM reports WHERE status IN ('pending', 'reviewing')"),
             'audit_24h_total' => $this->count('SELECT COUNT(*) FROM system_audit_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)'),
             'funnel' => [
                 'home_to_content_pct' => $homeToContent,
@@ -72,7 +91,10 @@ final class AdminDashboardRepository extends AdminRepositoryBase
             'retention_search' => [
                 'search_total_7d' => $searchTotal,
                 'zero_result_pct_7d' => $searchTotal > 0 ? round(($zeroResults / $searchTotal) * 100, 1) : 0,
-                'd1_retention_pct' => $retentionPct,
+                'd1_retention_pct' => $d1EligibleUsers > 0 ? round(($d1Retained / $d1EligibleUsers) * 100, 1) : 0,
+                'd1_eligible_users_7d' => $d1EligibleUsers,
+                'd7_retention_pct' => $d7EligibleUsers > 0 ? round(($d7Retained / $d7EligibleUsers) * 100, 1) : 0,
+                'd7_eligible_users_30d' => $d7EligibleUsers,
                 'new_users_7d' => $newUsers
             ],
             'performance_slo' => [
@@ -223,7 +245,7 @@ final class AdminDashboardRepository extends AdminRepositoryBase
              GROUP BY DATE(b.created_at)
              ORDER BY day ASC
              LIMIT :limit',
-            ['days' => $days, 'limit' => 400]
+            ['days' => max(0, $days - 1), 'limit' => 400]
         );
     
         $dailyApproved = $this->queryByDaysAndLimit(
@@ -237,7 +259,7 @@ final class AdminDashboardRepository extends AdminRepositoryBase
              GROUP BY DATE(b.approved_at)
              ORDER BY day ASC
              LIMIT :limit',
-            ['days' => $days, 'limit' => 400]
+            ['days' => max(0, $days - 1), 'limit' => 400]
         );
     
         return [
@@ -261,12 +283,66 @@ final class AdminDashboardRepository extends AdminRepositoryBase
         $daily = $this->visitCount(1);
         $weekly = $this->visitCount(7);
         $monthly = $this->visitCount(30);
+        $uniqueDaily = $this->uniqueVisitorCount(1);
+        $uniqueWeekly = $this->uniqueVisitorCount(7);
+        $uniqueMonthly = $this->uniqueVisitorCount(30);
+        $trend = $this->siteVisitTrend(30);
     
         return [
             'daily' => $daily,
             'weekly' => $weekly,
             'monthly' => $monthly,
+            'unique_daily' => $uniqueDaily,
+            'unique_weekly' => $uniqueWeekly,
+            'unique_monthly' => $uniqueMonthly,
+            'trend' => $trend,
         ];
+    }
+
+    private function uniqueVisitorCount(int $days): int
+    {
+        $days = max(1, min(365, $days));
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(DISTINCT COALESCE(NULLIF(session_hash, ''), ip_hash))
+                 FROM analytics_events
+                 WHERE event_type IN ('content_view', 'chapter_view')
+                   AND created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)"
+            );
+            // This query is intentionally rolling (NOW), unlike the daily
+            // snapshot counters which use inclusive calendar-day windows.
+            $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+            $stmt->execute();
+            return (int) ($stmt->fetchColumn() ?? 0);
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function siteVisitTrend(int $days): array
+    {
+        $days = max(1, min(90, $days));
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT DATE(created_at) AS day,
+                        COUNT(*) AS views,
+                        COUNT(DISTINCT COALESCE(NULLIF(session_hash, ''), ip_hash)) AS unique_visitors
+                 FROM analytics_events
+                 WHERE event_type IN ('content_view', 'chapter_view')
+                   AND created_at >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
+                 GROUP BY DATE(created_at)
+                 ORDER BY day ASC"
+            );
+            $stmt->bindValue(':days', max(0, $days - 1), PDO::PARAM_INT);
+            $stmt->execute();
+            return array_map(static fn(array $row): array => [
+                'day' => (string) ($row['day'] ?? ''),
+                'views' => (int) ($row['views'] ?? 0),
+                'unique_visitors' => (int) ($row['unique_visitors'] ?? 0),
+            ], $stmt->fetchAll());
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     public function userReputation(int $limit): array

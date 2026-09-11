@@ -30,7 +30,7 @@
       href="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/css/adminlte.min.css"
     />
     <!-- Increase +1 when change css code -->
-    <link rel="stylesheet" href="/assets/css/admin.css?7" />
+    <link rel="stylesheet" href="/assets/css/admin.css?9" />
 
     <script>
       window.__NMR_CONTEXT = %%NMR_CONTEXT_JSON%%;
@@ -130,6 +130,7 @@
                   href="/panel"
                   class="nav-link rounded"
                   data-route="dashboard"
+                  data-requires-permission="admin.metrics.view"
                 >
                   <i class="nav-icon bi bi-grid-1x2-fill me-2 text-info"></i>
                   <p class="mb-0">Genel Bakış (Dashboard)</p>
@@ -305,7 +306,7 @@
                 <ul class="nav nav-treeview flex-column gap-1">
                   <li
                     class="nav-item"
-                    data-requires-permission="admin.health.view"
+                    data-requires-permission="admin.panel.access"
                   >
                     <a
                       href="/panel/ops"
@@ -480,7 +481,7 @@
     <template id="tpl-panel-rows-dashboard-top"
       ><template data-for each="items" as="item"
         ><tr>
-          <td>${item.title}</td>
+          <td><a href="${item.detail_url}" data-panel-link>${item.title}</a></td>
           <td>${item.type}</td>
           <td>${item.views}</td>
           <td>${item.comments}</td>
@@ -1067,16 +1068,27 @@
         ><tr>
           <td>#${item.id}</td>
           <td>${item.job_type}</td>
-          <td>${item.status}</td>
-          <td>${item.attempts}</td>
+          <td>
+            <span class="badge ${item.status_class}">${item.status}</span
+            ><small class="d-block text-danger">${item.stale_label}</small>
+          </td>
+          <td>${item.priority_label}</td>
+          <td>${item.attempts_label}</td>
+          <td>
+            ${item.age_label}<small class="d-block text-secondary"
+              >${item.available_label}</small
+            >
+          </td>
           <td class="text-break">${item.last_error}</td>
-          <td>${item.created_at}</td>
+          <td class="text-nowrap">${item.created_label}</td>
           <td class="text-end">
             <button
               type="button"
               class="btn btn-xs btn-outline-primary ${item.retry_class}"
               data-on-click="retryQueueJob"
               data-id="${item.id}"
+              title="Yeniden dene"
+              aria-label="Kuyruk işini yeniden dene"
             >
               <i class="bi bi-arrow-repeat"></i></button
             ><button
@@ -1084,6 +1096,8 @@
               class="btn btn-xs btn-outline-danger ${item.cancel_class}"
               data-on-click="cancelQueueJob"
               data-id="${item.id}"
+              title="İptal et"
+              aria-label="Kuyruk işini iptal et"
             >
               <i class="bi bi-x-lg"></i>
             </button>
@@ -3393,20 +3407,53 @@ ${admin_note}</textarea>
               Platformun anlık metrikleri ve sistem durumu
             </p>
           </div>
-          <button
-            class="btn btn-sm btn-outline-primary"
-            data-on-click="refreshDashboard"
-          >
-            <i class="bi bi-arrow-clockwise me-1"></i> Yenile
-          </button>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="small text-secondary" id="panel-dashboard-updated"
+              >Henüz veri alınmadı</span
+            >
+            <label class="visually-hidden" for="panel-dashboard-period"
+              >Analiz dönemi</label
+            >
+            <select
+              id="panel-dashboard-period"
+              class="form-select form-select-sm w-auto"
+              data-on-change="changeDashboardPeriod"
+            >
+              <option value="1">24 saat</option>
+              <option value="7">7 gün</option>
+              <option value="30" selected>30 gün</option>
+              <option value="90">90 gün</option>
+            </select>
+            <button
+              class="btn btn-sm btn-outline-primary"
+              data-on-click="refreshDashboard"
+            >
+              <i class="bi bi-arrow-clockwise me-1"></i> Yenile
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="app-content p-4">
         <div class="container-fluid">
+          <div
+            id="panel-dashboard-loading"
+            class="alert alert-info d-flex align-items-center gap-2"
+            role="status"
+            hidden
+          >
+            <span class="lime-spinner" aria-hidden="true"></span>
+            Dashboard verileri yükleniyor…
+          </div>
+          <div
+            id="panel-dashboard-error"
+            class="alert alert-danger"
+            role="alert"
+            hidden
+          ></div>
           <!-- KPI Cards -->
           <div class="row g-3 mb-4">
-            <div class="col-lg-3 col-sm-6">
+            <div class="col-lg-2 col-md-4 col-sm-6">
               <div
                 class="card border-0 shadow-sm bg-primary text-white p-3 rounded-3"
               >
@@ -3425,7 +3472,7 @@ ${admin_note}</textarea>
                 </div>
               </div>
             </div>
-            <div class="col-lg-3 col-sm-6">
+            <div class="col-lg-2 col-md-4 col-sm-6">
               <div
                 class="card border-0 shadow-sm bg-success text-white p-3 rounded-3"
               >
@@ -3447,7 +3494,7 @@ ${admin_note}</textarea>
                 </div>
               </div>
             </div>
-            <div class="col-lg-3 col-sm-6">
+            <div class="col-lg-2 col-md-4 col-sm-6">
               <div
                 class="card border-0 shadow-sm bg-warning text-dark p-3 rounded-3"
               >
@@ -3469,7 +3516,7 @@ ${admin_note}</textarea>
                 </div>
               </div>
             </div>
-            <div class="col-lg-3 col-sm-6">
+            <div class="col-lg-2 col-md-4 col-sm-6">
               <div
                 class="card border-0 shadow-sm bg-danger text-white p-3 rounded-3"
               >
@@ -3484,7 +3531,113 @@ ${admin_note}</textarea>
                       0
                     </h3>
                   </div>
-                  <i class="bi bi-cpu-fill fs-1 opacity-50"></i>
+                  <i class="bi bi-newspaper fs-1 opacity-50"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+              <div
+                class="card border-0 shadow-sm bg-info text-white p-3 rounded-3"
+              >
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <p
+                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
+                    >
+                      Aktif Okuyucu (7 gün)
+                    </p>
+                    <h3
+                      class="mb-0 fw-bold"
+                      data-text="analytics.unique_visitors_weekly"
+                    >
+                      0
+                    </h3>
+                  </div>
+                  <i class="bi bi-person-check-fill fs-1 opacity-50"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+              <div
+                class="card border-0 shadow-sm bg-secondary text-white p-3 rounded-3"
+              >
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <p
+                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
+                    >
+                      Hatalı Kuyruk İşi
+                    </p>
+                    <h3 class="mb-0 fw-bold" data-text="overview.queue_failed">
+                      0
+                    </h3>
+                  </div>
+                  <i class="bi bi-exclamation-triangle-fill fs-1 opacity-50"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+              <div
+                class="card border-0 shadow-sm bg-dark text-white p-3 rounded-3"
+              >
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <p
+                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
+                    >
+                      Açık Rapor
+                    </p>
+                    <h3
+                      class="mb-0 fw-bold"
+                      data-text="overview.reports_pending"
+                    >
+                      0
+                    </h3>
+                  </div>
+                  <i class="bi bi-flag-fill fs-1 opacity-50"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+              <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-transparent border-0 pt-3 px-4">
+                  <h5 class="card-title fw-bold mb-0">
+                    <i class="bi bi-graph-up-arrow text-primary me-2"></i
+                    >Trafik ve Aktif Okuyucu Trendi
+                  </h5>
+                  <small class="text-secondary"
+                    >Görüntülenme ile benzersiz ziyaretçi karşılaştırması</small
+                  >
+                </div>
+                <div class="card-body">
+                  <div class="dashboard-chart-wrap">
+                    <canvas id="panel-dashboard-traffic-chart"></canvas>
+                    <div class="dashboard-chart-empty text-secondary small" data-chart-empty hidden>
+                      Bu dönem için trafik verisi yok.
+                    </div>
+                  </div>
+                  <small class="text-secondary" data-chart-fallback></small>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-transparent border-0 pt-3 px-4">
+                  <h5 class="card-title fw-bold mb-0">
+                    <i class="bi bi-funnel-fill text-info me-2"></i>Okuma Hunisi
+                  </h5>
+                </div>
+                <div class="card-body">
+                  <div class="dashboard-chart-wrap dashboard-chart-wrap-sm">
+                    <canvas id="panel-dashboard-funnel-chart"></canvas>
+                    <div class="dashboard-chart-empty text-secondary small" data-chart-empty hidden>
+                      Huniyi göstermek için yeterli veri yok.
+                    </div>
+                  </div>
+                  <small class="text-secondary" data-chart-fallback></small>
                 </div>
               </div>
             </div>
@@ -3530,12 +3683,14 @@ ${admin_note}</textarea>
                     href="/panel/series/new"
                     class="btn btn-outline-primary text-start"
                     data-panel-link
+                    data-requires-permission="admin.content.create"
                     ><i class="bi bi-plus-circle me-2"></i> Yeni İçerik Ekle</a
                   >
                   <a
                     href="/panel/user/roles"
                     class="btn btn-outline-success text-start"
                     data-panel-link
+                    data-requires-permission="admin.panel.access"
                     ><i class="bi bi-shield-check me-2"></i> Rolleri Yönet</a
                   >
                   <a
@@ -3569,20 +3724,30 @@ ${admin_note}</textarea>
             <div class="col-md-4">
               <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-transparent">
-                  <h6 class="mb-0">Ziyaretler</h6>
+                  <h6 class="mb-0">
+                    <i class="bi bi-bar-chart-line me-2"></i>Görüntülenme ve
+                    ziyaretçi
+                  </h6>
                 </div>
                 <div class="card-body">
                   <div class="d-flex justify-content-between">
-                    <span>24 saat</span
+                    <span>Görüntülenme · 24 saat</span
                     ><strong data-text="analytics.visits_daily">0</strong>
                   </div>
                   <div class="d-flex justify-content-between">
-                    <span>7 gün</span
+                    <span>Görüntülenme · 7 gün</span
                     ><strong data-text="analytics.visits_weekly">0</strong>
                   </div>
                   <div class="d-flex justify-content-between">
-                    <span>30 gün</span
+                    <span>Görüntülenme · 30 gün</span
                     ><strong data-text="analytics.visits_monthly">0</strong>
+                  </div>
+                  <hr class="my-2" />
+                  <div class="d-flex justify-content-between">
+                    <span>Benzersiz · 7 gün</span
+                    ><strong data-text="analytics.unique_visitors_weekly"
+                      >0</strong
+                    >
                   </div>
                 </div>
               </div>
@@ -3629,8 +3794,12 @@ ${admin_note}</textarea>
                     ><strong data-text="analytics.zero_result_pct">0%</strong>
                   </div>
                   <div class="d-flex justify-content-between">
-                    <span>D1 tutundurma</span
+                    <span>D1 tutundurma <small class="text-secondary">(n=<span data-text="analytics.d1_eligible_users">0</span>)</small></span
                     ><strong data-text="analytics.d1_retention">0%</strong>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span>D7 tutundurma <small class="text-secondary">(n=<span data-text="analytics.d7_eligible_users">0</span>)</small></span
+                    ><strong data-text="analytics.d7_retention">0%</strong>
                   </div>
                   <div class="d-flex justify-content-between">
                     <span>Yeni kullanıcı</span
@@ -3644,7 +3813,11 @@ ${admin_note}</textarea>
                 <div
                   class="card-header bg-transparent d-flex justify-content-between"
                 >
-                  <h6 class="mb-0">Gelir Analitiği (30 gün)</h6>
+                  <h6 class="mb-0">
+                    Gelir Analitiği (<span data-text="dashboardPeriodLabel"
+                      >30 gün</span
+                    >)
+                  </h6>
                   <span
                     ><strong data-text="analytics.total_coins">0</strong> coin /
                     <strong data-text="analytics.total_unlocks">0</strong>
@@ -3684,6 +3857,44 @@ ${admin_note}</textarea>
                 </div>
               </div>
             </div>
+            <div class="col-lg-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                  <h6 class="mb-0">
+                    <i class="bi bi-bar-chart-line-fill text-warning me-2"></i
+                    >Blog Moderasyon Trendi
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="dashboard-chart-wrap dashboard-chart-wrap-sm">
+                    <canvas id="panel-dashboard-blog-chart"></canvas>
+                    <div class="dashboard-chart-empty text-secondary small" data-chart-empty hidden>
+                      Bu dönem için blog hareketi yok.
+                    </div>
+                  </div>
+                  <small class="text-secondary" data-chart-fallback></small>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent">
+                  <h6 class="mb-0">
+                    <i class="bi bi-cash-coin text-danger me-2"></i>Coin Harcama
+                    Trendi
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div class="dashboard-chart-wrap dashboard-chart-wrap-sm">
+                    <canvas id="panel-dashboard-revenue-chart"></canvas>
+                    <div class="dashboard-chart-empty text-secondary small" data-chart-empty hidden>
+                      Bu dönem için coin harcaması yok.
+                    </div>
+                  </div>
+                  <small class="text-secondary" data-chart-fallback></small>
+                </div>
+              </div>
+            </div>
             <div class="col-md-6">
               <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-transparent">
@@ -3711,7 +3922,11 @@ ${admin_note}</textarea>
             <div class="col-md-6">
               <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-transparent">
-                  <h6 class="mb-0">Blog Özeti (30 gün)</h6>
+                  <h6 class="mb-0">
+                    Blog Özeti (<span data-text="dashboardPeriodLabel"
+                      >30 gün</span
+                    >)
+                  </h6>
                 </div>
                 <div class="card-body">
                   <div class="d-flex justify-content-between">
@@ -3791,7 +4006,11 @@ ${admin_note}</textarea>
             <div class="col-12">
               <div class="card border-0 shadow-sm">
                 <div class="card-header bg-transparent">
-                  <h6 class="mb-0">Günlük Blog Etkinliği (30 gün)</h6>
+                  <h6 class="mb-0">
+                    Günlük Blog Etkinliği (<span data-text="dashboardPeriodLabel"
+                      >30 gün</span
+                    >)
+                  </h6>
                 </div>
                 <div class="card-body p-0 table-responsive">
                   <table class="table table-sm mb-0">
@@ -4595,12 +4814,54 @@ ${admin_note}</textarea>
               Arka plan işleri, önbellek ısıtma ve temizlik araçları
             </p>
           </div>
+          <div class="btn-group btn-group-sm" role="tablist" aria-label="Ops görünümü">
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-on-click="switchOpsView"
+              data-ops-view="all"
+              aria-selected="true"
+            >
+              <i class="bi bi-grid me-1"></i>Tümü
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              data-on-click="switchOpsView"
+              data-ops-view="queue"
+              aria-selected="false"
+            >
+              <i class="bi bi-list-task me-1"></i>Kuyruk
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              data-on-click="switchOpsView"
+              data-ops-view="maintenance"
+              aria-selected="false"
+            >
+              <i class="bi bi-tools me-1"></i>Bakım
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="app-content p-4">
         <div class="container-fluid">
-          <div class="row g-3 mb-4">
+          <div
+            id="panel-ops-operation"
+            class="alert alert-info d-flex align-items-center gap-2"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></div>
+          <div
+            id="panel-health-error"
+            class="alert alert-warning"
+            role="status"
+            hidden
+          ></div>
+          <div class="row g-3 mb-4" id="panel-ops-health">
             <div class="col-md-3">
               <div class="card border-0 shadow-sm">
                 <div class="card-body">
@@ -4608,6 +4869,7 @@ ${admin_note}</textarea>
                   <div class="fw-bold" id="panel-health-database">
                     Kontrol ediliyor
                   </div>
+                  <small class="text-secondary" id="panel-health-migration"></small>
                 </div>
               </div>
             </div>
@@ -4626,6 +4888,9 @@ ${admin_note}</textarea>
                 <div class="card-body">
                   <small class="text-secondary">Kuyruk</small>
                   <div class="fw-bold" id="panel-health-queue">-</div>
+                  <small class="text-secondary d-block" id="panel-health-queue-detail"
+                    >-</small
+                  >
                 </div>
               </div>
             </div>
@@ -4634,11 +4899,14 @@ ${admin_note}</textarea>
                 <div class="card-body">
                   <small class="text-secondary">Son Yedek</small>
                   <div class="fw-bold small" id="panel-health-backup">-</div>
+                  <small class="text-secondary d-block" id="panel-health-backup-detail"
+                    >-</small
+                  >
                 </div>
               </div>
             </div>
           </div>
-          <div class="card border-0 shadow-sm rounded-3 mb-4">
+          <div class="card border-0 shadow-sm rounded-3 mb-4" id="panel-ops-queue">
             <div class="card-header bg-transparent">
               <div class="row g-2 align-items-center">
                 <div class="col-md-3"><h5 class="mb-0">Kuyruk İşleri</h5></div>
@@ -4651,6 +4919,14 @@ ${admin_note}</textarea>
                   />
                 </div>
                 <div class="col-md-3">
+                  <input
+                    id="panel-queue-job-type"
+                    class="form-control form-control-sm"
+                    placeholder="İş türü (tam eşleşme)"
+                    data-on-input="filterQueue"
+                  />
+                </div>
+                <div class="col-md-2">
                   <select
                     id="panel-queue-status"
                     class="form-select form-select-sm"
@@ -4664,7 +4940,7 @@ ${admin_note}</textarea>
                     <option value="cancelled">İptal</option>
                   </select>
                 </div>
-                <div class="col-md-2 text-end">
+                <div class="col-md-1 text-end">
                   <button
                     class="btn btn-sm btn-outline-secondary"
                     data-on-click="loadQueueJobs"
@@ -4681,7 +4957,9 @@ ${admin_note}</textarea>
                     <th>ID</th>
                     <th>İş türü</th>
                     <th>Durum</th>
+                    <th>Öncelik</th>
                     <th>Deneme</th>
+                    <th>Yaş / Uygunluk</th>
                     <th>Son hata</th>
                     <th>Oluşturma</th>
                     <th></th>
@@ -4695,7 +4973,7 @@ ${admin_note}</textarea>
               id="panel-queue-pager"
             ></div>
           </div>
-          <div class="row g-4">
+          <div class="row g-4" id="panel-ops-maintenance">
             <div class="col-md-6">
               <div class="card border-0 shadow-sm rounded-3 h-100">
                 <div class="card-header bg-transparent border-0 pt-3 px-4">
@@ -4706,8 +4984,8 @@ ${admin_note}</textarea>
                 </div>
                 <div class="card-body px-4">
                   <p class="text-secondary small">
-                    Bekleyen arka plan işlerini (bildirimler, e-postalar) tek
-                    adımda çalıştırır.
+                    Bekleyen arka plan işlerini tek seferde çalıştırır. İş türü
+                    boşsa tüm türler işlenir.
                   </p>
                   <div class="input-group">
                     <input
@@ -4717,9 +4995,14 @@ ${admin_note}</textarea>
                       value="20"
                       class="form-control"
                       id="panel-queue-limit"
+                    /><input
+                      id="panel-queue-run-type"
+                      class="form-control"
+                      placeholder="İş türü (opsiyonel)"
                     /><button
                       class="btn btn-primary"
                       data-on-click="runQueueWorker"
+                      data-ops-operation
                       data-requires-permission="admin.jobs.run"
                     >
                       <i class="bi bi-play-fill me-1"></i> Kuyruğu Çalıştır (Run
@@ -4740,8 +5023,9 @@ ${admin_note}</textarea>
                 </div>
                 <div class="card-body px-4">
                   <p class="text-secondary small">
-                    Eski oturumları, tamamlanmış kuyruk işlerini ve geçici
-                    logları temizler.
+                    Seçilen süreden eski oturumları, audit loglarını,
+                    tamamlanmış işleri ve geçici kayıtları siler. En az 7 gün
+                    saklama uygulanır.
                   </p>
                   <div class="input-group">
                     <input
@@ -4754,6 +5038,7 @@ ${admin_note}</textarea>
                     /><button
                       class="btn btn-outline-danger"
                       data-on-click="runRetentionCleanup"
+                      data-ops-operation
                       data-requires-permission="admin.jobs.run"
                     >
                       <i class="bi bi-broom me-1"></i> Temizliği Başlat
@@ -4778,6 +5063,7 @@ ${admin_note}</textarea>
                   <button
                     class="btn btn-outline-warning"
                     data-on-click="runCacheWarmup"
+                    data-ops-operation
                     data-requires-permission="admin.jobs.run"
                   >
                     <i class="bi bi-fire me-1"></i> Önbelleği Isıt
@@ -4787,8 +5073,10 @@ ${admin_note}</textarea>
             </div>
             <div class="col-12">
               <div
+                id="panel-advanced-maintenance"
                 class="card border-0 shadow-sm rounded-3"
                 data-requires-permission="admin.jobs.run"
+                hidden
               >
                 <div class="card-header bg-transparent">
                   <h5 class="mb-0">Gelişmiş Bakım Araçları</h5>
@@ -4799,6 +5087,7 @@ ${admin_note}</textarea>
                       <button
                         class="btn btn-outline-info w-100"
                         data-on-click="runMaintenance"
+                        data-ops-operation
                         data-task="backup"
                       >
                         Tam Yedek
@@ -4808,33 +5097,37 @@ ${admin_note}</textarea>
                       <button
                         class="btn btn-outline-secondary w-100"
                         data-on-click="runMaintenance"
+                        data-ops-operation
                         data-task="analytics"
                       >
                         Analytics Topla
                       </button>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4" data-developer-tool>
                       <button
                         class="btn btn-outline-success w-100"
                         data-on-click="runMaintenance"
+                        data-ops-operation
                         data-task="api-tests"
                       >
                         API Testleri
                       </button>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4" data-developer-tool>
                       <button
                         class="btn btn-outline-dark w-100"
                         data-on-click="runMaintenance"
+                        data-ops-operation
                         data-task="openapi"
                       >
                         OpenAPI Üret
                       </button>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4" data-developer-tool>
                       <button
                         class="btn btn-outline-success w-100"
                         data-on-click="runMaintenance"
+                        data-ops-operation
                         data-task="seed-data"
                       >
                         Varsayılan Veriyi Ekle
@@ -4866,6 +5159,7 @@ ${admin_note}</textarea>
                   <button
                     class="btn btn-outline-info"
                     data-on-click="generateSitemap"
+                    data-ops-operation
                     data-requires-permission="admin.jobs.run"
                   >
                     <i class="bi bi-arrow-repeat me-1"></i> Sitemap Oluştur
@@ -6124,12 +6418,13 @@ ${admin_note}</textarea>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/js/adminlte.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script type="module">
       const loader = document.getElementById("panel-bootstrap-loader");
 
       try {
         // Increase +1 when change admin.js code
-        await import("/assets/js/admin.js?35");
+        await import("/assets/js/admin.js?41");
         loader?.remove();
       } catch (error) {
         console.error("Admin panel yüklenemedi:", error);

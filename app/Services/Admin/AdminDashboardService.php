@@ -36,6 +36,8 @@ final class AdminDashboardService extends AdminConsoleServiceBase
                 'contents_total' => $data['contents_total'] ?? 0,
                 'chapters_total' => $data['chapters_total'] ?? 0,
                 'blogs_pending_total' => $data['blogs_pending_total'] ?? 0,
+                'queue_failed_total' => $data['queue_failed_total'] ?? 0,
+                'reports_pending_total' => $data['reports_pending_total'] ?? 0,
             ],
             'metrics' => [
                 'funnel' => [
@@ -50,6 +52,9 @@ final class AdminDashboardService extends AdminConsoleServiceBase
                     'search_total_7d' => $data['retention_search']['search_total_7d'] ?? 0,
                     'zero_result_pct_7d' => $data['retention_search']['zero_result_pct_7d'] ?? 0,
                     'd1_retention_pct' => $data['retention_search']['d1_retention_pct'] ?? 0,
+                    'd1_eligible_users_7d' => $data['retention_search']['d1_eligible_users_7d'] ?? 0,
+                    'd7_retention_pct' => $data['retention_search']['d7_retention_pct'] ?? 0,
+                    'd7_eligible_users_30d' => $data['retention_search']['d7_eligible_users_30d'] ?? 0,
                     'new_users_7d' => $data['retention_search']['new_users_7d'] ?? 0,
                 ],
                 'top_contents_7d' => $data['top_contents_7d'] ?? []

@@ -11,7 +11,7 @@ use App\Repositories\Admin\AdminRepositoryBase;
 /** Domain repository extracted from AdminConsoleRepository. */
 final class AdminOperationsRepository extends AdminRepositoryBase
 {
-    public function listQueueJobs(int $page, int $perPage, ?string $status = null, string $query = ''): array
+    public function listQueueJobs(int $page, int $perPage, ?string $status = null, string $query = '', ?string $jobType = null): array
     {
         $offset = max(0, ($page - 1) * $perPage);
         $where = [];
@@ -25,6 +25,10 @@ final class AdminOperationsRepository extends AdminRepositoryBase
             $queryValue = '%' . $query . '%';
             $params['query_job_type'] = $queryValue;
             $params['query_last_error'] = $queryValue;
+        }
+        if ($jobType !== null && trim($jobType) !== '') {
+            $where[] = 'job_type = :job_type';
+            $params['job_type'] = trim($jobType);
         }
         $whereSql = $where === [] ? '' : ' WHERE ' . implode(' AND ', $where);
         $count = $this->pdo->prepare('SELECT COUNT(*) FROM system_jobs' . $whereSql);
@@ -88,14 +92,44 @@ final class AdminOperationsRepository extends AdminRepositoryBase
     public function systemHealthSnapshot(): array
     {
         $queue = ['pending' => 0, 'processing' => 0, 'done' => 0, 'failed' => 0, 'cancelled' => 0];
-        foreach ($this->pdo->query('SELECT status, COUNT(*) AS total FROM system_jobs GROUP BY status')->fetchAll() as $row) {
-            $queue[(string)$row['status']] = (int)$row['total'];
+        try {
+            foreach ($this->pdo->query('SELECT status, COUNT(*) AS total FROM system_jobs GROUP BY status')->fetchAll() as $row) {
+                $queue[(string)$row['status']] = (int)$row['total'];
+            }
+        } catch (\Throwable) {
+            // Keep the rest of the health payload available while a fresh
+            // installation is still applying its schema.
         }
-        $latestMigration = $this->pdo->query('SELECT version, applied_at FROM schema_migrations ORDER BY applied_at DESC, version DESC LIMIT 1')->fetch() ?: null;
+        try {
+            $latestMigration = $this->pdo->query('SELECT version, applied_at FROM schema_migrations ORDER BY applied_at DESC, version DESC LIMIT 1')->fetch() ?: null;
+        } catch (\Throwable) {
+            $latestMigration = null;
+        }
+        try {
+            $databaseOk = $this->pdo->query('SELECT 1')->fetchColumn() !== false;
+        } catch (\Throwable) {
+            $databaseOk = false;
+        }
         return [
-            'database' => ['ok' => $this->pdo->query('SELECT 1')->fetchColumn() !== false, 'version' => (string)$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION)],
+            'database' => ['ok' => $databaseOk, 'version' => (string)$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION)],
             'queue' => $queue,
             'latest_migration' => $latestMigration,
+        ];
+    }
+
+    public function queueOperationalMetrics(): array
+    {
+        $row = $this->pdo->query(
+            "SELECT
+                MIN(CASE WHEN status = 'pending' THEN created_at END) AS oldest_pending_at,
+                SUM(CASE WHEN status = 'processing' AND locked_until IS NOT NULL AND locked_until < NOW() THEN 1 ELSE 0 END) AS stale_processing,
+                SUM(CASE WHEN status = 'pending' AND available_at > NOW() THEN 1 ELSE 0 END) AS delayed
+             FROM system_jobs"
+        )->fetch() ?: [];
+        return [
+            'oldest_pending_at' => $row['oldest_pending_at'] ?? null,
+            'stale_processing' => (int) ($row['stale_processing'] ?? 0),
+            'delayed' => (int) ($row['delayed'] ?? 0),
         ];
     }
 }

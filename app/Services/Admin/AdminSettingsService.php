@@ -42,7 +42,8 @@ final class AdminSettingsService extends AdminConsoleServiceBase
     public function updateEnv(array $payload, string $moderatorId): void
     {
         $this->ensureRootUser($moderatorId);
-        $path = dirname(__DIR__, 2) . '/.env';
+        $base = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\');
+        $path = $base . '/.env';
         $backupPath = $path . '.bak';
     
         if (!file_exists($path)) {

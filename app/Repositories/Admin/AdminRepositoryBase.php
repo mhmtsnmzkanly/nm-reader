@@ -181,6 +181,22 @@ abstract class AdminRepositoryBase
     protected function visitCount(int $days): int
     {
         $days = max(1, min(365, $days));
+        // The daily card is labelled “24 saat”, so use a rolling event window
+        // instead of the current calendar-day snapshot. Longer periods use
+        // compact daily snapshots to keep dashboard reads inexpensive.
+        if ($days === 1) {
+            try {
+                $stmt = $this->pdo->query(
+                    "SELECT COUNT(*)
+                     FROM analytics_events
+                     WHERE event_type IN ('content_view', 'chapter_view')
+                       AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)"
+                );
+                return (int) ($stmt->fetchColumn() ?? 0);
+            } catch (\Throwable) {
+                return 0;
+            }
+        }
         $windowDays = max(0, $days - 1);
         try {
             $stmt = $this->pdo->prepare(

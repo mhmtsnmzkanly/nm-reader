@@ -346,19 +346,32 @@ final class MetricsService
     private function topContentsSnapshot(int $limit): array
     {
         $limit = max(1, min(50, $limit));
-        $sql = 'SELECT
+        $sql = <<<'SQL'
+                SELECT
                     c.id,
                     c.title,
                     c.slug,
                     c.type,
                     SUM(s.view_count) AS view_count_7d,
-                    0 AS comment_count_7d
+                    COALESCE((
+                        SELECT COUNT(*)
+                        FROM comments cm
+                        LEFT JOIN chapters ccm ON cm.target_type = 'chapter' AND ccm.id = cm.target_id
+                        WHERE cm.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY)
+                          AND cm.deleted_at IS NULL
+                          AND cm.moderation_status <> 'deleted'
+                          AND (
+                              (cm.target_type = 'series' AND cm.target_id = s.content_id)
+                              OR (cm.target_type = 'chapter' AND ccm.content_id = s.content_id)
+                          )
+                    ), 0) AS comment_count_7d
                 FROM analytics_snapshots_series_top s
                 INNER JOIN series c ON c.id = s.content_id
                 WHERE s.stat_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY)
                 GROUP BY c.id, c.title, c.slug, c.type
                 ORDER BY view_count_7d DESC
-                LIMIT :limit';
+                LIMIT :limit
+                SQL;
 
         try {
             $stmt = $this->pdo->prepare($sql);
@@ -515,13 +528,17 @@ final class MetricsService
         $newUsers7d = $this->dailyMetric('new_users_7d_total');
         $retainedD1 = $this->dailyMetric('d1_retained_total');
         $retainedD7 = $this->dailyMetric('d7_retained_total');
+        $eligibleD1 = $this->dailyMetric('d1_eligible_users_total');
+        $eligibleD7 = $this->dailyMetric('d7_eligible_users_total');
 
         return [
             'new_users_7d_total' => $newUsers7d,
             'd1_retained_total' => $retainedD1,
-            'd1_retention_pct' => $this->pct($retainedD1, $newUsers7d),
+            'd1_eligible_users_total' => $eligibleD1,
+            'd1_retention_pct' => $this->pct($retainedD1, $eligibleD1),
             'd7_retained_total' => $retainedD7,
-            'd7_retention_pct' => $this->pct($retainedD7, $newUsers7d),
+            'd7_eligible_users_total' => $eligibleD7,
+            'd7_retention_pct' => $this->pct($retainedD7, $eligibleD7),
         ];
     }
 

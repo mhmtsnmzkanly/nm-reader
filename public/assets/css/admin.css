@@ -76,6 +76,32 @@
   min-width: 12rem;
 }
 
+.dashboard-chart-wrap {
+  position: relative;
+  min-height: 18rem;
+}
+.dashboard-chart-wrap-sm {
+  min-height: 13rem;
+}
+.dashboard-chart-empty {
+  min-height: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+#panel-dashboard-error:empty {
+  display: none !important;
+}
+@media (max-width: 575.98px) {
+  .dashboard-chart-wrap {
+    min-height: 14rem;
+  }
+  .dashboard-chart-wrap-sm {
+    min-height: 11rem;
+  }
+}
+
 /* AdminLTE's responsive layout expects the sidebar overlay to be present in
    the app wrapper. Keep the overlay above the page, but below the sidebar. */
 .sidebar-overlay {

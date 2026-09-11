@@ -171,6 +171,7 @@ Every response returned by `/api/v1/*` follows the strict JSON structure:
 ### 3.11 Admin Panel (RBAC Enforced)
 All `/api/v1/admin/*` endpoints require `AuthMiddleware` and `PermissionMiddleware`:
 - `GET /api/v1/admin/overview` (`admin.panel.access`)
+- `GET /api/v1/admin/dashboard-data` (`admin.metrics.view`) — consolidated dashboard payload (KPIs, charts, monetization and search insights; supports `days` and `limit`)
 - `GET /api/v1/admin/series` (`admin.panel.access`)
 - `POST /api/v1/admin/content` (`admin.content.create`)
 - `PUT /api/v1/admin/content/{id}` (`admin.content.update`)

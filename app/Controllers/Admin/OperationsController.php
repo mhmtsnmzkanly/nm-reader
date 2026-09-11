@@ -15,13 +15,13 @@ final class OperationsController extends AdminController
         {
             [$page, $perPage] = $this->pagination($request);
             $query = $request->getQueryParams();
-            $result = $this->operationsService->listQueueJobs($page, $perPage, isset($query['status']) ? (string)$query['status'] : null, (string)($query['q'] ?? ''));
+            $result = $this->operationsService->listQueueJobs($page, $perPage, isset($query['status']) ? (string)$query['status'] : null, (string)($query['q'] ?? ''), isset($query['job_type']) ? (string) $query['job_type'] : null);
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
     
     public function systemHealth(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->operationsService->systemHealth());
+            return ResponseHelper::success($this->operationsService->systemHealth((string) $request->getAttribute('user_id')));
         }
     
     public function retryQueueJob(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

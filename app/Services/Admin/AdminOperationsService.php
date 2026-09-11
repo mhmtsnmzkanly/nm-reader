@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Config;
 use App\Helpers\OutputSanitizer;
 use App\Helpers\Validator;
 use App\Services\AnalyticsAggregationService;
@@ -20,9 +21,9 @@ use App\Services\Admin\AdminConsoleServiceBase;
 /** Domain service extracted from the legacy admin console service. */
 final class AdminOperationsService extends AdminConsoleServiceBase
 {
-    public function listQueueJobs(int $page, int $perPage, ?string $status = null, string $query = ''): array
+    public function listQueueJobs(int $page, int $perPage, ?string $status = null, string $query = '', ?string $jobType = null): array
     {
-        $result = $this->repo->listQueueJobs($page, $perPage, $status, trim($query));
+        $result = $this->repo->listQueueJobs($page, $perPage, $status, trim($query), $jobType);
         return $this->withMeta($result['items'], $result['total'], $page, $perPage);
     }
 
@@ -52,10 +53,13 @@ final class AdminOperationsService extends AdminConsoleServiceBase
         }
     }
 
-    public function systemHealth(): array
+    public function systemHealth(?string $userId = null): array
     {
         $snapshot = $this->repo->systemHealthSnapshot();
-        $base = dirname(__DIR__, 2);
+        // Services live under app/Services/Admin, while storage belongs to the
+        // project root. Use the configured base path so health checks describe
+        // the same directories used by BackupService and the log services.
+        $base = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\');
         $paths = [$base . '/storage', $base . '/storage/logs', $base . '/storage/cache'];
         $snapshot['runtime'] = ['php_version' => PHP_VERSION, 'memory_limit' => ini_get('memory_limit'), 'memory_usage_bytes' => memory_get_usage(true)];
         $snapshot['storage'] = [
@@ -63,10 +67,55 @@ final class AdminOperationsService extends AdminConsoleServiceBase
             'free_bytes' => (int)(disk_free_space($base) ?: 0),
             'total_bytes' => (int)(disk_total_space($base) ?: 0),
         ];
+        $totalBytes = (int) ($snapshot['storage']['total_bytes'] ?? 0);
+        $freeBytes = (int) ($snapshot['storage']['free_bytes'] ?? 0);
+        $snapshot['storage']['used_bytes'] = max(0, $totalBytes - $freeBytes);
+        $snapshot['storage']['usage_pct'] = $totalBytes > 0
+            ? round(($snapshot['storage']['used_bytes'] / $totalBytes) * 100, 1)
+            : 0;
+        $snapshot['queue']['oldest_pending_at'] = null;
+        $snapshot['queue']['stale_processing'] = 0;
+        $snapshot['queue']['delayed'] = 0;
+        try {
+            $snapshot['queue'] = array_merge($snapshot['queue'], $this->repo->queueOperationalMetrics());
+        } catch (\Throwable) {
+            // Queue counts remain useful even when the optional age query fails.
+        }
         $backupDir = $base . '/storage/backups';
-        $backups = is_dir($backupDir) ? array_values(array_filter(glob($backupDir . '/*') ?: [], 'is_file')) : [];
-        usort($backups, static fn(string $a, string $b): int => (filemtime($b) ?: 0) <=> (filemtime($a) ?: 0));
-        $snapshot['backup'] = $backups === [] ? null : ['file' => basename($backups[0]), 'created_at' => gmdate('Y-m-d H:i:s', filemtime($backups[0]) ?: time()), 'size_bytes' => (int)(filesize($backups[0]) ?: 0)];
+        $backupFiles = is_dir($backupDir) ? array_values(array_filter(glob($backupDir . '/*') ?: [], 'is_file')) : [];
+        $runs = [];
+        foreach ($backupFiles as $file) {
+            $name = basename($file);
+            if (!preg_match('/^(db|media)_(.+)\\.(sql\\.gz|tar\\.gz)$/', $name, $match)) {
+                continue;
+            }
+            $timestamp = $match[2];
+            $runs[$timestamp][$match[1]] = $file;
+        }
+        if ($runs === []) {
+            $snapshot['backup'] = null;
+        } else {
+            uksort($runs, static fn(string $a, string $b): int => strcmp($b, $a));
+            $timestamp = (string) array_key_first($runs);
+            $run = $runs[$timestamp];
+            $dbFile = $run['db'] ?? null;
+            $mediaFile = $run['media'] ?? null;
+            $mtimes = array_map(static fn(?string $file): int => $file ? (int) (filemtime($file) ?: 0) : 0, [$dbFile, $mediaFile]);
+            $snapshot['backup'] = [
+                'timestamp' => $timestamp,
+                'file' => basename($dbFile ?: $mediaFile),
+                'database_file' => $dbFile ? basename($dbFile) : null,
+                'media_file' => $mediaFile ? basename($mediaFile) : null,
+                'complete' => $dbFile !== null && $mediaFile !== null,
+                'created_at' => gmdate('Y-m-d H:i:s', max($mtimes)),
+                'size_bytes' => array_sum(array_map(static fn(?string $file): int => $file ? (int) (filesize($file) ?: 0) : 0, [$dbFile, $mediaFile])),
+            ];
+        }
+        $rootId = trim((string) (Config::getSettings()['app']['root_user'] ?? ''));
+        $snapshot['capabilities'] = [
+            'root_maintenance' => $rootId !== '' && $userId !== null && hash_equals($rootId, $userId),
+            'developer_tools' => (string) (Config::getSettings()['app']['env'] ?? 'production') !== 'production',
+        ];
         return $snapshot;
     }
 
@@ -187,21 +236,21 @@ final class AdminOperationsService extends AdminConsoleServiceBase
     public function triggerApiTests(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
-        $scriptPath = dirname(__DIR__, 2) . '/app/Console/ApiTestSuite.php';
+        $scriptPath = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\') . '/app/Console/ApiTestSuite.php';
         return $this->runCliScript($scriptPath, '', $moderatorId, 'api_tests', 'Manual API test suite execution triggered');
     }
 
     public function triggerOpenApi(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
-        $scriptPath = dirname(__DIR__, 2) . '/app/Console/generate_openapi.php';
+        $scriptPath = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\') . '/app/Console/generate_openapi.php';
         return $this->runCliScript($scriptPath, '', $moderatorId, 'openapi', 'Manual OpenAPI spec generation triggered');
     }
 
     public function triggerSeedData(?string $moderatorId = null): array
     {
         $this->ensureRootUser($moderatorId);
-        $scriptPath = dirname(__DIR__, 2) . '/app/Console/seed_default_data.php';
+        $scriptPath = rtrim((string) (Config::getSettings()['app']['base_path'] ?? dirname(__DIR__, 3)), '/\\') . '/app/Console/seed_default_data.php';
         return $this->runCliScript($scriptPath, '', $moderatorId, 'seed_data', 'Default data seeding triggered');
     }
 }
