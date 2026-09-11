@@ -27,6 +27,26 @@ final class AdminOperationsService extends AdminConsoleServiceBase
         return $this->withMeta($result['items'], $result['total'], $page, $perPage);
     }
 
+    /**
+     * A queue page visit acknowledges the failures visible to that moderator.
+     * The marker is audited instead of adding another column to system_jobs.
+     */
+    public function markQueueFailuresSeen(string $moderatorId): void
+    {
+        $moderatorId = trim($moderatorId);
+        if ($moderatorId === '') {
+            return;
+        }
+
+        $this->repo->createModerationAction(
+            $moderatorId,
+            'system',
+            'queue',
+            'view_failures',
+            'Queue failures viewed'
+        );
+    }
+
     public function retryQueueJob(int $id, string $moderatorId): void
     {
         $this->pdo->beginTransaction();

@@ -6611,6 +6611,50 @@
                 ]
             }
         },
+        "/admin/queue/failures/seen": {
+            "post": {
+                "summary": "Admin Mark Queue Failures as Seen",
+                "tags": [
+                    "Admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseEnvelope"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation or Client error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseEnvelope"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Authentication required"
+                    },
+                    "403": {
+                        "description": "Forbidden - Insufficient permissions"
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/system/health": {
             "get": {
                 "summary": "Admin Get System Health",

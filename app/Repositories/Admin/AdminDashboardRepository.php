@@ -14,6 +14,25 @@ final class AdminDashboardRepository extends AdminRepositoryBase
     public function summaryKpis(): array
     {
         $todayViews = $this->queryValue("SELECT metric_value FROM analytics_snapshots_daily WHERE metric_name = 'total_views' ORDER BY stat_date DESC LIMIT 1");
+
+        // Keep moderation counters together with the core KPIs so the panel
+        // can render one compact summary without issuing separate requests.
+        $blogNotDeleted = $this->blogsNotDeletedCondition('b');
+        $blogDeleted = $this->blogsDeletedCondition('b');
+        $blogSummary = $this->queryOne(
+            'SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN b.status IN ("draft", "pending") AND ' . $blogNotDeleted . ' THEN 1 ELSE 0 END) AS pending_total,
+                SUM(CASE WHEN b.status IN ("rejected", "hidden") OR ' . $blogDeleted . ' THEN 1 ELSE 0 END) AS closed_total
+             FROM blogs b'
+        );
+        $reportSummary = $this->queryOne(
+            'SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN status IN ("pending", "reviewing") THEN 1 ELSE 0 END) AS pending_total,
+                SUM(CASE WHEN status IN ("resolved", "rejected") THEN 1 ELSE 0 END) AS closed_total
+             FROM reports'
+        );
         
         // Fetch Performance & Health. The dashboard should still render while
         // the first analytics rollup (or a fresh schema) is not available.
@@ -79,10 +98,14 @@ final class AdminDashboardRepository extends AdminRepositoryBase
             'chapters_total' => $this->count('SELECT COUNT(*) FROM chapters'),
             'comments_total' => $this->count('SELECT COUNT(*) FROM comments'),
             'today_content_views_total' => (int)($todayViews ?? 0),
-            'blogs_pending_total' => $this->count('SELECT COUNT(*) FROM blogs WHERE approved = 0'),
+            'blogs_total' => (int) ($blogSummary['total'] ?? 0),
+            'blogs_pending_total' => (int) ($blogSummary['pending_total'] ?? 0),
+            'blogs_closed_total' => (int) ($blogSummary['closed_total'] ?? 0),
             'queue_pending_total' => $this->count("SELECT COUNT(*) FROM system_jobs WHERE status = 'pending'"),
             'queue_failed_total' => $this->count("SELECT COUNT(*) FROM system_jobs WHERE status = 'failed'"),
-            'reports_pending_total' => $this->count("SELECT COUNT(*) FROM reports WHERE status IN ('pending', 'reviewing')"),
+            'reports_total' => (int) ($reportSummary['total'] ?? 0),
+            'reports_pending_total' => (int) ($reportSummary['pending_total'] ?? 0),
+            'reports_closed_total' => (int) ($reportSummary['closed_total'] ?? 0),
             'audit_24h_total' => $this->count('SELECT COUNT(*) FROM system_audit_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)'),
             'funnel' => [
                 'home_to_content_pct' => $homeToContent,
@@ -103,6 +126,47 @@ final class AdminDashboardRepository extends AdminRepositoryBase
             ],
             'top_contents_7d' => $topContents
         ];
+    }
+
+    /**
+     * Counts failed jobs that have not been seen by the current moderator.
+     * A view marker is written to admin_actions, so no schema change is
+     * required and a new failure (failed_at after the marker) is visible.
+     */
+    public function unseenFailedQueueCount(?string $moderatorUserId = null): int
+    {
+        $fallback = $this->count("SELECT COUNT(*) FROM system_jobs WHERE status = 'failed'");
+        $moderatorUserId = trim((string) $moderatorUserId);
+        if ($moderatorUserId === '') {
+            return $fallback;
+        }
+
+        try {
+            $seen = $this->pdo->prepare(
+                'SELECT MAX(created_at)
+                 FROM admin_actions
+                 WHERE moderator_user_id = :moderator_user_id
+                   AND target_type = "system"
+                   AND target_id = "queue"
+                   AND action = "view_failures"'
+            );
+            $seen->execute(['moderator_user_id' => $moderatorUserId]);
+            $seenAt = $seen->fetchColumn();
+            if ($seenAt === false || $seenAt === null || (string) $seenAt === '') {
+                return $fallback;
+            }
+
+            $stmt = $this->pdo->prepare(
+                'SELECT COUNT(*)
+                 FROM system_jobs
+                 WHERE status = "failed"
+                   AND COALESCE(failed_at, updated_at, created_at) > :seen_at'
+            );
+            $stmt->execute(['seen_at' => (string) $seenAt]);
+            return (int) $stmt->fetchColumn();
+        } catch (\Throwable) {
+            return $fallback;
+        }
     }
 
     public function topViewedStats(int $days, int $limit): array

@@ -153,11 +153,15 @@
                     class="nav-icon bi bi-journal-bookmark-fill me-2 text-primary"
                   ></i>
                   <p class="mb-0">
-                    İçerik <i class="nav-arrow bi bi-chevron-right"></i>
+                    İçerik Yönetimi
+                    <i class="nav-arrow bi bi-chevron-right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview flex-column gap-1">
-                  <li class="nav-item">
+                  <li
+                    class="nav-item"
+                    data-requires-permission="admin.panel.access"
+                  >
                     <a
                       href="/panel/series"
                       class="nav-link rounded"
@@ -166,7 +170,7 @@
                       <i
                         class="nav-icon bi bi-journal-richtext me-2 text-primary"
                       ></i>
-                      <p class="mb-0">İçerik & Bölümler</p>
+                      <p class="mb-0">Seriler &amp; Bölümler</p>
                     </a>
                   </li>
                   <li
@@ -182,17 +186,38 @@
                       <p class="mb-0">Tür & Etiketler</p>
                     </a>
                   </li>
-                  <li class="nav-item">
+                </ul>
+              </li>
+              <li class="nav-item">
+                <a
+                  href="#"
+                  class="nav-link rounded"
+                  role="button"
+                  aria-expanded="false"
+                >
+                  <i class="nav-icon bi bi-shield-check me-2 text-danger"></i>
+                  <p class="mb-0">
+                    Moderasyon <i class="nav-arrow bi bi-chevron-right"></i>
+                  </p>
+                </a>
+                <ul class="nav nav-treeview flex-column gap-1">
+                  <li
+                    class="nav-item"
+                    data-requires-permission="admin.panel.access"
+                  >
                     <a
                       href="/panel/blogs"
                       class="nav-link rounded"
                       data-route="blogs"
                     >
                       <i class="nav-icon bi bi-newspaper me-2 text-warning"></i>
-                      <p class="mb-0">Blog Moderasyonu</p>
+                      <p class="mb-0">Bloglar</p>
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <li
+                    class="nav-item"
+                    data-requires-permission="admin.panel.access"
+                  >
                     <a
                       href="/panel/comments"
                       class="nav-link rounded"
@@ -201,7 +226,7 @@
                       <i
                         class="nav-icon bi bi-chat-square-quote-fill me-2 text-danger"
                       ></i>
-                      <p class="mb-0">Yorum Moderasyonu</p>
+                      <p class="mb-0">Yorumlar</p>
                     </a>
                   </li>
                   <li
@@ -214,7 +239,7 @@
                       data-route="reports"
                     >
                       <i class="nav-icon bi bi-flag-fill me-2 text-danger"></i>
-                      <p class="mb-0">Raporlar & Şikâyetler</p>
+                      <p class="mb-0">Raporlar</p>
                     </a>
                   </li>
                 </ul>
@@ -228,12 +253,15 @@
                 >
                   <i class="nav-icon bi bi-people-fill me-2 text-success"></i>
                   <p class="mb-0">
-                    Kullanıcı ve Yetki
+                    Kullanıcılar & Yetkiler
                     <i class="nav-arrow bi bi-chevron-right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview flex-column gap-1">
-                  <li class="nav-item">
+                  <li
+                    class="nav-item"
+                    data-requires-permission="admin.panel.access"
+                  >
                     <a
                       href="/panel/user"
                       class="nav-link rounded"
@@ -242,7 +270,20 @@
                       <i
                         class="nav-icon bi bi-person-vcard-fill me-2 text-success"
                       ></i>
-                      <p class="mb-0">Kullanıcılar & Roller</p>
+                      <p class="mb-0">Kullanıcılar</p>
+                    </a>
+                  </li>
+                  <li
+                    class="nav-item"
+                    data-requires-permission="admin.panel.access"
+                  >
+                    <a
+                      href="/panel/user/roles"
+                      class="nav-link rounded"
+                      data-route="user-roles"
+                    >
+                      <i class="nav-icon bi bi-person-gear me-2 text-success"></i>
+                      <p class="mb-0">Roller & İzinler</p>
                     </a>
                   </li>
                 </ul>
@@ -256,7 +297,7 @@
                 >
                   <i class="nav-icon bi bi-shop me-2 text-warning"></i>
                   <p class="mb-0">
-                    Mağaza ve Finans
+                    Mağaza &amp; Finans
                     <i class="nav-arrow bi bi-chevron-right"></i>
                   </p>
                 </a>
@@ -271,7 +312,7 @@
                       data-route="monetization"
                     >
                       <i class="nav-icon bi bi-coin me-2 text-warning"></i>
-                      <p class="mb-0">Para Kazanma & Mağaza</p>
+                      <p class="mb-0">Mağaza</p>
                     </a>
                   </li>
                   <li
@@ -300,7 +341,7 @@
                 >
                   <i class="nav-icon bi bi-cpu-fill me-2 text-info"></i>
                   <p class="mb-0">
-                    Sistem <i class="nav-arrow bi bi-chevron-right"></i>
+                    Operasyon <i class="nav-arrow bi bi-chevron-right"></i>
                   </p>
                 </a>
                 <ul class="nav nav-treeview flex-column gap-1">
@@ -344,7 +385,7 @@
                       data-route="uploads"
                     >
                       <i class="nav-icon bi bi-images me-2 text-primary"></i>
-                      <p class="mb-0">System Uploads</p>
+                      <p class="mb-0">Medya / Yüklemeler</p>
                     </a>
                   </li>
                 </ul>
@@ -385,7 +426,7 @@
                       data-route="webhook"
                     >
                       <i class="nav-icon bi bi-broadcast me-2 text-info"></i>
-                      <p class="mb-0">Webhook Yönetimi</p>
+                      <p class="mb-0">Webhooklar</p>
                     </a>
                   </li>
                   <li
@@ -2531,7 +2572,7 @@ ${pages}</textarea>
           <template data-if is-truthy="is_published">
             <a
               class="btn btn-outline-primary mt-4"
-              href="${public_url}"
+              data-preview-live
               target="_blank"
               rel="noopener"
               ><i class="bi bi-box-arrow-up-right me-1"></i>Canlı sayfayı aç</a
@@ -2573,7 +2614,7 @@ ${pages}</textarea>
           <template data-if is-truthy="is_published"
             ><a
               class="btn btn-outline-primary mt-4"
-              href="${public_url}"
+              data-preview-live
               target="_blank"
               rel="noopener"
               ><i class="bi bi-box-arrow-up-right me-1"></i>Canlı sayfayı aç</a
@@ -3453,148 +3494,92 @@ ${admin_note}</textarea>
           ></div>
           <!-- KPI Cards -->
           <div class="row g-3 mb-4">
-            <div class="col-lg-2 col-md-4 col-sm-6">
-              <div
-                class="card border-0 shadow-sm bg-primary text-white p-3 rounded-3"
-              >
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="col-lg-4 col-md-6">
+              <div class="card border-0 shadow-sm bg-primary text-white p-3 rounded-3 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                   <div>
-                    <p
-                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
-                    >
-                      Toplam Kullanıcı
-                    </p>
-                    <h3 class="mb-0 fw-bold" data-text="overview.total_users">
-                      0
-                    </h3>
+                    <p class="mb-1 text-white-50 small text-uppercase fw-semibold">Toplam Kullanıcı</p>
+                    <h3 class="mb-0 fw-bold" data-text="overview.total_users">0</h3>
                   </div>
                   <i class="bi bi-people-fill fs-1 opacity-50"></i>
                 </div>
+                <a href="/panel/user" class="btn btn-sm btn-light text-primary mt-3 align-self-start" data-panel-link data-requires-permission="admin.panel.access">
+                  <i class="bi bi-arrow-right-circle me-1"></i> Kullanıcıları incele
+                </a>
               </div>
             </div>
-            <div class="col-lg-2 col-md-4 col-sm-6">
-              <div
-                class="card border-0 shadow-sm bg-success text-white p-3 rounded-3"
-              >
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="col-lg-4 col-md-6">
+              <div class="card border-0 shadow-sm bg-success text-white p-3 rounded-3 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                   <div>
-                    <p
-                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
-                    >
-                      Toplam İçerik
-                    </p>
-                    <h3
-                      class="mb-0 fw-bold"
-                      data-text="overview.total_contents"
-                    >
-                      0
-                    </h3>
+                    <p class="mb-1 text-white-50 small text-uppercase fw-semibold">Toplam İçerik</p>
+                    <h3 class="mb-0 fw-bold" data-text="overview.total_contents">0</h3>
                   </div>
                   <i class="bi bi-journal-bookmark-fill fs-1 opacity-50"></i>
                 </div>
+                <a href="/panel/series" class="btn btn-sm btn-light text-success mt-3 align-self-start" data-panel-link data-requires-permission="admin.panel.access">
+                  <i class="bi bi-arrow-right-circle me-1"></i> İçerikleri incele
+                </a>
               </div>
             </div>
-            <div class="col-lg-2 col-md-4 col-sm-6">
-              <div
-                class="card border-0 shadow-sm bg-warning text-dark p-3 rounded-3"
-              >
-                <div class="d-flex justify-content-between align-items-center">
+            <div class="col-lg-4 col-md-6">
+              <div class="card border-0 shadow-sm bg-warning text-dark p-3 rounded-3 h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3">
                   <div>
-                    <p
-                      class="mb-1 text-dark-50 small text-uppercase fw-semibold"
-                    >
-                      Toplam Bölüm
-                    </p>
-                    <h3
-                      class="mb-0 fw-bold"
-                      data-text="overview.total_chapters"
-                    >
-                      0
-                    </h3>
+                    <p class="mb-1 text-dark-50 small text-uppercase fw-semibold">Toplam Bölüm</p>
+                    <h3 class="mb-0 fw-bold" data-text="overview.total_chapters">0</h3>
                   </div>
                   <i class="bi bi-collection-fill fs-1 opacity-50"></i>
                 </div>
+                <a href="/panel/series" class="btn btn-sm btn-light text-dark mt-3 align-self-start" data-panel-link data-requires-permission="admin.panel.access">
+                  <i class="bi bi-arrow-right-circle me-1"></i> Serileri incele
+                </a>
               </div>
             </div>
-            <div class="col-lg-2 col-md-4 col-sm-6">
-              <div
-                class="card border-0 shadow-sm bg-danger text-white p-3 rounded-3"
-              >
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p
-                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
-                    >
-                      Onay Bekleyen Blog
-                    </p>
-                    <h3 class="mb-0 fw-bold" data-text="overview.queue_pending">
-                      0
-                    </h3>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-lg-4 col-md-6">
+              <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-transparent border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+                  <h5 class="card-title fw-bold mb-0"><i class="bi bi-newspaper text-danger me-2"></i>Bloglar</h5>
+                  <a href="/panel/blogs" class="btn btn-sm btn-outline-danger" data-panel-link data-requires-permission="admin.panel.access" title="Blogları incele"><i class="bi bi-arrow-up-right-circle"></i><span class="visually-hidden"> Blogları incele</span></a>
+                </div>
+                <div class="card-body px-4">
+                  <div class="row text-center g-2">
+                    <div class="col-4"><small class="text-secondary d-block">Toplam</small><strong class="fs-5" data-text="overview.blogs_total">0</strong></div>
+                    <div class="col-4"><small class="text-secondary d-block">Bekleyen</small><strong class="fs-5 text-warning" data-text="overview.blogs_pending">0</strong></div>
+                    <div class="col-4"><small class="text-secondary d-block" title="Reddedilen, gizlenen veya silinen">Kapalı</small><strong class="fs-5 text-secondary" data-text="overview.blogs_closed">0</strong></div>
                   </div>
-                  <i class="bi bi-newspaper fs-1 opacity-50"></i>
                 </div>
               </div>
             </div>
-            <div class="col-lg-2 col-md-4 col-sm-6">
-              <div
-                class="card border-0 shadow-sm bg-info text-white p-3 rounded-3"
-              >
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p
-                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
-                    >
-                      Aktif Okuyucu (7 gün)
-                    </p>
-                    <h3
-                      class="mb-0 fw-bold"
-                      data-text="analytics.unique_visitors_weekly"
-                    >
-                      0
-                    </h3>
+            <div class="col-lg-4 col-md-6">
+              <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-transparent border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+                  <h5 class="card-title fw-bold mb-0"><i class="bi bi-flag-fill text-danger me-2"></i>Raporlar</h5>
+                  <a href="/panel/reports" class="btn btn-sm btn-outline-danger" data-panel-link data-requires-permission="admin.panel.access" title="Raporları incele"><i class="bi bi-arrow-up-right-circle"></i><span class="visually-hidden"> Raporları incele</span></a>
+                </div>
+                <div class="card-body px-4">
+                  <div class="row text-center g-2">
+                    <div class="col-4"><small class="text-secondary d-block">Toplam</small><strong class="fs-5" data-text="overview.reports_total">0</strong></div>
+                    <div class="col-4"><small class="text-secondary d-block">Bekleyen</small><strong class="fs-5 text-warning" data-text="overview.reports_pending">0</strong></div>
+                    <div class="col-4"><small class="text-secondary d-block" title="Çözülen veya reddedilen">Kapalı</small><strong class="fs-5 text-secondary" data-text="overview.reports_closed">0</strong></div>
                   </div>
-                  <i class="bi bi-person-check-fill fs-1 opacity-50"></i>
                 </div>
               </div>
             </div>
-            <div class="col-lg-2 col-md-4 col-sm-6">
-              <div
-                class="card border-0 shadow-sm bg-secondary text-white p-3 rounded-3"
-              >
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p
-                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
-                    >
-                      Hatalı Kuyruk İşi
-                    </p>
-                    <h3 class="mb-0 fw-bold" data-text="overview.queue_failed">
-                      0
-                    </h3>
-                  </div>
-                  <i class="bi bi-exclamation-triangle-fill fs-1 opacity-50"></i>
+            <div class="col-lg-4 col-md-6">
+              <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-transparent border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+                  <h5 class="card-title fw-bold mb-0"><i class="bi bi-stack text-info me-2"></i>Queue</h5>
+                  <a href="/panel/ops" class="btn btn-sm btn-outline-info" data-panel-link data-requires-permission="admin.panel.access" title="Queue işlemlerini incele"><i class="bi bi-arrow-up-right-circle"></i><span class="visually-hidden"> Queue işlemlerini incele</span></a>
                 </div>
-              </div>
-            </div>
-            <div class="col-lg-2 col-md-4 col-sm-6">
-              <div
-                class="card border-0 shadow-sm bg-dark text-white p-3 rounded-3"
-              >
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p
-                      class="mb-1 text-white-50 small text-uppercase fw-semibold"
-                    >
-                      Açık Rapor
-                    </p>
-                    <h3
-                      class="mb-0 fw-bold"
-                      data-text="overview.reports_pending"
-                    >
-                      0
-                    </h3>
+                <div class="card-body px-4">
+                  <div class="row text-center g-2">
+                    <div class="col-6"><small class="text-secondary d-block">Bekleyen</small><strong class="fs-5 text-warning" data-text="overview.queue_pending">0</strong></div>
+                    <div class="col-6"><small class="text-secondary d-block" title="Bu yönetici tarafından daha önce görülmüş hatalar bu sayıdan çıkarılır">Hatalı</small><strong class="fs-5 text-danger" data-text="overview.queue_failed">0</strong></div>
                   </div>
-                  <i class="bi bi-flag-fill fs-1 opacity-50"></i>
                 </div>
               </div>
             </div>
@@ -6424,7 +6409,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when change admin.js code
-        await import("/assets/js/admin.js?41");
+        await import("/assets/js/admin.js?44");
         loader?.remove();
       } catch (error) {
         console.error("Admin panel yüklenemedi:", error);

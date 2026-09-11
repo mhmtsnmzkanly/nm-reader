@@ -169,6 +169,7 @@ $endpoints = [
     ['PUT', '/admin/series/{id}/pricing', 'Admin Update Series Pricing Strategy', 'Admin', true],
     ['PUT', '/admin/chapters/{id}/pricing', 'Admin Update Chapter Unlock Price', 'Admin', true],
     ['GET', '/admin/queue/jobs', 'Admin List Background Queue Jobs', 'Admin', true],
+    ['POST', '/admin/queue/failures/seen', 'Admin Mark Queue Failures as Seen', 'Admin', true],
     ['GET', '/admin/system/health', 'Admin Get System Health', 'Admin', true],
     ['POST', '/admin/queue/jobs/{id}/retry', 'Admin Retry Queue Job', 'Admin', true],
     ['POST', '/admin/queue/jobs/{id}/cancel', 'Admin Cancel Queue Job', 'Admin', true],

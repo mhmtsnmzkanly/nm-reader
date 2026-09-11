@@ -688,6 +688,7 @@ final class ApiTestSuite
             ['POST', '/api/v1/admin/rbac/permissions/assign', 'POST /api/v1/admin/rbac/permissions/assign'],
             ['DELETE', '/api/v1/admin/rbac/permissions', 'DELETE /api/v1/admin/rbac/permissions'],
             ['GET', '/api/v1/admin/queue/jobs', 'GET /api/v1/admin/queue/jobs'],
+            ['POST', '/api/v1/admin/queue/failures/seen', 'POST /api/v1/admin/queue/failures/seen'],
             ['GET', '/api/v1/admin/system/health', 'GET /api/v1/admin/system/health'],
             ['POST', '/api/v1/admin/queue/jobs/1/retry', 'POST /api/v1/admin/queue/jobs/{id}/retry'],
             ['POST', '/api/v1/admin/queue/jobs/1/cancel', 'POST /api/v1/admin/queue/jobs/{id}/cancel'],

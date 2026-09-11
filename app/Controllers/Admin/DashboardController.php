@@ -13,7 +13,8 @@ final class DashboardController extends AdminController
 {
     public function overview(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->dashboardService->overview());
+            $userId = trim((string) $request->getAttribute('user_id'));
+            return ResponseHelper::success($this->dashboardService->overview($userId !== '' ? $userId : null));
         }
 
     /**
@@ -27,7 +28,7 @@ final class DashboardController extends AdminController
             $limit = max(1, min(30, (int) ($query['limit'] ?? 10)));
 
             return ResponseHelper::success([
-                'overview' => $this->dashboardService->overview(),
+                'overview' => $this->dashboardService->overview((string) $request->getAttribute('user_id')),
                 'insights' => [
                     'views' => $this->dashboardService->viewStats($days, $limit),
                     'blogs' => $this->dashboardService->blogStats($days, $limit),
@@ -84,7 +85,8 @@ final class DashboardController extends AdminController
     
     public function metricsSnapshot(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
-            return ResponseHelper::success($this->dashboardService->overview());
+            $userId = trim((string) $request->getAttribute('user_id'));
+            return ResponseHelper::success($this->dashboardService->overview($userId !== '' ? $userId : null));
         }
     
     public function metricsInsights(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

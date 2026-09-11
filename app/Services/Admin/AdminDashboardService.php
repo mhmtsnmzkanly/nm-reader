@@ -20,7 +20,7 @@ use App\Services\Admin\AdminConsoleServiceBase;
 /** Domain service extracted from the legacy admin console service. */
 final class AdminDashboardService extends AdminConsoleServiceBase
 {
-    public function overview(): array
+    public function overview(?string $moderatorUserId = null): array
     {
         // Lazy timer: check whether the 60-second aggregation interval elapsed.
         $this->checkAndAutoTriggerAnalytics();
@@ -28,6 +28,9 @@ final class AdminDashboardService extends AdminConsoleServiceBase
         $data = $this->cache->remember(AdminConsoleServiceBase::CACHE_KEY_KPI, AdminConsoleServiceBase::CACHE_TTL_KPI, function () {
             return $this->repo->summaryKpis();
         });
+        // This value is intentionally not kept in the shared KPI cache: the
+        // "seen" marker belongs to the current moderator.
+        $data['queue_failed_unseen_total'] = $this->repo->unseenFailedQueueCount($moderatorUserId);
     
         // Split data into the structure expected by admin.js
         return [
@@ -35,9 +38,15 @@ final class AdminDashboardService extends AdminConsoleServiceBase
                 'users_total' => $data['users_total'] ?? 0,
                 'contents_total' => $data['contents_total'] ?? 0,
                 'chapters_total' => $data['chapters_total'] ?? 0,
+                'blogs_total' => $data['blogs_total'] ?? 0,
                 'blogs_pending_total' => $data['blogs_pending_total'] ?? 0,
+                'blogs_closed_total' => $data['blogs_closed_total'] ?? 0,
+                'queue_pending_total' => $data['queue_pending_total'] ?? 0,
                 'queue_failed_total' => $data['queue_failed_total'] ?? 0,
+                'queue_failed_unseen_total' => $data['queue_failed_unseen_total'] ?? 0,
+                'reports_total' => $data['reports_total'] ?? 0,
                 'reports_pending_total' => $data['reports_pending_total'] ?? 0,
+                'reports_closed_total' => $data['reports_closed_total'] ?? 0,
             ],
             'metrics' => [
                 'funnel' => [

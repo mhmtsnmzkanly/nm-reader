@@ -76,9 +76,14 @@ const store = createStore({
     total_users: 0,
     total_contents: 0,
     total_chapters: 0,
+    blogs_total: 0,
+    blogs_pending: 0,
+    blogs_closed: 0,
+    reports_total: 0,
+    reports_pending: 0,
+    reports_closed: 0,
     queue_pending: 0,
     queue_failed: 0,
-    reports_pending: 0,
   },
   topContents: [],
   analytics: {
@@ -217,6 +222,16 @@ function applyPermissionVisibility(root = document) {
       .map((value) => value.trim())
       .filter(Boolean);
     element.hidden = required.length > 0 && !hasPermission(...required);
+  });
+
+  // A treeview group is useful only when at least one direct child is
+  // available. This prevents empty headings from leaking the panel's route
+  // structure to users who do not have any permission in that group.
+  root.querySelectorAll("#panel-sidebar-nav > .nav-item").forEach((group) => {
+    const submenu = group.querySelector(":scope > .nav-treeview");
+    if (!submenu) return;
+    const children = Array.from(submenu.querySelectorAll(":scope > .nav-item"));
+    group.hidden = !children.some((child) => !child.hidden);
   });
 }
 
@@ -2026,7 +2041,7 @@ async function loadChapterPreviewPage(seriesId, chapterId) {
       ? `/${encodeURIComponent(seriesType)}/${encodeURIComponent(seriesSlug)}/chapter/${encodeURIComponent(chapterNumber)}`
       : "#";
 
-  mountEditorPage(
+  const page = mountEditorPage(
     `Önizleme: Bölüm ${chapterNumber}`,
     {
       name: "panel-chapter-preview",
@@ -2058,6 +2073,10 @@ async function loadChapterPreviewPage(seriesId, chapterId) {
       },
     },
   );
+  const liveLink = page.querySelector("[data-preview-live]");
+  if (liveLink && isPublished && publicUrl !== "#") {
+    liveLink.setAttribute("href", safeLocalPath(publicUrl));
+  }
 }
 
 async function loadBlogPreviewPage(blogId) {
@@ -2086,7 +2105,10 @@ async function loadBlogPreviewPage(blogId) {
     hidden: "bg-dark-subtle text-dark",
   };
 
-  mountEditorPage(`Önizleme: ${blog.title || blogId}`, {
+  const publicUrl = isPublished
+    ? safeLocalPath(`/blogs/${encodeURIComponent(String(blog.slug))}`)
+    : "#";
+  const page = mountEditorPage(`Önizleme: ${blog.title || blogId}`, {
     name: "panel-blog-preview",
     context: {
       has_cover: coverImage !== "#",
@@ -2099,11 +2121,11 @@ async function loadBlogPreviewPage(blogId) {
       status_badge:
         statusClasses[blog.status] || "bg-secondary-subtle text-secondary",
       is_published: isPublished,
-      public_url: isPublished
-        ? `/blogs/${encodeURIComponent(String(blog.slug))}`
-        : "#",
+      public_url: publicUrl,
     },
   });
+  const liveLink = page.querySelector("[data-preview-live]");
+  if (liveLink && publicUrl !== "#") liveLink.setAttribute("href", publicUrl);
 }
 
 async function loadLikersPage(targetType, targetId, pageNumber = 1) {
@@ -3481,16 +3503,39 @@ async function loadDashboardData() {
           formatCount(overviewData.kpis?.chapters_total),
         );
         store.set(
-          "overview.queue_pending",
+          "overview.blogs_total",
+          formatCount(overviewData.kpis?.blogs_total),
+        );
+        store.set(
+          "overview.blogs_pending",
           formatCount(overviewData.kpis?.blogs_pending_total),
         );
         store.set(
-          "overview.queue_failed",
-          formatCount(overviewData.kpis?.queue_failed_total),
+          "overview.blogs_closed",
+          formatCount(overviewData.kpis?.blogs_closed_total),
+        );
+        store.set(
+          "overview.reports_total",
+          formatCount(overviewData.kpis?.reports_total),
         );
         store.set(
           "overview.reports_pending",
           formatCount(overviewData.kpis?.reports_pending_total),
+        );
+        store.set(
+          "overview.reports_closed",
+          formatCount(overviewData.kpis?.reports_closed_total),
+        );
+        store.set(
+          "overview.queue_pending",
+          formatCount(overviewData.kpis?.queue_pending_total),
+        );
+        store.set(
+          "overview.queue_failed",
+          formatCount(
+            overviewData.kpis?.queue_failed_unseen_total ??
+              overviewData.kpis?.queue_failed_total,
+          ),
         );
         store.set("overview.funnel", metrics.funnel || {});
         store.set("topContents", metrics.top_contents_7d || []);
@@ -3916,6 +3961,14 @@ async function loadQueueJobsData(page = 1) {
     const response = queueResult.value;
     const health = healthResult.status === "fulfilled" ? healthResult.value : null;
     assertCurrentPage(requestEpoch);
+    if (opsQueueFailuresMarkedEpoch !== requestEpoch) {
+      try {
+        await api("/queue/failures/seen", { method: "POST" });
+      } catch {
+        // A view marker must never prevent the operations page from loading.
+      }
+      if (requestEpoch === pageEpoch) opsQueueFailuresMarkedEpoch = requestEpoch;
+    }
     store.batch(() => {
       store.set("queueJobsList", responseItems(response));
       store.set("queueMeta", responseMeta(response));
@@ -3950,6 +4003,7 @@ async function loadQueueJobsData(page = 1) {
         clearInterval(opsAutoRefreshTimer);
         opsAutoRefreshTimer = null;
       }
+      opsQueueFailuresMarkedEpoch = null;
     };
   } catch (error) {
     if (error?.name === "AbortError") return;
@@ -3977,6 +4031,7 @@ async function loadConfigData() {
 
 let logAutoRefreshTimer = null;
 let opsAutoRefreshTimer = null;
+let opsQueueFailuresMarkedEpoch = null;
 
 // 5. Global Action Handlers
 const handlers = {
@@ -5225,16 +5280,19 @@ function navigate() {
   }
   store.set("currentRoute", resolved.route);
 
-  let activeNavLink = null;
   const activeSection = resolved.section || resolved.route || "dashboard";
-  document.querySelectorAll("#panel-sidebar-nav a[data-route]").forEach((a) => {
-    if (a.getAttribute("data-route") === activeSection) {
-      a.classList.add("active-nav-link");
-      activeNavLink = a;
-    } else {
-      a.classList.remove("active-nav-link");
-    }
-  });
+  const navLinks = Array.from(
+    document.querySelectorAll("#panel-sidebar-nav a[data-route]"),
+  );
+  // Prefer an exact route match (for example `user-roles`) over the
+  // section fallback (`user`) so nested pages highlight the right item.
+  const activeNavLink =
+    navLinks.find((a) => a.getAttribute("data-route") === resolved.route) ||
+    navLinks.find((a) => a.getAttribute("data-route") === activeSection) ||
+    null;
+  navLinks.forEach((a) =>
+    a.classList.toggle("active-nav-link", a === activeNavLink),
+  );
   const activeNavGroup = activeNavLink
     ?.closest(".nav-treeview")
     ?.closest(".nav-item");

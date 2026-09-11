@@ -18,6 +18,12 @@ final class OperationsController extends AdminController
             $result = $this->operationsService->listQueueJobs($page, $perPage, isset($query['status']) ? (string)$query['status'] : null, (string)($query['q'] ?? ''), isset($query['job_type']) ? (string) $query['job_type'] : null);
             return ResponseHelper::paginate($result['items'], $page, $perPage, $result['meta']['total'] ?? null);
         }
+
+    public function markQueueFailuresSeen(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+        {
+            $this->operationsService->markQueueFailuresSeen((string) $request->getAttribute('user_id'));
+            return ResponseHelper::success();
+        }
     
     public function systemHealth(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {

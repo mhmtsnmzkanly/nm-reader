@@ -1054,6 +1054,7 @@ final class Config
             $group->post("/rbac/permissions/assign", [AdminUsersController::class, "assignPermissionToRole"])->add(new CriticalActionMiddleware())->add($perm(["admin.permissions.grant"]));
             $group->delete("/rbac/permissions", [AdminUsersController::class, "revokePermissionFromRole"])->add(new CriticalActionMiddleware())->add($perm(["admin.permissions.revoke"]));
             $group->get("/queue/jobs", [AdminOperationsController::class, "queueJobs"])->add($perm(["admin.panel.access"]));
+            $group->post("/queue/failures/seen", [AdminOperationsController::class, "markQueueFailuresSeen"])->add($perm(["admin.panel.access"]));
             $group->get("/system/health", [AdminOperationsController::class, "systemHealth"])->add($perm(["admin.health.view"]));
             $group->post("/queue/jobs/{id:[0-9]+}/retry", [AdminOperationsController::class, "retryQueueJob"])->add($perm(["admin.jobs.run"]));
             $group->post("/queue/jobs/{id:[0-9]+}/cancel", [AdminOperationsController::class, "cancelQueueJob"])->add($perm(["admin.jobs.run"]));

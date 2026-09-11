@@ -225,6 +225,7 @@ All `/api/v1/admin/*` endpoints require `AuthMiddleware` and `PermissionMiddlewa
 - `PUT /api/v1/admin/series/{id}/pricing` (`admin.shop.manage`)
 - `PUT /api/v1/admin/chapters/{id}/pricing` (`admin.shop.manage`)
 - `GET /api/v1/admin/queue/jobs` (`admin.panel.access`)
+- `POST /api/v1/admin/queue/failures/seen` (`admin.panel.access`) — marks the current moderator's visible queue failures as seen
 - `GET /api/v1/admin/system/health` (`admin.health.view`)
 - `POST /api/v1/admin/queue/jobs/{id}/retry` (`admin.jobs.run`)
 - `POST /api/v1/admin/queue/jobs/{id}/cancel` (`admin.jobs.run`)
