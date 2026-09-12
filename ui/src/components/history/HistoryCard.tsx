@@ -68,7 +68,7 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ item, onRemove }) => {
             <Badge variant="gold" size="sm" className="uppercase font-bold tracking-wider text-[9px] px-1.5 py-0.5">
               {contentType}
             </Badge>
-            {rating && (
+            {Boolean(rating && rating > 0) && (
               <span className="flex items-center gap-1 text-[11px] font-mono text-amber-500 font-semibold">
                 <Star className="w-3 h-3 fill-amber-500" />
                 {rating.toFixed(1)}
@@ -116,7 +116,7 @@ export const HistoryCard: React.FC<HistoryCardProps> = ({ item, onRemove }) => {
                   <CheckCircle2 className="w-3 h-3" /> %100
                 </span>
               ) : (
-                <>%{progress} {lastPage && totalPages ? `(${lastPage}/${totalPages} ${t('reader.page') || 'p'})` : ''}</>
+                <>%{progress} {Boolean(lastPage && totalPages) ? `(${lastPage}/${totalPages} ${t('reader.page') || 'p'})` : ''}</>
               )}
             </span>
           </div>

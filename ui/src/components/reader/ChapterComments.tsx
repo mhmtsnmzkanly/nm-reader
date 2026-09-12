@@ -73,7 +73,7 @@ export const ChapterComments: React.FC<ChapterCommentsProps> = ({
             <h3 className="font-serif font-bold text-lg text-[var(--text-primary)]">
               {t('comments.title')}
             </h3>
-            {chapterNumber && (
+            {Boolean(chapterNumber !== undefined && chapterNumber !== null && chapterNumber !== '') && (
               <span className="text-xs font-mono text-[var(--text-muted)]">
                 {t('chapters.chapterNumber', { number: chapterNumber })} • {comments.length} {t('comments.title').toLowerCase()}
               </span>

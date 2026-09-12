@@ -137,7 +137,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
           </Link>
           <div className="flex items-center justify-between mt-1 text-[11px] text-[var(--text-muted)] font-mono">
             <span>{formattedDate}</span>
-            {content.total_chapters && (
+            {Boolean(content.total_chapters && content.total_chapters > 0) && (
               <span>{t('content.chaptersCount', { count: content.total_chapters })}</span>
             )}
           </div>

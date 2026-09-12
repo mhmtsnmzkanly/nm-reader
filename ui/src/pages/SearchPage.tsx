@@ -127,7 +127,7 @@ export const SearchPage: React.FC = () => {
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-xs font-bold text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-colors self-start md:self-auto cursor-pointer"
         >
           <Filter className="w-4 h-4 text-[var(--accent-color)]" />
-          {t('search.filterTitle')} {(selectedGenres.length > 0 || selectedTags.length > 0 || statusParam) && `(${selectedGenres.length + selectedTags.length + (statusParam ? 1 : 0)})`}
+          {t('search.filterTitle')} {Boolean(selectedGenres.length > 0 || selectedTags.length > 0 || statusParam) && `(${selectedGenres.length + selectedTags.length + (statusParam ? 1 : 0)})`}
         </button>
       </div>
 

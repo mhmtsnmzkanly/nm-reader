@@ -78,7 +78,7 @@ export const ContentMetadata: React.FC<ContentMetadataProps> = ({ content, chapt
       label: t('contentMetadata.status'),
       value: statusLabel,
     },
-    ...(content.release_year
+    ...(content.release_year && String(content.release_year) !== '0'
       ? [
           {
             icon: <Calendar className="w-4 h-4 text-[var(--accent-color)]" />,

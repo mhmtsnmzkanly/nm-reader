@@ -144,7 +144,7 @@ export const MyBlogsPage: React.FC = () => {
                     <div className="flex items-center gap-2 text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider">
                       <Calendar className="w-3 h-3" />
                       <span>{formatDate(b.created_at || b.published_at || '')}</span>
-                      {b.read_time && (
+                      {Boolean(b.read_time && b.read_time > 0) && (
                         <>
                           <span>•</span>
                           <span>{t('blog.readingTime', { min: b.read_time })}</span>

@@ -149,7 +149,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                     <span>{t('membersOnly.badge')}</span>
                   </span>
                 )}
-                {content.release_year && (
+                {Boolean(content.release_year && String(content.release_year) !== '0') && (
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-mono font-bold bg-black/75 text-white shadow-md backdrop-blur-xs border border-white/20">
                     {content.release_year}
                   </span>
@@ -413,7 +413,7 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
           title={content.title}
           badge={typeLabels[content.type] || content.type}
           meta={
-            content.release_year
+            content.release_year && String(content.release_year) !== '0'
               ? `${content.release_year} • ★ ${ratingAvg.toFixed(1)}/10`
               : `★ ${ratingAvg.toFixed(1)}/10`
           }

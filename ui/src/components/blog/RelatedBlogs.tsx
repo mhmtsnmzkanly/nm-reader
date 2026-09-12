@@ -119,7 +119,7 @@ export const RelatedBlogs: React.FC<RelatedBlogsProps> = ({ currentBlogId, slug,
                   </div>
                 )}
 
-                {blog.read_time && (
+                {Boolean(blog.read_time && blog.read_time > 0) && (
                   <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-lg bg-black/60 text-white text-[10px] font-mono backdrop-blur-xs flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{t('blog.readingTime', { min: blog.read_time })}</span>

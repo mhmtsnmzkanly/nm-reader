@@ -190,7 +190,7 @@ export const BlogDetailPage: React.FC = () => {
               <span>•</span>
               <Calendar className="w-3.5 h-3.5" />
               <span>{formatDate(blog.created_at || '')}</span>
-              {blog.read_time && (
+              {Boolean(blog.read_time && blog.read_time > 0) && (
                 <>
                   <span>•</span>
                   <Clock className="w-3.5 h-3.5 text-[var(--accent-color)]" />
