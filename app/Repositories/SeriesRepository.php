@@ -793,11 +793,11 @@ final class SeriesRepository
     public function getContentTotalViews(string $contentId): int
     {
         $sql = 'SELECT (
-                    COALESCE((SELECT COUNT(*) FROM analytics_series_views WHERE content_id = :content_id), 0) +
-                    COALESCE((SELECT COUNT(*) FROM analytics_chapters_views acv INNER JOIN chapters ch ON ch.id = acv.chapter_id WHERE ch.content_id = :content_id), 0)
+                    COALESCE((SELECT COUNT(*) FROM analytics_series_views WHERE content_id = ?), 0) +
+                    COALESCE((SELECT COUNT(*) FROM analytics_chapters_views acv INNER JOIN chapters ch ON ch.id = acv.chapter_id WHERE ch.content_id = ?), 0)
                 ) AS total_views';
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['content_id' => $contentId]);
+        $stmt->execute([$contentId, $contentId]);
         return (int) ($stmt->fetchColumn() ?: 0);
     }
 
