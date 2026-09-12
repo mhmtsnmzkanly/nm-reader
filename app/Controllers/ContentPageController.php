@@ -94,6 +94,8 @@ final class ContentPageController extends BasePageController
             'type' => 'book', 'image' => $cover, 'keywords' => $keywords, 'json_ld' => $jsonLd,
             'canonical' => $this->absoluteUrl($request, sprintf('/%s/%s', $type, $slug)),
         ];
+        $content['total_views'] = (int) ($content['total_views'] ?? 0);
+        $content['views'] = $content['total_views'];
         $contentBootstrap = OutputSanitizer::sanitizeFields($content, ['title', 'description']);
         $chaptersBootstrap = $this->seriesService->chaptersByType($type, $slug, 1, 100, $userId);
         $relatedBootstrap = array_slice(array_values(array_filter(

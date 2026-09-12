@@ -122,6 +122,10 @@ final class SeriesService
         $this->series->recordContentView((string) $content['id'], hash('sha256', $ip));
         $this->analytics->track('content_view', null, 'content', (string) $content['id'], [], $ip);
 
+        $totalViews = $this->series->getContentTotalViews((string) $content['id']);
+        $content['total_views'] = $totalViews;
+        $content['views'] = $totalViews;
+
         $parseTaxonomy = static function(?string $raw): array {
             if ($raw === null || $raw === '') return [];
             $items = [];
@@ -171,6 +175,10 @@ final class SeriesService
 
         $this->series->recordContentView((string) $row['id'], hash('sha256', $ip));
         $this->analytics->track('content_view', $userId, 'content', (string) $row['id'], [], $ip);
+
+        $totalViews = $this->series->getContentTotalViews((string) $row['id']);
+        $row['total_views'] = $totalViews;
+        $row['views'] = $totalViews;
 
         $content = ContentDto::fromArray($row)->toArray();
 

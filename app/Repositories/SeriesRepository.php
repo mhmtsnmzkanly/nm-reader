@@ -157,6 +157,10 @@ final class SeriesRepository
                     c.artist,
                     c.country,
                     c.release_year,
+                    (
+                        COALESCE((SELECT COUNT(*) FROM analytics_series_views asv WHERE asv.content_id = c.id), 0) +
+                        COALESCE((SELECT COUNT(*) FROM analytics_chapters_views acv INNER JOIN chapters ch ON ch.id = acv.chapter_id WHERE ch.content_id = c.id), 0)
+                    ) AS total_views,
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
                     GROUP_CONCAT(DISTINCT CONCAT(t.name, "::", t.slug, "::", COALESCE(t.ui_config, "{}")) ORDER BY t.name SEPARATOR "||") AS series_tags_raw
                 FROM series c
@@ -201,6 +205,10 @@ final class SeriesRepository
                     c.artist,
                     c.country,
                     c.release_year,
+                    (
+                        COALESCE((SELECT COUNT(*) FROM analytics_series_views asv WHERE asv.content_id = c.id), 0) +
+                        COALESCE((SELECT COUNT(*) FROM analytics_chapters_views acv INNER JOIN chapters ch ON ch.id = acv.chapter_id WHERE ch.content_id = c.id), 0)
+                    ) AS total_views,
                     GROUP_CONCAT(DISTINCT CONCAT(g.name, "::", g.slug, "::", COALESCE(g.ui_config, "{}")) ORDER BY g.name SEPARATOR "||") AS series_genres_raw,
                     GROUP_CONCAT(DISTINCT CONCAT(t.name, "::", t.slug, "::", COALESCE(t.ui_config, "{}")) ORDER BY t.name SEPARATOR "||") AS series_tags_raw,
                     (CASE WHEN ucf.user_id IS NOT NULL THEN 1 ELSE 0 END) AS is_followed
@@ -777,6 +785,20 @@ final class SeriesRepository
             'content_id' => $contentId,
             'ip_hash' => $ipHash,
         ]);
+    }
+
+    /**
+     * Gets the total view count for a series (series page views + chapter views).
+     */
+    public function getContentTotalViews(string $contentId): int
+    {
+        $sql = 'SELECT (
+                    COALESCE((SELECT COUNT(*) FROM analytics_series_views WHERE content_id = :content_id), 0) +
+                    COALESCE((SELECT COUNT(*) FROM analytics_chapters_views acv INNER JOIN chapters ch ON ch.id = acv.chapter_id WHERE ch.content_id = :content_id), 0)
+                ) AS total_views';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['content_id' => $contentId]);
+        return (int) ($stmt->fetchColumn() ?: 0);
     }
 
     /**

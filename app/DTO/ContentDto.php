@@ -57,7 +57,8 @@ final class ContentDto
         public readonly ?string $country = null,
         public readonly ?string $releaseYear = null,
         public readonly ?string $description = null,
-        public readonly ?string $createdAt = null
+        public readonly ?string $createdAt = null,
+        public readonly int $totalViews = 0
     ) {
     }
 
@@ -88,7 +89,8 @@ final class ContentDto
             country: $row['country'] ?? null,
             releaseYear: (string) ($row['release_year'] ?? ''),
             description: $row['description'] ?? null,
-            createdAt: $row['created_at'] ?? null
+            createdAt: $row['created_at'] ?? null,
+            totalViews: (int) ($row['total_views'] ?? $row['views'] ?? 0)
         );
     }
 
@@ -124,6 +126,8 @@ final class ContentDto
             'country' => $this->country,
             'release_year' => $this->releaseYear,
             'description' => $this->description,
+            'views' => $this->totalViews,
+            'total_views' => $this->totalViews,
             'created_at' => $this->createdAt,
         ];
     }
