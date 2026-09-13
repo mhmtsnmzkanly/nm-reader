@@ -2,11 +2,11 @@
   "name": "nm-reader-ui-workspace",
   "private": true,
   "scripts": {
-    "lint:admin": "npm --prefix admin run lint",
-    "lint:client": "npm --prefix client run lint",
-    "build:admin": "npm --prefix admin run build",
-    "build:client": "npm --prefix client run build",
-    "clean:admin": "npm --prefix admin run clean",
-    "clean:client": "npm --prefix client run clean"
+    "lint:admin": "npm --prefix admin run lint --",
+    "lint:client": "npm --prefix client run lint --",
+    "build:admin": "npm --prefix admin run build --",
+    "build:client": "npm --prefix client run build --",
+    "clean:admin": "npm --prefix admin run clean --",
+    "clean:client": "npm --prefix client run clean --"
   }
 }

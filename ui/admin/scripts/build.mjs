@@ -8,21 +8,21 @@ const adminRoot = path.resolve(scriptDirectory, "..");
 const outputRoot = path.resolve(adminRoot, "../../public");
 const outputJsRoot = path.join(outputRoot, "assets", "js");
 const outputAdminJsRoot = path.join(outputJsRoot, "admin");
-const outputModuleRoot = path.join(outputAdminJsRoot, "modules");
-const legacyModuleRoot = path.join(outputJsRoot, "modules");
 const outputAdminCssRoot = path.join(outputRoot, "assets", "css", "admin");
 
 function minifyHtml(source) {
   // Keep the cache-buster comments while removing section comments and the
   // whitespace between tags. Script/style contents are left untouched.
-  return source
-    .replace(/<!--(?!\s*Increase \+1)[\s\S]*?-->/g, "")
-    .replace(/>\s+</g, "><")
-    .trim() + "\n";
+  return source.split(/(<(?:script|style|pre|textarea)\b[^>]*>[\s\S]*?<\/(?:script|style|pre|textarea)\s*>)/gi)
+    .map((part, index) => index % 2 ? part : part
+      .replace(/<!--(?!\s*Increase \+1)[\s\S]*?-->/g, "")
+      .replace(/^[\t ]+$/gm, "")
+      .replace(/>\s+</g, "><"))
+    .join("").trim() + "\n";
 }
 
 async function writeJavaScript(sourcePath, destinationPath) {
-  await build({
+  const result = await build({
     entryPoints: [sourcePath],
     outfile: destinationPath,
     bundle: true,
@@ -33,43 +33,41 @@ async function writeJavaScript(sourcePath, destinationPath) {
     minify: true,
     legalComments: "none",
     sourcemap: false,
+    write: false,
   });
+  return result.outputFiles[0].contents;
 }
 
-async function writeCss(sourcePath, destinationPath) {
+async function writeCss(sourcePath) {
   const source = await fs.readFile(sourcePath, "utf8");
   const result = await transform(source, {
     loader: "css",
     minify: true,
     sourcemap: false,
   });
-  await fs.mkdir(path.dirname(destinationPath), { recursive: true });
-  await fs.writeFile(destinationPath, result.code, "utf8");
+  return result.code;
 }
 
 await fs.mkdir(outputAdminJsRoot, { recursive: true });
 await fs.mkdir(outputAdminCssRoot, { recursive: true });
 
-await writeJavaScript(
+const javascript = await writeJavaScript(
   path.join(adminRoot, "admin.js"),
   path.join(outputAdminJsRoot, "admin.js"),
 );
-await writeCss(
+const css = await writeCss(
   path.join(adminRoot, "admin.css"),
-  path.join(outputAdminCssRoot, "admin.css"),
 );
 
 const html = await fs.readFile(path.join(adminRoot, "admin.html"), "utf8");
+const minifiedHtml = minifyHtml(html);
+// Compile every input before replacing any existing build output.
+await fs.writeFile(path.join(outputAdminJsRoot, "admin.js"), javascript);
+await fs.writeFile(path.join(outputAdminCssRoot, "admin.css"), css, "utf8");
 await fs.writeFile(
   path.join(outputRoot, "admin.html"),
-  minifyHtml(html),
+  minifiedHtml,
   "utf8",
 );
-
-// Remove obsolete generated modules only after the replacement build succeeds.
-await fs.rm(outputModuleRoot, { recursive: true, force: true });
-await fs.rm(legacyModuleRoot, { recursive: true, force: true });
-await fs.rm(path.join(outputJsRoot, "admin.js"), { force: true });
-await fs.rm(path.join(outputRoot, "assets", "css", "admin.css"), { force: true });
 
 console.log("Admin build complete: 1 bundled JS, 1 CSS, 1 HTML file.");

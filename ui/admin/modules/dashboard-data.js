@@ -10,7 +10,7 @@ export function createDashboardDataController({
   destroyDashboardCharts,
   registerPageCleanup,
   translate = (_key, fallback) => fallback,
-  formatNumber = (value) => String(Number(value || 0)),
+  formatNumber: formatCount = (value) => String(Number(value || 0)),
   documentRef = globalThis.document,
 } = {}) {
   const document = documentRef;

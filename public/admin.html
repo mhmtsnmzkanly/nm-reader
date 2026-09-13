@@ -13,9 +13,12 @@
     /><link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/css/adminlte.min.css"
-    /><!-- Increase +1 when change css code --><link rel="stylesheet" href="/assets/css/admin/admin.css?12" /><script>
+    /><!-- Increase +1 when change css code --><link rel="stylesheet" href="/assets/css/admin/admin.css?12" />
+
+<script>
       window.__NMR_CONTEXT = %%NMR_CONTEXT_JSON%%;
-    </script></head><body class="layout-fixed sidebar-expand-lg bg-body-tertiary"><div class="app-wrapper"><nav class="app-header navbar navbar-expand bg-body border-bottom"><div class="container-fluid"><ul class="navbar-nav"><li class="nav-item"><a
+    </script>
+  </head><body class="layout-fixed sidebar-expand-lg bg-body-tertiary"><div class="app-wrapper"><nav class="app-header navbar navbar-expand bg-body border-bottom"><div class="container-fluid"><ul class="navbar-nav"><li class="nav-item"><a
                 class="nav-link"
                 data-lte-toggle="sidebar"
                 href="#"
@@ -769,7 +772,8 @@
                         maxlength="1000"
                         rows="4"
                       >
-${bio}</textarea></div><button type="submit" class="btn btn-primary w-100"><i class="bi bi-save me-2"></i><span data-i18n="admin.user.save_profile">Profili kaydet</span></button></form></div></div></div></div><div class="row g-3 mb-4"><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary"><i class="bi bi-chat-square-text me-1"></i><span data-i18n="admin.comments">Yorumlar</span></div><div class="fs-3 fw-bold">${comments_total}</div></div></div></div><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary"><i class="bi bi-newspaper me-1"></i><span data-i18n="admin.blogs">Bloglar</span></div><div class="fs-3 fw-bold">${blogs_total}</div></div></div></div><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div
+${bio}</textarea>
+                    </div><button type="submit" class="btn btn-primary w-100"><i class="bi bi-save me-2"></i><span data-i18n="admin.user.save_profile">Profili kaydet</span></button></form></div></div></div></div><div class="row g-3 mb-4"><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary"><i class="bi bi-chat-square-text me-1"></i><span data-i18n="admin.comments">Yorumlar</span></div><div class="fs-3 fw-bold">${comments_total}</div></div></div></div><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-secondary"><i class="bi bi-newspaper me-1"></i><span data-i18n="admin.blogs">Bloglar</span></div><div class="fs-3 fw-bold">${blogs_total}</div></div></div></div><div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div
                     class="d-flex justify-content-between align-items-start gap-2"
                   ><div><div class="small text-secondary"><i class="bi bi-shield-exclamation me-1"></i><span data-i18n="admin.user.penalties">Cezalar</span></div><div class="fs-3 fw-bold">${violations_total}</div></div><template data-if is-truthy="can_penalty"
                       ><a
@@ -857,7 +861,8 @@ ${bio}</textarea></div><button type="submit" class="btn btn-primary w-100"><i cl
                         maxlength="1000"
                         placeholder="Kararın gerekçesini yazın" data-i18n-attr="placeholder:admin.user.reason_placeholder"
                         required
-                      ></textarea><div class="form-text" data-i18n="admin.user.reason_limit">En fazla 1000 karakter.</div></div></div></div><div
+                      ></textarea>
+                      <div class="form-text" data-i18n="admin.user.reason_limit">En fazla 1000 karakter.</div></div></div></div><div
                   class="card-footer bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2"
                 ><a
                     class="btn btn-outline-secondary btn-lg"
@@ -887,7 +892,8 @@ ${bio}</textarea></div><button type="submit" class="btn btn-primary w-100"><i cl
                         rows="3"
                         maxlength="255"
                         required
-                      ></textarea></div></div><div class="card-footer bg-transparent text-end"><button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-2"></i><span data-i18n="admin.user.apply_transaction">İşlemi uygula</span></button></div></form></div></template
+                      ></textarea>
+                    </div></div><div class="card-footer bg-transparent text-end"><button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-2"></i><span data-i18n="admin.user.apply_transaction">İşlemi uygula</span></button></div></form></div></template
             ><template data-if is-truthy="can_load_packages"
               ><div class="col-xl-6"><form
                   id="panel-user-wallet-package-form"
@@ -910,7 +916,8 @@ ${bio}</textarea></div><button type="submit" class="btn btn-primary w-100"><i cl
                         rows="3"
                         maxlength="255"
                         required
-                      ></textarea></div></div><div class="card-footer bg-transparent text-end"><button type="submit" class="btn btn-info"><i class="bi bi-gift me-2"></i><span data-i18n="admin.user.grant_package">Paketi ver</span></button></div></form></div></template
+                      ></textarea>
+                    </div></div><div class="card-footer bg-transparent text-end"><button type="submit" class="btn btn-info"><i class="bi bi-gift me-2"></i><span data-i18n="admin.user.grant_package">Paketi ver</span></button></div></form></div></template
             ></div><div class="card border-0 shadow-sm"><div class="card-header bg-transparent py-3"><h5 class="mb-0"><i class="bi bi-clock-history me-2 text-secondary"></i><span data-i18n="admin.user.wallet_transactions">Cüzdan hareketleri</span></h5></div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th class="ps-4" data-i18n="admin.type">Tür</th><th data-i18n="admin.user.change">Değişim</th><th data-i18n="admin.user.balance_after">Son bakiye</th><th data-i18n="admin.user.reference">Referans</th><th data-i18n="admin.date">Tarih</th></tr></thead><tbody id="panel-user-wallet-transactions"></tbody></table></div></div><div class="card-footer bg-transparent"><div id="panel-user-wallet-pager"></div></div></div></partial></template><template id="tpl-panel-rows-wallet-transactions"
       ><template data-for each="items" as="item"
         ><tr><td><span class="badge bg-light text-dark border">${item.type}</span></td><td class="fw-semibold ${item.delta_class}">
@@ -945,7 +952,8 @@ ${bio}</textarea></div><button type="submit" class="btn btn-primary w-100"><i cl
             value="${alternative_titles}"
           /></div><div class="col-12"><label class="form-label" data-i18n="admin.field.description">Açıklama</label
           ><textarea class="form-control" name="description" rows="4">
-${description}</textarea></div><div class="col-md-6"><label class="form-label" data-i18n="admin.field.cover_path">Kapak görseli yolu</label
+${description}</textarea>
+        </div><div class="col-md-6"><label class="form-label" data-i18n="admin.field.cover_path">Kapak görseli yolu</label
           ><input
             class="form-control"
             name="cover_image"
@@ -1059,22 +1067,26 @@ ${description}</textarea></div><div class="col-md-6"><label class="form-label" d
             rows="3"
             placeholder="Okuyucuya gösterilecek ek not (isteğe bağlı)" data-i18n-attr="placeholder:admin.field.translator_note_placeholder"
           >
-${translator_note}</textarea></div><div class="col-12" data-chapter-body><label class="form-label" data-i18n="admin.field.body">Metin</label
+${translator_note}</textarea>
+        </div><div class="col-12" data-chapter-body><label class="form-label" data-i18n="admin.field.body">Metin</label
           ><textarea class="form-control" name="body" rows="8">
-${body}</textarea></div><div class="col-12" data-chapter-pages><label class="form-label" data-i18n="admin.field.pages">Görsel sayfaları</label
+${body}</textarea>
+        </div><div class="col-12" data-chapter-pages><label class="form-label" data-i18n="admin.field.pages">Görsel sayfaları</label
           ><input
             type="file"
             accept="image/*,.zip"
             multiple
             class="form-control mb-2"
             name="page_files"
-          /><div class="row g-2 mb-2" data-page-preview></div><textarea
+          /><div class="row g-2 mb-2" data-page-preview></div>
+<textarea
             class="form-control"
             name="pages"
             rows="6"
             placeholder="Görsel yolları (satır başına bir tane)" data-i18n-attr="placeholder:admin.field.pages_placeholder"
           >
-${pages}</textarea><div class="form-text"><span data-i18n="admin.field.pages_help">Önizleme kartlarındaki oklarla sıralayın veya bir kartı kaldırın.</span></div></div></div></template
+${pages}</textarea>
+          <div class="form-text"><span data-i18n="admin.field.pages_help">Önizleme kartlarındaki oklarla sıralayın veya bir kartı kaldırın.</span></div></div></div></template
     ><template id="tpl-panel-package-form"
       ><div class="row g-3"><div class="col-md-6"><label class="form-label" data-i18n="admin.field.package_name">Paket adı</label
           ><input class="form-control" name="name" value="${name}" required /></div><div class="col-md-3"><label class="form-label" data-i18n="admin.field.coin">Coin</label
@@ -1267,7 +1279,8 @@ ${pages}</textarea><div class="form-text"><span data-i18n="admin.field.pages_hel
                 rows="6"
                 maxlength="2000"
               >
-${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent d-flex justify-content-end"><button class="btn btn-primary" type="submit"><span data-i18n="admin.action.save">Kaydet</span></button></div></form></template
+${admin_note}</textarea>
+            </div></div></div><div class="card-footer bg-transparent d-flex justify-content-end"><button class="btn btn-primary" type="submit"><span data-i18n="admin.action.save">Kaydet</span></button></div></form></template
     ><template id="tpl-panel-series-breadcrumb"
       ><li class="breadcrumb-item"><a href="/panel" data-panel-link><span data-i18n="admin.navigation.panel">Panel</span></a></li><li class="breadcrumb-item"><a href="/panel/series" data-panel-link><span data-i18n="admin.navigation.contents">İçerikler</span></a></li><li class="breadcrumb-item active">${label}</li></template
     ><template id="tpl-panel-page-error"
@@ -1540,7 +1553,9 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
           ><tr><td class="text-center text-secondary">Kayıt bulunamadı</td></tr></template
         ></template
       ></template
-    ><template id="tpl-panel-audit-json"><pre class="bg-dark text-light rounded p-3 mb-0 text-wrap">${json}</pre></template><template id="tpl-panel-moderation-form"
+    ><template id="tpl-panel-audit-json">
+<pre class="bg-dark text-light rounded p-3 mb-0 text-wrap">${json}</pre>
+    </template><template id="tpl-panel-moderation-form"
       ><div class="row g-3"><div class="col-md-4"><label class="form-label">Hedef türü</label
           ><select class="form-select" name="target_type" required><option value="user">Kullanıcı</option><option value="content">İçerik</option><option value="chapter">Bölüm</option><option value="blog">Blog</option><option value="comment">Yorum</option><option value="system">Sistem</option></select></div><div class="col-md-4"><label class="form-label">Hedef ID</label
           ><input class="form-control" name="target_id" required /></div><div class="col-md-4"><label class="form-label">İşlem</label
@@ -1550,7 +1565,8 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
             placeholder="warn, hide, review..."
             required
           /></div><div class="col-12"><label class="form-label">Gerekçe</label
-          ><textarea class="form-control" name="reason" rows="4"></textarea></div></div
+          ><textarea class="form-control" name="reason" rows="4"></textarea>
+        </div></div
     ></template><template id="tpl-panel-chapters"
       ><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div class="btn-group btn-group-sm"><button
             type="button"
@@ -2113,11 +2129,13 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
                         data-task="seed-data"
                       >
                         Varsayılan Veriyi Ekle
-                      </button></div></div><pre
+                      </button></div></div>
+<pre
                     class="bg-dark text-light rounded p-3 mt-3 mb-0 panel-output"
                     id="panel-maintenance-output"
                   >
-İşlem çıktısı burada gösterilecek.</pre></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-map-fill text-info me-2"></i>Sitemap & SEO
+İşlem çıktısı burada gösterilecek.</pre>
+                </div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-map-fill text-info me-2"></i>Sitemap & SEO
                     Oluşturucu
                   </h5></div><div class="card-body px-4"><p class="text-secondary small">
                     Arama motorları için sitemap.xml dosyasını yeniden üretir.
@@ -2283,13 +2301,15 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
                       placeholder="En İyi Çevrimiçi Manga ve Novel Okuyucusu"
                     /></div><div class="col-12"><label class="form-label fw-semibold"
                       >Site Açıklaması (Meta Description)</label
-                    ><textarea
+                    >
+<textarea
                       class="form-control"
                       rows="2"
                       data-model="config.site_description"
                       maxlength="1000"
                       placeholder="Arama motorları için meta açıklama metni..."
-                    ></textarea></div><div class="col-12"><label class="form-label fw-semibold"
+                    ></textarea>
+                  </div><div class="col-12"><label class="form-label fw-semibold"
                       >Altbilgi (Footer) Metni</label
                     ><input
                       type="text"
@@ -2364,12 +2384,14 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
                         izinli IP'ler erişebilir.
                       </div></div></div><div class="col-12"><label class="form-label fw-semibold"
                       >Bakım Modu IP Beyaz Listesi</label
-                    ><textarea
+                    >
+<textarea
                       class="form-control font-monospace"
                       rows="3"
                       data-model="config.maintenance_whitelist_text"
                       placeholder="127.0.0.1&#10;::1"
-                    ></textarea><div class="form-text text-secondary">
+                    ></textarea>
+                    <div class="form-text text-secondary">
                       Her satıra bir IP adresi girin veya virgülle ayırın.
                     </div></div></div></div></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div
                 class="card-header bg-transparent py-3 border-bottom d-flex align-items-center"
@@ -2443,12 +2465,14 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
                       Kullanılabilir değişkenler: <code>{{site_name}}</code>,
                       <code>{{username}}</code></div></div><div class="col-12"><label class="form-label fw-semibold"
                       >Şifre Sıfırlama HTML Şablonu</label
-                    ><textarea
+                    >
+<textarea
                       class="form-control font-monospace small"
                       rows="5"
                       data-model="config.password_reset_body"
                       placeholder="HTML şablon içeriği..."
-                    ></textarea><div class="small text-secondary mt-1">
+                    ></textarea>
+                    <div class="small text-secondary mt-1">
                       Kullanılabilir değişkenler: <code>{{username}}</code>,
                       <code>{{site_name}}</code>, <code>{{action_url}}</code>,
                       <code>{{expires_in}}</code></div></div><div class="col-12"><label class="form-label fw-semibold"
@@ -2463,12 +2487,14 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
                       Kullanılabilir değişkenler: <code>{{site_name}}</code>,
                       <code>{{username}}</code></div></div><div class="col-12"><label class="form-label fw-semibold"
                       >E-Posta Doğrulama HTML Şablonu</label
-                    ><textarea
+                    >
+<textarea
                       class="form-control font-monospace small"
                       rows="5"
                       data-model="config.email_verification_body"
                       placeholder="HTML şablon içeriği..."
-                    ></textarea><div class="small text-secondary mt-1">
+                    ></textarea>
+                    <div class="small text-secondary mt-1">
                       Kullanılabilir değişkenler: <code>{{username}}</code>,
                       <code>{{site_name}}</code>, <code>{{action_url}}</code>,
                       <code>{{expires_in}}</code></div></div></div></div></div><div class="d-flex justify-content-end gap-2 mb-4"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet
@@ -2530,12 +2556,24 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-rbac" data="fields"></partial></div></div></partial></template><template id="tpl-panel-ownership-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-ownership" data="fields"></partial></div></div></partial></template><template id="tpl-panel-log-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-log" data="fields"></partial></div></div></partial></template><template id="tpl-panel-audit-json-page"
-      ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-audit-json" data="fields"></partial></div></div></partial></template><script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"></script><script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js"></script><script src="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/js/adminlte.min.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script><script type="module">
+      ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-audit-json" data="fields"></partial></div></div></partial></template>
+
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script type="module">
       const loader = document.getElementById("panel-bootstrap-loader");
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?214");
+        const admin = await import("/assets/js/admin/admin.js?216");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {
@@ -2544,4 +2582,5 @@ ${admin_note}</textarea></div></div></div><div class="card-footer bg-transparent
         if (message)
           message.textContent = "Panel yüklenemedi. Sayfayı yenileyin.";
       }
-    </script></body></html>
+    </script>
+  </body></html>

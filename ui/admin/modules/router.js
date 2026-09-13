@@ -62,7 +62,7 @@ export function isRouteLink(
   ) return false;
   if (
     element.hasAttribute("download") ||
-    (element.getAttribute("target") || "").toLowerCase() === "_blank"
+    !["", "_self"].includes((element.getAttribute("target") || "").toLowerCase())
   ) return false;
   const href = element.getAttribute("href") || "";
   if (!href || href.startsWith("#")) return false;
@@ -101,7 +101,7 @@ export function bindPanelNavigation({
     const candidate = target?.closest?.("a");
     const link = isRouteLink(candidate, basePath, locationRef) ? candidate : null;
     if (
-      !link ||
+      !link || event.defaultPrevented ||
       event.button !== 0 ||
       event.metaKey ||
       event.ctrlKey ||

@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { transform } from "esbuild";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const adminRoot = path.resolve(scriptDirectory, "..");
@@ -38,5 +39,16 @@ const html = await fs.readFile(path.join(adminRoot, "admin.html"), "utf8");
 if (!html.includes("window.__NMR_CONTEXT") || !html.includes("<template")) {
   throw new Error("Admin HTML shell is missing its context or templates.");
 }
-await fs.readFile(path.join(adminRoot, "admin.css"), "utf8");
+for (const script of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+  if (/\bsrc\s*=/.test(script[1])) continue;
+  await transform(script[2].replaceAll("%%NMR_CONTEXT_JSON%%", "{}"), {
+    loader: "js",
+    target: "esnext",
+  });
+}
+const css = await fs.readFile(path.join(adminRoot, "admin.css"), "utf8");
+const cssResult = await transform(css, { loader: "css" });
+if (cssResult.warnings.length) {
+  throw new Error(cssResult.warnings.map((warning) => warning.text).join("\n"));
+}
 console.log(`Admin lint passed: ${javascriptFiles.length} JavaScript files.`);
