@@ -1,3 +1,5 @@
+import { createCollectionTableRenderer } from "./collection-tables.js";
+
 /** Users list page controller; profile/penalty/wallet controllers stay separate. */
 export function createUsersListController({
   store,
@@ -16,6 +18,7 @@ export function createUsersListController({
   translate = (_key, fallback) => fallback,
   documentRef = globalThis.document,
 } = {}) {
+  const renderCollectionTable = createCollectionTableRenderer(setTableRows);
   function renderUsersTable() {
     const canInspect = hasPermission("admin.users.manage");
     const items = (store.get("usersList") || []).map((user) => ({
@@ -24,7 +27,7 @@ export function createUsersListController({
       inspect_class: canInspect ? "" : "d-none",
       profile_url: `/panel/user/${encodeURIComponent(user.id)}`,
     }));
-    setTableRows("panel-users-list", "panel-rows-users", items, 6);
+    renderCollectionTable("users", items);
     renderPager(
       "panel-users-pager",
       store.get("usersMeta"),
@@ -36,7 +39,7 @@ export function createUsersListController({
   async function loadUsersData(page = 1) {
     const requestEpoch = getPageEpoch();
     const requestToken = requestGate.begin();
-    setTableRows?.("panel-users-list", "", [], 6, { loading: true });
+    renderCollectionTable("users", [], { loading: true });
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -72,7 +75,7 @@ export function createUsersListController({
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (!requestGate.isCurrent(requestToken)) return;
-      setTableRows?.("panel-users-list", "", [], 6, {
+      renderCollectionTable("users", [], {
         error_message: error.message ||
           translate("admin.error.users_load", "Kullanıcılar yüklenemedi."),
       });

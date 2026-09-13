@@ -1,3 +1,5 @@
+import { createCollectionTableRenderer } from "./collection-tables.js";
+
 /** Collection data loaders for panel list pages. */
 export function createCollectionDataController({
   store,
@@ -22,20 +24,21 @@ export function createCollectionDataController({
   translate = (_key, fallback) => fallback,
   documentRef = globalThis.document,
 } = {}) {
+  const renderCollectionTable = createCollectionTableRenderer(setTableRows);
   const document = documentRef;
-  const showTableError = (id, colspan, error) => {
-    setTableRows?.(id, "", [], colspan, {
+  const showTableError = (name, error) => {
+    renderCollectionTable(name, [], {
       error_message: error?.message ||
         translate("admin.state.data_failed", "Veriler yüklenemedi."),
     });
   };
-  const showTableLoading = (id, colspan) => {
-    setTableRows?.(id, "", [], colspan, { loading: true });
+  const showTableLoading = (name) => {
+    renderCollectionTable(name, [], { loading: true });
   };
   async function loadSeriesData(page = 1) {
     const requestEpoch = getPageEpoch();
     const requestToken = seriesRequestGate.begin();
-    showTableLoading("panel-series-list", 6);
+    showTableLoading("series");
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -64,7 +67,7 @@ export function createCollectionDataController({
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (!seriesRequestGate.isCurrent(requestToken)) return;
-      showTableError("panel-series-list", 6, e);
+      showTableError("series", e);
       showToast(
         translate("admin.error.series_load", "İçerikler yüklenemedi: {message}", { message: e.message }),
         "danger",
@@ -75,7 +78,7 @@ export function createCollectionDataController({
   async function loadBlogsData(page = 1) {
     const requestEpoch = getPageEpoch();
     const requestToken = requestGates.blogs?.begin();
-    showTableLoading("panel-blogs-list", 5);
+    showTableLoading("blogs");
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -127,7 +130,7 @@ export function createCollectionDataController({
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (requestGates.blogs && !requestGates.blogs.isCurrent(requestToken)) return;
-      showTableError("panel-blogs-list", 5, e);
+      showTableError("blogs", e);
       showToast(
         translate("admin.error.blog_load", "Bloglar yüklenemedi: {message}", { message: e.message }),
         "danger",
@@ -138,7 +141,7 @@ export function createCollectionDataController({
   async function loadCommentsData(page = 1) {
     const requestEpoch = getPageEpoch();
     const requestToken = requestGates.comments?.begin();
-    showTableLoading("panel-comments-list", 6);
+    showTableLoading("comments");
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -177,7 +180,7 @@ export function createCollectionDataController({
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (requestGates.comments && !requestGates.comments.isCurrent(requestToken)) return;
-      showTableError("panel-comments-list", 6, e);
+      showTableError("comments", e);
       showToast(
         translate("admin.error.comment_load", "Yorumlar yüklenemedi: {message}", { message: e.message }),
         "danger",
@@ -188,7 +191,7 @@ export function createCollectionDataController({
   async function loadReportsData(page = 1) {
     const requestEpoch = getPageEpoch();
     const requestToken = requestGates.reports?.begin();
-    showTableLoading("panel-reports-list", 6);
+    showTableLoading("reports");
     try {
       const params = new URLSearchParams({
         page: String(Math.max(1, Number(page) || 1)),
@@ -217,7 +220,7 @@ export function createCollectionDataController({
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (requestGates.reports && !requestGates.reports.isCurrent(requestToken)) return;
-      showTableError("panel-reports-list", 6, error);
+      showTableError("reports", error);
       showToast(
         translate("admin.error.report_load", "Raporlar yüklenemedi: {message}", { message: error.message }),
         "danger",
@@ -228,7 +231,7 @@ export function createCollectionDataController({
   async function loadPackagesData() {
     const requestEpoch = getPageEpoch();
     const requestToken = requestGates.packages?.begin();
-    showTableLoading("panel-packages-list", 5);
+    showTableLoading("packages");
     try {
       const res = await api("/shop/packages");
       assertCurrentPage(requestEpoch);
@@ -249,7 +252,7 @@ export function createCollectionDataController({
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (requestGates.packages && !requestGates.packages.isCurrent(requestToken)) return;
-      showTableError("panel-packages-list", 5, e);
+      showTableError("packages", e);
       showToast(
         translate("admin.error.package_load", "Paketler yüklenemedi: {message}", { message: e.message }),
         "danger",
@@ -260,7 +263,7 @@ export function createCollectionDataController({
   async function loadFinanceData(page = 1) {
     const requestEpoch = getPageEpoch();
     const requestToken = requestGates.finance?.begin();
-    showTableLoading("panel-finance-list", 7);
+    showTableLoading("finance");
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -290,7 +293,7 @@ export function createCollectionDataController({
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (requestGates.finance && !requestGates.finance.isCurrent(requestToken)) return;
-      showTableError("panel-finance-list", 7, error);
+      showTableError("finance", error);
       showToast(
         translate("admin.error.finance_load", "Finans hareketleri alınamadı: {message}", { message: error.message }),
         "danger",
@@ -301,7 +304,7 @@ export function createCollectionDataController({
   async function loadLogsData(page = 1) {
     const requestEpoch = getPageEpoch();
     const requestToken = requestGates.logs?.begin();
-    showTableLoading("panel-log-body", 9);
+    showTableLoading("logs");
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -329,7 +332,7 @@ export function createCollectionDataController({
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (requestGates.logs && !requestGates.logs.isCurrent(requestToken)) return;
-      showTableError("panel-log-body", 9, e);
+      showTableError("logs", e);
       showToast(
         translate("admin.error.logs_load", "Loglar yüklenemedi: {message}", { message: e.message }),
         "danger",
@@ -340,7 +343,7 @@ export function createCollectionDataController({
   async function loadUploadsData(page = 1) {
     const requestEpoch = getPageEpoch();
     const requestToken = requestGates.uploads?.begin();
-    showTableLoading("panel-uploads-list", 7);
+    showTableLoading("uploads");
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -377,7 +380,7 @@ export function createCollectionDataController({
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (requestGates.uploads && !requestGates.uploads.isCurrent(requestToken)) return;
-      showTableError("panel-uploads-list", 7, error);
+      showTableError("uploads", error);
       showToast(
         translate("admin.error.upload_load", "Yüklemeler alınamadı: {message}", { message: error.message }),
         "danger",

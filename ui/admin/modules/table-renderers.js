@@ -1,3 +1,5 @@
+import { createCollectionTableRenderer } from "./collection-tables.js";
+
 /** Shared table presenters for panel collection pages. */
 export function createPanelTableRenderers({
   store,
@@ -13,6 +15,7 @@ export function createPanelTableRenderers({
   formatDateTime = (value) => String(value || "-"),
   documentRef = globalThis.document,
 } = {}) {
+  const renderCollectionTable = createCollectionTableRenderer(setTableRows);
   const document = documentRef;
   function renderSeriesTable() {
     const lifecycleLabel = {
@@ -57,7 +60,7 @@ export function createPanelTableRenderers({
         chapters_url: `/panel/series/${seriesId}/chapters`,
       };
     });
-    setTableRows("panel-series-list", "panel-rows-series", items, 6);
+    renderCollectionTable("series", items);
     renderPager(
       "panel-series-pager",
       store.get("seriesMeta"),
@@ -88,7 +91,7 @@ export function createPanelTableRenderers({
         delete_class: canModerate ? "" : "d-none",
       };
     });
-    setTableRows("panel-blogs-list", "panel-rows-blogs", items, 5);
+    renderCollectionTable("blogs", items);
     renderPager(
       "panel-blogs-pager",
       store.get("blogsMeta"),
@@ -134,7 +137,7 @@ export function createPanelTableRenderers({
         next_icon: nextStatus === "approved" ? "check-circle" : "eye-slash",
       };
     });
-    setTableRows("panel-comments-list", "panel-rows-comments", items, 7);
+    renderCollectionTable("comments", items);
     renderPager(
       "panel-comments-pager",
       store.get("commentsMeta"),
@@ -160,7 +163,7 @@ export function createPanelTableRenderers({
         detail_url: `/panel/reports/${Number(report.id)}`,
       };
     });
-    setTableRows("panel-reports-list", "panel-rows-reports", items, 7);
+    renderCollectionTable("reports", items);
     const meta = store.get("reportsMeta") || {};
     const counts = meta.counts || {};
     ["pending", "reviewing", "resolved", "rejected"].forEach((status) => {
@@ -184,11 +187,9 @@ export function createPanelTableRenderers({
   }
 
   function renderPackagesTable() {
-    setTableRows(
-      "panel-packages-list",
-      "panel-rows-packages",
+    renderCollectionTable(
+      "packages",
       (store.get("packagesList") || []).map((item) => ({ ...item })),
-      6,
     );
   }
 
@@ -223,7 +224,7 @@ export function createPanelTableRenderers({
         description_label: item.description || "-",
       };
     });
-    setTableRows("panel-finance-list", "panel-rows-finance", items, 8);
+    renderCollectionTable("finance", items);
     const summary = store.get("financeSummary") || {};
     const values = {
       circulating: summary.circulating_coin,
@@ -421,7 +422,7 @@ export function createPanelTableRenderers({
       actor_label: log.username || log.user_id || "-",
       duration_label: `${Number(log.duration_ms || 0)}ms`,
     }));
-    setTableRows("panel-audit-logs", "panel-rows-logs", items, 7);
+    renderCollectionTable("logs", items);
     renderPager(
       "panel-logs-pager",
       store.get("logsMeta"),
@@ -465,7 +466,7 @@ export function createPanelTableRenderers({
         can_delete: canDelete,
       };
     });
-    setTableRows("panel-uploads-list", "panel-rows-uploads", items, 9);
+    renderCollectionTable("uploads", items);
     renderPager(
       "panel-uploads-pager",
       store.get("uploadsMeta"),
