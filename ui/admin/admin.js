@@ -213,6 +213,7 @@ const adminApi = createAdminApi({
   getSignal: () => pageRequests.signal,
   getCsrfToken: () => csrfToken,
   assertCurrentPage,
+  translate: panelTranslate,
   reauthenticate: createAdminReauth({
     getCsrfToken: () => csrfToken,
     assertCurrentPage,
@@ -1059,7 +1060,11 @@ function triggerNavigate() {
   void navigate().catch((error) => {
     if (error?.name === "AbortError") return;
     console.error("Panel navigasyonu başarısız:", error);
-    showToast(error?.message || "Panel sayfası yüklenemedi.", "danger");
+    showToast(
+      error?.message ||
+        panelTranslate("admin.page.load_failed", "Panel sayfası yüklenemedi."),
+      "danger",
+    );
   });
 }
 let adminStartPromise = null;

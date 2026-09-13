@@ -266,9 +266,7 @@
         ><tr><td><a href="${item.detail_url}" data-panel-link>${item.title}</a></td><td>${item.type}</td><td>${item.views}</td><td>${item.comments}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-dashboard-monetization"
@@ -276,9 +274,7 @@
         ><tr><td>${item.title}</td><td>${item.unlocks}</td><td>${item.coins}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-dashboard-zero-searches"
@@ -286,9 +282,7 @@
         ><tr><td>${item.query}</td><td>${item.count}</td><td>${item.last_searched_at}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-dashboard-views"
@@ -296,9 +290,7 @@
         ><tr><td>${item.name}</td><td>${item.views}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-dashboard-reputation"
@@ -306,9 +298,7 @@
         ><tr><td>@${item.username}</td><td>${item.comments}</td><td>${item.score}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-dashboard-types"
@@ -316,9 +306,7 @@
         ><tr><td>${item.type}</td><td>${item.views}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-dashboard-chapters"
@@ -326,9 +314,7 @@
         ><tr><td>${item.content_title} #${item.chapter_number}</td><td>${item.views}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-dashboard-blog-authors"
@@ -336,9 +322,7 @@
         ><tr><td>@${item.username}</td><td>${item.approved}</td><td>${item.blogs}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-dashboard-blog-daily"
@@ -346,9 +330,7 @@
         ><tr><td>${item.day}</td><td>${item.created}</td><td>${item.approved}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3">
-              Kayıt bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-3"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-series"
@@ -393,9 +375,7 @@
             ></a></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              İçerik bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.content_empty">İçerik bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-users"
@@ -410,17 +390,15 @@
             ></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Kullanıcı bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.user_empty">Kullanıcı bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-user-comments"
       ><template data-for each="items" as="item"
         ><tr><td class="text-break"><span class="badge ${item.reply_badge_class}"
-              ><i class="bi bi-arrow-return-right me-1"></i>Yanıt</span
+              ><i class="bi bi-arrow-return-right me-1"></i><span data-i18n="admin.comment.reply">Yanıt</span></span
             >${item.body}<small class="${item.reply_reference_class}"
-              >Üst yorum: ${item.parent_reference}</small
+              ><span data-i18n="admin.comment.parent">Üst yorum:</span> ${item.parent_reference}</small
             ></td><td>${item.context_label}</td><td><span class="badge ${item.status_class}">${item.status_label}</span></td><td><span class="text-success">+${item.upvotes}</span> /
             <span class="text-danger">-${item.downvotes}</span></td><td class="text-nowrap">${item.created_at}</td><td class="text-end"><a
               class="btn btn-xs btn-outline-danger"
@@ -431,9 +409,7 @@
             ></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Yorum bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.comment_empty">Yorum bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-user-blogs"
@@ -453,9 +429,7 @@
             ></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Blog bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.blog_empty">Blog bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-user-violations"
@@ -468,9 +442,7 @@
             ></td><td class="text-break">${item.reason}</td><td>${item.moderator_label}</td><td class="text-nowrap">${item.created_at}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Ceza kaydı bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.violation_empty">Ceza kaydı bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-blogs"
@@ -507,16 +479,14 @@
             ><i class="bi bi-trash"></i></button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Blog bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.blog_empty">Blog bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-comments"
       ><template data-for each="items" as="item"
         ><tr><td>
             @${item.username}<small class="${item.reply_reference_class}"
-              ><i class="bi bi-arrow-return-right me-1"></i>Yanıt: ${item.parent_reference}</small
+              ><i class="bi bi-arrow-return-right me-1"></i><span data-i18n="admin.comment.reply_to">Yanıt:</span> ${item.parent_reference}</small
             ></td><td class="text-break">${item.body}</td><td>${item.context_label}</td><td><span class="badge ${item.status_class}">${item.status_label}</span></td><td>+${item.upvotes} / -${item.downvotes}</td><td>${item.created_at}</td><td class="text-end"><a
               class="btn btn-xs btn-outline-danger me-1"
               href="${item.likers_url}"
@@ -533,9 +503,7 @@
             </button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Yorum bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.comment_empty">Yorum bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-likers"
@@ -557,9 +525,7 @@
             ></td><td class="text-nowrap">${item.created_at}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="2" class="text-center text-secondary py-4">
-              Beğeni bulunamadı
-            </td></tr></template
+          ><tr><td colspan="2" class="text-center text-secondary py-4"><span data-i18n="admin.state.liker_empty">Beğeni bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-reports"
@@ -581,9 +547,7 @@
             ></a></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Rapor bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.report_empty">Rapor bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-packages"
@@ -596,9 +560,7 @@
             ></a></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Paket bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.package_empty">Paket bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-finance"
@@ -616,13 +578,11 @@
               data-id="${item.id}"
             ><i class="bi bi-arrow-counterclockwise"></i> İade</button
             ><span class="badge bg-secondary ms-1 ${item.refunded_class}"
-              >İade edildi</span
+              ><span data-i18n="admin.finance.refunded">İade edildi</span></span
             ></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              İşlem bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.transaction_empty">İşlem bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-queue"
@@ -637,7 +597,7 @@
               data-on-click="retryQueueJob"
               data-id="${item.id}"
               title="Yeniden dene" data-i18n-attr="title:admin.action.retry"
-              aria-label="Kuyruk işini yeniden dene"
+              aria-label="Kuyruk işini yeniden dene" data-i18n-attr="aria-label:admin.queue.retry"
             ><i class="bi bi-arrow-repeat"></i></button
             ><button
               type="button"
@@ -645,13 +605,11 @@
               data-on-click="cancelQueueJob"
               data-id="${item.id}"
               title="İptal et" data-i18n-attr="title:admin.action.cancel"
-              aria-label="Kuyruk işini iptal et"
+              aria-label="Kuyruk işini iptal et" data-i18n-attr="aria-label:admin.queue.cancel"
             ><i class="bi bi-x-lg"></i></button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Kuyruk boş
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.queue_empty">Kuyruk boş</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-logs"
@@ -664,9 +622,7 @@
             ></a></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Log bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.log_empty">Log bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-uploads"
@@ -711,9 +667,7 @@
             ><i class="bi bi-trash"></i></button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4">
-              Yükleme bulunamadı
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span data-i18n="admin.state.upload_empty">Yükleme bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-user-detail-content"><partial name="panel-page-shell" header="header"><ol slot="breadcrumb" class="breadcrumb mb-1 small"><li class="breadcrumb-item"><a href="/panel" data-panel-link><i class="bi bi-speedometer2 me-1"></i><span data-i18n="admin.navigation.panel">Panel</span></a></li><li class="breadcrumb-item"><a href="/panel/user" data-panel-link><i class="bi bi-people me-1"></i><span data-i18n="admin.navigation.users">Kullanıcılar</span></a></li><li class="breadcrumb-item active" aria-current="page">@${username_label}</li></ol><div class="row g-4 mb-4"><div class="col-xl-8"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="d-flex flex-wrap align-items-center gap-3"><img
@@ -907,7 +861,7 @@ ${bio}</textarea>
                       ><input
                         class="form-control"
                         name="cash_amount"
-                        placeholder="Örn. 99.90"
+                        placeholder="Örn. 99.90" data-i18n-attr="placeholder:admin.field.price_placeholder"
                       /></div><div class="mb-3"><label class="form-label fw-semibold" data-i18n="admin.user.grant_reason"
                         >Tanımlama nedeni</label
                       ><textarea
@@ -925,8 +879,7 @@ ${bio}</textarea>
           </td><td>${item.balance_after}</td><td>${item.reference_label}</td><td class="small text-secondary text-nowrap">${item.created_at}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="5" class="text-center text-secondary py-5"><i class="bi bi-inbox fs-3 d-block mb-2"></i>İşlem bulunamadı
-            </td></tr></template
+          ><tr><td colspan="5" class="text-center text-secondary py-5"><i class="bi bi-inbox fs-3 d-block mb-2"></i><span data-i18n="admin.state.transaction_empty">İşlem bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-content-form"
@@ -1147,15 +1100,13 @@ ${pages}</textarea>
             ></template
           ></div></div></template
     ><template id="tpl-panel-series-revisions"
-      ><div class="table-responsive panel-scroll-70"><table class="table table-sm align-middle"><thead class="table-dark position-sticky top-0"><tr><th>Tarih</th><th>Yönetici</th><th>İşlem</th><th>Başlık</th><th>Durum</th></tr></thead><tbody id="panel-series-revisions-rows"></tbody></table></div
+      ><div class="table-responsive panel-scroll-70"><table class="table table-sm align-middle"><thead class="table-dark position-sticky top-0"><tr><th data-i18n="admin.date">Tarih</th><th data-i18n="admin.user.admin">Yönetici</th><th data-i18n="admin.actions">İşlem</th><th data-i18n="admin.title">Başlık</th><th data-i18n="admin.status">Durum</th></tr></thead><tbody id="panel-series-revisions-rows"></tbody></table></div
     ></template><template id="tpl-panel-rows-series-revisions"
       ><template data-for each="items" as="item"
         ><tr><td>${item.created_at}</td><td>${item.moderator}</td><td><span class="badge bg-secondary">${item.action}</span></td><td>${item.title}</td><td>${item.status} / ${item.lifecycle_status}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="5" class="text-center text-secondary">
-              Revizyon bulunamadı
-            </td></tr></template
+          ><tr><td colspan="5" class="text-center text-secondary"><span data-i18n="admin.state.revision_empty">Revizyon bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-chapter-pages-preview"
@@ -1183,23 +1134,23 @@ ${pages}</textarea>
                     class="btn btn-outline-secondary"
                     data-page-move="up"
                     data-page-disabled="${item.first_disabled}"
-                    aria-label="Yukarı taşı"
+                    aria-label="Yukarı taşı" data-i18n-attr="aria-label:admin.action.move_up"
                   ><i class="bi bi-arrow-up"></i></button
                   ><button
                     type="button"
                     class="btn btn-outline-secondary"
                     data-page-move="down"
                     data-page-disabled="${item.last_disabled}"
-                    aria-label="Aşağı taşı"
+                    aria-label="Aşağı taşı" data-i18n-attr="aria-label:admin.action.move_down"
                   ><i class="bi bi-arrow-down"></i></button
                   ><button
                     type="button"
                     class="btn btn-outline-danger"
                     data-page-remove
-                    aria-label="Sayfayı kaldır"
+                    aria-label="Sayfayı kaldır" data-i18n-attr="aria-label:admin.action.remove_page"
                   ><i class="bi bi-trash"></i></button></div></div></div></div></template
         ><template data-else
-          ><div class="col-12"><div class="text-secondary small">Henüz görsel sayfası yok.</div></div></template
+          ><div class="col-12"><div class="text-secondary small"><span data-i18n="admin.state.pages_empty">Henüz görsel sayfası yok.</span></div></div></template
         ></template
       ></template
     ><template id="tpl-panel-chapter-preview"><div class="row g-4"><div class="col-12"><div class="d-flex flex-wrap align-items-center gap-2 mb-3"><span class="badge bg-primary">${type_label}</span><span class="badge bg-secondary">${publication_label}</span><span class="badge bg-warning text-dark"><i class="bi bi-coin me-1"></i>${price_label}</span><span class="badge bg-light text-dark border">${access_label}</span></div><h3 class="mb-2">${heading}</h3><p class="text-secondary mb-4"><i class="bi bi-book me-1"></i>${series_title}
@@ -1208,23 +1159,18 @@ ${pages}</textarea>
               class="border rounded-3 bg-body-tertiary p-4 lh-lg panel-preformatted"
             >${body}</article><template data-else><template data-if is-truthy="has_pages"><div class="row g-3"><template data-for each="pages" as="item"><div class="col-6 col-md-4 col-xl-3"><div class="card h-100 border shadow-sm"><div class="ratio ratio-3x4 bg-body-tertiary rounded-top overflow-hidden"><img
                             src="${item.url}"
-                            alt="Sayfa ${item.number}"
+                            alt="Sayfa ${item.number}" data-i18n-attr="alt:admin.preview.page_alt"
                             loading="lazy"
                             class="w-100 h-100 object-fit-contain"
-                          /></div><div class="card-body py-2 px-3 small text-secondary">
-                          Sayfa ${item.number}
-                        </div></div></div></template></div><template data-else><div class="alert alert-secondary mb-0">
-                    Bu bölüm için görsel sayfası bulunamadı.
-                  </div></template></template></template></template><template data-if is-truthy="has_translator_note"><div class="alert alert-info mt-4 mb-0"><strong><i class="bi bi-info-circle me-1"></i>Çevirmen notu</strong><div class="mt-2 panel-preformatted">${translator_note}</div></div></template><template data-if is-truthy="is_published"><a
+                          /></div><div class="card-body py-2 px-3 small text-secondary"><span data-i18n="admin.preview.page">Sayfa</span> ${item.number}
+                        </div></div></div></template></div><template data-else><div class="alert alert-secondary mb-0"><span data-i18n="admin.state.chapter_pages_empty">Bu bölüm için görsel sayfası bulunamadı.</span></div></template></template></template></template><template data-if is-truthy="has_translator_note"><div class="alert alert-info mt-4 mb-0"><strong><i class="bi bi-info-circle me-1"></i><span data-i18n="admin.field.translator_note">Çevirmen notu</span></strong><div class="mt-2 panel-preformatted">${translator_note}</div></div></template><template data-if is-truthy="is_published"><a
               class="btn btn-outline-primary mt-4"
               data-preview-live
               href="#"
               target="_blank"
               rel="noopener"
               ><i class="bi bi-box-arrow-up-right me-1"></i><span data-i18n="admin.preview.open_live">Canlı sayfayı aç</span></a
-            ><template data-else><div class="alert alert-warning mt-4 mb-0">
-                Bu bölüm henüz halka açık değil; yalnızca yönetici önizlemesindesiniz.
-              </div></template></template></div></div></template><template id="tpl-panel-blog-preview"
+            ><template data-else><div class="alert alert-warning mt-4 mb-0"><span data-i18n="admin.preview.chapter_private">Bu bölüm henüz halka açık değil; yalnızca yönetici önizlemesindesiniz.</span></div></template></template></div></div></template><template id="tpl-panel-blog-preview"
       ><div class="row g-4"><div class="col-12"><template data-if is-truthy="has_cover"
             ><div class="ratio ratio-21x9 bg-body-tertiary rounded-3 overflow-hidden mb-4"><img
                 src="${cover_image}"
@@ -1246,7 +1192,7 @@ ${pages}</textarea>
               href="#"
               target="_blank"
               rel="noopener"
-              ><i class="bi bi-box-arrow-up-right me-1"></i>Canlı sayfayı aç</a
+              ><i class="bi bi-box-arrow-up-right me-1"></i><span data-i18n="admin.preview.open_live">Canlı sayfayı aç</span></a
             ><template data-else
               ><div class="alert alert-warning mt-4 mb-0"><span data-i18n="admin.preview.blog_private">Bu blog henüz halka açık değil; yalnızca yönetici önizlemesindesiniz.</span></div></template
             ></template
@@ -1288,15 +1234,12 @@ ${admin_note}</textarea>
           class="btn btn-outline-secondary btn-lg"
           href="${parent_path}"
           data-panel-link
-          ><i class="bi bi-arrow-left me-1"></i>Geri dön</a
+          ><i class="bi bi-arrow-left me-1"></i><span data-i18n="admin.action.back">Geri dön</span></a
         ><div class="alert alert-danger mt-4">${error_message}</div></div></template
     ><template id="tpl-panel-page-error-shell"
       ><partial name="panel-page-shell" header="header"><div class="p-4"><div class="alert alert-danger" role="alert">${error_message}</div></div></partial></template
     ><template id="tpl-panel-env-page-content"
-      ><div class="alert alert-warning small">
-        Bu sayfa yalnızca root yönetici içindir. Hassas değerler maskeli
-        gösterilir ve boş bırakılırsa korunur.
-      </div><form id="panel-config-env-form"><div class="card-body p-0"><template data-for each="groups" as="group"
+      ><div class="alert alert-warning small"><span data-i18n="admin.env.warning">Bu sayfa yalnızca root yönetici içindir. Hassas değerler maskeli gösterilir ve boş bırakılırsa korunur.</span></div><form id="panel-config-env-form"><div class="card-body p-0"><template data-for each="groups" as="group"
             ><section class="mb-4"><h6 class="border-bottom pb-2 mb-3"><i class="bi ${group.icon} text-secondary me-2"></i
                 >${group.title}
               </h6><div class="row g-3"><template data-for each="group.fields" as="field"
@@ -1332,54 +1275,46 @@ ${admin_note}</textarea>
             href="/panel/config"
             data-panel-link
             class="btn btn-outline-secondary"
-            >İptal</a
-          ><button class="btn btn-primary" type="submit">Kaydet</button></div></form></template
+            ><span data-i18n="admin.action.cancel">İptal</span></a
+          ><button class="btn btn-primary" type="submit" data-i18n="admin.action.save">Kaydet</button></div></form></template
     ><template id="tpl-panel-webhook-page-content"
-      ><form id="panel-webhook-form" class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-3"><div class="col-md-3"><label class="form-label">Platform</label
-              ><select class="form-select" name="platform"><option value="discord">Discord</option><option value="telegram">Telegram</option><option value="custom">Özel HTTP</option></select></div><div class="col-md-3"><label class="form-label">Olay</label
-              ><select class="form-select" name="event"><option value="chapter_published">Bölüm yayınlandı</option><option value="blog_approved">Blog onaylandı</option><option value="series_created">Seri oluşturuldu</option></select></div><div class="col-md-6"><label class="form-label">Webhook URL</label
+      ><form id="panel-webhook-form" class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-3"><div class="col-md-3"><label class="form-label" data-i18n="admin.webhook.platform">Platform</label
+              ><select class="form-select" name="platform"><option value="discord" data-i18n="admin.webhook.discord">Discord</option><option value="telegram" data-i18n="admin.webhook.telegram">Telegram</option><option value="custom" data-i18n="admin.webhook.custom_http">Özel HTTP</option></select></div><div class="col-md-3"><label class="form-label" data-i18n="admin.webhook.event">Olay</label
+              ><select class="form-select" name="event"><option value="chapter_published" data-i18n="admin.webhook.chapter_published">Bölüm yayınlandı</option><option value="blog_approved" data-i18n="admin.webhook.blog_approved">Blog onaylandı</option><option value="series_created" data-i18n="admin.webhook.series_created">Seri oluşturuldu</option></select></div><div class="col-md-6"><label class="form-label" data-i18n="admin.webhook.url">Webhook URL</label
               ><input
                 type="url"
                 class="form-control"
                 name="webhook_url"
                 placeholder="https://..."
                 required
-              /></div></div></div><div class="card-footer bg-transparent text-end"><button class="btn btn-primary" type="submit"><i class="bi bi-plus-lg me-1"></i>Webhook ekle
-          </button></div></form><div class="card border-0 shadow-sm"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Platform</th><th>Olay</th><th>URL</th><th>Durum</th><th></th></tr></thead><tbody id="panel-webhook-rows"></tbody></table></div></div
+              /></div></div></div><div class="card-footer bg-transparent text-end"><button class="btn btn-primary" type="submit"><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.webhook.add">Webhook ekle</span></button></div></form><div class="card border-0 shadow-sm"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th data-i18n="admin.webhook.platform">Platform</th><th data-i18n="admin.webhook.event">Olay</th><th data-i18n="admin.webhook.url">URL</th><th data-i18n="admin.status">Durum</th><th></th></tr></thead><tbody id="panel-webhook-rows"></tbody></table></div></div
     ></template><template id="tpl-panel-rows-webhook"
       ><template data-for each="items" as="item"
         ><tr><td>${item.platform}</td><td>${item.event}</td><td class="text-break">${item.webhook_url}</td><td>${item.status_label}</td><td class="text-end text-nowrap"><button
               type="button"
               class="btn btn-xs btn-outline-info me-1"
               data-test-webhook="${item.id}"
-            >
-              Test</button
+            ><span data-i18n="admin.action.test">Test</span></button
             ><button
               type="button"
               class="btn btn-xs btn-outline-danger"
               data-delete-webhook="${item.id}"
-            >
-              Sil
-            </button></td></tr></template
+            ><span data-i18n="admin.action.delete">Sil</span></button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="5" class="text-center text-secondary py-4">
-              Webhook bulunamadı
-            </td></tr></template
+          ><tr><td colspan="5" class="text-center text-secondary py-4"><span data-i18n="admin.state.webhook_empty">Webhook bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-taxonomy"
-      ><div class="row g-4"><div class="col-md-6"><div class="d-flex justify-content-between mb-2"><h6>Türler</h6><button
+      ><div class="row g-4"><div class="col-md-6"><div class="d-flex justify-content-between mb-2"><h6 data-i18n="admin.taxonomy.genres">Türler</h6><button
               type="button"
               class="btn btn-sm btn-primary"
               data-create-taxonomy="genre"
-            ><i class="bi bi-plus-lg me-1"></i>Yeni Tür
-            </button></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th>Ad / Slug</th><th>Kullanım</th><th>Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-genres"></tbody></table></div></div><div class="col-md-6"><div class="d-flex justify-content-between mb-2"><h6>Etiketler</h6><button
+            ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_genre">Yeni Tür</span></button></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th data-i18n="admin.taxonomy.usage">Kullanım</th><th data-i18n="admin.taxonomy.order">Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-genres"></tbody></table></div></div><div class="col-md-6"><div class="d-flex justify-content-between mb-2"><h6 data-i18n="admin.taxonomy.tags">Etiketler</h6><button
               type="button"
               class="btn btn-sm btn-primary"
               data-create-taxonomy="tag"
-            ><i class="bi bi-plus-lg me-1"></i>Yeni Etiket
-            </button></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th>Ad / Slug</th><th>Kullanım</th><th>Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-tags"></tbody></table></div></div></div
+            ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_tag">Yeni Etiket</span></button></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th data-i18n="admin.taxonomy.usage">Kullanım</th><th data-i18n="admin.taxonomy.order">Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-tags"></tbody></table></div></div></div
     ></template><template id="tpl-panel-rows-taxonomy"
       ><template data-for each="items" as="item"
         ><tr data-taxonomy-row="${item.id}"><td class="text-secondary">${item.id}</td><td><strong>${item.name}</strong
@@ -1400,7 +1335,7 @@ ${admin_note}</textarea>
               type="button"
               class="btn btn-xs btn-outline-primary me-1"
               data-merge-taxonomy="${item.id}"
-              title="Birleştir"
+              title="Birleştir" data-i18n-attr="title:admin.action.merge"
             ><i class="bi bi-intersect"></i></button
             ><button
               type="button"
@@ -1408,22 +1343,22 @@ ${admin_note}</textarea>
               data-delete-taxonomy="${item.id}"
               data-name="${item.name}"
               data-usage="${item.usage_count}"
-              title="Sil"
+              title="Sil" data-i18n-attr="title:admin.action.delete"
             ><i class="bi bi-trash"></i></button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="5" class="text-secondary">Kayıt bulunamadı</td></tr></template
+          ><tr><td colspan="5" class="text-secondary"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-team"
-      ><div class="row g-2 mb-4"><div class="col-md-7"><label class="form-label">Kullanıcı ID</label
+      ><div class="row g-2 mb-4"><div class="col-md-7"><label class="form-label" data-i18n="admin.user.id">Kullanıcı ID</label
           ><input
             class="form-control"
             name="user_id"
             pattern="[a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9]"
             required
-          /></div><div class="col-md-5"><label class="form-label">Görev</label
-          ><select class="form-select" name="role"><option value="translator">Çevirmen</option><option value="proofreader">Kontrolör</option><option value="cleaner">Cleaner</option><option value="typesetter">Dizgici</option><option value="uploader">Uploader</option><option value="lead">Proje lideri</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Kullanıcı</th><th>Görev</th><th>Tarih</th><th></th></tr></thead><tbody id="panel-team-rows"></tbody></table></div
+          /></div><div class="col-md-5"><label class="form-label" data-i18n="admin.team.role">Görev</label
+          ><select class="form-select" name="role"><option value="translator" data-i18n="admin.team.translator">Çevirmen</option><option value="proofreader" data-i18n="admin.team.proofreader">Kontrolör</option><option value="cleaner" data-i18n="admin.team.cleaner">Cleaner</option><option value="typesetter" data-i18n="admin.team.typesetter">Dizgici</option><option value="uploader" data-i18n="admin.team.uploader">Uploader</option><option value="lead" data-i18n="admin.team.lead">Proje lideri</option></select></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th data-i18n="admin.user">Kullanıcı</th><th data-i18n="admin.team.role">Görev</th><th data-i18n="admin.date">Tarih</th><th></th></tr></thead><tbody id="panel-team-rows"></tbody></table></div
     ></template><template id="tpl-panel-rows-team"
       ><template data-for each="items" as="item"
         ><tr><td><strong>@${item.username}</strong><br /><small
@@ -1435,17 +1370,13 @@ ${admin_note}</textarea>
             ><i class="bi bi-trash"></i></button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="4" class="text-center text-secondary">
-              Henüz ekip üyesi yok
-            </td></tr></template
+          ><tr><td colspan="4" class="text-center text-secondary"><span data-i18n="admin.team.empty">Henüz ekip üyesi yok</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rbac"
-      ><p class="text-secondary small">
-        Temel rol izinleri uygulama yapılandırmasından, panelde yaptığınız
-        ekleme ve kaldırmalar veritabanındaki RBAC geçersiz kılmalarından
-        okunur. Kullanıcı rolünü kullanıcı detay ekranından değiştirebilirsiniz.
-      </p><div class="table-responsive panel-scroll-65"><table class="table table-sm table-bordered align-middle"><thead class="table-dark position-sticky top-0"><tr id="panel-rbac-head"><th>İzin</th></tr></thead><tbody id="panel-rbac-rows"></tbody></table></div
+      ><p class="text-secondary small" data-i18n="admin.rbac.description">
+        Temel rol izinleri uygulama yapılandırmasından, panelde yaptığınız ekleme ve kaldırmalar veritabanındaki RBAC geçersiz kılmalarından okunur. Kullanıcı rolünü kullanıcı detay ekranından değiştirebilirsiniz.
+      </p><div class="table-responsive panel-scroll-65"><table class="table table-sm table-bordered align-middle"><thead class="table-dark position-sticky top-0"><tr id="panel-rbac-head"><th data-i18n="admin.permission">İzin</th></tr></thead><tbody id="panel-rbac-rows"></tbody></table></div
     ></template><template id="tpl-panel-rows-rbac"
       ><template data-for each="rows" as="row"
         ><tr class="table-secondary ${row.group_class}"><td colspan="${role_colspan}"><strong>${row.group}</strong></td></tr><tr class="${row.permission_class}"><td><code>${row.code}</code><br /><small class="text-secondary"
@@ -1469,16 +1400,13 @@ ${admin_note}</textarea>
           ><tr><td
               colspan="${role_colspan}"
               class="text-center text-secondary py-3"
-            >
-              Yetki kaydı bulunamadı
-            </td></tr></template
+            ><span data-i18n="admin.state.permission_empty">Yetki kaydı bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-ownership"
-      ><p class="text-secondary small">
-        Rol tablosu yönetim API’sindeki izinlerden, “Sahibi” satırları ise
-        kullanıcının kendi oluşturduğu kayıtlara uygulanan kapsamdan hesaplanır.
-      </p><div class="table-responsive panel-scroll-55 mb-4"><table class="table table-sm table-bordered align-middle"><thead class="table-dark position-sticky top-0"><tr id="panel-ownership-head"><th>Varlık</th><th>İşlem</th><th>Gerekli izin / kapsam</th></tr></thead><tbody id="panel-ownership-capability-rows"></tbody></table></div><h6>Son oluşturulan kayıtlar</h6><div class="table-responsive panel-scroll-35"><table class="table table-sm align-middle"><thead><tr><th>Tür</th><th>Kayıt</th><th>Sahibi</th><th>Oluşturulma</th></tr></thead><tbody id="panel-ownership-record-rows"></tbody></table></div
+      ><p class="text-secondary small" data-i18n="admin.ownership.description">
+        Rol tablosu yönetim API’sindeki izinlerden, “Sahibi” satırları ise kullanıcının kendi oluşturduğu kayıtlara uygulanan kapsamdan hesaplanır.
+      </p><div class="table-responsive panel-scroll-55 mb-4"><table class="table table-sm table-bordered align-middle"><thead class="table-dark position-sticky top-0"><tr id="panel-ownership-head"><th data-i18n="admin.ownership.entity">Varlık</th><th data-i18n="admin.actions">İşlem</th><th data-i18n="admin.ownership.permission_scope">Gerekli izin / kapsam</th></tr></thead><tbody id="panel-ownership-capability-rows"></tbody></table></div><h6 data-i18n="admin.ownership.latest_records">Son oluşturulan kayıtlar</h6><div class="table-responsive panel-scroll-35"><table class="table table-sm align-middle"><thead><tr><th data-i18n="admin.type">Tür</th><th data-i18n="admin.record">Kayıt</th><th data-i18n="admin.owner">Sahibi</th><th data-i18n="admin.created_at">Oluşturulma</th></tr></thead><tbody id="panel-ownership-record-rows"></tbody></table></div
     ></template><template id="tpl-panel-rows-ownership-capabilities"
       ><template data-for each="items" as="item"
         ><tr><td>${item.entity_label}</td><td>${item.action}</td><td><code>${item.permission}</code></td><template data-for each="item.cells" as="cell"
@@ -1488,9 +1416,7 @@ ${admin_note}</textarea>
           ></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="${colspan}" class="text-secondary">
-              Yetki kaydı bulunamadı.
-            </td></tr></template
+          ><tr><td colspan="${colspan}" class="text-secondary"><span data-i18n="admin.state.permission_empty">Yetki kaydı bulunamadı.</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-rows-ownership-records"
@@ -1503,44 +1429,44 @@ ${admin_note}</textarea>
             ></td><td>${item.owner}</td><td class="small text-secondary">${item.created_at}</td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="4" class="text-secondary">Kayıt bulunamadı.</td></tr></template
+          ><tr><td colspan="4" class="text-secondary"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı.</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-ad-free-form"
-      ><div class="row g-3"><div class="col-md-6"><label class="form-label">Ürün adı</label
-          ><input class="form-control" name="name" value="${name}" required /></div><div class="col-md-2"><label class="form-label">Coin fiyatı</label
+      ><div class="row g-3"><div class="col-md-6"><label class="form-label" data-i18n="admin.product.name">Ürün adı</label
+          ><input class="form-control" name="name" value="${name}" required /></div><div class="col-md-2"><label class="form-label" data-i18n="admin.coin.price">Coin fiyatı</label
           ><input
             type="number"
             min="0"
             class="form-control"
             name="coin_price"
             value="${coin_price}"
-          /></div><div class="col-md-2"><label class="form-label">Süre (gün)</label
+          /></div><div class="col-md-2"><label class="form-label" data-i18n="admin.duration_days">Süre (gün)</label
           ><input
             type="number"
             min="1"
             class="form-control"
             name="duration_days"
             value="${duration_days}"
-          /></div><div class="col-md-2"><label class="form-label">Durum</label
-          ><select class="form-select" name="is_active"><option value="1">Aktif</option><option value="0">Pasif</option></select></div></div></template
+          /></div><div class="col-md-2"><label class="form-label" data-i18n="admin.status">Durum</label
+          ><select class="form-select" name="is_active"><option value="1" data-i18n="admin.status.active">Aktif</option><option value="0" data-i18n="admin.status.inactive">Pasif</option></select></div></div></template
     ><template id="tpl-panel-pricing-form"
-      ><div class="row g-3"><div class="col-md-4"><label class="form-label">Hedef</label
-          ><select class="form-select" name="target_type"><option value="series">Seri</option><option value="chapters">Bölüm</option></select></div><div class="col-md-4"><label class="form-label">Hedef ID</label
+      ><div class="row g-3"><div class="col-md-4"><label class="form-label" data-i18n="admin.target">Hedef</label
+          ><select class="form-select" name="target_type"><option value="series" data-i18n="admin.target.series">Seri</option><option value="chapters" data-i18n="admin.target.chapter">Bölüm</option></select></div><div class="col-md-4"><label class="form-label" data-i18n="admin.target.id">Hedef ID</label
           ><input
             class="form-control"
             name="target_id"
             pattern="[a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9][a-z0-9]"
             required
-          /></div><div class="col-md-2"><label class="form-label">Coin fiyatı</label
+          /></div><div class="col-md-2"><label class="form-label" data-i18n="admin.coin.price">Coin fiyatı</label
           ><input
             type="number"
             min="0"
             class="form-control"
             name="price_coin"
             value="0"
-          /></div><div class="col-md-2"><label class="form-label">Durum</label
-          ><select class="form-select" name="is_active"><option value="1">Aktif</option><option value="0">Pasif</option></select></div></div></template
+          /></div><div class="col-md-2"><label class="form-label" data-i18n="admin.status">Durum</label
+          ><select class="form-select" name="is_active"><option value="1" data-i18n="admin.status.active">Aktif</option><option value="0" data-i18n="admin.status.inactive">Pasif</option></select></div></div></template
     ><template id="tpl-panel-log"
       ><div class="table-responsive panel-scroll-70"><table class="table table-sm table-hover font-monospace"><thead class="table-dark position-sticky top-0"><tr id="panel-log-head"></tr></thead><tbody id="panel-log-body"></tbody></table></div
     ></template><template id="tpl-panel-rows-log"
@@ -1550,21 +1476,21 @@ ${admin_note}</textarea>
           ></tr></template
       ><template data-if is-truthy="has_rows"
         ><template data-else
-          ><tr><td class="text-center text-secondary">Kayıt bulunamadı</td></tr></template
+          ><tr><td class="text-center text-secondary"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-audit-json">
 <pre class="bg-dark text-light rounded p-3 mb-0 text-wrap">${json}</pre>
     </template><template id="tpl-panel-moderation-form"
-      ><div class="row g-3"><div class="col-md-4"><label class="form-label">Hedef türü</label
-          ><select class="form-select" name="target_type" required><option value="user">Kullanıcı</option><option value="content">İçerik</option><option value="chapter">Bölüm</option><option value="blog">Blog</option><option value="comment">Yorum</option><option value="system">Sistem</option></select></div><div class="col-md-4"><label class="form-label">Hedef ID</label
-          ><input class="form-control" name="target_id" required /></div><div class="col-md-4"><label class="form-label">İşlem</label
+      ><div class="row g-3"><div class="col-md-4"><label class="form-label" data-i18n="admin.moderation.target_type">Hedef türü</label
+          ><select class="form-select" name="target_type" required><option value="user" data-i18n="admin.target.user">Kullanıcı</option><option value="content" data-i18n="admin.target.content">İçerik</option><option value="chapter" data-i18n="admin.target.chapter">Bölüm</option><option value="blog" data-i18n="admin.target.blog">Blog</option><option value="comment" data-i18n="admin.target.comment">Yorum</option><option value="system" data-i18n="admin.target.system">Sistem</option></select></div><div class="col-md-4"><label class="form-label" data-i18n="admin.target.id">Hedef ID</label
+          ><input class="form-control" name="target_id" required /></div><div class="col-md-4"><label class="form-label" data-i18n="admin.actions">İşlem</label
           ><input
             class="form-control"
             name="action"
-            placeholder="warn, hide, review..."
+              placeholder="warn, hide, review..." data-i18n-attr="placeholder:admin.moderation.action_placeholder"
             required
-          /></div><div class="col-12"><label class="form-label">Gerekçe</label
+          /></div><div class="col-12"><label class="form-label" data-i18n="admin.reason">Gerekçe</label
           ><textarea class="form-control" name="reason" rows="4"></textarea>
         </div></div
     ></template><template id="tpl-panel-chapters"
@@ -1572,51 +1498,42 @@ ${admin_note}</textarea>
             type="button"
             class="btn btn-outline-success"
             data-bulk-chapter="publish"
-          >
-            Yayınla</button
+          ><span data-i18n="admin.action.publish">Yayınla</span></button
           ><button
             type="button"
             class="btn btn-outline-warning"
             data-bulk-chapter="schedule"
-          >
-            Zamanla</button
+          ><span data-i18n="admin.action.schedule">Zamanla</span></button
           ><button
             type="button"
             class="btn btn-outline-info"
             data-bulk-chapter="set_price"
-          >
-            Fiyatlandır</button
+          ><span data-i18n="admin.action.pricing">Fiyatlandır</span></button
           ><button
             type="button"
             class="btn btn-outline-danger"
             data-bulk-chapter="delete"
-          >
-            Sil
-          </button></div><div class="d-flex gap-2"><button
+          ><span data-i18n="admin.action.delete">Sil</span></button></div><div class="d-flex gap-2"><button
             type="button"
             class="btn btn-outline-primary"
             data-manage-team
-          ><i class="bi bi-people me-1"></i>Ekip</button
-          ><button type="button" class="btn btn-primary" data-create-chapter><i class="bi bi-plus-lg me-1"></i>Yeni Bölüm
-          </button></div></div><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th><input
+          ><i class="bi bi-people me-1"></i><span data-i18n="admin.team.title">Ekip</span></button
+          ><button type="button" class="btn btn-primary" data-create-chapter><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.chapter.new">Yeni Bölüm</span></button></div></div><div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th><input
                   type="checkbox"
                   class="form-check-input"
                   data-select-all-chapters
-                /></th><th>#</th><th>Başlık</th><th>Tür</th><th>Fiyat</th><th>Yayın</th><th></th></tr></thead><tbody id="panel-chapter-rows"></tbody></table></div><div class="d-flex justify-content-between align-items-center mt-3"><small class="text-secondary">${total} bölüm</small><div class="btn-group btn-group-sm"><button
+                /></th><th>#</th><th data-i18n="admin.title">Başlık</th><th data-i18n="admin.type">Tür</th><th data-i18n="admin.price">Fiyat</th><th data-i18n="admin.publication">Yayın</th><th></th></tr></thead><tbody id="panel-chapter-rows"></tbody></table></div><div class="d-flex justify-content-between align-items-center mt-3"><small class="text-secondary">${total} bölüm</small><div class="btn-group btn-group-sm"><button
             type="button"
             class="btn btn-outline-secondary"
             data-chapter-page="prev"
             data-chapter-page-disabled="${previous_disabled}"
-          >
-            Önceki</button
+          ><span data-i18n="admin.pagination.previous">Önceki</span></button
           ><button
             type="button"
             class="btn btn-outline-secondary"
             data-chapter-page="next"
             data-chapter-page-disabled="${next_disabled}"
-          >
-            Sonraki
-          </button></div></div></template
+          ><span data-i18n="admin.pagination.next">Sonraki</span></button></div></div></template
     ><template id="tpl-panel-rows-chapters"
       ><template data-for each="items" as="item"
         ><tr><td><input
@@ -1642,9 +1559,7 @@ ${admin_note}</textarea>
             ><i class="bi bi-trash"></i></button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
-          ><tr><td colspan="7" class="text-center text-secondary py-4">
-              Bölüm bulunamadı
-            </td></tr></template
+          ><tr><td colspan="7" class="text-center text-secondary py-4"><span data-i18n="admin.state.chapter_empty">Bölüm bulunamadı</span></td></tr></template
         ></template
       ></template
     ><template id="tpl-panel-dashboard"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex flex-wrap align-items-center gap-2"><span class="small text-secondary" id="panel-dashboard-updated" data-i18n="admin.dashboard.no_data"
@@ -1655,7 +1570,7 @@ ${admin_note}</textarea>
               id="panel-dashboard-period"
               class="form-select form-select-sm w-auto"
               data-on-change="changeDashboardPeriod"
-            ><option value="1">24 saat</option><option value="7">7 gün</option><option value="30" selected>30 gün</option><option value="90">90 gün</option></select><button
+            ><option value="1" data-i18n="admin.period.hours_24">24 saat</option><option value="7" data-i18n="admin.period.days_7">7 gün</option><option value="30" selected data-i18n="admin.period.days_30">30 gün</option><option value="90" data-i18n="admin.period.days_90">90 gün</option></select><button
               class="btn btn-sm btn-outline-primary"
               data-on-click="refreshDashboard"
             ><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="admin.action.refresh">Yenile</span></button></div><div
@@ -1703,150 +1618,133 @@ ${admin_note}</textarea>
                     data-panel-link
                     data-requires-permission="admin.settings.modify"
                     ><i class="bi bi-sliders me-2"></i><span data-i18n="admin.dashboard.edit_settings">Site Ayarlarını Düzenle</span></a
-                  ></div></div></div></div><div class="row g-4 mt-1"><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i>Görüntülenme ve
-                    ziyaretçi
-                  </h6></div><div class="card-body"><div class="d-flex justify-content-between"><span>Görüntülenme · 24 saat</span
-                    ><strong data-text="analytics.visits_daily">0</strong></div><div class="d-flex justify-content-between"><span>Görüntülenme · 7 gün</span
-                    ><strong data-text="analytics.visits_weekly">0</strong></div><div class="d-flex justify-content-between"><span>Görüntülenme · 30 gün</span
-                    ><strong data-text="analytics.visits_monthly">0</strong></div><hr class="my-2" /><div class="d-flex justify-content-between"><span>Benzersiz · 7 gün</span
+                  ></div></div></div></div><div class="row g-4 mt-1"><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bi bi-bar-chart-line me-2"></i><span data-i18n="admin.dashboard.views_visitors">Görüntülenme ve ziyaretçi</span></h6></div><div class="card-body"><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.views_24h">Görüntülenme · 24 saat</span
+                    ><strong data-text="analytics.visits_daily">0</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.views_7d">Görüntülenme · 7 gün</span
+                    ><strong data-text="analytics.visits_weekly">0</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.views_30d">Görüntülenme · 30 gün</span
+                    ><strong data-text="analytics.visits_monthly">0</strong></div><hr class="my-2" /><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.unique_7d">Benzersiz · 7 gün</span
                     ><strong data-text="analytics.unique_visitors_weekly"
                       >0</strong
-                    ></div></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">Funnel ve Sağlık</h6></div><div class="card-body"><div class="d-flex justify-content-between"><span>Ana sayfa → içerik</span
-                    ><strong data-text="analytics.home_to_content">0%</strong></div><div class="d-flex justify-content-between"><span>İçerik → bölüm</span
+                    ></div></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.funnel_health">Funnel ve Sağlık</h6></div><div class="card-body"><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.home_to_content">Ana sayfa → içerik</span
+                    ><strong data-text="analytics.home_to_content">0%</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.content_to_chapter">İçerik → bölüm</span
                     ><strong data-text="analytics.content_to_chapter"
                       >0%</strong
-                    ></div><div class="d-flex justify-content-between"><span>5xx oranı</span
-                    ><strong data-text="analytics.error_rate">0%</strong></div><div class="d-flex justify-content-between"><span>p95 süre</span
-                    ><strong data-text="analytics.p95">0 ms</strong></div></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">Arama ve Tutundurma</h6></div><div class="card-body"><div class="d-flex justify-content-between"><span>7 günlük arama</span
-                    ><strong data-text="analytics.search_total">0</strong></div><div class="d-flex justify-content-between"><span>Sıfır sonuç oranı</span
-                    ><strong data-text="analytics.zero_result_pct">0%</strong></div><div class="d-flex justify-content-between"><span>D1 tutundurma <small class="text-secondary">(n=<span data-text="analytics.d1_eligible_users">0</span>)</small></span
-                    ><strong data-text="analytics.d1_retention">0%</strong></div><div class="d-flex justify-content-between"><span>D7 tutundurma <small class="text-secondary">(n=<span data-text="analytics.d7_eligible_users">0</span>)</small></span
-                    ><strong data-text="analytics.d7_retention">0%</strong></div><div class="d-flex justify-content-between"><span>Yeni kullanıcı</span
+                    ></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.error_rate">5xx oranı</span
+                    ><strong data-text="analytics.error_rate">0%</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.p95_duration">p95 süre</span
+                    ><strong data-text="analytics.p95">0 ms</strong></div></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.search_retention">Arama ve Tutundurma</h6></div><div class="card-body"><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.search_7d">7 günlük arama</span
+                    ><strong data-text="analytics.search_total">0</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.zero_result_rate">Sıfır sonuç oranı</span
+                    ><strong data-text="analytics.zero_result_pct">0%</strong></div><div class="d-flex justify-content-between"><span><span data-i18n="admin.dashboard.d1_retention">D1 tutundurma</span><small class="text-secondary">(n=<span data-text="analytics.d1_eligible_users">0</span>)</small></span
+                    ><strong data-text="analytics.d1_retention">0%</strong></div><div class="d-flex justify-content-between"><span><span data-i18n="admin.dashboard.d7_retention">D7 tutundurma</span><small class="text-secondary">(n=<span data-text="analytics.d7_eligible_users">0</span>)</small></span
+                    ><strong data-text="analytics.d7_retention">0%</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.new_users">Yeni kullanıcı</span
                     ><strong data-text="analytics.new_users">0</strong></div></div></div></div><div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div
                   class="card-header bg-transparent d-flex justify-content-between"
-                ><h6 class="mb-0">
-                    Gelir Analitiği (<span data-text="dashboardPeriodLabel"
+                ><h6 class="mb-0"><span data-i18n="admin.dashboard.revenue_analytics">Gelir Analitiği</span> (<span data-text="dashboardPeriodLabel"
                       >30 gün</span
                     >)
                   </h6><span
-                    ><strong data-text="analytics.total_coins">0</strong> coin /
-                    <strong data-text="analytics.total_unlocks">0</strong>
-                    kilit</span
-                  ></div><div class="card-body p-0 table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Seri</th><th>Kilit</th><th>Coin</th></tr></thead><tbody id="panel-monetization-series"></tbody></table></div></div></div><div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">Sıfır Sonuçlu Aramalar</h6></div><div class="card-body p-0 table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Arama</th><th>Sayı</th><th>Son arama</th></tr></thead><tbody id="panel-zero-searches"></tbody></table></div></div></div><div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bi bi-bar-chart-line-fill text-warning me-2"></i
-                    >Blog Moderasyon Trendi
-                  </h6></div><div class="card-body"><div class="dashboard-chart-wrap dashboard-chart-wrap-sm"><canvas id="panel-dashboard-blog-chart"></canvas><div class="dashboard-chart-empty text-secondary small" data-chart-empty hidden>
-                      Bu dönem için blog hareketi yok.
-                    </div></div><small class="text-secondary" data-chart-fallback></small></div></div></div><div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bi bi-cash-coin text-danger me-2"></i>Coin Harcama
-                    Trendi
-                  </h6></div><div class="card-body"><div class="dashboard-chart-wrap dashboard-chart-wrap-sm"><canvas id="panel-dashboard-revenue-chart"></canvas><div class="dashboard-chart-empty text-secondary small" data-chart-empty hidden>
-                      Bu dönem için coin harcaması yok.
-                    </div></div><small class="text-secondary" data-chart-fallback></small></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">En Çok Okunan Türler</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-genres"></tbody></table></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">En Çok Okunan Etiketler</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-tags"></tbody></table></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">
-                    Blog Özeti (<span data-text="dashboardPeriodLabel"
+                    ><strong data-text="analytics.total_coins">0</strong><span data-i18n="admin.currency.coin">coin</span> /
+                    <strong data-text="analytics.total_unlocks">0</strong><span data-i18n="admin.dashboard.unlocks">kilit</span></span
+                  ></div><div class="card-body p-0 table-responsive"><table class="table table-sm mb-0"><thead><tr><th data-i18n="admin.series">Seri</th><th data-i18n="admin.dashboard.unlocks">Kilit</th><th data-i18n="admin.dashboard.coins">Coin</th></tr></thead><tbody id="panel-monetization-series"></tbody></table></div></div></div><div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.zero_result_searches">Sıfır Sonuçlu Aramalar</h6></div><div class="card-body p-0 table-responsive"><table class="table table-sm mb-0"><thead><tr><th data-i18n="admin.dashboard.search">Arama</th><th data-i18n="admin.dashboard.count">Sayı</th><th data-i18n="admin.dashboard.last_search">Son arama</th></tr></thead><tbody id="panel-zero-searches"></tbody></table></div></div></div><div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bi bi-bar-chart-line-fill text-warning me-2"></i
+                    ><span data-i18n="admin.dashboard.blog_moderation_trend">Blog Moderasyon Trendi</span></h6></div><div class="card-body"><div class="dashboard-chart-wrap dashboard-chart-wrap-sm"><canvas id="panel-dashboard-blog-chart"></canvas><div class="dashboard-chart-empty text-secondary small" data-chart-empty hidden><span data-i18n="admin.dashboard.blog_activity_empty">Bu dönem için blog hareketi yok.</span></div></div><small class="text-secondary" data-chart-fallback></small></div></div></div><div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0"><i class="bi bi-cash-coin text-danger me-2"></i><span data-i18n="admin.dashboard.coin_spending_trend">Coin Harcama Trendi</span></h6></div><div class="card-body"><div class="dashboard-chart-wrap dashboard-chart-wrap-sm"><canvas id="panel-dashboard-revenue-chart"></canvas><div class="dashboard-chart-empty text-secondary small" data-chart-empty hidden><span data-i18n="admin.dashboard.coin_spending_empty">Bu dönem için coin harcaması yok.</span></div></div><small class="text-secondary" data-chart-fallback></small></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.top_genres">En Çok Okunan Türler</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-genres"></tbody></table></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.top_tags">En Çok Okunan Etiketler</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-tags"></tbody></table></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0"><span data-i18n="admin.dashboard.blog_summary">Blog Özeti</span> (<span data-text="dashboardPeriodLabel"
                       >30 gün</span
                     >)
-                  </h6></div><div class="card-body"><div class="d-flex justify-content-between"><span>Toplam</span
-                    ><strong data-text="analytics.blog_total">0</strong></div><div class="d-flex justify-content-between"><span>Görünür</span
-                    ><strong data-text="analytics.blog_visible">0</strong></div><div class="d-flex justify-content-between"><span>Gizli</span
-                    ><strong data-text="analytics.blog_hidden">0</strong></div><div class="d-flex justify-content-between"><span>Silinmiş</span
-                    ><strong data-text="analytics.blog_deleted">0</strong></div><div class="d-flex justify-content-between"><span>Yeni / Onaylanan</span
+                  </h6></div><div class="card-body"><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.total">Toplam</span
+                    ><strong data-text="analytics.blog_total">0</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.visible">Görünür</span
+                    ><strong data-text="analytics.blog_visible">0</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.hidden">Gizli</span
+                    ><strong data-text="analytics.blog_hidden">0</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.deleted">Silinmiş</span
+                    ><strong data-text="analytics.blog_deleted">0</strong></div><div class="d-flex justify-content-between"><span data-i18n="admin.dashboard.created_approved">Yeni / Onaylanan</span
                     ><strong
                       ><span data-text="analytics.blog_created">0</span> /
                       <span data-text="analytics.blog_approved">0</span></strong
-                    ></div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">Kullanıcı İtibarı</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-reputation"></tbody></table></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">İçerik Türleri</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-types"></tbody></table></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">En Çok Okunan Bölümler</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-chapters"></tbody></table></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0">En Aktif Blog Yazarları</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-blog-authors"></tbody></table></div></div></div><div class="col-12"><div class="card border-0 shadow-sm"><div class="card-header bg-transparent"><h6 class="mb-0">
-                    Günlük Blog Etkinliği (<span data-text="dashboardPeriodLabel"
+                    ></div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.user_reputation">Kullanıcı İtibarı</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-reputation"></tbody></table></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.content_types">İçerik Türleri</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-types"></tbody></table></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.top_chapters">En Çok Okunan Bölümler</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-chapters"></tbody></table></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-transparent"><h6 class="mb-0" data-i18n="admin.dashboard.top_blog_authors">En Aktif Blog Yazarları</h6></div><div class="card-body p-0"><table class="table table-sm mb-0"><tbody id="panel-dashboard-blog-authors"></tbody></table></div></div></div><div class="col-12"><div class="card border-0 shadow-sm"><div class="card-header bg-transparent"><h6 class="mb-0"><span data-i18n="admin.dashboard.daily_blog_activity">Günlük Blog Etkinliği</span> (<span data-text="dashboardPeriodLabel"
                       >30 gün</span
                     >)
-                  </h6></div><div class="card-body p-0 table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Gün</th><th>Oluşturulan</th><th>Onaylanan</th></tr></thead><tbody id="panel-dashboard-blog-daily"></tbody></table></div></div></div></div></partial></template><template id="tpl-panel-series"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex gap-2"><a
+                  </h6></div><div class="card-body p-0 table-responsive"><table class="table table-sm mb-0"><thead><tr><th data-i18n="admin.dashboard.day">Gün</th><th data-i18n="admin.dashboard.created">Oluşturulan</th><th data-i18n="admin.dashboard.approved">Onaylanan</th></tr></thead><tbody id="panel-dashboard-blog-daily"></tbody></table></div></div></div></div></partial></template><template id="tpl-panel-series"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex gap-2"><a
               class="btn btn-sm btn-primary"
               href="/panel/series/new"
               data-panel-link
               data-requires-permission="admin.content.create"
-            ><i class="bi bi-plus-lg me-1"></i> Yeni Seri Ekle
-            </a><button
+            ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.series.new">Yeni Seri Ekle</span></a><button
               class="btn btn-sm btn-outline-secondary"
               data-on-click="loadSeries"
-            ><i class="bi bi-arrow-clockwise me-1"></i> Yenile
-            </button></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div class="card-body p-3"><div class="row g-2 align-items-center"><div class="col-md-3"><div class="input-group"><span class="input-group-text bg-transparent border-end-0"
+            ><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="admin.action.refresh">Yenile</span></button></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div class="card-body p-3"><div class="row g-2 align-items-center"><div class="col-md-3"><div class="input-group"><span class="input-group-text bg-transparent border-end-0"
                       ><i class="bi bi-search"></i
                     ></span><input
                       type="search"
                       class="form-control border-start-0"
                       id="panel-series-search"
-                      placeholder="Başlık veya slug ile ara..."
+                    placeholder="Başlık veya slug ile ara..." data-i18n-attr="placeholder:admin.series.search_placeholder"
                       data-on-input="filterSeries"
                     /></div></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-series-status"
                     data-on-change="filterSeries"
-                  ><option value="">Eser durumu</option><option value="ongoing">Devam ediyor</option><option value="completed">Tamamlandı</option><option value="hiatus">Ara verdi</option><option value="dropped">Bırakıldı</option></select></div><div class="col-md-2"><select
+                  ><option value="" data-i18n="admin.lifecycle">Eser durumu</option><option value="ongoing" data-i18n="admin.lifecycle.ongoing">Devam ediyor</option><option value="completed" data-i18n="admin.lifecycle.completed">Tamamlandı</option><option value="hiatus" data-i18n="admin.lifecycle.hiatus">Ara verdi</option><option value="dropped" data-i18n="admin.lifecycle.dropped">Bırakıldı</option></select></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-series-type"
                     data-on-change="filterSeries"
-                  ><option value="">Tüm türler</option><option value="manga">Manga</option><option value="manhua">Manhua</option><option value="manhwa">Manhwa</option><option value="webtoon">Webtoon</option><option value="novel">Novel</option><option value="light-novel">Light novel</option><option value="web-novel">Web novel</option></select></div><div class="col-md-3"><select
+                  ><option value="" data-i18n="admin.all_types">Tüm türler</option><option value="manga" data-i18n="admin.type.manga">Manga</option><option value="manhua" data-i18n="admin.type.manhua">Manhua</option><option value="manhwa" data-i18n="admin.type.manhwa">Manhwa</option><option value="webtoon" data-i18n="admin.type.webtoon">Webtoon</option><option value="novel" data-i18n="admin.type.novel">Novel</option><option value="light-novel" data-i18n="admin.type.light_novel">Light novel</option><option value="web-novel" data-i18n="admin.type.web_novel">Web novel</option></select></div><div class="col-md-3"><select
                     class="form-select"
                     id="panel-series-lifecycle"
                     data-on-change="filterSeries"
-                  ><option value="">Tüm yayın durumları</option><option value="draft">Taslak</option><option value="scheduled">Zamanlandı</option><option value="published">Yayında</option><option value="archived">Arşivlendi</option></select></div><div class="col-md-2"><select
+                  ><option value="" data-i18n="admin.all_publication_statuses">Tüm yayın durumları</option><option value="draft" data-i18n="admin.status.draft">Taslak</option><option value="scheduled" data-i18n="admin.status.scheduled">Zamanlandı</option><option value="published" data-i18n="admin.status.published">Yayında</option><option value="archived" data-i18n="admin.status.archived">Arşivlendi</option></select></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-series-sort"
                     data-on-change="filterSeries"
-                  ><option value="newest">En yeni</option><option value="oldest">En eski</option><option value="updated">Son güncellenen</option><option value="title">Başlık A-Z</option></select></div></div></div></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="w-10">ID</th><th>Tür</th><th>Başlık</th><th>Slug</th><th>Durum</th><th class="text-end">İşlemler</th></tr></thead><tbody id="panel-series-list"></tbody></table></div><div
+                  ><option value="newest" data-i18n="admin.sort.newest">En yeni</option><option value="oldest" data-i18n="admin.sort.oldest">En eski</option><option value="updated" data-i18n="admin.sort.updated">Son güncellenen</option><option value="title" data-i18n="admin.sort.title_az">Başlık A-Z</option></select></div></div></div></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="w-10">ID</th><th data-i18n="admin.type">Tür</th><th data-i18n="admin.title">Başlık</th><th data-i18n="admin.slug">Slug</th><th data-i18n="admin.status">Durum</th><th class="text-end" data-i18n="admin.actions">İşlemler</th></tr></thead><tbody id="panel-series-list"></tbody></table></div><div
               class="card-footer bg-transparent"
               id="panel-series-pager"
             ></div></div></partial></template><template id="tpl-panel-user"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex gap-2"><a
               class="btn btn-sm btn-outline-primary"
               href="/panel/user/roles"
               data-panel-link
-              ><i class="bi bi-shield-lock me-1"></i>Yetki Matrisi</a
+              ><i class="bi bi-shield-lock me-1"></i><span data-i18n="admin.user.permission_matrix">Yetki Matrisi</span></a
             ><a
               class="btn btn-sm btn-outline-info"
               href="/panel/series/ownership"
               data-panel-link
-              ><i class="bi bi-diagram-3 me-1"></i>İçerik Yetki Özeti</a
+              ><i class="bi bi-diagram-3 me-1"></i><span data-i18n="admin.user.content_permissions">İçerik Yetki Özeti</span></a
             ><button
               class="btn btn-sm btn-outline-secondary"
               data-on-click="loadUsers"
-            ><i class="bi bi-arrow-clockwise me-1"></i> Yenile
-            </button></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div class="card-body p-3"><div class="row g-2"><div class="col-md-5"><input
+            ><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="admin.action.refresh">Yenile</span></button></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div class="card-body p-3"><div class="row g-2"><div class="col-md-5"><input
                     type="search"
                     class="form-control"
                     id="panel-users-search"
-                    placeholder="Kullanıcı adı veya e-posta ile ara..."
+                    placeholder="Kullanıcı adı veya e-posta ile ara..." data-i18n-attr="placeholder:admin.user.search_placeholder"
                     data-on-input="filterUsers"
                   /></div><div class="col-md-3"><select
                     class="form-select"
                     id="panel-users-status"
                     data-on-change="filterUsers"
-                  ><option value="">Tüm hesaplar</option><option value="active">Aktif</option><option value="banned">Yasaklı</option></select></div><div class="col-md-2"><select
+                  ><option value="" data-i18n="admin.user.all_accounts">Tüm hesaplar</option><option value="active" data-i18n="admin.status.active">Aktif</option><option value="banned" data-i18n="admin.status.banned">Yasaklı</option></select></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-users-role"
                     data-on-change="filterUsers"
-                  ><option value="">Tüm roller</option><option value="admin">Admin</option><option value="moderator">Moderatör</option><option value="editor">Editör</option><option value="user">Kullanıcı</option></select></div><div class="col-md-2"><select
+                  ><option value="" data-i18n="admin.user.all_roles">Tüm roller</option><option value="admin" data-i18n="admin.role.admin">Admin</option><option value="moderator" data-i18n="admin.role.moderator">Moderatör</option><option value="editor" data-i18n="admin.role.editor">Editör</option><option value="user" data-i18n="admin.role.user">Kullanıcı</option></select></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-users-sort"
                     data-on-change="filterUsers"
-                  ><option value="newest">En yeni</option><option value="oldest">En eski</option><option value="username">Kullanıcı A-Z</option></select></div></div></div></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Hesap Durumu</th><th>Kayıt Tarihi</th><th class="text-end">İncele</th></tr></thead><tbody id="panel-users-list"></tbody></table></div><div
+                  ><option value="newest" data-i18n="admin.sort.newest">En yeni</option><option value="oldest" data-i18n="admin.sort.oldest">En eski</option><option value="username" data-i18n="admin.sort.username_az">Kullanıcı A-Z</option></select></div></div></div></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th data-i18n="admin.user">Kullanıcı</th><th data-i18n="admin.user.email">E-posta</th><th data-i18n="admin.user.role">Rol</th><th data-i18n="admin.user.account_status">Hesap Durumu</th><th data-i18n="admin.user.registered_at">Kayıt Tarihi</th><th class="text-end" data-i18n="admin.action.inspect">İncele</th></tr></thead><tbody id="panel-users-list"></tbody></table></div><div
               class="card-footer bg-transparent"
               id="panel-users-pager"
             ></div></div></partial></template><template id="tpl-panel-blogs"><partial name="panel-page-shell" header="header"><div slot="actions"><button
             class="btn btn-sm btn-outline-secondary"
             data-on-click="loadBlogs"
-          ><i class="bi bi-arrow-clockwise me-1"></i> Yenile
-          </button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-2"><div class="col-md-5"><input
+          ><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="admin.action.refresh">Yenile</span></button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-2"><div class="col-md-5"><input
                     type="search"
                     class="form-control"
                     id="panel-blogs-search"
-                    placeholder="Başlık, slug veya yazar ara..."
+                    placeholder="Başlık, slug veya yazar ara..." data-i18n-attr="placeholder:admin.blog.search_placeholder"
                     data-on-input="filterBlogs"
                   /></div><div class="col-md-4"><select
                     class="form-select"
                     id="panel-blogs-status"
                     data-on-change="filterBlogs"
-                  ><option value="">Aktif kayıtlar</option><option value="draft">Taslak</option><option value="pending">Bekleyen</option><option value="published">Yayınlanan</option><option value="rejected">Reddedilen</option><option value="hidden">Gizlenen</option><option value="deleted">Silinen</option></select></div><div class="col-md-3"><select
+                  ><option value="" data-i18n="admin.blog.all_records">Aktif kayıtlar</option><option value="draft" data-i18n="admin.status.draft">Taslak</option><option value="pending" data-i18n="admin.status.pending">Bekleyen</option><option value="published" data-i18n="admin.status.published">Yayınlanan</option><option value="rejected" data-i18n="admin.status.rejected">Reddedilen</option><option value="hidden" data-i18n="admin.status.hidden">Gizlenen</option><option value="deleted" data-i18n="admin.status.deleted">Silinen</option></select></div><div class="col-md-3"><select
                     class="form-select"
                     id="panel-blogs-sort"
                     data-on-change="filterBlogs"
-                  ><option value="newest">En yeni</option><option value="oldest">En eski</option></select></div></div></div></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Başlık</th><th>Yazar</th><th>Durum</th><th>Tarih</th><th class="text-end">İşlem</th></tr></thead><tbody id="panel-blogs-list"></tbody></table></div><div
+                  ><option value="newest" data-i18n="admin.sort.newest">En yeni</option><option value="oldest" data-i18n="admin.sort.oldest">En eski</option></select></div></div></div></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th data-i18n="admin.title">Başlık</th><th data-i18n="admin.author">Yazar</th><th data-i18n="admin.status">Durum</th><th data-i18n="admin.date">Tarih</th><th class="text-end" data-i18n="admin.actions">İşlem</th></tr></thead><tbody id="panel-blogs-list"></tbody></table></div><div
               class="card-footer bg-transparent"
               id="panel-blogs-pager"
             ></div></div></partial></template><template id="tpl-panel-comments"><partial name="panel-page-shell" header="header"><div slot="actions"><button
@@ -1857,43 +1755,42 @@ ${admin_note}</textarea>
                     type="search"
                     class="form-control"
                     id="panel-comments-search"
-                    placeholder="Yorum veya kullanıcı ara..."
+                    placeholder="Yorum veya kullanıcı ara..." data-i18n-attr="placeholder:admin.comment.search_placeholder"
                     data-on-input="filterComments"
                   /></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-comments-target"
                     data-on-change="filterComments"
-                  ><option value="">Tüm hedefler</option><option value="series">Seri</option><option value="chapter">Bölüm</option><option value="blog">Blog</option></select></div><div class="col-md-2"><select
+                  ><option value="" data-i18n="admin.all_targets">Tüm hedefler</option><option value="series" data-i18n="admin.target.series">Seri</option><option value="chapter" data-i18n="admin.target.chapter">Bölüm</option><option value="blog" data-i18n="admin.target.blog">Blog</option></select></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-comments-status"
                     data-on-change="filterComments"
-                  ><option value="">Tüm durumlar</option><option value="pending">Bekliyor</option><option value="approved">Onaylı</option><option value="hidden">Gizli</option><option value="deleted">Silindi</option></select></div><div class="col-md-3"><select
+                  ><option value="" data-i18n="admin.all_statuses">Tüm durumlar</option><option value="pending" data-i18n="admin.status.pending">Bekliyor</option><option value="approved" data-i18n="admin.status.approved">Onaylı</option><option value="hidden" data-i18n="admin.status.hidden">Gizli</option><option value="deleted" data-i18n="admin.status.deleted">Silindi</option></select></div><div class="col-md-3"><select
                     class="form-select"
                     id="panel-comments-sort"
                     data-on-change="filterComments"
-                  ><option value="newest">En yeni</option><option value="oldest">En eski</option></select></div></div></div></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Kullanıcı</th><th>Yorum Metni</th><th>Bağlam</th><th>Durum</th><th>Beğeni / Dislike</th><th>Tarih</th><th class="text-end">İşlem</th></tr></thead><tbody id="panel-comments-list"></tbody></table></div><div
+                  ><option value="newest" data-i18n="admin.sort.newest">En yeni</option><option value="oldest" data-i18n="admin.sort.oldest">En eski</option></select></div></div></div></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th data-i18n="admin.user">Kullanıcı</th><th data-i18n="admin.comment.body">Yorum Metni</th><th data-i18n="admin.context">Bağlam</th><th data-i18n="admin.status">Durum</th><th data-i18n="admin.comment.likes_dislikes">Beğeni / Dislike</th><th data-i18n="admin.date">Tarih</th><th class="text-end" data-i18n="admin.actions">İşlem</th></tr></thead><tbody id="panel-comments-list"></tbody></table></div><div
               class="card-footer bg-transparent"
               id="panel-comments-pager"
             ></div></div></partial></template><template id="tpl-panel-reports"><partial name="panel-page-shell" header="header"><div slot="actions"><button
             class="btn btn-sm btn-outline-secondary"
             data-on-click="loadReports"
-          ><i class="bi bi-arrow-clockwise me-1"></i>Yenile
-          </button></div><div class="row g-3 mb-4"><div class="col-6 col-lg-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Bekleyen</small><div
+          ><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="admin.action.refresh">Yenile</span></button></div><div class="row g-3 mb-4"><div class="col-6 col-lg-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.dashboard.pending">Bekleyen</small><div
                     class="fs-3 fw-bold text-warning"
                     id="panel-report-count-pending"
                   >
                     0
-                  </div></div></div></div><div class="col-6 col-lg-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">İncelenen</small><div
+                  </div></div></div></div><div class="col-6 col-lg-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.dashboard.reviewing">İncelenen</small><div
                     class="fs-3 fw-bold text-info"
                     id="panel-report-count-reviewing"
                   >
                     0
-                  </div></div></div></div><div class="col-6 col-lg-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Çözülen</small><div
+                  </div></div></div></div><div class="col-6 col-lg-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.dashboard.resolved">Çözülen</small><div
                     class="fs-3 fw-bold text-success"
                     id="panel-report-count-resolved"
                   >
                     0
-                  </div></div></div></div><div class="col-6 col-lg-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Reddedilen</small><div
+                  </div></div></div></div><div class="col-6 col-lg-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.status.rejected">Reddedilen</small><div
                     class="fs-3 fw-bold text-secondary"
                     id="panel-report-count-rejected"
                   >
@@ -1902,41 +1799,41 @@ ${admin_note}</textarea>
                     class="form-select"
                     id="panel-report-status"
                     data-on-change="filterReports"
-                  ><option value="">Tüm durumlar</option><option value="pending">Bekleyen</option><option value="reviewing">İncelenen</option><option value="resolved">Çözülen</option><option value="rejected">Reddedilen</option></select></div><div class="col-md-4"><select
+                  ><option value="" data-i18n="admin.all_statuses">Tüm durumlar</option><option value="pending" data-i18n="admin.status.pending">Bekleyen</option><option value="reviewing" data-i18n="admin.status.reviewing">İncelenen</option><option value="resolved" data-i18n="admin.status.resolved">Çözülen</option><option value="rejected" data-i18n="admin.status.rejected">Reddedilen</option></select></div><div class="col-md-4"><select
                     class="form-select"
                     id="panel-report-target"
                     data-on-change="filterReports"
-                  ><option value="">Tüm hedefler</option><option value="series">Seri</option><option value="chapter">Bölüm</option><option value="blog">Blog</option><option value="comment">Yorum</option></select></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>#</th><th>Bildiren</th><th>Hedef</th><th>Neden</th><th>Durum</th><th>Tarih</th><th></th></tr></thead><tbody id="panel-reports-list"></tbody></table></div><div
+                  ><option value="" data-i18n="admin.all_targets">Tüm hedefler</option><option value="series" data-i18n="admin.target.series">Seri</option><option value="chapter" data-i18n="admin.target.chapter">Bölüm</option><option value="blog" data-i18n="admin.target.blog">Blog</option><option value="comment" data-i18n="admin.target.comment">Yorum</option></select></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>#</th><th data-i18n="admin.report.reporter">Bildiren</th><th data-i18n="admin.target">Hedef</th><th data-i18n="admin.report.reason">Neden</th><th data-i18n="admin.status">Durum</th><th data-i18n="admin.date">Tarih</th><th></th></tr></thead><tbody id="panel-reports-list"></tbody></table></div><div
               class="card-footer bg-transparent"
               id="panel-reports-pager"
             ></div></div></partial></template><template id="tpl-panel-monetization"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex flex-wrap gap-2"><a
               class="btn btn-sm btn-outline-danger"
               href="/panel/monetization/ad-free"
               data-panel-link
-              ><i class="bi bi-badge-ad me-1"></i>Reklamsız Ürün</a
+              ><i class="bi bi-badge-ad me-1"></i><span data-i18n="admin.monetization.ad_free">Reklamsız Ürün</span></a
             ><a
               class="btn btn-sm btn-outline-secondary"
               href="/panel/monetization/pricing"
               data-panel-link
-              ><i class="bi bi-tags me-1"></i>Fiyatlandırma</a
+              ><i class="bi bi-tags me-1"></i><span data-i18n="admin.monetization.pricing">Fiyatlandırma</span></a
             ><a
               class="btn btn-sm btn-primary"
               href="/panel/monetization/package/new"
               data-panel-link
-              ><i class="bi bi-plus-lg me-1"></i> Yeni Paket Ekle</a
-            ></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Paket Başlığı</th><th>Coin Miktarı</th><th>Bonus Coin</th><th>Fiyat</th><th>Durum</th><th class="text-end">İşlemler</th></tr></thead><tbody id="panel-packages-list"></tbody></table></div></div></partial></template><template id="tpl-panel-finance"><partial name="panel-page-shell" header="header"><div class="row g-3 mb-4"><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Dolaşımdaki Coin</small><div class="fs-3 fw-bold" id="panel-finance-circulating">
+              ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.package.new">Yeni Paket Ekle</span></a
+            ></div><div class="card border-0 shadow-sm rounded-3"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th data-i18n="admin.package.name">Paket Başlığı</th><th data-i18n="admin.coin.amount">Coin Miktarı</th><th data-i18n="admin.coin.bonus">Bonus Coin</th><th data-i18n="admin.price">Fiyat</th><th data-i18n="admin.status">Durum</th><th class="text-end" data-i18n="admin.actions">İşlemler</th></tr></thead><tbody id="panel-packages-list"></tbody></table></div></div></partial></template><template id="tpl-panel-finance"><partial name="panel-page-shell" header="header"><div class="row g-3 mb-4"><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.finance.circulating">Dolaşımdaki Coin</small><div class="fs-3 fw-bold" id="panel-finance-circulating">
                     0
-                  </div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">30 Gün Kredi</small><div
+                  </div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.finance.credited_30d">30 Gün Kredi</small><div
                     class="fs-3 fw-bold text-success"
                     id="panel-finance-credited"
                   >
                     0
-                  </div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">30 Gün Harcama</small><div
+                  </div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.finance.spent_30d">30 Gün Harcama</small><div
                     class="fs-3 fw-bold text-warning"
                     id="panel-finance-spent"
                   >
                     0
-                  </div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">30 Gün İade</small><div
+                  </div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.finance.refunded_30d">30 Gün İade</small><div
                     class="fs-3 fw-bold text-danger"
                     id="panel-finance-refunded"
                   >
@@ -1944,41 +1841,38 @@ ${admin_note}</textarea>
                   </div></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-header bg-transparent"><div class="row g-2"><div class="col-md-6"><input
                     id="panel-finance-search"
                     class="form-control form-control-sm"
-                    placeholder="Kullanıcı, açıklama veya referans ara"
+                    placeholder="Kullanıcı, açıklama veya referans ara" data-i18n-attr="placeholder:admin.finance.search_placeholder"
                     data-on-input="filterFinance"
                   /></div><div class="col-md-3"><select
                     id="panel-finance-type"
                     class="form-select form-select-sm"
                     data-on-change="filterFinance"
-                  ><option value="">Tüm işlem türleri</option><option value="package_credit">Paket kredisi</option><option value="manual_credit">Manuel kredi</option><option value="manual_debit">Manuel borç</option><option value="chapter_unlock">Bölüm kilidi</option><option value="series_unlock">Seri kilidi</option><option value="feature_unlock">Özellik kilidi</option><option value="refund">İade</option></select></div><div class="col-md-3"><select
+                  ><option value="" data-i18n="admin.finance.all_types">Tüm işlem türleri</option><option value="package_credit" data-i18n="admin.finance.package_credit">Paket kredisi</option><option value="manual_credit" data-i18n="admin.finance.manual_credit">Manuel kredi</option><option value="manual_debit" data-i18n="admin.finance.manual_debit">Manuel borç</option><option value="chapter_unlock" data-i18n="admin.finance.chapter_unlock">Bölüm kilidi</option><option value="series_unlock" data-i18n="admin.finance.series_unlock">Seri kilidi</option><option value="feature_unlock" data-i18n="admin.finance.feature_unlock">Özellik kilidi</option><option value="refund" data-i18n="admin.finance.refund">İade</option></select></div><div class="col-md-3"><select
                     id="panel-finance-sort"
                     class="form-select form-select-sm"
                     data-on-change="filterFinance"
-                  ><option value="newest">En yeni</option><option value="oldest">En eski</option><option value="amount_desc">Tutar: büyükten</option></select></div></div></div><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>ID</th><th>Kullanıcı</th><th>Tür</th><th>Coin</th><th>Bakiye</th><th>Referans / Açıklama</th><th>Tarih</th><th></th></tr></thead><tbody id="panel-finance-list"></tbody></table></div><div
+                  ><option value="newest" data-i18n="admin.sort.newest">En yeni</option><option value="oldest" data-i18n="admin.sort.oldest">En eski</option><option value="amount_desc" data-i18n="admin.finance.amount_desc">Tutar: büyükten</option></select></div></div></div><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>ID</th><th data-i18n="admin.user">Kullanıcı</th><th data-i18n="admin.type">Tür</th><th data-i18n="admin.coin">Coin</th><th data-i18n="admin.balance">Bakiye</th><th data-i18n="admin.reference_description">Referans / Açıklama</th><th data-i18n="admin.date">Tarih</th><th></th></tr></thead><tbody id="panel-finance-list"></tbody></table></div><div
               class="card-footer bg-transparent"
               id="panel-finance-pager"
-            ></div></div></partial></template><template id="tpl-panel-ops"><partial name="panel-page-shell" header="header"><div slot="actions" class="btn-group btn-group-sm" role="tablist" aria-label="Ops görünümü"><button
+            ></div></div></partial></template><template id="tpl-panel-ops"><partial name="panel-page-shell" header="header"><div slot="actions" class="btn-group btn-group-sm" role="tablist" aria-label="Ops görünümü" data-i18n-attr="aria-label:admin.ops.view_label"><button
               type="button"
               class="btn btn-primary"
               data-on-click="switchOpsView"
               data-ops-view="all"
               aria-selected="true"
-            ><i class="bi bi-grid me-1"></i>Tümü
-            </button><button
+            ><i class="bi bi-grid me-1"></i><span data-i18n="admin.ops.all">Tümü</span></button><button
               type="button"
               class="btn btn-outline-secondary"
               data-on-click="switchOpsView"
               data-ops-view="queue"
               aria-selected="false"
-            ><i class="bi bi-list-task me-1"></i>Kuyruk
-            </button><button
+            ><i class="bi bi-list-task me-1"></i><span data-i18n="admin.ops.queue">Kuyruk</span></button><button
               type="button"
               class="btn btn-outline-secondary"
               data-on-click="switchOpsView"
               data-ops-view="maintenance"
               aria-selected="false"
-            ><i class="bi bi-tools me-1"></i>Bakım
-            </button></div><div
+            ><i class="bi bi-tools me-1"></i><span data-i18n="admin.ops.maintenance">Bakım</span></button></div><div
             id="panel-ops-operation"
             class="alert alert-info d-flex align-items-center gap-2"
             role="status"
@@ -1994,41 +1888,32 @@ ${admin_note}</textarea>
             class="row g-3 mb-4"
             id="panel-ops-health"
             data-requires-permission="admin.health.view"
-          ><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Veritabanı</small><div class="fw-bold" id="panel-health-database">
-                    Kontrol ediliyor
-                  </div><small class="text-secondary" id="panel-health-migration"></small></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Depolama</small><div class="fw-bold" id="panel-health-storage">
-                    Kontrol ediliyor
-                  </div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Kuyruk</small><div class="fw-bold" id="panel-health-queue">-</div><small class="text-secondary d-block" id="panel-health-queue-detail"
+          ><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.ops.database">Veritabanı</small><div class="fw-bold" id="panel-health-database"><span data-i18n="admin.ops.checking">Kontrol ediliyor</span></div><small class="text-secondary" id="panel-health-migration"></small></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.ops.storage">Depolama</small><div class="fw-bold" id="panel-health-storage"><span data-i18n="admin.ops.checking">Kontrol ediliyor</span></div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.ops.queue">Kuyruk</small><div class="fw-bold" id="panel-health-queue">-</div><small class="text-secondary d-block" id="panel-health-queue-detail"
                     >-</small
-                  ></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Son Yedek</small><div class="fw-bold small" id="panel-health-backup">-</div><small class="text-secondary d-block" id="panel-health-backup-detail"
+                  ></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.ops.last_backup">Son Yedek</small><div class="fw-bold small" id="panel-health-backup">-</div><small class="text-secondary d-block" id="panel-health-backup-detail"
                     >-</small
-                  ></div></div></div></div><div class="card border-0 shadow-sm rounded-3 mb-4" id="panel-ops-queue"><div class="card-header bg-transparent"><div class="row g-2 align-items-center"><div class="col-md-3"><h5 class="mb-0">Kuyruk İşleri</h5></div><div class="col-md-4"><input
+                  ></div></div></div></div><div class="card border-0 shadow-sm rounded-3 mb-4" id="panel-ops-queue"><div class="card-header bg-transparent"><div class="row g-2 align-items-center"><div class="col-md-3"><h5 class="mb-0" data-i18n="admin.ops.queue_jobs">Kuyruk İşleri</h5></div><div class="col-md-4"><input
                     id="panel-queue-search"
                     class="form-control form-control-sm"
-                    placeholder="İş türü veya hata ara"
+                    placeholder="İş türü veya hata ara" data-i18n-attr="placeholder:admin.queue.search_placeholder"
                     data-on-input="filterQueue"
                   /></div><div class="col-md-3"><input
                     id="panel-queue-job-type"
                     class="form-control form-control-sm"
-                    placeholder="İş türü (tam eşleşme)"
+                    placeholder="İş türü (tam eşleşme)" data-i18n-attr="placeholder:admin.queue.job_type_placeholder"
                     data-on-input="filterQueue"
                   /></div><div class="col-md-2"><select
                     id="panel-queue-status"
                     class="form-select form-select-sm"
                     data-on-change="filterQueue"
-                  ><option value="">Tüm durumlar</option><option value="pending">Bekleyen</option><option value="processing">İşleniyor</option><option value="failed">Başarısız</option><option value="done">Tamamlandı</option><option value="cancelled">İptal</option></select></div><div class="col-md-1 text-end"><button
+                  ><option value="" data-i18n="admin.all_statuses">Tüm durumlar</option><option value="pending" data-i18n="admin.status.pending">Bekleyen</option><option value="processing" data-i18n="admin.status.processing">İşleniyor</option><option value="failed" data-i18n="admin.status.failed">Başarısız</option><option value="done" data-i18n="admin.status.done">Tamamlandı</option><option value="cancelled" data-i18n="admin.status.cancelled">İptal</option></select></div><div class="col-md-1 text-end"><button
                     class="btn btn-sm btn-outline-secondary"
                     data-on-click="loadQueueJobs"
-                  >
-                    Yenile
-                  </button></div></div></div><div class="card-body p-0 table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>ID</th><th>İş türü</th><th>Durum</th><th>Öncelik</th><th>Deneme</th><th>Yaş / Uygunluk</th><th>Son hata</th><th>Oluşturma</th><th></th></tr></thead><tbody id="panel-queue-jobs"></tbody></table></div><div
+                  ><span data-i18n="admin.action.refresh">Yenile</span></button></div></div></div><div class="card-body p-0 table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>ID</th><th data-i18n="admin.queue.job_type">İş türü</th><th data-i18n="admin.status">Durum</th><th data-i18n="admin.queue.priority">Öncelik</th><th data-i18n="admin.queue.attempts">Deneme</th><th data-i18n="admin.queue.age_readiness">Yaş / Uygunluk</th><th data-i18n="admin.queue.last_error">Son hata</th><th data-i18n="admin.created_at">Oluşturma</th><th></th></tr></thead><tbody id="panel-queue-jobs"></tbody></table></div><div
               class="card-footer bg-transparent"
               id="panel-queue-pager"
-            ></div></div><div class="row g-4" id="panel-ops-maintenance"><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-cpu-fill text-primary me-2"></i>Kuyruk
-                    İşleyici (Queue Worker)
-                  </h5></div><div class="card-body px-4"><p class="text-secondary small">
-                    Bekleyen arka plan işlerini tek seferde çalıştırır. İş türü
-                    boşsa tüm türler işlenir.
+            ></div></div><div class="row g-4" id="panel-ops-maintenance"><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-cpu-fill text-primary me-2"></i><span data-i18n="admin.ops.queue_worker">Kuyruk İşleyici (Queue Worker)</span></h5></div><div class="card-body px-4"><p class="text-secondary small" data-i18n="admin.ops.queue_worker_help">
+                    Bekleyen arka plan işlerini tek seferde çalıştırır. İş türü boşsa tüm türler işlenir.
                   </p><div class="input-group"><input
                       type="number"
                       min="1"
@@ -2039,20 +1924,14 @@ ${admin_note}</textarea>
                     /><input
                       id="panel-queue-run-type"
                       class="form-control"
-                      placeholder="İş türü (opsiyonel)"
+                      placeholder="İş türü (opsiyonel)" data-i18n-attr="placeholder:admin.queue.optional_job_type_placeholder"
                     /><button
                       class="btn btn-primary"
                       data-on-click="runQueueWorker"
                       data-ops-operation
                       data-requires-permission="admin.jobs.run"
-                    ><i class="bi bi-play-fill me-1"></i> Kuyruğu Çalıştır (Run
-                      Once)
-                    </button></div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-trash3-fill text-danger me-2"></i>Veri
-                    Saklama & Temizlik (Retention)
-                  </h5></div><div class="card-body px-4"><p class="text-secondary small">
-                    Seçilen süreden eski oturumları, audit loglarını,
-                    tamamlanmış işleri ve geçici kayıtları siler. En az 7 gün
-                    saklama uygulanır.
+                    ><i class="bi bi-play-fill me-1"></i><span data-i18n="admin.ops.run_queue">Kuyruğu Çalıştır (Run Once)</span></button></div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-trash3-fill text-danger me-2"></i><span data-i18n="admin.ops.retention">Veri Saklama &amp; Temizlik (Retention)</span></h5></div><div class="card-body px-4"><p class="text-secondary small" data-i18n="admin.ops.retention_help">
+                    Seçilen süreden eski oturumları, audit loglarını, tamamlanmış işleri ve geçici kayıtları siler. En az 7 gün saklama uygulanır.
                   </p><div class="input-group"><input
                       type="number"
                       min="1"
@@ -2065,124 +1944,107 @@ ${admin_note}</textarea>
                       data-on-click="runRetentionCleanup"
                       data-ops-operation
                       data-requires-permission="admin.jobs.run"
-                    ><i class="bi bi-broom me-1"></i> Temizliği Başlat
-                    </button></div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-lightning-charge-fill text-warning me-2"></i
-                    >Önbellek Isıtma (Cache Warmup)
-                  </h5></div><div class="card-body px-4"><p class="text-secondary small">
+                    ><i class="bi bi-broom me-1"></i><span data-i18n="admin.ops.start_cleanup">Temizliği Başlat</span></button></div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-lightning-charge-fill text-warning me-2"></i
+                    ><span data-i18n="admin.ops.cache_warmup">Önbellek Isıtma (Cache Warmup)</span></h5></div><div class="card-body px-4"><p class="text-secondary small" data-i18n="admin.ops.cache_warmup_help">
                     Popüler seriler ve site yapılandırmasını önbelleğe yükler.
                   </p><button
                     class="btn btn-outline-warning"
                     data-on-click="runCacheWarmup"
                     data-ops-operation
                     data-requires-permission="admin.jobs.run"
-                  ><i class="bi bi-fire me-1"></i> Önbelleği Isıt
-                  </button></div></div></div><div class="col-12"><div
+                  ><i class="bi bi-fire me-1"></i><span data-i18n="admin.ops.warm_cache">Önbelleği Isıt</span></button></div></div></div><div class="col-12"><div
                 id="panel-advanced-maintenance"
                 class="card border-0 shadow-sm rounded-3"
                 data-requires-permission="admin.jobs.run"
                 hidden
-              ><div class="card-header bg-transparent"><h5 class="mb-0">Gelişmiş Bakım Araçları</h5></div><div class="card-body"><div class="row g-2"><div class="col-md-4"><button
+              ><div class="card-header bg-transparent"><h5 class="mb-0" data-i18n="admin.ops.advanced_tools">Gelişmiş Bakım Araçları</h5></div><div class="card-body"><div class="row g-2"><div class="col-md-4"><button
                         class="btn btn-outline-info w-100"
                         data-on-click="runMaintenance"
                         data-ops-operation
                         data-task="backup"
-                      >
-                        Tam Yedek
-                      </button></div><div class="col-md-4"><button
+                      ><span data-i18n="admin.ops.full_backup">Tam Yedek</span></button></div><div class="col-md-4"><button
                         class="btn btn-outline-secondary w-100"
                         data-on-click="runMaintenance"
                         data-ops-operation
                         data-task="analytics"
-                      >
-                        Analytics Topla
-                      </button></div><div class="col-md-4" data-developer-tool><button
+                      ><span data-i18n="admin.ops.collect_analytics">Analytics Topla</span></button></div><div class="col-md-4" data-developer-tool><button
                         class="btn btn-outline-success w-100"
                         data-on-click="runMaintenance"
                         data-ops-operation
                         data-task="api-tests"
-                      >
-                        API Testleri
-                      </button></div><div class="col-md-4" data-developer-tool><button
+                      ><span data-i18n="admin.ops.api_tests">API Testleri</span></button></div><div class="col-md-4" data-developer-tool><button
                         class="btn btn-outline-dark w-100"
                         data-on-click="runMaintenance"
                         data-ops-operation
                         data-task="openapi"
-                      >
-                        OpenAPI Üret
-                      </button></div><div class="col-md-4" data-developer-tool><button
+                      ><span data-i18n="admin.ops.generate_openapi">OpenAPI Üret</span></button></div><div class="col-md-4" data-developer-tool><button
                         class="btn btn-outline-success w-100"
                         data-on-click="runMaintenance"
                         data-ops-operation
                         data-task="seed-data"
-                      >
-                        Varsayılan Veriyi Ekle
-                      </button></div></div>
+                      ><span data-i18n="admin.ops.seed_data">Varsayılan Veriyi Ekle</span></button></div></div>
 <pre
                     class="bg-dark text-light rounded p-3 mt-3 mb-0 panel-output"
                     id="panel-maintenance-output"
                   >
-İşlem çıktısı burada gösterilecek.</pre>
-                </div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-map-fill text-info me-2"></i>Sitemap & SEO
-                    Oluşturucu
-                  </h5></div><div class="card-body px-4"><p class="text-secondary small">
+<span data-i18n="admin.ops.output_placeholder">İşlem çıktısı burada gösterilecek.</span></pre>
+                </div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-map-fill text-info me-2"></i><span data-i18n="admin.ops.sitemap_seo">Sitemap &amp; SEO Oluşturucu</span></h5></div><div class="card-body px-4"><p class="text-secondary small" data-i18n="admin.ops.sitemap_help">
                     Arama motorları için sitemap.xml dosyasını yeniden üretir.
                   </p><button
                     class="btn btn-outline-info"
                     data-on-click="generateSitemap"
                     data-ops-operation
                     data-requires-permission="admin.jobs.run"
-                  ><i class="bi bi-arrow-repeat me-1"></i> Sitemap Oluştur
-                  </button></div></div></div></div></partial></template><template id="tpl-panel-logs"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex flex-wrap gap-2"><a
+                  ><i class="bi bi-arrow-repeat me-1"></i><span data-i18n="admin.ops.generate_sitemap">Sitemap Oluştur</span></button></div></div></div></div></partial></template><template id="tpl-panel-logs"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex flex-wrap gap-2"><a
               class="btn btn-sm btn-primary"
               href="/panel/logs/moderation"
               data-panel-link
-              ><i class="bi bi-plus-lg me-1"></i>Moderasyon Kaydı</a
+              ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.logs.moderation_record">Moderasyon Kaydı</span></a
             ><a
               class="btn btn-sm btn-outline-info"
               href="/panel/logs/viewer/login-events"
               data-panel-link
-              >Girişler</a
+              ><span data-i18n="admin.logs.login_events">Girişler</span></a
             ><a
               class="btn btn-sm btn-outline-danger"
               href="/panel/logs/viewer/error"
               data-panel-link
-              >Hatalar</a
+              ><span data-i18n="admin.logs.errors">Hatalar</span></a
             ><a
               class="btn btn-sm btn-outline-dark"
               href="/panel/logs/viewer/moderation-actions"
               data-panel-link
-              >Moderasyon</a
+              ><span data-i18n="admin.logs.moderation">Moderasyon</span></a
             ><button
               class="btn btn-sm btn-outline-success"
               data-on-click="exportLogsCsv"
-            ><i class="bi bi-filetype-csv me-1"></i>CSV</button
+            ><i class="bi bi-filetype-csv me-1"></i><span data-i18n="admin.logs.export_csv">CSV</span></button
             ><button
               class="btn btn-sm btn-outline-secondary"
               data-on-click="toggleLogAutoRefresh"
               id="panel-log-auto"
-            ><i class="bi bi-broadcast me-1"></i>Otomatik: Kapalı</button
+            ><i class="bi bi-broadcast me-1"></i><span data-i18n="admin.logs.auto_off">Otomatik: Kapalı</span></button
             ><button
               class="btn btn-sm btn-outline-secondary"
               data-on-click="loadLogs"
-            ><i class="bi bi-arrow-clockwise me-1"></i> Yenile
-            </button></div><div class="card border-0 shadow-sm rounded-3"><div class="card-header bg-transparent"><div class="row g-2"><div class="col-lg-4"><input
+            ><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="admin.action.refresh">Yenile</span></button></div><div class="card border-0 shadow-sm rounded-3"><div class="card-header bg-transparent"><div class="row g-2"><div class="col-lg-4"><input
                     id="panel-logs-search"
                     class="form-control form-control-sm"
-                    placeholder="Yol, kullanıcı veya user-agent ara"
+                    placeholder="Yol, kullanıcı veya user-agent ara" data-i18n-attr="placeholder:admin.logs.search_placeholder"
                     data-on-input="filterLogs"
                   /></div><div class="col"><select
                     id="panel-logs-method"
                     class="form-select form-select-sm"
                     data-on-change="filterLogs"
-                  ><option value="">Metot</option><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></div><div class="col"><select
+                  ><option value="" data-i18n="admin.logs.method">Metot</option><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></div><div class="col"><select
                     id="panel-logs-status"
                     class="form-select form-select-sm"
                     data-on-change="filterLogs"
-                  ><option value="">Durum</option><option value="2xx">2xx</option><option value="4xx">4xx</option><option value="5xx">5xx</option></select></div><div class="col"><select
+                  ><option value="" data-i18n="admin.status">Durum</option><option value="2xx">2xx</option><option value="4xx">4xx</option><option value="5xx">5xx</option></select></div><div class="col"><select
                     id="panel-logs-sort"
                     class="form-select form-select-sm"
                     data-on-change="filterLogs"
-                  ><option value="newest">En yeni</option><option value="oldest">En eski</option><option value="slowest">En yavaş</option></select></div><div class="col"><input
+                  ><option value="newest" data-i18n="admin.sort.newest">En yeni</option><option value="oldest" data-i18n="admin.sort.oldest">En eski</option><option value="slowest" data-i18n="admin.logs.slowest">En yavaş</option></select></div><div class="col"><input
                     type="date"
                     id="panel-logs-from"
                     class="form-control form-control-sm"
@@ -2194,68 +2056,49 @@ ${admin_note}</textarea>
                     data-on-change="filterLogs"
                   /></div></div></div><div class="card-body p-0 table-responsive"><table
                 class="table table-hover align-middle mb-0 font-monospace fs-8"
-              ><thead class="table-light"><tr><th>Metot</th><th>Yol (Path)</th><th>Durum</th><th>Kullanıcı ID</th><th>Süre</th><th>Tarih</th><th></th></tr></thead><tbody id="panel-audit-logs"></tbody></table></div><div class="card-footer bg-transparent" id="panel-logs-pager"></div></div></partial></template><template id="tpl-panel-uploads"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex gap-2"><button
+              ><thead class="table-light"><tr><th data-i18n="admin.logs.method">Metot</th><th data-i18n="admin.logs.path">Yol (Path)</th><th data-i18n="admin.status">Durum</th><th data-i18n="admin.user.id">Kullanıcı ID</th><th data-i18n="admin.logs.duration">Süre</th><th data-i18n="admin.date">Tarih</th><th></th></tr></thead><tbody id="panel-audit-logs"></tbody></table></div><div class="card-footer bg-transparent" id="panel-logs-pager"></div></div></partial></template><template id="tpl-panel-uploads"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex gap-2"><button
               class="btn btn-sm btn-outline-danger"
               data-on-click="bulkDeleteUploads"
               data-requires-permission="admin.uploads.delete"
-            ><i class="bi bi-trash me-1"></i>Seçilenleri Sil</button
+            ><i class="bi bi-trash me-1"></i><span data-i18n="admin.action.delete_selected">Seçilenleri Sil</span></button
             ><button
               class="btn btn-sm btn-outline-secondary"
               data-on-click="loadUploads"
-            ><i class="bi bi-arrow-clockwise me-1"></i>Yenile
-            </button></div><div class="row g-3 mb-3"><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Dosya</small><div class="fs-4 fw-bold" id="panel-upload-count">0</div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Toplam Boyut</small><div class="fs-4 fw-bold" id="panel-upload-size">0 MB</div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary">Dağılım</small><div class="fw-semibold" id="panel-upload-types">-</div></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-header bg-transparent"><div class="row g-2"><div class="col-md-6"><input
+            ><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="admin.action.refresh">Yenile</span></button></div><div class="row g-3 mb-3"><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.upload.file">Dosya</small><div class="fs-4 fw-bold" id="panel-upload-count">0</div></div></div></div><div class="col-md-3"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.upload.total_size">Toplam Boyut</small><div class="fs-4 fw-bold" id="panel-upload-size">0 MB</div></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm"><div class="card-body"><small class="text-secondary" data-i18n="admin.upload.distribution">Dağılım</small><div class="fw-semibold" id="panel-upload-types">-</div></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-header bg-transparent"><div class="row g-2"><div class="col-md-6"><input
                     id="panel-uploads-search"
                     class="form-control form-control-sm"
-                    placeholder="Dosya, görsel ID veya kullanıcı ara"
+                    placeholder="Dosya, görsel ID veya kullanıcı ara" data-i18n-attr="placeholder:admin.upload.search_placeholder"
                     data-on-input="filterUploads"
                   /></div><div class="col-md-3"><select
                     id="panel-uploads-mime"
                     class="form-select form-select-sm"
                     data-on-change="filterUploads"
-                  ><option value="">Tüm türler</option><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option><option value="image/gif">GIF</option></select></div><div class="col-md-3"><label class="form-check mt-1"
+                  ><option value="" data-i18n="admin.all_types">Tüm türler</option><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option><option value="image/gif">GIF</option></select></div><div class="col-md-3"><label class="form-check mt-1"
                     ><input
                       id="panel-uploads-orphans"
                       class="form-check-input"
                       type="checkbox"
                       data-on-change="filterUploads"
                     /><span class="form-check-label"
-                      >Yalnız yetim dosyalar</span
+                      ><span data-i18n="admin.upload.orphans_only">Yalnız yetim dosyalar</span
                     ></label
                   ></div></div></div><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th><input
                         type="checkbox"
                         data-on-change="toggleAllUploads"
-                      /></th><th>Önizleme</th><th>Dosya</th><th>Tür</th><th>Boyut</th><th>Bağlantılar</th><th>Yükleyen</th><th>Tarih</th><th></th></tr></thead><tbody id="panel-uploads-list"></tbody></table></div><div
+                      /></th><th data-i18n="admin.preview">Önizleme</th><th data-i18n="admin.upload.file">Dosya</th><th data-i18n="admin.type">Tür</th><th data-i18n="admin.upload.size">Boyut</th><th data-i18n="admin.upload.references">Bağlantılar</th><th data-i18n="admin.upload.uploader">Yükleyen</th><th data-i18n="admin.date">Tarih</th><th></th></tr></thead><tbody id="panel-uploads-list"></tbody></table></div><div
               class="card-footer bg-transparent"
               id="panel-uploads-pager"
             ></div></div></partial></template><template id="tpl-panel-help"><partial name="panel-page-shell" header="header"><div class="row g-4"><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h5><i class="bi bi-journal-richtext text-primary me-2"></i
-                    >İçerik ve Bölümler
-                  </h5><p>
-                    Seri ekleyin, metadata ve tür/etiketleri düzenleyin.
-                    Bölümler ekranından metin veya görsel bölüm oluşturabilir,
-                    ZIP/görsel yükleyebilir ve toplu işlemler
-                    uygulayabilirsiniz.
-                  </p></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h5><i class="bi bi-people text-success me-2"></i>Kullanıcılar
-                    ve Roller
-                  </h5><p>
-                    Kullanıcı bilgisi, rolü ve yasak durumunu düzenleyin. Yetki
-                    matrisi rollerin uygulama yapılandırmasından gelen
-                    izinlerini gösterir.
-                  </p></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h5><i class="bi bi-coin text-warning me-2"></i>Cüzdan ve Mağaza
-                  </h5><p>
-                    Bakiye işlemlerini gerekçeli yapın. Paket verme, paket
-                    yapılandırma, reklamsız ürün ve içerik fiyatlandırma
-                    araçları bu bölümde bulunur.
+                    ><span data-i18n="admin.help.content_title">İçerik ve Bölümler</span></h5><p data-i18n="admin.help.content_description">
+                    Seri ekleyin, metadata ve tür/etiketleri düzenleyin. Bölümler ekranından metin veya görsel bölüm oluşturabilir, ZIP/görsel yükleyebilir ve toplu işlemler uygulayabilirsiniz.
+                  </p></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h5><i class="bi bi-people text-success me-2"></i><span data-i18n="admin.help.users_title">Kullanıcılar ve Roller</span></h5><p data-i18n="admin.help.users_description">
+                    Kullanıcı bilgisi, rolü ve yasak durumunu düzenleyin. Yetki matrisi rollerin uygulama yapılandırmasından gelen izinlerini gösterir.
+                  </p></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h5><i class="bi bi-coin text-warning me-2"></i><span data-i18n="admin.help.wallet_title">Cüzdan ve Mağaza</span></h5><p data-i18n="admin.help.wallet_description">
+                    Bakiye işlemlerini gerekçeli yapın. Paket verme, paket yapılandırma, reklamsız ürün ve içerik fiyatlandırma araçları bu bölümde bulunur.
                   </p></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h5><i class="bi bi-shield-exclamation text-danger me-2"></i
-                    >Güvenli İşlemler
-                  </h5><p>
-                    Silme, bakım, `.env`, yedek ve seed işlemleri kalıcı
-                    sonuçlar doğurabilir. Hedefi kontrol edin, işlem çıktısını
-                    inceleyin ve özellikle üretim ortamında yedek alın.
-                  </p></div></div></div><div class="col-12"><div class="alert alert-info mb-0"><strong>API:</strong> Panel tüm işlemleri
-                <code>/api/v1/admin</code> altındaki kimlik doğrulamalı uç
-                noktalarla yapar. Görmediğiniz veya 403 dönen bir işlem için
-                hesabınızın ilgili RBAC iznine sahip olduğunu doğrulayın.
-              </div></div></div></partial></template><template id="tpl-panel-config"><partial name="panel-page-shell" header="header"><div slot="actions"><button
+                    ><span data-i18n="admin.help.safe_title">Güvenli İşlemler</span></h5><p data-i18n="admin.help.safe_description">
+                    Silme, bakım, `.env`, yedek ve seed işlemleri kalıcı sonuçlar doğurabilir. Hedefi kontrol edin, işlem çıktısını inceleyin ve özellikle üretim ortamında yedek alın.
+                  </p></div></div></div><div class="col-12"><div class="alert alert-info mb-0"><strong data-i18n="admin.help.api_label">API:</strong><span data-i18n="admin.help.api_intro">Panel tüm işlemleri</span><code>/api/v1/admin</code><span data-i18n="admin.help.api_details">altındaki kimlik doğrulamalı uç noktalarla yapar. Görmediğiniz veya 403 dönen bir işlem için hesabınızın ilgili RBAC iznine sahip olduğunu doğrulayın.</span></div></div></div></partial></template><template id="tpl-panel-config"><partial name="panel-page-shell" header="header"><div slot="actions"><button
             type="submit"
             form="panel-config-form"
             id="panel-config-save"
@@ -2263,82 +2106,78 @@ ${admin_note}</textarea>
             disabled
           ><i class="bi bi-check2-circle me-1"></i><span data-i18n="admin.config.save">Ayarları Kaydet</span></button></div><form id="panel-config-form"><div class="card border-0 shadow-sm rounded-3 mb-4"><div
                 class="card-header bg-transparent py-3 border-bottom d-flex align-items-center"
-              ><i class="bi bi-globe2 text-primary fs-5 me-2"></i><h5 class="mb-0 fw-semibold">Genel Site Kimliği</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-4"><label class="form-label fw-semibold">Site Adı</label><input
+              ><i class="bi bi-globe2 text-primary fs-5 me-2"></i><h5 class="mb-0 fw-semibold" data-i18n="admin.config.identity">Genel Site Kimliği</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-4"><label class="form-label fw-semibold" data-i18n="admin.config.site_name">Site Adı</label><input
                       type="text"
                       class="form-control"
                       data-model="config.site_name"
                       maxlength="120"
-                      placeholder="NM Reader"
+                      placeholder="NM Reader" data-i18n-attr="placeholder:admin.config.site_name_placeholder"
                     /></div><div class="col-md-4"><label class="form-label fw-semibold"
-                      >Site Kısaltması (Abbreviation)</label
+                      data-i18n="admin.config.site_abbreviation">Site Kısaltması (Abbreviation)</label
                     ><input
                       type="text"
                       class="form-control"
                       data-model="config.site_abbreviation"
                       maxlength="20"
-                      placeholder="NMR"
-                    /></div><div class="col-md-4"><label class="form-label fw-semibold">Varsayılan Dil</label><select
+                      placeholder="NMR" data-i18n-attr="placeholder:admin.config.abbreviation_placeholder"
+                    /></div><div class="col-md-4"><label class="form-label fw-semibold" data-i18n="admin.config.default_language">Varsayılan Dil</label><select
                       class="form-select"
                       data-model="config.default_language"
-                    ><option value="tr">Türkçe (tr)</option><option value="en">English (en)</option></select></div><div class="col-md-6"><label class="form-label fw-semibold">Site Sloganı</label><input
+                    ><option value="tr" data-i18n="admin.language.turkish">Türkçe (tr)</option><option value="en" data-i18n="admin.language.english">English (en)</option></select></div><div class="col-md-6"><label class="form-label fw-semibold" data-i18n="admin.config.site_slogan">Site Sloganı</label><input
                       type="text"
                       class="form-control"
                       data-model="config.site_slogan"
                       maxlength="255"
-                      placeholder="En İyi Çevrimiçi Manga ve Novel Okuyucusu"
+                      placeholder="En İyi Çevrimiçi Manga ve Novel Okuyucusu" data-i18n-attr="placeholder:admin.config.slogan_placeholder"
                     /></div><div class="col-12"><label class="form-label fw-semibold"
-                      >Site Açıklaması (Meta Description)</label
+                      data-i18n="admin.config.site_description">Site Açıklaması (Meta Description)</label
                     >
 <textarea
                       class="form-control"
                       rows="2"
                       data-model="config.site_description"
                       maxlength="1000"
-                      placeholder="Arama motorları için meta açıklama metni..."
+                      placeholder="Arama motorları için meta açıklama metni..." data-i18n-attr="placeholder:admin.config.description_placeholder"
                     ></textarea>
                   </div><div class="col-12"><label class="form-label fw-semibold"
-                      >Altbilgi (Footer) Metni</label
+                      data-i18n="admin.config.footer_text">Altbilgi (Footer) Metni</label
                     ><input
                       type="text"
                       class="form-control"
                       data-model="config.footer_text"
                       maxlength="500"
-                      placeholder="© 2026 NM Reader. Tüm hakları saklıdır."
+                      placeholder="© 2026 NM Reader. Tüm hakları saklıdır." data-i18n-attr="placeholder:admin.config.footer_placeholder"
                     /></div></div></div></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div
                 class="card-header bg-transparent py-3 border-bottom d-flex align-items-center"
-              ><i class="bi bi-palette text-success fs-5 me-2"></i><h5 class="mb-0 fw-semibold">Görünüm ve Medyalar</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-4"><label class="form-label fw-semibold"
-                      >Varsayılan Tema</label
+              ><i class="bi bi-palette text-success fs-5 me-2"></i><h5 class="mb-0 fw-semibold" data-i18n="admin.config.appearance">Görünüm ve Medyalar</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-4"><label class="form-label fw-semibold"
+                      data-i18n="admin.config.default_theme">Varsayılan Tema</label
                     ><select
                       class="form-select"
                       data-model="config.default_theme"
-                    ><option value="default">Default</option><option value="dark">Dark</option><option value="royal">Royal</option><option value="bootstrap">Bootstrap</option><option value="material">Material</option><option value="apple">Apple</option><option value="glass">Glass</option></select></div><div class="col-md-4"><label class="form-label fw-semibold"
-                      >Header Logo URL <code>site_logo</code></label
+                    ><option value="default" data-i18n="admin.theme.default">Default</option><option value="dark" data-i18n="admin.theme.dark">Dark</option><option value="royal" data-i18n="admin.theme.royal">Royal</option><option value="bootstrap" data-i18n="admin.theme.bootstrap">Bootstrap</option><option value="material" data-i18n="admin.theme.material">Material</option><option value="apple" data-i18n="admin.theme.apple">Apple</option><option value="glass" data-i18n="admin.theme.glass">Glass</option></select></div><div class="col-md-4"><label class="form-label fw-semibold"
+                      data-i18n="admin.config.header_logo_url">Header Logo URL <code>site_logo</code></label
                     ><input
                       type="text"
                       class="form-control"
                       data-model="config.site_logo"
                       maxlength="255"
                       placeholder="/assets/img/logo-header.svg"
-                    /><div class="form-text text-secondary">
-                      Public Header/Navbar logosu.
-                    </div></div><div class="col-md-4"><label class="form-label fw-semibold"
-                      >Footer Logo URL <code>logo_url</code></label
+                    /><div class="form-text text-secondary"><span data-i18n="admin.config.header_logo_help">Public Header/Navbar logosu.</span></div></div><div class="col-md-4"><label class="form-label fw-semibold"
+                      data-i18n="admin.config.footer_logo_url">Footer Logo URL <code>logo_url</code></label
                     ><input
                       type="text"
                       class="form-control"
                       data-model="config.logo_url"
                       maxlength="255"
                       placeholder="/assets/img/logo-footer.svg"
-                    /><div class="form-text text-secondary">
-                      Public Footer logosu.
-                    </div></div><div class="col-md-4"><label class="form-label fw-semibold">Favicon URL</label><input
+                    /><div class="form-text text-secondary"><span data-i18n="admin.config.footer_logo_help">Public Footer logosu.</span></div></div><div class="col-md-4"><label class="form-label fw-semibold" data-i18n="admin.config.favicon_url">Favicon URL</label><input
                       type="text"
                       class="form-control"
                       data-model="config.favicon_url"
                       maxlength="255"
                       placeholder="/favicon.ico"
                     /></div><div class="col-md-6"><label class="form-label fw-semibold"
-                      >Varsayılan Profil Resmi</label
+                      data-i18n="admin.config.default_profile_image">Varsayılan Profil Resmi</label
                     ><input
                       type="text"
                       class="form-control"
@@ -2346,7 +2185,7 @@ ${admin_note}</textarea>
                       maxlength="255"
                       placeholder="/assets/img/default-profile.svg"
                     /></div><div class="col-md-6"><label class="form-label fw-semibold"
-                      >Varsayılan İçerik Kapak Resmi</label
+                      data-i18n="admin.config.default_cover_image">Varsayılan İçerik Kapak Resmi</label
                     ><input
                       type="text"
                       class="form-control"
@@ -2355,7 +2194,7 @@ ${admin_note}</textarea>
                       placeholder="/assets/img/covers/placeholder.svg"
                     /></div></div></div></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div
                 class="card-header bg-transparent py-3 border-bottom d-flex align-items-center"
-              ><i class="bi bi-shield-lock text-warning fs-5 me-2"></i><h5 class="mb-0 fw-semibold">Güvenlik ve Bakım Modu</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-6"><div
+              ><i class="bi bi-shield-lock text-warning fs-5 me-2"></i><h5 class="mb-0 fw-semibold" data-i18n="admin.config.security_maintenance">Güvenlik ve Bakım Modu</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-6"><div
                       class="form-check form-switch p-3 border rounded-3 bg-body-tertiary"
                     ><input
                         class="form-check-input ms-0 me-2"
@@ -2365,12 +2204,9 @@ ${admin_note}</textarea>
                       /><label
                         class="form-check-label fw-semibold"
                         for="panel-maintenance-mode"
-                        >Bakım Modu Aktif</label
-                      ><div class="small text-secondary mt-1">
-                        Site ziyaretçilere kapatılır, sadece yöneticiler ve
-                        izinli IP'ler erişebilir.
-                      </div></div></div><div class="col-12"><label class="form-label fw-semibold"
-                      >Bakım Modu IP Beyaz Listesi</label
+                        data-i18n="admin.config.maintenance_enabled">Bakım Modu Aktif</label
+                      ><div class="small text-secondary mt-1"><span data-i18n="admin.config.maintenance_help">Site ziyaretçilere kapatılır, sadece yöneticiler ve izinli IP'ler erişebilir.</span></div></div></div><div class="col-12"><label class="form-label fw-semibold"
+                      data-i18n="admin.config.maintenance_whitelist">Bakım Modu IP Beyaz Listesi</label
                     >
 <textarea
                       class="form-control font-monospace"
@@ -2378,11 +2214,9 @@ ${admin_note}</textarea>
                       data-model="config.maintenance_whitelist_text"
                       placeholder="127.0.0.1&#10;::1"
                     ></textarea>
-                    <div class="form-text text-secondary">
-                      Her satıra bir IP adresi girin veya virgülle ayırın.
-                    </div></div></div></div></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div
+                    <div class="form-text text-secondary"><span data-i18n="admin.config.whitelist_help">Her satıra bir IP adresi girin veya virgülle ayırın.</span></div></div></div></div></div><div class="card border-0 shadow-sm rounded-3 mb-4"><div
                 class="card-header bg-transparent py-3 border-bottom d-flex align-items-center"
-              ><i class="bi bi-envelope-at text-info fs-5 me-2"></i><h5 class="mb-0 fw-semibold">E-Posta ve Bildirimler</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-4"><div
+              ><i class="bi bi-envelope-at text-info fs-5 me-2"></i><h5 class="mb-0 fw-semibold" data-i18n="admin.config.email_notifications">E-Posta ve Bildirimler</h5></div><div class="card-body p-4"><div class="row g-3"><div class="col-md-4"><div
                       class="form-check form-switch p-3 border rounded-3 bg-body-tertiary h-100"
                     ><input
                         class="form-check-input ms-0 me-2"
@@ -2392,11 +2226,8 @@ ${admin_note}</textarea>
                       /><label
                         class="form-check-label fw-semibold"
                         for="panel-mail-enabled"
-                        >E-Posta Sistemi Aktif</label
-                      ><div class="small text-secondary mt-1">
-                        Sistem genelinde e-posta gönderimini açar veya tamamen
-                        devre dışı bırakır.
-                      </div></div></div><div class="col-md-4"><div
+                        data-i18n="admin.config.mail_enabled">E-Posta Sistemi Aktif</label
+                      ><div class="small text-secondary mt-1"><span data-i18n="admin.config.mail_help">Sistem genelinde e-posta gönderimini açar veya tamamen devre dışı bırakır.</span></div></div></div><div class="col-md-4"><div
                       class="form-check form-switch p-3 border rounded-3 bg-body-tertiary h-100"
                     ><input
                         class="form-check-input ms-0 me-2"
@@ -2406,11 +2237,8 @@ ${admin_note}</textarea>
                       /><label
                         class="form-check-label fw-semibold"
                         for="panel-mail-register"
-                        >Kayıtta E-Posta Gönder</label
-                      ><div class="small text-secondary mt-1">
-                        Yeni kayıt olan kullanıcılara hoş geldin veya doğrulama
-                        postası iletir.
-                      </div></div></div><div class="col-md-4"><div
+                        data-i18n="admin.config.mail_on_register">Kayıtta E-Posta Gönder</label
+                      ><div class="small text-secondary mt-1"><span data-i18n="admin.config.mail_register_help">Yeni kayıt olan kullanıcılara hoş geldin veya doğrulama postası iletir.</span></div></div></div><div class="col-md-4"><div
                       class="form-check form-switch p-3 border rounded-3 bg-body-tertiary h-100"
                     ><input
                         class="form-check-input ms-0 me-2"
@@ -2420,12 +2248,9 @@ ${admin_note}</textarea>
                       /><label
                         class="form-check-label fw-semibold"
                         for="panel-email-verify-req"
-                        >E-Posta Doğrulama Zorunlu</label
-                      ><div class="small text-secondary mt-1">
-                        Kullanıcıların oturum açabilmesi için e-posta
-                        doğrulaması şart koşulur.
-                      </div></div></div><div class="col-md-6"><label class="form-label fw-semibold"
-                      >Gönderici Adı (From Name)</label
+                        data-i18n="admin.config.email_verification_required">E-Posta Doğrulama Zorunlu</label
+                      ><div class="small text-secondary mt-1"><span data-i18n="admin.config.email_verify_help">Kullanıcıların oturum açabilmesi için e-posta doğrulaması şart koşulur.</span></div></div></div><div class="col-md-6"><label class="form-label fw-semibold"
+                      data-i18n="admin.config.mail_from_name">Gönderici Adı (From Name)</label
                     ><input
                       type="text"
                       class="form-control"
@@ -2433,7 +2258,7 @@ ${admin_note}</textarea>
                       maxlength="120"
                       placeholder="NM Reader"
                     /></div><div class="col-md-6"><label class="form-label fw-semibold"
-                      >Gönderici E-Posta Adresi (From Address)</label
+                      data-i18n="admin.config.mail_from_address">Gönderici E-Posta Adresi (From Address)</label
                     ><input
                       type="email"
                       class="form-control"
@@ -2441,64 +2266,57 @@ ${admin_note}</textarea>
                       maxlength="150"
                       placeholder="noreply@nmreader.com"
                     /></div><div class="col-12"><label class="form-label fw-semibold"
-                      >Şifre Sıfırlama E-Posta Konusu</label
+                      data-i18n="admin.config.password_reset_subject">Şifre Sıfırlama E-Posta Konusu</label
                     ><input
                       type="text"
                       class="form-control"
                       data-model="config.password_reset_subject"
                       maxlength="255"
-                      placeholder="Şifre Sıfırlama Talebi"
-                    /><div class="small text-secondary mt-1">
-                      Kullanılabilir değişkenler: <code>{{site_name}}</code>,
+                      placeholder="Şifre Sıfırlama Talebi" data-i18n-attr="placeholder:admin.config.password_reset_subject_placeholder"
+                    /><div class="small text-secondary mt-1"><span data-i18n="admin.config.available_variables">Kullanılabilir değişkenler:</span><code>{{site_name}}</code>,
                       <code>{{username}}</code></div></div><div class="col-12"><label class="form-label fw-semibold"
-                      >Şifre Sıfırlama HTML Şablonu</label
+                      data-i18n="admin.config.password_reset_body">Şifre Sıfırlama HTML Şablonu</label
                     >
 <textarea
                       class="form-control font-monospace small"
                       rows="5"
                       data-model="config.password_reset_body"
-                      placeholder="HTML şablon içeriği..."
+                      placeholder="HTML şablon içeriği..." data-i18n-attr="placeholder:admin.config.html_template_placeholder"
                     ></textarea>
-                    <div class="small text-secondary mt-1">
-                      Kullanılabilir değişkenler: <code>{{username}}</code>,
+                    <div class="small text-secondary mt-1"><span data-i18n="admin.config.available_variables">Kullanılabilir değişkenler:</span><code>{{username}}</code>,
                       <code>{{site_name}}</code>, <code>{{action_url}}</code>,
                       <code>{{expires_in}}</code></div></div><div class="col-12"><label class="form-label fw-semibold"
-                      >E-Posta Doğrulama Konusu</label
+                      data-i18n="admin.config.email_verification_subject">E-Posta Doğrulama Konusu</label
                     ><input
                       type="text"
                       class="form-control"
                       data-model="config.email_verification_subject"
                       maxlength="255"
-                      placeholder="E-posta Adresinizi Doğrulayın"
-                    /><div class="small text-secondary mt-1">
-                      Kullanılabilir değişkenler: <code>{{site_name}}</code>,
+                      placeholder="E-posta Adresinizi Doğrulayın" data-i18n-attr="placeholder:admin.config.email_verification_subject_placeholder"
+                    /><div class="small text-secondary mt-1"><span data-i18n="admin.config.available_variables">Kullanılabilir değişkenler:</span><code>{{site_name}}</code>,
                       <code>{{username}}</code></div></div><div class="col-12"><label class="form-label fw-semibold"
-                      >E-Posta Doğrulama HTML Şablonu</label
+                      data-i18n="admin.config.email_verification_body">E-Posta Doğrulama HTML Şablonu</label
                     >
 <textarea
                       class="form-control font-monospace small"
                       rows="5"
                       data-model="config.email_verification_body"
-                      placeholder="HTML şablon içeriği..."
+                      placeholder="HTML şablon içeriği..." data-i18n-attr="placeholder:admin.config.html_template_placeholder"
                     ></textarea>
-                    <div class="small text-secondary mt-1">
-                      Kullanılabilir değişkenler: <code>{{username}}</code>,
+                    <div class="small text-secondary mt-1"><span data-i18n="admin.config.available_variables">Kullanılabilir değişkenler:</span><code>{{username}}</code>,
                       <code>{{site_name}}</code>, <code>{{action_url}}</code>,
-                      <code>{{expires_in}}</code></div></div></div></div></div><div class="d-flex justify-content-end gap-2 mb-4"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2-circle me-1"></i> Ayarları Kaydet
-              </button></div></form></partial></template><template id="tpl-panel-report-detail"><partial name="panel-page-shell" header="header"><ol slot="breadcrumb" id="panel-report-breadcrumb" class="breadcrumb mb-1"></ol><div id="panel-report-detail-page"><div class="text-secondary" data-i18n="admin.state.report_loading">Rapor yükleniyor...</div></div></partial></template><template id="tpl-panel-series-editor"><partial name="panel-page-shell" header="header"><ol slot="breadcrumb" id="panel-series-breadcrumb" class="breadcrumb mb-1"></ol><form id="panel-series-editor-form" class="card border-0 shadow-sm"><div class="card-body p-4" id="panel-series-editor-fields"><div class="text-secondary" data-i18n="admin.state.form_loading">Form yükleniyor...</div></div><div
+                      <code>{{expires_in}}</code></div></div></div></div></div><div class="d-flex justify-content-end gap-2 mb-4"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-check2-circle me-1"></i><span data-i18n="admin.config.save">Ayarları Kaydet</span></button></div></form></partial></template><template id="tpl-panel-report-detail"><partial name="panel-page-shell" header="header"><ol slot="breadcrumb" id="panel-report-breadcrumb" class="breadcrumb mb-1"></ol><div id="panel-report-detail-page"><div class="text-secondary" data-i18n="admin.state.report_loading">Rapor yükleniyor...</div></div></partial></template><template id="tpl-panel-series-editor"><partial name="panel-page-shell" header="header"><ol slot="breadcrumb" id="panel-series-breadcrumb" class="breadcrumb mb-1"></ol><form id="panel-series-editor-form" class="card border-0 shadow-sm"><div class="card-body p-4" id="panel-series-editor-fields"><div class="text-secondary" data-i18n="admin.state.form_loading">Form yükleniyor...</div></div><div
               class="card-footer bg-transparent d-flex justify-content-end gap-2"
             ><a
                 class="btn btn-outline-secondary"
                 href="/panel/series"
                 data-panel-link
-                >İptal</a
+                ><span data-i18n="admin.action.cancel">İptal</span></a
               ><button
                 type="submit"
                 class="btn btn-primary"
                 id="panel-series-editor-submit"
-              >
-                Kaydet
-              </button></div></form></partial></template><template id="tpl-panel-webhook"><partial name="panel-page-shell" header="header"><div id="panel-webhook-page"><div class="text-secondary" data-i18n="admin.state.webhooks_loading">Webhooklar yükleniyor...</div></div></partial></template><template id="tpl-panel-config-env"><partial name="panel-page-shell" header="header"><div id="panel-config-env-page"><div class="text-secondary" data-i18n="admin.state.env_loading">Ortam değişkenleri yükleniyor...</div></div></partial></template><template id="tpl-panel-loading"
+              ><span data-i18n="admin.action.save">Kaydet</span></button></div></form></partial></template><template id="tpl-panel-webhook"><partial name="panel-page-shell" header="header"><div id="panel-webhook-page"><div class="text-secondary" data-i18n="admin.state.webhooks_loading">Webhooklar yükleniyor...</div></div></partial></template><template id="tpl-panel-config-env"><partial name="panel-page-shell" header="header"><div id="panel-config-env-page"><div class="text-secondary" data-i18n="admin.state.env_loading">Ortam değişkenleri yükleniyor...</div></div></partial></template><template id="tpl-panel-loading"
       ><div
         class="d-flex align-items-center justify-content-center gap-2 p-5"
         role="status"
@@ -2527,15 +2345,16 @@ ${admin_note}</textarea>
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><form data-editor-form><div class="card-body p-4"><partial name="panel-moderation-form" data="fields"></partial></div><div class="card-footer bg-transparent text-end"><partial name="panel-save-button"></partial></div></form></div></partial></template><template id="tpl-panel-likers-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4"><div><h4 class="mb-1"><i class="bi bi-heart-fill text-danger me-2"></i>${target_title}</h4><p class="text-secondary mb-0">${target_context}</p></div><span class="badge bg-primary-subtle text-primary"
                   >${target_type_label} · ${total} beğeni</span
-                ></div><div class="row g-2 mb-3"><div class="col-md-6"><label class="form-label visually-hidden" for="panel-likers-search">Kullanıcı ara</label
+                ></div><div class="row g-2 mb-3"><div class="col-md-6"><label class="form-label visually-hidden" for="panel-likers-search" data-i18n="admin.user.search">Kullanıcı ara</label
                   ><input
                     id="panel-likers-search"
                     type="search"
                     class="form-control"
                     placeholder="Kullanıcı adına göre ara..."
+                    data-i18n-attr="placeholder:admin.user.search_placeholder"
                     value="${query}"
                     data-on-input="filterLikers"
-                  /></div></div><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Kullanıcı</th><th>Beğeni tarihi</th></tr></thead><tbody id="panel-likers-list"></tbody></table></div><div id="panel-likers-pager" class="mt-3"></div></div></div></partial></template><template id="tpl-panel-series-preview-page"
+                  /></div></div><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th data-i18n="admin.user">Kullanıcı</th><th data-i18n="admin.like.date">Beğeni tarihi</th></tr></thead><tbody id="panel-likers-list"></tbody></table></div><div id="panel-likers-pager" class="mt-3"></div></div></div></partial></template><template id="tpl-panel-series-preview-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-series-preview" data="fields"></partial></div></div></partial></template><template id="tpl-panel-chapter-preview-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-chapter-preview" data="fields"></partial></div></div></partial></template><template id="tpl-panel-blog-preview-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-blog-preview" data="fields"></partial></div></div></partial></template><template id="tpl-panel-series-revisions-page"
@@ -2560,7 +2379,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?219");
+        const admin = await import("/assets/js/admin/admin.js?232");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {

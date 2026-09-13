@@ -6,6 +6,7 @@ export function createAdminApi({
   getCsrfToken,
   assertCurrentPage,
   reauthenticate,
+  translate = (_key, fallback) => fallback,
   fetchImpl = globalThis.fetch,
 } = {}) {
   if (typeof fetchImpl !== "function") {
@@ -56,7 +57,7 @@ export function createAdminApi({
       throw createApiError(
         0,
         "NETWORK_ERROR",
-        error?.message || "Sunucuya ulaşılamadı.",
+        error?.message || translate("admin.api.network_error", "Sunucuya ulaşılamadı."),
       );
     }
     if (!detached) assertCurrentPage?.(epoch);
@@ -65,14 +66,14 @@ export function createAdminApi({
         throw createApiError(
           428,
           "REAUTH_REQUIRED",
-          "Yeniden doğrulama gerekli.",
+          translate("admin.api.reauth_required", "Yeniden doğrulama gerekli."),
         );
       }
       if (!(await reauthenticate({ signal: getSignal?.(), epoch }))) {
         throw createApiError(
           428,
           "REAUTH_CANCELLED",
-          "Kritik işlem iptal edildi.",
+          translate("admin.api.reauth_cancelled", "Kritik işlem iptal edildi."),
         );
       }
       if (!detached) assertCurrentPage?.(epoch);
@@ -94,7 +95,7 @@ export function createAdminApi({
       throw createApiError(
         response.status,
         "MALFORMED_RESPONSE",
-        "Sunucudan geçersiz JSON yanıtı alındı.",
+        translate("admin.api.malformed_response", "Sunucudan geçersiz JSON yanıtı alındı."),
         [],
         payload,
       );
@@ -103,7 +104,7 @@ export function createAdminApi({
       throw createApiError(
         Number(payload.error?.code) || response.status,
         payload.error?.key || "API_ERROR",
-        payload.error?.message || "API isteği başarısız.",
+        payload.error?.message || translate("admin.api.request_failed", "API isteği başarısız."),
         payload.error?.params,
         payload,
       );
@@ -112,7 +113,7 @@ export function createAdminApi({
       throw createApiError(
         response.status,
         payload?.error?.key || "HTTP_ERROR",
-        payload?.error?.message || `HTTP ${response.status}`,
+        payload?.error?.message || translate("admin.api.http_error", `HTTP ${response.status}`),
         payload?.error?.params,
         payload,
       );

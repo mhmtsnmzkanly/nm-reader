@@ -117,10 +117,19 @@ export function createTaxonomyPageController({
         if (deleteButton) {
           if (Number(deleteButton.dataset.usage || 0) > 0) {
             throw new Error(
-              "Kullanılan bir kayıt silinemez; önce başka bir kayda birleştirin.",
+              translate(
+                "admin.taxonomy.cannot_delete_used",
+                "Kullanılan bir kayıt silinemez; önce başka bir kayda birleştirin.",
+              ),
             );
           }
-          if (!confirmAction(`“${deleteButton.dataset.name}” silinsin mi?`)) return;
+          if (
+            !confirmAction(
+              translate("admin.taxonomy.delete_confirm", "“{name}” silinsin mi?", {
+                name: deleteButton.dataset.name || "-",
+              }),
+            )
+          ) return;
           await api(`/taxonomies/${deleteButton.dataset.deleteTaxonomy}`, {
             method: "DELETE",
           });
