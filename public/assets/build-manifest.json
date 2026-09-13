@@ -1,6 +1,6 @@
 {
-  "_BlogCard-Dh8HOtu-.js": {
-    "file": "assets/js/BlogCard-Dh8HOtu-.js",
+  "_BlogCard-t1T0NzQH.js": {
+    "file": "assets/js/client/BlogCard-t1T0NzQH.js",
     "name": "BlogCard",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -8,8 +8,8 @@
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_BlogImageUpload-Bfv3LpkV.js": {
-    "file": "assets/js/BlogImageUpload-Bfv3LpkV.js",
+  "_BlogImageUpload-BARKCpFS.js": {
+    "file": "assets/js/client/BlogImageUpload-BARKCpFS.js",
     "name": "BlogImageUpload",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -17,8 +17,8 @@
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_ChapterRow-BiNCNsUz.js": {
-    "file": "assets/js/ChapterRow-BiNCNsUz.js",
+  "_ChapterRow-8EnLADr0.js": {
+    "file": "assets/js/client/ChapterRow-8EnLADr0.js",
     "name": "ChapterRow",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -26,8 +26,8 @@
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_CommentThread-BHAIFIxV.js": {
-    "file": "assets/js/CommentThread-BHAIFIxV.js",
+  "_CommentThread-CGFToPq0.js": {
+    "file": "assets/js/client/CommentThread-CGFToPq0.js",
     "name": "CommentThread",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -35,8 +35,8 @@
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_ContentCard-CMTnrN6g.js": {
-    "file": "assets/js/ContentCard-CMTnrN6g.js",
+  "_ContentCard-BJk61tPV.js": {
+    "file": "assets/js/client/ContentCard-BJk61tPV.js",
     "name": "ContentCard",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -46,15 +46,15 @@
     ]
   },
   "_Dialog-D105b_cA.js": {
-    "file": "assets/js/Dialog-D105b_cA.js",
+    "file": "assets/js/client/Dialog-D105b_cA.js",
     "name": "Dialog",
     "imports": [
       "_react-QbDTDCEN.js",
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_LoginPrompt-P5MJw6A9.js": {
-    "file": "assets/js/LoginPrompt-P5MJw6A9.js",
+  "_LoginPrompt-DX3oIW1R.js": {
+    "file": "assets/js/client/LoginPrompt-DX3oIW1R.js",
     "name": "LoginPrompt",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -62,8 +62,8 @@
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_MembersOnlyLock-DheUcgkE.js": {
-    "file": "assets/js/MembersOnlyLock-DheUcgkE.js",
+  "_MembersOnlyLock-CmG8oGAT.js": {
+    "file": "assets/js/client/MembersOnlyLock-CmG8oGAT.js",
     "name": "MembersOnlyLock",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -71,8 +71,8 @@
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_Pagination-Kaa0MHqs.js": {
-    "file": "assets/js/Pagination-Kaa0MHqs.js",
+  "_Pagination-qh1sPyWR.js": {
+    "file": "assets/js/client/Pagination-qh1sPyWR.js",
     "name": "Pagination",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -80,18 +80,18 @@
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_ProfileActivityList-D2C3_BWP.js": {
-    "file": "assets/js/ProfileActivityList-D2C3_BWP.js",
+  "_ProfileActivityList-C0NWamwo.js": {
+    "file": "assets/js/client/ProfileActivityList-C0NWamwo.js",
     "name": "ProfileActivityList",
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
       "_lucide-CiC8sumC.js",
-      "_ContentCard-CMTnrN6g.js"
+      "_ContentCard-BJk61tPV.js"
     ]
   },
-  "_SessionManager-BE-uSPXz.js": {
-    "file": "assets/js/SessionManager-BE-uSPXz.js",
+  "_SessionManager-CfRZGtj4.js": {
+    "file": "assets/js/client/SessionManager-CfRZGtj4.js",
     "name": "SessionManager",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -99,8 +99,8 @@
       "_lucide-CiC8sumC.js"
     ]
   },
-  "_TopUpModal-wolbxJ1q.js": {
-    "file": "assets/js/TopUpModal-wolbxJ1q.js",
+  "_TopUpModal-8pZKa1p3.js": {
+    "file": "assets/js/client/TopUpModal-8pZKa1p3.js",
     "name": "TopUpModal",
     "imports": [
       "_react-QbDTDCEN.js",
@@ -109,29 +109,29 @@
     ]
   },
   "_lucide-CiC8sumC.js": {
-    "file": "assets/js/lucide-CiC8sumC.js",
+    "file": "assets/js/client/lucide-CiC8sumC.js",
     "name": "lucide",
     "imports": [
       "_react-QbDTDCEN.js"
     ]
   },
   "_number-BPbSmNBE.js": {
-    "file": "assets/js/number-BPbSmNBE.js",
+    "file": "assets/js/client/number-BPbSmNBE.js",
     "name": "number"
   },
   "_react-QbDTDCEN.js": {
-    "file": "assets/js/react-QbDTDCEN.js",
+    "file": "assets/js/client/react-QbDTDCEN.js",
     "name": "react"
   },
   "_vendor-C7gWOgml.js": {
-    "file": "assets/js/vendor-C7gWOgml.js",
+    "file": "assets/js/client/vendor-C7gWOgml.js",
     "name": "vendor",
     "imports": [
       "_react-QbDTDCEN.js"
     ]
   },
   "app.html": {
-    "file": "assets/js/app-CBG6dVRc.js",
+    "file": "assets/js/client/app-DkEneACm.js",
     "name": "app",
     "src": "app.html",
     "isEntry": true,
@@ -170,185 +170,185 @@
       "src/pages/NotFoundPage.tsx"
     ],
     "css": [
-      "assets/css/app-D8GMVAnw.css"
+      "assets/css/client/app-BQA8pHGr.css"
     ],
     "assets": [
-      "assets/fonts/playfair-display-cyrillic-400-normal-CjW2EstV.woff2",
-      "assets/fonts/playfair-display-cyrillic-400-normal-ZiRag6zj.woff",
-      "assets/fonts/playfair-display-vietnamese-400-normal-BV2APVTb.woff2",
-      "assets/fonts/playfair-display-vietnamese-400-normal-BbvUAu4N.woff",
-      "assets/fonts/playfair-display-latin-ext-400-normal-BxlSGspa.woff2",
-      "assets/fonts/playfair-display-latin-ext-400-normal-qdZwdvNS.woff",
-      "assets/fonts/playfair-display-latin-400-normal-CFtfchNt.woff2",
-      "assets/fonts/playfair-display-latin-400-normal-DHYHbkg3.woff",
-      "assets/fonts/playfair-display-cyrillic-600-normal-oLY6jnZ7.woff2",
-      "assets/fonts/playfair-display-cyrillic-600-normal-DbWAkkgN.woff",
-      "assets/fonts/playfair-display-vietnamese-600-normal-ICsRR-qJ.woff2",
-      "assets/fonts/playfair-display-vietnamese-600-normal-BPJkAZPN.woff",
-      "assets/fonts/playfair-display-latin-ext-600-normal-CEjQclLc.woff2",
-      "assets/fonts/playfair-display-latin-ext-600-normal-BumBfC1v.woff",
-      "assets/fonts/playfair-display-latin-600-normal-CZLGqjJe.woff2",
-      "assets/fonts/playfair-display-latin-600-normal-CxxueQ0Z.woff",
-      "assets/fonts/playfair-display-cyrillic-700-normal-Dw3uKy19.woff2",
-      "assets/fonts/playfair-display-cyrillic-700-normal-Dk1mTcxf.woff",
-      "assets/fonts/playfair-display-vietnamese-700-normal-CaKJSIny.woff2",
-      "assets/fonts/playfair-display-vietnamese-700-normal-Cr1rw0mr.woff",
-      "assets/fonts/playfair-display-latin-ext-700-normal-C58ejOkc.woff2",
-      "assets/fonts/playfair-display-latin-ext-700-normal-D5HUU8GT.woff",
-      "assets/fonts/playfair-display-latin-700-normal-CuDiGg7c.woff2",
-      "assets/fonts/playfair-display-latin-700-normal-Bc_1Q1cG.woff"
+      "assets/fonts/client/playfair-display-cyrillic-400-normal-CjW2EstV.woff2",
+      "assets/fonts/client/playfair-display-cyrillic-400-normal-ZiRag6zj.woff",
+      "assets/fonts/client/playfair-display-vietnamese-400-normal-BV2APVTb.woff2",
+      "assets/fonts/client/playfair-display-vietnamese-400-normal-BbvUAu4N.woff",
+      "assets/fonts/client/playfair-display-latin-ext-400-normal-BxlSGspa.woff2",
+      "assets/fonts/client/playfair-display-latin-ext-400-normal-qdZwdvNS.woff",
+      "assets/fonts/client/playfair-display-latin-400-normal-CFtfchNt.woff2",
+      "assets/fonts/client/playfair-display-latin-400-normal-DHYHbkg3.woff",
+      "assets/fonts/client/playfair-display-cyrillic-600-normal-oLY6jnZ7.woff2",
+      "assets/fonts/client/playfair-display-cyrillic-600-normal-DbWAkkgN.woff",
+      "assets/fonts/client/playfair-display-vietnamese-600-normal-ICsRR-qJ.woff2",
+      "assets/fonts/client/playfair-display-vietnamese-600-normal-BPJkAZPN.woff",
+      "assets/fonts/client/playfair-display-latin-ext-600-normal-CEjQclLc.woff2",
+      "assets/fonts/client/playfair-display-latin-ext-600-normal-BumBfC1v.woff",
+      "assets/fonts/client/playfair-display-latin-600-normal-CZLGqjJe.woff2",
+      "assets/fonts/client/playfair-display-latin-600-normal-CxxueQ0Z.woff",
+      "assets/fonts/client/playfair-display-cyrillic-700-normal-Dw3uKy19.woff2",
+      "assets/fonts/client/playfair-display-cyrillic-700-normal-Dk1mTcxf.woff",
+      "assets/fonts/client/playfair-display-vietnamese-700-normal-CaKJSIny.woff2",
+      "assets/fonts/client/playfair-display-vietnamese-700-normal-Cr1rw0mr.woff",
+      "assets/fonts/client/playfair-display-latin-ext-700-normal-C58ejOkc.woff2",
+      "assets/fonts/client/playfair-display-latin-ext-700-normal-D5HUU8GT.woff",
+      "assets/fonts/client/playfair-display-latin-700-normal-CuDiGg7c.woff2",
+      "assets/fonts/client/playfair-display-latin-700-normal-Bc_1Q1cG.woff"
     ]
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-400-normal.woff": {
-    "file": "assets/fonts/playfair-display-cyrillic-400-normal-ZiRag6zj.woff",
+    "file": "assets/fonts/client/playfair-display-cyrillic-400-normal-ZiRag6zj.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-400-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-400-normal.woff2": {
-    "file": "assets/fonts/playfair-display-cyrillic-400-normal-CjW2EstV.woff2",
+    "file": "assets/fonts/client/playfair-display-cyrillic-400-normal-CjW2EstV.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-400-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-600-normal.woff": {
-    "file": "assets/fonts/playfair-display-cyrillic-600-normal-DbWAkkgN.woff",
+    "file": "assets/fonts/client/playfair-display-cyrillic-600-normal-DbWAkkgN.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-600-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-600-normal.woff2": {
-    "file": "assets/fonts/playfair-display-cyrillic-600-normal-oLY6jnZ7.woff2",
+    "file": "assets/fonts/client/playfair-display-cyrillic-600-normal-oLY6jnZ7.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-600-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-700-normal.woff": {
-    "file": "assets/fonts/playfair-display-cyrillic-700-normal-Dk1mTcxf.woff",
+    "file": "assets/fonts/client/playfair-display-cyrillic-700-normal-Dk1mTcxf.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-700-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-700-normal.woff2": {
-    "file": "assets/fonts/playfair-display-cyrillic-700-normal-Dw3uKy19.woff2",
+    "file": "assets/fonts/client/playfair-display-cyrillic-700-normal-Dw3uKy19.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-700-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-400-normal.woff": {
-    "file": "assets/fonts/playfair-display-latin-400-normal-DHYHbkg3.woff",
+    "file": "assets/fonts/client/playfair-display-latin-400-normal-DHYHbkg3.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-400-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-400-normal.woff2": {
-    "file": "assets/fonts/playfair-display-latin-400-normal-CFtfchNt.woff2",
+    "file": "assets/fonts/client/playfair-display-latin-400-normal-CFtfchNt.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-400-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff": {
-    "file": "assets/fonts/playfair-display-latin-600-normal-CxxueQ0Z.woff",
+    "file": "assets/fonts/client/playfair-display-latin-600-normal-CxxueQ0Z.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff2": {
-    "file": "assets/fonts/playfair-display-latin-600-normal-CZLGqjJe.woff2",
+    "file": "assets/fonts/client/playfair-display-latin-600-normal-CZLGqjJe.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-700-normal.woff": {
-    "file": "assets/fonts/playfair-display-latin-700-normal-Bc_1Q1cG.woff",
+    "file": "assets/fonts/client/playfair-display-latin-700-normal-Bc_1Q1cG.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-700-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-700-normal.woff2": {
-    "file": "assets/fonts/playfair-display-latin-700-normal-CuDiGg7c.woff2",
+    "file": "assets/fonts/client/playfair-display-latin-700-normal-CuDiGg7c.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-700-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-400-normal.woff": {
-    "file": "assets/fonts/playfair-display-latin-ext-400-normal-qdZwdvNS.woff",
+    "file": "assets/fonts/client/playfair-display-latin-ext-400-normal-qdZwdvNS.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-400-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-400-normal.woff2": {
-    "file": "assets/fonts/playfair-display-latin-ext-400-normal-BxlSGspa.woff2",
+    "file": "assets/fonts/client/playfair-display-latin-ext-400-normal-BxlSGspa.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-400-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-600-normal.woff": {
-    "file": "assets/fonts/playfair-display-latin-ext-600-normal-BumBfC1v.woff",
+    "file": "assets/fonts/client/playfair-display-latin-ext-600-normal-BumBfC1v.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-600-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-600-normal.woff2": {
-    "file": "assets/fonts/playfair-display-latin-ext-600-normal-CEjQclLc.woff2",
+    "file": "assets/fonts/client/playfair-display-latin-ext-600-normal-CEjQclLc.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-600-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-700-normal.woff": {
-    "file": "assets/fonts/playfair-display-latin-ext-700-normal-D5HUU8GT.woff",
+    "file": "assets/fonts/client/playfair-display-latin-ext-700-normal-D5HUU8GT.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-700-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-700-normal.woff2": {
-    "file": "assets/fonts/playfair-display-latin-ext-700-normal-C58ejOkc.woff2",
+    "file": "assets/fonts/client/playfair-display-latin-ext-700-normal-C58ejOkc.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-latin-ext-700-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-400-normal.woff": {
-    "file": "assets/fonts/playfair-display-vietnamese-400-normal-BbvUAu4N.woff",
+    "file": "assets/fonts/client/playfair-display-vietnamese-400-normal-BbvUAu4N.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-400-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-400-normal.woff2": {
-    "file": "assets/fonts/playfair-display-vietnamese-400-normal-BV2APVTb.woff2",
+    "file": "assets/fonts/client/playfair-display-vietnamese-400-normal-BV2APVTb.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-400-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-600-normal.woff": {
-    "file": "assets/fonts/playfair-display-vietnamese-600-normal-BPJkAZPN.woff",
+    "file": "assets/fonts/client/playfair-display-vietnamese-600-normal-BPJkAZPN.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-600-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-600-normal.woff2": {
-    "file": "assets/fonts/playfair-display-vietnamese-600-normal-ICsRR-qJ.woff2",
+    "file": "assets/fonts/client/playfair-display-vietnamese-600-normal-ICsRR-qJ.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-600-normal.woff2"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-700-normal.woff": {
-    "file": "assets/fonts/playfair-display-vietnamese-700-normal-Cr1rw0mr.woff",
+    "file": "assets/fonts/client/playfair-display-vietnamese-700-normal-Cr1rw0mr.woff",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-700-normal.woff"
   },
   "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-700-normal.woff2": {
-    "file": "assets/fonts/playfair-display-vietnamese-700-normal-CaKJSIny.woff2",
+    "file": "assets/fonts/client/playfair-display-vietnamese-700-normal-CaKJSIny.woff2",
     "src": "node_modules/@fontsource/playfair-display/files/playfair-display-vietnamese-700-normal.woff2"
   },
   "src/pages/BlogDetailPage.tsx": {
-    "file": "assets/js/BlogDetailPage-m79p5-SM.js",
+    "file": "assets/js/client/BlogDetailPage-BebTqpP3.js",
     "name": "BlogDetailPage",
     "src": "src/pages/BlogDetailPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_CommentThread-BHAIFIxV.js",
+      "_CommentThread-CGFToPq0.js",
       "_lucide-CiC8sumC.js",
       "_vendor-C7gWOgml.js"
     ]
   },
   "src/pages/BlogListPage.tsx": {
-    "file": "assets/js/BlogListPage-9fhCi0aN.js",
+    "file": "assets/js/client/BlogListPage-7D05TLvg.js",
     "name": "BlogListPage",
     "src": "src/pages/BlogListPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_BlogCard-Dh8HOtu-.js",
-      "_Pagination-Kaa0MHqs.js",
+      "_BlogCard-t1T0NzQH.js",
+      "_Pagination-qh1sPyWR.js",
       "_lucide-CiC8sumC.js"
     ]
   },
   "src/pages/BrowsePage.tsx": {
-    "file": "assets/js/BrowsePage-D_8LkvmA.js",
+    "file": "assets/js/client/BrowsePage-_mGLBBzR.js",
     "name": "BrowsePage",
     "src": "src/pages/BrowsePage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_ContentCard-CMTnrN6g.js",
-      "_Pagination-Kaa0MHqs.js",
+      "_ContentCard-BJk61tPV.js",
+      "_Pagination-qh1sPyWR.js",
       "_lucide-CiC8sumC.js",
       "_number-BPbSmNBE.js"
     ]
   },
   "src/pages/ChapterListPage.tsx": {
-    "file": "assets/js/ChapterListPage-yDJm9Wam.js",
+    "file": "assets/js/client/ChapterListPage-eAgJdy56.js",
     "name": "ChapterListPage",
     "src": "src/pages/ChapterListPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_ChapterRow-BiNCNsUz.js",
+      "_ChapterRow-8EnLADr0.js",
       "_lucide-CiC8sumC.js"
     ]
   },
   "src/pages/ContentDetailPage.tsx": {
-    "file": "assets/js/ContentDetailPage-BsPScDwK.js",
+    "file": "assets/js/client/ContentDetailPage-2NFVo0t5.js",
     "name": "ContentDetailPage",
     "src": "src/pages/ContentDetailPage.tsx",
     "isDynamicEntry": true,
@@ -356,29 +356,29 @@
       "_react-QbDTDCEN.js",
       "app.html",
       "_lucide-CiC8sumC.js",
-      "_CommentThread-BHAIFIxV.js",
+      "_CommentThread-CGFToPq0.js",
       "_number-BPbSmNBE.js",
-      "_ChapterRow-BiNCNsUz.js",
+      "_ChapterRow-8EnLADr0.js",
       "_Dialog-D105b_cA.js",
-      "_ContentCard-CMTnrN6g.js",
-      "_MembersOnlyLock-DheUcgkE.js"
+      "_ContentCard-BJk61tPV.js",
+      "_MembersOnlyLock-CmG8oGAT.js"
     ]
   },
   "src/pages/EditBlogPage.tsx": {
-    "file": "assets/js/EditBlogPage-Xrcp8O0n.js",
+    "file": "assets/js/client/EditBlogPage-F2_rFKfp.js",
     "name": "EditBlogPage",
     "src": "src/pages/EditBlogPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_BlogImageUpload-Bfv3LpkV.js",
+      "_BlogImageUpload-BARKCpFS.js",
       "_lucide-CiC8sumC.js",
       "_vendor-C7gWOgml.js"
     ]
   },
   "src/pages/GenreDirectoryPage.tsx": {
-    "file": "assets/js/GenreDirectoryPage-CccGqdXe.js",
+    "file": "assets/js/client/GenreDirectoryPage-B1JLMWoD.js",
     "name": "GenreDirectoryPage",
     "src": "src/pages/GenreDirectoryPage.tsx",
     "isDynamicEntry": true,
@@ -389,21 +389,21 @@
     ]
   },
   "src/pages/GenreResultsPage.tsx": {
-    "file": "assets/js/GenreResultsPage-EfJCSJCg.js",
+    "file": "assets/js/client/GenreResultsPage-C4d7nHey.js",
     "name": "GenreResultsPage",
     "src": "src/pages/GenreResultsPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_ContentCard-CMTnrN6g.js",
-      "_Pagination-Kaa0MHqs.js",
+      "_ContentCard-BJk61tPV.js",
+      "_Pagination-qh1sPyWR.js",
       "_lucide-CiC8sumC.js",
       "_number-BPbSmNBE.js"
     ]
   },
   "src/pages/HistoryPage.tsx": {
-    "file": "assets/js/HistoryPage-DjrmYxmu.js",
+    "file": "assets/js/client/HistoryPage-ClMPS_q_.js",
     "name": "HistoryPage",
     "src": "src/pages/HistoryPage.tsx",
     "isDynamicEntry": true,
@@ -412,12 +412,12 @@
       "app.html",
       "_number-BPbSmNBE.js",
       "_lucide-CiC8sumC.js",
-      "_Pagination-Kaa0MHqs.js",
+      "_Pagination-qh1sPyWR.js",
       "_Dialog-D105b_cA.js"
     ]
   },
   "src/pages/HomePage.tsx": {
-    "file": "assets/js/HomePage-BHYortR8.js",
+    "file": "assets/js/client/HomePage-CeSBX1rq.js",
     "name": "HomePage",
     "src": "src/pages/HomePage.tsx",
     "isDynamicEntry": true,
@@ -426,12 +426,12 @@
       "app.html",
       "_number-BPbSmNBE.js",
       "_lucide-CiC8sumC.js",
-      "_ContentCard-CMTnrN6g.js",
-      "_BlogCard-Dh8HOtu-.js"
+      "_ContentCard-BJk61tPV.js",
+      "_BlogCard-t1T0NzQH.js"
     ]
   },
   "src/pages/LibraryPage.tsx": {
-    "file": "assets/js/LibraryPage-AWwDstmi.js",
+    "file": "assets/js/client/LibraryPage-Ck_01zXe.js",
     "name": "LibraryPage",
     "src": "src/pages/LibraryPage.tsx",
     "isDynamicEntry": true,
@@ -440,12 +440,12 @@
       "app.html",
       "_number-BPbSmNBE.js",
       "_lucide-CiC8sumC.js",
-      "_Pagination-Kaa0MHqs.js",
+      "_Pagination-qh1sPyWR.js",
       "_Dialog-D105b_cA.js"
     ]
   },
   "src/pages/LoginPage.tsx": {
-    "file": "assets/js/LoginPage-EXULSlQR.js",
+    "file": "assets/js/client/LoginPage-DO3OVtyO.js",
     "name": "LoginPage",
     "src": "src/pages/LoginPage.tsx",
     "isDynamicEntry": true,
@@ -456,7 +456,7 @@
     ]
   },
   "src/pages/MyBlogsPage.tsx": {
-    "file": "assets/js/MyBlogsPage-DUqTE0wR.js",
+    "file": "assets/js/client/MyBlogsPage-0nrUbxkV.js",
     "name": "MyBlogsPage",
     "src": "src/pages/MyBlogsPage.tsx",
     "isDynamicEntry": true,
@@ -467,20 +467,20 @@
     ]
   },
   "src/pages/NewBlogPage.tsx": {
-    "file": "assets/js/NewBlogPage-Db31WpWl.js",
+    "file": "assets/js/client/NewBlogPage-6D5kClA7.js",
     "name": "NewBlogPage",
     "src": "src/pages/NewBlogPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_BlogImageUpload-Bfv3LpkV.js",
+      "_BlogImageUpload-BARKCpFS.js",
       "_lucide-CiC8sumC.js",
       "_vendor-C7gWOgml.js"
     ]
   },
   "src/pages/NotFoundPage.tsx": {
-    "file": "assets/js/NotFoundPage-BPxm0qeI.js",
+    "file": "assets/js/client/NotFoundPage-C1btHmER.js",
     "name": "NotFoundPage",
     "src": "src/pages/NotFoundPage.tsx",
     "isDynamicEntry": true,
@@ -491,78 +491,78 @@
     ]
   },
   "src/pages/NotificationsPage.tsx": {
-    "file": "assets/js/NotificationsPage-CgSl-I6o.js",
+    "file": "assets/js/client/NotificationsPage-D5uxFP2e.js",
     "name": "NotificationsPage",
     "src": "src/pages/NotificationsPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_LoginPrompt-P5MJw6A9.js",
+      "_LoginPrompt-DX3oIW1R.js",
       "_lucide-CiC8sumC.js"
     ]
   },
   "src/pages/PreferencesPage.tsx": {
-    "file": "assets/js/PreferencesPage-CKjFWu7e.js",
+    "file": "assets/js/client/PreferencesPage-Dx9VrjNt.js",
     "name": "PreferencesPage",
     "src": "src/pages/PreferencesPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_SessionManager-BE-uSPXz.js",
+      "_SessionManager-CfRZGtj4.js",
       "_Dialog-D105b_cA.js",
       "_lucide-CiC8sumC.js"
     ]
   },
   "src/pages/ProfilePage.tsx": {
-    "file": "assets/js/ProfilePage-CJyvhSsu.js",
+    "file": "assets/js/client/ProfilePage-BGdRFwok.js",
     "name": "ProfilePage",
     "src": "src/pages/ProfilePage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_ProfileActivityList-D2C3_BWP.js",
+      "_ProfileActivityList-C0NWamwo.js",
       "_lucide-CiC8sumC.js",
-      "_SessionManager-BE-uSPXz.js",
+      "_SessionManager-CfRZGtj4.js",
       "_Dialog-D105b_cA.js",
-      "_LoginPrompt-P5MJw6A9.js",
-      "_ContentCard-CMTnrN6g.js",
+      "_LoginPrompt-DX3oIW1R.js",
+      "_ContentCard-BJk61tPV.js",
       "_number-BPbSmNBE.js"
     ]
   },
   "src/pages/PublicProfilePage.tsx": {
-    "file": "assets/js/PublicProfilePage-DvU0-wj9.js",
+    "file": "assets/js/client/PublicProfilePage-D_QrXF4n.js",
     "name": "PublicProfilePage",
     "src": "src/pages/PublicProfilePage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_ProfileActivityList-D2C3_BWP.js",
+      "_ProfileActivityList-C0NWamwo.js",
       "_lucide-CiC8sumC.js",
-      "_ContentCard-CMTnrN6g.js",
+      "_ContentCard-BJk61tPV.js",
       "_number-BPbSmNBE.js"
     ]
   },
   "src/pages/ReaderPage.tsx": {
-    "file": "assets/js/ReaderPage-BbspTpD5.js",
+    "file": "assets/js/client/ReaderPage-D39cHkdo.js",
     "name": "ReaderPage",
     "src": "src/pages/ReaderPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_MembersOnlyLock-DheUcgkE.js",
-      "_CommentThread-BHAIFIxV.js",
+      "_MembersOnlyLock-CmG8oGAT.js",
+      "_CommentThread-CGFToPq0.js",
       "_lucide-CiC8sumC.js",
       "_vendor-C7gWOgml.js",
       "_Dialog-D105b_cA.js"
     ]
   },
   "src/pages/RegisterPage.tsx": {
-    "file": "assets/js/RegisterPage-8gKP7vgZ.js",
+    "file": "assets/js/client/RegisterPage-o7XYqmPh.js",
     "name": "RegisterPage",
     "src": "src/pages/RegisterPage.tsx",
     "isDynamicEntry": true,
@@ -573,7 +573,7 @@
     ]
   },
   "src/pages/ResetPasswordPage.tsx": {
-    "file": "assets/js/ResetPasswordPage-S2xobjCL.js",
+    "file": "assets/js/client/ResetPasswordPage-CU10p7m3.js",
     "name": "ResetPasswordPage",
     "src": "src/pages/ResetPasswordPage.tsx",
     "isDynamicEntry": true,
@@ -584,33 +584,33 @@
     ]
   },
   "src/pages/SearchPage.tsx": {
-    "file": "assets/js/SearchPage-alm-8tim.js",
+    "file": "assets/js/client/SearchPage-rJf5omuy.js",
     "name": "SearchPage",
     "src": "src/pages/SearchPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_ContentCard-CMTnrN6g.js",
-      "_Pagination-Kaa0MHqs.js",
+      "_ContentCard-BJk61tPV.js",
+      "_Pagination-qh1sPyWR.js",
       "_lucide-CiC8sumC.js",
       "_number-BPbSmNBE.js"
     ]
   },
   "src/pages/ShopPage.tsx": {
-    "file": "assets/js/ShopPage-B8av1sTs.js",
+    "file": "assets/js/client/ShopPage-BpUYIgvQ.js",
     "name": "ShopPage",
     "src": "src/pages/ShopPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_TopUpModal-wolbxJ1q.js",
+      "_TopUpModal-8pZKa1p3.js",
       "_lucide-CiC8sumC.js"
     ]
   },
   "src/pages/TagDirectoryPage.tsx": {
-    "file": "assets/js/TagDirectoryPage-BvLXqw49.js",
+    "file": "assets/js/client/TagDirectoryPage-C3xxL_Ee.js",
     "name": "TagDirectoryPage",
     "src": "src/pages/TagDirectoryPage.tsx",
     "isDynamicEntry": true,
@@ -621,21 +621,21 @@
     ]
   },
   "src/pages/TagResultsPage.tsx": {
-    "file": "assets/js/TagResultsPage-BB9N38Kk.js",
+    "file": "assets/js/client/TagResultsPage-rAcvCuTm.js",
     "name": "TagResultsPage",
     "src": "src/pages/TagResultsPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-QbDTDCEN.js",
       "app.html",
-      "_ContentCard-CMTnrN6g.js",
-      "_Pagination-Kaa0MHqs.js",
+      "_ContentCard-BJk61tPV.js",
+      "_Pagination-qh1sPyWR.js",
       "_lucide-CiC8sumC.js",
       "_number-BPbSmNBE.js"
     ]
   },
   "src/pages/VerifyEmailPage.tsx": {
-    "file": "assets/js/VerifyEmailPage-CtLdbFEk.js",
+    "file": "assets/js/client/VerifyEmailPage-CMFAVPfW.js",
     "name": "VerifyEmailPage",
     "src": "src/pages/VerifyEmailPage.tsx",
     "isDynamicEntry": true,
@@ -646,7 +646,7 @@
     ]
   },
   "src/pages/WalletPage.tsx": {
-    "file": "assets/js/WalletPage-BAHijfk8.js",
+    "file": "assets/js/client/WalletPage-DecjbJVf.js",
     "name": "WalletPage",
     "src": "src/pages/WalletPage.tsx",
     "isDynamicEntry": true,
@@ -654,7 +654,7 @@
       "_react-QbDTDCEN.js",
       "app.html",
       "_lucide-CiC8sumC.js",
-      "_TopUpModal-wolbxJ1q.js"
+      "_TopUpModal-8pZKa1p3.js"
     ]
   }
 }

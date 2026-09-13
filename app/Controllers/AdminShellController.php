@@ -31,13 +31,19 @@ final class AdminShellController
         $userId = $_SESSION['user_id'] ?? null;
         $langCode = $this->i18n->resolveLocale($request, $userId ? (string) $userId : null);
         $lang = $this->i18n->getDictionary($langCode);
+        $defaultLang = $this->i18n->getDefaultLanguage();
+        $translations = [$langCode => $lang];
+        if ($defaultLang !== $langCode) {
+            $translations[$defaultLang] = $this->i18n->getDictionary($defaultLang);
+        }
         $authContext = $this->webContext->auth($userId ? (string) $userId : null);
         $contextJson = (string) json_encode([
             'auth' => $authContext,
             'lang_code' => $langCode,
             'lang_hash' => md5((string) json_encode($lang, JSON_UNESCAPED_UNICODE)),
-            'default_lang' => $this->i18n->getDefaultLanguage(),
+            'default_lang' => $defaultLang,
             'supported_langs' => $this->i18n->getSupportedLanguages(),
+            'translations' => $translations,
             'site_config' => $siteConfig,
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
@@ -45,6 +51,7 @@ final class AdminShellController
             'context_json' => $contextJson !== '' ? $contextJson : '{}',
             'site_name' => $escape((string) (($siteConfig['site_name'] ?? null) ?: 'Main Site')),
             'admin_username' => $escape((string) ($authContext['username'] ?? 'Administrator')),
+            'admin_panel_title' => $escape($this->i18n->translate($langCode, 'admin.panel_badge')),
             'logout_label' => $escape($this->i18n->translate($langCode, 'logout')),
             'site_abbreviation' => $escape((string) (($siteConfig['site_abbreviation'] ?? null) ?: 'NMR')),
             'next_year' => (string) (((int) date('Y')) + 1),

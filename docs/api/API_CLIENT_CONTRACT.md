@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0  
 **Status:** CANONICAL SPECIFICATION  
-**Scope:** Architecture, transport, envelope normalization, authentication, CSRF retry, media resolution, and domain services for the React CSR frontend (`ui/src/api/`).
+**Scope:** Architecture, transport, envelope normalization, authentication, CSRF retry, media resolution, and domain services for the React CSR frontend (`ui/client/src/api/`).
 
 ---
 
@@ -40,7 +40,7 @@ The NM-Reader frontend adopts a strict 3-tier service architecture to decouple U
 
 ## 2. API Client Abstraction
 
-- **Location:** [`ui/src/api/`](file:///home/duldul/Belgeler/nm-reader/ui/src/api/)
+- **Location:** [`ui/client/src/api/`](file:///home/duldul/Belgeler/nm-reader/ui/client/src/api/)
 - **Core Files:**
   - `client.ts`: `HttpClient` class and singleton `apiClient`.
   - `types.ts`: Protocol types, request options, envelope generics.
@@ -54,7 +54,7 @@ The NM-Reader frontend adopts a strict 3-tier service architecture to decouple U
 
 ## 3. Base URL & Environment Configuration
 
-Configuration is managed via [`ui/src/api/config.ts`](file:///home/duldul/Belgeler/nm-reader/ui/src/api/config.ts):
+Configuration is managed via [`ui/client/src/api/config.ts`](file:///home/duldul/Belgeler/nm-reader/ui/client/src/api/config.ts):
 
 - **Default Base URL:** `/api/v1` (relative path matching same-origin production deployment).
 - **Environment Override:** `VITE_API_BASE_URL` (e.g. `http://localhost:8080/api/v1` for local decoupled dev).
@@ -207,8 +207,8 @@ resolveMediaUrl('https://cdn.example.com/pic.jpg'); // Preserved
 
 ## 12. Real Service Boundary
 
-- All new domain services implement the exact same interfaces (`IContentService`, `IAuthService`, `IBlogService`, `ICommentService`, `IUserService`, `IWalletService`) defined in [`ui/src/services/contracts.ts`](file:///home/duldul/Belgeler/nm-reader/ui/src/services/contracts.ts).
-- `ui/src/services/provider.ts` instantiates only the API-backed implementations.
+- All new domain services implement the exact same interfaces (`IContentService`, `IAuthService`, `IBlogService`, `ICommentService`, `IUserService`, `IWalletService`) defined in [`ui/client/src/services/contracts.ts`](file:///home/duldul/Belgeler/nm-reader/ui/client/src/services/contracts.ts).
+- `ui/client/src/services/provider.ts` instantiates only the API-backed implementations.
 - Production source contains no runtime mock selector, fixture provider, or `VITE_USE_MOCK` branch. Test doubles are isolated to verification scripts and are never bundled.
 
 ---

@@ -2,6 +2,8 @@
 /vendor/
 /node_modules/
 /ui/node_modules/
+/ui/client/node_modules/
+/ui/admin/node_modules/
 /ui/dist/
 /ui/build/
 /ui/.vite/

@@ -177,7 +177,7 @@ TOTAL CANONICAL ENDPOINTS: 94
 - **Backend API Regression Suite:** [`app/Console/ApiTestSuite.php`](file:///home/duldul/Belgeler/nm-reader/app/Console/ApiTestSuite.php)
   - Execution: `composer test:api`
   - Result: **124 / 124 PASS (100% Green)**
-- **Frontend Client Test Suite:** [`ui/scripts/test-client.ts`](file:///home/duldul/Belgeler/nm-reader/ui/scripts/test-client.ts)
+- **Frontend Client Test Suite:** [`ui/client/scripts/test-client.ts`](file:///home/duldul/Belgeler/nm-reader/ui/client/scripts/test-client.ts)
   - Execution: `npm run test:client` (in `ui/`)
   - Result: **25 / 25 PASS (100% Green)**
 - **OpenAPI Validation:** [`app/Console/generate_openapi.php`](file:///home/duldul/Belgeler/nm-reader/app/Console/generate_openapi.php)

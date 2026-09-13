@@ -1,0 +1,1 @@
+function o(a=[]){let n=new Set(a);const e=s=>n.has("*")||n.has(String(s));return Object.freeze({can:e,any:(s=[])=>{const t=Array.isArray(s)?s:[s];return t.length===0||t.some(e)},all:(s=[])=>(Array.isArray(s)?s:[s]).every(e),setPermissions:s=>{n=new Set(Array.isArray(s)?s:[])},snapshot:()=>new Set(n)})}export{o as createAccess};

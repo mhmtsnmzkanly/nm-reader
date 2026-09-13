@@ -43,10 +43,10 @@ Split page controllers (Prepares route-specific data)
 Crawler-Ready HTML Document Response
         │
         ▼
-React 19 SPA Hydration / CSR Router (`ui/src/App.tsx`)
+React 19 SPA Hydration / CSR Router (`ui/client/src/App.tsx`)
         │
         ▼
-Centralized `HttpClient` (`ui/src/api/client.ts`) ──> REST API (`/api/v1/*`)
+Centralized `HttpClient` (`ui/client/src/api/client.ts`) ──> REST API (`/api/v1/*`)
 ```
 
 ---
@@ -132,7 +132,7 @@ Media endpoints (`/media/public/*` and `/media/chapter/*`) are fully independent
 - ❌ `storage/views/partials_modals.php`
 
 ### Admin Views:
-- ✅ `public/admin.html` (unified panel shell)
+- ✅ `public/admin.html` (built unified panel shell from `ui/admin/admin.html`)
 - ❌ Legacy `storage/views/admin_*.php` per-page templates (removed)
 - ❌ `storage/views/layout_adminlte.php` (removed)
 - ❌ `public/assets/js/admin-bundle.js` (removed)

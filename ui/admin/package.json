@@ -1,0 +1,15 @@
+{
+  "name": "nm-reader-admin",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "clean": "node scripts/clean.mjs",
+    "lint": "node scripts/lint.mjs",
+    "test": "node --test ../../tests/admin/*.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

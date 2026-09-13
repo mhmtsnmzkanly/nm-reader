@@ -58,10 +58,10 @@ The NM-Reader platform has achieved a decoupled, high-performance hybrid archite
 
 ## 3. Frontend API Client Contract
 
-- **Architecture:** 3-tier client layer in `ui/src/api/` (`client.ts`, domain services, types, errors, config).
+- **Architecture:** 3-tier client layer in `ui/client/src/api/` (`client.ts`, domain services, types, errors, config).
 - **Transport:** Native `fetch` with `credentials: "include"`.
-- **Provider:** `ui/src/services/provider.ts` always instantiates the real API services; the production UI has no mock/fixture switch.
-- **Unit Verification:** 40/40 PASS in `ui/scripts/test-client.ts`.
+- **Provider:** `ui/client/src/services/provider.ts` always instantiates the real API services; the production UI has no mock/fixture switch.
+- **Unit Verification:** 40/40 PASS in `ui/client/scripts/test-client.ts`.
 
 ---
 
@@ -119,7 +119,7 @@ The NM-Reader platform has achieved a decoupled, high-performance hybrid archite
 
 ## 10. Admin Management Console
 
-- **Execution:** `AdminShellController::index()` reads `public/admin.html` as an HTML shell; its client-side sections consume `/api/v1/admin/*`.
+- **Execution:** `AdminShellController::index()` reads the built `public/admin.html` shell generated from `ui/admin/admin.html`; its client-side sections consume `/api/v1/admin/*`.
 - **Security:** Session access is checked before the shell is served, and API operations enforce endpoint-specific RBAC permissions.
 - **Independence:** Decoupled from the public React SPA build.
 

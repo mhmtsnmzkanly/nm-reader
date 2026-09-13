@@ -1,38 +1,12 @@
 {
-  "name": "nm-reader-ui",
+  "name": "nm-reader-ui-workspace",
   "private": true,
-  "version": "1.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
-    "preview": "vite preview",
-    "clean": "node scripts/clean-build.mjs",
-    "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit",
-    "test:client": "tsx scripts/test-client.ts",
-    "test:e2e": "tsx scripts/test-e2e-runtime.ts"
-  },
-  "dependencies": {
-    "@fontsource/playfair-display": "^5.3.0",
-    "@tailwindcss/vite": "^4.1.14",
-    "@vitejs/plugin-react": "^5.0.4",
-    "lucide-react": "^0.546.0",
-    "motion": "^12.23.24",
-    "react": "^19.0.1",
-    "react-dom": "^19.0.1",
-    "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.18.2",
-    "remark-gfm": "^4.0.1",
-    "vite": "^6.2.3"
-  },
-  "devDependencies": {
-    "@types/node": "^22.14.0",
-    "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.0",
-    "tailwindcss": "^4.1.14",
-    "tsx": "^4.21.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "lint:admin": "npm --prefix admin run lint",
+    "lint:client": "npm --prefix client run lint",
+    "build:admin": "npm --prefix admin run build",
+    "build:client": "npm --prefix client run build",
+    "clean:admin": "npm --prefix admin run clean",
+    "clean:client": "npm --prefix client run clean"
   }
 }
