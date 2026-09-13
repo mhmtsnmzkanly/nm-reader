@@ -1,3 +1,5 @@
+import { adjacentPage } from "./pagination.js";
+
 /** Thin event-handler registry. Domain operations are injected by the panel bootstrap. */
 export function createPanelHandlers({
   store,
@@ -27,6 +29,10 @@ export function createPanelHandlers({
   documentRef = globalThis.document,
 } = {}) {
   const document = documentRef;
+  const changePage = (metaKey, direction, load) => {
+    const page = adjacentPage(store.get(metaKey), direction);
+    if (page !== null) return load(page);
+  };
   let logAutoRefreshTimer = null;
   let logAutoRefreshCleanupRegistered = false;
   const stopLogAutoRefresh = () => {
@@ -76,14 +82,10 @@ export function createPanelHandlers({
       scheduleReload("logs", () => loadLogsData(1));
     },
     previousLogsPage() {
-      const page = Number(store.get("logsMeta")?.page || 1);
-      if (page > 1) loadLogsData(page - 1);
+      return changePage("logsMeta", -1, loadLogsData);
     },
     nextLogsPage() {
-      const meta = store.get("logsMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadLogsData(Number(meta.page) + 1);
-      }
+      return changePage("logsMeta", 1, loadLogsData);
     },
 
     exportLogsCsv() {
@@ -180,14 +182,10 @@ export function createPanelHandlers({
       scheduleReload("queue", () => loadQueueJobsData(1));
     },
     previousQueuePage() {
-      const page = Number(store.get("queueMeta")?.page || 1);
-      if (page > 1) loadQueueJobsData(page - 1);
+      return changePage("queueMeta", -1, loadQueueJobsData);
     },
     nextQueuePage() {
-      const meta = store.get("queueMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadQueueJobsData(Number(meta.page) + 1);
-      }
+      return changePage("queueMeta", 1, loadQueueJobsData);
     },
     async retryQueueJob({ element: el }) {
       try {
@@ -240,80 +238,65 @@ export function createPanelHandlers({
       scheduleReload("comments", () => loadCommentsData(1));
     },
     previousSeriesPage() {
-      const page = Number(store.get("seriesMeta")?.page || 1);
-      if (page > 1) loadSeriesData(page - 1);
+      return changePage("seriesMeta", -1, loadSeriesData);
     },
     nextSeriesPage() {
-      const meta = store.get("seriesMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadSeriesData(Number(meta.page) + 1);
-      }
+      return changePage("seriesMeta", 1, loadSeriesData);
     },
     previousUsersPage() {
-      const page = Number(store.get("usersMeta")?.page || 1);
-      if (page > 1) loadUsersData(page - 1);
+      return changePage("usersMeta", -1, loadUsersData);
     },
     nextUsersPage() {
-      const meta = store.get("usersMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadUsersData(Number(meta.page) + 1);
-      }
+      return changePage("usersMeta", 1, loadUsersData);
     },
 
     previousUserCommentsPage() {
-      const page = Number(store.get("userCommentsMeta")?.page || 1);
-      if (page > 1) loadUserCommentsData(store.get("userDetailId"), page - 1);
+      return changePage("userCommentsMeta", -1, (page) =>
+        loadUserCommentsData(store.get("userDetailId"), page)
+      );
     },
     nextUserCommentsPage() {
-      const meta = store.get("userCommentsMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadUserCommentsData(store.get("userDetailId"), Number(meta.page) + 1);
-      }
+      return changePage("userCommentsMeta", 1, (page) =>
+        loadUserCommentsData(store.get("userDetailId"), page)
+      );
     },
 
     previousUserBlogsPage() {
-      const page = Number(store.get("userBlogsMeta")?.page || 1);
-      if (page > 1) loadUserBlogsData(store.get("userDetailId"), page - 1);
+      return changePage("userBlogsMeta", -1, (page) =>
+        loadUserBlogsData(store.get("userDetailId"), page)
+      );
     },
     nextUserBlogsPage() {
-      const meta = store.get("userBlogsMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadUserBlogsData(store.get("userDetailId"), Number(meta.page) + 1);
-      }
+      return changePage("userBlogsMeta", 1, (page) =>
+        loadUserBlogsData(store.get("userDetailId"), page)
+      );
     },
 
     previousUserViolationsPage() {
-      const page = Number(store.get("userViolationsMeta")?.page || 1);
-      if (page > 1) loadUserViolationsData(store.get("userDetailId"), page - 1);
+      return changePage("userViolationsMeta", -1, (page) =>
+        loadUserViolationsData(store.get("userDetailId"), page)
+      );
     },
     nextUserViolationsPage() {
-      const meta = store.get("userViolationsMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadUserViolationsData(
-          store.get("userDetailId"),
-          Number(meta.page) + 1,
-        );
-      }
+      return changePage("userViolationsMeta", 1, (page) =>
+        loadUserViolationsData(store.get("userDetailId"), page)
+      );
     },
     previousUserWalletPage() {
-      const page = Number(store.get("userWalletMeta")?.page || 1);
-      if (page > 1) loadUserWalletPage(store.get("userWalletId"), page - 1);
+      return changePage("userWalletMeta", -1, (page) =>
+        loadUserWalletPage(store.get("userWalletId"), page)
+      );
     },
     nextUserWalletPage() {
-      const meta = store.get("userWalletMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadUserWalletPage(store.get("userWalletId"), Number(meta.page) + 1);
-      }
+      return changePage("userWalletMeta", 1, (page) =>
+        loadUserWalletPage(store.get("userWalletId"), page)
+      );
     },
     previousBlogsPage() {
-      const page = Number(store.get("blogsMeta")?.page || 1);
-      if (page > 1) loadBlogsData(page - 1);
+      return changePage("blogsMeta", -1, loadBlogsData);
     },
     nextBlogsPage() {
-      const meta = store.get("blogsMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadBlogsData(Number(meta.page) + 1);
-      }
+      return changePage("blogsMeta", 1, loadBlogsData);
     },
     filterLikers() {
       const target = store.get("likersTarget") || {};
@@ -325,61 +308,42 @@ export function createPanelHandlers({
     },
     previousLikersPage() {
       const target = store.get("likersTarget") || {};
-      const page = Number(store.get("likersMeta")?.page || 1);
-      if (page > 1 && target.targetType && target.targetId) {
-        loadLikersPage(target.targetType, target.targetId, page - 1);
-      }
+      if (!target.targetType || !target.targetId) return;
+      return changePage("likersMeta", -1, (page) =>
+        loadLikersPage(target.targetType, target.targetId, page)
+      );
     },
     nextLikersPage() {
       const target = store.get("likersTarget") || {};
-      const meta = store.get("likersMeta") || {};
-      if (
-        Number(meta.page) < Number(meta.total_pages) &&
-        target.targetType &&
-        target.targetId
-      ) {
-        loadLikersPage(
-          target.targetType,
-          target.targetId,
-          Number(meta.page) + 1,
-        );
-      }
+      if (!target.targetType || !target.targetId) return;
+      return changePage("likersMeta", 1, (page) =>
+        loadLikersPage(target.targetType, target.targetId, page)
+      );
     },
     previousCommentsPage() {
-      const page = Number(store.get("commentsMeta")?.page || 1);
-      if (page > 1) loadCommentsData(page - 1);
+      return changePage("commentsMeta", -1, loadCommentsData);
     },
     nextCommentsPage() {
-      const meta = store.get("commentsMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadCommentsData(Number(meta.page) + 1);
-      }
+      return changePage("commentsMeta", 1, loadCommentsData);
     },
     filterReports() {
       loadReportsData(1);
     },
     previousReportsPage() {
-      const page = Number(store.get("reportsMeta")?.page || 1);
-      if (page > 1) loadReportsData(page - 1);
+      return changePage("reportsMeta", -1, loadReportsData);
     },
     nextReportsPage() {
-      const meta = store.get("reportsMeta") || {};
-      const page = Number(meta.page || 1);
-      if (page < Number(meta.total_pages || 1)) loadReportsData(page + 1);
+      return changePage("reportsMeta", 1, loadReportsData);
     },
 
     filterFinance() {
       scheduleReload("finance", () => loadFinanceData(1));
     },
     previousFinancePage() {
-      const page = Number(store.get("financeMeta")?.page || 1);
-      if (page > 1) loadFinanceData(page - 1);
+      return changePage("financeMeta", -1, loadFinanceData);
     },
     nextFinancePage() {
-      const meta = store.get("financeMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadFinanceData(Number(meta.page) + 1);
-      }
+      return changePage("financeMeta", 1, loadFinanceData);
     },
     async refundFinanceTransaction({ element: el }) {
       const reason = promptValue(translate("admin.prompt.refund_reason", "İade nedeni:"));
@@ -481,14 +445,10 @@ export function createPanelHandlers({
       scheduleReload("uploads", () => loadUploadsData(1));
     },
     previousUploadsPage() {
-      const page = Number(store.get("uploadsMeta")?.page || 1);
-      if (page > 1) loadUploadsData(page - 1);
+      return changePage("uploadsMeta", -1, loadUploadsData);
     },
     nextUploadsPage() {
-      const meta = store.get("uploadsMeta") || {};
-      if (Number(meta.page) < Number(meta.total_pages)) {
-        loadUploadsData(Number(meta.page) + 1);
-      }
+      return changePage("uploadsMeta", 1, loadUploadsData);
     },
     toggleAllUploads({ element: el }) {
       document.querySelectorAll("[data-upload-select]").forEach((input) => {

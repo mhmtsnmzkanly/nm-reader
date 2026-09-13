@@ -1,3 +1,5 @@
+import { paginationState } from "./pagination.js";
+
 export function createPanelUi(
   { documentRef = globalThis.document, mountPartial } = {},
 ) {
@@ -62,16 +64,10 @@ export function createPanelUi(
   function renderPager(id, meta, previousHandler, nextHandler) {
     const target = documentRef?.getElementById(id);
     if (!target || typeof mountPartial !== "function") return;
-    const page = Number(meta?.page || 1);
-    const totalPages = Math.max(1, Number(meta?.total_pages || 1));
     mountPartial("panel-pager", target, {
-      page,
-      total_pages: totalPages,
-      total: Number(meta?.total || 0),
+      ...paginationState(meta),
       previous_handler: previousHandler,
       next_handler: nextHandler,
-      has_previous: page > 1,
-      has_next: page < totalPages,
     });
   }
   return Object.freeze({

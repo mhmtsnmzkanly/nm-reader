@@ -1907,22 +1907,9 @@ ${admin_note}</textarea>
                     id="panel-report-target"
                     data-on-change="filterReports"
                   ><option value="">Tüm hedefler</option><option value="series">Seri</option><option value="chapter">Bölüm</option><option value="blog">Blog</option><option value="comment">Yorum</option></select></div></div></div></div><div class="card border-0 shadow-sm"><div class="card-body p-0 table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>#</th><th>Bildiren</th><th>Hedef</th><th>Neden</th><th>Durum</th><th>Tarih</th><th></th></tr></thead><tbody id="panel-reports-list"></tbody></table></div><div
-              class="card-footer bg-transparent d-flex justify-content-between align-items-center"
-            ><button
-                class="btn btn-sm btn-outline-secondary"
-                data-on-click="previousReportsPage"
-                id="panel-reports-prev"
-              >
-                Önceki</button
-              ><span class="small text-secondary" id="panel-reports-page"
-                >Sayfa 1</span
-              ><button
-                class="btn btn-sm btn-outline-secondary"
-                data-on-click="nextReportsPage"
-                id="panel-reports-next"
-              >
-                Sonraki
-              </button></div></div></partial></template><template id="tpl-panel-monetization"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex flex-wrap gap-2"><a
+              class="card-footer bg-transparent"
+              id="panel-reports-pager"
+            ></div></div></partial></template><template id="tpl-panel-monetization"><partial name="panel-page-shell" header="header"><div slot="actions" class="d-flex flex-wrap gap-2"><a
               class="btn btn-sm btn-outline-danger"
               href="/panel/monetization/ad-free"
               data-panel-link
@@ -2573,7 +2560,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?218");
+        const admin = await import("/assets/js/admin/admin.js?219");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {

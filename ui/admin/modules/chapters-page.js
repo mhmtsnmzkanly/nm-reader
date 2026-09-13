@@ -1,3 +1,5 @@
+import { adjacentPage, paginationState } from "./pagination.js";
+
 /** Chapter list and bulk-management page controller. */
 export function createChaptersPageController({
   store,
@@ -31,7 +33,7 @@ export function createChaptersPageController({
     }
     const response = await api(
       `/content/${content.id}/chapters?page=${
-        Math.max(1, Number(pageNumber))
+        paginationState({ page: pageNumber }).page
       }&per_page=25`,
     );
     assertCurrentPage(requestEpoch);
@@ -51,7 +53,7 @@ export function createChaptersPageController({
         : translate("admin.access.free", "Ücretsiz"),
       published_at: chapter.published_at || "-",
     }));
-    const chapterMeta = responseMeta(response);
+    const chapterMeta = paginationState(responseMeta(response));
     const page = mountEditorPage(
       translate(
         "admin.chapters.title",
@@ -66,10 +68,8 @@ export function createChaptersPageController({
         name: "panel-chapters",
         context: {
           total: Number(chapterMeta.total || chapters.length),
-          previous_disabled: chapterMeta.page <= 1 ? "disabled" : "",
-          next_disabled: chapterMeta.page >= chapterMeta.total_pages
-            ? "disabled"
-            : "",
+          previous_disabled: chapterMeta.has_previous ? "" : "disabled",
+          next_disabled: chapterMeta.has_next ? "" : "disabled",
         },
       },
     );
@@ -86,9 +86,12 @@ export function createChaptersPageController({
     const onClick = async (event) => {
       const pageButton = event.target.closest("[data-chapter-page]");
       if (pageButton && !pageButton.disabled) {
-        const nextPage = chapterMeta.page +
-          (pageButton.dataset.chapterPage === "next" ? 1 : -1);
-        await loadChaptersPage(content.id, nextPage);
+        const direction = pageButton.dataset.chapterPage;
+        const nextPage = adjacentPage(
+          chapterMeta,
+          direction === "next" ? 1 : direction === "prev" ? -1 : 0,
+        );
+        if (nextPage !== null) await loadChaptersPage(content.id, nextPage);
         return;
       }
       const createButton = event.target.closest("[data-create-chapter]");

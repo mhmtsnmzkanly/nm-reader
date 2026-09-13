@@ -170,20 +170,12 @@ export function createPanelTableRenderers({
       const element = document.getElementById(`panel-report-count-${status}`);
       if (element) element.textContent = String(Number(counts[status] || 0));
     });
-    const page = Number(meta.page || 1);
-    const totalPages = Math.max(1, Number(meta.total_pages || 1));
-    const label = document.getElementById("panel-reports-page");
-    if (label) {
-      label.textContent = translate(
-        "admin.pagination.summary",
-        "Sayfa {page} / {pages} · {total} kayıt",
-        { page, pages: totalPages, total: Number(meta.total || 0) },
-      );
-    }
-    const previous = document.getElementById("panel-reports-prev");
-    const next = document.getElementById("panel-reports-next");
-    if (previous) previous.disabled = page <= 1;
-    if (next) next.disabled = page >= totalPages;
+    renderPager(
+      "panel-reports-pager",
+      meta,
+      "previousReportsPage",
+      "nextReportsPage",
+    );
   }
 
   function renderPackagesTable() {
