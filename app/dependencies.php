@@ -270,8 +270,7 @@ $builder->addDefinitions([
     ContentPageController::class => DI\autowire(ContentPageController::class),
     BlogPageController::class => DI\autowire(BlogPageController::class),
     AccountPageController::class => DI\autowire(AccountPageController::class),
-    AdminShellController::class => DI\autowire(AdminShellController::class)
-        ->constructorParameter('settings', $settings),
+    AdminShellController::class => DI\autowire(AdminShellController::class),
     SystemPageController::class => DI\autowire(SystemPageController::class)
         ->constructorParameter('settings', $settings)
         ->constructorParameter('errorLogger', DI\get('logger.error')),
