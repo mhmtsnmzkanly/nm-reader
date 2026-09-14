@@ -103,7 +103,7 @@ test("overlapping requests for the same period are deduplicated", async () => {
     return new Promise((done) => { resolve = done; });
   });
   const first = f.loadDashboardData();
-  assert.equal(await f.loadDashboardData(), false);
+  assert.equal(await f.loadDashboardData(), undefined);
   resolve({ data: {} });
   assert.equal(await first, true);
   assert.equal(calls, 1);
@@ -118,7 +118,7 @@ test("late responses cannot overwrite a newer selected period", async () => {
   pending[1]({ data: { overview: { kpis: { users_total: 20 } } } });
   assert.equal(await second, true);
   pending[0]({ data: { overview: { kpis: { users_total: 10 } } } });
-  assert.equal(await first, false);
+  assert.equal(await first, undefined);
   assert.equal(f.values.get("overview.total_users"), "20");
   assert.equal(f.renders.tables, 1);
 });

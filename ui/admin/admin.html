@@ -59,6 +59,16 @@
             </li>
           </ul>
           <ul class="navbar-nav ms-auto align-items-center gap-3">
+            <li class="nav-item d-flex align-items-center gap-1">
+              <label for="panel-language" class="mb-0">
+                <i class="bi bi-translate" aria-hidden="true"></i>
+                <span class="visually-hidden" data-i18n="admin.language.select">Panel dili</span>
+              </label>
+              <select id="panel-language" class="form-select form-select-sm w-auto" disabled>
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+              </select>
+            </li>
             <li class="nav-item">
               <span
                 class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"
@@ -1111,7 +1121,7 @@
               data-on-click="refundFinanceTransaction"
               data-id="${item.id}"
             >
-              <i class="bi bi-arrow-counterclockwise"></i> İade</button
+              <i class="bi bi-arrow-counterclockwise"></i> <span data-i18n="admin.finance.refund">İade</span></button
             ><span class="badge bg-secondary ms-1 ${item.refunded_class}"
               ><span data-i18n="admin.finance.refunded">İade edildi</span></span
             >
@@ -1151,8 +1161,8 @@
               class="btn btn-xs btn-outline-primary ${item.retry_class}"
               data-on-click="retryQueueJob"
               data-id="${item.id}"
-              title="Yeniden dene" data-i18n-attr="title:admin.action.retry"
-              aria-label="Kuyruk işini yeniden dene" data-i18n-attr="aria-label:admin.queue.retry"
+              title="Yeniden dene"
+              aria-label="Kuyruk işini yeniden dene" data-i18n-attr="title:admin.action.retry,aria-label:admin.queue.retry"
             >
               <i class="bi bi-arrow-repeat"></i></button
             ><button
@@ -1160,8 +1170,8 @@
               class="btn btn-xs btn-outline-danger ${item.cancel_class}"
               data-on-click="cancelQueueJob"
               data-id="${item.id}"
-              title="İptal et" data-i18n-attr="title:admin.action.cancel"
-              aria-label="Kuyruk işini iptal et" data-i18n-attr="aria-label:admin.queue.cancel"
+              title="İptal et"
+              aria-label="Kuyruk işini iptal et" data-i18n-attr="title:admin.action.cancel,aria-label:admin.queue.cancel"
             >
               <i class="bi bi-x-lg"></i>
             </button>
@@ -3302,7 +3312,7 @@ ${admin_note}</textarea>
         </table>
       </div>
       <div class="d-flex justify-content-between align-items-center mt-3">
-        <small class="text-secondary">${total} bölüm</small>
+        <small class="text-secondary">${total} <span data-i18n="admin.chapter.count_label">bölüm</span></small>
         <div class="btn-group btn-group-sm">
           <button
             type="button"
@@ -4230,7 +4240,7 @@ ${admin_note}</textarea>
             class="btn btn-sm btn-outline-secondary"
             data-on-click="loadComments"
           >
-            <i class="bi bi-arrow-clockwise me-1"></i> Yenile
+            <i class="bi bi-arrow-clockwise me-1"></i> <span data-i18n="admin.action.refresh">Yenile</span>
           </button>
           </div>
           <div class="card border-0 shadow-sm mb-4">
@@ -5878,7 +5888,7 @@ ${admin_note}</textarea>
                   <p class="text-secondary mb-0">${target_context}</p>
                 </div>
                 <span class="badge bg-primary-subtle text-primary"
-                  >${target_type_label} · ${total} beğeni</span
+                  >${target_type_label} · ${total} <span data-i18n="admin.like.count_label">beğeni</span></span
                 >
               </div>
               <div class="row g-2 mb-3">
@@ -5999,14 +6009,18 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?232");
+        const admin = await import("/assets/js/admin/admin.js?238");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {
         console.error("Admin panel yüklenemedi:", error);
         const message = loader?.querySelector("[data-loader-message]");
         if (message)
-          message.textContent = "Panel yüklenemedi. Sayfayı yenileyin.";
+          message.textContent = error?.status === 401
+            ? "Oturumunuz sona ermiş. Yeniden giriş yapın. / Your session has expired. Please sign in again."
+            : error?.status === 403
+            ? "Panele erişim izniniz yok. / You do not have permission to access the panel."
+            : "Panel yüklenemedi. Sayfayı yenileyin. / Could not load the panel. Please refresh.";
       }
     </script>
   </body>

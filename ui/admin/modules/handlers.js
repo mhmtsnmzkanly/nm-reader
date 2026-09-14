@@ -43,6 +43,7 @@ export function createPanelHandlers({
   const handlers = {
     async refreshDashboard() {
       const success = await loadDashboardData();
+      if (success === undefined) return;
       showToast(
         success
           ? translate("admin.toast.dashboard_updated", "İstatistikler güncellendi")
@@ -55,28 +56,33 @@ export function createPanelHandlers({
       store.set("dashboardPeriodDays", Math.max(1, Math.min(90, value)));
       loadDashboardData();
     },
-    loadSeries() {
-      loadSeriesData(Number(store.get("seriesMeta")?.page || 1));
-      showToast(translate("admin.toast.series_refreshed", "İçerik listesi yenilendi"));
+    async loadSeries() {
+      if (await loadSeriesData(Number(store.get("seriesMeta")?.page || 1)) === true) {
+        showToast(translate("admin.toast.series_refreshed", "İçerik listesi yenilendi"));
+      }
     },
-    loadUsers() {
-      loadUsersData(Number(store.get("usersMeta")?.page || 1));
-      showToast(translate("admin.toast.users_refreshed", "Kullanıcı listesi yenilendi"));
+    async loadUsers() {
+      if (await loadUsersData(Number(store.get("usersMeta")?.page || 1)) === true) {
+        showToast(translate("admin.toast.users_refreshed", "Kullanıcı listesi yenilendi"));
+      }
     },
-    loadBlogs() {
-      loadBlogsData(Number(store.get("blogsMeta")?.page || 1));
-      showToast(translate("admin.toast.blogs_refreshed", "Blog listesi yenilendi"));
+    async loadBlogs() {
+      if (await loadBlogsData(Number(store.get("blogsMeta")?.page || 1)) === true) {
+        showToast(translate("admin.toast.blogs_refreshed", "Blog listesi yenilendi"));
+      }
     },
-    loadComments() {
-      loadCommentsData(Number(store.get("commentsMeta")?.page || 1));
-      showToast(translate("admin.toast.comments_refreshed", "Yorum listesi yenilendi"));
+    async loadComments() {
+      if (await loadCommentsData(Number(store.get("commentsMeta")?.page || 1)) === true) {
+        showToast(translate("admin.toast.comments_refreshed", "Yorum listesi yenilendi"));
+      }
     },
     loadReports() {
       loadReportsData(Number(store.get("reportsMeta")?.page || 1));
     },
-    loadLogs() {
-      loadLogsData(Number(store.get("logsMeta")?.page || 1));
-      showToast(translate("admin.toast.logs_refreshed", "Loglar yenilendi"));
+    async loadLogs() {
+      if (await loadLogsData(Number(store.get("logsMeta")?.page || 1)) === true) {
+        showToast(translate("admin.toast.logs_refreshed", "Loglar yenilendi"));
+      }
     },
     filterLogs() {
       scheduleReload("logs", () => loadLogsData(1));
@@ -145,13 +151,15 @@ export function createPanelHandlers({
         translate("admin.logs.auto_15s", "Otomatik: 15 sn"),
       );
     },
-    loadUploads() {
-      loadUploadsData();
-      showToast(translate("admin.toast.uploads_refreshed", "Yüklemeler yenilendi"));
+    async loadUploads() {
+      if (await loadUploadsData(Number(store.get("uploadsMeta")?.page || 1)) === true) {
+        showToast(translate("admin.toast.uploads_refreshed", "Yüklemeler yenilendi"));
+      }
     },
     async loadQueueJobs() {
-      await loadQueueJobsData();
-      showToast(translate("admin.toast.queue_refreshed", "Kuyruk yenilendi"));
+      if (await loadQueueJobsData(Number(store.get("queueMeta")?.page || 1)) === true) {
+        showToast(translate("admin.toast.queue_refreshed", "Kuyruk yenilendi"));
+      }
     },
     switchOpsView({ element } = {}) {
       const view = element?.dataset.opsView || "all";

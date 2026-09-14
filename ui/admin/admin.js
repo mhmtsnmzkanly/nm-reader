@@ -24,8 +24,9 @@ import {
   bindPanelNavigation,
   createPanelRouter,
   navigatePanelPath,
-  runPanelLoader,
 } from "./modules/router.js?129";
+import { createPanelNavigationController } from "./modules/navigation-controller.js";
+import { createPageView } from "./modules/page-view.js";
 import { createPageSession } from "./modules/page-session.js?125";
 import {
   capturePanelGroupState,
@@ -33,6 +34,8 @@ import {
   restorePanelGroupState,
 } from "./modules/navigation.js?130";
 import { createI18n } from "./modules/i18n.js?131";
+import { resolvePanelContext } from "./modules/bootstrap.js";
+import { bindLanguageSelector, savedPanelLocale } from "./modules/language-selector.js";
 import { createFeedback } from "./modules/feedback.js?125";
 import { createRequestGate } from "./modules/request-gate.js?125";
 import { createTranslationModule } from "./modules/directives/translation.js?126";
@@ -59,6 +62,8 @@ import { createOpsHandlers } from "./modules/ops-handlers.js?126";
 import { createPanelStore } from "./modules/state.js?125";
 import { createUsersListController } from "./modules/users-list.js?126";
 import { createUsersDetailController } from "./modules/users-detail.js?135";
+import { createUserPenaltyController } from "./modules/user-penalty.js";
+import { createUserWalletController } from "./modules/user-wallet.js";
 import { createMiscPagesController } from "./modules/misc-pages.js?128";
 import {
   commentThreadFields,
@@ -73,9 +78,8 @@ import {
 } from "./modules/formatters.js?127";
 import {
   createPanelRoutes,
-  panelPageHeaderKeys,
-  panelRootRoutes,
 } from "./modules/routes.js?127";
+function initializeAdmin() {
 const configuredNextYear = document
   .querySelector('meta[name="nmr-next-year"]')
   ?.getAttribute("content") || "";
@@ -83,10 +87,13 @@ const nextYear = /^\d{4}$/.test(configuredNextYear)
   ? configuredNextYear
   : String(new Date().getFullYear() + 1);
 
+const panelLanguages = globalThis.__NMR_CONTEXT?.supported_langs?.length
+  ? globalThis.__NMR_CONTEXT.supported_langs
+  : ["tr", "en"];
 const i18n = createI18n({
-  locale: globalThis.__NMR_CONTEXT?.lang_code || "en",
+  locale: savedPanelLocale(panelLanguages, globalThis.__NMR_CONTEXT?.lang_code || "en"),
   fallbackLocale: globalThis.__NMR_CONTEXT?.default_lang || "en",
-  supported: globalThis.__NMR_CONTEXT?.supported_langs || [],
+  supported: panelLanguages,
   initialDictionaries: globalThis.__NMR_CONTEXT?.translations || {},
 });
 document.documentElement.lang = i18n.locale();
@@ -247,69 +254,27 @@ function mountPartialEngine(name, options = {}) {
   });
 }
 
-const reloadTimers = new Map();
-const pagePartials = new Set();
-const pagePartialTargets = new Map();
+const pageView = createPageView({
+  target: document.getElementById("panel-app"),
+  pageSession,
+  mount,
+  mountPartialEngine,
+  applyPermissionVisibility,
+});
 function scheduleReload(key, callback) {
-  clearTimeout(reloadTimers.get(key));
-  const epoch = pageEpoch;
-  reloadTimers.set(
-    key,
-    setTimeout(() => {
-      reloadTimers.delete(key);
-      if (epoch === pageEpoch) callback();
-    }, 300),
-  );
+  return pageView.scheduleReload(key, callback);
 }
-
 function mountPartial(name, target, context = {}) {
-  if (!target) return null;
-  // The page mount owns Lime's delegated event listeners on #panel-app.
-  // Partials are nested inside that target, so attaching handlers here would
-  // invoke the same data-on-* action more than once as the event bubbles.
-  // They are also rendered as short-lived snapshots; the parent page or the
-  // page controller explicitly remounts them when data changes, so they do not
-  // need independent reactive subscriptions.
-  const previous = pagePartialTargets.get(target);
-  if (previous) {
-    previous.instance?.unmount?.();
-    previous.unregister?.();
-    pagePartials.delete(previous.instance);
-  }
-  const instance = mountPartialEngine(name, { target, context });
-  applyPermissionVisibility(target);
-  if (instance?.unmount) {
-    pagePartials.add(instance);
-    const unregister = registerPageCleanup(() => {
-      // A route replacement may have already disposed this partial
-      // synchronously. Lime instances are expected to be disposable, but the
-      // guard keeps cleanup idempotent when session disposal runs afterward.
-      if (pagePartials.has(instance)) {
-        instance.unmount();
-        pagePartials.delete(instance);
-      }
-      if (pagePartialTargets.get(target)?.instance === instance) {
-        pagePartialTargets.delete(target);
-      }
-    });
-    pagePartialTargets.set(target, { instance, unregister });
-  }
-  return instance;
+  return pageView.mountPartial(name, target, context);
 }
-
-function clearPagePartials() {
-  for (const [partialTarget, entry] of pagePartialTargets) {
-    entry.instance?.unmount?.();
-    entry.unregister?.();
-    pagePartials.delete(entry.instance);
-    if (pagePartialTargets.get(partialTarget) === entry) {
-      pagePartialTargets.delete(partialTarget);
-    }
-  }
-  // A defensive sweep also handles a partial created by a custom page module
-  // that did not register a target entry (for example an inactive mount).
-  for (const partial of pagePartials) partial.unmount?.();
-  pagePartials.clear();
+function registerPageCleanup(callback) {
+  return pageView.registerPageCleanup(callback);
+}
+function mountPage(name, context = {}) {
+  return pageView.mountPage(name, context);
+}
+function disposePage() {
+  return pageView.disposePage();
 }
 
 const panelUi = createPanelUi({
@@ -353,9 +318,7 @@ const usersDetailController = createUsersDetailController({
   setTableRows,
   renderPager,
   mountPage,
-  mountPartial,
   scheduleReload,
-  panelNavigate,
   bindFormAction,
   registerPageCleanup,
   showToast,
@@ -373,6 +336,18 @@ const usersDetailController = createUsersDetailController({
   },
   translate: panelTranslate,
   documentRef: document,
+});
+
+const userPenaltyController = createUserPenaltyController({
+  store, api, getPageEpoch: () => pageEpoch, assertCurrentPage, mountPage,
+  bindFormAction, registerPageCleanup, panelNavigate, showToast,
+  translate: panelTranslate,
+});
+const userWalletController = createUserWalletController({
+  store, api, responseItems, responseMeta, getPageEpoch: () => pageEpoch,
+  assertCurrentPage, hasPermission, mountPage, mountPartial, bindFormAction,
+  registerPageCleanup, showToast, renderPager,
+  translate: panelTranslate, formatNumber: panelFormatNumber,
 });
 
 const dashboardChartManager = createDashboardChartManager({
@@ -539,7 +514,7 @@ const moderationPagesController = createModerationPagesController({
   responseItems,
   responseMeta,
   getPageEpoch: () => pageEpoch,
-  getPageParent: () => pageParent,
+  getPageParent: () => navigationController.parentPath(),
   assertCurrentPage,
   safeLocalPath,
   mountEditorPage,
@@ -681,55 +656,10 @@ function renderRouteTables(route) {
   routeTableRenderers[route]?.();
 }
 
-let pageParent = "/panel";
-let pageMount = null;
-
-function registerPageCleanup(callback) {
-  return pageSession.onCleanup(callback);
-}
-
-async function disposePage() {
-  pageMount?.unmount?.();
-  pageMount = null;
-  for (const timer of reloadTimers.values()) clearTimeout(timer);
-  reloadTimers.clear();
-  await pageSession.dispose();
-}
-
-function mountPage(name, context = {}) {
-  if (!target) return null;
-  // A route loader may replace the initial loading view with an editor or a
-  // detail page. Dispose that short-lived Lime instance before mounting the
-  // replacement so delegated listeners and subscriptions do not accumulate.
-  pageMount?.unmount?.();
-  pageMount = null;
-  clearPagePartials();
-  // Lime reports an explicit FOR_NOT_ARRAY diagnostic for an absent loop
-  // source. Pages are often mounted once before their async payload arrives;
-  // seed common collection paths so the first render is a quiet empty state.
-  const mountContext = {
-    items: [],
-    rows: [],
-    pages: [],
-    packages: [],
-    genres: [],
-    tags: [],
-    restrictions: [],
-    roles: [],
-    ...context,
-  };
-  pageMount = mount(name, { target, context: mountContext, store, handlers });
-  // Lime owns the target's DOM and cleanup lifecycle. Keep the target as the
-  // page root so every page-local query and listener remains inside the same
-  // mount boundary without introducing a second wrapper lifecycle.
-  applyPermissionVisibility(target);
-  return target;
-}
-
 function mountEditorPage(title, body, onSubmit) {
   const fields = body.context || {};
   const page = mountPage(body.name + "-page", {
-    header: { title, parent_path: pageParent, show_back: true },
+    header: { title, parent_path: navigationController.parentPath(), show_back: true },
     fields,
     // Some presentation-only pages (for example likers) bind directly to
     // their page context instead of a form partial's `fields` scope. Keep the
@@ -837,7 +767,7 @@ const handlers = Object.freeze({
     loadUserCommentsData: usersDetailController.loadUserCommentsData,
     loadUserBlogsData: usersDetailController.loadUserBlogsData,
     loadUserViolationsData: usersDetailController.loadUserViolationsData,
-    loadUserWalletPage: usersDetailController.loadUserWalletPage,
+    loadUserWalletPage: userWalletController.loadUserWalletPage,
     registerPageCleanup,
     translate: panelTranslate,
   }),
@@ -858,7 +788,6 @@ const handlers = Object.freeze({
  */
 
 // 5. Router & View Mount
-const target = document.getElementById("panel-app");
 
 const panelRoutes = createPanelRoutes({
   loaders: {
@@ -875,8 +804,8 @@ const panelRoutes = createPanelRoutes({
     loadTaxonomyPage,
     loadUsersData,
     loadUserDetailPage: usersDetailController.loadUserDetailPage,
-    loadUserPenaltyPage: usersDetailController.loadUserPenaltyPage,
-    loadUserWalletPage: usersDetailController.loadUserWalletPage,
+    loadUserPenaltyPage: userPenaltyController.loadUserPenaltyPage,
+    loadUserWalletPage: userWalletController.loadUserWalletPage,
     loadBlogsData,
     loadBlogPreviewPage,
     loadLikersPage,
@@ -903,146 +832,30 @@ const panelRoutes = createPanelRoutes({
 });
 const panelRouter = createPanelRouter({ routeTree: panelRoutes });
 
-function resolvePanelRoute() {
-  return panelRouter.resolve();
-}
-
-// Root list pages share the same shell as detail/editor pages. Keeping the
-// metadata here leaves page templates focused on their body and lets the
-// translation module provide the visible title/description at mount time.
-function panelPageContext(resolved) {
-  const context = { ...resolved.params };
-  const metadata = panelPageHeaderKeys[resolved.route] ||
-    panelPageHeaderKeys[resolved.section];
-  if (!metadata) return context;
-  context.header = {
-    title_key: metadata[0],
-    title: panelTranslate(metadata[0], metadata[1]),
-    description_key: metadata[2],
-    description: panelTranslate(metadata[2], metadata[3]),
-    parent_path: pageParent,
-    show_back: !panelRootRoutes.has(resolved.route),
-  };
-  return context;
-}
-
-let navigationSequence = 0;
-async function navigate() {
-  const navigationId = ++navigationSequence;
-  let resolved = resolvePanelRoute();
-  if (!resolved) return;
-
-  if (resolved.redirect && globalThis.location.pathname !== resolved.redirect) {
-    showToast(
-      panelTranslate(
-        "admin.route.not_found",
-        "İstenen panel sayfası bulunamadı; dashboard açıldı.",
-      ),
-      "warning",
-    );
-    globalThis.history.replaceState({}, "", resolved.redirect);
-    resolved = resolvePanelRoute();
-  }
-
-  const required = resolved.permissions || [];
-  if (required.length > 0 && !hasPermission(...required)) {
-    if (globalThis.location.pathname !== "/panel") {
-      globalThis.history.replaceState({}, "", "/panel");
-      resolved = resolvePanelRoute();
-    }
-    const fallbackRequired = resolved?.permissions || [];
-    if (fallbackRequired.length > 0 && !hasPermission(...fallbackRequired)) {
-      await disposePage();
-      if (navigationId !== navigationSequence) return;
-      const session = pageSession.begin();
-      pageEpoch = session.epoch;
-      pageRequests = session.controller;
-      mountPage("panel-page-error-shell", {
-        header: {
-          title: panelTranslate("admin.page.error_title", "Sayfa kullanılamıyor"),
-          parent_path: "/",
-          show_back: true,
-        },
-        error_message: panelTranslate(
-          "admin.permission.denied",
-          "Bu panel bölümü için gerekli yetkiniz bulunmuyor.",
-        ),
-      });
-      return;
-    }
-  }
-
-  await disposePage();
-  if (navigationId !== navigationSequence) return;
-  const session = pageSession.begin();
-  pageEpoch = session.epoch;
-  pageRequests = session.controller;
-  const sectionParent = {
-    taxonomies: "series",
-    webhook: "config",
-    "config-env": "config",
-  }[resolved.section] || resolved.section;
-  pageParent = resolved.section === "user" && resolved.params.userId
-    ? "/panel/user/" + encodeURIComponent(resolved.params.userId)
-    : sectionParent && sectionParent !== "dashboard"
-    ? "/panel/" + sectionParent
-    : "/panel";
-  if (
-    ["chapter-new", "chapter-edit", "chapter-preview", "series-team"].includes(
-      resolved.route,
-    )
-  ) {
-    pageParent = "/panel/series/" +
-      encodeURIComponent(resolved.params.seriesId) +
-      "/chapters";
-  }
-  store.set("currentRoute", resolved.route);
-
-  const activeSection = resolved.section || resolved.route || "dashboard";
-  store.set("currentSection", activeSection);
-  panelNavigation.setActiveRoute?.(resolved.route, activeSection);
-
-  if (resolved.view) {
-    mountPage(resolved.view, panelPageContext(resolved));
-    renderRouteTables(resolved.route);
-  } else {
-    mountPage("panel-loading");
-  }
-
-  if (typeof resolved.load === "function") {
-    runPanelLoader(resolved.load, resolved.params).catch((error) => {
-      if (error?.name === "AbortError" || navigationId !== navigationSequence) return;
-      void (async () => {
-        // A loader may have installed page-local listeners before a later
-        // synchronous/async failure. Dispose that failed page before showing
-        // the error view so its cleanup callbacks cannot leak into the next
-        // navigation.
-        await disposePage();
-        if (navigationId !== navigationSequence) return;
-        const session = pageSession.begin();
-        pageEpoch = session.epoch;
-        pageRequests = session.controller;
-        mountPage("panel-page-error-shell", {
-          header: {
-            title: panelTranslate("admin.page.error_title", "Sayfa yüklenemedi"),
-            parent_path: pageParent,
-            show_back: true,
-          },
-          error_message: error.message || panelTranslate(
-            "admin.page.load_failed",
-            "Sayfa verileri yüklenemedi.",
-          ),
-        });
-      })().catch((disposeError) => {
-        if (disposeError?.name !== "AbortError") {
-          console.error("Panel hata görünümü hazırlanamadı:", disposeError);
-        }
-      });
-    });
-  }
+const navigationController = createPanelNavigationController({
+  panelRouter, panelNavigation, store, hasPermission, showToast,
+  panelTranslate, disposePage, mountPage, renderRouteTables,
+  beginPage: () => {
+    const session = pageSession.begin();
+    pageEpoch = session.epoch;
+    pageRequests = session.controller;
+  },
+});
+function navigate() {
+  return navigationController.navigate();
 }
 
 applyPermissionVisibility(document);
+const unbindLanguageSelector = bindLanguageSelector({
+  select: document.getElementById("panel-language"),
+  supported: panelLanguages,
+  i18n,
+  onChange: () => {
+    renderSidebar();
+    i18n.refresh(document);
+  },
+  onError: () => showToast(panelTranslate("admin.language.load_failed", "Dil yüklenemedi. Tekrar deneyin."), "danger"),
+});
 const unbindPanelNavigation = bindPanelNavigation({
   documentRef: document,
   onNavigate: panelNavigate,
@@ -1052,20 +865,13 @@ const unbindPanelNavigation = bindPanelNavigation({
 const onPopState = () => triggerNavigate();
 globalThis.addEventListener?.("beforeunload", () => {
   unbindPanelNavigation();
+  unbindLanguageSelector();
   onPopState && globalThis.removeEventListener?.("popstate", onPopState);
   panelNavigation.cleanup?.();
 }, { once: true });
 globalThis.addEventListener("popstate", onPopState);
 function triggerNavigate() {
-  void navigate().catch((error) => {
-    if (error?.name === "AbortError") return;
-    console.error("Panel navigasyonu başarısız:", error);
-    showToast(
-      error?.message ||
-        panelTranslate("admin.page.load_failed", "Panel sayfası yüklenemedi."),
-      "danger",
-    );
-  });
+  navigationController.triggerNavigate();
 }
 let adminStartPromise = null;
 function startAdmin() {
@@ -1090,5 +896,18 @@ function startAdmin() {
   return adminStartPromise;
 }
 
+return startAdmin();
+}
+
+let bootstrapPromise;
+export function startAdmin() {
+  if (!bootstrapPromise) {
+    bootstrapPromise = resolvePanelContext(globalThis.__NMR_CONTEXT).then((context) => {
+      globalThis.__NMR_CONTEXT = context;
+      return initializeAdmin();
+    });
+  }
+  return bootstrapPromise;
+}
 const adminReady = startAdmin();
-export { adminReady, startAdmin };
+export { adminReady };

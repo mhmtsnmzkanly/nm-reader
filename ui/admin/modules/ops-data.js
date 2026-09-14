@@ -106,6 +106,7 @@ export function createOpsDataController({
         healthNotice.hidden = !healthError;
         healthNotice.textContent = healthError || "";
       }
+      return true;
     } catch (error) {
       if (error?.name === "AbortError") return;
       setTableRows?.("panel-queue-jobs", "", [], 9, {

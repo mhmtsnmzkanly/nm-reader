@@ -72,6 +72,7 @@ export function createUsersListController({
         store.set("usersMeta", responseMeta(res));
       });
       renderUsersTable();
+      return true;
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (!requestGate.isCurrent(requestToken)) return;

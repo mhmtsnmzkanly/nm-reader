@@ -27,7 +27,7 @@
               ></a></li><li class="nav-item d-none d-md-block"><a href="/" class="nav-link"
                 ><i class="bi bi-box-arrow-up-right me-1"></i>
                 %%NMR_SITE_NAME%%</a
-              ></li></ul><ul class="navbar-nav ms-auto align-items-center gap-3"><li class="nav-item"><span
+              ></li></ul><ul class="navbar-nav ms-auto align-items-center gap-3"><li class="nav-item d-flex align-items-center gap-1"><label for="panel-language" class="mb-0"><i class="bi bi-translate" aria-hidden="true"></i><span class="visually-hidden" data-i18n="admin.language.select">Panel dili</span></label><select id="panel-language" class="form-select form-select-sm w-auto" disabled><option value="tr">Türkçe</option><option value="en">English</option></select></li><li class="nav-item"><span
                 class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"
               ><i class="bi bi-lightning-charge-fill me-1"></i><span data-i18n="admin.panel_badge">%%NMR_ADMIN_PANEL_TITLE%%</span></span></li><li class="nav-item dropdown user-menu"><a
                 href="#"
@@ -576,7 +576,7 @@
               class="btn btn-xs btn-outline-danger ${item.refund_class}"
               data-on-click="refundFinanceTransaction"
               data-id="${item.id}"
-            ><i class="bi bi-arrow-counterclockwise"></i> İade</button
+            ><i class="bi bi-arrow-counterclockwise"></i><span data-i18n="admin.finance.refund">İade</span></button
             ><span class="badge bg-secondary ms-1 ${item.refunded_class}"
               ><span data-i18n="admin.finance.refunded">İade edildi</span></span
             ></td></tr></template
@@ -596,16 +596,16 @@
               class="btn btn-xs btn-outline-primary ${item.retry_class}"
               data-on-click="retryQueueJob"
               data-id="${item.id}"
-              title="Yeniden dene" data-i18n-attr="title:admin.action.retry"
-              aria-label="Kuyruk işini yeniden dene" data-i18n-attr="aria-label:admin.queue.retry"
+              title="Yeniden dene"
+              aria-label="Kuyruk işini yeniden dene" data-i18n-attr="title:admin.action.retry,aria-label:admin.queue.retry"
             ><i class="bi bi-arrow-repeat"></i></button
             ><button
               type="button"
               class="btn btn-xs btn-outline-danger ${item.cancel_class}"
               data-on-click="cancelQueueJob"
               data-id="${item.id}"
-              title="İptal et" data-i18n-attr="title:admin.action.cancel"
-              aria-label="Kuyruk işini iptal et" data-i18n-attr="aria-label:admin.queue.cancel"
+              title="İptal et"
+              aria-label="Kuyruk işini iptal et" data-i18n-attr="title:admin.action.cancel,aria-label:admin.queue.cancel"
             ><i class="bi bi-x-lg"></i></button></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
@@ -1522,7 +1522,7 @@ ${admin_note}</textarea>
                   type="checkbox"
                   class="form-check-input"
                   data-select-all-chapters
-                /></th><th>#</th><th data-i18n="admin.title">Başlık</th><th data-i18n="admin.type">Tür</th><th data-i18n="admin.price">Fiyat</th><th data-i18n="admin.publication">Yayın</th><th></th></tr></thead><tbody id="panel-chapter-rows"></tbody></table></div><div class="d-flex justify-content-between align-items-center mt-3"><small class="text-secondary">${total} bölüm</small><div class="btn-group btn-group-sm"><button
+                /></th><th>#</th><th data-i18n="admin.title">Başlık</th><th data-i18n="admin.type">Tür</th><th data-i18n="admin.price">Fiyat</th><th data-i18n="admin.publication">Yayın</th><th></th></tr></thead><tbody id="panel-chapter-rows"></tbody></table></div><div class="d-flex justify-content-between align-items-center mt-3"><small class="text-secondary">${total} <span data-i18n="admin.chapter.count_label">bölüm</span></small><div class="btn-group btn-group-sm"><button
             type="button"
             class="btn btn-outline-secondary"
             data-chapter-page="prev"
@@ -1750,8 +1750,7 @@ ${admin_note}</textarea>
             ></div></div></partial></template><template id="tpl-panel-comments"><partial name="panel-page-shell" header="header"><div slot="actions"><button
             class="btn btn-sm btn-outline-secondary"
             data-on-click="loadComments"
-          ><i class="bi bi-arrow-clockwise me-1"></i> Yenile
-          </button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-2"><div class="col-md-5"><input
+          ><i class="bi bi-arrow-clockwise me-1"></i><span data-i18n="admin.action.refresh">Yenile</span></button></div><div class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-2"><div class="col-md-5"><input
                     type="search"
                     class="form-control"
                     id="panel-comments-search"
@@ -2344,7 +2343,7 @@ ${admin_note}</textarea>
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><form data-editor-form><div class="card-body p-4"><partial name="panel-pricing-form" data="fields"></partial></div><div class="card-footer bg-transparent text-end"><partial name="panel-save-button"></partial></div></form></div></partial></template><template id="tpl-panel-moderation-form-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><form data-editor-form><div class="card-body p-4"><partial name="panel-moderation-form" data="fields"></partial></div><div class="card-footer bg-transparent text-end"><partial name="panel-save-button"></partial></div></form></div></partial></template><template id="tpl-panel-likers-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4"><div><h4 class="mb-1"><i class="bi bi-heart-fill text-danger me-2"></i>${target_title}</h4><p class="text-secondary mb-0">${target_context}</p></div><span class="badge bg-primary-subtle text-primary"
-                  >${target_type_label} · ${total} beğeni</span
+                  >${target_type_label} · ${total} <span data-i18n="admin.like.count_label">beğeni</span></span
                 ></div><div class="row g-2 mb-3"><div class="col-md-6"><label class="form-label visually-hidden" for="panel-likers-search" data-i18n="admin.user.search">Kullanıcı ara</label
                   ><input
                     id="panel-likers-search"
@@ -2379,14 +2378,18 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?232");
+        const admin = await import("/assets/js/admin/admin.js?238");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {
         console.error("Admin panel yüklenemedi:", error);
         const message = loader?.querySelector("[data-loader-message]");
         if (message)
-          message.textContent = "Panel yüklenemedi. Sayfayı yenileyin.";
+          message.textContent = error?.status === 401
+            ? "Oturumunuz sona ermiş. Yeniden giriş yapın. / Your session has expired. Please sign in again."
+            : error?.status === 403
+            ? "Panele erişim izniniz yok. / You do not have permission to access the panel."
+            : "Panel yüklenemedi. Sayfayı yenileyin. / Could not load the panel. Please refresh.";
       }
     </script>
   </body></html>

@@ -1,8 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import { execFileSync } from "node:child_process";
+import { auditTemplates } from "./template-audit.mjs";
 import { fileURLToPath } from "node:url";
 import { transform } from "esbuild";
+import { build } from "esbuild";
+import { ESLint } from "eslint";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const adminRoot = path.resolve(scriptDirectory, "..");
@@ -34,14 +38,46 @@ const javascriptFiles = [
   ...(await walk(path.join(adminRoot, "modules"))).filter((file) => file.endsWith(".js")),
 ];
 await Promise.all(javascriptFiles.map(checkJavaScript));
+const eslint = new ESLint({ cwd: adminRoot });
+const results = await eslint.lintFiles([
+  ...javascriptFiles, "scripts/**/*.mjs", "tests/**/*.mjs", "eslint.config.mjs",
+]);
+if (results.some((result) => result.errorCount || result.warningCount)) {
+  const formatter = await eslint.loadFormatter("stylish");
+  throw new Error(formatter.format(results));
+}
+// Resolve local imports and named exports without writing build artifacts.
+// CDN imports stay external, just as in the production bundle.
+await build({
+  entryPoints: [path.join(adminRoot, "admin.js")],
+  bundle: true, write: false, format: "esm", platform: "browser",
+  external: ["https://*", "http://*"], logLevel: "silent",
+});
 
 const html = await fs.readFile(path.join(adminRoot, "admin.html"), "utf8");
+const dictionaries = Object.fromEntries(["tr", "en"].map((locale) => {
+  const file = path.resolve(adminRoot, "../../storage/lang", `${locale}.php`);
+  const dictionary = JSON.parse(execFileSync("php", [
+    "-r", "echo json_encode(require $argv[1], JSON_THROW_ON_ERROR);", file,
+  ], { encoding: "utf8" }));
+  return [locale, dictionary];
+}));
+const audit = auditTemplates(html, dictionaries);
+if (audit.errors.length) throw new Error(audit.errors.join("\n"));
 if (!html.includes("window.__NMR_CONTEXT") || !html.includes("<template")) {
   throw new Error("Admin HTML shell is missing its context or templates.");
 }
 for (const script of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
   if (/\bsrc\s*=/.test(script[1])) continue;
-  await transform(script[2].replaceAll("%%NMR_CONTEXT_JSON%%", "{}"), {
+  const source = script[2].replaceAll("%%NMR_CONTEXT_JSON%%", "{}");
+  const inlineResults = await eslint.lintText(source, {
+    filePath: path.join(adminRoot, "admin.js"),
+  });
+  if (inlineResults.some((result) => result.errorCount || result.warningCount)) {
+    const formatter = await eslint.loadFormatter("stylish");
+    throw new Error(`Admin HTML inline script:\n${formatter.format(inlineResults)}`);
+  }
+  await transform(source, {
     loader: "js",
     target: "esnext",
   });

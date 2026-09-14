@@ -64,6 +64,7 @@ export function createCollectionDataController({
         store.set("seriesMeta", responseMeta(res));
       });
       renderSeriesTable();
+      return true;
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (!seriesRequestGate.isCurrent(requestToken)) return;
@@ -127,6 +128,7 @@ export function createCollectionDataController({
         store.set("blogsMeta", responseMeta(res));
       });
       renderBlogsTable();
+      return true;
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (requestGates.blogs && !requestGates.blogs.isCurrent(requestToken)) return;
@@ -177,6 +179,7 @@ export function createCollectionDataController({
         store.set("commentsMeta", responseMeta(res));
       });
       renderCommentsTable();
+      return true;
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (requestGates.comments && !requestGates.comments.isCurrent(requestToken)) return;
@@ -217,6 +220,7 @@ export function createCollectionDataController({
         });
       });
       renderReportsTable();
+      return true;
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (requestGates.reports && !requestGates.reports.isCurrent(requestToken)) return;
@@ -249,6 +253,7 @@ export function createCollectionDataController({
         })),
       );
       renderPackagesTable();
+      return true;
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (requestGates.packages && !requestGates.packages.isCurrent(requestToken)) return;
@@ -290,6 +295,7 @@ export function createCollectionDataController({
         );
       });
       renderFinanceTable();
+      return true;
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (requestGates.finance && !requestGates.finance.isCurrent(requestToken)) return;
@@ -329,6 +335,7 @@ export function createCollectionDataController({
         store.set("logsMeta", responseMeta(res));
       });
       renderLogsTable();
+      return true;
     } catch (e) {
       if (e?.name === "AbortError") return;
       if (requestGates.logs && !requestGates.logs.isCurrent(requestToken)) return;
@@ -377,6 +384,7 @@ export function createCollectionDataController({
         store.set("uploadsStats", response?.meta?.stats || {});
       });
       renderUploadsTable();
+      return true;
     } catch (error) {
       if (error?.name === "AbortError") return;
       if (requestGates.uploads && !requestGates.uploads.isCurrent(requestToken)) return;

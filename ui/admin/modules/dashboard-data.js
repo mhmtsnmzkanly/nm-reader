@@ -51,7 +51,7 @@ export function createDashboardDataController({
       Math.min(90, Number(store.get("dashboardPeriodDays") || 30)),
     );
     const requestKey = `${requestEpoch}:${days}`;
-    if (dashboardRefreshInFlight?.key === requestKey) return false;
+    if (dashboardRefreshInFlight?.key === requestKey) return;
     // Install the 60-second refresh lifecycle before the first request. A
     // transient initial failure must still retry automatically, and cleanup
     // must be registered even when the request rejects.
@@ -66,7 +66,7 @@ export function createDashboardDataController({
     try {
       const data = await api(`/dashboard-data?days=${days}&limit=10`);
       assertCurrentPage(requestEpoch);
-      if (dashboardRefreshInFlight?.id !== requestId) return false;
+      if (dashboardRefreshInFlight?.id !== requestId) return;
       if (!data?.data || typeof data.data !== "object") {
         throw new Error(
           translate(
@@ -91,7 +91,7 @@ export function createDashboardDataController({
       return true;
     } catch (e) {
       if (e?.name === "AbortError") return;
-      if (dashboardRefreshInFlight?.id !== requestId) return false;
+      if (dashboardRefreshInFlight?.id !== requestId) return;
       console.error("Dashboard load error:", e);
       store.batch(() => {
         store.set("dashboardLoading", false);
