@@ -3,9 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>%%NMR_SITE_NAME%% — %%NMR_ADMIN_PANEL_TITLE%%</title>
+    <title>Panel</title>
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="nmr-next-year" content="%%NMR_NEXT_YEAR%%" />
 
     <!-- Fonts & Icons -->
     <link
@@ -32,9 +31,6 @@
     <!-- Increase +1 when change css code -->
     <link rel="stylesheet" href="/assets/css/admin/admin.css?12" />
 
-    <script>
-      window.__NMR_CONTEXT = %%NMR_CONTEXT_JSON%%;
-    </script>
   </head>
   <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
     <div class="app-wrapper">
@@ -52,9 +48,9 @@
               ></a>
             </li>
             <li class="nav-item d-none d-md-block">
-              <a href="/" class="nav-link"
+              <a href="/" id="panel-site-link" class="nav-link"
                 ><i class="bi bi-box-arrow-up-right me-1"></i>
-                %%NMR_SITE_NAME%%</a
+                <span data-i18n="admin.site.visit">Siteye git</span></a
               >
             </li>
           </ul>
@@ -69,47 +65,6 @@
                 <option value="en">English</option>
               </select>
             </li>
-            <li class="nav-item">
-              <span
-                class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"
-              >
-                <i class="bi bi-lightning-charge-fill me-1"></i><span data-i18n="admin.panel_badge">%%NMR_ADMIN_PANEL_TITLE%%</span>
-              </span>
-            </li>
-            <li class="nav-item dropdown user-menu">
-              <a
-                href="#"
-                class="nav-link dropdown-toggle d-flex align-items-center gap-2"
-                data-bs-toggle="dropdown"
-              >
-                <i class="bi bi-person-circle fs-5"></i>
-                <span class="d-none d-md-inline fw-semibold"
-                  >%%NMR_ADMIN_USERNAME%%</span
-                >
-              </a>
-              <ul
-                class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow"
-              >
-                <li class="user-header text-bg-primary p-3 text-center">
-                  <i class="bi bi-shield-lock fs-1 mb-2"></i>
-                  <p class="mb-0 fw-bold">%%NMR_ADMIN_USERNAME%%</p>
-                  <small class="opacity-75" data-i18n="admin.system_administrator">System Administrator</small>
-                </li>
-                <li class="user-footer p-2 d-flex justify-content-between">
-                  <a
-                    href="/panel/config"
-                    class="btn btn-sm btn-outline-secondary"
-                    data-panel-link
-                    data-requires-permission="admin.settings.modify"
-                    ><i class="bi bi-gear me-1"></i><span data-i18n="admin.settings">Ayarlar</span></a
-                  >
-                  <a href="/logout" class="btn btn-sm btn-danger"
-                    ><i class="bi bi-box-arrow-right me-1"></i>
-                    %%NMR_LOGOUT_LABEL%%</a
-                  >
-                </li>
-              </ul>
-            </li>
           </ul>
         </div>
       </nav>
@@ -122,11 +77,7 @@
             class="brand-link text-decoration-none d-flex align-items-center gap-2"
             data-panel-link
           >
-            <i class="bi bi-speedometer2 fs-4 text-warning"></i>
-            <span class="brand-text fw-bold fs-5"
-              >%%NMR_SITE_ABBREVIATION%%
-              <span class="badge bg-warning text-dark fs-8" data-i18n="admin.console">Console</span></span
-            >
+            <span class="brand-text fw-bold fs-5">Panel</span>
           </a>
         </div>
         <div class="sidebar-wrapper py-2">
@@ -6009,7 +5960,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?238");
+        const admin = await import("/assets/js/admin/admin.js?239");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'admin.site.visit' => 'Go to site',
     'admin.language.select' => 'Panel language',
     'admin.language.load_failed' => 'Could not load the language. Please try again.',
     'admin.chapter.count_label' => 'chapters',

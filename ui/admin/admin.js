@@ -35,6 +35,7 @@ import {
 } from "./modules/navigation.js?130";
 import { createI18n } from "./modules/i18n.js?131";
 import { resolvePanelContext } from "./modules/bootstrap.js";
+import { initializeShell, panelTitle } from "./modules/shell.js";
 import { bindLanguageSelector, savedPanelLocale } from "./modules/language-selector.js";
 import { createFeedback } from "./modules/feedback.js?125";
 import { createRequestGate } from "./modules/request-gate.js?125";
@@ -80,12 +81,8 @@ import {
   createPanelRoutes,
 } from "./modules/routes.js?127";
 function initializeAdmin() {
-const configuredNextYear = document
-  .querySelector('meta[name="nmr-next-year"]')
-  ?.getAttribute("content") || "";
-const nextYear = /^\d{4}$/.test(configuredNextYear)
-  ? configuredNextYear
-  : String(new Date().getFullYear() + 1);
+initializeShell();
+const nextYear = String(new Date().getFullYear() + 1);
 
 const panelLanguages = globalThis.__NMR_CONTEXT?.supported_langs?.length
   ? globalThis.__NMR_CONTEXT.supported_langs
@@ -271,6 +268,7 @@ function registerPageCleanup(callback) {
   return pageView.registerPageCleanup(callback);
 }
 function mountPage(name, context = {}) {
+  document.title = panelTitle(store.get("currentRoute"), context);
   return pageView.mountPage(name, context);
 }
 function disposePage() {
@@ -902,7 +900,7 @@ return startAdmin();
 let bootstrapPromise;
 export function startAdmin() {
   if (!bootstrapPromise) {
-    bootstrapPromise = resolvePanelContext(globalThis.__NMR_CONTEXT).then((context) => {
+    bootstrapPromise = resolvePanelContext().then((context) => {
       globalThis.__NMR_CONTEXT = context;
       return initializeAdmin();
     });

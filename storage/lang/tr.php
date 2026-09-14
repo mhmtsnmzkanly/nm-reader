@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'admin.site.visit' => 'Siteye git',
     'admin.language.select' => 'Panel dili',
     'admin.language.load_failed' => 'Dil yüklenemedi. Tekrar deneyin.',
     'admin.chapter.count_label' => 'bölüm',

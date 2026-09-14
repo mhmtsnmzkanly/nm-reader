@@ -64,12 +64,12 @@ const dictionaries = Object.fromEntries(["tr", "en"].map((locale) => {
 }));
 const audit = auditTemplates(html, dictionaries);
 if (audit.errors.length) throw new Error(audit.errors.join("\n"));
-if (!html.includes("window.__NMR_CONTEXT") || !html.includes("<template")) {
-  throw new Error("Admin HTML shell is missing its context or templates.");
+if (!html.includes("<template") || /%%NMR_[A-Z_]+%%/.test(html)) {
+  throw new Error("Admin HTML must contain templates and no SSR placeholders.");
 }
 for (const script of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
   if (/\bsrc\s*=/.test(script[1])) continue;
-  const source = script[2].replaceAll("%%NMR_CONTEXT_JSON%%", "{}");
+  const source = script[2];
   const inlineResults = await eslint.lintText(source, {
     filePath: path.join(adminRoot, "admin.js"),
   });
