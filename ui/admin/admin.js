@@ -12,7 +12,7 @@ import {
   partials,
   show,
   text,
-} from "https://cdn.jsdelivr.net/npm/lime-csr-js@0.3.0/dist/index.min.js";
+} from "https://cdn.jsdelivr.net/gh/mhmtsnmzkanly/lime-csr-js@v0.4.0/dist/index.min.js";
 import {
   createAdminApi,
   createAdminReauth,
@@ -230,13 +230,16 @@ const adminApi = createAdminApi({
 // newly extracted page modules.
 const api = adminApi;
 
-// Central mount boundary. Page features supply the documented 0.3.0 positional
-// signature here, keeping engine ownership in one place during the refactor.
+// Central mount boundary. Page features use this wrapper so the engine's
+// object-only configuration stays isolated from individual page modules.
 function mount(name, options = {}) {
   const { target: mountTarget, context = {}, store: mountStore, ...rest } =
     options;
-  return panelEngine.mount(mountTarget, name, mountStore || store, {
+  return panelEngine.mount({
     ...rest,
+    target: mountTarget,
+    template: name,
+    store: mountStore || store,
     context,
     handlers: rest.handlers || handlers,
   });
@@ -245,8 +248,11 @@ function mount(name, options = {}) {
 function mountPartialEngine(name, options = {}) {
   const { target: mountTarget, context = {}, store: mountStore, ...rest } =
     options;
-  return panelPartialEngine.mount(mountTarget, name, mountStore || store, {
+  return panelPartialEngine.mount({
     ...rest,
+    target: mountTarget,
+    template: name,
+    store: mountStore || store,
     context,
   });
 }
