@@ -73,6 +73,35 @@ final class AdminOperationsService extends AdminConsoleServiceBase
         }
     }
 
+    public function runSingleQueueJob(int $id, string $userId, array $permissions): array
+    {
+        $job = $this->queueService->getJob($id);
+        if ($job === null) {
+            throw new \InvalidArgumentException(sprintf('Job #%d not found.', $id));
+        }
+
+        $jobType = (string) ($job['job_type'] ?? '');
+        $requiredPermission = $this->queueService->getRequiredPermission($jobType);
+
+        $canRunAll = in_array('admin.jobs.run', $permissions, true) || in_array('*', $permissions, true);
+        $canRunSpecific = $requiredPermission !== null && in_array($requiredPermission, $permissions, true);
+
+        if (!$canRunAll && !$canRunSpecific) {
+            throw new \DomainException('Insufficient permissions to execute this queue job.');
+        }
+
+        $result = $this->queueService->runSingleJob($id);
+        $this->repo->createModerationAction(
+            $userId,
+            'system',
+            (string) $id,
+            'trigger',
+            sprintf('Single queue job #%d (%s) executed', $id, $jobType)
+        );
+
+        return $result;
+    }
+
     public function systemHealth(?string $userId = null): array
     {
         $snapshot = $this->repo->systemHealthSnapshot();

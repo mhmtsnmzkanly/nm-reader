@@ -64,6 +64,121 @@ final class QueueService
         return $this->handlers;
     }
 
+    /**
+     * Returns the permission code required to execute a specific job type.
+     */
+    public function getRequiredPermission(string $type): ?string
+    {
+        $handlerClass = $this->handlers[trim($type)] ?? null;
+        if ($handlerClass === null) {
+            return null;
+        }
+
+        return $this->resolveHandler($handlerClass)->requiredPermission();
+    }
+
+    /**
+     * Fetches a queue job row by primary key.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getJob(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM system_jobs WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Executes a single queue job by ID immediately with atomic lock claiming.
+     *
+     * @return array<string, mixed> Execution status details.
+     */
+    public function runSingleJob(int $id, ?string $workerId = null): array
+    {
+        $workerId = $workerId !== null && trim($workerId) !== ''
+            ? substr(trim($workerId), 0, 80)
+            : sprintf('%s:%d:%s', php_uname('n'), getmypid(), bin2hex(random_bytes(6)));
+
+        $job = $this->getJob($id);
+        if ($job === null) {
+            throw new \InvalidArgumentException(sprintf('Job #%d not found.', $id));
+        }
+
+        if ($job['status'] !== 'pending') {
+            return [
+                'success' => false,
+                'status' => (string) $job['status'],
+                'message' => sprintf('Job #%d is in "%s" state, cannot be run.', $id, $job['status']),
+            ];
+        }
+
+        $type = (string) ($job['job_type'] ?? '');
+        $payload = json_decode((string) ($job['payload'] ?? '{}'), true);
+        if (!is_array($payload)) {
+            $payload = [];
+        }
+
+        // Atomically claim the job to prevent duplicate execution across workers
+        $leaseUntil = (new \DateTimeImmutable('now'))
+            ->modify('+' . self::LEASE_SECONDS . ' seconds')
+            ->format('Y-m-d H:i:s');
+        $claim = $this->pdo->prepare(
+            "UPDATE system_jobs
+             SET status = 'processing', locked_by = :worker_id, locked_at = NOW(),
+                 locked_until = :locked_until, started_at = COALESCE(started_at, NOW()),
+                 attempts = attempts + 1, updated_at = NOW()
+             WHERE id = :id AND status = 'pending'"
+        );
+        $claim->execute(['id' => $id, 'worker_id' => $workerId, 'locked_until' => $leaseUntil]);
+        if ($claim->rowCount() === 0) {
+            return [
+                'success' => false,
+                'status' => 'claimed_by_other',
+                'message' => sprintf('Job #%d was already claimed by another worker.', $id),
+            ];
+        }
+
+        try {
+            $this->process($type, $payload);
+            $done = $this->pdo->prepare(
+                'UPDATE system_jobs
+                 SET status = :status, result = :result, completed_at = NOW(),
+                     locked_by = NULL, locked_at = NULL, locked_until = NULL, updated_at = NOW()
+                 WHERE id = :id AND status = "processing" AND locked_by = :worker_id'
+            );
+            $done->execute([
+                'status' => 'done',
+                'result' => json_encode(['completed_at' => gmdate('c')], JSON_UNESCAPED_SLASHES),
+                'id' => $id,
+                'worker_id' => $workerId,
+            ]);
+
+            return ['success' => true, 'status' => 'done', 'job_id' => $id];
+        } catch (\Throwable $e) {
+            $fail = $this->pdo->prepare(
+                'UPDATE system_jobs
+                 SET status = :status, last_error = :last_error, failed_at = NOW(),
+                     locked_by = NULL, locked_at = NULL, locked_until = NULL, updated_at = NOW()
+                 WHERE id = :id AND status = "processing" AND locked_by = :worker_id'
+            );
+            $fail->execute([
+                'status' => 'failed',
+                'last_error' => substr($e->getMessage(), 0, 500),
+                'id' => $id,
+                'worker_id' => $workerId,
+            ]);
+
+            return [
+                'success' => false,
+                'status' => 'failed',
+                'job_id' => $id,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
     public function enqueue(
         string $type,
         array $payload,

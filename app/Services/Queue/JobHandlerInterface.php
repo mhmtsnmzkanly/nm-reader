@@ -20,4 +20,10 @@ interface JobHandlerInterface
      * @throws \Throwable If processing fails (triggers retry/failure logic in QueueService).
      */
     public function handle(array $payload): void;
+
+    /**
+     * Returns the granular permission code required to execute this specific job type,
+     * or null if the job can be run by any authorized worker/administrator.
+     */
+    public function requiredPermission(): ?string;
 }

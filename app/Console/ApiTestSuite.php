@@ -692,6 +692,7 @@ final class ApiTestSuite
             ['GET', '/api/v1/admin/system/health', 'GET /api/v1/admin/system/health'],
             ['POST', '/api/v1/admin/queue/jobs/1/retry', 'POST /api/v1/admin/queue/jobs/{id}/retry'],
             ['POST', '/api/v1/admin/queue/jobs/1/cancel', 'POST /api/v1/admin/queue/jobs/{id}/cancel'],
+            ['POST', '/api/v1/admin/queue/jobs/1/run', 'POST /api/v1/admin/queue/jobs/{id}/run'],
             ['POST', '/api/v1/admin/queue/run-once', 'POST /api/v1/admin/queue/run-once'],
             ['POST', '/api/v1/admin/retention/cleanup', 'POST /api/v1/admin/retention/cleanup'],
             ['POST', '/api/v1/admin/maintenance/backup', 'POST /api/v1/admin/maintenance/backup'],

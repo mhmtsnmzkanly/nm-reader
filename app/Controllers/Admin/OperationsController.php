@@ -58,6 +58,22 @@ final class OperationsController extends AdminController
                 ['job_type' => $jobType, 'requested_limit' => $limit, 'moderator_id' => $modId]
             );
         }
+
+    public function runSingleQueueJob(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+        {
+            $id = (int) ($args['id'] ?? 0);
+            $userId = (string) $request->getAttribute('user_id', '');
+            $permissions = (array) $request->getAttribute('permissions', []);
+
+            try {
+                $result = $this->operationsService->runSingleQueueJob($id, $userId, $permissions);
+                return ResponseHelper::success($result);
+            } catch (\DomainException $e) {
+                return ResponseHelper::error(403, $e->getMessage());
+            } catch (\InvalidArgumentException $e) {
+                return ResponseHelper::error(404, $e->getMessage());
+            }
+        }
     
     public function cleanupRetention(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {

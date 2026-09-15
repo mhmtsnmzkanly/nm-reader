@@ -156,7 +156,7 @@ final class ChapterAdminService extends AdminServiceBase
         $this->cache->delete(sprintf('content_%s', $slug));
         $this->cache->delete(sprintf('content_%s_%s', $dbType, $slug));
         $this->invalidateListingCaches();
-        $this->queue->enqueue('notify_new_chapter', [
+        $jobId = $this->queue->enqueue('notify_new_chapter', [
             'content_id' => $contentId,
             'chapter_id' => $chapterId,
             'chapter_number' => ChapterNumber::normalize($chapterNumber),
@@ -172,6 +172,7 @@ final class ChapterAdminService extends AdminServiceBase
             'price_amount' => $priceAmount,
             'published_at' => $publishedAt,
             'is_free_after' => $isFreeAfter,
+            'queue_job_ids' => $jobId > 0 ? [$jobId] : [],
         ];
     }
 

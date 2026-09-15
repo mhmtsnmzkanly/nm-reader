@@ -81,4 +81,10 @@ final class NotifyNewChapterHandler implements JobHandlerInterface
             'content_id' => $contentId,
         ]);
     }
+
+    #[\Override]
+    public function requiredPermission(): ?string
+    {
+        return 'admin.chapter.create';
+    }
 }

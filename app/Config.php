@@ -1058,6 +1058,7 @@ final class Config
             $group->get("/system/health", [AdminOperationsController::class, "systemHealth"])->add($perm(["admin.health.view"]));
             $group->post("/queue/jobs/{id:[0-9]+}/retry", [AdminOperationsController::class, "retryQueueJob"])->add($perm(["admin.jobs.run"]));
             $group->post("/queue/jobs/{id:[0-9]+}/cancel", [AdminOperationsController::class, "cancelQueueJob"])->add($perm(["admin.jobs.run"]));
+            $group->post("/queue/jobs/{id:[0-9]+}/run", [AdminOperationsController::class, "runSingleQueueJob"])->add($perm(["admin.panel.access"]));
             $group->post("/queue/run-once", [AdminOperationsController::class, "runQueueOnce"])->add($perm(["admin.jobs.run"]));
             $group->post("/retention/cleanup", [AdminOperationsController::class, "cleanupRetention"])->add($perm(["admin.jobs.run"]));
             $group->post("/maintenance/backup", [AdminOperationsController::class, "triggerBackup"])->add(new CriticalActionMiddleware())->add($perm(["admin.jobs.run"]));
