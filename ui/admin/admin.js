@@ -42,13 +42,13 @@ import { createRequestGate } from "./modules/request-gate.js?125";
 import { createTranslationModule } from "./modules/directives/translation.js?126";
 import { bindFormAction } from "./modules/form-action.js?126";
 import { createDashboardChartManager } from "./modules/dashboard-charts.js?125";
-import { createDashboardDataController } from "./modules/dashboard-data.js?130";
+import { createDashboardDataController } from "./modules/dashboard-data.js?131";
 import { createDashboardView } from "./modules/dashboard-view.js?125";
 import { createConfigPagesController } from "./modules/config-pages.js?129";
 import { createCollectionDataController } from "./modules/collection-data.js?127";
 import { createChaptersPageController } from "./modules/chapters-page.js?128";
 import { createContentPreviewsController } from "./modules/content-previews.js?127";
-import { createChapterEditorController } from "./modules/chapter-editor.js?128";
+import { createChapterEditorController } from "./modules/chapter-editor.js?129";
 import { createSeriesEditorController } from "./modules/series-editor.js?130";
 import { createTaxonomyPageController } from "./modules/taxonomy-page.js?126";
 import { createAccessControlPagesController } from "./modules/access-control-pages.js?127";
@@ -386,6 +386,8 @@ const dashboardDataController = createDashboardDataController({
   translate: panelTranslate,
   formatNumber: panelFormatNumber,
   documentRef: document,
+  hasPermission,
+  panelNavigate,
 });
 const { loadDashboardData } = dashboardDataController;
 

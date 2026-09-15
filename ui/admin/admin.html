@@ -29,7 +29,7 @@
       href="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/css/adminlte.min.css"
     />
     <!-- Increase +1 when change css code -->
-    <link rel="stylesheet" href="/assets/css/admin/admin.css?12" />
+    <link rel="stylesheet" href="/assets/css/admin/admin.css?13" />
 
   </head>
   <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -450,6 +450,54 @@
         id="lime-toasts"
         class="lime-toast-container d-flex flex-column gap-2"
       ></div>
+
+      <!-- Queue Error Modal -->
+      <div
+        class="modal fade"
+        id="panel-queue-error-modal"
+        tabindex="-1"
+        aria-labelledby="panel-queue-error-modal-label"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content shadow">
+            <div class="modal-header">
+              <h5 class="modal-title fs-5" id="panel-queue-error-modal-label">
+                <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i><span data-i18n="admin.queue.error_modal_title">Kuyruk Hatası Bildirimi</span>
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Kapat"
+                data-i18n-attr="aria-label:admin.queue.error_modal_close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-0" id="panel-queue-error-modal-message"></p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+                id="panel-queue-error-modal-close"
+                data-i18n="admin.queue.error_modal_close"
+              >
+                Kapat
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                id="panel-queue-error-modal-inspect"
+                data-i18n="admin.queue.error_modal_inspect"
+              >
+                Kuyruğu İncele
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ========================================================================= -->
@@ -5960,7 +6008,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?240");
+        const admin = await import("/assets/js/admin/admin.js?242");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {

@@ -132,3 +132,138 @@ test("invalid initial response shows an error and keeps automatic retry", async 
   assert.equal(f.renders.tables, 0);
   assert.equal(f.intervals.size, 1);
 });
+
+test("auto-run triggers once per session when pending queue jobs exist and permission is granted", async () => {
+  const apiCalls = [];
+  const sessionData = new Map();
+  const f = fixture(async (path, options) => {
+    apiCalls.push({ path, options });
+    if (path.startsWith("/dashboard-data")) {
+      return {
+        data: {
+          overview: {
+            kpis: { queue_pending_total: 5, queue_failed_total: 0 },
+          },
+        },
+      };
+    }
+    return { data: {} };
+  }, {
+    hasPermission: (perm) => perm === "admin.jobs.run",
+    documentRef: {
+      visibilityState: "visible",
+      defaultView: {
+        setInterval: () => 1,
+        clearInterval: () => {},
+        sessionStorage: {
+          getItem: (key) => sessionData.get(key) || null,
+          setItem: (key, val) => sessionData.set(key, String(val)),
+        },
+      },
+    },
+  });
+
+  await f.loadDashboardData();
+  const queueRuns = apiCalls.filter((call) => call.path === "/queue/run-once");
+  assert.equal(queueRuns.length, 1);
+  assert.equal(queueRuns[0].options?.method, "POST");
+  assert.equal(queueRuns[0].options?.detached, true);
+  assert.equal(sessionData.get("nm_queue_auto_run_triggered"), "1");
+
+  // Second load should not trigger again
+  await f.loadDashboardData();
+  const secondRuns = apiCalls.filter((call) => call.path === "/queue/run-once");
+  assert.equal(secondRuns.length, 1);
+});
+
+test("queue error modal triggers once per session when failed jobs exist and permission is granted", async () => {
+  const sessionData = new Map();
+  let modalShown = false;
+  let modalMessage = "";
+  const modalEl = {
+    classList: {
+      add: (cls) => { if (cls === "show") modalShown = true; },
+      remove: (cls) => { if (cls === "show") modalShown = false; },
+    },
+    style: {},
+    addEventListener: () => {},
+  };
+  const messageEl = {
+    set textContent(val) { modalMessage = val; },
+    get textContent() { return modalMessage; },
+  };
+
+  const f = fixture(async () => {
+    return {
+      data: {
+        overview: {
+          kpis: { queue_pending_total: 0, queue_failed_total: 3 },
+        },
+      },
+    };
+  }, {
+    hasPermission: (perm) => perm === "admin.jobs.run",
+    translate: (key, fallback, params) => `${params?.count || 0} failed jobs`,
+    documentRef: {
+      visibilityState: "visible",
+      getElementById: (id) => {
+        if (id === "panel-queue-error-modal") return modalEl;
+        if (id === "panel-queue-error-modal-message") return messageEl;
+        return null;
+      },
+      defaultView: {
+        setInterval: () => 1,
+        clearInterval: () => {},
+        sessionStorage: {
+          getItem: (key) => sessionData.get(key) || null,
+          setItem: (key, val) => sessionData.set(key, String(val)),
+        },
+      },
+    },
+  });
+
+  await f.loadDashboardData();
+  assert.equal(modalShown, true);
+  assert.equal(modalMessage, "3 failed jobs");
+  assert.equal(sessionData.get("nm_queue_error_modal_dismissed"), "1");
+});
+
+test("queue auto-run and modal are suppressed when user lacks admin.jobs.run", async () => {
+  const apiCalls = [];
+  let modalShown = false;
+  const modalEl = {
+    classList: { add: () => { modalShown = true; }, remove: () => {} },
+    style: {},
+    addEventListener: () => {},
+  };
+
+  const f = fixture(async (path, options) => {
+    apiCalls.push({ path, options });
+    return {
+      data: {
+        overview: {
+          kpis: { queue_pending_total: 5, queue_failed_total: 3 },
+        },
+      },
+    };
+  }, {
+    hasPermission: () => false,
+    documentRef: {
+      visibilityState: "visible",
+      getElementById: (id) => (id === "panel-queue-error-modal" ? modalEl : null),
+      defaultView: {
+        setInterval: () => 1,
+        clearInterval: () => {},
+        sessionStorage: {
+          getItem: () => null,
+          setItem: () => {},
+        },
+      },
+    },
+  });
+
+  await f.loadDashboardData();
+  const queueRuns = apiCalls.filter((call) => call.path === "/queue/run-once");
+  assert.equal(queueRuns.length, 0);
+  assert.equal(modalShown, false);
+});

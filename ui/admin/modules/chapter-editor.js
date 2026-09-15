@@ -124,7 +124,7 @@ export function createChapterEditorController({
           // operations. The content update keeps the existing price otherwise.
           delete payload.price_amount;
         }
-        await api(
+        const res = await api(
           chapterId
             ? `/chapters/${chapterId}`
             : `/content/${content.id}/chapters`,
@@ -139,11 +139,29 @@ export function createChapterEditorController({
             body: { price_coin: requestedPrice, is_active: requestedPrice > 0 },
           });
         }
-        showToast(
-          chapterId
-            ? t("admin.chapter.updated", "Bölüm güncellendi")
-            : t("admin.chapter.created", "Bölüm oluşturuldu"),
-        );
+        const queueJobIds = Array.isArray(res?.data?.queue_job_ids)
+          ? res.data.queue_job_ids
+          : [];
+        if (!chapterId && queueJobIds.length > 0) {
+          showToast(
+            t(
+              "admin.chapter.created_queue_processing",
+              "Bölüm oluşturuldu, arka plan bildirimleri işleniyor...",
+            ),
+          );
+          for (const jobId of queueJobIds) {
+            void api(`/queue/jobs/${encodeURIComponent(jobId)}/run`, {
+              method: "POST",
+              detached: true,
+            }).catch(() => {});
+          }
+        } else {
+          showToast(
+            chapterId
+              ? t("admin.chapter.updated", "Bölüm güncellendi")
+              : t("admin.chapter.created", "Bölüm oluşturuldu"),
+          );
+        }
         panelNavigate(
           "/panel/series/" + encodeURIComponent(content.id) + "/chapters",
         );
