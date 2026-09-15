@@ -172,6 +172,15 @@ class LocaleRegressionSuite
 
         $resMobile = $this->request('GET', '/mobile');
         $this->assert('GET /mobile is retired with 404', $resMobile->getStatusCode() === 404);
+
+        $resMissingAsset = $this->request('GET', '/assets/js/nonexistent.js');
+        $this->assert('GET /assets/js/*.js returns direct 404 without React UI shell', $resMissingAsset->getStatusCode() === 404 && !str_contains((string) $resMissingAsset->getBody(), 'id="root"') && str_contains((string) $resMissingAsset->getBody(), '404 Not Found'));
+
+        $resMissingFile = $this->request('GET', '/nonexistent_file.png');
+        $this->assert('GET /nonexistent_file.png returns direct 404 without React UI shell', $resMissingFile->getStatusCode() === 404 && !str_contains((string) $resMissingFile->getBody(), 'id="root"') && str_contains((string) $resMissingFile->getBody(), '404 Not Found'));
+
+        $resWeb404 = $this->request('GET', '/nonexistent-page');
+        $this->assert('GET /nonexistent-page (navigation) serves React UI 404 shell', $resWeb404->getStatusCode() === 404 && str_contains((string) $resWeb404->getBody(), 'id="root"'));
         echo "\n";
     }
 

@@ -12,5 +12,12 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [END]
 
+# Return direct 404 for missing static files/assets without passing them to index.php
+RewriteCond %{REQUEST_URI} !^/(?:robots\.txt|sitemap\.xml)$
+RewriteCond %{REQUEST_URI} !^/(?:api|media)(?:/|$)
+RewriteCond %{REQUEST_URI} ^/assets/ [OR]
+RewriteCond %{REQUEST_URI} \.[a-zA-Z0-9]{1,10}$
+RewriteRule ^ - [R=404,L]
+
 # All clean URLs are handled by Slim's single entrypoint.
 RewriteRule ^ index.php [QSA,END]

@@ -352,6 +352,19 @@ $errorMiddleware->setDefaultErrorHandler(
             return ResponseHelper::error($statusCode, $displayErrorDetails ? $exception->getMessage() : $message);
         }
 
+        // Direct 404 for missing static files / asset paths instead of bootstrapping React UI
+        if ($statusCode === 404 && (
+            str_starts_with($path, '/assets/') ||
+            (pathinfo($path, PATHINFO_EXTENSION) !== '' && !in_array($path, ['/robots.txt', '/sitemap.xml'], true))
+        )) {
+            $responseFactory = new \Slim\Psr7\Factory\ResponseFactory();
+            $response = $responseFactory->createResponse(404);
+            $response->getBody()->write('404 Not Found');
+            return $response
+                ->withHeader('Content-Type', 'text/plain; charset=utf-8')
+                ->withHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+
         try {
             $webController = $container->get(\App\Controllers\SystemPageController::class);
             $responseFactory = new \Slim\Psr7\Factory\ResponseFactory();

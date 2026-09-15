@@ -19,5 +19,12 @@ RewriteCond %{DOCUMENT_ROOT}/public/$1 -f [OR]
 RewriteCond %{DOCUMENT_ROOT}/public/$1 -d
 RewriteRule ^(.+)$ public/$1 [END]
 
+# Return direct 404 for missing static files/assets without passing them to index.php
+RewriteCond %{REQUEST_URI} !^/(?:robots\.txt|sitemap\.xml)$
+RewriteCond %{REQUEST_URI} !^/(?:api|media)(?:/|$)
+RewriteCond %{REQUEST_URI} ^/assets/ [OR]
+RewriteCond %{REQUEST_URI} \.[a-zA-Z0-9]{1,10}$
+RewriteRule ^ - [R=404,L]
+
 # Slim front controller for every dynamic web, panel, and API request.
 RewriteRule ^ public/index.php [END]
