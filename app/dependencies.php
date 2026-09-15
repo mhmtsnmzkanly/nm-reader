@@ -224,6 +224,7 @@ $builder->addDefinitions([
     UserActivityService::class => DI\autowire(UserActivityService::class),
     SlugService::class => DI\autowire(SlugService::class),
     UploadService::class => DI\autowire(UploadService::class),
+    \App\Services\Queue\Handlers\NotifyNewChapterHandler::class => DI\autowire(\App\Services\Queue\Handlers\NotifyNewChapterHandler::class),
     QueueService::class => DI\autowire(QueueService::class),
     MetricsService::class => DI\autowire(MetricsService::class)
         ->constructorParameter('cache', DI\get(CacheService::class)),

@@ -4,14 +4,64 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\Queue\Handlers\NotifyNewChapterHandler;
+use App\Services\Queue\JobHandlerInterface;
 use PDO;
+use Psr\Container\ContainerInterface;
 
 final class QueueService
 {
     private const LEASE_SECONDS = 300;
 
-    public function __construct(private readonly PDO $pdo)
+    /**
+     * Default registry of job types mapped to their handler classes.
+     *
+     * @var array<string, class-string<JobHandlerInterface>>
+     */
+    private const DEFAULT_HANDLERS = [
+        'notify_new_chapter' => NotifyNewChapterHandler::class,
+    ];
+
+    /**
+     * @var array<string, class-string<JobHandlerInterface>>
+     */
+    private array $handlers;
+
+    public function __construct(
+        private readonly PDO $pdo,
+        private readonly ?ContainerInterface $container = null,
+        array $customHandlers = []
+    ) {
+        $this->handlers = array_merge(self::DEFAULT_HANDLERS, $customHandlers);
+    }
+
+    /**
+     * Registers or overrides a job handler for a specific job type.
+     *
+     * @param string $type
+     * @param class-string<JobHandlerInterface> $handlerClass
+     */
+    public function registerHandler(string $type, string $handlerClass): void
     {
+        $this->handlers[trim($type)] = $handlerClass;
+    }
+
+    /**
+     * Checks whether a handler is registered for a given job type.
+     */
+    public function hasHandler(string $type): bool
+    {
+        return isset($this->handlers[trim($type)]);
+    }
+
+    /**
+     * Returns the registered handlers map.
+     *
+     * @return array<string, class-string<JobHandlerInterface>>
+     */
+    public function getHandlers(): array
+    {
+        return $this->handlers;
     }
 
     public function enqueue(
@@ -196,64 +246,33 @@ final class QueueService
 
     private function process(string $type, array $payload): void
     {
-        if ($type === 'notify_new_chapter') {
-            $contentId = (string) ($payload['content_id'] ?? '');
-            $chapterId = (string) ($payload['chapter_id'] ?? '');
-            $chapterNumber = (string) ($payload['chapter_number'] ?? '');
-            $seriesTitle = (string) ($payload['series_title'] ?? 'Series');
-            if ($contentId === '' || $chapterId === '') {
-                throw new \RuntimeException('Invalid notify_new_chapter payload');
-            }
+        $handlerClass = $this->handlers[$type] ?? null;
 
-            $eventTitle = 'Yeni bolum yayinlandi';
-            $eventBody = sprintf('%s icin yeni bolum (%s) yayinda.', $seriesTitle, $chapterNumber);
-            $eventData = json_encode([
-                'source' => 'new_chapter',
-                'content_id' => $contentId,
-                'chapter_id' => $chapterId,
-                'chapter_number' => $chapterNumber,
-            ], JSON_UNESCAPED_UNICODE) ?: '{}';
-
-            $eventId = null;
-            try {
-                $stmtEvent = $this->pdo->prepare(
-                    'INSERT INTO notification_events (actor_user_id, type, target_type, target_id, title, body, `data`, created_at)
-                     VALUES (NULL, :type, "chapter", :chapter_id, :title, :body, :data, NOW())'
-                );
-                $stmtEvent->execute([
-                    'type' => 'new_chapter',
-                    'chapter_id' => $chapterId,
-                    'title' => $eventTitle,
-                    'body' => $eventBody,
-                    'data' => $eventData,
-                ]);
-                $eventId = (int) $this->pdo->lastInsertId();
-            } catch (\Throwable) {}
-
-            $sql = 'INSERT INTO user_notifications (user_id, event_id, actor_user_id, type, title, body, `data`, created_at)
-                    SELECT
-                        f.user_id,
-                        :event_id,
-                        NULL,
-                        :type,
-                        :title,
-                        :body,
-                        :data,
-                        NOW()
-                    FROM user_series_follows f
-                    WHERE f.content_id = :content_id';
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([
-                'event_id' => $eventId,
-                'type' => 'new_chapter',
-                'title' => $eventTitle,
-                'body' => $eventBody,
-                'data' => $eventData,
-                'content_id' => $contentId,
-            ]);
-            return;
+        if ($handlerClass === null) {
+            throw new \RuntimeException('Unknown job type: ' . $type);
         }
 
-        throw new \RuntimeException('Unknown job type: ' . $type);
+        $handler = $this->resolveHandler($handlerClass);
+        $handler->handle($payload);
+    }
+
+    private function resolveHandler(string $handlerClass): JobHandlerInterface
+    {
+        if ($this->container !== null && $this->container->has($handlerClass)) {
+            $instance = $this->container->get($handlerClass);
+        } else {
+            // Direct instantiation fallback (passing PDO to constructor if accepted)
+            $instance = new $handlerClass($this->pdo);
+        }
+
+        if (!$instance instanceof JobHandlerInterface) {
+            throw new \RuntimeException(sprintf(
+                'Job handler %s must implement %s',
+                $handlerClass,
+                JobHandlerInterface::class
+            ));
+        }
+
+        return $instance;
     }
 }
