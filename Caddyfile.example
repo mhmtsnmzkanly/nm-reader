@@ -1,0 +1,63 @@
+# ==============================================================================
+# NM-Reader — Production Caddyfile Example
+# ==============================================================================
+# Usage:
+#   1. Replace 'example.com' with your actual domain
+#   2. Adjust 'root' path to your nm-reader/public directory
+#   3. Adjust PHP-FPM socket path (/run/php/php8.4-fpm.sock or 127.0.0.1:9000)
+#   4. Validate: caddy validate --config Caddyfile
+#   5. Reload: systemctl reload caddy (or: caddy reload)
+# ==============================================================================
+
+example.com {
+    # Document root MUST point to the public/ directory
+    root * /var/www/nm-reader/public
+
+    # Automatic compression (gzip & zstd)
+    encode gzip zstd
+
+    # Maximum upload size for chapter ZIPs and manga covers (UploadService supports up to 200MB)
+    request_body {
+        max_size 256MB
+    }
+
+    # Security headers (supplements application middleware)
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # 1. Block direct access to controller-rendered HTML shell templates
+    @protected_shells path /admin.html /install.html /maintenance.html
+    respond @protected_shells 404
+
+    # 2. Block hidden files (.env, .git, .htaccess)
+    @dotfiles path */.*
+    respond @dotfiles 404
+
+    # 3. Direct 404 for missing static assets (prevent forwarding to React/PHP)
+    @static_missing {
+        not path /robots.txt /sitemap.xml /api/* /media/*
+        path /assets/* *.css *.js *.mjs *.map *.json *.png *.jpg *.jpeg *.gif *.webp *.avif *.svg *.ico *.woff *.woff2 *.ttf *.eot *.otf *.mp4 *.webm *.pdf *.zip
+        not file
+    }
+    respond @static_missing 404
+
+    # 4. Cache headers for existing static assets
+    @static_assets {
+        path /assets/* *.css *.js *.mjs *.map *.json *.png *.jpg *.jpeg *.gif *.webp *.avif *.svg *.ico *.woff *.woff2 *.ttf *.eot *.otf *.mp4 *.webm *.pdf *.zip
+        file
+    }
+    header @static_assets Cache-Control "public, max-age=2592000"
+
+    # 5. PHP-FPM handler & Front Controller fallback for React SPA / clean URLs
+    php_fastcgi unix//run/php/php8.4-fpm.sock {
+        # Or TCP:
+        # 127.0.0.1:9000
+    }
+
+    # 6. Static file server
+    file_server
+}
