@@ -12,7 +12,7 @@ import {
   partials,
   show,
   text,
-} from "https://cdn.jsdelivr.net/gh/mhmtsnmzkanly/lime-csr-js@v0.4.1/dist/index.min.js";
+} from "https://cdn.jsdelivr.net/gh/mhmtsnmzkanly/lime-csr-js@v0.4.2/dist/index.min.js";
 import {
   createAdminApi,
   createAdminReauth,
