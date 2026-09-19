@@ -77,6 +77,7 @@ final class ChapterRepository
                 WHERE ch.id = :chapter_id
                   AND ' . PublicVisibility::chapter('ch') . '
                   AND ' . PublicVisibility::series('c') . '
+                  AND ch.is_members_only = 0
                   AND c.is_members_only = 0
                 LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
