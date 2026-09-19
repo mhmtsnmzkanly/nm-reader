@@ -66,4 +66,6 @@ export DB_PASSWORD=
 export DB_PERSISTENT=false
 export NM_READER_SECURITY_DB=1
 
-exec php "$repo_root/app/Console/SecurityDbTestSuite.php" "$@"
+php "$repo_root/app/Console/SecurityDbTestSuite.php" "$@"
+test_exit_code=$?
+exit "$test_exit_code"
