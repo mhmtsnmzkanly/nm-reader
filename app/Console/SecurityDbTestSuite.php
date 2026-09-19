@@ -44,6 +44,8 @@ final class SecurityDbTestSuite
     ];
 
     private PDO $pdo;
+    private ?\Slim\App $app = null;
+    private int $requestCounter = 0;
 
     public function __construct()
     {
@@ -65,13 +67,20 @@ final class SecurityDbTestSuite
     public function run(string $phase): void
     {
         $version = (string) $this->pdo->query('SELECT VERSION()')->fetchColumn();
-        printf("Security DB: %s (%s)\n", (string) getenv('DB_DATABASE'), $version);
-        if ($phase !== 'fixtures') {
-            throw new RuntimeException('Unknown phase: ' . $phase);
-        }
         $this->seedFixtures();
         $this->assertFixtureIntegrity();
-        echo "FIXTURES: PASS\n";
+        if ($phase === 'fixtures') {
+            printf("Security DB: %s (%s)\n", (string) getenv('DB_DATABASE'), $version);
+            echo "FIXTURES: PASS\n";
+            return;
+        }
+        if ($phase === 'chapter') {
+            $this->testChapterVisibility();
+            printf("Security DB: %s (%s)\n", (string) getenv('DB_DATABASE'), $version);
+            echo "CHAPTER VISIBILITY: PASS\n";
+            return;
+        }
+        throw new RuntimeException('Unknown phase: ' . $phase);
     }
 
     private function assertIsolatedEnvironment(): void
@@ -246,6 +255,96 @@ final class SecurityDbTestSuite
     private function assertTrue(bool $condition, string $message): void
     {
         if (!$condition) throw new RuntimeException($message);
+    }
+
+    private function testChapterVisibility(): void
+    {
+        $futureFreePath = '/api/v1/content/manga/security-published-series/chapter/4';
+        $futurePaidPath = '/api/v1/content/manga/security-published-series/chapter/5';
+        $deletedPath = '/api/v1/content/manga/security-published-series/chapter/6';
+
+        $this->assertStatus($this->request('GET', $futureFreePath), 404, 'future free chapter detail');
+        $this->assertStatus($this->request('GET', $futurePaidPath), 404, 'future paid chapter detail (guest)');
+        $this->assertStatus($this->request('GET', $futurePaidPath, self::FIXTURE_USERS['purchased']['token']), 404, 'future paid chapter detail (purchased)');
+        $this->assertStatus($this->request('GET', $deletedPath), 404, 'deleted chapter detail');
+
+        $list = $this->jsonRequest('GET', '/api/v1/content/manga/security-published-series/chapters');
+        $this->assertStatus($list, 200, 'series chapter list');
+        $this->assertIdsAbsent($list['json']['data'] ?? [], ['sec104', 'sec105', 'sec106'], 'series chapter list publication filter');
+
+        $overview = $this->jsonRequest('GET', '/api/v1/content/manga/security-published-series/overview');
+        $this->assertStatus($overview, 200, 'series overview');
+        $this->assertIdsAbsent($overview['json']['data']['chapters'] ?? [], ['sec104', 'sec105', 'sec106'], 'series overview publication filter');
+
+        $latest = $this->jsonRequest('GET', '/api/v1/latest-chapters');
+        $this->assertStatus($latest, 200, 'latest chapters');
+        $this->assertIdsAbsent($latest['json']['data'] ?? [], ['sec104', 'sec105', 'sec106'], 'latest chapters publication filter');
+
+        $latestType = $this->jsonRequest('GET', '/api/v1/content/manga/chapters');
+        $this->assertStatus($latestType, 200, 'latest chapters by type');
+        $this->assertIdsAbsent($latestType['json']['data'] ?? [], ['sec104', 'sec105', 'sec106'], 'latest chapters by type publication filter');
+
+        $published = $this->jsonRequest('GET', '/api/v1/content/manga/security-published-series/chapter/1');
+        $this->assertStatus($published, 200, 'published free chapter detail');
+        $this->assertTrue(($published['json']['data']['body'] ?? null) === 'SECURITY FIXTURE BODY published_free', 'published free chapter body was not returned');
+    }
+
+    /** @return array{status:int,json:array,headers:array<string,array<string>>} */
+    private function jsonRequest(string $method, string $path, ?string $token = null): array
+    {
+        $result = $this->request($method, $path, $token);
+        $json = json_decode($result['body'], true);
+        $this->assertTrue(is_array($json), 'expected JSON response for ' . $method . ' ' . $path);
+        $result['json'] = $json;
+        return $result;
+    }
+
+    /** @return array{status:int,body:string,headers:array<string,array<string>>} */
+    private function request(string $method, string $path, ?string $token = null): array
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+        $this->requestCounter++;
+        $sessionId = 'secdb' . str_pad((string) $this->requestCounter, 20, '0', STR_PAD_LEFT);
+        if (session_status() === PHP_SESSION_NONE) {
+            session_id($sessionId);
+        }
+        $factory = new \Slim\Psr7\Factory\ServerRequestFactory();
+        $request = $factory->createServerRequest($method, 'http://127.0.0.1' . $path, [
+            'REMOTE_ADDR' => '198.51.100.10',
+            'REQUEST_URI' => $path,
+        ]);
+        if ($token !== null) {
+            $request = $request->withHeader('Authorization', 'Bearer ' . $token);
+        }
+        try {
+            $response = $this->application()->handle($request);
+        } catch (Throwable $exception) {
+            throw new RuntimeException('HTTP request failed: ' . $method . ' ' . $path . ': ' . $exception->getMessage(), 0, $exception);
+        }
+        return ['status' => $response->getStatusCode(), 'body' => (string) $response->getBody(), 'headers' => $response->getHeaders()];
+    }
+
+    private function application(): \Slim\App
+    {
+        if ($this->app === null) {
+            $this->app = \App\Config::createApp();
+        }
+        return $this->app;
+    }
+
+    private function assertStatus(array $response, int $expected, string $label): void
+    {
+        $this->assertTrue($response['status'] === $expected, sprintf('%s expected HTTP %d, got %d (%s)', $label, $expected, $response['status'], substr($response['body'], 0, 240)));
+    }
+
+    private function assertIdsAbsent(array $items, array $ids, string $label): void
+    {
+        $encoded = json_encode($items, JSON_UNESCAPED_SLASHES);
+        foreach ($ids as $id) {
+            $this->assertTrue(!is_string($encoded) || !str_contains($encoded, '"id":"' . $id . '"'), $label . ' leaked chapter ' . $id);
+        }
     }
 }
 
