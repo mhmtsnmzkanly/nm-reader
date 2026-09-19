@@ -315,7 +315,7 @@ final class SecurityDbTestSuite
         foreach (['security-draft-series', 'security-archived-series', 'security-deleted-series'] as $slug) {
             $this->assertStatus($this->request('GET', '/api/v1/content/manga/' . $slug . '/comments'), 404, 'non-public series comments: ' . $slug);
         }
-        foreach (['sec104', 'sec106', 'sec107'] as $chapterId) {
+        foreach (['sec104', 'sec106', 'sec107', 'sec108', 'sec109'] as $chapterId) {
             $this->assertStatus($this->request('GET', '/api/v1/chapter/' . $chapterId . '/comments'), 404, 'non-public chapter comments: ' . $chapterId);
         }
 
@@ -348,6 +348,14 @@ final class SecurityDbTestSuite
 
         $futurePurchased = $this->request('GET', '/api/v1/content/manga/security-published-series/chapter/5', self::FIXTURE_USERS['purchased']['token']);
         $this->assertStatus($futurePurchased, 404, 'purchased future paid chapter');
+
+        $membersOnly = '/api/v1/content/manga/security-published-series/chapter/3';
+        $membersGuest = $this->jsonRequest('GET', $membersOnly);
+        $this->assertStatus($membersGuest, 200, 'members-only chapter guest metadata contract');
+        $this->assertTrue(($membersGuest['json']['data']['body'] ?? null) === null && ($membersGuest['json']['data']['pages'] ?? null) === [], 'guest received members-only chapter content');
+        $membersUser = $this->jsonRequest('GET', $membersOnly, self::FIXTURE_USERS['verified']['token']);
+        $this->assertStatus($membersUser, 200, 'members-only chapter non-member metadata contract');
+        $this->assertTrue(($membersUser['json']['data']['body'] ?? null) === 'SECURITY FIXTURE BODY published_members', 'authenticated members-only chapter contract changed unexpectedly');
     }
 
     private function prepareMediaFixture(): void
