@@ -41,6 +41,8 @@ final class SecurityDbTestSuite
         'archived_parent' => ['id' => 'sec108', 'series' => 'archived', 'number' => '1', 'type' => 'text', 'members' => 0, 'price' => 0, 'published' => '2020-01-01 00:00:00', 'deleted' => null],
         'deleted_parent' => ['id' => 'sec109', 'series' => 'deleted', 'number' => '1', 'type' => 'text', 'members' => 0, 'price' => 0, 'published' => '2020-01-01 00:00:00', 'deleted' => null],
         'members_parent' => ['id' => 'sec110', 'series' => 'members', 'number' => '1', 'type' => 'text', 'members' => 0, 'price' => 0, 'published' => '2020-01-01 00:00:00', 'deleted' => null],
+        'protected_media' => ['id' => 'sec111', 'series' => 'published', 'number' => '7', 'type' => 'image', 'members' => 0, 'price' => 15, 'published' => '2020-01-01 00:00:00', 'deleted' => null],
+        'published_paid_text' => ['id' => 'sec112', 'series' => 'published', 'number' => '8', 'type' => 'text', 'members' => 0, 'price' => 15, 'published' => '2020-01-01 00:00:00', 'deleted' => null],
     ];
 
     private PDO $pdo;
@@ -84,6 +86,12 @@ final class SecurityDbTestSuite
             $this->testCommentVisibility();
             printf("Security DB: %s (%s)\n", (string) getenv('DB_DATABASE'), $version);
             echo "COMMENT VISIBILITY: PASS\n";
+            return;
+        }
+        if ($phase === 'paid') {
+            $this->testPaidAccess();
+            printf("Security DB: %s (%s)\n", (string) getenv('DB_DATABASE'), $version);
+            echo "PAID ACCESS: PASS\n";
             return;
         }
         throw new RuntimeException('Unknown phase: ' . $phase);
@@ -192,7 +200,7 @@ final class SecurityDbTestSuite
         $stmt = $this->pdo->prepare('INSERT INTO chapters (id,content_id,number,chapter_number,title,type,data,is_members_only,price_amount,published_at,created_by,deleted_at) VALUES (:id,:content_id,:number,:chapter_number,:title,:type,:data,:members,:price,:published_at,:created_by,:deleted_at)');
         foreach (self::FIXTURE_CHAPTERS as $name => $chapter) {
             $data = $chapter['type'] === 'image'
-                ? ['body' => [['page_order' => 1, 'image_path' => 'chapter.sec102.png']], 'translator_note' => null]
+                ? ['body' => [['page_order' => 1, 'image_path' => 'chapter.' . $chapter['id'] . '.png']], 'translator_note' => null]
                 : ['body' => 'SECURITY FIXTURE BODY ' . $name, 'translator_note' => null];
             $stmt->execute([
                 'id' => $chapter['id'], 'content_id' => self::FIXTURE_SERIES[$chapter['series']]['id'],
@@ -207,7 +215,7 @@ final class SecurityDbTestSuite
     private function insertUnlock(): void
     {
         $stmt = $this->pdo->prepare('INSERT INTO user_unlocks (user_id,unlock_type,target_id,content_id,price_coin,unlocked_at) VALUES (:user_id,"chapter",:target_id,:content_id,15,"2020-01-01 00:00:00")');
-        foreach (['published_paid', 'future_paid'] as $chapterName) {
+        foreach (['published_paid', 'future_paid', 'protected_media', 'published_paid_text'] as $chapterName) {
             $stmt->execute(['user_id' => self::FIXTURE_USERS['purchased']['id'], 'target_id' => self::FIXTURE_CHAPTERS[$chapterName]['id'], 'content_id' => self::FIXTURE_SERIES['published']['id']]);
         }
     }
@@ -311,6 +319,28 @@ final class SecurityDbTestSuite
         $chapter = $this->jsonRequest('GET', '/api/v1/chapter/sec101/comments');
         $this->assertStatus($chapter, 200, 'published chapter comments');
         $this->assertVisibleCommentBodies($chapter['json']['data'] ?? [], ['approved public chapter comment'], ['hidden chapter comment']);
+    }
+
+    private function testPaidAccess(): void
+    {
+        $path = '/api/v1/content/manga/security-published-series/chapter/8';
+        $guest = $this->jsonRequest('GET', $path);
+        $this->assertStatus($guest, 200, 'paid text chapter guest metadata');
+        $this->assertTrue(($guest['json']['data']['body'] ?? null) === null && ($guest['json']['data']['pages'] ?? null) === [], 'guest received paid chapter content');
+        $this->assertTrue(!str_contains((string) json_encode($guest['json']), '/media/chapter/'), 'guest received protected media URL');
+
+        $unpaid = $this->jsonRequest('GET', $path, self::FIXTURE_USERS['unpurchased']['token']);
+        $this->assertStatus($unpaid, 200, 'paid text chapter unpurchased metadata');
+        $this->assertTrue(($unpaid['json']['data']['body'] ?? null) === null && ($unpaid['json']['data']['pages'] ?? null) === [], 'unpurchased user received paid chapter content');
+        $this->assertTrue(!str_contains((string) json_encode($unpaid['json']), '/media/chapter/'), 'unpurchased user received protected media URL');
+
+        $purchased = $this->jsonRequest('GET', $path, self::FIXTURE_USERS['purchased']['token']);
+        $this->assertStatus($purchased, 200, 'paid text chapter purchased access');
+        $this->assertTrue(($purchased['json']['data']['body'] ?? null) === 'SECURITY FIXTURE BODY published_paid_text', 'purchased user did not receive paid chapter body');
+        $this->assertTrue(($purchased['json']['data']['is_locked'] ?? true) === false, 'purchased chapter remained locked');
+
+        $futurePurchased = $this->request('GET', '/api/v1/content/manga/security-published-series/chapter/5', self::FIXTURE_USERS['purchased']['token']);
+        $this->assertStatus($futurePurchased, 404, 'purchased future paid chapter');
     }
 
     private function assertVisibleCommentBodies(array $items, array $required, array $forbidden): void
