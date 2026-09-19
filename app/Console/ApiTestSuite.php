@@ -189,6 +189,7 @@ final class ApiTestSuite
         $this->testAdminEndpoints();
         $this->testErrorEnvelopeAndStatusContracts();
         $this->testPaginationStructureContract();
+        $this->testSecurityHardeningContracts();
 
         echo "\n==============================================================\n";
         echo sprintf("TOTAL TESTS: %d | PASSED: %d | FAILED: %d\n", $this->passCount + $this->failCount, $this->passCount, $this->failCount);
@@ -816,6 +817,70 @@ final class ApiTestSuite
             $this->failCount++;
             $this->failures[] = 'Pagination envelope is missing meta.pagination keys';
             echo "  [FAIL] Pagination envelope is missing meta.pagination keys\n";
+        }
+    }
+
+    private function testSecurityHardeningContracts(): void
+    {
+        echo "\n14. Testing Security Hardening Contracts...\n";
+
+        $this->assertResponse('GET /logout does not mutate session', $this->request('GET', '/logout', [], null, 'testuser'), 302, 'GET /logout');
+        $this->assertResponse('GET /api/v1/auth/logout is not a mutation route', $this->request('GET', '/api/v1/auth/logout'), 405, 'GET /api/v1/auth/logout');
+
+        $longQuery = str_repeat('a', 201);
+        $this->assertResponse('Search query length is bounded', $this->request('GET', '/api/v1/search?q=' . $longQuery), 400, 'GET /api/v1/search');
+        $this->assertResponse('Suggest query length is bounded', $this->request('GET', '/api/v1/search/suggest?q=' . $longQuery), 400, 'GET /api/v1/search/suggest');
+        $tooManyTags = implode(',', array_fill(0, 21, 'tag'));
+        $this->assertResponse('Search filter cardinality is bounded', $this->request('GET', '/api/v1/search?tags=' . $tooManyTags), 400, 'GET /api/v1/search');
+        for ($i = 0; $i < 57; $i++) {
+            $this->request('GET', '/api/v1/search?q=burst' . $i);
+        }
+        $this->assertResponse('Search rate limit returns 429', $this->request('GET', '/api/v1/search?q=burst-final'), 429, 'GET /api/v1/search');
+        for ($i = 0; $i < 118; $i++) {
+            $this->request('GET', '/api/v1/search/suggest?q=su' . $i);
+        }
+        $this->assertResponse('Suggest rate limit returns 429', $this->request('GET', '/api/v1/search/suggest?q=suggest-final'), 429, 'GET /api/v1/search/suggest');
+
+        $this->assertResponse('Error logger rejects invalid field types', $this->request('POST', '/api/v1/log/error', [], ['message' => ['nested']]), 400, 'POST /api/v1/log/error');
+        $this->assertResponse('Error logger rejects oversized fields', $this->request('POST', '/api/v1/log/error', [], ['message' => str_repeat('x', 4097)]), 400, 'POST /api/v1/log/error');
+        $deepContext = ['a' => ['b' => ['c' => ['d' => ['e' => 'too-deep']]]]];
+        $this->assertResponse('Error logger rejects deep context', $this->request('POST', '/api/v1/log/error', [], ['message' => 'test', 'context' => $deepContext]), 400, 'POST /api/v1/log/error');
+        for ($i = 0; $i < 26; $i++) {
+            $this->request('POST', '/api/v1/log/error', [], ['message' => 'burst test']);
+        }
+        $this->assertResponse('Error logger rate limit returns 429', $this->request('POST', '/api/v1/log/error', [], ['message' => 'burst test']), 429, 'POST /api/v1/log/error');
+
+        $chapterPredicate = \App\Helpers\PublicVisibility::chapter('ch');
+        if (str_contains($chapterPredicate, 'ch.published_at IS NOT NULL')
+            && str_contains($chapterPredicate, 'ch.published_at <= NOW()')
+            && str_contains($chapterPredicate, 'ch.deleted_at IS NULL')) {
+            $this->passCount++;
+            echo "  [PASS] Central chapter visibility predicate requires publication and non-deletion\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'Central chapter visibility predicate is incomplete';
+            echo "  [FAIL] Central chapter visibility predicate is incomplete\n";
+        }
+
+        $private = $this->request('GET', '/api/v1/user/profile', [], null, 'testuser');
+        $this->assertResponse('Authenticated API response is not cacheable', $private, 200, 'GET /api/v1/user/profile');
+        if (str_contains(strtolower($private->getHeaderLine('Cache-Control')), 'no-store')) {
+            $this->passCount++;
+            echo "  [PASS] Authenticated response has Cache-Control no-store\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'Authenticated response is missing Cache-Control no-store';
+            echo "  [FAIL] Authenticated response is missing Cache-Control no-store\n";
+        }
+
+        $public = $this->request('GET', '/api/v1/home');
+        if (!str_contains(strtolower($public->getHeaderLine('Cache-Control')), 'no-store')) {
+            $this->passCount++;
+            echo "  [PASS] Guest public response retains public cache behaviour\n";
+        } else {
+            $this->failCount++;
+            $this->failures[] = 'Guest public response was unexpectedly made no-store';
+            echo "  [FAIL] Guest public response was unexpectedly made no-store\n";
         }
     }
 
