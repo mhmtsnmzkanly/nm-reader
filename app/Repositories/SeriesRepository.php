@@ -657,6 +657,24 @@ final class SeriesRepository
     }
 
     /**
+     * Resolves only a series that is visible on the public API surface.
+     */
+    public function findPublicContentIdBySlug(string $slug): ?string
+    {
+        $sql = 'SELECT id
+                FROM series c
+                WHERE c.slug = :slug
+                  AND ' . PublicVisibility::series('c') . '
+                  AND c.is_members_only = 0
+                LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['slug' => $slug]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : (string) $row['id'];
+    }
+
+    /**
      * Returns whether comments are disabled for a series.
      */
     public function areCommentsDisabled(string $contentId): bool

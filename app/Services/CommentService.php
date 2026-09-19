@@ -244,6 +244,10 @@ final class CommentService
      */
     public function listByChapter(string $chapterId, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursor = null): array
     {
+        if (!$this->chapters->isPublicChapter($chapterId)) {
+            throw new \DomainException('Chapter not found');
+        }
+
         $cursorData = CursorPagination::decode($cursor);
         if ($cursorData !== null) {
             [$cursorCreatedAt, $cursorId] = $cursorData;
@@ -259,7 +263,7 @@ final class CommentService
      */
     public function listBySeriesSlug(string $slug, int $page, int $perPage, ?string $viewerUserId = null, ?string $cursor = null): array
     {
-        $contentId = $this->series->findContentIdBySlug($slug);
+        $contentId = $this->series->findPublicContentIdBySlug($slug);
         if ($contentId === null) {
             throw new \DomainException('Series not found');
         }

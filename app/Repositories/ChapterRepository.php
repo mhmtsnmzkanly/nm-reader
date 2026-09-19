@@ -66,6 +66,26 @@ final class ChapterRepository
     }
 
     /**
+     * Returns whether a chapter and its parent series are public.
+     * Paid chapters remain public metadata; members-only series do not.
+     */
+    public function isPublicChapter(string $chapterId): bool
+    {
+        $sql = 'SELECT 1
+                FROM chapters ch
+                INNER JOIN series c ON c.id = ch.content_id
+                WHERE ch.id = :chapter_id
+                  AND ' . PublicVisibility::chapter('ch') . '
+                  AND ' . PublicVisibility::series('c') . '
+                  AND c.is_members_only = 0
+                LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['chapter_id' => $chapterId]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
      * Finds the parent series identity (ID, slug, type) for a given chapter.
      */
     public function findContentIdentityByChapterId(string $chapterId): ?array
