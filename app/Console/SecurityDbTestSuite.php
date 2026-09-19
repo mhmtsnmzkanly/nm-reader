@@ -80,6 +80,12 @@ final class SecurityDbTestSuite
             echo "CHAPTER VISIBILITY: PASS\n";
             return;
         }
+        if ($phase === 'comments') {
+            $this->testCommentVisibility();
+            printf("Security DB: %s (%s)\n", (string) getenv('DB_DATABASE'), $version);
+            echo "COMMENT VISIBILITY: PASS\n";
+            return;
+        }
         throw new RuntimeException('Unknown phase: ' . $phase);
     }
 
@@ -287,6 +293,32 @@ final class SecurityDbTestSuite
         $published = $this->jsonRequest('GET', '/api/v1/content/manga/security-published-series/chapter/1');
         $this->assertStatus($published, 200, 'published free chapter detail');
         $this->assertTrue(($published['json']['data']['body'] ?? null) === 'SECURITY FIXTURE BODY published_free', 'published free chapter body was not returned');
+    }
+
+    private function testCommentVisibility(): void
+    {
+        foreach (['security-draft-series', 'security-archived-series', 'security-deleted-series'] as $slug) {
+            $this->assertStatus($this->request('GET', '/api/v1/content/manga/' . $slug . '/comments'), 404, 'non-public series comments: ' . $slug);
+        }
+        foreach (['sec104', 'sec106', 'sec107'] as $chapterId) {
+            $this->assertStatus($this->request('GET', '/api/v1/chapter/' . $chapterId . '/comments'), 404, 'non-public chapter comments: ' . $chapterId);
+        }
+
+        $series = $this->jsonRequest('GET', '/api/v1/content/manga/security-published-series/comments');
+        $this->assertStatus($series, 200, 'published series comments');
+        $this->assertVisibleCommentBodies($series['json']['data'] ?? [], ['approved public series comment'], ['pending comment must stay hidden', 'hidden comment must stay hidden', 'deleted comment must stay hidden']);
+
+        $chapter = $this->jsonRequest('GET', '/api/v1/chapter/sec101/comments');
+        $this->assertStatus($chapter, 200, 'published chapter comments');
+        $this->assertVisibleCommentBodies($chapter['json']['data'] ?? [], ['approved public chapter comment'], ['hidden chapter comment']);
+    }
+
+    private function assertVisibleCommentBodies(array $items, array $required, array $forbidden): void
+    {
+        $encoded = json_encode($items, JSON_UNESCAPED_SLASHES);
+        $this->assertTrue(is_string($encoded), 'comment response could not be encoded');
+        foreach ($required as $body) $this->assertTrue(str_contains($encoded, $body), 'approved comment missing: ' . $body);
+        foreach ($forbidden as $body) $this->assertTrue(!str_contains($encoded, $body), 'hidden comment leaked: ' . $body);
     }
 
     /** @return array{status:int,json:array,headers:array<string,array<string>>} */
