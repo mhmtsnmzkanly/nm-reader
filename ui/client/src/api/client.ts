@@ -11,7 +11,6 @@ function isCsrfExempt(url: string): boolean {
     '/auth/login',
     '/auth/register',
     '/auth/refresh',
-    '/auth/logout',
     '/log/error',
   ];
   return exemptPatterns.some((path) => url.includes(path));

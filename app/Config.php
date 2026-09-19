@@ -852,7 +852,7 @@ final class Config
         $app->get("/sitemap.xml", [SystemPageController::class, "sitemapXml"]);
         $app->get("/media/public/{filename:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "servePublicMedia"]);
         $app->get("/media/chapter/{token:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "serveChapterMedia"]);
-        $app->get("/logout", [AuthController::class, "logout"]);
+        $app->get("/logout", static fn ($request, $response) => $response->withHeader('Location', '/')->withStatus(302));
 
         // Public Web Routes (Direct Clean URLs without locale prefix)
         $app->get("/", [ContentPageController::class, "home"]);
@@ -948,7 +948,7 @@ final class Config
                 ->add(new AuthMiddleware(true, $authorization));
             $group->post("/auth/refresh", [AuthController::class, "refresh"])->add(new RateLimitMiddleware($cache, "refresh", 20, 60, $trustedProxies));
             $group->get("/auth/csrf", [AuthController::class, "csrf"])->add(new RateLimitMiddleware($cache, "csrf", 60, 60, $trustedProxies));
-            $group->map(["GET", "POST"], "/auth/logout", [AuthController::class, "logout"]);
+            $group->post("/auth/logout", [AuthController::class, "logout"])->add(new CsrfMiddleware());
 
             $group->group("", function (RouteCollectorProxy $secure) use ($typePattern, $users): void {
                 $secure->get("/me", [UserController::class, "me"]);

@@ -549,8 +549,9 @@ final class ApiTestSuite
 
         $this->assertResponse('GET /api/v1/auth/csrf', $this->request('GET', '/api/v1/auth/csrf'), 200, 'GET /api/v1/auth/csrf');
 
-        // 46. POST /api/v1/auth/logout
-        $this->assertResponse('POST /api/v1/auth/logout', $this->request('POST', '/api/v1/auth/logout'), 200, 'POST /api/v1/auth/logout');
+        // 46. POST /api/v1/auth/logout requires CSRF for session-cookie auth
+        $this->assertResponse('POST /api/v1/auth/logout (missing CSRF)', $this->request('POST', '/api/v1/auth/logout', [], [], 'testuser'), 419, 'POST /api/v1/auth/logout');
+        $this->assertResponse('POST /api/v1/auth/logout', $this->request('POST', '/api/v1/auth/logout', ['X-CSRF-Token' => 'test_token_123'], [], 'testuser'), 200, 'POST /api/v1/auth/logout');
 
         // 47. GET /api/v1/auth/sessions
         $this->assertResponse('GET /api/v1/auth/sessions (Guest -> 401)', $this->request('GET', '/api/v1/auth/sessions'), 401, 'GET /api/v1/auth/sessions');

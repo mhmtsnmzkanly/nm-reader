@@ -25,7 +25,7 @@ export class ApiAuthService implements IAuthService {
   }
 
   public logout(): Promise<ApiResponse<{ logged_out: boolean }>> {
-    return apiClient.post<{ logged_out: boolean }>('/auth/logout', {}, { skipCsrf: true });
+    return apiClient.post<{ logged_out: boolean }>('/auth/logout');
   }
 
   public getSessions(): Promise<ApiResponse<UserSession[]>> {

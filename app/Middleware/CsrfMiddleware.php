@@ -34,11 +34,6 @@ final class CsrfMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        // Skip CSRF for logout to prevent edge cases when session is expiring
-        if ($request->getUri()->getPath() === '/api/v1/auth/logout') {
-            return $handler->handle($request);
-        }
-
         // Stateless Bearer token requests are immune to CSRF
         $authHeader = $request->getHeaderLine('Authorization');
         if (str_starts_with($authHeader, 'Bearer ') && $request->getAttribute('user_id') !== null) {
