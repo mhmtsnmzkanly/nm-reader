@@ -852,7 +852,7 @@ final class Config
         $app->get("/sitemap.xml", [SystemPageController::class, "sitemapXml"]);
         $app->get("/media/public/{filename:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "servePublicMedia"]);
         $app->get("/media/chapter/{token:[a-zA-Z0-9_\.\-]+}", [\App\Controllers\MediaController::class, "serveChapterMedia"]);
-        $app->get("/logout", static fn ($request, $response) => $response->withHeader('Location', '/')->withStatus(302));
+        $app->get("/logout", fn ($request, $response) => $response->withHeader('Location', '/')->withStatus(302));
 
         // Public Web Routes (Direct Clean URLs without locale prefix)
         $app->get("/", [ContentPageController::class, "home"]);
