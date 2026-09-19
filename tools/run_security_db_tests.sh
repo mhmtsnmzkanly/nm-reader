@@ -8,7 +8,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 data_dir="$(mktemp -d /tmp/nm-reader-security-db.XXXXXX)"
 socket_path="$data_dir/mysql.sock"
-port="${NM_READER_TEST_PORT:-13306}"
+port="${NM_READER_TEST_PORT:-$((20000 + RANDOM % 20000))}"
 database="nm_reader_test_${RANDOM}${RANDOM}"
 server_pid=""
 
@@ -33,13 +33,19 @@ mariadbd \
     --user="$(id -un)" >/dev/null 2>&1 &
 server_pid=$!
 
+ready=0
 for _ in $(seq 1 100); do
     if mariadb-admin --no-defaults --socket="$socket_path" -uroot ping >/dev/null 2>&1; then
+        ready=1
         break
     fi
     sleep 0.1
 done
-mariadb-admin --no-defaults --socket="$socket_path" -uroot ping >/dev/null
+if [[ "$ready" != "1" ]]; then
+    cat "$data_dir/error.log" >&2 || true
+    echo "MariaDB disposable test server did not become ready" >&2
+    exit 1
+fi
 
 mariadb --no-defaults --socket="$socket_path" -uroot -e \
     "CREATE DATABASE \`$database\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
