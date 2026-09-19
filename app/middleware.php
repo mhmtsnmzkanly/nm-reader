@@ -379,4 +379,5 @@ $errorMiddleware->setDefaultErrorHandler(
 // Slim executes the last-added middleware first. Keep security/CORS outside the
 // error handler so preflights short-circuit and error responses retain headers.
 $app->add(\App\Middleware\SecurityHeadersMiddleware::class);
+$app->add(\App\Middleware\SensitiveCacheMiddleware::class);
 $app->add(\App\Middleware\CorsMiddleware::class);
