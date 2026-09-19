@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Helpers\PublicVisibility;
 use PDO;
 
 /**
@@ -83,7 +84,7 @@ final class SeriesRepository
                     MAX(ch.created_at) as last_chapter_at
                 FROM series c
                 INNER JOIN chapters ch ON ch.content_id = c.id
-                WHERE c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ' . PublicVisibility::chapter('ch') . $membersOnlyCondition . '
                 GROUP BY c.id
                 ORDER BY last_chapter_at DESC
                 LIMIT :limit';
@@ -249,6 +250,7 @@ final class SeriesRepository
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
                 WHERE c.slug = :slug AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
+                  AND ' . PublicVisibility::chapter('ch') . '
                 ORDER BY ch.chapter_number DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -277,6 +279,7 @@ final class SeriesRepository
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
                 WHERE c.type = :type AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND c.slug = :slug
+                  AND ' . PublicVisibility::chapter('ch') . '
                 ORDER BY ch.chapter_number DESC
                 LIMIT :limit OFFSET :offset';
 
@@ -300,6 +303,7 @@ final class SeriesRepository
              FROM chapters ch
              INNER JOIN series c ON c.id = ch.content_id
              WHERE c.type = :type AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND c.slug = :slug
+               AND ' . PublicVisibility::chapter('ch') . '
              ORDER BY CAST(ch.chapter_number AS DECIMAL(10,2)) ASC, ch.id ASC
              LIMIT 1'
         );
@@ -820,7 +824,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ' . PublicVisibility::chapter('ch') . $membersOnlyCondition . '
                 ORDER BY ch.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
@@ -848,7 +852,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE c.type = :type AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ch.deleted_at IS NULL' . $membersOnlyCondition . '
+                WHERE c.type = :type AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW())) AND ' . PublicVisibility::chapter('ch') . $membersOnlyCondition . '
                 ORDER BY ch.created_at DESC
                 LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
@@ -888,7 +892,7 @@ final class SeriesRepository
                     ch.created_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE ch.deleted_at IS NULL AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
+                WHERE ' . PublicVisibility::chapter('ch') . ' AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
                 ORDER BY ch.created_at DESC
                 LIMIT :limit';
         $stmt = $this->pdo->prepare($sql);

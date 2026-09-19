@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Helpers\PublicVisibility;
 use PDO;
 
 /**
@@ -94,8 +95,9 @@ final class ChapterRepository
                        c.is_adult, c.is_members_only AS series_is_members_only
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
-                WHERE ch.chapter_number = :chapter_number AND ch.deleted_at IS NULL AND c.deleted_at IS NULL
-                  AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
+                WHERE ch.chapter_number = :chapter_number
+                  AND ' . PublicVisibility::chapter('ch') . '
+                  AND ' . PublicVisibility::series('c') . '
                 ORDER BY ch.id DESC
                 LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
@@ -117,8 +119,8 @@ final class ChapterRepository
              FROM chapters ch
              INNER JOIN series c ON c.id = ch.content_id
              WHERE CAST(ch.chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
-               AND ch.deleted_at IS NULL AND c.deleted_at IS NULL
-               AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
+               AND ' . PublicVisibility::chapter('ch') . '
+               AND ' . PublicVisibility::series('c') . '
              ORDER BY ch.id DESC
              LIMIT 1'
         );
@@ -152,9 +154,8 @@ final class ChapterRepository
                 WHERE c.type = :type
                   AND c.slug = :slug
                   AND ch.chapter_number = :chapter_number
-                  AND ch.deleted_at IS NULL
-                  AND c.deleted_at IS NULL
-                  AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
+                  AND ' . PublicVisibility::chapter('ch') . '
+                  AND ' . PublicVisibility::series('c') . '
                 LIMIT 1';
 
         $stmt = $this->pdo->prepare($sql);
@@ -192,9 +193,8 @@ final class ChapterRepository
              WHERE c.type = :type
                AND c.slug = :slug
                AND CAST(ch.chapter_number AS DECIMAL(10,2)) = CAST(:chapter_number AS DECIMAL(10,2))
-               AND ch.deleted_at IS NULL
-               AND c.deleted_at IS NULL
-               AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))
+               AND ' . PublicVisibility::chapter('ch') . '
+               AND ' . PublicVisibility::series('c') . '
              ORDER BY ch.id ASC
              LIMIT 1'
         );
@@ -351,14 +351,14 @@ final class ChapterRepository
         $nextSql = 'SELECT chapter_number FROM chapters 
                     WHERE content_id = :content_id 
                       AND CAST(chapter_number AS DECIMAL(10,2)) > CAST(:current AS DECIMAL(10,2))
-                      AND deleted_at IS NULL
+                      AND ' . PublicVisibility::chapter('chapters') . '
                     ORDER BY CAST(chapter_number AS DECIMAL(10,2)) ASC 
                     LIMIT 1';
         
         $prevSql = 'SELECT chapter_number FROM chapters 
                     WHERE content_id = :content_id 
                       AND CAST(chapter_number AS DECIMAL(10,2)) < CAST(:current AS DECIMAL(10,2))
-                      AND deleted_at IS NULL
+                      AND ' . PublicVisibility::chapter('chapters') . '
                     ORDER BY CAST(chapter_number AS DECIMAL(10,2)) DESC 
                     LIMIT 1';
 
