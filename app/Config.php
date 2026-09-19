@@ -916,7 +916,8 @@ final class Config
             $group->get("/search/suggest", [ContentController::class, "suggest"]);
             $group->get("/i18n/{lang:[a-z]{2}}", [SystemPageController::class, "i18nJson"]);
             $group->get("/site-config", [SystemPageController::class, "siteConfig"]);
-            $group->post("/log/error", [SystemPageController::class, "logError"]);
+            $group->post("/log/error", [SystemPageController::class, "logError"])
+                ->add(new RateLimitMiddleware($cache, "frontend_error", 30, 60, $trustedProxies));
             $group->post("/user/activity", [UserInteractionController::class, "trackActivity"])->add(new AuthMiddleware(true, $authorization));
             
             $group->get("/chapter/{chapterId:[a-z0-9]{6}}/comments", [UserInteractionController::class, "listChapterComments"]);

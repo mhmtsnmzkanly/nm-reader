@@ -31,16 +31,89 @@ final class SystemPageController
 
     public function logError(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $payload = (array) $request->getParsedBody();
-        $this->errorLogger->error('frontend_error: ' . (string) ($payload['message'] ?? 'Unknown JS error'), [
+        $contentLength = trim($request->getHeaderLine('Content-Length'));
+        if ($contentLength !== '' && (!ctype_digit($contentLength) || (int) $contentLength > 32768)) {
+            return \App\Helpers\ResponseHelper::error(413, 'Error report is too large.');
+        }
+
+        $parsed = $request->getParsedBody();
+        if (!is_array($parsed)) {
+            return \App\Helpers\ResponseHelper::error(400, 'Invalid error report.');
+        }
+
+        $encoded = json_encode($parsed, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($encoded === false || strlen($encoded) > 32768) {
+            return \App\Helpers\ResponseHelper::error(413, 'Error report is too large.');
+        }
+
+        $message = $this->logField($parsed, 'message', 4096);
+        $url = $this->logField($parsed, 'url', 2048);
+        $stack = $this->logField($parsed, 'stack', 12000);
+        if ($message === null || $url === null || $stack === null) {
+            return \App\Helpers\ResponseHelper::error(400, 'Invalid error report fields.');
+        }
+
+        $context = $parsed['context'] ?? [];
+        if ($context !== [] && (!is_array($context) || !$this->safeLogContext($context))) {
+            return \App\Helpers\ResponseHelper::error(400, 'Invalid error report context.');
+        }
+
+        $this->errorLogger->error('frontend_error: ' . ($message !== '' ? $message : 'Unknown JS error'), [
             'user_id' => $_SESSION['user_id'] ?? null,
             'ip_hash' => hash('sha256', RequestSecurity::clientIp($request, (array) (Config::getSettings()['app']['trusted_proxies'] ?? []))),
             'user_agent' => substr((string) $request->getHeaderLine('User-Agent'), 0, 255),
-            'url' => (string) ($payload['url'] ?? ''),
-            'stack' => (string) ($payload['stack'] ?? ''),
-            'browser_context' => (array) ($payload['context'] ?? []),
+            'url' => $url,
+            'stack' => $stack,
+            'browser_context' => $context,
         ]);
         return \App\Helpers\ResponseHelper::success(['logged' => true]);
+    }
+
+    private function logField(array $payload, string $field, int $maxLength): ?string
+    {
+        if (!array_key_exists($field, $payload)) {
+            return '';
+        }
+        if (!is_string($payload[$field])) {
+            return null;
+        }
+
+        $value = $payload[$field];
+        if (mb_strlen($value) > $maxLength) {
+            return null;
+        }
+
+        // Monolog encodes context, but the message itself is a log-line prefix.
+        // Remove control characters so a client cannot forge additional lines.
+        return (string) preg_replace('/[\x00-\x1F\x7F\r\n]+/u', ' ', $value);
+    }
+
+    private function safeLogContext(array $context, int $depth = 0): bool
+    {
+        if ($depth > 3 || count($context) > 32) {
+            return false;
+        }
+
+        foreach ($context as $key => $value) {
+            if (!is_int($key) && (!is_string($key) || mb_strlen($key) > 128)) {
+                return false;
+            }
+            if (is_array($value)) {
+                if (!$this->safeLogContext($value, $depth + 1)) {
+                    return false;
+                }
+                continue;
+            }
+            if (is_string($value) && mb_strlen($value) <= 512) {
+                continue;
+            }
+            if (is_int($value) || is_float($value) || is_bool($value) || $value === null) {
+                continue;
+            }
+            return false;
+        }
+
+        return true;
     }
 
     public function robotsTxt(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
