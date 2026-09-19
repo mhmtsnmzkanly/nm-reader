@@ -189,6 +189,12 @@ final class ContentController
 
     public function search(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
+        try {
+            $this->validateSearchComplexity($request->getQueryParams());
+        } catch (\InvalidArgumentException $exception) {
+            return ResponseHelper::error(400, $exception->getMessage());
+        }
+
         [$page, $perPage] = $this->pagination($request);
         $params = $request->getQueryParams();
         $query = trim((string) ($params['q'] ?? ''));
@@ -221,6 +227,9 @@ final class ContentController
     public function suggest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $query = trim((string) ($request->getQueryParams()['q'] ?? ''));
+        if (mb_strlen($query) > 200) {
+            return ResponseHelper::error(400, 'Search query must be at most 200 characters');
+        }
         if (mb_strlen($query) < 2) return ResponseHelper::success([]);
         return ResponseHelper::success($this->seriesService->suggest($query));
     }
@@ -302,5 +311,35 @@ final class ContentController
     {
         $query = $request->getQueryParams();
         return [max(1, (int) ($query['page'] ?? 1)), max(1, min(50, (int) ($query['per_page'] ?? 20)))];
+    }
+
+    private function validateSearchComplexity(array $params): void
+    {
+        $query = $params['q'] ?? '';
+        if (!is_scalar($query) || mb_strlen(trim((string) $query)) > 200) {
+            throw new \InvalidArgumentException('Search query must be at most 200 characters');
+        }
+
+        foreach (['genres', 'tags'] as $field) {
+            if (!array_key_exists($field, $params) || $params[$field] === '' || $params[$field] === null) {
+                continue;
+            }
+
+            $values = is_array($params[$field])
+                ? $params[$field]
+                : explode(',', (string) $params[$field]);
+            if (count($values) > 20) {
+                throw new \InvalidArgumentException(ucfirst($field) . ' filter contains too many values');
+            }
+            foreach ($values as $value) {
+                if (!is_scalar($value) || mb_strlen(trim((string) $value)) > 80) {
+                    throw new \InvalidArgumentException('Invalid ' . $field . ' filter value');
+                }
+            }
+        }
+
+        if (array_key_exists('page', $params) && (!is_scalar($params['page']) || (int) $params['page'] > 100000)) {
+            throw new \InvalidArgumentException('Search page is out of range');
+        }
     }
 }

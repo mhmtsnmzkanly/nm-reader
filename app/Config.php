@@ -912,8 +912,10 @@ final class Config
             $group->get("/blogs/{slug}", [BlogController::class, "show"])->add(new AuthMiddleware(true, $authorization));
             $group->get("/blogs/{slug}/related", [BlogController::class, "related"]);
             $group->get("/content/{type:".$typePattern."}/{slug}/chapter/{chapterNumber}", [ContentController::class, "chapterDetail"]);
-            $group->get("/search", [ContentController::class, "search"]);
-            $group->get("/search/suggest", [ContentController::class, "suggest"]);
+            $group->get("/search", [ContentController::class, "search"])
+                ->add(new RateLimitMiddleware($cache, "search", 60, 60, $trustedProxies));
+            $group->get("/search/suggest", [ContentController::class, "suggest"])
+                ->add(new RateLimitMiddleware($cache, "search_suggest", 120, 60, $trustedProxies));
             $group->get("/i18n/{lang:[a-z]{2}}", [SystemPageController::class, "i18nJson"]);
             $group->get("/site-config", [SystemPageController::class, "siteConfig"]);
             $group->post("/log/error", [SystemPageController::class, "logError"])
