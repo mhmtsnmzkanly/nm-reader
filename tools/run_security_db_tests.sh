@@ -44,12 +44,14 @@ mariadb-admin --no-defaults --socket="$socket_path" -uroot ping >/dev/null
 mariadb --no-defaults --socket="$socket_path" -uroot -e \
     "CREATE DATABASE \`$database\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
 mariadb --no-defaults --socket="$socket_path" -uroot "$database" < "$repo_root/app/database/schema.sql"
+mkdir -p "$data_dir/media"
 
 export APP_ENV=test
 export APP_DEBUG=false
 export APP_URL=http://127.0.0.1
 export ENFORCE_HTTPS=false
 export MEDIA_SECRET=security-test-media-secret-012345678901234567890123
+export MEDIA_STORAGE_PATH="$data_dir/media"
 export DB_HOST=127.0.0.1
 export DB_PORT="$port"
 export DB_DATABASE="$database"

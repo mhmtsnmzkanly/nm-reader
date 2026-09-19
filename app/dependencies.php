@@ -235,7 +235,7 @@ $builder->addDefinitions([
     \App\Middleware\MaintenanceMiddleware::class => DI\autowire(\App\Middleware\MaintenanceMiddleware::class)
         ->constructorParameter('trustedProxies', $settings['app']['trusted_proxies'] ?? []),
     \App\Services\MediaService::class => DI\autowire(\App\Services\MediaService::class)
-        ->constructorParameter('baseUploadDir', $settings['app']['base_path'] . '/storage/media/')
+        ->constructorParameter('baseUploadDir', (string) (getenv('MEDIA_STORAGE_PATH') ?: ($settings['app']['base_path'] . '/storage/media/')))
         ->constructorParameter('appSecret', (string) ($settings['app']['media_secret'] ?? '')),
     \App\Services\SeoService::class => DI\autowire(\App\Services\SeoService::class)
         ->constructorParameter('basePath', $settings['app']['base_path']),

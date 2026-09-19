@@ -94,6 +94,12 @@ final class SecurityDbTestSuite
             echo "PAID ACCESS: PASS\n";
             return;
         }
+        if ($phase === 'media') {
+            $this->testMediaAuthorization();
+            printf("Security DB: %s (%s)\n", (string) getenv('DB_DATABASE'), $version);
+            echo "MEDIA AUTHORIZATION: PASS\n";
+            return;
+        }
         throw new RuntimeException('Unknown phase: ' . $phase);
     }
 
@@ -141,6 +147,7 @@ final class SecurityDbTestSuite
             $this->insertComments();
             $this->insertBlogs();
             $this->pdo->commit();
+            $this->prepareMediaFixture();
         } catch (Throwable $exception) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -341,6 +348,61 @@ final class SecurityDbTestSuite
 
         $futurePurchased = $this->request('GET', '/api/v1/content/manga/security-published-series/chapter/5', self::FIXTURE_USERS['purchased']['token']);
         $this->assertStatus($futurePurchased, 404, 'purchased future paid chapter');
+    }
+
+    private function prepareMediaFixture(): void
+    {
+        $directory = trim((string) getenv('MEDIA_STORAGE_PATH'));
+        if ($directory === '') throw new RuntimeException('MEDIA_STORAGE_PATH is required for database-backed media tests.');
+        if (!is_dir($directory) && !mkdir($directory, 0700, true) && !is_dir($directory)) throw new RuntimeException('Unable to create isolated media test directory.');
+        if (file_put_contents($directory . DIRECTORY_SEPARATOR . 'chapter.sec111.png', 'SECURITY MEDIA FIXTURE') === false) throw new RuntimeException('Unable to create isolated media fixture.');
+    }
+
+    private function testMediaAuthorization(): void
+    {
+        $chapter = $this->jsonRequest('GET', '/api/v1/content/manga/security-published-series/chapter/7', self::FIXTURE_USERS['purchased']['token']);
+        $this->assertStatus($chapter, 200, 'authorized media chapter detail');
+        $url = (string) ($chapter['json']['data']['pages'][0]['url'] ?? '');
+        $this->assertTrue(str_starts_with($url, '/media/chapter/'), 'authorized response did not contain a signed media URL');
+        $token = substr($url, strlen('/media/chapter/'));
+
+        $valid = $this->request('GET', '/api/v1/media/chapter/' . $token, self::FIXTURE_USERS['purchased']['token']);
+        $this->assertStatus($valid, 200, 'valid authorized media token');
+        $this->assertTrue($valid['body'] === 'SECURITY MEDIA FIXTURE', 'valid media token returned unexpected file');
+        $tampered = substr($token, 0, -1) . (substr($token, -1) === 'a' ? 'b' : 'a');
+        $this->assertStatus($this->request('GET', '/api/v1/media/chapter/' . $tampered, self::FIXTURE_USERS['purchased']['token']), 403, 'tampered media token');
+        $this->assertStatus($this->request('GET', '/api/v1/media/chapter/' . $token, self::FIXTURE_USERS['unpurchased']['token']), 403, 'wrong user audience');
+
+        $media = new \App\Services\MediaService((string) getenv('MEDIA_STORAGE_PATH'), (string) getenv('MEDIA_SECRET'));
+        $expired = $this->tokenFor('sec111', 1, 'chapter.sec111.png', self::FIXTURE_USERS['purchased']['id'], time() - 10);
+        $this->assertStatus($this->request('GET', '/api/v1/media/chapter/' . $expired, self::FIXTURE_USERS['purchased']['token']), 403, 'expired media token');
+        $wrongChapter = $media->generateChapterPageUrl('sec101', 1, 'chapter.sec111.png', self::FIXTURE_USERS['purchased']['id']);
+        $this->assertStatus($this->request('GET', '/api/v1/media/chapter/' . basename($wrongChapter), self::FIXTURE_USERS['purchased']['token']), 403, 'wrong chapter media token');
+        $wrongPage = $media->generateChapterPageUrl('sec111', 2, 'chapter.sec111.png', self::FIXTURE_USERS['purchased']['id']);
+        $this->assertStatus($this->request('GET', '/api/v1/media/chapter/' . basename($wrongPage), self::FIXTURE_USERS['purchased']['token']), 403, 'wrong page media token');
+        $wrongFile = $media->generateChapterPageUrl('sec111', 1, 'chapter.other.png', self::FIXTURE_USERS['purchased']['id']);
+        $this->assertStatus($this->request('GET', '/api/v1/media/chapter/' . basename($wrongFile), self::FIXTURE_USERS['purchased']['token']), 403, 'wrong filename media token');
+
+        if (session_status() === PHP_SESSION_ACTIVE) session_write_close();
+        session_id('secdb-guest-audience');
+        session_start();
+        $guestToken = $media->generateChapterPageUrl('sec111', 1, 'chapter.sec111.png', null);
+        session_write_close();
+        $this->assertStatus($this->request('GET', '/api/v1/media/chapter/' . basename($guestToken)), 403, 'wrong guest session audience');
+
+        $traversal = $this->tokenFor('sec111', 1, '../chapter.sec111.png', self::FIXTURE_USERS['purchased']['id'], time() + 600);
+        $traversalResponse = $this->request('GET', '/api/v1/media/chapter/' . $traversal, self::FIXTURE_USERS['purchased']['token']);
+        $this->assertStatus($traversalResponse, 200, 'signed traversal basename normalization');
+        $this->assertTrue($traversalResponse['body'] === 'SECURITY MEDIA FIXTURE', 'traversal token escaped isolated media boundary');
+        $encodedTraversal = $this->tokenFor('sec111', 1, '..%2F..%2Fchapter.sec111.png', self::FIXTURE_USERS['purchased']['id'], time() + 600);
+        $this->assertStatus($this->request('GET', '/api/v1/media/chapter/' . $encodedTraversal, self::FIXTURE_USERS['purchased']['token']), 403, 'encoded traversal token');
+    }
+
+    private function tokenFor(string $chapterId, int $page, string $filename, string $userId, int $expires): string
+    {
+        $payload = ['cid' => $chapterId, 'p' => $page, 'f' => $filename, 'uid' => $userId, 'sid' => null, 'exp' => $expires];
+        $encoded = rtrim(strtr(base64_encode((string) json_encode($payload, JSON_UNESCAPED_SLASHES)), '+/', '-_'), '=');
+        return 't_' . $encoded . '.' . hash_hmac('sha256', $encoded, (string) getenv('MEDIA_SECRET'));
     }
 
     private function assertVisibleCommentBodies(array $items, array $required, array $forbidden): void
