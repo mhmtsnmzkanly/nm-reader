@@ -55,6 +55,8 @@ export type ContentStatus = 'ongoing' | 'completed' | 'hiatus' | 'dropped';
 export type GenreConfig = {
   icon?: string;
   color?: string;
+  description?: string;
+  [key: string]: unknown;
 };
 
 export type Genre = {
@@ -69,7 +71,7 @@ export type Tag = {
   id: number | string;
   name: string;
   slug: string;
-  ui_config?: Record<string, unknown>;
+  ui_config?: GenreConfig;
   content_count?: number;
 };
 

@@ -35,8 +35,6 @@ final class SitemapService
     public function buildSitemapXml(?string $baseUrl = null): string
     {
         $base = $this->resolveBaseUrl($baseUrl);
-        $nowIso = gmdate("Y-m-d\TH:i:s\Z");
-
         $urls = [];
         $push = static function (
             array &$bucket,
@@ -53,9 +51,29 @@ final class SitemapService
             ];
         };
 
+        $seriesList = $this->seriesRepository->listContentsForSitemap(5000);
+        $chapterList = $this->seriesRepository->listChaptersForSitemap(10000);
+        $blogs = $this->blogRepository->listApprovedForSitemap(5000);
+        $genres = $this->seriesService->series_genres(1, 500);
+        $tags = $this->seriesService->series_tags(1, 500);
+
+        $iso = static function (mixed $value): ?string {
+            if (!is_string($value) || trim($value) === '') return null;
+            $timestamp = strtotime($value);
+            return $timestamp === false ? null : gmdate("Y-m-d\TH:i:s\Z", $timestamp);
+        };
+        $latest = static function (array $items, string $field) use ($iso): ?string {
+            $timestamps = array_filter(array_map(static fn (array $item): ?string => $iso($item[$field] ?? null), $items));
+            rsort($timestamps, SORT_STRING);
+            return $timestamps[0] ?? null;
+        };
+        $homeLastmod = $latest(array_merge($seriesList, $chapterList, $blogs), 'updated_at')
+            ?? $latest($blogs, 'lastmod')
+            ?? $latest($seriesList, 'created_at');
+
         // Canonical public URLs
-        $push($urls, $base . "/", $nowIso, "hourly", "1.0");
-        $push($urls, $base . "/blogs", $nowIso, "daily", "0.9");
+        $push($urls, $base . "/", $homeLastmod, "hourly", "1.0");
+        $push($urls, $base . "/blogs", $latest($blogs, 'lastmod'), "daily", "0.9");
 
         foreach (
             [
@@ -68,42 +86,43 @@ final class SitemapService
                 "webtoon",
             ] as $type
         ) {
-            $push($urls, $base . "/" . $type, $nowIso, "daily", "0.8");
+            $typeRows = array_values(array_filter(
+                $seriesList,
+                static fn (array $series): bool => str_replace('_', '-', (string) ($series['type'] ?? '')) === $type,
+            ));
+            $push($urls, $base . "/" . $type, $latest($typeRows, 'updated_at') ?? $latest($typeRows, 'created_at'), "daily", "0.8");
         }
 
-        foreach ($this->seriesService->series_genres(1, 500) as $genre) {
+        foreach ($genres as $genre) {
             if (!isset($genre["slug"])) {
                 continue;
             }
             $push(
                 $urls,
                 $base . "/genre/" . rawurlencode((string) $genre["slug"]),
-                $nowIso,
+                $iso($genre['updated_at'] ?? null),
                 "daily",
                 "0.7"
             );
         }
 
-        foreach ($this->seriesService->series_tags(1, 500) as $tag) {
+        foreach ($tags as $tag) {
             if (!isset($tag["slug"])) {
                 continue;
             }
             $push(
                 $urls,
                 $base . "/tag/" . rawurlencode((string) $tag["slug"]),
-                $nowIso,
+                $iso($tag['updated_at'] ?? null),
                 "daily",
                 "0.7"
             );
         }
 
-        $seriesList = $this->seriesRepository->listContentsForSitemap(5000);
         foreach ($seriesList as $series) {
             $slug = (string) ($series["slug"] ?? "");
-            $type = (string) ($series["type"] ?? "novel");
-            $lastmod = !empty($series["created_at"])
-                ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) $series["created_at"]))
-                : $nowIso;
+            $type = str_replace('_', '-', (string) ($series["type"] ?? "novel"));
+            $lastmod = $iso($series["updated_at"] ?? null) ?? $iso($series["created_at"] ?? null);
             if ($slug === "") {
                 continue;
             }
@@ -116,14 +135,11 @@ final class SitemapService
             );
         }
 
-        $chapterList = $this->seriesRepository->listChaptersForSitemap(10000);
         foreach ($chapterList as $chap) {
             $slug = (string) ($chap["slug"] ?? "");
-            $type = (string) ($chap["type"] ?? "novel");
+            $type = str_replace('_', '-', (string) ($chap["type"] ?? "novel"));
             $chapNumber = (string) ($chap["chapter_number"] ?? "");
-            $lastmod = !empty($chap["created_at"])
-                ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) $chap["created_at"]))
-                : $nowIso;
+            $lastmod = $iso($chap["updated_at"] ?? null);
             if ($slug === "" || $chapNumber === "") {
                 continue;
             }
@@ -143,12 +159,9 @@ final class SitemapService
         }
 
         // Add blogs
-        $blogs = $this->blogRepository->listApprovedForSitemap(5000);
         foreach ($blogs as $blog) {
             $slug = (string) ($blog["slug"] ?? "");
-            $lastmod = !empty($blog["lastmod"])
-                ? gmdate("Y-m-d\TH:i:s\Z", strtotime((string) $blog["lastmod"]))
-                : $nowIso;
+            $lastmod = $iso($blog["lastmod"] ?? null);
             if ($slug === "") {
                 continue;
             }

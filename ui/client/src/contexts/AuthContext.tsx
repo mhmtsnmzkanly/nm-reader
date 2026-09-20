@@ -11,8 +11,8 @@ type AuthContextType = {
   permissions: string[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, pass: string, remember: boolean) => Promise<boolean>;
-  register: (uname: string, email: string, pass: string) => Promise<boolean>;
+  login: (email: string, pass: string, remember: boolean, turnstileToken?: string) => Promise<boolean>;
+  register: (uname: string, email: string, pass: string, turnstileToken?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   isAuthModalOpen: boolean;
@@ -56,8 +56,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await refreshMe();
   };
 
-  const login = async (email: string, pass: string, remember: boolean) => {
-    const res = await authService.login(email, pass, remember);
+  const login = async (email: string, pass: string, remember: boolean, turnstileToken = '') => {
+    const res = await authService.login(email, pass, remember, turnstileToken);
     if (res.status === 'success') {
       await refreshMe();
       return true;
@@ -65,8 +65,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
-  const register = async (uname: string, email: string, pass: string) => {
-    const res = await authService.register(uname, email, pass);
+  const register = async (uname: string, email: string, pass: string, turnstileToken = '') => {
+    const res = await authService.register(uname, email, pass, turnstileToken);
     return res.status === 'success';
   };
 

@@ -16,14 +16,34 @@ export function createTaxonomyPageController({
     const requestEpoch = getPageEpoch();
     const { genres, tags } = await loadTaxonomies();
     assertCurrentPage(requestEpoch);
+    const normalizeConfig = (config) => {
+      if (config && typeof config === "object" && !Array.isArray(config)) return config;
+      if (typeof config !== "string" || !config.trim()) return {};
+      try {
+        const parsed = JSON.parse(config);
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      } catch {
+        return {};
+      }
+    };
     const normalize = (items) =>
-      items.map((item) => ({
+      items.map((item) => {
+        const uiConfig = normalizeConfig(item.ui_config);
+        return {
         id: item.id,
         name: item.name || "-",
         slug: item.slug || "",
+        description: uiConfig.description || "",
+        ui_config: uiConfig,
         usage_count: Number(item.usage_count || 0),
         sort_order: Number(item.sort_order || 0),
-      }));
+        };
+      });
+    const genreItems = normalize(genres);
+    const tagItems = normalize(tags);
+    const configById = new Map(
+      [...genreItems, ...tagItems].map((item) => [String(item.id), item.ui_config]),
+    );
     const page = mountEditorPage(
       translate("admin.taxonomy.title", "Tür ve Etiket Yönetimi"),
       { name: "panel-taxonomy", context: {} },
@@ -44,12 +64,12 @@ export function createTaxonomyPageController({
     mountPartial(
       "panel-rows-taxonomy",
       page.querySelector("#panel-taxonomy-genres"),
-      { items: normalize(genres), has_items: genres.length > 0 },
+      { items: genreItems, has_items: genreItems.length > 0 },
     );
     mountPartial(
       "panel-rows-taxonomy",
       page.querySelector("#panel-taxonomy-tags"),
-      { items: normalize(tags), has_items: tags.length > 0 },
+      { items: tagItems, has_items: tagItems.length > 0 },
     );
     const submit = page.querySelector('button[type="submit"]');
     if (submit) submit.textContent = translate("admin.taxonomy.save_order", "Sıralamayı Kaydet");
@@ -64,9 +84,17 @@ export function createTaxonomyPageController({
               : translate("admin.taxonomy.new_tag", "Yeni etiket adı:"),
           );
           if (!name?.trim()) return;
+          const description = promptValue(
+            translate("admin.taxonomy.new_description", "Açıklama:"),
+            "",
+          );
+          if (description === null) return;
           await api(kind === "genre" ? "/series_genres" : "/series_tags", {
             method: "POST",
-            body: { name: name.trim() },
+            body: {
+              name: name.trim(),
+              ui_config: description.trim() ? { description: description.trim() } : {},
+            },
           });
           showToast(
             kind === "genre"
@@ -82,10 +110,23 @@ export function createTaxonomyPageController({
             translate("admin.taxonomy.new_name", "Yeni ad:"),
             editButton.dataset.name || "",
           );
-          if (!name?.trim() || name.trim() === editButton.dataset.name) return;
+          if (!name?.trim()) return;
+          const uiConfig = {
+            ...(configById.get(String(editButton.dataset.editTaxonomy)) || {}),
+          };
+          const description = promptValue(
+            translate("admin.taxonomy.new_description", "Açıklama:"),
+            uiConfig.description || "",
+          );
+          if (description === null) return;
+          if (description.trim()) {
+            uiConfig.description = description.trim();
+          } else {
+            delete uiConfig.description;
+          }
           await api(`/taxonomies/${editButton.dataset.editTaxonomy}`, {
             method: "PUT",
-            body: { name: name.trim() },
+            body: { name: name.trim(), ui_config: uiConfig },
           });
           showToast(translate("admin.taxonomy.updated", "Taksonomi güncellendi"));
           await loadTaxonomyPage();

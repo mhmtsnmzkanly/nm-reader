@@ -33,7 +33,7 @@ export const NotFoundPage: React.FC = () => {
           </Button>
         </Link>
 
-        <Link to="/browse">
+        <Link to="/manga">
           <Button variant="outline" size="md" className="gap-2 cursor-pointer">
             <BookOpen className="w-4 h-4" />
             <span>{t('feedback.browseCatalog')}</span>

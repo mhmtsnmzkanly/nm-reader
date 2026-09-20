@@ -12,6 +12,9 @@ final class WebUrlService
 {
     public function absolute(ServerRequestInterface $request, string $path): string
     {
+        if (preg_match('#^https?://#i', $path) === 1) {
+            return $path;
+        }
         if (str_starts_with($path, '//')) {
             return ($request->getUri()->getScheme() ?: 'http') . ':' . $path;
         }

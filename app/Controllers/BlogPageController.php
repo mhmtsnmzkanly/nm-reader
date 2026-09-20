@@ -30,24 +30,38 @@ final class BlogPageController extends BasePageController
         $siteName = $this->siteConfig->siteName();
         $seo = [
             'title' => 'Blog - ' . $siteName,
-            'description' => $siteName . ' toplulugundan blog yazilari, rehberler ve analizler.',
+            'description' => $siteName . ' topluluğundan manga, manhwa, webtoon ve novel yazıları, rehberleri ve analizleri.',
             'type' => 'website', 'robots' => 'index,follow',
         ];
         $post = null;
         if ($slug !== '') {
             $post = $this->blogRepository->findApprovedBySlug($slug);
-            if ($post === null) return $response->withStatus(404);
+            if ($post === null) return $this->notFound($request, $response);
             $postTitle = (string) ($post['title'] ?? 'Blog');
             $postDescription = $this->truncateDescription((string) ($post['body'] ?? ''));
             $seo['title'] = $postTitle . ' - Blog';
             $seo['description'] = $postDescription !== '' ? $postDescription : 'Blog yazisi';
             $seo['type'] = 'article';
+            $seo['canonical'] = $this->absoluteUrl($request, '/blogs/' . $slug);
+            $seo['image'] = !empty($post['cover_image']) ? $post['cover_image'] : $this->siteConfig->defaultContentCoverImage();
+            $schemaImage = $this->absoluteUrl($request, (string) $seo['image']);
             $seo['json_ld'] = [
                 '@context' => 'https://schema.org', '@type' => 'BlogPosting', 'headline' => $postTitle,
-                'image' => !empty($post['cover_image']) ? $post['cover_image'] : $this->siteConfig->defaultContentCoverImage(),
+                'image' => $schemaImage,
                 'author' => ['@type' => 'Person', 'name' => (string) ($post['author_username'] ?? 'NMR Author')],
+                'publisher' => [
+                    '@type' => 'Organization',
+                    'name' => $siteName,
+                    'logo' => [
+                        '@type' => 'ImageObject',
+                        'url' => $this->absoluteUrl($request, $this->siteConfig->siteLogo()),
+                    ],
+                ],
                 'datePublished' => (string) ($post['approved_at'] ?? ($post['created_at'] ?? gmdate('Y-m-d H:i:s'))),
+                'dateModified' => (string) ($post['updated_at'] ?? ($post['approved_at'] ?? $post['created_at'] ?? '')),
                 'url' => $this->absoluteUrl($request, '/blogs/' . $slug), 'description' => $seo['description'],
+                'mainEntityOfPage' => $this->absoluteUrl($request, '/blogs/' . $slug),
+                'inLanguage' => 'tr-TR',
             ];
         }
         $blogBootstrap = null;
@@ -60,13 +74,14 @@ final class BlogPageController extends BasePageController
                 'excerpt', 'likes', 'upvote_count', 'downvote_count', 'comments_count', 'status',
             ]));
         }
+        $currentPage = $blogBootstrap === null
+            ? ['route' => 'blogs', 'data' => ['items' => $this->blogRepository->listApproved(1, 20)]]
+            : ['route' => 'blog', 'data' => ['slug' => $slug, 'blog' => $blogBootstrap]];
         return $this->render($request, $response, [
             'breadcrumbs' => $this->breadcrumbs($request, 'blog', [
                 'title' => ($slug !== '' && $post) ? ($post['title'] ?? '') : '',
             ]),
-            'current_page' => $blogBootstrap === null ? null : [
-                'route' => 'blog', 'data' => ['slug' => $slug, 'blog' => $blogBootstrap],
-            ],
+            'current_page' => $currentPage,
         ], $seo['title'], $seo);
     }
 }

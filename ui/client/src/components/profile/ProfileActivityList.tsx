@@ -48,7 +48,7 @@ export const ProfileActivityList: React.FC<ProfileActivityListProps> = ({
 
   const getTargetLink = (target: UserActivityItem['target']) => {
     if (target.type === 'blog') {
-      return `/blog/${target.slug || target.id}`;
+      return `/blogs/${target.slug || target.id}`;
     }
     const cType = target.content_type || 'manga';
     return `/${cType}/${target.slug || target.id}`;

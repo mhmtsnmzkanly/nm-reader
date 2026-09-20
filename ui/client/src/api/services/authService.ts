@@ -4,19 +4,21 @@ import type { AuthPayload, UserSession } from '../../types/api';
 import type { IAuthService } from '../../services/contracts';
 
 export class ApiAuthService implements IAuthService {
-  public login(email: string, password: string, remember = false): Promise<ApiResponse<AuthPayload>> {
+  public login(email: string, password: string, remember = false, turnstileToken = ''): Promise<ApiResponse<AuthPayload>> {
     return apiClient.post<AuthPayload>('/auth/login', {
       email,
       password,
       remember,
+      turnstile_token: turnstileToken,
     }, { skipCsrf: true });
   }
 
-  public register(username: string, email: string, password: string): Promise<ApiResponse<{ id: string; username: string; email: string }>> {
+  public register(username: string, email: string, password: string, turnstileToken = ''): Promise<ApiResponse<{ id: string; username: string; email: string }>> {
     return apiClient.post<{ id: string; username: string; email: string }>('/auth/register', {
       username,
       email,
       password,
+      turnstile_token: turnstileToken,
     }, { skipCsrf: true });
   }
 
@@ -40,8 +42,11 @@ export class ApiAuthService implements IAuthService {
     return apiClient.post<{ revoked_count: number }>('/auth/sessions/revoke-others');
   }
 
-  public forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
-    return apiClient.post<{ message: string }>('/auth/forgot-password', { email }, { skipCsrf: true });
+  public forgotPassword(email: string, turnstileToken = ''): Promise<ApiResponse<{ message: string }>> {
+    return apiClient.post<{ message: string }>('/auth/forgot-password', {
+      email,
+      turnstile_token: turnstileToken,
+    }, { skipCsrf: true });
   }
 
   public resetPassword(token: string, password: string): Promise<ApiResponse<{ id: string; message: string }>> {

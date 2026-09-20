@@ -5,6 +5,7 @@ import { ContentSummary, PaginationMeta } from '../types/api';
 import { ContentCard } from '../components/content/ContentCard';
 import { Pagination } from '../components/feedback/Pagination';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { TaxonomyIcon, taxonomyColor } from '../components/taxonomy/TaxonomyIcon';
 
 function getBootstrapGenreResults(slug: string, page: number): ContentSummary[] | null {
   if (page !== 1 || typeof window === 'undefined') return null;
@@ -24,6 +25,8 @@ export const GenreResultsPage: React.FC = () => {
   const perPage = parseInt(searchParams.get('per_page') || '10', 10);
 
   const [bootstrapContents] = useState(() => getBootstrapGenreResults(slug, page));
+  const taxonomy = window.__NMR_CONTEXT?.current_page?.data?.taxonomy;
+  const taxonomyAccent = taxonomyColor(taxonomy?.ui_config?.color);
   const [contents, setContents] = useState<ContentSummary[]>(bootstrapContents || []);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(bootstrapContents === null);
@@ -56,13 +59,26 @@ export const GenreResultsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8 transition-colors duration-300">
-      <div className="border-b border-[var(--border-color)] pb-6">
+      <div
+        className="border-b border-[var(--border-color)] pb-6"
+        style={{ '--taxonomy-color': taxonomyAccent } as React.CSSProperties}
+      >
         <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--accent-color)] font-bold">
           {t('genre.filterBadge')}
         </span>
-        <h1 className="font-serif text-3xl font-bold text-[var(--text-primary)] capitalize">
-          {t('genre.resultsHeader', { slug })}
-        </h1>
+        <div className="mt-2 flex items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ color: taxonomyAccent, backgroundColor: `${taxonomyAccent}18` }}>
+            <TaxonomyIcon name={taxonomy?.ui_config?.icon} className="h-6 w-6" />
+          </span>
+          <h1 className="font-serif text-3xl font-bold text-[var(--text-primary)] capitalize">
+            {t('genre.resultsHeader', { slug: taxonomy?.name || slug })}
+          </h1>
+        </div>
+        {taxonomy?.ui_config?.description && (
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--text-muted)]">
+            {taxonomy.ui_config.description}
+          </p>
+        )}
       </div>
 
       {isLoading ? (

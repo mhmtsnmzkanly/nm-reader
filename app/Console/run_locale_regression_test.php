@@ -7,7 +7,7 @@ declare(strict_types=1);
  *
  * Verifies that:
  * 1. URL-based locale routing is completely removed from backend.
- * 2. Public canonical URLs (/, /browse, /search, /blogs, etc.) serve 200 OK without redirects.
+ * 2. Public canonical URLs serve 200 while retired aliases redirect permanently.
  * 3. /panel, /api/v1/*, and /media/* are completely untouched by locale routing.
  * 4. Legacy /tr/* and /en/* URLs permanently redirect (301) to clean canonical paths.
  * 5. Invalid locale-prefixed API, admin, panel, and media paths return 404 (no 301).
@@ -132,10 +132,19 @@ class LocaleRegressionSuite
         $resHome = $this->request('GET', '/');
         $this->assert('GET / returns 200 OK (no 302 to /tr)', $resHome->getStatusCode() === 200, 'Status: ' . $resHome->getStatusCode());
         $bodyHome = (string) $resHome->getBody();
-        $this->assert('GET / serves React root element', str_contains($bodyHome, '<div id="root"></div>'));
+        $this->assert('GET / serves React root element', str_contains($bodyHome, '<div id="root">'));
+        $this->assert('GET / includes server-rendered SEO content', str_contains($bodyHome, 'data-server-rendered="true"'));
 
         $resBrowse = $this->request('GET', '/browse');
-        $this->assert('GET /browse returns 200 OK', $resBrowse->getStatusCode() === 200, 'Status: ' . $resBrowse->getStatusCode());
+        $this->assert('GET /browse redirects permanently to /manga', $resBrowse->getStatusCode() === 301 && $resBrowse->getHeaderLine('Location') === '/manga', 'Status: ' . $resBrowse->getStatusCode());
+        $resBrowseType = $this->request('GET', '/browse/manhwa');
+        $this->assert('GET /browse/manhwa redirects permanently to /manhwa', $resBrowseType->getStatusCode() === 301 && $resBrowseType->getHeaderLine('Location') === '/manhwa');
+        $resOldBlog = $this->request('GET', '/blog/test-post');
+        $this->assert('GET /blog/{slug} redirects to /blogs/{slug}', $resOldBlog->getStatusCode() === 301 && $resOldBlog->getHeaderLine('Location') === '/blogs/test-post');
+        $resUnderscoreType = $this->request('GET', '/web_novel/test-series');
+        $this->assert('Underscore content type redirects to its hyphenated URL', $resUnderscoreType->getStatusCode() === 301 && $resUnderscoreType->getHeaderLine('Location') === '/web-novel/test-series');
+        $resChapterList = $this->request('GET', '/manga/test-series/chapters');
+        $this->assert('Chapter-list alias redirects to series detail', $resChapterList->getStatusCode() === 301 && $resChapterList->getHeaderLine('Location') === '/manga/test-series');
 
         $resBlogs = $this->request('GET', '/blogs');
         $this->assert('GET /blogs returns 200 OK', $resBlogs->getStatusCode() === 200);
@@ -195,7 +204,7 @@ class LocaleRegressionSuite
         $this->assert('GET /en redirects 301 to /', $resEnHome->getStatusCode() === 301 && $resEnHome->getHeaderLine('Location') === '/');
 
         $resTrBrowse = $this->request('GET', '/tr/browse');
-        $this->assert('GET /tr/browse redirects 301 to /browse', $resTrBrowse->getStatusCode() === 301 && $resTrBrowse->getHeaderLine('Location') === '/browse');
+        $this->assert('GET /tr/browse redirects 301 to /manga', $resTrBrowse->getStatusCode() === 301 && $resTrBrowse->getHeaderLine('Location') === '/manga');
 
         $resEnBlogs = $this->request('GET', '/en/blogs/test-post');
         $this->assert('GET /en/blogs/test-post redirects 301 to /blogs/test-post', $resEnBlogs->getStatusCode() === 301 && $resEnBlogs->getHeaderLine('Location') === '/blogs/test-post');

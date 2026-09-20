@@ -153,7 +153,7 @@ export const MyBlogsPage: React.FC = () => {
                     </div>
 
                     {isLive ? (
-                      <Link to={`/blog/${b.slug}`}>
+                      <Link to={`/blogs/${b.slug}`}>
                         <h3 className="font-serif text-lg font-semibold text-[var(--text-primary)] hover:text-[var(--accent-color)] transition-colors leading-snug line-clamp-2">
                           {b.title}
                         </h3>
@@ -225,4 +225,3 @@ export const MyBlogsPage: React.FC = () => {
     </div>
   );
 };
-

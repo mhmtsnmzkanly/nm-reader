@@ -40,13 +40,18 @@ final class ContentPageController extends BasePageController
         }
         return $this->render($request, $response, $context, 'Home - ' . $siteName, [
             'title' => $siteName . ' - Manga, Manhwa, Webtoon ve Novel Oku',
-            'description' => 'Manga, manhwa, webtoon ve novel serilerini tek yerde kesfet. Hizli okuma deneyimi ve duzenli guncellemeler.',
+            'description' => 'Manga, manhwa, webtoon ve novel serilerini tek yerde keşfet. Hızlı okuma deneyimi ve düzenli güncellemeler.',
             'keywords' => 'manga oku, manhwa oku, webtoon oku, novel oku, light novel, web novel',
             'type' => 'website',
             'robots' => 'index,follow',
             'json_ld' => [
                 '@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => $siteName,
                 'url' => $this->absoluteUrl($request, '/'), 'inLanguage' => 'tr-TR',
+                'potentialAction' => [
+                    '@type' => 'SearchAction',
+                    'target' => $this->absoluteUrl($request, '/search?q={search_term_string}'),
+                    'query-input' => 'required name=search_term_string',
+                ],
             ],
         ]);
     }
@@ -57,7 +62,7 @@ final class ContentPageController extends BasePageController
         $slug = (string) ($args['slug'] ?? '');
         $userId = isset($_SESSION['user_id']) ? (string) $_SESSION['user_id'] : null;
         $content = $this->seriesRepository->findContentByTypeAndSlug($this->seriesService->toDbType($type), $slug, $userId);
-        if ($content === null) return $response->withStatus(404);
+        if ($content === null) return $this->notFound($request, $response);
         if ((bool) ($content['is_members_only'] ?? false) && $userId === null) {
             throw new \DomainException('MEMBERS_ONLY_REQUIRED: Bu içerik yalnızca kayıtlı üyelere özeldir.');
         }
@@ -69,17 +74,24 @@ final class ContentPageController extends BasePageController
         $releaseYear = (string) ($content['release_year'] ?? '');
         $altTitles = (string) ($content['alternative_titles'] ?? '');
         $jsonLd = [
-            '@context' => 'https://schema.org', '@type' => 'Book', 'name' => $title,
+            '@context' => 'https://schema.org', '@type' => 'CreativeWorkSeries', 'name' => $title,
             'url' => $this->absoluteUrl($request, sprintf('/%s/%s', $type, $slug)),
-            'description' => $description, 'image' => $cover,
+            'description' => $description,
+            'image' => $cover !== '' ? $this->absoluteUrl($request, $cover) : null,
             'datePublished' => (string) ($content['created_at'] ?? gmdate('Y-m-d H:i:s')),
+            'inLanguage' => 'tr-TR',
         ];
+        if ($cover === '') unset($jsonLd['image']);
         if ($altTitles !== '') $jsonLd['alternateName'] = array_map('trim', explode(',', $altTitles));
         if ($author !== '') $jsonLd['author'] = ['@type' => 'Person', 'name' => $author];
-        if (isset($content['rating_avg']) && (float) $content['rating_avg'] > 0) {
+        if (
+            isset($content['rating_avg'], $content['rating_count'])
+            && (float) $content['rating_avg'] > 0
+            && (int) $content['rating_count'] > 0
+        ) {
             $jsonLd['aggregateRating'] = [
                 '@type' => 'AggregateRating', 'ratingValue' => (float) $content['rating_avg'],
-                'reviewCount' => (int) ($content['rating_count'] ?? 1), 'bestRating' => 5, 'worstRating' => 1,
+                'reviewCount' => (int) $content['rating_count'], 'bestRating' => 5, 'worstRating' => 1,
             ];
         }
         $genres = $this->taxonomyFormatter->names((string) ($content['series_genres_raw'] ?? ''));
@@ -89,14 +101,16 @@ final class ContentPageController extends BasePageController
         if ($altTitles !== '') $keywords .= ', ' . $altTitles;
         if ($author !== '') $keywords .= ', ' . $author;
         $seo = [
-            'title' => sprintf('%s - %s Oku', $title, ucfirst($type)),
-            'description' => $description !== '' ? $description : $title . ' detaylari ve bolumleri',
-            'type' => 'book', 'image' => $cover, 'keywords' => $keywords, 'json_ld' => $jsonLd,
+            'title' => sprintf('%s Türkçe Oku - %s', $title, $this->displayType($type)),
+            'description' => $description !== '' ? $description : $title . ' konusu, seri detayları ve güncel bölümleri.',
+            'type' => 'article', 'image' => $cover, 'keywords' => $keywords, 'json_ld' => $jsonLd,
             'canonical' => $this->absoluteUrl($request, sprintf('/%s/%s', $type, $slug)),
         ];
         $content['total_views'] = (int) ($content['total_views'] ?? 0);
         $content['views'] = $content['total_views'];
         $contentBootstrap = OutputSanitizer::sanitizeFields($content, ['title', 'description']);
+        $contentBootstrap['series_genres'] = $this->taxonomyFormatter->items((string) ($content['series_genres_raw'] ?? ''));
+        $contentBootstrap['series_tags'] = $this->taxonomyFormatter->items((string) ($content['series_tags_raw'] ?? ''));
         $chaptersBootstrap = $this->seriesService->chaptersByType($type, $slug, 1, 100, $userId);
         $relatedBootstrap = array_slice(array_values(array_filter(
             $this->seriesService->byType($type, 1, 6, $userId),
@@ -117,18 +131,33 @@ final class ContentPageController extends BasePageController
         $slug = (string) ($args['slug'] ?? '');
         $chapterNumber = (string) ($args['chapterNumber'] ?? '');
         $chapter = $this->chapterRepository->findByTypeSlugAndChapterNumber($this->seriesService->toDbType($type), $slug, $chapterNumber);
-        if ($chapter === null) return $response->withStatus(404);
+        if ($chapter === null) return $this->notFound($request, $response);
         $seriesTitle = (string) ($chapter['series_title'] ?? '');
-        $seoTitle = $seriesTitle . ' - Bolum ' . $chapterNumber;
+        $seoTitle = $seriesTitle . ' Bölüm ' . $chapterNumber . ' Türkçe Oku';
         return $this->render($request, $response, [
             'breadcrumbs' => $this->breadcrumbs($request, 'chapter', [
                 'content_type' => $type, 'content_slug' => $slug, 'content_title' => $seriesTitle,
                 'chapter_number' => $chapterNumber,
             ]),
+            'current_page' => ['route' => 'chapter', 'data' => ['chapter' => $chapter]],
         ], $seoTitle, [
             'title' => $seoTitle . ' - ' . $this->siteConfig->siteName(),
-            'description' => 'Read ' . $seriesTitle . ' chapter ' . $chapterNumber . ' online.',
+            'description' => $seriesTitle . ' Bölüm ' . $chapterNumber . ' Türkçe okuma sayfası.',
             'type' => 'article', 'robots' => 'index,follow',
+            'canonical' => $this->absoluteUrl($request, sprintf('/%s/%s/chapter/%s', $type, $slug, $chapterNumber)),
+            'json_ld' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'Chapter',
+                'name' => $seriesTitle . ' Bölüm ' . $chapterNumber,
+                'isPartOf' => [
+                    '@type' => 'CreativeWorkSeries',
+                    'name' => $seriesTitle,
+                    'url' => $this->absoluteUrl($request, sprintf('/%s/%s', $type, $slug)),
+                ],
+                'url' => $this->absoluteUrl($request, sprintf('/%s/%s/chapter/%s', $type, $slug, $chapterNumber)),
+                'datePublished' => (string) ($chapter['created_at'] ?? ''),
+                'inLanguage' => 'tr-TR',
+            ],
         ]);
     }
 
@@ -138,7 +167,7 @@ final class ContentPageController extends BasePageController
         $query = trim((string) ($request->getQueryParams()['q'] ?? ''));
         return $this->render($request, $response, [], 'Search - ' . $siteName, [
             'title' => $query !== '' ? sprintf('Arama: %s - %s', $query, $siteName) : 'Arama - ' . $siteName,
-            'description' => 'Icerik arama sonuclari.', 'robots' => 'noindex,follow',
+            'description' => 'İçerik arama sonuçları.', 'robots' => 'noindex,follow',
             'canonical' => $this->absoluteUrl($request, '/search'),
         ]);
     }
@@ -156,7 +185,7 @@ final class ContentPageController extends BasePageController
             'tags' => $this->seriesService->series_tags(1, 50),
             default => $this->seriesService->byType($bootstrapType, 1, 10, $userId !== '' ? $userId : null),
         };
-        $display = $type !== '' ? ucwords(str_replace('-', ' ', $type)) : 'Tum';
+        $display = $type !== '' ? $this->displayType($type) : 'Tüm';
         return $this->render($request, $response, [
             'current_page' => [
                 'route' => $contextRoute,
@@ -164,24 +193,33 @@ final class ContentPageController extends BasePageController
             ],
         ], 'Browse - ' . $siteName, [
             'title' => sprintf('%s Serileri - %s', $display, $siteName),
-            'description' => sprintf('%s turundeki serileri listele, incele ve okumaya basla.', $display),
+            'description' => sprintf('%s türündeki manga ve novel serilerini keşfet, incele ve okumaya başla.', $display),
             'type' => 'website', 'robots' => 'index,follow',
         ]);
     }
 
     public function genre(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
-        return $this->taxonomyPage($request, $response, (string) ($args['slug'] ?? ''), 'genre', '%s etiketine ait serileri kesfet.');
+        return $this->taxonomyPage($request, $response, (string) ($args['slug'] ?? ''), 'genre', '%s türündeki serileri keşfedin.');
     }
 
     public function tag(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface
     {
-        return $this->taxonomyPage($request, $response, (string) ($args['slug'] ?? ''), 'tag', '%s tagine ait icerikleri goruntule.');
+        return $this->taxonomyPage($request, $response, (string) ($args['slug'] ?? ''), 'tag', '%s etiketine sahip serileri keşfedin.');
     }
 
     private function taxonomyPage(ServerRequestInterface $request, ResponseInterface $response, string $slug, string $route, string $description): ResponseInterface
     {
-        $display = ucwords(str_replace('-', ' ', $slug));
+        $taxonomy = $this->seriesService->taxonomyBySlug($route, $slug);
+        if ($taxonomy === null) {
+            return $this->notFound($request, $response);
+        }
+        $display = (string) $taxonomy['name'];
+        $uiConfig = (array) ($taxonomy['ui_config'] ?? []);
+        $taxonomyDescription = trim((string) ($uiConfig['description'] ?? ''));
+        if ($taxonomyDescription === '') {
+            $taxonomyDescription = sprintf($description, $display);
+        }
         $userId = isset($_SESSION['user_id']) ? (string) $_SESSION['user_id'] : null;
         $items = $route === 'genre'
             ? $this->seriesService->byGenre($slug, 1, 10, $userId !== '' ? $userId : null)
@@ -190,12 +228,24 @@ final class ContentPageController extends BasePageController
             'breadcrumbs' => $this->breadcrumbs($request, $route, ['name' => $display]),
             'current_page' => [
                 'route' => $route,
-                'data' => ['slug' => $slug, 'items' => $items, 'page' => 1],
+                'data' => ['slug' => $slug, 'taxonomy' => $taxonomy, 'items' => $items, 'page' => 1],
             ],
-        ], ucfirst($route) . ': ' . $slug, [
-            'title' => sprintf('%s: %s - %s', ucfirst($route), $display, $this->siteConfig->siteName()),
-            'description' => sprintf($description, $display), 'robots' => 'index,follow',
+        ], $display . ' Serileri', [
+            'title' => sprintf('%s %s - %s', $display, $route === 'genre' ? 'Türündeki Seriler' : 'Etiketli Seriler', $this->siteConfig->siteName()),
+            'description' => $taxonomyDescription, 'robots' => 'index,follow',
         ]);
     }
 
+    private function displayType(string $type): string
+    {
+        return match (str_replace('_', '-', $type)) {
+            'light-novel' => 'Light Novel',
+            'web-novel' => 'Web Novel',
+            'manhwa' => 'Manhwa',
+            'manhua' => 'Manhua',
+            'webtoon' => 'Webtoon',
+            'manga' => 'Manga',
+            default => 'Novel',
+        };
+    }
 }

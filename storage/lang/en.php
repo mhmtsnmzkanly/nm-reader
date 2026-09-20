@@ -918,6 +918,7 @@ return [
     'admin.taxonomy.genre_created' => 'Genre created',
     'admin.taxonomy.tag_created' => 'Tag created',
     'admin.taxonomy.new_name' => 'New name:',
+    'admin.taxonomy.new_description' => 'Taxonomy description:',
     'admin.taxonomy.updated' => 'Taxonomy updated',
     'admin.taxonomy.merge_target' => 'Target taxonomy ID for this record:',
     'admin.taxonomy.merged' => 'Taxonomies merged',

@@ -1317,7 +1317,7 @@ ${admin_note}</textarea>
     ></template><template id="tpl-panel-rows-taxonomy"
       ><template data-for each="items" as="item"
         ><tr data-taxonomy-row="${item.id}"><td class="text-secondary">${item.id}</td><td><strong>${item.name}</strong
-            ><small class="d-block text-secondary">${item.slug}</small></td><td>${item.usage_count}</td><td class="panel-action-column"><input
+            ><small class="d-block text-secondary">${item.slug}</small><small class="d-block text-secondary text-truncate" style="max-width: 36rem">${item.description}</small></td><td>${item.usage_count}</td><td class="panel-action-column"><input
               type="number"
               min="0"
               class="form-control form-control-sm"
@@ -2377,7 +2377,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?242");
+        const admin = await import("/assets/js/admin/admin.js?245");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {

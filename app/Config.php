@@ -239,6 +239,7 @@ final class Config
             'ENFORCE_HTTPS', 'TRUSTED_PROXIES', 'DB_PERSISTENT', 'DB_HOST', 'DB_PORT',
             'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'DB_CHARSET', 'ROOT_USER',
             'MEDIA_SECRET', 'RESEND_API_KEY', 'GOOGLE_ANALYTICS_ID',
+            'GOOGLE_SITE_VERIFICATION', 'BING_SITE_VERIFICATION', 'YANDEX_SITE_VERIFICATION',
             'GOOGLE_RECAPTCHA_SITE_KEY', 'GOOGLE_RECAPTCHA_SECRET_KEY',
             'CLOUDFLARE_TURNSTILE_SITE_KEY', 'CLOUDFLARE_TURNSTILE_SECRET_KEY',
             'MAIL_FROM_NAME', 'MAIL_FROM_ADDRESS', 'INSTALL_TOKEN',
@@ -680,11 +681,18 @@ final class Config
     public static function getSystemConfig(): array
     {
         self::loadEnvironment();
+        $turnstileSiteKey = trim((string) self::env("CLOUDFLARE_TURNSTILE_SITE_KEY", ""));
+        $turnstileSecretKey = trim((string) self::env("CLOUDFLARE_TURNSTILE_SECRET_KEY", ""));
         return [
             "integrations" => [
                 "google_analytics_id" => (string) self::env("GOOGLE_ANALYTICS_ID", ""),
+                "google_site_verification" => (string) self::env("GOOGLE_SITE_VERIFICATION", ""),
+                "bing_site_verification" => (string) self::env("BING_SITE_VERIFICATION", ""),
+                "yandex_site_verification" => (string) self::env("YANDEX_SITE_VERIFICATION", ""),
                 "google_recaptcha_site_key" => (string) self::env("GOOGLE_RECAPTCHA_SITE_KEY", ""),
-                "cloudflare_turnstile_site_key" => (string) self::env("CLOUDFLARE_TURNSTILE_SITE_KEY", ""),
+                "cloudflare_turnstile_site_key" => $turnstileSiteKey !== '' && $turnstileSecretKey !== ''
+                    ? $turnstileSiteKey
+                    : "",
             ],
         ];
     }
@@ -814,10 +822,13 @@ final class Config
 
     private static function registerWebRoutes(App $app, string $typePattern): void
     {
-        $addWebRoutes = function (RouteCollectorProxy $group, bool $includeHome = true) use ($typePattern): void {
+        $canonicalTypePattern = "light-novel|web-novel|novel|manga|manhua|manhwa|webtoon";
+        $addWebRoutes = function (RouteCollectorProxy $group, bool $includeHome = true) use ($canonicalTypePattern): void {
             if ($includeHome) $group->get("", [ContentPageController::class, "home"]);
-            $group->get("/browse", [ContentPageController::class, "listing"]);
-            $group->get("/browse/{type:" . $typePattern . "}", [ContentPageController::class, "listing"]);
+            $group->get("/browse", fn ($request, $response) => $response->withHeader("Location", "/manga")->withStatus(301));
+            $group->get("/browse/{type:" . $canonicalTypePattern . "}", function ($request, $response, array $args) {
+                return $response->withHeader("Location", "/" . (string) $args['type'])->withStatus(301);
+            });
             $group->get("/genres", [ContentPageController::class, "listing"]);
             $group->get("/tags", [ContentPageController::class, "listing"]);
             $group->get("/library", [ContentPageController::class, "home"]);
@@ -829,15 +840,34 @@ final class Config
             $group->get("/blogs", [BlogPageController::class, "blog"]);
             $group->get("/blogs/new", [ContentPageController::class, "home"]);
             $group->get("/my-blogs", [ContentPageController::class, "home"]);
-            $group->get("/blog/{slug}", [BlogPageController::class, "blog"]);
+            $group->get("/blog/{slug}", function ($request, $response, array $args) {
+                return $response->withHeader("Location", "/blogs/" . rawurlencode((string) $args['slug']))->withStatus(301);
+            });
             $group->get("/blogs/{slug}", [BlogPageController::class, "blog"]);
             $group->get("/search", [ContentPageController::class, "search"]);
             $group->get("/genre/{slug}", [ContentPageController::class, "genre"]);
             $group->get("/tag/{slug}", [ContentPageController::class, "tag"]);
-            $group->get("/{type:" . $typePattern . "}", [ContentPageController::class, "listing"]);
-            $group->get("/{type:" . $typePattern . "}/{slug}/chapter/{chapterNumber}", [ContentPageController::class, "chapter"]);
-            $group->get("/{type:" . $typePattern . "}/{slug}/chapters", [ContentPageController::class, "content"]);
-            $group->get("/{type:" . $typePattern . "}/{slug}", [ContentPageController::class, "content"]);
+            foreach (['light_novel' => 'light-novel', 'web_novel' => 'web-novel'] as $legacy => $canonical) {
+                $group->get('/' . $legacy, fn ($request, $response) => $response->withHeader('Location', '/' . $canonical)->withStatus(301));
+                $group->get('/' . $legacy . '/{slug}', function ($request, $response, array $args) use ($canonical) {
+                    return $response->withHeader('Location', '/' . $canonical . '/' . rawurlencode((string) $args['slug']))->withStatus(301);
+                });
+                $group->get('/' . $legacy . '/{slug}/chapter/{chapterNumber}', function ($request, $response, array $args) use ($canonical) {
+                    return $response->withHeader(
+                        'Location',
+                        '/' . $canonical . '/' . rawurlencode((string) $args['slug']) . '/chapter/' . rawurlencode((string) $args['chapterNumber'])
+                    )->withStatus(301);
+                });
+            }
+            $group->get("/{type:" . $canonicalTypePattern . "}", [ContentPageController::class, "listing"]);
+            $group->get("/{type:" . $canonicalTypePattern . "}/{slug}/chapter/{chapterNumber}", [ContentPageController::class, "chapter"]);
+            $group->get("/{type:" . $canonicalTypePattern . "}/{slug}/chapters", function ($request, $response, array $args) {
+                return $response->withHeader(
+                    'Location',
+                    '/' . (string) $args['type'] . '/' . rawurlencode((string) $args['slug'])
+                )->withStatus(301);
+            });
+            $group->get("/{type:" . $canonicalTypePattern . "}/{slug}", [ContentPageController::class, "content"]);
             $group->get("/login", [AccountPageController::class, "login"]);
             $group->get("/register", [AccountPageController::class, "login"]);
             $group->get("/me", [AccountPageController::class, "profile"]);
@@ -876,7 +906,16 @@ final class Config
                 $res->getBody()->write($payload);
                 return $res->withHeader("Content-Type", "application/json")->withStatus(404);
             }
-            return $res->withHeader("Location", "/" . ltrim($path, "/"))->withStatus(301);
+            $path = ltrim($path, "/");
+            if ($path === 'browse') {
+                $path = 'manga';
+            } elseif (str_starts_with($path, 'browse/')) {
+                $path = substr($path, strlen('browse/'));
+            } elseif (str_starts_with($path, 'blog/')) {
+                $path = 'blogs/' . substr($path, strlen('blog/'));
+            }
+            $path = preg_replace('#^(light|web)_novel(?=/|$)#', '$1-novel', $path) ?? $path;
+            return $res->withHeader("Location", "/" . $path)->withStatus(301);
         });
     }
 

@@ -45,9 +45,23 @@ example.com {
     }
     respond @static_missing 404
 
-    # 4. Cache headers for existing static assets
+    # 4. Cache fingerprinted build assets immutably
+    @immutable_assets {
+        path /assets/js/client/* /assets/css/client/* /assets/fonts/client/*
+        file
+    }
+    header @immutable_assets Cache-Control "public, max-age=31536000, immutable"
+
+    @mutable_assets {
+        path /assets/*
+        not path /assets/js/client/* /assets/css/client/* /assets/fonts/client/*
+        file
+    }
+    header @mutable_assets Cache-Control "public, max-age=3600, must-revalidate"
+
     @static_assets {
-        path /assets/* *.css *.js *.mjs *.map *.json *.png *.jpg *.jpeg *.gif *.webp *.avif *.svg *.ico *.woff *.woff2 *.ttf *.eot *.otf *.mp4 *.webm *.pdf *.zip
+        not path /assets/*
+        path *.png *.jpg *.jpeg *.gif *.webp *.avif *.svg *.ico *.woff *.woff2 *.ttf *.eot *.otf *.mp4 *.webm *.pdf *.zip
         file
     }
     header @static_assets Cache-Control "public, max-age=2592000"

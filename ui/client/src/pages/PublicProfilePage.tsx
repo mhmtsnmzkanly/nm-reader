@@ -141,7 +141,7 @@ export const PublicProfilePage: React.FC = () => {
         />
         <div className="mt-6 flex justify-center">
           <Link
-            to="/browse"
+            to="/manga"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-xs font-mono font-semibold text-[var(--text-primary)] hover:text-[var(--accent-color)] hover:border-[var(--accent-color)] transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -284,7 +284,7 @@ export const PublicProfilePage: React.FC = () => {
                   {blogs.map((b) => (
                     <Link
                       key={b.slug}
-                      to={`/blog/${b.slug}`}
+                      to={`/blogs/${b.slug}`}
                       className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--accent-color)] rounded-2xl flex flex-col justify-between gap-3 group transition-all"
                     >
                       <div>

@@ -16,7 +16,7 @@ export const MobileNav: React.FC = () => {
 
   const navItems = [
     { id: 'home', path: '/', label: t('navigation.home'), icon: Home },
-    { id: 'browse', path: '/browse', label: t('navigation.browse'), icon: Compass },
+    { id: 'browse', path: '/manga', label: t('navigation.browse'), icon: Compass },
     {
       id: 'library',
       path: '/library',
@@ -39,7 +39,9 @@ export const MobileNav: React.FC = () => {
         const Icon = item.icon;
         const isActive =
           item.id === 'browse'
-            ? location.pathname.startsWith('/browse')
+            ? /^\/(?:manga|manhwa|manhua|webtoon|light-novel|web-novel|novel)(?:\/|$)/.test(location.pathname)
+              || location.pathname.startsWith('/genre')
+              || location.pathname.startsWith('/tag')
             : location.pathname === item.path;
 
         if (item.requiresAuth && !isAuthenticated) {

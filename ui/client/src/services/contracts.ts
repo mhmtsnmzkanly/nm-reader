@@ -176,12 +176,14 @@ export interface IAuthService {
   login(
     identity: string,
     password: string,
-    remember?: boolean
+    remember?: boolean,
+    turnstileToken?: string
   ): Promise<ApiResponse<AuthPayload>>;
   register(
     username: string,
     email: string,
-    password: string
+    password: string,
+    turnstileToken?: string
   ): Promise<ApiResponse<{ id: string; username: string; email: string; email_verified?: boolean }>>;
   refresh(): Promise<ApiResponse<AuthPayload>>;
   logout(): Promise<ApiResponse<{ logged_out: boolean }>>;
@@ -190,7 +192,7 @@ export interface IAuthService {
   revokeOtherSessions(): Promise<ApiResponse<{ revoked_count: number }>>;
 
   // Yeni E-posta & Şifre İşlemleri
-  forgotPassword(email: string): Promise<ApiResponse<{ message: string }>>;
+  forgotPassword(email: string, turnstileToken?: string): Promise<ApiResponse<{ message: string }>>;
   resetPassword(token: string, password: string): Promise<ApiResponse<{ id: string; message: string }>>;
   verifyEmail(token: string): Promise<ApiResponse<{ id: string; email_verified: boolean }>>;
   resendVerificationEmail(): Promise<ApiResponse<{ message: string }>>;

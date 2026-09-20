@@ -33,9 +33,12 @@ export const ContentCard: React.FC<ContentCardProps> = ({ content, rank }) => {
           <img
             src={content.cover_image}
             alt={content.title}
+            width={320}
+            height={426}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full bg-[var(--bg-tertiary)] text-[var(--accent-color)] flex items-center justify-center font-serif text-3xl font-bold">

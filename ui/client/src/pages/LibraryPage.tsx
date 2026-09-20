@@ -137,7 +137,7 @@ export const LibraryPage: React.FC = () => {
           </p>
         </div>
 
-        <Link to="/browse">
+        <Link to="/manga">
           <Button variant="outline" size="sm" className="gap-2 cursor-pointer w-full sm:w-auto">
             <Compass className="w-4 h-4 text-[var(--accent-color)]" />
             <span>{t('library.discoverNew')}</span>
@@ -223,7 +223,7 @@ export const LibraryPage: React.FC = () => {
               : t('library.emptyFilteredDesc')
           }
           actionLabel={t('library.exploreCta')}
-          onAction={() => window.location.assign('/browse')}
+          onAction={() => window.location.assign('/manga')}
           icon={<Bookmark className="w-12 h-12 text-[var(--accent-color)]" />}
         />
       ) : (

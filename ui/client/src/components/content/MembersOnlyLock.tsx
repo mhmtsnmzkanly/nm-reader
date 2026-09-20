@@ -147,7 +147,7 @@ export const MembersOnlyLock: React.FC<MembersOnlyLockProps> = ({
 
         <button
           type="button"
-          onClick={() => navigate('/browse')}
+          onClick={() => navigate('/manga')}
           className="mt-1 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:underline inline-flex items-center justify-center gap-1.5 cursor-pointer py-1"
         >
           <Compass className="w-3.5 h-3.5" />

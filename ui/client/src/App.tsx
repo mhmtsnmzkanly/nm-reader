@@ -1,5 +1,6 @@
-import React, { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import ReactGA from 'react-ga4';
 import { AuthProvider } from './contexts/AuthContext';
 import { PreferencesProvider } from './contexts/PreferencesContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -12,6 +13,8 @@ import { EmailVerificationBanner } from './components/common/EmailVerificationBa
 import { MeProvider } from './contexts/MeContext';
 import { SiteConfigProvider } from './contexts/SiteConfigContext';
 
+let initializedAnalyticsId = '';
+
 // Route-level chunks keep the initial app shell small.
 const HomePage = lazy(() => import('./pages/HomePage').then((module) => ({ default: module.HomePage })));
 const BrowsePage = lazy(() => import('./pages/BrowsePage').then((module) => ({ default: module.BrowsePage })));
@@ -21,7 +24,6 @@ const TagDirectoryPage = lazy(() => import('./pages/TagDirectoryPage').then((mod
 const TagResultsPage = lazy(() => import('./pages/TagResultsPage').then((module) => ({ default: module.TagResultsPage })));
 const SearchPage = lazy(() => import('./pages/SearchPage').then((module) => ({ default: module.SearchPage })));
 const ContentDetailPage = lazy(() => import('./pages/ContentDetailPage').then((module) => ({ default: module.ContentDetailPage })));
-const ChapterListPage = lazy(() => import('./pages/ChapterListPage').then((module) => ({ default: module.ChapterListPage })));
 const ReaderPage = lazy(() => import('./pages/ReaderPage').then((module) => ({ default: module.ReaderPage })));
 const BlogListPage = lazy(() => import('./pages/BlogListPage').then((module) => ({ default: module.BlogListPage })));
 const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage').then((module) => ({ default: module.BlogDetailPage })));
@@ -42,6 +44,63 @@ const WalletPage = lazy(() => import('./pages/WalletPage').then((module) => ({ d
 const ShopPage = lazy(() => import('./pages/ShopPage').then((module) => ({ default: module.ShopPage })));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })));
 
+function NavigationEffects() {
+  const location = useLocation();
+  const isInitial = useRef(true);
+  const lastTrackedPage = useRef('');
+  useEffect(() => {
+    const siteName = String(window.__NMR_CONTEXT?.site_config?.site_name || 'NM Reader');
+    if (!isInitial.current) {
+      const segments = location.pathname.split('/').filter(Boolean).map((segment) => decodeURIComponent(segment));
+      const contentPath = /^\/(?:manga|manhwa|manhua|webtoon|light-novel|web-novel|novel)(?:\/[^/]+(?:\/chapter\/[^/]+)?)?$/.test(location.pathname);
+      const publicPath = location.pathname === '/'
+        || /^\/(?:genres|tags|genre\/[^/]+|tag\/[^/]+)$/.test(location.pathname)
+        || /^\/blogs(?:\/(?!new$)[^/]+)?$/.test(location.pathname)
+        || /^\/u\/[^/]+$/.test(location.pathname)
+        || contentPath;
+      const label = segments.length === 0
+        ? siteName
+        : segments.map((segment) => segment.replaceAll('-', ' ')).join(' · ');
+      document.title = `${label.replace(/\b\p{L}/gu, (letter) => letter.toLocaleUpperCase('tr-TR'))} - ${siteName}`;
+      const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+      if (description) {
+        description.content = segments.length === 0
+          ? `${siteName} üzerinde manga, manhwa, webtoon ve novel serilerini keşfet ve Türkçe oku.`
+          : `${label} sayfasını ${siteName} üzerinde keşfet.`;
+      }
+      const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+      if (robots) {
+        robots.content = location.pathname === '/search'
+          ? 'noindex,follow'
+          : publicPath ? 'index,follow' : 'noindex,nofollow';
+      }
+      const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (canonical) canonical.href = `${window.location.origin}${location.pathname}`;
+      const main = document.querySelector<HTMLElement>('main[data-app-main]');
+      main?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    isInitial.current = false;
+    const id = window.__NMR_CONTEXT?.integrations?.google_analytics_id;
+    const page = `${location.pathname}${location.search}`;
+    if (id && /^(?:G|GT|AW)-[A-Z0-9-]+$/.test(id) && lastTrackedPage.current !== page) {
+      if (initializedAnalyticsId !== id) {
+        ReactGA.initialize(id, {
+          gtagOptions: { send_page_view: false },
+        });
+        initializedAnalyticsId = id;
+      }
+      ReactGA.send({
+        hitType: 'pageview',
+        page,
+        title: document.title,
+      });
+      lastTrackedPage.current = page;
+    }
+  }, [location.pathname, location.search]);
+  return null;
+}
+
 export function App() {
   return (
     <SiteConfigProvider>
@@ -50,15 +109,14 @@ export function App() {
           <AuthProvider>
             <NotificationsProvider>
               <Router>
+            <NavigationEffects />
             <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans transition-colors duration-300 selection:bg-[var(--accent-color)] selection:text-white">
               <Header />
               <EmailVerificationBanner />
-              <main className="flex-1 pb-16 sm:pb-0">
+              <main data-app-main tabIndex={-1} className="flex-1 pb-16 sm:pb-0 outline-none">
                 <Suspense fallback={<div className="min-h-[40vh]" aria-busy="true" aria-label="Loading" />}>
                   <Routes>
                     <Route path="/" element={<HomePage />} />
-                    <Route path="/browse" element={<BrowsePage />} />
-                    <Route path="/browse/:type" element={<BrowsePage />} />
                     <Route path="/genres" element={<GenreDirectoryPage />} />
                     <Route path="/genre/:slug" element={<GenreResultsPage />} />
                     <Route path="/tags" element={<TagDirectoryPage />} />
@@ -66,16 +124,13 @@ export function App() {
                     <Route path="/search" element={<SearchPage />} />
 
                     {/* Content Details & Reader */}
-                    {/* Canonical server URLs also expose a one-segment type
-                        listing (e.g. /manga and /web_novel). */}
+                    {/* Canonical one-segment content type routes. */}
                     <Route path="/:type" element={<BrowsePage />} />
                     <Route path="/:type/:slug" element={<ContentDetailPage />} />
-                    <Route path="/:type/:slug/chapters" element={<ChapterListPage />} />
                     <Route path="/:type/:slug/chapter/:chapterNumber" element={<ReaderPage />} />
 
                     {/* Blogs */}
                     <Route path="/blogs" element={<BlogListPage />} />
-                    <Route path="/blog/:slug" element={<BlogDetailPage />} />
                     <Route path="/blogs/:slug" element={<BlogDetailPage />} />
                     <Route path="/my-blogs" element={<MyBlogsPage />} />
                     <Route path="/blogs/new" element={<NewBlogPage />} />

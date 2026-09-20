@@ -319,7 +319,8 @@ final class SeriesService
     public function series_genres(int $page, int $perPage): array
     {
         $cacheKey = sprintf('genres_%d_%d', $page, $perPage);
-        return $this->cache->remember($cacheKey, 180, fn () => $this->series->getGenres($page, $perPage));
+        $items = $this->cache->remember($cacheKey, 180, fn () => $this->series->getGenres($page, $perPage));
+        return $this->decodeTaxonomyUiConfigs($items);
     }
 
     /**
@@ -332,7 +333,28 @@ final class SeriesService
     public function series_tags(int $page, int $perPage): array
     {
         $cacheKey = sprintf('tags_%d_%d', $page, $perPage);
-        return $this->cache->remember($cacheKey, 180, fn () => $this->series->getTags($page, $perPage));
+        $items = $this->cache->remember($cacheKey, 180, fn () => $this->series->getTags($page, $perPage));
+        return $this->decodeTaxonomyUiConfigs($items);
+    }
+
+    public function taxonomyBySlug(string $type, string $slug): ?array
+    {
+        $taxonomy = $this->series->findTaxonomyBySlug($type, $slug);
+        if ($taxonomy === null) return null;
+        return $this->decodeTaxonomyUiConfigs([$taxonomy])[0];
+    }
+
+    private function decodeTaxonomyUiConfigs(array $items): array
+    {
+        return array_map(static function (array $item): array {
+            $config = $item['ui_config'] ?? null;
+            if (is_string($config)) {
+                $decoded = json_decode($config, true);
+                $config = is_array($decoded) ? $decoded : [];
+            }
+            $item['ui_config'] = is_array($config) ? $config : [];
+            return $item;
+        }, $items);
     }
 
     /**

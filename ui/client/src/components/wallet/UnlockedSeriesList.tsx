@@ -79,7 +79,7 @@ export const UnlockedSeriesList: React.FC = () => {
             {t('unlocks.emptySeriesDesc')}
           </p>
           <Link
-            to="/browse"
+            to="/manga"
             className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--accent-color)] text-white text-xs font-semibold hover:opacity-90 transition-opacity"
           >
             <span>{t('common.exploreNew')}</span>

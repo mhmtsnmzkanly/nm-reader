@@ -157,14 +157,22 @@ final class ContentController extends AdminController
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::created($this->contentService->createGenre((string) ($payload['name'] ?? ''), $modId));
+            return ResponseHelper::created($this->contentService->createGenre(
+                (string) ($payload['name'] ?? ''),
+                $modId,
+                (array) ($payload['ui_config'] ?? [])
+            ));
         }
     
     public function createTag(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
         {
             $payload = (array) $request->getParsedBody();
             $modId = (string) $request->getAttribute('user_id');
-            return ResponseHelper::created($this->contentService->createTag((string) ($payload['name'] ?? ''), $modId));
+            return ResponseHelper::created($this->contentService->createTag(
+                (string) ($payload['name'] ?? ''),
+                $modId,
+                (array) ($payload['ui_config'] ?? [])
+            ));
         }
     
     public function editTaxonomy(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

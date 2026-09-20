@@ -79,7 +79,7 @@ export const BrowsePage: React.FC = () => {
   }, [normalizedType, page, perPage, sortBy]);
 
   const handleTypeChange = (newType: ContentType) => {
-    navigate(`/browse/${newType}?page=1`);
+    navigate(`/${newType}?page=1`);
   };
 
   const handlePageChange = (newPage: number) => {

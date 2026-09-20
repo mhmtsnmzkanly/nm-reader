@@ -120,8 +120,12 @@ final class WebPageRenderer
                 'card' => 'summary_large_image',
             ],
             'jsonLd' => $finalJsonLd,
+            'googleSiteVerification' => $contextPayload['integrations']['google_site_verification'] ?? '',
+            'bingSiteVerification' => $contextPayload['integrations']['bing_site_verification'] ?? '',
+            'yandexSiteVerification' => $contextPayload['integrations']['yandex_site_verification'] ?? '',
         ];
-        $layoutContent = $this->seoService->renderShell($seoData, $contextJson);
+        $initialContent = $this->seoService->renderInitialContent($contextPayload);
+        $layoutContent = $this->seoService->renderShell($seoData, $contextJson, $initialContent);
 
         $cacheControl = !empty($authContext['is_logged_in'])
             ? 'private, max-age=0, must-revalidate'

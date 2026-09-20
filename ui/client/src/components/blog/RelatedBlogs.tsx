@@ -101,7 +101,7 @@ export const RelatedBlogs: React.FC<RelatedBlogsProps> = ({ currentBlogId, slug,
           {relatedList.map((blog) => (
             <Link
               key={blog.id}
-              to={`/blog/${blog.slug || blog.id}`}
+              to={`/blogs/${blog.slug || blog.id}`}
               className="bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--accent-color)]/60 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
             >
               {/* Cover Image */}
@@ -110,8 +110,12 @@ export const RelatedBlogs: React.FC<RelatedBlogsProps> = ({ currentBlogId, slug,
                   <img
                     src={blog.cover_image}
                     alt={blog.title}
+                    width={320}
+                    height={180}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <div className="w-full h-full bg-[var(--accent-light)] text-[var(--accent-color)] flex items-center justify-center font-serif font-bold text-lg">

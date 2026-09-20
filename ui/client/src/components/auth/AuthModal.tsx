@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePreferences } from '../../contexts/PreferencesContext';
 import { authService } from '../../services';
 import { Button } from '../ui/Button';
+import { TurnstileField } from './TurnstileField';
 
 export const AuthModal: React.FC = () => {
   const { t } = usePreferences();
@@ -29,6 +30,11 @@ export const AuthModal: React.FC = () => {
   const [forgotError, setForgotError] = useState<string | null>(null);
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
   const [isForgotLoading, setIsForgotLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const turnstileEnabled = Boolean(
+    window.__NMR_CONTEXT?.integrations?.cloudflare_turnstile_site_key?.trim(),
+  );
 
   useEffect(() => {
     setActiveTab(authModalTab);
@@ -37,7 +43,14 @@ export const AuthModal: React.FC = () => {
     setRegSuccess(null);
     setForgotError(null);
     setForgotSuccess(null);
+    setTurnstileToken('');
+    setTurnstileResetKey((value) => value + 1);
   }, [authModalTab, isAuthModalOpen]);
+
+  useEffect(() => {
+    setTurnstileToken('');
+    setTurnstileResetKey((value) => value + 1);
+  }, [activeTab]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -53,12 +66,12 @@ export const AuthModal: React.FC = () => {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginIdentity || !loginPassword || isLoginLoading) return;
+    if (!loginIdentity || !loginPassword || isLoginLoading || (turnstileEnabled && !turnstileToken)) return;
 
     setLoginError(null);
     setIsLoginLoading(true);
     try {
-      const success = await login(loginIdentity, loginPassword, true);
+      const success = await login(loginIdentity, loginPassword, true, turnstileToken);
       if (success) {
         closeAuthModal();
         setLoginIdentity('');
@@ -70,23 +83,30 @@ export const AuthModal: React.FC = () => {
       setLoginError(t('auth.generalError'));
     } finally {
       setIsLoginLoading(false);
+      setTurnstileToken('');
+      setTurnstileResetKey((value) => value + 1);
     }
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regUsername || !regEmail || !regPassword || isRegLoading) return;
+    if (!regUsername || !regEmail || !regPassword || isRegLoading || (turnstileEnabled && !turnstileToken)) return;
 
     setRegError(null);
     setRegSuccess(null);
     setIsRegLoading(true);
     try {
-      const success = await register(regUsername, regEmail, regPassword);
+      const success = await register(regUsername, regEmail, regPassword, turnstileToken);
       if (success) {
-        setRegSuccess(t('auth.registerSuccess'));
+        setRegSuccess(t(turnstileEnabled ? 'auth.registerSuccessManual' : 'auth.registerSuccess'));
         setTimeout(async () => {
-          await login(regEmail, regPassword, true);
-          closeAuthModal();
+          if (turnstileEnabled) {
+            setLoginIdentity(regEmail);
+            setActiveTab('login');
+          } else {
+            await login(regEmail, regPassword, true);
+            closeAuthModal();
+          }
           setRegUsername('');
           setRegEmail('');
           setRegPassword('');
@@ -99,18 +119,20 @@ export const AuthModal: React.FC = () => {
       setRegError(t('auth.generalError'));
     } finally {
       setIsRegLoading(false);
+      setTurnstileToken('');
+      setTurnstileResetKey((value) => value + 1);
     }
   };
 
   const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail || isForgotLoading) return;
+    if (!forgotEmail || isForgotLoading || (turnstileEnabled && !turnstileToken)) return;
 
     setForgotError(null);
     setForgotSuccess(null);
     setIsForgotLoading(true);
     try {
-      const res = await authService.forgotPassword(forgotEmail);
+      const res = await authService.forgotPassword(forgotEmail, turnstileToken);
       if (res.status === 'success') {
         setForgotSuccess(res.data.message || t('auth.resetLinkSent'));
       } else {
@@ -120,7 +142,16 @@ export const AuthModal: React.FC = () => {
       setForgotError(t('auth.generalError'));
     } finally {
       setIsForgotLoading(false);
+      setTurnstileToken('');
+      setTurnstileResetKey((value) => value + 1);
     }
+  };
+
+  const handleTurnstileError = () => {
+    const message = t('auth.securityCheckFailed');
+    if (activeTab === 'login') setLoginError(message);
+    if (activeTab === 'register') setRegError(message);
+    if (activeTab === 'forgot-password') setForgotError(message);
   };
 
   return (
@@ -252,12 +283,19 @@ export const AuthModal: React.FC = () => {
               />
             </div>
 
+            <TurnstileField
+              action="login"
+              resetKey={turnstileResetKey}
+              onToken={setTurnstileToken}
+              onError={handleTurnstileError}
+            />
+
             <Button
               type="submit"
               variant="gold"
               size="lg"
               isLoading={isLoginLoading}
-              disabled={!loginIdentity || !loginPassword}
+              disabled={!loginIdentity || !loginPassword || (turnstileEnabled && !turnstileToken)}
               fullWidth
               className="mt-2 bg-[var(--accent-color)] text-white hover:opacity-90 cursor-pointer"
             >
@@ -345,12 +383,19 @@ export const AuthModal: React.FC = () => {
               />
             </div>
 
+            <TurnstileField
+              action="register"
+              resetKey={turnstileResetKey}
+              onToken={setTurnstileToken}
+              onError={handleTurnstileError}
+            />
+
             <Button
               type="submit"
               variant="gold"
               size="lg"
               isLoading={isRegLoading}
-              disabled={!regUsername || !regEmail || !regPassword}
+              disabled={!regUsername || !regEmail || !regPassword || (turnstileEnabled && !turnstileToken)}
               fullWidth
               className="mt-2 bg-[var(--accent-color)] text-white hover:opacity-90 cursor-pointer"
             >
@@ -411,12 +456,19 @@ export const AuthModal: React.FC = () => {
                   </div>
                 </div>
 
+                <TurnstileField
+                  action="forgot_password"
+                  resetKey={turnstileResetKey}
+                  onToken={setTurnstileToken}
+                  onError={handleTurnstileError}
+                />
+
                 <Button
                   type="submit"
                   variant="gold"
                   size="lg"
                   isLoading={isForgotLoading}
-                  disabled={!forgotEmail}
+                  disabled={!forgotEmail || (turnstileEnabled && !turnstileToken)}
                   fullWidth
                   className="mt-2 bg-[var(--accent-color)] text-white hover:opacity-90 cursor-pointer"
                 >
@@ -445,4 +497,3 @@ export const AuthModal: React.FC = () => {
     </div>
   );
 };
-

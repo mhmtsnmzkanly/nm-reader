@@ -449,7 +449,7 @@ final class BlogRepository
     {
         $sql = 'SELECT
                     slug,
-                    COALESCE(approved_at, created_at) AS lastmod
+                    COALESCE(updated_at, approved_at, created_at) AS lastmod
                 FROM blogs
                 WHERE approved = 1' . $this->deletedAtCondition() . '
                 ORDER BY COALESCE(approved_at, created_at) DESC

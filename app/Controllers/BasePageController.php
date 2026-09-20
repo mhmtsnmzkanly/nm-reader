@@ -40,6 +40,22 @@ abstract class BasePageController
         return $this->renderer->truncateDescription($value, $limit);
     }
 
+    protected function notFound(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $siteName = $this->siteConfig->siteName();
+        return $this->render(
+            $request,
+            $response,
+            ['current_page' => ['route' => 'error', 'data' => ['code' => 404]]],
+            'Sayfa Bulunamadı - ' . $siteName,
+            [
+                'title' => 'Sayfa Bulunamadı - ' . $siteName,
+                'description' => 'Aradığınız sayfa bulunamadı.',
+                'robots' => 'noindex,nofollow',
+            ],
+        )->withStatus(404);
+    }
+
     /** @return list<array<string,mixed>> */
     protected function breadcrumbs(ServerRequestInterface $request, string $route, array $data = []): array
     {

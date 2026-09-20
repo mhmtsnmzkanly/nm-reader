@@ -114,7 +114,10 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
           <img
             src={bannerUrl}
             alt=""
+            width={1280}
+            height={720}
             referrerPolicy="no-referrer"
+            decoding="async"
             className="w-full h-full object-cover object-center blur-md scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--bg-card)]/80 to-[var(--bg-card)]" />
@@ -180,7 +183,11 @@ export const ContentHero: React.FC<ContentHeroProps> = ({
                 <img
                   src={coverUrl}
                   alt={content.title}
+                  width={480}
+                  height={640}
                   referrerPolicy="no-referrer"
+                  fetchPriority="high"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (

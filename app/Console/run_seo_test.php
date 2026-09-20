@@ -60,7 +60,8 @@ $html = $seoService->renderShell([
         'image' => 'https://nmreader.com/media/public/cover.default.webp',
         'card' => 'summary_large_image'
     ],
-    'jsonLd' => $seoService->buildWebSiteSchema('NM-Reader', 'https://nmreader.com')
+    'jsonLd' => $seoService->buildWebSiteSchema('NM-Reader', 'https://nmreader.com'),
+    'yandexSiteVerification' => 'yandex-test-token_123',
 ]);
 
 assertTest(str_contains($html, '<title>Test Homepage — NM-Reader</title>'), 'Title tag injected correctly');
@@ -70,6 +71,7 @@ assertTest(str_contains($html, '<link rel="canonical" href="https://nmreader.com
 assertTest(str_contains($html, '<meta property="og:title" content="Test Homepage — NM-Reader" />'), 'OG title injected');
 assertTest(str_contains($html, '<meta name="twitter:card" content="summary_large_image" />'), 'Twitter card injected');
 assertTest(str_contains($html, '<script type="application/ld+json">'), 'JSON-LD script block injected');
+assertTest(str_contains($html, '<meta name="yandex-verification" content="yandex-test-token_123" />'), 'Yandex verification tag injected');
 assertTest(!preg_match('/<!--\s*SEO:[A-Z_]+\s*-->/', $html), 'Zero raw SEO comment placeholders left in output');
 
 // Duplicate check
@@ -204,6 +206,47 @@ $html404 = $seoService->renderShell([
     'robots' => 'noindex, nofollow'
 ]);
 assertTest(str_contains($html404, '<meta name="robots" content="noindex, nofollow" />'), '404 error page sets noindex, nofollow');
+
+// -----------------------------------------------------------------
+// 6. Crawlable Initial HTML
+// -----------------------------------------------------------------
+echo "\n6. Testing Crawlable Initial HTML...\n";
+$homeContent = $seoService->renderInitialContent([
+    'site_config' => ['site_name' => 'NM-Reader', 'site_description' => 'Türkçe okuma platformu'],
+    'current_page' => ['route' => 'home', 'data' => [
+        'explore' => [[
+            'title' => 'Örnek Seri',
+            'slug' => 'ornek-seri',
+            'type' => 'web_novel',
+            'description' => 'Örnek açıklama',
+        ]],
+    ]],
+]);
+$homeShell = $seoService->renderShell(['title' => 'Ana Sayfa'], null, $homeContent);
+assertTest(str_contains($homeShell, 'data-server-rendered="true"'), 'Initial HTML is injected into the React root');
+assertTest(str_contains($homeShell, '<h1>NM-Reader — Manga, Manhwa, Webtoon ve Novel Oku</h1>'), 'Home initial HTML contains a meaningful H1');
+assertTest(str_contains($homeShell, 'href="/web-novel/ornek-seri"'), 'Initial content links use canonical type paths');
+
+$detailContent = $seoService->renderInitialContent([
+    'current_page' => ['route' => 'content', 'data' => [
+        'type' => 'manhwa',
+        'slug' => 'ornek-seri',
+        'content' => [
+            'title' => 'Örnek Seri',
+            'description' => 'Detaylı seri konusu.',
+            'series_genres' => [['name' => 'Aksiyon', 'slug' => 'aksiyon']],
+        ],
+        'chapters' => [['chapter_number' => '12']],
+    ]],
+]);
+assertTest(str_contains($detailContent, 'Detaylı seri konusu.'), 'Series initial HTML contains its description');
+assertTest(str_contains($detailContent, 'href="/genre/aksiyon"'), 'Series initial HTML contains taxonomy links');
+assertTest(str_contains($detailContent, 'href="/manhwa/ornek-seri/chapter/12"'), 'Series initial HTML contains chapter links');
+
+$errorContent = $seoService->renderInitialContent([
+    'current_page' => ['route' => 'error', 'data' => ['code' => 404]],
+]);
+assertTest(str_contains($errorContent, '<h1>Sayfa Bulunamadı</h1>'), '404 initial HTML contains a visible H1');
 
 echo "\n==============================================================\n";
 echo "TOTAL SEO TESTS: {$totalTests} | PASSED: {$passedTests} | FAILED: {$failedTests}\n";

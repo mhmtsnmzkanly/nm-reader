@@ -6,19 +6,27 @@ export class ApiAuthService implements IAuthService {
   async login(
     identity: string,
     password: string,
-    remember = false
+    remember = false,
+    turnstileToken = ''
   ): Promise<ApiResponse<AuthPayload>> {
-    return api.post<AuthPayload>('/auth/login', { identity, email: identity, password, remember });
+    return api.post<AuthPayload>('/auth/login', {
+      identity,
+      email: identity,
+      password,
+      remember,
+      turnstile_token: turnstileToken,
+    });
   }
 
   async register(
     username: string,
     email: string,
-    password: string
+    password: string,
+    turnstileToken = ''
   ): Promise<ApiResponse<{ id: string; username: string; email: string; email_verified?: boolean }>> {
     return api.post<{ id: string; username: string; email: string; email_verified?: boolean }>(
       '/auth/register',
-      { username, email, password }
+      { username, email, password, turnstile_token: turnstileToken }
     );
   }
 
@@ -42,8 +50,8 @@ export class ApiAuthService implements IAuthService {
     return api.post<{ revoked_count: number }>('/auth/sessions/revoke-others');
   }
 
-  async forgotPassword(email: string): Promise<ApiResponse<{ message: string }>> {
-    return api.post<{ message: string }>('/auth/forgot-password', { email });
+  async forgotPassword(email: string, turnstileToken = ''): Promise<ApiResponse<{ message: string }>> {
+    return api.post<{ message: string }>('/auth/forgot-password', { email, turnstile_token: turnstileToken });
   }
 
   async resetPassword(

@@ -16,12 +16,27 @@ declare global {
         notifications?: MeData['notifications'];
       };
       site_config?: Record<string, any>;
+      integrations?: {
+        google_analytics_id?: string;
+        cloudflare_turnstile_site_key?: string;
+      };
+      lang_code?: string;
       current_page?: {
         route?: string;
         data?: {
           home?: HomeData;
           type?: string;
           slug?: string;
+          taxonomy?: {
+            id: number | string;
+            name: string;
+            slug: string;
+            ui_config?: {
+              icon?: string;
+              color?: string;
+              description?: string;
+            };
+          };
           content?: ContentDetail;
           chapters?: ContentDetailChapter[];
           related?: ContentSummary[];

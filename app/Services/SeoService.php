@@ -30,7 +30,7 @@ class SeoService
      *   jsonLd?: array|object|null
      * } $seo
      */
-    public function renderShell(array $seo = [], ?string $contextJson = null): string
+    public function renderShell(array $seo = [], ?string $contextJson = null, string $initialContent = ''): string
     {
         $appHtmlPath = $this->basePath . '/public/app.html';
         if (!file_exists($appHtmlPath)) {
@@ -71,6 +71,21 @@ class SeoService
         $metaTags = "<meta name=\"description\" content=\"{$escapedDescription}\" />\n    <meta name=\"robots\" content=\"{$escapedRobots}\" />";
         if (str_contains($html, '<!-- SEO:META -->')) {
             $html = str_replace('<!-- SEO:META -->', $metaTags, $html);
+        }
+
+        $verificationTags = [];
+        foreach ([
+            'google-site-verification' => $seo['googleSiteVerification'] ?? '',
+            'msvalidate.01' => $seo['bingSiteVerification'] ?? '',
+            'yandex-verification' => $seo['yandexSiteVerification'] ?? '',
+        ] as $name => $value) {
+            $value = trim((string) $value);
+            if ($value !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $value)) {
+                $verificationTags[] = '<meta name="' . $name . '" content="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '" />';
+            }
+        }
+        if ($verificationTags !== [] && str_contains($html, '</head>')) {
+            $html = str_replace('</head>', '  ' . implode("\n  ", $verificationTags) . "\n  </head>", $html);
         }
 
         // 4. Inject Canonical
@@ -177,6 +192,16 @@ class SeoService
             } else if (str_contains($html, '</head>')) {
                 $html = str_replace('</head>', "  {$contextTag}\n  </head>", $html);
             }
+
+        }
+
+        if ($initialContent !== '') {
+            $html = preg_replace(
+                '/<div id="root"><\/div>/',
+                '<div id="root">' . $initialContent . '</div>',
+                $html,
+                1,
+            ) ?? $html;
         }
 
         // 9. Clean up any leftover SEO comment placeholders
@@ -185,12 +210,144 @@ class SeoService
         return $html;
     }
 
+    public function renderInitialContent(array $context): string
+    {
+        $page = is_array($context['current_page'] ?? null) ? $context['current_page'] : [];
+        $route = (string) ($page['route'] ?? '');
+        $data = is_array($page['data'] ?? null) ? $page['data'] : [];
+        if ($route === '') return '';
+
+        $escape = static fn (mixed $value): string => htmlspecialchars(
+            trim(strip_tags((string) $value)),
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8',
+        );
+        $text = static function (mixed $value, int $limit = 500) use ($escape): string {
+            $clean = trim(preg_replace('/[#*_>`~\[\]]+/', ' ', strip_tags((string) $value)) ?? '');
+            $clean = trim(preg_replace('/\s+/', ' ', $clean) ?? '');
+            if (mb_strlen($clean) > $limit) $clean = rtrim(mb_substr($clean, 0, $limit - 1)) . '…';
+            return $escape($clean);
+        };
+        $path = static function (array $item): string {
+            $candidate = (string) ($item['url_path'] ?? '');
+            if ($candidate !== '' && str_starts_with($candidate, '/')) return $candidate;
+            $type = str_replace('_', '-', (string) ($item['type_path'] ?? ($item['type'] ?? 'novel')));
+            $slug = rawurlencode((string) ($item['slug'] ?? ''));
+            return $slug === '' ? '#' : '/' . rawurlencode($type) . '/' . $slug;
+        };
+        $cards = static function (array $items, string $heading) use ($escape, $text, $path): string {
+            if ($items === []) return '';
+            $html = '<section><h2>' . $escape($heading) . '</h2><ul>';
+            foreach (array_slice($items, 0, 20) as $item) {
+                if (!is_array($item)) continue;
+                $title = $escape($item['title'] ?? ($item['series_title'] ?? ''));
+                if ($title === '') continue;
+                $href = $path($item);
+                $cover = trim((string) ($item['cover_image'] ?? ($item['cover'] ?? '')));
+                $html .= '<li><article>';
+                if ($cover !== '' && !str_contains($cover, '/media/chapter/')) {
+                    $html .= '<a href="' . $escape($href) . '" tabindex="-1"><img src="' . $escape($cover)
+                        . '" alt="' . $title . '" width="240" height="320" loading="lazy" decoding="async"></a>';
+                }
+                $html .= '<h3><a href="' . $escape($href) . '">' . $title . '</a></h3>';
+                $summary = $text($item['description'] ?? ($item['summary'] ?? ''), 220);
+                if ($summary !== '') $html .= '<p>' . $summary . '</p>';
+                $html .= '</article></li>';
+            }
+            return $html . '</ul></section>';
+        };
+
+        $html = '<main id="server-content" data-server-rendered="true">';
+        if ($route === 'home') {
+            $html .= '<h1>' . $escape(($context['site_config']['site_name'] ?? 'NM Reader') . ' — Manga, Manhwa, Webtoon ve Novel Oku') . '</h1>';
+            $html .= '<p>' . $text($context['site_config']['site_description'] ?? '', 300) . '</p>';
+            $html .= $cards((array) ($data['explore'] ?? []), 'Öne Çıkan Seriler');
+            $html .= $cards((array) ($data['recently_added'] ?? []), 'Yeni Eklenen Seriler');
+            $recent = [];
+            foreach ((array) ($data['recent_chapters'] ?? []) as $chapter) {
+                if (!is_array($chapter)) continue;
+                $chapter['title'] = ($chapter['series_title'] ?? '') . ' Bölüm ' . ($chapter['chapter_number'] ?? '');
+                $chapter['url_path'] = $path($chapter) . '/chapter/' . rawurlencode((string) ($chapter['chapter_number'] ?? ''));
+                $recent[] = $chapter;
+            }
+            $html .= $cards($recent, 'Son Güncellenen Bölümler');
+        } elseif (in_array($route, ['listing', 'genre', 'tag'], true)) {
+            $taxonomy = is_array($data['taxonomy'] ?? null) ? $data['taxonomy'] : [];
+            $name = (string) ($taxonomy['name'] ?? str_replace('-', ' ', (string) ($data['type'] ?? $data['slug'] ?? 'Seriler')));
+            $config = is_array($taxonomy['ui_config'] ?? null) ? $taxonomy['ui_config'] : [];
+            $html .= '<h1>' . $escape(ucwords($name) . ' Serileri') . '</h1>';
+            if (!empty($config['description'])) $html .= '<p>' . $text($config['description'], 500) . '</p>';
+            $html .= $cards((array) ($data['items'] ?? []), 'Seriler');
+        } elseif ($route === 'content') {
+            $content = is_array($data['content'] ?? null) ? $data['content'] : [];
+            $title = $escape($content['title'] ?? '');
+            $html .= '<article><h1>' . $title . '</h1>';
+            $cover = trim((string) ($content['cover_image'] ?? ''));
+            if ($cover !== '') {
+                $html .= '<img src="' . $escape($cover) . '" alt="' . $title . ' kapak görseli" width="360" height="480" fetchpriority="high">';
+            }
+            if (!empty($content['description'])) $html .= '<p>' . $text($content['description'], 1200) . '</p>';
+            foreach (['series_genres' => 'genre', 'series_tags' => 'tag'] as $key => $segment) {
+                if (!is_array($content[$key] ?? null) || $content[$key] === []) continue;
+                $html .= '<ul>';
+                foreach ($content[$key] as $taxonomy) {
+                    if (!is_array($taxonomy) || empty($taxonomy['slug'])) continue;
+                    $html .= '<li><a href="/' . $segment . '/' . rawurlencode((string) $taxonomy['slug']) . '">'
+                        . $escape($taxonomy['name'] ?? $taxonomy['slug']) . '</a></li>';
+                }
+                $html .= '</ul>';
+            }
+            $html .= '</article>';
+            $chapters = (array) ($data['chapters'] ?? []);
+            if ($chapters !== []) {
+                $type = rawurlencode(str_replace('_', '-', (string) ($data['type'] ?? 'novel')));
+                $slug = rawurlencode((string) ($data['slug'] ?? ''));
+                $html .= '<section><h2>Bölümler</h2><ol>';
+                foreach (array_slice($chapters, 0, 100) as $chapter) {
+                    if (!is_array($chapter)) continue;
+                    $number = (string) ($chapter['chapter_number'] ?? ($chapter['number'] ?? ''));
+                    if ($number === '') continue;
+                    $html .= '<li><a href="/' . $type . '/' . $slug . '/chapter/' . rawurlencode($number) . '">'
+                        . $title . ' Bölüm ' . $escape($number) . '</a></li>';
+                }
+                $html .= '</ol></section>';
+            }
+            $html .= $cards((array) ($data['related'] ?? []), 'Benzer Seriler');
+        } elseif ($route === 'chapter') {
+            $chapter = is_array($data['chapter'] ?? null) ? $data['chapter'] : [];
+            $title = (string) ($chapter['series_title'] ?? '');
+            $number = (string) ($chapter['chapter_number'] ?? '');
+            $html .= '<article><h1>' . $escape($title . ' Bölüm ' . $number) . '</h1>';
+            $html .= '<p><a href="/' . rawurlencode(str_replace('_', '-', (string) ($chapter['series_type'] ?? 'novel')))
+                . '/' . rawurlencode((string) ($chapter['series_slug'] ?? '')) . '">' . $escape($title) . ' seri sayfasına dön</a></p></article>';
+        } elseif ($route === 'blog') {
+            $blog = is_array($data['blog'] ?? null) ? $data['blog'] : [];
+            $html .= '<article><h1>' . $escape($blog['title'] ?? 'Blog') . '</h1>';
+            if (!empty($blog['cover_image'])) {
+                $html .= '<img src="' . $escape($blog['cover_image']) . '" alt="' . $escape($blog['title'] ?? 'Blog')
+                    . '" width="960" height="540" fetchpriority="high">';
+            }
+            $html .= '<p>' . $text($blog['body'] ?? ($blog['excerpt'] ?? ''), 1500) . '</p></article>';
+        } elseif ($route === 'blogs') {
+            $html .= '<h1>NM Reader Blog</h1>';
+            $html .= $cards((array) ($data['items'] ?? []), 'Son Yazılar');
+        } elseif ($route === 'error') {
+            $html .= '<h1>Sayfa Bulunamadı</h1><p>Aradığınız içerik kaldırılmış, taşınmış veya hiç var olmamış olabilir.</p>'
+                . '<p><a href="/">Ana sayfaya dön</a></p>';
+        }
+
+        return $html . '</main>';
+    }
+
     /**
      * Sanitizes plain text inputs for SEO strings.
      */
     public function sanitizeText(string $text): string
     {
         $clean = strip_tags($text);
+        $clean = preg_replace('/(?:^|\s)[#*_>`~]+/u', ' ', $clean);
+        $clean = preg_replace('/!\[([^\]]*)\]\([^)]+\)/u', '$1', (string) $clean);
+        $clean = preg_replace('/\[([^\]]+)\]\([^)]+\)/u', '$1', (string) $clean);
         $clean = preg_replace('/\s+/', ' ', $clean);
         return trim((string) $clean);
     }

@@ -13,13 +13,16 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
   return (
     <div className="group bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--accent-color)] rounded-2xl overflow-hidden transition-all duration-300 flex flex-col justify-between h-full shadow-sm hover:shadow-lg">
       {blog.cover_image && (
-        <Link to={`/blog/${blog.slug}`} className="relative aspect-[16/9] overflow-hidden bg-[var(--bg-tertiary)]">
+        <Link to={`/blogs/${blog.slug}`} className="relative aspect-[16/9] overflow-hidden bg-[var(--bg-tertiary)]">
           <img
             src={blog.cover_image}
             alt={blog.title}
+            width={640}
+            height={360}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-card)] via-transparent to-transparent opacity-60" />
         </Link>
@@ -36,7 +39,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
             </div>
           </div>
 
-          <Link to={`/blog/${blog.slug}`}>
+          <Link to={`/blogs/${blog.slug}`}>
             <h3 className="font-serif text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors leading-snug line-clamp-2">
               {blog.title}
             </h3>

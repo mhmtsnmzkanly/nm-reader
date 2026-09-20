@@ -349,7 +349,7 @@ export const ProfilePage: React.FC = () => {
                   </p>
                 </div>
                 <Link
-                  to="/browse"
+                  to="/manga"
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] hover:border-[var(--accent-color)] text-xs font-mono font-semibold text-[var(--text-primary)] hover:text-[var(--accent-color)] transition-all"
                 >
                   <Compass className="w-3.5 h-3.5" />
@@ -374,7 +374,7 @@ export const ProfilePage: React.FC = () => {
                   </p>
                 </div>
                 <Link
-                  to="/browse"
+                  to="/manga"
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-color)] hover:border-[var(--accent-color)] text-xs font-mono font-semibold text-[var(--text-primary)] hover:text-[var(--accent-color)] transition-all"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[var(--accent-color)]" />

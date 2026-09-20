@@ -3,10 +3,31 @@ import { Link } from 'react-router-dom';
 import { Sparkles, Hash } from 'lucide-react';
 import { Genre, Tag } from '../../types/api';
 import { usePreferences } from '../../contexts/PreferencesContext';
+import { TaxonomyIcon, taxonomyColor } from '../taxonomy/TaxonomyIcon';
 
 type ContentGenresTagsProps = {
   genres?: Genre[];
   tags?: Tag[];
+};
+
+const TaxonomyPill: React.FC<{
+  item: Genre | Tag;
+  path: 'genre' | 'tag';
+}> = ({ item, path }) => {
+  const color = taxonomyColor(item.ui_config?.color);
+  return (
+    <Link
+      to={`/${path}/${item.slug}`}
+      className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-sm"
+      style={{ color, borderColor: `${color}55`, backgroundColor: `${color}12` }}
+    >
+      <TaxonomyIcon name={item.ui_config?.icon} className="h-3.5 w-3.5" />
+      <span>{path === 'tag' ? '#' : ''}{item.name}</span>
+      {item.content_count !== undefined && (
+        <span className="text-[10px] opacity-70 font-mono">({item.content_count})</span>
+      )}
+    </Link>
+  );
 };
 
 export const ContentGenresTags: React.FC<ContentGenresTagsProps> = ({
@@ -30,17 +51,8 @@ export const ContentGenresTags: React.FC<ContentGenresTagsProps> = ({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {genres.map((g) => (
-              <Link
-                key={`genre-${g.id || g.slug}`}
-                to={`/genre/${g.slug}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[var(--accent-light)] text-[var(--accent-color)] border border-[var(--accent-border)] hover:opacity-90 hover:scale-102 transition-all shadow-2xs"
-              >
-                <span>{g.name}</span>
-                {g.content_count !== undefined && (
-                  <span className="text-[10px] opacity-70 font-mono">({g.content_count})</span>
-                )}
-              </Link>
+            {genres.map((genre) => (
+              <TaxonomyPill key={`genre-${genre.id || genre.slug}`} item={genre} path="genre" />
             ))}
           </div>
         </div>
@@ -55,17 +67,8 @@ export const ContentGenresTags: React.FC<ContentGenresTagsProps> = ({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {tags.map((item) => (
-              <Link
-                key={`tag-${item.id || item.slug}`}
-                to={`/tag/${item.slug}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border-color)] hover:text-[var(--text-primary)] hover:border-[var(--accent-color)] transition-all shadow-2xs"
-              >
-                <span>#{item.name}</span>
-                {item.content_count !== undefined && (
-                  <span className="text-[10px] opacity-70 font-mono">({item.content_count})</span>
-                )}
-              </Link>
+            {tags.map((tag) => (
+              <TaxonomyPill key={`tag-${tag.id || tag.slug}`} item={tag} path="tag" />
             ))}
           </div>
         </div>

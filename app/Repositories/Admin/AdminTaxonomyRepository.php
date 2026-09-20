@@ -11,19 +11,19 @@ use App\Repositories\Admin\AdminRepositoryBase;
 /** Domain repository extracted from AdminConsoleRepository. */
 final class AdminTaxonomyRepository extends AdminRepositoryBase
 {
-    public function createGenre(string $name, string $slug): array
+    public function createGenre(string $name, string $slug, array $uiConfig = []): array
     {
-        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug, sort_order) SELECT "genre", :name, :slug, COALESCE(MAX(sort_order), -1) + 1 FROM taxonomies WHERE type = "genre"');
-        $stmt->execute(['name' => $name, 'slug' => $slug]);
+        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug, ui_config, sort_order) SELECT "genre", :name, :slug, :ui_config, COALESCE(MAX(sort_order), -1) + 1 FROM taxonomies WHERE type = "genre"');
+        $stmt->execute(['name' => $name, 'slug' => $slug, 'ui_config' => $this->encodeUiConfig($uiConfig)]);
         $id = (int)$this->pdo->lastInsertId();
     
         return ['id' => $id, 'type' => 'genre', 'name' => $name, 'slug' => $slug, 'sort_order' => $this->taxonomySortOrder($id)];
     }
 
-    public function createTag(string $name, string $slug): array
+    public function createTag(string $name, string $slug, array $uiConfig = []): array
     {
-        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug, sort_order) SELECT "tag", :name, :slug, COALESCE(MAX(sort_order), -1) + 1 FROM taxonomies WHERE type = "tag"');
-        $stmt->execute(['name' => $name, 'slug' => $slug]);
+        $stmt = $this->pdo->prepare('INSERT INTO taxonomies (type, name, slug, ui_config, sort_order) SELECT "tag", :name, :slug, :ui_config, COALESCE(MAX(sort_order), -1) + 1 FROM taxonomies WHERE type = "tag"');
+        $stmt->execute(['name' => $name, 'slug' => $slug, 'ui_config' => $this->encodeUiConfig($uiConfig)]);
         $id = (int)$this->pdo->lastInsertId();
     
         return ['id' => $id, 'type' => 'tag', 'name' => $name, 'slug' => $slug, 'sort_order' => $this->taxonomySortOrder($id)];
@@ -37,11 +37,22 @@ final class AdminTaxonomyRepository extends AdminRepositoryBase
         return $row ?: null;
     }
 
-    public function updateTaxonomy(int $id, string $name, string $slug): ?array
+    public function updateTaxonomy(int $id, string $name, string $slug, array $uiConfig): ?array
     {
-        $stmt = $this->pdo->prepare('UPDATE taxonomies SET name = :name, slug = :slug WHERE id = :id');
-        $stmt->execute(['id' => $id, 'name' => $name, 'slug' => $slug]);
+        $stmt = $this->pdo->prepare('UPDATE taxonomies SET name = :name, slug = :slug, ui_config = :ui_config WHERE id = :id');
+        $stmt->execute([
+            'id' => $id,
+            'name' => $name,
+            'slug' => $slug,
+            'ui_config' => $this->encodeUiConfig($uiConfig),
+        ]);
         return $this->taxonomyById($id);
+    }
+
+    private function encodeUiConfig(array $uiConfig): ?string
+    {
+        if ($uiConfig === []) return null;
+        return json_encode($uiConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     }
 
     public function deleteTaxonomy(int $id): bool

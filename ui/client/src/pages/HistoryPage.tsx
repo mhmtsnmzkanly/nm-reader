@@ -126,7 +126,7 @@ export const HistoryPage: React.FC = () => {
             </Button>
           )}
 
-          <Link to="/browse">
+          <Link to="/manga">
             <Button variant="outline" size="sm" className="gap-2 cursor-pointer text-xs">
               <Compass className="w-4 h-4 text-[var(--accent-color)]" />
               <span>{t('history.exploreBtn')}</span>
@@ -163,7 +163,7 @@ export const HistoryPage: React.FC = () => {
           title={t('history.emptyTitle')}
           description={t('history.emptyDesc')}
           actionLabel={t('history.startReadingCta')}
-          onAction={() => window.location.assign('/browse')}
+          onAction={() => window.location.assign('/manga')}
           icon={<History className="w-12 h-12 text-[var(--accent-color)]" />}
         />
       ) : (

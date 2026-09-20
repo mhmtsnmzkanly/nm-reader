@@ -28,14 +28,14 @@ final class AdminContentService extends AdminConsoleServiceBase
         return $this->withMeta($items, $result['total'], $page, $perPage);
     }
 
-    public function createGenre(string $name, string $moderatorId): array
+    public function createGenre(string $name, string $moderatorId, array $uiConfig = []): array
     {
         $name = trim($name);
         if ($name === '') throw new \InvalidArgumentException('Name is required');
 
         $this->pdo->beginTransaction();
         try {
-            $genre = $this->repo->createGenre($name, $this->taxonomySlug($name));
+            $genre = $this->repo->createGenre($name, $this->taxonomySlug($name), $this->normalizeTaxonomyUiConfig($uiConfig));
             $this->repo->createModerationAction($moderatorId, 'system', (string) $genre['id'], 'create_genre', "New genre created: $name");
             $this->pdo->commit();
         } catch (\Throwable $exception) {
@@ -46,14 +46,14 @@ final class AdminContentService extends AdminConsoleServiceBase
         return $genre;
     }
 
-    public function createTag(string $name, string $moderatorId): array
+    public function createTag(string $name, string $moderatorId, array $uiConfig = []): array
     {
         $name = trim($name);
         if ($name === '') throw new \InvalidArgumentException('Name is required');
 
         $this->pdo->beginTransaction();
         try {
-            $tag = $this->repo->createTag($name, $this->taxonomySlug($name));
+            $tag = $this->repo->createTag($name, $this->taxonomySlug($name), $this->normalizeTaxonomyUiConfig($uiConfig));
             $this->repo->createModerationAction($moderatorId, 'system', (string) $tag['id'], 'create_tag', "New tag created: $name");
             $this->pdo->commit();
         } catch (\Throwable $exception) {
@@ -85,10 +85,13 @@ final class AdminContentService extends AdminConsoleServiceBase
         if (!$existing) throw new \InvalidArgumentException('Taxonomy not found');
         $name = trim((string)($payload['name'] ?? ''));
         if ($name === '') throw new \InvalidArgumentException('Name is required');
+        $uiConfig = array_key_exists('ui_config', $payload)
+            ? $this->normalizeTaxonomyUiConfig((array) $payload['ui_config'])
+            : $this->decodeTaxonomyUiConfig($existing['ui_config'] ?? null);
 
         $this->pdo->beginTransaction();
         try {
-            $updated = $this->repo->updateTaxonomy($id, $name, $this->taxonomySlug($name));
+            $updated = $this->repo->updateTaxonomy($id, $name, $this->taxonomySlug($name), $uiConfig);
             $this->repo->createModerationAction($moderatorId, 'system', (string) $id, 'update_taxonomy', "Taxonomy renamed: {$existing['name']} -> $name");
             $this->pdo->commit();
         } catch (\Throwable $exception) {
@@ -97,6 +100,37 @@ final class AdminContentService extends AdminConsoleServiceBase
         }
 
         return $updated ?? [];
+    }
+
+    private function normalizeTaxonomyUiConfig(array $uiConfig): array
+    {
+        if (array_is_list($uiConfig)) {
+            throw new \InvalidArgumentException('ui_config must be a JSON object');
+        }
+        if (isset($uiConfig['description'])) {
+            $description = trim(strip_tags((string) $uiConfig['description']));
+            $length = function_exists('mb_strlen') ? mb_strlen($description) : strlen($description);
+            if ($length > 200) throw new \InvalidArgumentException('Description must be 200 characters or fewer');
+            if ($description === '') {
+                unset($uiConfig['description']);
+            } else {
+                $uiConfig['description'] = $description;
+            }
+        }
+        try {
+            json_encode($uiConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new \InvalidArgumentException('ui_config must contain valid JSON values');
+        }
+        return $uiConfig;
+    }
+
+    private function decodeTaxonomyUiConfig(mixed $uiConfig): array
+    {
+        if (is_array($uiConfig)) return $uiConfig;
+        if (!is_string($uiConfig) || trim($uiConfig) === '') return [];
+        $decoded = json_decode($uiConfig, true);
+        return is_array($decoded) ? $decoded : [];
     }
 
     public function deleteTaxonomy(int $id, string $moderatorId): void

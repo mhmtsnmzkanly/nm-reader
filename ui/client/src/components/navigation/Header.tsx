@@ -40,7 +40,7 @@ export const Header: React.FC = () => {
   };
 
   const isBrowseActive =
-    location.pathname.startsWith('/browse') ||
+    /^\/(?:manga|manhwa|manhua|webtoon|light-novel|web-novel|novel)(?:\/|$)/.test(location.pathname) ||
     location.pathname.startsWith('/genre') ||
     location.pathname.startsWith('/tag');
 
@@ -172,7 +172,7 @@ export const Header: React.FC = () => {
                           {t('navigation.formats')}
                         </span>
                         <Link
-                          to="/browse"
+                          to="/manga"
                           onClick={() => setIsBrowseOpen(false)}
                           className="text-[10px] font-mono text-[var(--accent-color)] hover:underline"
                         >
@@ -181,11 +181,11 @@ export const Header: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-1">
                         {contentTypes.map((ct) => {
-                          const isTypeActive = location.pathname === `/browse/${ct.key}`;
+                          const isTypeActive = location.pathname === `/${ct.key}`;
                           return (
                             <Link
                               key={ct.key}
-                              to={`/browse/${ct.key}`}
+                              to={`/${ct.key}`}
                               onClick={() => setIsBrowseOpen(false)}
                               className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center justify-between ${
                                 isTypeActive

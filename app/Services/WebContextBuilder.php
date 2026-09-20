@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Config;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -21,7 +22,7 @@ final class WebContextBuilder
         private readonly \Monolog\Logger $errorLogger,
     ) {}
 
-    /** @return array{lang_code:string,auth:array<string,mixed>,site_config:array<string,mixed>,current_page?:array<string,mixed>} */
+    /** @return array{lang_code:string,auth:array<string,mixed>,site_config:array<string,mixed>,integrations:array<string,mixed>,current_page?:array<string,mixed>} */
     public function build(ServerRequestInterface $request, array $pageContext = []): array
     {
         $userId = isset($_SESSION['user_id']) && $_SESSION['user_id'] !== ''
@@ -34,6 +35,7 @@ final class WebContextBuilder
             'auth' => $auth,
             'lang_code' => $langCode,
             'site_config' => $this->siteConfig->public(),
+            'integrations' => Config::getSystemConfig()['integrations'],
         ];
         if (isset($pageContext['current_page']) && is_array($pageContext['current_page'])) {
             $payload['current_page'] = $pageContext['current_page'];

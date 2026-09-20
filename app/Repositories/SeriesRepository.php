@@ -609,7 +609,7 @@ final class SeriesRepository
     public function getGenres(int $page, int $perPage): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $sql = 'SELECT id, name, slug, ui_config FROM taxonomies WHERE type = "genre" ORDER BY name ASC LIMIT :limit OFFSET :offset';
+        $sql = 'SELECT id, name, slug, ui_config, updated_at FROM taxonomies WHERE type = "genre" ORDER BY name ASC LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -628,11 +628,12 @@ final class SeriesRepository
                     t.name,
                     t.slug,
                     t.ui_config,
+                    t.updated_at,
                     COUNT(ct.content_id) AS content_count
                 FROM taxonomies t
                 LEFT JOIN series_taxonomy_map ct ON ct.taxonomy_id = t.id
                 WHERE t.type = "tag"
-                GROUP BY t.id, t.name, t.slug
+                GROUP BY t.id, t.name, t.slug, t.ui_config, t.updated_at
                 ORDER BY t.name ASC
                 LIMIT :limit OFFSET :offset';
 
@@ -642,6 +643,20 @@ final class SeriesRepository
         $stmt->execute();
 
         return $stmt->fetchAll();
+    }
+
+    public function findTaxonomyBySlug(string $type, string $slug): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, type, name, slug, ui_config
+             FROM taxonomies
+             WHERE type = :type AND slug = :slug
+             LIMIT 1'
+        );
+        $stmt->execute(['type' => $type, 'slug' => $slug]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
     }
 
     /**
@@ -886,7 +901,7 @@ final class SeriesRepository
      */
     public function listContentsForSitemap(int $limit = 50000): array
     {
-        $sql = 'SELECT type, slug, created_at
+        $sql = 'SELECT type, slug, created_at, updated_at
                 FROM series
                 WHERE deleted_at IS NULL
                   AND (lifecycle_status = "published" OR (lifecycle_status = "scheduled" AND scheduled_at <= NOW()))
@@ -907,7 +922,7 @@ final class SeriesRepository
                     c.type,
                     c.slug,
                     CAST(ch.chapter_number AS CHAR) AS chapter_number,
-                    ch.created_at
+                    COALESCE(ch.published_at, ch.created_at) AS updated_at
                 FROM chapters ch
                 INNER JOIN series c ON c.id = ch.content_id
                 WHERE ' . PublicVisibility::chapter('ch') . ' AND c.deleted_at IS NULL AND (c.lifecycle_status = "published" OR (c.lifecycle_status = "scheduled" AND c.scheduled_at <= NOW()))

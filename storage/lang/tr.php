@@ -918,6 +918,7 @@ return [
     'admin.taxonomy.genre_created' => 'Tür oluşturuldu',
     'admin.taxonomy.tag_created' => 'Etiket oluşturuldu',
     'admin.taxonomy.new_name' => 'Yeni ad:',
+    'admin.taxonomy.new_description' => 'Etikete özel açıklama:',
     'admin.taxonomy.updated' => 'Taksonomi güncellendi',
     'admin.taxonomy.merge_target' => 'Bu kaydın birleştirileceği hedef taksonomi ID:',
     'admin.taxonomy.merged' => 'Taksonomiler birleştirildi',

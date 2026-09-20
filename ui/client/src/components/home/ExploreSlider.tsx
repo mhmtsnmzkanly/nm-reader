@@ -74,7 +74,11 @@ export const ExploreSlider: React.FC<ExploreSliderProps> = ({ items }) => {
             <img
               src={coverImg}
               alt={currentItem.title}
+              width={480}
+              height={640}
               referrerPolicy="no-referrer"
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-full object-cover"
             />
           ) : (

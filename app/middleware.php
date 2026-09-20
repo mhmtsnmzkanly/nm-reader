@@ -289,9 +289,12 @@ $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $ha
 
 // Utility Middlewares
 $app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
-    $path = $request->getUri()->getPath();
-    if ($path !== '/' && str_ends_with($path, '/')) {
-        $normalizedPath = rtrim($path, '/');
+    $path = (string) $request->getUri()->getPath();
+    $normalizedPath = preg_replace('#/{2,}#', '/', $path) ?: '/';
+    if ($normalizedPath !== '/' && str_ends_with($normalizedPath, '/')) {
+        $normalizedPath = rtrim($normalizedPath, '/');
+    }
+    if ($normalizedPath !== $path) {
         $query = $request->getUri()->getQuery();
         $location = $normalizedPath . ($query !== '' ? '?' . $query : '');
 

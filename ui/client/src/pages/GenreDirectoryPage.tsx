@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { contentService } from '../services';
 import { Genre } from '../types/api';
 import { usePreferences } from '../contexts/PreferencesContext';
+import { TaxonomyIcon, taxonomyColor } from '../components/taxonomy/TaxonomyIcon';
 
 function getBootstrapGenres(): Genre[] | null {
   if (typeof window === 'undefined') return null;
@@ -54,23 +55,33 @@ export const GenreDirectoryPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {genres.map((genre) => (
-            <Link
-              key={genre.id}
-              to={`/genre/${genre.slug}`}
-              className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] hover:border-[var(--accent-color)] rounded-2xl transition-all hover:shadow-xl group flex items-center justify-between shadow-sm"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="font-serif text-lg font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent-color)] transition-colors">
-                  {genre.name}
+          {genres.map((genre) => {
+            const color = taxonomyColor(genre.ui_config?.color);
+            return (
+              <Link
+                key={genre.id}
+                to={`/genre/${genre.slug}`}
+                className="p-5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl transition-all hover:-translate-y-0.5 hover:shadow-xl group flex items-center gap-4"
+                style={{ '--taxonomy-color': color } as React.CSSProperties}
+              >
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
+                  style={{ color, backgroundColor: `${color}18` }}
+                >
+                  <TaxonomyIcon name={genre.ui_config?.icon} className="h-5 w-5" />
                 </span>
-                <span className="text-xs font-mono text-[var(--text-muted)]">
-                  {t('common.contentsCount', { count: genre.content_count || 0 })}
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent-color)] transition-colors" />
-            </Link>
-          ))}
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="font-serif text-lg font-semibold text-[var(--text-primary)] transition-colors group-hover:text-[var(--taxonomy-color)]">
+                    {genre.name}
+                  </span>
+                  <span className="text-xs font-mono text-[var(--text-muted)]">
+                    {t('common.contentsCount', { count: genre.content_count || 0 })}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[var(--text-muted)] transition-all group-hover:translate-x-1 group-hover:text-[var(--taxonomy-color)]" />
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

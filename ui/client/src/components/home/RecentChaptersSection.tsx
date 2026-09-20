@@ -119,9 +119,12 @@ export const RecentChaptersSection: React.FC<RecentChaptersSectionProps> = ({ ch
                     <img
                       src={item.cover}
                       alt={item.seriesTitle}
+                      width={160}
+                      height={224}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center font-bold text-xs text-[var(--text-muted)] bg-slate-800">
