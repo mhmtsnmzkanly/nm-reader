@@ -21,7 +21,22 @@
                 ><i class="bi bi-list fs-5"></i
               ></a></li><li class="nav-item d-none d-md-block"><a href="/" id="panel-site-link" class="nav-link"
                 ><i class="bi bi-box-arrow-up-right me-1"></i><span data-i18n="admin.site.visit">Siteye git</span></a
-              ></li></ul><ul class="navbar-nav ms-auto align-items-center gap-3"><li class="nav-item d-flex align-items-center gap-1"><label for="panel-language" class="mb-0"><i class="bi bi-translate" aria-hidden="true"></i><span class="visually-hidden" data-i18n="admin.language.select">Panel dili</span></label><select id="panel-language" class="form-select form-select-sm w-auto" disabled><option value="tr">Türkçe</option><option value="en">English</option></select></li></ul></div></nav><aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark"><div class="sidebar-brand p-3 border-bottom border-secondary"><a
+              ></li></ul><ul class="navbar-nav ms-auto align-items-center gap-3"><li class="nav-item"><button
+                type="button"
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 px-2 py-1"
+                id="panel-command-palette-trigger"
+                aria-label="Komut Paleti"
+                data-i18n-attr="aria-label:admin.command_palette.title"
+              ><i class="bi bi-search" aria-hidden="true"></i><span class="d-none d-lg-inline small" data-i18n="admin.command_palette.search">Hızlı Ara...</span><kbd class="small bg-body-secondary border px-1 rounded d-none d-sm-inline">Ctrl K</kbd></button></li><li class="nav-item d-flex align-items-center gap-1"><label for="panel-language" class="mb-0"><i class="bi bi-translate" aria-hidden="true"></i><span class="visually-hidden" data-i18n="admin.language.select">Panel dili</span></label><select id="panel-language" class="form-select form-select-sm w-auto" disabled><option value="tr">Türkçe</option><option value="en">English</option></select></li><li class="nav-item dropdown"><button
+                class="btn btn-sm btn-link nav-link dropdown-toggle d-flex align-items-center gap-1 text-decoration-none"
+                id="panel-theme-dropdown"
+                type="button"
+                aria-expanded="false"
+                data-bs-toggle="dropdown"
+                data-bs-display="static"
+                aria-label="Panel teması"
+                data-i18n-attr="aria-label:admin.theme.toggle"
+              ><i class="bi bi-circle-half theme-icon-active" id="theme-icon-active" aria-hidden="true"></i><span class="visually-hidden" data-i18n="admin.theme.toggle">Panel teması</span></button><ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="panel-theme-dropdown"><li><button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-theme-value="light" aria-pressed="false"><i class="bi bi-sun-fill text-warning"></i><span data-i18n="admin.theme.light">Açık</span></button></li><li><button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-theme-value="dark" aria-pressed="false"><i class="bi bi-moon-stars-fill text-info"></i><span data-i18n="admin.theme.dark">Koyu</span></button></li><li><button type="button" class="dropdown-item d-flex align-items-center gap-2 active" data-bs-theme-value="auto" aria-pressed="true"><i class="bi bi-circle-half text-secondary"></i><span data-i18n="admin.theme.auto">Otomatik</span></button></li></ul></li></ul></div></nav><aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark"><div class="sidebar-brand p-3 border-bottom border-secondary"><a
             href="/panel"
             class="brand-link text-decoration-none d-flex align-items-center gap-2"
             data-panel-link
@@ -234,11 +249,30 @@
                 data-i18n="admin.queue.error_modal_inspect"
               >
                 Kuyruğu İncele
-              </button></div></div></div></div></div><template id="tpl-panel-table-error"
+              </button></div></div></div></div><div
+        class="modal fade"
+        id="panel-command-palette-modal"
+        tabindex="-1"
+        aria-labelledby="panel-command-palette-input"
+        aria-hidden="true"
+      ><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content shadow-lg border-0"><div class="modal-header border-bottom-0 pb-0"><div class="input-group"><span class="input-group-text bg-transparent border-0 fs-5"><i class="bi bi-search"></i></span><input
+                  type="search"
+                  class="form-control border-0 fs-5 shadow-none"
+                  id="panel-command-palette-input"
+                  placeholder="Sayfa veya işlem arayın... (örn. seriler, kullanıcılar, tema)"
+                  data-i18n-attr="placeholder:admin.command_palette.placeholder"
+                  autocomplete="off"
+                /><button
+                  type="button"
+                  class="btn-close ms-2 align-self-center"
+                  data-bs-dismiss="modal"
+                  aria-label="Kapat"
+                  data-i18n-attr="aria-label:admin.queue.error_modal_close"
+                ></button></div></div><div class="modal-body pt-2"><div class="list-group list-group-flush rounded-3" id="panel-command-palette-results"></div><div class="text-center text-secondary py-4" id="panel-command-palette-empty" hidden><i class="bi bi-slash-circle fs-3 d-block mb-2"></i><span data-i18n="admin.command_palette.no_results">Eşleşen komut veya sayfa bulunamadı</span></div></div><div class="modal-footer border-top-0 py-2 d-flex justify-content-between text-secondary small bg-body-tertiary rounded-bottom"><span class="d-flex align-items-center gap-2"><kbd class="bg-body border text-body px-1 rounded">↑</kbd><kbd class="bg-body border text-body px-1 rounded">↓</kbd><kbd class="bg-body border text-body px-1 rounded ms-2">↵</kbd></span><span class="d-flex align-items-center gap-1"><kbd class="bg-body border text-body px-1 rounded">ESC</kbd></span></div></div></div></div></div><template id="tpl-panel-table-error"
       ><tr><td colspan="${colspan}" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-1"></i>${error_message}
         </td></tr></template
     ><template id="tpl-panel-table-loading"
-      ><tr><td colspan="${colspan}" class="text-center text-secondary py-4"><span class="lime-spinner me-2" aria-hidden="true"></span><span data-i18n="admin.state.loading">Yükleniyor...</span></td></tr></template
+      ><tr><td colspan="${colspan}" class="p-0"><div class="p-3 placeholder-glow"><div class="d-flex align-items-center justify-content-between mb-3 text-secondary small"><div class="d-flex align-items-center gap-2"><span class="lime-spinner" aria-hidden="true"></span><span data-i18n="admin.state.loading">Yükleniyor...</span></div></div><div class="d-flex flex-column gap-2"><div class="d-flex align-items-center gap-3"><span class="placeholder col-1 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-4 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-2 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-2 bg-secondary opacity-25 rounded py-2 ms-auto"></span></div><div class="d-flex align-items-center gap-3"><span class="placeholder col-1 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-3 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-3 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-2 bg-secondary opacity-25 rounded py-2 ms-auto"></span></div><div class="d-flex align-items-center gap-3"><span class="placeholder col-1 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-5 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-2 bg-secondary opacity-25 rounded py-2"></span><span class="placeholder col-1 bg-secondary opacity-25 rounded py-2 ms-auto"></span></div></div></div></td></tr></template
     ><template id="tpl-panel-pager"
       ><div class="d-flex justify-content-between align-items-center"><small class="text-secondary"
         ><span data-i18n="admin.pagination.page">Sayfa</span> ${page} / ${total_pages} · ${total} <span data-i18n="admin.pagination.records">kayıt</span></small
@@ -971,7 +1005,7 @@ ${description}</textarea>
               ></template
             ></div></div></div></template
     ><template id="tpl-panel-chapter-form"
-      ><div class="row g-3"><div class="col-md-4"><label class="form-label" data-i18n="admin.field.chapter_number">Bölüm numarası</label
+      ><div class="row g-3"><div class="col-12" id="panel-chapter-draft-alert" hidden><div class="alert alert-warning d-flex align-items-center justify-content-between p-2 mb-0"><div class="d-flex align-items-center gap-2"><i class="bi bi-file-earmark-diff-fill text-warning"></i><span id="panel-chapter-draft-text" data-i18n="admin.chapter.draft_found">Kaydedilmemiş bir yerel taslak bulundu.</span></div><div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-primary" id="panel-chapter-draft-restore" data-i18n="admin.chapter.draft_restore">Geri Yükle</button><button type="button" class="btn btn-sm btn-outline-secondary" id="panel-chapter-draft-discard" data-i18n="admin.chapter.draft_discard">Sil</button></div></div></div><div class="col-md-4"><label class="form-label" data-i18n="admin.field.chapter_number">Bölüm numarası</label
           ><input
             class="form-control"
             name="chapter_number"
@@ -1576,11 +1610,14 @@ ${admin_note}</textarea>
             id="panel-dashboard-loading"
             class="alert alert-info d-flex align-items-center gap-2"
             role="status"
+            data-show="dashboardLoading"
             hidden
           ><span class="lime-spinner" aria-hidden="true"></span><span data-i18n="admin.dashboard.loading">Dashboard verileri yükleniyor…</span></div><div
             id="panel-dashboard-error"
             class="alert alert-danger"
             role="alert"
+            data-show="dashboardError"
+            data-text="dashboardError"
             hidden
           ></div><div class="row g-3 mb-4"><div class="col-lg-4 col-md-6"><div class="card border-0 shadow-sm bg-primary text-white p-3 rounded-3 h-100"><div class="d-flex justify-content-between align-items-start gap-3"><div><p class="mb-1 text-white-50 small text-uppercase fw-semibold" data-i18n="admin.dashboard.total_users">Toplam Kullanıcı</p><h3 class="mb-0 fw-bold" data-text="overview.total_users">0</h3></div><i class="bi bi-people-fill fs-1 opacity-50"></i></div><a href="/panel/user" class="btn btn-sm btn-light text-primary mt-3 align-self-start" data-panel-link data-requires-permission="admin.panel.access"><i class="bi bi-arrow-right-circle me-1"></i><span data-i18n="admin.dashboard.inspect_users">Kullanıcıları incele</span></a></div></div><div class="col-lg-4 col-md-6"><div class="card border-0 shadow-sm bg-success text-white p-3 rounded-3 h-100"><div class="d-flex justify-content-between align-items-start gap-3"><div><p class="mb-1 text-white-50 small text-uppercase fw-semibold" data-i18n="admin.dashboard.total_content">Toplam İçerik</p><h3 class="mb-0 fw-bold" data-text="overview.total_contents">0</h3></div><i class="bi bi-journal-bookmark-fill fs-1 opacity-50"></i></div><a href="/panel/series" class="btn btn-sm btn-light text-success mt-3 align-self-start" data-panel-link data-requires-permission="admin.panel.access"><i class="bi bi-arrow-right-circle me-1"></i><span data-i18n="admin.dashboard.inspect_content">İçerikleri incele</span></a></div></div><div class="col-lg-4 col-md-6"><div class="card border-0 shadow-sm bg-warning text-dark p-3 rounded-3 h-100"><div class="d-flex justify-content-between align-items-start gap-3"><div><p class="mb-1 text-dark-50 small text-uppercase fw-semibold" data-i18n="admin.dashboard.total_chapters">Toplam Bölüm</p><h3 class="mb-0 fw-bold" data-text="overview.total_chapters">0</h3></div><i class="bi bi-collection-fill fs-1 opacity-50"></i></div><a href="/panel/series" class="btn btn-sm btn-light text-dark mt-3 align-self-start" data-panel-link data-requires-permission="admin.panel.access"><i class="bi bi-arrow-right-circle me-1"></i><span data-i18n="admin.dashboard.inspect_series">Serileri incele</span></a></div></div></div><div class="row g-3 mb-4"><div class="col-lg-4 col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4 d-flex justify-content-between align-items-center"><h5 class="card-title fw-bold mb-0"><i class="bi bi-newspaper text-danger me-2"></i><span data-i18n="admin.blogs">Bloglar</span></h5><a href="/panel/blogs" class="btn btn-sm btn-outline-danger" data-panel-link data-requires-permission="admin.panel.access" title="Blogları incele" data-i18n-attr="title:admin.dashboard.inspect_blogs"><i class="bi bi-arrow-up-right-circle"></i><span class="visually-hidden" data-i18n="admin.dashboard.inspect_blogs"> Blogları incele</span></a></div><div class="card-body px-4"><div class="row text-center g-2"><div class="col-4"><small class="text-secondary d-block" data-i18n="admin.dashboard.total">Toplam</small><strong class="fs-5" data-text="overview.blogs_total">0</strong></div><div class="col-4"><small class="text-secondary d-block" data-i18n="admin.dashboard.pending">Bekleyen</small><strong class="fs-5 text-warning" data-text="overview.blogs_pending">0</strong></div><div class="col-4"><small class="text-secondary d-block" title="Reddedilen, gizlenen veya silinen" data-i18n-attr="title:admin.dashboard.closed_blogs_help" data-i18n="admin.dashboard.closed">Kapalı</small><strong class="fs-5 text-secondary" data-text="overview.blogs_closed">0</strong></div></div></div></div></div><div class="col-lg-4 col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4 d-flex justify-content-between align-items-center"><h5 class="card-title fw-bold mb-0"><i class="bi bi-flag-fill text-danger me-2"></i><span data-i18n="admin.reports">Raporlar</span></h5><a href="/panel/reports" class="btn btn-sm btn-outline-danger" data-panel-link data-requires-permission="admin.panel.access" title="Raporları incele" data-i18n-attr="title:admin.dashboard.inspect_reports"><i class="bi bi-arrow-up-right-circle"></i><span class="visually-hidden" data-i18n="admin.dashboard.inspect_reports"> Raporları incele</span></a></div><div class="card-body px-4"><div class="row text-center g-2"><div class="col-4"><small class="text-secondary d-block" data-i18n="admin.dashboard.total">Toplam</small><strong class="fs-5" data-text="overview.reports_total">0</strong></div><div class="col-4"><small class="text-secondary d-block" data-i18n="admin.dashboard.pending">Bekleyen</small><strong class="fs-5 text-warning" data-text="overview.reports_pending">0</strong></div><div class="col-4"><small class="text-secondary d-block" title="Çözülen veya reddedilen" data-i18n-attr="title:admin.dashboard.closed_reports_help" data-i18n="admin.dashboard.closed">Kapalı</small><strong class="fs-5 text-secondary" data-text="overview.reports_closed">0</strong></div></div></div></div></div><div class="col-lg-4 col-md-6"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4 d-flex justify-content-between align-items-center"><h5 class="card-title fw-bold mb-0"><i class="bi bi-stack text-info me-2"></i><span data-i18n="admin.dashboard.queue">Queue</span></h5><a href="/panel/ops" class="btn btn-sm btn-outline-info" data-panel-link data-requires-permission="admin.panel.access" title="Queue işlemlerini incele" data-i18n-attr="title:admin.dashboard.inspect_queue"><i class="bi bi-arrow-up-right-circle"></i><span class="visually-hidden" data-i18n="admin.dashboard.inspect_queue"> Queue işlemlerini incele</span></a></div><div class="card-body px-4"><div class="row text-center g-2"><div class="col-6"><small class="text-secondary d-block" data-i18n="admin.dashboard.pending">Bekleyen</small><strong class="fs-5 text-warning" data-text="overview.queue_pending">0</strong></div><div class="col-6"><small class="text-secondary d-block" title="Bu yönetici tarafından daha önce görülmüş hatalar bu sayıdan çıkarılır" data-i18n-attr="title:admin.dashboard.failed_queue_help" data-i18n="admin.dashboard.failed">Hatalı</small><strong class="fs-5 text-danger" data-text="overview.queue_failed">0</strong></div></div></div></div></div></div><div class="row g-4 mb-4"><div class="col-lg-8"><div class="card border-0 shadow-sm rounded-3 h-100"><div class="card-header bg-transparent border-0 pt-3 px-4"><h5 class="card-title fw-bold mb-0"><i class="bi bi-graph-up-arrow text-primary me-2"></i
                     ><span data-i18n="admin.dashboard.traffic_trend">Trafik ve Aktif Okuyucu Trendi</span></h5><small class="text-secondary"
@@ -1673,6 +1710,7 @@ ${admin_note}</textarea>
                       id="panel-series-search"
                     placeholder="Başlık veya slug ile ara..." data-i18n-attr="placeholder:admin.series.search_placeholder"
                       data-on-input="filterSeries"
+                      data-on-keydown-enter="searchSeries"
                     /></div></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-series-status"
@@ -1711,6 +1749,7 @@ ${admin_note}</textarea>
                     id="panel-users-search"
                     placeholder="Kullanıcı adı veya e-posta ile ara..." data-i18n-attr="placeholder:admin.user.search_placeholder"
                     data-on-input="filterUsers"
+                    data-on-keydown-enter="searchUsers"
                   /></div><div class="col-md-3"><select
                     class="form-select"
                     id="panel-users-status"
@@ -1735,6 +1774,7 @@ ${admin_note}</textarea>
                     id="panel-blogs-search"
                     placeholder="Başlık, slug veya yazar ara..." data-i18n-attr="placeholder:admin.blog.search_placeholder"
                     data-on-input="filterBlogs"
+                    data-on-keydown-enter="searchBlogs"
                   /></div><div class="col-md-4"><select
                     class="form-select"
                     id="panel-blogs-status"
@@ -1755,6 +1795,7 @@ ${admin_note}</textarea>
                     id="panel-comments-search"
                     placeholder="Yorum veya kullanıcı ara..." data-i18n-attr="placeholder:admin.comment.search_placeholder"
                     data-on-input="filterComments"
+                    data-on-keydown-enter="searchComments"
                   /></div><div class="col-md-2"><select
                     class="form-select"
                     id="panel-comments-target"
@@ -1841,6 +1882,7 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="Kullanıcı, açıklama veya referans ara" data-i18n-attr="placeholder:admin.finance.search_placeholder"
                     data-on-input="filterFinance"
+                    data-on-keydown-enter="searchFinance"
                   /></div><div class="col-md-3"><select
                     id="panel-finance-type"
                     class="form-select form-select-sm"
@@ -1895,11 +1937,13 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="İş türü veya hata ara" data-i18n-attr="placeholder:admin.queue.search_placeholder"
                     data-on-input="filterQueue"
+                    data-on-keydown-enter="searchQueue"
                   /></div><div class="col-md-3"><input
                     id="panel-queue-job-type"
                     class="form-control form-control-sm"
                     placeholder="İş türü (tam eşleşme)" data-i18n-attr="placeholder:admin.queue.job_type_placeholder"
                     data-on-input="filterQueue"
+                    data-on-keydown-enter="searchQueue"
                   /></div><div class="col-md-2"><select
                     id="panel-queue-status"
                     class="form-select form-select-sm"
@@ -2030,6 +2074,7 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="Yol, kullanıcı veya user-agent ara" data-i18n-attr="placeholder:admin.logs.search_placeholder"
                     data-on-input="filterLogs"
+                    data-on-keydown-enter="searchLogs"
                   /></div><div class="col"><select
                     id="panel-logs-method"
                     class="form-select form-select-sm"
@@ -2067,6 +2112,7 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="Dosya, görsel ID veya kullanıcı ara" data-i18n-attr="placeholder:admin.upload.search_placeholder"
                     data-on-input="filterUploads"
+                    data-on-keydown-enter="searchUploads"
                   /></div><div class="col-md-3"><select
                     id="panel-uploads-mime"
                     class="form-select form-select-sm"
@@ -2352,6 +2398,7 @@ ${admin_note}</textarea>
                     data-i18n-attr="placeholder:admin.user.search_placeholder"
                     value="${query}"
                     data-on-input="filterLikers"
+                    data-on-keydown-enter="searchLikers"
                   /></div></div><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th data-i18n="admin.user">Kullanıcı</th><th data-i18n="admin.like.date">Beğeni tarihi</th></tr></thead><tbody id="panel-likers-list"></tbody></table></div><div id="panel-likers-pager" class="mt-3"></div></div></div></partial></template><template id="tpl-panel-series-preview-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-series-preview" data="fields"></partial></div></div></partial></template><template id="tpl-panel-chapter-preview-page"
       ><partial name="panel-page-shell" header="header"><div class="card border-0 shadow-sm"><div class="card-body p-4"><partial name="panel-chapter-preview" data="fields"></partial></div></div></partial></template><template id="tpl-panel-blog-preview-page"

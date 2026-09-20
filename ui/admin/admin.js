@@ -38,10 +38,13 @@ import { createI18n } from "./modules/i18n.js?131";
 import { resolvePanelContext } from "./modules/bootstrap.js";
 import { initializeShell, panelTitle } from "./modules/shell.js";
 import { bindLanguageSelector, savedPanelLocale } from "./modules/language-selector.js";
+import { createThemeController } from "./modules/theme.js";
 import { createFeedback } from "./modules/feedback.js?125";
 import { createRequestGate } from "./modules/request-gate.js?125";
 import { createTranslationModule } from "./modules/directives/translation.js?126";
 import { bindFormAction } from "./modules/form-action.js?126";
+import { createDirtyGuard } from "./modules/dirty-guard.js";
+import { createCommandPalette } from "./modules/command-palette.js";
 import { createDashboardChartManager } from "./modules/dashboard-charts.js?125";
 import { createDashboardDataController } from "./modules/dashboard-data.js?131";
 import { createDashboardView } from "./modules/dashboard-view.js?125";
@@ -101,6 +104,13 @@ function panelTranslate(key, fallback, params = {}) {
   const value = i18n.t(key, params);
   return value === key ? fallback : value;
 }
+const dirtyGuard = createDirtyGuard({
+  windowRef: globalThis.window,
+  confirmAction,
+  translate: panelTranslate,
+});
+const panelBindFormAction = (form, submitAction, options = {}) =>
+  bindFormAction(form, submitAction, { dirtyGuard, ...options });
 const formatUserModerationStatus = (status) =>
   userModerationStatus(status, panelTranslate);
 const formatUserViolationLevel = (level) =>
@@ -312,7 +322,7 @@ const usersDetailController = createUsersDetailController({
   renderPager,
   mountPage,
   scheduleReload,
-  bindFormAction,
+  bindFormAction: panelBindFormAction,
   registerPageCleanup,
   showToast,
   userModerationStatus: formatUserModerationStatus,
@@ -333,12 +343,12 @@ const usersDetailController = createUsersDetailController({
 
 const userPenaltyController = createUserPenaltyController({
   store, api, getPageEpoch: () => pageEpoch, assertCurrentPage, mountPage,
-  bindFormAction, registerPageCleanup, panelNavigate, showToast,
+  bindFormAction: panelBindFormAction, registerPageCleanup, panelNavigate, showToast,
   translate: panelTranslate,
 });
 const userWalletController = createUserWalletController({
   store, api, responseItems, responseMeta, getPageEpoch: () => pageEpoch,
-  assertCurrentPage, hasPermission, mountPage, mountPartial, bindFormAction,
+  assertCurrentPage, hasPermission, mountPage, mountPartial, bindFormAction: panelBindFormAction,
   registerPageCleanup, showToast, renderPager,
   translate: panelTranslate, formatNumber: panelFormatNumber,
 });
@@ -480,7 +490,7 @@ const configPagesController = createConfigPagesController({
   mountPartial,
   panelNavigate,
   confirmAction,
-  bindFormAction,
+  bindFormAction: panelBindFormAction,
   registerPageCleanup,
   showToast,
   translate: panelTranslate,
@@ -519,7 +529,7 @@ const moderationPagesController = createModerationPagesController({
   showToast,
   hasPermission,
   requestGate: requestGates.likers,
-  bindFormAction,
+  bindFormAction: panelBindFormAction,
   registerPageCleanup,
   translate: panelTranslate,
   targetTypeLabel,
@@ -568,7 +578,7 @@ const seriesEditorController = createSeriesEditorController({
   selectedValues,
   mountPartial,
   registerPageCleanup,
-  bindFormAction,
+  bindFormAction: panelBindFormAction,
   showToast,
   panelNavigate,
   nextYear,
@@ -664,7 +674,7 @@ function mountEditorPage(title, body, onSubmit) {
   const form = page.querySelector("[data-editor-form]");
   if (!form || typeof onSubmit !== "function") return page;
   registerPageCleanup(
-    bindFormAction(form, onSubmit, {
+    panelBindFormAction(form, onSubmit, {
       onError: (error) => showToast(error.message, "danger"),
     }),
   );
@@ -830,6 +840,7 @@ const panelRouter = createPanelRouter({ routeTree: panelRoutes });
 const navigationController = createPanelNavigationController({
   panelRouter, panelNavigation, store, hasPermission, showToast,
   panelTranslate, disposePage, mountPage, renderRouteTables,
+  dirtyGuard,
   beginPage: () => {
     const session = pageSession.begin();
     pageEpoch = session.epoch;
@@ -851,6 +862,24 @@ const unbindLanguageSelector = bindLanguageSelector({
   },
   onError: () => showToast(panelTranslate("admin.language.load_failed", "Dil yüklenemedi. Tekrar deneyin."), "danger"),
 });
+const themeController = createThemeController({
+  documentRef: document,
+  windowRef: globalThis.window,
+  onThemeChange: () => {
+    if (store.get("currentRoute") === "dashboard") {
+      renderDashboardCharts?.();
+    }
+  },
+});
+const unbindTheme = themeController.init();
+const commandPalette = createCommandPalette({
+  documentRef: document,
+  windowRef: globalThis.window,
+  panelNavigate,
+  hasPermission,
+  setTheme: (mode) => themeController.setTheme(mode),
+  translate: panelTranslate,
+});
 const unbindPanelNavigation = bindPanelNavigation({
   documentRef: document,
   onNavigate: panelNavigate,
@@ -859,6 +888,9 @@ const unbindPanelNavigation = bindPanelNavigation({
 // for test hosts and embedders that dispose the application explicitly.
 const onPopState = () => triggerNavigate();
 globalThis.addEventListener?.("beforeunload", () => {
+  commandPalette.cleanup?.();
+  dirtyGuard.cleanup?.();
+  unbindTheme?.();
   unbindPanelNavigation();
   unbindLanguageSelector();
   onPopState && globalThis.removeEventListener?.("popstate", onPopState);

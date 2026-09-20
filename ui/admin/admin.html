@@ -55,6 +55,19 @@
             </li>
           </ul>
           <ul class="navbar-nav ms-auto align-items-center gap-3">
+            <li class="nav-item">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 px-2 py-1"
+                id="panel-command-palette-trigger"
+                aria-label="Komut Paleti"
+                data-i18n-attr="aria-label:admin.command_palette.title"
+              >
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <span class="d-none d-lg-inline small" data-i18n="admin.command_palette.search">Hızlı Ara...</span>
+                <kbd class="small bg-body-secondary border px-1 rounded d-none d-sm-inline">Ctrl K</kbd>
+              </button>
+            </li>
             <li class="nav-item d-flex align-items-center gap-1">
               <label for="panel-language" class="mb-0">
                 <i class="bi bi-translate" aria-hidden="true"></i>
@@ -64,6 +77,41 @@
                 <option value="tr">Türkçe</option>
                 <option value="en">English</option>
               </select>
+            </li>
+            <li class="nav-item dropdown">
+              <button
+                class="btn btn-sm btn-link nav-link dropdown-toggle d-flex align-items-center gap-1 text-decoration-none"
+                id="panel-theme-dropdown"
+                type="button"
+                aria-expanded="false"
+                data-bs-toggle="dropdown"
+                data-bs-display="static"
+                aria-label="Panel teması"
+                data-i18n-attr="aria-label:admin.theme.toggle"
+              >
+                <i class="bi bi-circle-half theme-icon-active" id="theme-icon-active" aria-hidden="true"></i>
+                <span class="visually-hidden" data-i18n="admin.theme.toggle">Panel teması</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="panel-theme-dropdown">
+                <li>
+                  <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-theme-value="light" aria-pressed="false">
+                    <i class="bi bi-sun-fill text-warning"></i>
+                    <span data-i18n="admin.theme.light">Açık</span>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-theme-value="dark" aria-pressed="false">
+                    <i class="bi bi-moon-stars-fill text-info"></i>
+                    <span data-i18n="admin.theme.dark">Koyu</span>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="dropdown-item d-flex align-items-center gap-2 active" data-bs-theme-value="auto" aria-pressed="true">
+                    <i class="bi bi-circle-half text-secondary"></i>
+                    <span data-i18n="admin.theme.auto">Otomatik</span>
+                  </button>
+                </li>
+              </ul>
             </li>
           </ul>
         </div>
@@ -498,6 +546,56 @@
           </div>
         </div>
       </div>
+      <!-- Command Palette Modal -->
+      <div
+        class="modal fade"
+        id="panel-command-palette-modal"
+        tabindex="-1"
+        aria-labelledby="panel-command-palette-input"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content shadow-lg border-0">
+            <div class="modal-header border-bottom-0 pb-0">
+              <div class="input-group">
+                <span class="input-group-text bg-transparent border-0 fs-5"><i class="bi bi-search"></i></span>
+                <input
+                  type="search"
+                  class="form-control border-0 fs-5 shadow-none"
+                  id="panel-command-palette-input"
+                  placeholder="Sayfa veya işlem arayın... (örn. seriler, kullanıcılar, tema)"
+                  data-i18n-attr="placeholder:admin.command_palette.placeholder"
+                  autocomplete="off"
+                />
+                <button
+                  type="button"
+                  class="btn-close ms-2 align-self-center"
+                  data-bs-dismiss="modal"
+                  aria-label="Kapat"
+                  data-i18n-attr="aria-label:admin.queue.error_modal_close"
+                ></button>
+              </div>
+            </div>
+            <div class="modal-body pt-2">
+              <div class="list-group list-group-flush rounded-3" id="panel-command-palette-results"></div>
+              <div class="text-center text-secondary py-4" id="panel-command-palette-empty" hidden>
+                <i class="bi bi-slash-circle fs-3 d-block mb-2"></i>
+                <span data-i18n="admin.command_palette.no_results">Eşleşen komut veya sayfa bulunamadı</span>
+              </div>
+            </div>
+            <div class="modal-footer border-top-0 py-2 d-flex justify-content-between text-secondary small bg-body-tertiary rounded-bottom">
+              <span class="d-flex align-items-center gap-2">
+                <kbd class="bg-body border text-body px-1 rounded">↑</kbd>
+                <kbd class="bg-body border text-body px-1 rounded">↓</kbd>
+                <kbd class="bg-body border text-body px-1 rounded ms-2">↵</kbd>
+              </span>
+              <span class="d-flex align-items-center gap-1">
+                <kbd class="bg-body border text-body px-1 rounded">ESC</kbd>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ========================================================================= -->
@@ -515,8 +613,35 @@
     >
     <template id="tpl-panel-table-loading"
       ><tr>
-        <td colspan="${colspan}" class="text-center text-secondary py-4">
-          <span class="lime-spinner me-2" aria-hidden="true"></span><span data-i18n="admin.state.loading">Yükleniyor...</span>
+        <td colspan="${colspan}" class="p-0">
+          <div class="p-3 placeholder-glow">
+            <div class="d-flex align-items-center justify-content-between mb-3 text-secondary small">
+              <div class="d-flex align-items-center gap-2">
+                <span class="lime-spinner" aria-hidden="true"></span>
+                <span data-i18n="admin.state.loading">Yükleniyor...</span>
+              </div>
+            </div>
+            <div class="d-flex flex-column gap-2">
+              <div class="d-flex align-items-center gap-3">
+                <span class="placeholder col-1 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-4 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-2 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-2 bg-secondary opacity-25 rounded py-2 ms-auto"></span>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <span class="placeholder col-1 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-3 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-3 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-2 bg-secondary opacity-25 rounded py-2 ms-auto"></span>
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <span class="placeholder col-1 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-5 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-2 bg-secondary opacity-25 rounded py-2"></span>
+                <span class="placeholder col-1 bg-secondary opacity-25 rounded py-2 ms-auto"></span>
+              </div>
+            </div>
+          </div>
         </td>
       </tr></template
     >
@@ -2144,6 +2269,18 @@ ${description}</textarea>
     >
     <template id="tpl-panel-chapter-form"
       ><div class="row g-3">
+        <div class="col-12" id="panel-chapter-draft-alert" hidden>
+          <div class="alert alert-warning d-flex align-items-center justify-content-between p-2 mb-0">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-file-earmark-diff-fill text-warning"></i>
+              <span id="panel-chapter-draft-text" data-i18n="admin.chapter.draft_found">Kaydedilmemiş bir yerel taslak bulundu.</span>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-sm btn-primary" id="panel-chapter-draft-restore" data-i18n="admin.chapter.draft_restore">Geri Yükle</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="panel-chapter-draft-discard" data-i18n="admin.chapter.draft_discard">Sil</button>
+            </div>
+          </div>
+        </div>
         <div class="col-md-4">
           <label class="form-label" data-i18n="admin.field.chapter_number">Bölüm numarası</label
           ><input
@@ -3411,6 +3548,7 @@ ${admin_note}</textarea>
             id="panel-dashboard-loading"
             class="alert alert-info d-flex align-items-center gap-2"
             role="status"
+            data-show="dashboardLoading"
             hidden
           >
             <span class="lime-spinner" aria-hidden="true"></span>
@@ -3420,6 +3558,8 @@ ${admin_note}</textarea>
             id="panel-dashboard-error"
             class="alert alert-danger"
             role="alert"
+            data-show="dashboardError"
+            data-text="dashboardError"
             hidden
           ></div>
           <!-- KPI Cards -->
@@ -3974,6 +4114,7 @@ ${admin_note}</textarea>
                       id="panel-series-search"
                     placeholder="Başlık veya slug ile ara..." data-i18n-attr="placeholder:admin.series.search_placeholder"
                       data-on-input="filterSeries"
+                      data-on-keydown-enter="searchSeries"
                     />
                   </div>
                 </div>
@@ -4093,6 +4234,7 @@ ${admin_note}</textarea>
                     id="panel-users-search"
                     placeholder="Kullanıcı adı veya e-posta ile ara..." data-i18n-attr="placeholder:admin.user.search_placeholder"
                     data-on-input="filterUsers"
+                    data-on-keydown-enter="searchUsers"
                   />
                 </div>
                 <div class="col-md-3">
@@ -4179,6 +4321,7 @@ ${admin_note}</textarea>
                     id="panel-blogs-search"
                     placeholder="Başlık, slug veya yazar ara..." data-i18n-attr="placeholder:admin.blog.search_placeholder"
                     data-on-input="filterBlogs"
+                    data-on-keydown-enter="searchBlogs"
                   />
                 </div>
                 <div class="col-md-4">
@@ -4253,6 +4396,7 @@ ${admin_note}</textarea>
                     id="panel-comments-search"
                     placeholder="Yorum veya kullanıcı ara..." data-i18n-attr="placeholder:admin.comment.search_placeholder"
                     data-on-input="filterComments"
+                    data-on-keydown-enter="searchComments"
                   />
                 </div>
                 <div class="col-md-2">
@@ -4545,6 +4689,7 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="Kullanıcı, açıklama veya referans ara" data-i18n-attr="placeholder:admin.finance.search_placeholder"
                     data-on-input="filterFinance"
+                    data-on-keydown-enter="searchFinance"
                   />
                 </div>
                 <div class="col-md-3">
@@ -4706,6 +4851,7 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="İş türü veya hata ara" data-i18n-attr="placeholder:admin.queue.search_placeholder"
                     data-on-input="filterQueue"
+                    data-on-keydown-enter="searchQueue"
                   />
                 </div>
                 <div class="col-md-3">
@@ -4714,6 +4860,7 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="İş türü (tam eşleşme)" data-i18n-attr="placeholder:admin.queue.job_type_placeholder"
                     data-on-input="filterQueue"
+                    data-on-keydown-enter="searchQueue"
                   />
                 </div>
                 <div class="col-md-2">
@@ -5005,6 +5152,7 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="Yol, kullanıcı veya user-agent ara" data-i18n-attr="placeholder:admin.logs.search_placeholder"
                     data-on-input="filterLogs"
+                    data-on-keydown-enter="searchLogs"
                   />
                 </div>
                 <div class="col">
@@ -5137,6 +5285,7 @@ ${admin_note}</textarea>
                     class="form-control form-control-sm"
                     placeholder="Dosya, görsel ID veya kullanıcı ara" data-i18n-attr="placeholder:admin.upload.search_placeholder"
                     data-on-input="filterUploads"
+                    data-on-keydown-enter="searchUploads"
                   />
                 </div>
                 <div class="col-md-3">
@@ -5902,6 +6051,7 @@ ${admin_note}</textarea>
                     data-i18n-attr="placeholder:admin.user.search_placeholder"
                     value="${query}"
                     data-on-input="filterLikers"
+                    data-on-keydown-enter="searchLikers"
                   />
                 </div>
               </div>

@@ -1,6 +1,7 @@
-export function bindFormAction(form, submitAction, { onError } = {}) {
+export function bindFormAction(form, submitAction, { onError, dirtyGuard } = {}) {
   if (!form || typeof submitAction !== "function") return () => {};
   let inFlight = false;
+  const unregisterGuard = dirtyGuard?.register?.(form);
   const onSubmit = async (event) => {
     event.preventDefault();
     if (inFlight) return;
@@ -14,6 +15,7 @@ export function bindFormAction(form, submitAction, { onError } = {}) {
     form.setAttribute("aria-busy", "true");
     try {
       await submitAction(new FormData(form), form, event);
+      dirtyGuard?.markClean?.();
     } catch (error) {
       if (error?.name !== "AbortError") onError?.(error);
     } finally {
@@ -26,5 +28,8 @@ export function bindFormAction(form, submitAction, { onError } = {}) {
     }
   };
   form.addEventListener("submit", onSubmit);
-  return () => form.removeEventListener("submit", onSubmit);
+  return () => {
+    unregisterGuard?.();
+    form.removeEventListener("submit", onSubmit);
+  };
 }

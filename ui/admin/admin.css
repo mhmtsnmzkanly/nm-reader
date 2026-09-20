@@ -27,10 +27,14 @@
   border-radius: 50%;
   animation: lime-spin 0.75s linear infinite;
 }
-@keyframes lime-spin {
-  to {
-    transform: rotate(360deg);
-  }
+.theme-icon-active {
+  font-size: 1.1rem;
+}
+[data-bs-theme="dark"] .app-sidebar {
+  border-right: 1px solid var(--bs-border-color);
+}
+.table-skeleton-row {
+  height: 2.75rem;
 }
 .panel-bootstrap-loader {
   position: absolute;

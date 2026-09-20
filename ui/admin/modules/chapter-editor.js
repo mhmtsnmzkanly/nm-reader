@@ -13,6 +13,7 @@ export function createChapterEditorController({
   panelNavigate,
   translate = (_key, fallback) => fallback,
   documentRef = globalThis.document,
+  storage = globalThis.localStorage,
 } = {}) {
   const document = documentRef;
   const t = (key, fallback, params = {}) => {
@@ -69,13 +70,22 @@ export function createChapterEditorController({
       ? (await api(`/chapters/${chapterId}`))?.data || {}
       : {};
     assertCurrentPage(requestEpoch);
+    const draftKey = `nm_chapter_draft_${content.id}_${chapterId || "new"}`;
+    let page = null;
+    const clearDraft = () => {
+      try {
+        storage?.removeItem?.(draftKey);
+      } catch {}
+      const draftAlert = page?.querySelector?.("#panel-chapter-draft-alert");
+      if (draftAlert) draftAlert.hidden = true;
+    };
     const uploadedPaths = [];
     const originalPrice = chapterId
       ? Number(chapter.pricing?.base_price ?? chapter.price_amount ?? 0)
       : null;
     const dateValue = (value) =>
       value ? String(value).replace(" ", "T").slice(0, 16) : "";
-    const page = mountEditorPage(
+    page = mountEditorPage(
       chapterId
         ? t("admin.chapter.edit_title", "Bölümü Düzenle: {number}", {
           number: chapter.chapter_number,
@@ -162,6 +172,7 @@ export function createChapterEditorController({
               : t("admin.chapter.created", "Bölüm oluşturuldu"),
           );
         }
+        clearDraft();
         panelNavigate(
           "/panel/series/" + encodeURIComponent(content.id) + "/chapters",
         );
@@ -171,6 +182,68 @@ export function createChapterEditorController({
     if (typeInput) {
       typeInput.value = chapter.type === "image" ? "image" : "text";
     }
+    const bodyTextarea = page.querySelector('[name="body"]');
+    const noteTextarea = page.querySelector('[name="translator_note"]');
+    const draftAlert = page.querySelector("#panel-chapter-draft-alert");
+    const draftRestoreBtn = page.querySelector("#panel-chapter-draft-restore");
+    const draftDiscardBtn = page.querySelector("#panel-chapter-draft-discard");
+
+    try {
+      const savedDraftRaw = storage?.getItem?.(draftKey);
+      if (savedDraftRaw) {
+        const savedDraft = JSON.parse(savedDraftRaw);
+        const currentBody = bodyTextarea?.value || "";
+        const currentNote = noteTextarea?.value || "";
+        const hasBodyDiff = savedDraft.body && savedDraft.body !== currentBody;
+        const hasNoteDiff = savedDraft.translator_note && savedDraft.translator_note !== currentNote;
+        if (hasBodyDiff || hasNoteDiff) {
+          if (draftAlert) {
+            draftAlert.hidden = false;
+            draftRestoreBtn?.addEventListener("click", () => {
+              const EventCtor = document.defaultView?.Event || globalThis.Event;
+              if (bodyTextarea && savedDraft.body !== undefined) {
+                bodyTextarea.value = savedDraft.body;
+                bodyTextarea.dispatchEvent(new EventCtor("input", { bubbles: true }));
+              }
+              if (noteTextarea && savedDraft.translator_note !== undefined) {
+                noteTextarea.value = savedDraft.translator_note;
+                noteTextarea.dispatchEvent(new EventCtor("input", { bubbles: true }));
+              }
+              draftAlert.hidden = true;
+              showToast(t("admin.chapter.draft_restored", "Taslak geri yüklendi."), "success");
+            }, { once: true });
+            draftDiscardBtn?.addEventListener("click", () => {
+              clearDraft();
+            }, { once: true });
+          }
+        }
+      }
+    } catch {}
+
+    let draftTimer = null;
+    const onDraftInput = () => {
+      if (typeInput?.value === "image") return;
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(() => {
+        try {
+          const body = bodyTextarea?.value || "";
+          const note = noteTextarea?.value || "";
+          if (body || note) {
+            storage?.setItem?.(
+              draftKey,
+              JSON.stringify({ body, translator_note: note, savedAt: Date.now() })
+            );
+          }
+        } catch {}
+      }, 500);
+    };
+    bodyTextarea?.addEventListener("input", onDraftInput);
+    noteTextarea?.addEventListener("input", onDraftInput);
+    registerPageCleanup(() => {
+      clearTimeout(draftTimer);
+      bodyTextarea?.removeEventListener("input", onDraftInput);
+      noteTextarea?.removeEventListener("input", onDraftInput);
+    });
     const membersInput = page.querySelector('[name="is_members_only"]');
     if (membersInput) {
       membersInput.checked = Number(chapter.is_members_only) === 1;

@@ -236,14 +236,45 @@ export function createPanelHandlers({
     filterSeries() {
       scheduleReload("series", () => loadSeriesData(1));
     },
+    searchSeries() {
+      return loadSeriesData(1);
+    },
     filterUsers() {
       scheduleReload("users", () => loadUsersData(1));
+    },
+    searchUsers() {
+      return loadUsersData(1);
     },
     filterBlogs() {
       scheduleReload("blogs", () => loadBlogsData(1));
     },
+    searchBlogs() {
+      return loadBlogsData(1);
+    },
     filterComments() {
       scheduleReload("comments", () => loadCommentsData(1));
+    },
+    searchComments() {
+      return loadCommentsData(1);
+    },
+    searchLogs() {
+      return loadLogsData(1);
+    },
+    searchUploads() {
+      return loadUploadsData(1);
+    },
+    searchFinance() {
+      return loadFinanceData(1);
+    },
+    searchQueue() {
+      return loadQueueJobsData(1);
+    },
+    searchLikers() {
+      const targetId = store.get("likersTargetId");
+      const targetType = store.get("likersTargetType");
+      if (targetId && targetType) {
+        return loadLikersPage(targetType, targetId, 1);
+      }
     },
     previousSeriesPage() {
       return changePage("seriesMeta", -1, loadSeriesData);

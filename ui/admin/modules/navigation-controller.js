@@ -6,6 +6,7 @@ export function createPanelNavigationController({
   panelRouter, panelNavigation, store, hasPermission, showToast,
   panelTranslate, disposePage, beginPage, mountPage, renderRouteTables,
   browser = globalThis,
+  dirtyGuard = null,
 }) {
   let pageParent = "/panel";
   function resolvePanelRoute() {
@@ -33,6 +34,7 @@ export function createPanelNavigationController({
 
   let navigationSequence = 0;
   async function navigate() {
+    if (dirtyGuard && !dirtyGuard.checkCanNavigate()) return;
     const navigationId = ++navigationSequence;
     let resolved = resolvePanelRoute();
     if (!resolved) return;
