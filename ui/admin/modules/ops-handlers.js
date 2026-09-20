@@ -48,13 +48,13 @@ export function createOpsHandlers({
         return;
       }
       if (
-        !confirmAction(
+        !(await confirmAction(
           translate(
             "admin.ops.cleanup_confirm",
             "{days} günden eski oturum, log ve tamamlanmış kuyruk kayıtları silinecek. Devam edilsin mi?",
             { days },
           ),
-        )
+        ))
       ) {
         return;
       }

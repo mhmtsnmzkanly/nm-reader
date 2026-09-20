@@ -86,7 +86,7 @@ export function createAccessControlPagesController({
       if (!button) return;
       const granted = button.dataset.granted === "1";
       if (
-        !confirmAction(
+        !(await confirmAction(
           translate(
             "admin.confirm.permission_change",
             "{permission} izni {role} rolü için {change} mi?",
@@ -98,7 +98,7 @@ export function createAccessControlPagesController({
                 : translate("admin.rbac.grant_future", "verilsin"),
             },
           ),
-        )
+        ))
       ) {
         return;
       }

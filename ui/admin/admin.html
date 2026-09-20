@@ -546,6 +546,208 @@
           </div>
         </div>
       </div>
+
+      <!-- Confirmation Modal -->
+      <div
+        class="modal fade"
+        id="panel-confirm-modal"
+        tabindex="-1"
+        aria-labelledby="panel-confirm-modal-heading"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content shadow-lg border-0">
+            <div class="modal-header">
+              <h5 class="modal-title fs-5 d-flex align-items-center gap-2">
+                <i id="panel-confirm-modal-icon" class="bi bi-exclamation-triangle-fill text-danger"></i>
+                <span id="panel-confirm-modal-heading" data-i18n="admin.modal.confirm_title">Onay Gerekiyor</span>
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Kapat"
+                data-i18n-attr="aria-label:admin.queue.error_modal_close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-0 text-secondary-emphasis" id="panel-confirm-modal-message"></p>
+            </div>
+            <div class="modal-footer bg-body-tertiary">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+                id="panel-confirm-modal-cancel"
+                data-i18n="admin.modal.cancel"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                id="panel-confirm-modal-submit"
+                data-i18n="admin.modal.confirm"
+              >
+                Onayla
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prompt Modal -->
+      <div
+        class="modal fade"
+        id="panel-prompt-modal"
+        tabindex="-1"
+        aria-labelledby="panel-prompt-modal-heading"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content shadow-lg border-0">
+            <form id="panel-prompt-modal-form">
+              <div class="modal-header">
+                <h5 class="modal-title fs-5 d-flex align-items-center gap-2">
+                  <i id="panel-prompt-modal-icon" class="bi bi-pencil-square text-primary"></i>
+                  <span id="panel-prompt-modal-heading" data-i18n="admin.modal.prompt_title">Bilgi Girişi</span>
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Kapat"
+                  data-i18n-attr="aria-label:admin.queue.error_modal_close"
+                ></button>
+              </div>
+              <div class="modal-body">
+                <label
+                  for="panel-prompt-modal-input"
+                  class="form-label text-secondary-emphasis mb-2 fw-medium"
+                  id="panel-prompt-modal-label"
+                ></label>
+                <input
+                  type="text"
+                  class="form-control shadow-none"
+                  id="panel-prompt-modal-input"
+                  autocomplete="off"
+                />
+                <div class="form-text mt-1" id="panel-prompt-modal-help" hidden></div>
+              </div>
+              <div class="modal-footer bg-body-tertiary">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                  id="panel-prompt-modal-cancel"
+                  data-i18n="admin.modal.cancel"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  id="panel-prompt-modal-submit"
+                  data-i18n="admin.modal.ok"
+                >
+                  Tamam
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alert Modal -->
+      <div
+        class="modal fade"
+        id="panel-alert-modal"
+        tabindex="-1"
+        aria-labelledby="panel-alert-modal-heading"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content shadow-lg border-0">
+            <div class="modal-header">
+              <h5 class="modal-title fs-5 d-flex align-items-center gap-2">
+                <i id="panel-alert-modal-icon" class="bi bi-info-circle-fill text-primary"></i>
+                <span id="panel-alert-modal-heading" data-i18n="admin.modal.alert_title">Bildirim</span>
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Kapat"
+                data-i18n-attr="aria-label:admin.queue.error_modal_close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-0 text-secondary-emphasis" id="panel-alert-modal-message"></p>
+            </div>
+            <div class="modal-footer bg-body-tertiary">
+              <button
+                type="button"
+                class="btn btn-primary"
+                data-bs-dismiss="modal"
+                id="panel-alert-modal-submit"
+                data-i18n="admin.modal.ok"
+              >
+                Tamam
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Dialog Modal -->
+      <div
+        class="modal fade"
+        id="panel-dialog-modal"
+        tabindex="-1"
+        aria-labelledby="panel-dialog-modal-heading"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content shadow-lg border-0">
+            <form id="panel-dialog-modal-form">
+              <div class="modal-header">
+                <h5 class="modal-title fs-5 d-flex align-items-center gap-2">
+                  <i id="panel-dialog-modal-icon" class="bi bi-sliders text-primary"></i>
+                  <span id="panel-dialog-modal-heading" data-i18n="admin.modal.dialog_title">İşlem</span>
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Kapat"
+                  data-i18n-attr="aria-label:admin.queue.error_modal_close"
+                ></button>
+              </div>
+              <div class="modal-body d-flex flex-column gap-2" id="panel-dialog-modal-fields"></div>
+              <div class="modal-footer bg-body-tertiary">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                  id="panel-dialog-modal-cancel"
+                  data-i18n="admin.modal.cancel"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  id="panel-dialog-modal-submit"
+                  data-i18n="admin.modal.ok"
+                >
+                  Tamam
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
       <!-- Command Palette Modal -->
       <div
         class="modal fade"

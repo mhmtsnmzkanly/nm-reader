@@ -8,6 +8,7 @@ export function createTaxonomyPageController({
   mountPartial,
   confirmAction = () => false,
   promptValue = () => null,
+  modalService = null,
   showToast,
   registerPageCleanup,
   translate = (_key, fallback) => fallback,
@@ -78,22 +79,55 @@ export function createTaxonomyPageController({
         const createButton = event.target.closest("[data-create-taxonomy]");
         if (createButton) {
           const kind = createButton.dataset.createTaxonomy;
-          const name = promptValue(
-            kind === "genre"
-              ? translate("admin.taxonomy.new_genre", "Yeni tür adı:")
-              : translate("admin.taxonomy.new_tag", "Yeni etiket adı:"),
-          );
-          if (!name?.trim()) return;
-          const description = promptValue(
-            translate("admin.taxonomy.new_description", "Açıklama:"),
-            "",
-          );
-          if (description === null) return;
+          let name, description;
+          if (modalService?.dialog) {
+            const result = await modalService.dialog({
+              title: kind === "genre"
+                ? translate("admin.taxonomy.new_genre", "Yeni tür adı:")
+                : translate("admin.taxonomy.new_tag", "Yeni etiket adı:"),
+              icon: "bi-tag-fill",
+              variant: "primary",
+              confirmText: translate("admin.modal.ok", "Tamam"),
+              fields: [
+                {
+                  name: "name",
+                  label: kind === "genre"
+                    ? translate("admin.taxonomy.new_genre", "Yeni tür adı:")
+                    : translate("admin.taxonomy.new_tag", "Yeni etiket adı:"),
+                  type: "text",
+                  required: true,
+                },
+                {
+                  name: "description",
+                  label: translate("admin.taxonomy.new_description", "Açıklama:"),
+                  type: "textarea",
+                  rows: 2,
+                },
+              ],
+            });
+            if (!result || !result.name?.trim()) return;
+            name = result.name.trim();
+            description = result.description?.trim() || "";
+          } else {
+            const rawName = await promptValue(
+              kind === "genre"
+                ? translate("admin.taxonomy.new_genre", "Yeni tür adı:")
+                : translate("admin.taxonomy.new_tag", "Yeni etiket adı:"),
+            );
+            if (!rawName?.trim()) return;
+            name = rawName.trim();
+            const rawDesc = await promptValue(
+              translate("admin.taxonomy.new_description", "Açıklama:"),
+              "",
+            );
+            if (rawDesc === null) return;
+            description = rawDesc.trim();
+          }
           await api(kind === "genre" ? "/series_genres" : "/series_tags", {
             method: "POST",
             body: {
-              name: name.trim(),
-              ui_config: description.trim() ? { description: description.trim() } : {},
+              name,
+              ui_config: description ? { description } : {},
             },
           });
           showToast(
@@ -106,27 +140,58 @@ export function createTaxonomyPageController({
         }
         const editButton = event.target.closest("[data-edit-taxonomy]");
         if (editButton) {
-          const name = promptValue(
-            translate("admin.taxonomy.new_name", "Yeni ad:"),
-            editButton.dataset.name || "",
-          );
-          if (!name?.trim()) return;
           const uiConfig = {
             ...(configById.get(String(editButton.dataset.editTaxonomy)) || {}),
           };
-          const description = promptValue(
-            translate("admin.taxonomy.new_description", "Açıklama:"),
-            uiConfig.description || "",
-          );
-          if (description === null) return;
-          if (description.trim()) {
-            uiConfig.description = description.trim();
+          let name, description;
+          if (modalService?.dialog) {
+            const result = await modalService.dialog({
+              title: translate("admin.taxonomy.new_name", "Yeni ad:"),
+              icon: "bi-pencil-square",
+              variant: "primary",
+              confirmText: translate("admin.modal.ok", "Tamam"),
+              fields: [
+                {
+                  name: "name",
+                  label: translate("admin.taxonomy.new_name", "Yeni ad:"),
+                  type: "text",
+                  value: editButton.dataset.name || "",
+                  required: true,
+                },
+                {
+                  name: "description",
+                  label: translate("admin.taxonomy.new_description", "Açıklama:"),
+                  type: "textarea",
+                  rows: 2,
+                  value: uiConfig.description || "",
+                },
+              ],
+            });
+            if (!result || !result.name?.trim()) return;
+            name = result.name.trim();
+            description = result.description?.trim() || "";
+          } else {
+            const rawName = await promptValue(
+              translate("admin.taxonomy.new_name", "Yeni ad:"),
+              editButton.dataset.name || "",
+            );
+            if (!rawName?.trim()) return;
+            name = rawName.trim();
+            const rawDesc = await promptValue(
+              translate("admin.taxonomy.new_description", "Açıklama:"),
+              uiConfig.description || "",
+            );
+            if (rawDesc === null) return;
+            description = rawDesc.trim();
+          }
+          if (description) {
+            uiConfig.description = description;
           } else {
             delete uiConfig.description;
           }
           await api(`/taxonomies/${editButton.dataset.editTaxonomy}`, {
             method: "PUT",
-            body: { name: name.trim(), ui_config: uiConfig },
+            body: { name, ui_config: uiConfig },
           });
           showToast(translate("admin.taxonomy.updated", "Taksonomi güncellendi"));
           await loadTaxonomyPage();
@@ -135,7 +200,7 @@ export function createTaxonomyPageController({
         const mergeButton = event.target.closest("[data-merge-taxonomy]");
         if (mergeButton) {
           const targetId = Number(
-            promptValue(
+            await promptValue(
               translate(
                 "admin.taxonomy.merge_target",
                 "Bu kaydın birleştirileceği hedef taksonomi ID:",
@@ -165,11 +230,11 @@ export function createTaxonomyPageController({
             );
           }
           if (
-            !confirmAction(
+            !(await confirmAction(
               translate("admin.taxonomy.delete_confirm", "“{name}” silinsin mi?", {
                 name: deleteButton.dataset.name || "-",
               }),
-            )
+            ))
           ) return;
           await api(`/taxonomies/${deleteButton.dataset.deleteTaxonomy}`, {
             method: "DELETE",

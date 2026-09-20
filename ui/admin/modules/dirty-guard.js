@@ -83,10 +83,18 @@ export function createDirtyGuard({
       "Kaydedilmemiş değişiklikleriniz var. Sayfadan ayrılmak istediğinize emin misiniz?",
     );
     const confirmed = confirmAction(message);
+    if (confirmed && typeof confirmed.then === "function") {
+      return confirmed.then((result) => {
+        if (result) {
+          isFormDirty = false;
+        }
+        return Boolean(result);
+      });
+    }
     if (confirmed) {
       isFormDirty = false;
     }
-    return confirmed;
+    return Boolean(confirmed);
   }
 
   const onBeforeUnload = (event) => {

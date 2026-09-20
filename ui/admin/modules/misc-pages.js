@@ -88,7 +88,7 @@ export function createMiscPagesController({
       const button = event.target.closest("[data-remove-team]");
       if (
         !button ||
-        !confirmAction(translate("admin.confirm.team_remove", "Ekip üyesini çıkarmak istediğinize emin misiniz?"))
+        !(await confirmAction(translate("admin.confirm.team_remove", "Ekip üyesini çıkarmak istediğinize emin misiniz?")))
       ) {
         return;
       }

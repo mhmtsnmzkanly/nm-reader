@@ -34,7 +34,7 @@ export function createPanelNavigationController({
 
   let navigationSequence = 0;
   async function navigate() {
-    if (dirtyGuard && !dirtyGuard.checkCanNavigate()) return;
+    if (dirtyGuard && !(await dirtyGuard.checkCanNavigate())) return;
     const navigationId = ++navigationSequence;
     let resolved = resolvePanelRoute();
     if (!resolved) return;

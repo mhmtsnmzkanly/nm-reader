@@ -146,13 +146,17 @@ export function createAdminReauth({
     throw new TypeError("createAdminReauth requires a fetch implementation.");
   }
   return async ({ signal, epoch } = {}) => {
+    const promptMessage = translate(
+      "admin.auth.reauth_prompt",
+      "Bu kritik işlem için yönetici parolanızı yeniden girin:",
+    );
     const password = typeof promptImpl === "function"
-      ? promptImpl(
-        translate(
-          "admin.auth.reauth_prompt",
-          "Bu kritik işlem için yönetici parolanızı yeniden girin:",
-        ),
-      )
+      ? await promptImpl({
+        title: promptMessage,
+        message: promptMessage,
+        inputType: "password",
+        required: true,
+      })
       : "";
     if (!password) return false;
     const csrf = getCsrfToken?.();

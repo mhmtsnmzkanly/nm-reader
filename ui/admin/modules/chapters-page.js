@@ -13,6 +13,7 @@ export function createChaptersPageController({
   panelNavigate,
   confirmAction = () => false,
   promptValue = () => null,
+  modalService = null,
   showToast,
   registerPageCleanup,
   loadSeriesData,
@@ -120,7 +121,12 @@ export function createChaptersPageController({
       }
       if (
         deleteButton &&
-        confirmAction(translate("admin.confirm.chapter_delete", "Bu bölümü silmek istediğinize emin misiniz?"))
+        (await confirmAction({
+          title: translate("admin.chapters.delete_title", "Bölüm Sil"),
+          message: translate("admin.confirm.chapter_delete", "Bu bölümü silmek istediğinize emin misiniz?"),
+          confirmText: translate("admin.chapters.delete_confirm_btn", "Sil"),
+          variant: "danger",
+        }))
       ) {
         try {
           await api(`/chapters/${deleteButton.dataset.deleteChapter}`, {
@@ -144,20 +150,60 @@ export function createChaptersPageController({
         const action = bulkButton.dataset.bulkChapter;
         const params = {};
         if (action === "schedule") {
-          const publishedAt = promptValue(translate("admin.prompt.publish_at", "Yayın tarihi (YYYY-MM-DD HH:MM):"));
+          const publishedAt = await promptValue({
+            title: translate("admin.prompt.publish_at", "Yayın tarihi (YYYY-MM-DD HH:MM):"),
+            message: translate("admin.prompt.publish_at", "Yayın tarihi (YYYY-MM-DD HH:MM):"),
+            inputType: "datetime-local",
+          });
           if (!publishedAt) return;
-          params.published_at = publishedAt;
+          params.published_at = publishedAt.replace("T", " ");
         }
         if (action === "set_price") {
-          const price = promptValue(translate("admin.prompt.coin_price", "Coin fiyatı:"), "0");
-          if (price === null) return;
-          params.price_amount = Number(price);
-          const freeAfter = promptValue(translate("admin.prompt.free_after", "Ücretsiz olma tarihi (isteğe bağlı):"), "");
-          if (freeAfter) params.is_free_after = freeAfter;
+          if (modalService?.dialog) {
+            const values = await modalService.dialog({
+              title: translate("admin.chapters.pricing_title", "Bölüm Fiyatlandırma"),
+              icon: "bi-coin",
+              variant: "primary",
+              confirmText: translate("admin.chapters.save_price", "Fiyatı Uygula"),
+              fields: [
+                {
+                  name: "coin_price",
+                  label: translate("admin.prompt.coin_price", "Coin fiyatı:"),
+                  type: "number",
+                  value: 0,
+                  min: 0,
+                  required: true,
+                },
+                {
+                  name: "is_free_after",
+                  label: translate("admin.prompt.free_after", "Ücretsiz olma tarihi (isteğe bağlı):"),
+                  type: "datetime-local",
+                  value: "",
+                  help: translate("admin.chapters.pricing_free_after_help", "Boş bırakılırsa süre sınırlaması uygulanmaz."),
+                },
+              ],
+            });
+            if (!values) return;
+            params.price_amount = Number(values.coin_price || 0);
+            if (values.is_free_after?.trim()) {
+              params.is_free_after = values.is_free_after.trim().replace("T", " ");
+            }
+          } else {
+            const price = await promptValue(translate("admin.prompt.coin_price", "Coin fiyatı:"), "0");
+            if (price === null) return;
+            params.price_amount = Number(price);
+            const freeAfter = await promptValue(translate("admin.prompt.free_after", "Ücretsiz olma tarihi (isteğe bağlı):"), "");
+            if (freeAfter) params.is_free_after = freeAfter;
+          }
         }
         if (
           action === "delete" &&
-          !confirmAction(translate("admin.confirm.chapter_bulk_delete", "{count} bölümü silmek istediğinize emin misiniz?", { count: ids.length }))
+          !(await confirmAction({
+            title: translate("admin.chapters.bulk_delete_title", "Toplu Bölüm Silme"),
+            message: translate("admin.confirm.chapter_bulk_delete", "{count} bölümü silmek istediğinize emin misiniz?", { count: ids.length }),
+            confirmText: translate("admin.chapters.delete_confirm_btn", "Sil"),
+            variant: "danger",
+          }))
         ) {
           return;
         }

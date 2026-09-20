@@ -226,7 +226,7 @@ export function createConfigPagesController({
                 result?.data?.success === false ? "danger" : "success",
               );
             }
-            if (remove && confirmAction(translate("admin.confirm.webhook_delete", "Webhook silinsin mi?"))) {
+            if (remove && (await confirmAction(translate("admin.confirm.webhook_delete", "Webhook silinsin mi?")))) {
               await api(`/webhooks/${remove.dataset.deleteWebhook}`, {
                 method: "DELETE",
               });

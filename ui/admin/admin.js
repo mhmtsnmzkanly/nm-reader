@@ -39,6 +39,7 @@ import { resolvePanelContext } from "./modules/bootstrap.js";
 import { initializeShell, panelTitle } from "./modules/shell.js";
 import { bindLanguageSelector, savedPanelLocale } from "./modules/language-selector.js";
 import { createThemeController } from "./modules/theme.js";
+import { createModalService } from "./modules/modal.js";
 import { createFeedback } from "./modules/feedback.js?125";
 import { createRequestGate } from "./modules/request-gate.js?125";
 import { createTranslationModule } from "./modules/directives/translation.js?126";
@@ -98,12 +99,21 @@ const i18n = createI18n({
   initialDictionaries: globalThis.__NMR_CONTEXT?.translations || {},
 });
 document.documentElement.lang = i18n.locale();
-const feedback = createFeedback(document);
-const { confirmAction, promptValue } = feedback;
 function panelTranslate(key, fallback, params = {}) {
   const value = i18n.t(key, params);
   return value === key ? fallback : value;
 }
+const modalService = createModalService({
+  documentRef: document,
+  windowRef: globalThis.window,
+  translate: panelTranslate,
+});
+const feedback = createFeedback({
+  documentRef: document,
+  windowRef: globalThis.window,
+  modalService,
+});
+const { confirmAction, promptValue } = feedback;
 const dirtyGuard = createDirtyGuard({
   windowRef: globalThis.window,
   confirmAction,
@@ -474,6 +484,7 @@ const chaptersPageController = createChaptersPageController({
   panelNavigate,
   confirmAction,
   promptValue,
+  modalService,
   showToast,
   registerPageCleanup,
   loadSeriesData,
@@ -595,6 +606,7 @@ const taxonomyPageController = createTaxonomyPageController({
   mountPartial,
   confirmAction,
   promptValue,
+  modalService,
   showToast,
   registerPageCleanup,
   documentRef: document,

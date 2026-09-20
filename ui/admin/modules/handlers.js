@@ -206,7 +206,7 @@ export function createPanelHandlers({
       }
     },
     async cancelQueueJob({ element: el }) {
-      if (!confirmAction(translate("admin.confirm.queue_cancel", "Kuyruk işi #{id} iptal edilsin mi?", { id: el.dataset.id }))) return;
+      if (!(await confirmAction(translate("admin.confirm.queue_cancel", "Kuyruk işi #{id} iptal edilsin mi?", { id: el.dataset.id })))) return;
       try {
         await api(`/queue/jobs/${el.dataset.id}/cancel`, { method: "POST" });
         showToast(translate("admin.toast.job_cancelled", "İş iptal edildi"));
@@ -219,7 +219,7 @@ export function createPanelHandlers({
 
     async changeSeriesLifecycle({ element: el }) {
       const action = el.dataset.action;
-      if (!confirmAction(translate("admin.confirm.content_lifecycle", "İçerik için {action} işlemi uygulansın mı?", { action }))) return;
+      if (!(await confirmAction(translate("admin.confirm.content_lifecycle", "İçerik için {action} işlemi uygulansın mı?", { action })))) return;
       try {
         await api(`/content/${el.dataset.id}/lifecycle`, {
           method: "POST",
@@ -385,16 +385,16 @@ export function createPanelHandlers({
       return changePage("financeMeta", 1, loadFinanceData);
     },
     async refundFinanceTransaction({ element: el }) {
-      const reason = promptValue(translate("admin.prompt.refund_reason", "İade nedeni:"));
+      const reason = await promptValue(translate("admin.prompt.refund_reason", "İade nedeni:"));
       if (!reason?.trim()) return;
       if (
-        !confirmAction(
+        !(await confirmAction(
           translate(
             "admin.confirm.refund",
             "İşlem #{id} için coin iadesi yapılsın ve ilgili erişim geri alınsın mı?",
             { id: el.dataset.id },
           ),
-        )
+        ))
       ) {
         return;
       }
@@ -413,7 +413,7 @@ export function createPanelHandlers({
 
     async deleteBlog({ element: el }) {
       const id = el.dataset.id;
-      if (!confirmAction(translate("admin.confirm.blog_delete", "Bu blog yazısını silmek istediğinize emin misiniz?"))) {
+      if (!(await confirmAction(translate("admin.confirm.blog_delete", "Bu blog yazısını silmek istediğinize emin misiniz?")))) {
         return;
       }
       try {
@@ -438,7 +438,7 @@ export function createPanelHandlers({
     },
 
     async hideBlog({ element: el }) {
-      if (!confirmAction(translate("admin.confirm.blog_hide", "Bu blog yazısını gizlemek istediğinize emin misiniz?"))) {
+      if (!(await confirmAction(translate("admin.confirm.blog_hide", "Bu blog yazısını gizlemek istediğinize emin misiniz?")))) {
         return;
       }
       try {
@@ -470,7 +470,7 @@ export function createPanelHandlers({
     },
 
     async deleteUpload({ element: el }) {
-      if (!confirmAction(translate("admin.confirm.upload_delete", "Bu yükleme kaydı ve bağlı dosya silinsin mi?"))) return;
+      if (!(await confirmAction(translate("admin.confirm.upload_delete", "Bu yükleme kaydı ve bağlı dosya silinsin mi?")))) return;
       try {
         await api(`/uploads/${el.dataset.id}`, { method: "DELETE" });
         showToast(translate("admin.toast.upload_deleted", "Yükleme silindi"));
@@ -502,13 +502,13 @@ export function createPanelHandlers({
         return showToast(translate("admin.validation.select_upload", "Önce en az bir dosya seçin"), "danger");
       }
       if (
-        !confirmAction(
+        !(await confirmAction(
           translate(
             "admin.confirm.upload_bulk_delete",
             "{count} yükleme kaydı ve fiziksel dosyaları silinsin mi?",
             { count: ids.length },
           ),
-        )
+        ))
       ) {
         return;
       }

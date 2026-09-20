@@ -333,7 +333,7 @@ export function createChapterEditorController({
       page.querySelector("[data-chapter-body]").hidden = image;
       page.querySelector("[data-chapter-pages]").hidden = !image;
     };
-    const onTypeChange = () => {
+    const onTypeChange = async () => {
       const nextType = typeInput.value;
       if (nextType !== previousType) {
         const warning = nextType === "image"
@@ -345,7 +345,7 @@ export function createChapterEditorController({
             "admin.chapter.convert_to_text",
             "Görsel sayfaları metin bölüme çevrilecek. Kaydederseniz görsel sayfaları kaldırılır. Devam edilsin mi?",
           );
-        if (!confirmAction(warning)) {
+        if (!(await confirmAction(warning))) {
           typeInput.value = previousType;
           return;
         }
