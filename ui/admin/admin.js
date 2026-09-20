@@ -10,9 +10,10 @@ import {
   loops,
   model,
   partials,
+  ref,
   show,
   text,
-} from "https://cdn.jsdelivr.net/gh/mhmtsnmzkanly/lime-csr-js@v0.5.0/dist/index.min.js";
+} from "https://cdn.jsdelivr.net/gh/mhmtsnmzkanly/lime-csr-js@v0.6.2/dist/index.min.js";
 import {
   createAdminApi,
   createAdminReauth,
@@ -132,17 +133,14 @@ const panelModules = [
   text(),
   show(),
   events(),
+  ref(),
   panelTranslationModule,
 ];
 const panelEngine = createEngine({ modules: panelModules });
-// Partials are mounted inside the page engine's target. Lime's events module
-// delegates from its mount target, so mounting a second events-enabled engine
-// here would dispatch every partial action twice (nested target + #panel-app).
-// Structural/translation modules still run for partials; the page engine's
-// single delegated listener handles their data-on-* attributes.
-const panelPartialEngine = createEngine({
-  modules: panelModules.filter((module) => module.name !== "events"),
-});
+// Partials and pages share panelEngine. In Lime-CSR v0.6.1+, nested mount
+// boundaries ([data-lime-mount]) are isolated by the events module, so the
+// outer page engine skips events from nested partial targets. Partials mount
+// with full event delegation, eliminating double dispatch and event drop.
 const panelNavigation = createPanelNavigation({ documentRef: document });
 let sidebarRender = null;
 function renderSidebar() {
@@ -156,9 +154,8 @@ function renderSidebar() {
   // dictionary refresh so sidebar renders cannot accumulate handlers.
   sidebarRender?.cleanup?.();
   // Sidebar links are handled by the panel navigation adapter below; it has
-  // no Lime data-on-* actions. Use the structural engine so a dictionary
-  // refresh cannot add a second delegated events listener to the sidebar.
-  sidebarRender = panelPartialEngine.render(shell, { store, handlers });
+  // no Lime data-on-* actions.
+  sidebarRender = panelEngine.render(shell, { store, handlers });
   applyPermissionVisibility(shell);
   restorePanelGroupState(shell, groupState);
   panelNavigation.setActiveRoute?.(currentRoute, currentSection);
@@ -246,15 +243,7 @@ function mount(name, options = {}) {
 }
 
 function mountPartialEngine(name, options = {}) {
-  const { target: mountTarget, context = {}, store: mountStore, ...rest } =
-    options;
-  return panelPartialEngine.mount({
-    ...rest,
-    target: mountTarget,
-    template: name,
-    store: mountStore || store,
-    context,
-  });
+  return mount(name, options);
 }
 
 const pageView = createPageView({
