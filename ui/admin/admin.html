@@ -29,7 +29,7 @@
       href="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/css/adminlte.min.css"
     />
     <!-- Increase +1 when change css code -->
-    <link rel="stylesheet" href="/assets/css/admin/admin.css?13" />
+    <link rel="stylesheet" href="/assets/css/admin/admin.css?14" />
 
   </head>
   <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -187,7 +187,7 @@
                   </li>
                   <li
                     class="nav-item"
-                    data-requires-permission="admin.content.create"
+                    data-requires-permission="admin.content.create, admin.content.update"
                   >
                     <a
                       href="/panel/taxonomies"
@@ -3156,15 +3156,23 @@ ${admin_note}</textarea>
     <template id="tpl-panel-taxonomy"
       ><div class="row g-4">
         <div class="col-md-6">
-          <div class="d-flex justify-content-between mb-2">
-            <h6 data-i18n="admin.taxonomy.genres">Türler</h6>
-            <button
-              type="button"
-              class="btn btn-sm btn-primary"
-              data-create-taxonomy="genre"
-            >
-              <i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_genre">Yeni Tür</span>
-            </button>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0" data-i18n="admin.taxonomy.genres">Türler</h6>
+            <div class="d-flex gap-2">
+              <button
+                type="submit"
+                class="btn btn-sm btn-outline-primary"
+              >
+                <i class="bi bi-arrow-down-up me-1"></i><span data-i18n="admin.taxonomy.save_order">Sıralamayı Kaydet</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                data-create-taxonomy="genre"
+              >
+                <i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_genre">Yeni Tür</span>
+              </button>
+            </div>
           </div>
           <div class="table-responsive">
             <table class="table table-sm align-middle">
@@ -3182,15 +3190,23 @@ ${admin_note}</textarea>
           </div>
         </div>
         <div class="col-md-6">
-          <div class="d-flex justify-content-between mb-2">
-            <h6 data-i18n="admin.taxonomy.tags">Etiketler</h6>
-            <button
-              type="button"
-              class="btn btn-sm btn-primary"
-              data-create-taxonomy="tag"
-            >
-              <i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_tag">Yeni Etiket</span>
-            </button>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0" data-i18n="admin.taxonomy.tags">Etiketler</h6>
+            <div class="d-flex gap-2">
+              <button
+                type="submit"
+                class="btn btn-sm btn-outline-primary"
+              >
+                <i class="bi bi-arrow-down-up me-1"></i><span data-i18n="admin.taxonomy.save_order">Sıralamayı Kaydet</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                data-create-taxonomy="tag"
+              >
+                <i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_tag">Yeni Etiket</span>
+              </button>
+            </div>
           </div>
           <div class="table-responsive">
             <table class="table table-sm align-middle">
@@ -3222,6 +3238,7 @@ ${admin_note}</textarea>
             <input
               type="number"
               min="0"
+              name="taxonomy_order_${item.id}"
               class="form-control form-control-sm"
               data-taxonomy-order
               value="${item.sort_order}"
@@ -6361,7 +6378,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?246");
+        const admin = await import("/assets/js/admin/admin.js?247");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {

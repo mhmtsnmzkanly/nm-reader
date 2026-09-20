@@ -609,7 +609,7 @@ final class SeriesRepository
     public function getGenres(int $page, int $perPage): array
     {
         $offset = max(0, ($page - 1) * $perPage);
-        $sql = 'SELECT id, name, slug, ui_config, updated_at FROM taxonomies WHERE type = "genre" ORDER BY name ASC LIMIT :limit OFFSET :offset';
+        $sql = 'SELECT id, name, slug, ui_config, sort_order, updated_at FROM taxonomies WHERE type = "genre" ORDER BY sort_order ASC, name ASC LIMIT :limit OFFSET :offset';
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -628,13 +628,14 @@ final class SeriesRepository
                     t.name,
                     t.slug,
                     t.ui_config,
+                    t.sort_order,
                     t.updated_at,
                     COUNT(ct.content_id) AS content_count
                 FROM taxonomies t
                 LEFT JOIN series_taxonomy_map ct ON ct.taxonomy_id = t.id
                 WHERE t.type = "tag"
-                GROUP BY t.id, t.name, t.slug, t.ui_config, t.updated_at
-                ORDER BY t.name ASC
+                GROUP BY t.id, t.name, t.slug, t.ui_config, t.sort_order, t.updated_at
+                ORDER BY t.sort_order ASC, t.name ASC
                 LIMIT :limit OFFSET :offset';
 
         $stmt = $this->pdo->prepare($sql);

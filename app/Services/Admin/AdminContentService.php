@@ -38,6 +38,7 @@ final class AdminContentService extends AdminConsoleServiceBase
             $genre = $this->repo->createGenre($name, $this->taxonomySlug($name), $this->normalizeTaxonomyUiConfig($uiConfig));
             $this->repo->createModerationAction($moderatorId, 'system', (string) $genre['id'], 'create_genre', "New genre created: $name");
             $this->pdo->commit();
+            $this->invalidateListingCaches();
         } catch (\Throwable $exception) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
             throw $exception;
@@ -56,6 +57,7 @@ final class AdminContentService extends AdminConsoleServiceBase
             $tag = $this->repo->createTag($name, $this->taxonomySlug($name), $this->normalizeTaxonomyUiConfig($uiConfig));
             $this->repo->createModerationAction($moderatorId, 'system', (string) $tag['id'], 'create_tag', "New tag created: $name");
             $this->pdo->commit();
+            $this->invalidateListingCaches();
         } catch (\Throwable $exception) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
             throw $exception;
@@ -67,6 +69,7 @@ final class AdminContentService extends AdminConsoleServiceBase
     public function updateContentTaxonomy(string $contentId, array $genreIds, array $tagIds, string $moderatorId): void
     {
         $this->repo->updateContentTaxonomy($contentId, $genreIds, $tagIds, $moderatorId);
+        $this->invalidateListingCaches();
     }
 
     public function listAllGenres(): array
@@ -94,6 +97,7 @@ final class AdminContentService extends AdminConsoleServiceBase
             $updated = $this->repo->updateTaxonomy($id, $name, $this->taxonomySlug($name), $uiConfig);
             $this->repo->createModerationAction($moderatorId, 'system', (string) $id, 'update_taxonomy', "Taxonomy renamed: {$existing['name']} -> $name");
             $this->pdo->commit();
+            $this->invalidateListingCaches();
         } catch (\Throwable $exception) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
             throw $exception;
@@ -104,7 +108,7 @@ final class AdminContentService extends AdminConsoleServiceBase
 
     private function normalizeTaxonomyUiConfig(array $uiConfig): array
     {
-        if (array_is_list($uiConfig)) {
+        if ($uiConfig !== [] && array_is_list($uiConfig)) {
             throw new \InvalidArgumentException('ui_config must be a JSON object');
         }
         if (isset($uiConfig['description'])) {
@@ -144,6 +148,7 @@ final class AdminContentService extends AdminConsoleServiceBase
             if (!$this->repo->deleteTaxonomy($id)) throw new \RuntimeException('Taxonomy could not be deleted');
             $this->repo->createModerationAction($moderatorId, 'system', (string) $id, 'delete', "Taxonomy deleted: {$existing['name']}");
             $this->pdo->commit();
+            $this->invalidateListingCaches();
         } catch (\Throwable $exception) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
             throw $exception;
@@ -155,7 +160,9 @@ final class AdminContentService extends AdminConsoleServiceBase
         $sourceId = (int)($payload['source_id'] ?? 0);
         $targetId = (int)($payload['target_id'] ?? 0);
         if ($sourceId <= 0 || $targetId <= 0 || $sourceId === $targetId) throw new \InvalidArgumentException('Valid, different source_id and target_id are required');
-        return $this->repo->mergeTaxonomies($sourceId, $targetId, $moderatorId);
+        $result = $this->repo->mergeTaxonomies($sourceId, $targetId, $moderatorId);
+        $this->invalidateListingCaches();
+        return $result;
     }
 
     public function reorderTaxonomies(array $payload, string $moderatorId): void
@@ -168,5 +175,6 @@ final class AdminContentService extends AdminConsoleServiceBase
             $normalized[] = ['id' => (int)$item['id'], 'sort_order' => max(0, (int)($item['sort_order'] ?? 0))];
         }
         $this->repo->reorderTaxonomies($normalized, $moderatorId);
+        $this->invalidateListingCaches();
     }
 }

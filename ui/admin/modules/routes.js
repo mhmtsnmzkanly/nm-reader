@@ -205,7 +205,7 @@ export function createPanelRoutes({ loaders = {}, page: pageFactory } = {}) {
         index: panelPage(null, {
           route: "taxonomies",
           section: "taxonomies",
-          permissions: ["admin.content.create"],
+          permissions: ["admin.content.create", "admin.content.update"],
           load: () => loadTaxonomyPage(),
         }),
       },

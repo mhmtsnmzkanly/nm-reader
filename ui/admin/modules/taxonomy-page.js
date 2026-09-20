@@ -72,8 +72,13 @@ export function createTaxonomyPageController({
       page.querySelector("#panel-taxonomy-tags"),
       { items: tagItems, has_items: tagItems.length > 0 },
     );
-    const submit = page.querySelector('button[type="submit"]');
-    if (submit) submit.textContent = translate("admin.taxonomy.save_order", "Sıralamayı Kaydet");
+    const footerSubmitSpan = page.querySelector('.card-footer button[type="submit"] span');
+    if (footerSubmitSpan) {
+      footerSubmitSpan.textContent = translate("admin.taxonomy.save_order", "Sıralamayı Kaydet");
+    } else {
+      const submit = page.querySelector('button[type="submit"]');
+      if (submit) submit.textContent = translate("admin.taxonomy.save_order", "Sıralamayı Kaydet");
+    }
     const onClick = async (event) => {
       try {
         const createButton = event.target.closest("[data-create-taxonomy]");

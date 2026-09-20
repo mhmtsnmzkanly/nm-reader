@@ -103,6 +103,18 @@ abstract class AdminConsoleServiceBase
         return substr($slug, 0, 50);
     }
 
+    protected function invalidateListingCaches(): void
+    {
+        $this->cache->delete('sitemap_xml');
+        $this->cache->deleteByPrefix('homepage_popular_');
+        $this->cache->deleteByPrefix('type_list_');
+        $this->cache->deleteByPrefix('genre_list_');
+        $this->cache->deleteByPrefix('tag_list_');
+        $this->cache->deleteByPrefix('latest_chapters_');
+        $this->cache->deleteByPrefix('genres_');
+        $this->cache->deleteByPrefix('tags_');
+    }
+
     protected function readEnvFile(): array
     {
         // Admin services live in app/Services/Admin; the environment file is

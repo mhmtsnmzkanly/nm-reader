@@ -13,7 +13,7 @@
     /><link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/admin-lte@4.9.1/dist/css/adminlte.min.css"
-    /><!-- Increase +1 when change css code --><link rel="stylesheet" href="/assets/css/admin/admin.css?13" /></head><body class="layout-fixed sidebar-expand-lg bg-body-tertiary"><div class="app-wrapper"><nav class="app-header navbar navbar-expand bg-body border-bottom"><div class="container-fluid"><ul class="navbar-nav"><li class="nav-item"><a
+    /><!-- Increase +1 when change css code --><link rel="stylesheet" href="/assets/css/admin/admin.css?14" /></head><body class="layout-fixed sidebar-expand-lg bg-body-tertiary"><div class="app-wrapper"><nav class="app-header navbar navbar-expand bg-body border-bottom"><div class="container-fluid"><ul class="navbar-nav"><li class="nav-item"><a
                 class="nav-link"
                 data-lte-toggle="sidebar"
                 href="#"
@@ -71,7 +71,7 @@
                         class="nav-icon bi bi-journal-richtext me-2 text-primary"
                       ></i><p class="mb-0" data-i18n="admin.series">Seriler &amp; Bölümler</p></a></li><li
                     class="nav-item"
-                    data-requires-permission="admin.content.create"
+                    data-requires-permission="admin.content.create, admin.content.update"
                   ><a
                       href="/panel/taxonomies"
                       class="nav-link rounded"
@@ -1449,21 +1449,28 @@ ${admin_note}</textarea>
         ></template
       ></template
     ><template id="tpl-panel-taxonomy"
-      ><div class="row g-4"><div class="col-md-6"><div class="d-flex justify-content-between mb-2"><h6 data-i18n="admin.taxonomy.genres">Türler</h6><button
-              type="button"
-              class="btn btn-sm btn-primary"
-              data-create-taxonomy="genre"
-            ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_genre">Yeni Tür</span></button></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th data-i18n="admin.taxonomy.usage">Kullanım</th><th data-i18n="admin.taxonomy.order">Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-genres"></tbody></table></div></div><div class="col-md-6"><div class="d-flex justify-content-between mb-2"><h6 data-i18n="admin.taxonomy.tags">Etiketler</h6><button
-              type="button"
-              class="btn btn-sm btn-primary"
-              data-create-taxonomy="tag"
-            ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_tag">Yeni Etiket</span></button></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th data-i18n="admin.taxonomy.usage">Kullanım</th><th data-i18n="admin.taxonomy.order">Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-tags"></tbody></table></div></div></div
+      ><div class="row g-4"><div class="col-md-6"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0" data-i18n="admin.taxonomy.genres">Türler</h6><div class="d-flex gap-2"><button
+                type="submit"
+                class="btn btn-sm btn-outline-primary"
+              ><i class="bi bi-arrow-down-up me-1"></i><span data-i18n="admin.taxonomy.save_order">Sıralamayı Kaydet</span></button><button
+                type="button"
+                class="btn btn-sm btn-primary"
+                data-create-taxonomy="genre"
+              ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_genre">Yeni Tür</span></button></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th data-i18n="admin.taxonomy.usage">Kullanım</th><th data-i18n="admin.taxonomy.order">Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-genres"></tbody></table></div></div><div class="col-md-6"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0" data-i18n="admin.taxonomy.tags">Etiketler</h6><div class="d-flex gap-2"><button
+                type="submit"
+                class="btn btn-sm btn-outline-primary"
+              ><i class="bi bi-arrow-down-up me-1"></i><span data-i18n="admin.taxonomy.save_order">Sıralamayı Kaydet</span></button><button
+                type="button"
+                class="btn btn-sm btn-primary"
+                data-create-taxonomy="tag"
+              ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_tag">Yeni Etiket</span></button></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th data-i18n="admin.taxonomy.usage">Kullanım</th><th data-i18n="admin.taxonomy.order">Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-tags"></tbody></table></div></div></div
     ></template><template id="tpl-panel-rows-taxonomy"
       ><template data-for each="items" as="item"
         ><tr data-taxonomy-row="${item.id}"><td class="text-secondary">${item.id}</td><td><strong>${item.name}</strong
             ><small class="d-block text-secondary">${item.slug}</small><small class="d-block text-secondary text-truncate" style="max-width: 36rem">${item.description}</small></td><td>${item.usage_count}</td><td class="panel-action-column"><input
               type="number"
               min="0"
+              name="taxonomy_order_${item.id}"
               class="form-control form-control-sm"
               data-taxonomy-order
               value="${item.sort_order}"
@@ -2534,7 +2541,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?246");
+        const admin = await import("/assets/js/admin/admin.js?247");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {
