@@ -64,7 +64,8 @@ abstract class AdminConsoleServiceBase
         array|string $payload,
         ?string $targetId = null,
         ?string $action = null,
-        ?string $reason = null
+        ?string $reason = null,
+        ?array $metadata = null
     ): int
     {
         if (is_array($payload)) {
@@ -75,6 +76,7 @@ abstract class AdminConsoleServiceBase
                 'target_id' => $targetId,
                 'action' => $action,
                 'reason' => $reason,
+                'metadata' => $metadata,
             ];
         }
     

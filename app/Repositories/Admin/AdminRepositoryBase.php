@@ -37,8 +37,8 @@ abstract class AdminRepositoryBase
         $stmt->execute([
             'moderator_user_id' => $moderatorUserId,
             'target_type' => $targetType,
-            'target_id' => $targetId,
-            'action' => $action,
+            'target_id' => mb_substr($targetId, 0, 32),
+            'action' => mb_substr($action, 0, 64),
             'reason' => $reason !== null ? mb_substr($reason, 0, 255) : null,
             'outcome' => in_array($outcome, ['success', 'failure'], true) ? $outcome : 'success',
             'metadata' => $metadata === null ? null : json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),

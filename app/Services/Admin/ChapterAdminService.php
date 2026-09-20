@@ -464,12 +464,23 @@ final class ChapterAdminService extends AdminServiceBase
             }
     
             if ($moderatorId !== null && $affected > 0) {
+                $count = count($chapterIds);
+                $targetId = $count === 1
+                    ? $chapterIds[0]
+                    : mb_substr($chapterIds[0] . ' (+' . ($count - 1) . ')', 0, 32);
+
                 $this->adminConsole->createModerationAction(
                     $moderatorId,
                     'chapter',
-                    implode(',', array_slice($chapterIds, 0, 5)),
+                    $targetId,
                     'bulk_' . $action,
-                    "Bulk {$action} applied to {$affected} chapters"
+                    "Bulk {$action} applied to {$affected} chapters",
+                    [
+                        'chapter_ids' => $chapterIds,
+                        'affected' => $affected,
+                        'action' => $action,
+                        'params' => $params,
+                    ]
                 );
             }
     
