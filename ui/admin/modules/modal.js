@@ -26,6 +26,9 @@ function showModal(element, windowRef) {
 }
 
 function hideModal(element, windowRef) {
+  if (element && element.contains(element.ownerDocument?.activeElement)) {
+    element.ownerDocument.activeElement.blur?.();
+  }
   const bsModal = getBootstrapModal(element, windowRef);
   if (bsModal) {
     try {

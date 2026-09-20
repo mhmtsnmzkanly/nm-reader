@@ -195,3 +195,63 @@ test("creating genre opens modal dialog and sends POST /series_genres with ui_co
   });
   assert.equal(toastMessage, "Tür oluşturuldu");
 });
+
+test("loadTaxonomyPage binds tab switching and populates count badges", async () => {
+  const dom = new JSDOM("<!DOCTYPE html><html><body><div id='root'></div></body></html>");
+  const doc = dom.window.document;
+
+  const mockGenres = [
+    { id: 1, name: "Action", slug: "action", sort_order: 0, usage_count: 5 },
+    { id: 2, name: "Comedy", slug: "comedy", sort_order: 1, usage_count: 3 },
+  ];
+  const mockTags = [
+    { id: 10, name: "Magic", slug: "magic", sort_order: 0, usage_count: 8 },
+  ];
+
+  const pageEl = doc.createElement("div");
+  pageEl.innerHTML = `
+    <ul class="nav nav-tabs">
+      <li><button class="nav-link active" data-taxonomy-tab="genres"><span id="panel-taxonomy-genres-count"></span></button></li>
+      <li><button class="nav-link" data-taxonomy-tab="tags"><span id="panel-taxonomy-tags-count"></span></button></li>
+    </ul>
+    <section data-taxonomy-section="genres"></section>
+    <section data-taxonomy-section="tags" hidden></section>
+    <tbody id="panel-taxonomy-genres"></tbody>
+    <tbody id="panel-taxonomy-tags"></tbody>
+  `;
+
+  const controller = createTaxonomyPageController({
+    api: async () => ({}),
+    getPageEpoch: () => 1,
+    assertCurrentPage: () => {},
+    loadTaxonomies: async () => ({ genres: mockGenres, tags: mockTags }),
+    mountEditorPage: () => pageEl,
+    mountPartial: () => {},
+    showToast: () => {},
+    registerPageCleanup: () => {},
+    translate: (_key, fallback) => fallback,
+  });
+
+  await controller.loadTaxonomyPage();
+
+  assert.equal(pageEl.querySelector("#panel-taxonomy-genres-count").textContent, "2");
+  assert.equal(pageEl.querySelector("#panel-taxonomy-tags-count").textContent, "1");
+
+  const genresTabBtn = pageEl.querySelector('[data-taxonomy-tab="genres"]');
+  const tagsTabBtn = pageEl.querySelector('[data-taxonomy-tab="tags"]');
+  const genresSec = pageEl.querySelector('[data-taxonomy-section="genres"]');
+  const tagsSec = pageEl.querySelector('[data-taxonomy-section="tags"]');
+
+  assert.equal(genresTabBtn.classList.contains("active"), true);
+  assert.equal(tagsTabBtn.classList.contains("active"), false);
+  assert.equal(genresSec.hidden, false);
+  assert.equal(tagsSec.hidden, true);
+
+  // Click tags tab
+  tagsTabBtn.click();
+  assert.equal(genresTabBtn.classList.contains("active"), false);
+  assert.equal(tagsTabBtn.classList.contains("active"), true);
+  assert.equal(genresSec.hidden, true);
+  assert.equal(tagsSec.hidden, false);
+});
+

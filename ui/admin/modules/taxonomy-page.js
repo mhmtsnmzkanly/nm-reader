@@ -13,6 +13,8 @@ export function createTaxonomyPageController({
   registerPageCleanup,
   translate = (_key, fallback) => fallback,
 } = {}) {
+  let currentTab = "genres";
+
   async function loadTaxonomyPage() {
     const requestEpoch = getPageEpoch();
     const { genres, tags } = await loadTaxonomies();
@@ -72,6 +74,29 @@ export function createTaxonomyPageController({
       page.querySelector("#panel-taxonomy-tags"),
       { items: tagItems, has_items: tagItems.length > 0 },
     );
+    const genresCountEl = page.querySelector("#panel-taxonomy-genres-count");
+    if (genresCountEl) genresCountEl.textContent = String(genreItems.length);
+    const tagsCountEl = page.querySelector("#panel-taxonomy-tags-count");
+    if (tagsCountEl) tagsCountEl.textContent = String(tagItems.length);
+
+    const tabButtons = page.querySelectorAll("[data-taxonomy-tab]");
+    const tabSections = page.querySelectorAll("[data-taxonomy-section]");
+    const updateTabs = (tab) => {
+      currentTab = tab;
+      tabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.taxonomyTab === tab));
+      tabSections.forEach((sec) => {
+        sec.hidden = sec.dataset.taxonomySection !== tab;
+      });
+    };
+    if (tabButtons.length > 0) {
+      updateTabs(currentTab);
+      tabButtons.forEach((btn) => {
+        const onTabClick = () => updateTabs(btn.dataset.taxonomyTab);
+        btn.addEventListener("click", onTabClick);
+        registerPageCleanup?.(() => btn.removeEventListener("click", onTabClick));
+      });
+    }
+
     const footerSubmitSpan = page.querySelector('.card-footer button[type="submit"] span');
     if (footerSubmitSpan) {
       footerSubmitSpan.textContent = translate("admin.taxonomy.save_order", "Sıralamayı Kaydet");

@@ -1448,53 +1448,63 @@ ${admin_note}</textarea>
           ><tr><td colspan="5" class="text-center text-secondary py-4"><span data-i18n="admin.state.webhook_empty">Webhook bulunamadı</span></td></tr></template
         ></template
       ></template
-    ><template id="tpl-panel-taxonomy"
-      ><div class="row g-4"><div class="col-md-6"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0" data-i18n="admin.taxonomy.genres">Türler</h6><div class="d-flex gap-2"><button
-                type="submit"
-                class="btn btn-sm btn-outline-primary"
-              ><i class="bi bi-arrow-down-up me-1"></i><span data-i18n="admin.taxonomy.save_order">Sıralamayı Kaydet</span></button><button
-                type="button"
-                class="btn btn-sm btn-primary"
-                data-create-taxonomy="genre"
-              ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_genre">Yeni Tür</span></button></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th data-i18n="admin.taxonomy.usage">Kullanım</th><th data-i18n="admin.taxonomy.order">Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-genres"></tbody></table></div></div><div class="col-md-6"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0" data-i18n="admin.taxonomy.tags">Etiketler</h6><div class="d-flex gap-2"><button
-                type="submit"
-                class="btn btn-sm btn-outline-primary"
-              ><i class="bi bi-arrow-down-up me-1"></i><span data-i18n="admin.taxonomy.save_order">Sıralamayı Kaydet</span></button><button
-                type="button"
-                class="btn btn-sm btn-primary"
-                data-create-taxonomy="tag"
-              ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_tag">Yeni Etiket</span></button></div></div><div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>ID</th><th data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th data-i18n="admin.taxonomy.usage">Kullanım</th><th data-i18n="admin.taxonomy.order">Sıra</th><th></th></tr></thead><tbody id="panel-taxonomy-tags"></tbody></table></div></div></div
-    ></template><template id="tpl-panel-rows-taxonomy"
+    ><template id="tpl-panel-taxonomy"><ul class="nav nav-tabs mb-4" role="tablist"><li class="nav-item"><button
+            type="button"
+            class="nav-link active"
+            data-taxonomy-tab="genres"
+          ><i class="bi bi-collection-fill me-1"></i><span data-i18n="admin.taxonomy.genres">Türler</span><span class="badge bg-secondary-subtle text-secondary ms-1" id="panel-taxonomy-genres-count"></span></button></li><li class="nav-item"><button
+            type="button"
+            class="nav-link"
+            data-taxonomy-tab="tags"
+          ><i class="bi bi-tags-fill me-1"></i><span data-i18n="admin.taxonomy.tags">Etiketler</span><span class="badge bg-secondary-subtle text-secondary ms-1" id="panel-taxonomy-tags-count"></span></button></li></ul><section data-taxonomy-section="genres"><div class="d-flex justify-content-between align-items-center mb-3"><h6 class="mb-0 text-body-secondary fw-semibold" data-i18n="admin.taxonomy.genres">Türler</h6><div class="d-flex gap-2"><button
+              type="submit"
+              class="btn btn-sm btn-outline-primary"
+            ><i class="bi bi-arrow-down-up me-1"></i><span data-i18n="admin.taxonomy.save_order">Sıralamayı Kaydet</span></button><button
+              type="button"
+              class="btn btn-sm btn-primary"
+              data-create-taxonomy="genre"
+            ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_genre">Yeni Tür</span></button></div></div><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th style="width: 60px">ID</th><th style="width: 40%" data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th style="width: 15%" data-i18n="admin.taxonomy.usage">Kullanım</th><th style="width: 110px" data-i18n="admin.taxonomy.order">Sıra</th><th class="text-end" data-i18n="admin.actions">İşlemler</th></tr></thead><tbody id="panel-taxonomy-genres"></tbody></table></div></section><section data-taxonomy-section="tags" hidden><div class="d-flex justify-content-between align-items-center mb-3"><h6 class="mb-0 text-body-secondary fw-semibold" data-i18n="admin.taxonomy.tags">Etiketler</h6><div class="d-flex gap-2"><button
+              type="submit"
+              class="btn btn-sm btn-outline-primary"
+            ><i class="bi bi-arrow-down-up me-1"></i><span data-i18n="admin.taxonomy.save_order">Sıralamayı Kaydet</span></button><button
+              type="button"
+              class="btn btn-sm btn-primary"
+              data-create-taxonomy="tag"
+            ><i class="bi bi-plus-lg me-1"></i><span data-i18n="admin.taxonomy.new_tag">Yeni Etiket</span></button></div></div><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th style="width: 60px">ID</th><th style="width: 40%" data-i18n="admin.taxonomy.name_slug">Ad / Slug</th><th style="width: 15%" data-i18n="admin.taxonomy.usage">Kullanım</th><th style="width: 110px" data-i18n="admin.taxonomy.order">Sıra</th><th class="text-end" data-i18n="admin.actions">İşlemler</th></tr></thead><tbody id="panel-taxonomy-tags"></tbody></table></div></section></template><template id="tpl-panel-rows-taxonomy"
       ><template data-for each="items" as="item"
-        ><tr data-taxonomy-row="${item.id}"><td class="text-secondary">${item.id}</td><td><strong>${item.name}</strong
-            ><small class="d-block text-secondary">${item.slug}</small><small class="d-block text-secondary text-truncate" style="max-width: 36rem">${item.description}</small></td><td>${item.usage_count}</td><td class="panel-action-column"><input
+        ><tr data-taxonomy-row="${item.id}"><td class="text-secondary fw-medium">${item.id}</td><td><div class="d-flex align-items-baseline gap-2"><strong class="text-body-emphasis">${item.name}</strong><small class="badge bg-body-secondary text-body-secondary fw-normal">${item.slug}</small></div><small class="d-block text-secondary text-truncate" style="max-width: 32rem">${item.description}</small></td><td><span class="badge bg-primary-subtle text-primary fw-medium px-2 py-1">${item.usage_count} seri</span></td><td><input
               type="number"
               min="0"
               name="taxonomy_order_${item.id}"
-              class="form-control form-control-sm"
+              class="form-control form-control-sm text-center"
+              style="width: 75px"
               data-taxonomy-order
               value="${item.sort_order}"
-            /></td><td class="text-end text-nowrap"><button
-              type="button"
-              class="btn btn-xs btn-outline-secondary me-1"
-              data-edit-taxonomy="${item.id}"
-              data-name="${item.name}"
-              title="Düzenle" data-i18n-attr="title:admin.action.edit"
-            ><i class="bi bi-pencil"></i></button
-            ><button
-              type="button"
-              class="btn btn-xs btn-outline-primary me-1"
-              data-merge-taxonomy="${item.id}"
-              title="Birleştir" data-i18n-attr="title:admin.action.merge"
-            ><i class="bi bi-intersect"></i></button
-            ><button
-              type="button"
-              class="btn btn-xs btn-outline-danger"
-              data-delete-taxonomy="${item.id}"
-              data-name="${item.name}"
-              data-usage="${item.usage_count}"
-              title="Sil" data-i18n-attr="title:admin.action.delete"
-            ><i class="bi bi-trash"></i></button></td></tr></template
+            /></td><td class="text-end text-nowrap"><div class="btn-group btn-group-sm" role="group"><button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                data-edit-taxonomy="${item.id}"
+                data-name="${item.name}"
+                title="Düzenle"
+                data-i18n-attr="title:admin.action.edit,aria-label:admin.action.edit"
+                aria-label="Düzenle"
+              ><i class="bi bi-pencil me-1"></i><span class="d-none d-md-inline" data-i18n="admin.action.edit">Düzenle</span></button><button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                data-merge-taxonomy="${item.id}"
+                title="Birleştir"
+                data-i18n-attr="title:admin.action.merge,aria-label:admin.action.merge"
+                aria-label="Birleştir"
+              ><i class="bi bi-arrows-collapse me-1"></i><span class="d-none d-md-inline" data-i18n="admin.action.merge">Birleştir</span></button><button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                data-delete-taxonomy="${item.id}"
+                data-name="${item.name}"
+                data-usage="${item.usage_count}"
+                title="Sil"
+                data-i18n-attr="title:admin.action.delete,aria-label:admin.action.delete"
+                aria-label="Sil"
+              ><i class="bi bi-trash"></i></button></div></td></tr></template
       ><template data-if is-truthy="has_items"
         ><template data-else
           ><tr><td colspan="5" class="text-secondary"><span data-i18n="admin.state.record_empty">Kayıt bulunamadı</span></td></tr></template
@@ -2541,7 +2551,7 @@ ${admin_note}</textarea>
 
       try {
         // Increase +1 when changing admin.js or an imported admin module.
-        const admin = await import("/assets/js/admin/admin.js?248");
+        const admin = await import("/assets/js/admin/admin.js?249");
         await admin.adminReady;
         loader?.remove();
       } catch (error) {
