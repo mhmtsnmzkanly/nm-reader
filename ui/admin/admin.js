@@ -55,7 +55,7 @@ import { createChaptersPageController } from "./modules/chapters-page.js?128";
 import { createContentPreviewsController } from "./modules/content-previews.js?127";
 import { createChapterEditorController } from "./modules/chapter-editor.js?129";
 import { createSeriesEditorController } from "./modules/series-editor.js?130";
-import { createTaxonomyPageController } from "./modules/taxonomy-page.js?126";
+import { createTaxonomyPageController } from "./modules/taxonomy-page.js?127";
 import { createAccessControlPagesController } from "./modules/access-control-pages.js?127";
 import { createModerationPagesController } from "./modules/moderation-pages.js?129";
 import { createPanelTableRenderers } from "./modules/table-renderers.js?131";
@@ -84,7 +84,7 @@ import {
 } from "./modules/formatters.js?127";
 import {
   createPanelRoutes,
-} from "./modules/routes.js?127";
+} from "./modules/routes.js?128";
 function initializeAdmin() {
 initializeShell();
 const nextYear = String(new Date().getFullYear() + 1);
