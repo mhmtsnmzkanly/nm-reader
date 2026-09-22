@@ -13,7 +13,7 @@ import {
   ref,
   show,
   text,
-} from "https://cdn.jsdelivr.net/gh/mhmtsnmzkanly/lime-csr-js@v0.6.2/dist/index.min.js";
+} from "https://cdn.jsdelivr.net/gh/mhmtsnmzkanly/lime-csr-js@v0.6.4/dist/index.min.js";
 import {
   createAdminApi,
   createAdminReauth,
